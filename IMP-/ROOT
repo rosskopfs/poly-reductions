@@ -1,6 +1,6 @@
 chapter Poly_Reductions
 
-session IMP_Minus = HOL + 
+session IMP_Minus = "HOL-Eisbach" + 
   theories
     Com
     Big_StepT

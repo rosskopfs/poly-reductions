@@ -1,5 +1,5 @@
 theory SAT_Plan_Base_Nat 
-  imports "Verified_SAT_Based_AI_Planning.SAT_Plan_Base" "IMP-_To_IMP--/Primitives"
+  imports "Verified_SAT_Based_AI_Planning.SAT_Plan_Base" Primitives
 begin
 
 definition  encode_state_variable_nat

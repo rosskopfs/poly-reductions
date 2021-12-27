@@ -231,8 +231,6 @@ method dest_com_init_while =
    \<open>match premises in b[thin]: "(v ::= a;; WHILE v \<noteq>0 DO _, s2) \<Rightarrow>\<^bsup>t2\<^esup> s2'"
       for s2 s2' t2 \<Rightarrow> \<open>insert a\<close>\<close>)*)
 
-
-
 lemma terminates_split_if : "(P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t1\<^esup> s1 ) \<Longrightarrow> 
 (\<not> P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t2\<^esup> s2 ) \<Longrightarrow> (c,s) \<Rightarrow>\<^bsup>if P s then t1 else t2\<^esup>  if P s then s1 else s2"
   by auto
@@ -298,17 +296,57 @@ lemma AssignI'':
 "\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
         \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<and> s' = s'" 
   by (auto simp add: Assign eval_nat_numeral)
-thm Assign_tE
 
 lemma AssignD: "(x ::= a, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> t = 2 \<and> s' = s(x := aval a s)"
   by auto
 
-thm Seq_tE
+lemma compose_programs_1:
+  "(c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> 
+    ((c1;; c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
+   \<Longrightarrow> P"
+  by auto
 
-lemma Seq_tE_While_init: 
+lemma compose_programs_2:
+  "(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> 
+    ((c1;; c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
+   \<Longrightarrow> P"
+  by auto
+
+lemma While_tE_time:
+"(WHILE b\<noteq>0 DO c, s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow>
+  (x = Suc (Suc 0) \<Longrightarrow> t = s \<Longrightarrow> s b = 0 \<Longrightarrow> P) \<Longrightarrow>
+  (\<And>x' s2 y. 0 < s b \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup> x' \<^esup> s2 \<Longrightarrow> (WHILE b\<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> t \<Longrightarrow> x = Suc (x' + y) \<Longrightarrow> P) \<Longrightarrow> P"
+  by auto
+
+lemma Seq_tE_While_init:
   "(WHILE v \<noteq>0 DO c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> 
     ((c1;; WHILE v \<noteq>0 DO c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
    \<Longrightarrow> P"
   by auto
+
+method dest_com_gen = 
+  (erule compose_programs_1[where ?c2.0 = "(Com.While _ _)"], assumption,
+    erule compose_programs_2[where ?c1.0 = "(_;; Com.While _ _)"], assumption,
+    (match premises
+      in a[thin]: 
+      "(init_while_cond;; 
+                WHILE _ \<noteq>0 DO (loop_body;; init_while_cond);;
+                after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
+    for init_while_cond loop_body after_loop  \<Rightarrow> 
+      \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
+       for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a]\<close>\<close>))
+
+
+method dest_com_gen_time = 
+  (erule compose_programs_1[where ?c2.0 = "(Com.While _ _)"], assumption,
+    erule compose_programs_2[where ?c1.0 = "(_;; Com.While _ _)"], assumption,
+    (match premises
+      in a[thin]: 
+      "(init_while_cond;; 
+                WHILE _ \<noteq>0 DO (loop_body;; init_while_cond);;
+                after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
+    for init_while_cond loop_body after_loop  \<Rightarrow> 
+      \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
+       for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a, simplified add.assoc]\<close>\<close>))
 
 end

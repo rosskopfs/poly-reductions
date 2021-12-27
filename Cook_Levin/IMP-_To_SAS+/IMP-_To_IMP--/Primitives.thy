@@ -1,11 +1,12 @@
 theory Primitives
-  imports Main  "HOL-Library.Nat_Bijection" "../../../IMP-/Com" "../IMP_Minus_Minus_Com"
+  imports Main  "HOL-Library.Nat_Bijection"
+         IMP_Minus.Com IMP_Minus_Minus_Com
  "HOL.String"
  "Verified_SAT_Based_AI_Planning.SAT_Plan_Base"
 "Verified_SAT_Based_AI_Planning.STRIPS_Representation"
- "../SAS_Plus_Plus" "HOL-Library.Mapping"
-"../SAS++_To_SAS+/SAS_Plus_Plus_To_SAS_Plus"
-"../IMP--_To_SAS++/IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations"
+ SAS_Plus_Plus "HOL-Library.Mapping"
+SAS_Plus_Plus_To_SAS_Plus
+IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
 
 begin 
 

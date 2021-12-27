@@ -3,8 +3,8 @@
 section "Binary Operations in IMP--"
                                                     
 theory Binary_Operations 
-  imports IMP_Minus_To_IMP_Minus_Minus_State_Translations "IMP_Minus.Max_Constant" 
-    "../IMP--_To_SAS++/IMP_Minus_Minus_Subprograms"
+  imports IMP_Minus_To_IMP_Minus_Minus_State_Translations IMP_Minus.Max_Constant
+    IMP_Minus_Minus_Subprograms
 begin 
 
 text \<open> We give programs in IMP-- that work on states translated from IMP- to IMP-- and simulate 

@@ -1,6 +1,6 @@
 theory IMP_Minus_Max_Constant_Nat
   imports "HOL-Library.Nat_Bijection"
-  "IMP-_To_IMP--/Primitives"  IMP_Minus.Max_Constant 
+  Primitives  IMP_Minus.Max_Constant 
 begin
 
 

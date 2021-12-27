@@ -1,386 +1,540 @@
 theory Binary_Arithmetic_IMP 
-  imports "../../../IMP-/IMP_Minus_Nat_Bijection"  Binary_Arithmetic_Nat
+  imports Primitives_IMP_Minus  Binary_Arithmetic_Nat IMP_Minus.Com
 begin
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
-unbundle Com.no_com_syntax
+subsection \<open>N-th bit of Natural Number\<close>
 
+fun nth_bit_of_num_nat' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "nth_bit_of_num_nat' x n  = (if x \<noteq> 0 then 
+                              (if n \<noteq> 0 then
+                                nth_bit_of_num_nat' (tl_nat x) (n-1)
+                               else
+                                (if hd_nat x \<noteq> 0 then
+                                   1 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>
+                                 else
+                                   0 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>))
+                            else
+                              (if n \<noteq> 0 then
+                                 0 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>
+                               else
+                                 1 \<comment> \<open>x = 0 \<and> n = 0\<close>)
+                              )"
 
-fun nth_bit_of_num_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_of_num_nat x n  = 
-  (if x = 0 then
-    (if n = 0 then
-       1
-     else
-       0)
-   else
-     if n = 0 then
-       (if hd_nat x = 0 then
-          0
-        else
-          1)
-     else
-        nth_bit_of_num_nat (tl_nat x) (n-1)
-   )"
+lemma nth_bit_of_num_nat'_correct:
+  "(nth_bit_of_num_nat' x n) = (nth_bit_of_num_nat x n)"
+proof (induction x n rule: nth_bit_of_num_nat.induct)
+  case (1 s)
+  then show ?case
+    apply(subst nth_bit_of_num_nat.simps)
+    apply(subst nth_bit_of_num_nat'.simps)
+    by (auto simp: Let_def split: if_splits)
+qed 
 
-fun nth_bit_of_num_nat_imp :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_of_num_nat_imp x n  = 
-(
-  let
-    next_iteration = (0::nat)
+record nth_bit_of_num_state = nth_bit_of_num_x::nat nth_bit_of_num_n::nat nth_bit_of_num_ret::nat
+
+abbreviation "nth_bit_of_num_prefix \<equiv> ''nth_bit_of_num.''"
+abbreviation "nth_bit_of_num_x_str \<equiv> ''x''"
+abbreviation "nth_bit_of_num_n_str \<equiv> ''n''"
+abbreviation "nth_bit_of_num_ret_str \<equiv> ''ret''"
+
+definition "nth_bit_of_num_state_upd s \<equiv>
+      let
+        tl_xs' = nth_bit_of_num_x s;
+        tl_ret' = 0;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_ret_state = tl_imp tl_state;
+        nth_bit_of_num_x' = tl_ret tl_ret_state;
+        nth_bit_of_num_n' = nth_bit_of_num_n s - 1;
+        ret = \<lparr>nth_bit_of_num_x = nth_bit_of_num_x', nth_bit_of_num_n = nth_bit_of_num_n', nth_bit_of_num_ret = nth_bit_of_num_ret s\<rparr>
+      in
+        ret
+"
+
+definition 
+  "nth_bit_of_num_imp_compute_loop_condition s \<equiv>
+  (let
+     AND_neq_zero_a' = nth_bit_of_num_x s;
+     AND_neq_zero_b' = nth_bit_of_num_n s;
+     AND_neq_zero_ret' = 0;
+     AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a', AND_neq_zero_b = AND_neq_zero_b', AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+     AND_neq_zero_state_ret = AND_neq_zero_imp AND_neq_zero_state;
+     condition = AND_neq_zero_ret (AND_neq_zero_state_ret)
   in
-    (if x \<noteq> 0 then
-       if n \<noteq> 0 then
-         (let
-            x = tl_nat x;
-            n = n - 1;
-            next_iteration = nth_bit_of_num_nat x n
-          in 
-            next_iteration
-         )
-       else
-         let
-           hd_x = hd_nat x
-         in
-           (if hd_x \<noteq> 0 then
-             (let
-                ret = 1
-              in 
-                ret
-             )
-            else
-             (let
-                ret = 0
-              in 
-                ret
-             )
-           )
-     else
-       if n \<noteq> 0 then
-         (let
-            ret = 0
-          in 
-            ret
-         )
-       else
-         (let
-            ret = 1
-          in 
-            ret
-         )
-     )
+     condition)"
+
+definition 
+  "nth_bit_of_num_imp_after_loop s \<equiv>
+       (let
+          hd_xs' = nth_bit_of_num_x s;
+          hd_ret' = 0;
+          hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+          hd_state_ret = hd_imp hd_state;
+          hd_x = hd_ret hd_state_ret;
+          nth_bit_of_num_ret' = 
+                           (if nth_bit_of_num_x s \<noteq> 0 then 
+                              ((if hd_x \<noteq> 0 then
+                                   1 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>
+                                 else
+                                   0 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>))
+                            else
+                              (if nth_bit_of_num_n s \<noteq> 0 then
+                                 0 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>
+                               else
+                                 1 \<comment> \<open>x = 0 \<and> n = 0\<close>)
+                              );
+          ret = \<lparr>nth_bit_of_num_x = nth_bit_of_num_x s, nth_bit_of_num_n = nth_bit_of_num_n s,
+                 nth_bit_of_num_ret = nth_bit_of_num_ret'\<rparr>
+        in
+          ret)"
+
+
+function nth_bit_of_num_imp:: "nth_bit_of_num_state \<Rightarrow> nth_bit_of_num_state" where
+  "nth_bit_of_num_imp s = 
+  (
+    (if nth_bit_of_num_imp_compute_loop_condition s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
+      (
+        let
+          next_iteration = nth_bit_of_num_imp (nth_bit_of_num_state_upd s)
+        in
+          next_iteration
+      )
+    else
+      (
+        let
+          ret = nth_bit_of_num_imp_after_loop s
+        in
+          ret
+      )
+    )
+)"
+  by pat_completeness auto
+termination
+  by (relation "measure (\<lambda>s. nth_bit_of_num_n s)")
+    (auto simp: nth_bit_of_num_imp_compute_loop_condition_def AND_neq_zero_imp_correct tl_imp_correct nth_bit_of_num_state_upd_def Let_def split: if_splits)
+
+lemmas nth_bit_of_num_imp_subprogram_simps = 
+  nth_bit_of_num_imp_after_loop_def nth_bit_of_num_state_upd_def
+  nth_bit_of_num_imp_compute_loop_condition_def 
+
+declare nth_bit_of_num_imp.simps [simp del]
+
+lemma nth_bit_of_num_imp_correct:
+  "nth_bit_of_num_ret (nth_bit_of_num_imp s) = nth_bit_of_num_nat (nth_bit_of_num_x s) (nth_bit_of_num_n s)"
+proof (induction s rule: nth_bit_of_num_imp.induct)
+  case (1 s)
+  then show ?case
+    apply(subst nth_bit_of_num_imp.simps)
+    apply(subst nth_bit_of_num_nat.simps)
+    by (auto simp del: nth_bit_of_num_nat.simps
+        simp add: nth_bit_of_num_imp_after_loop_def 
+        nth_bit_of_num_imp_compute_loop_condition_def
+        tl_imp_correct hd_imp_correct AND_neq_zero_imp_correct
+        nth_bit_of_num_state_upd_def Let_def
+        split: if_splits)
+qed 
+
+
+definition "nth_bit_of_num_state_upd_time t s \<equiv>
+      let
+        tl_xs' = nth_bit_of_num_x s;
+        t = t + 2;
+        tl_ret' = 0;
+        t = t + 2;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_ret_state = tl_imp tl_state;
+        t = t + tl_imp_time 0 tl_state;
+        nth_bit_of_num_x' = tl_ret tl_ret_state;
+        t = t + 2;
+        nth_bit_of_num_n' = nth_bit_of_num_n s - 1;
+        t = t + 2;
+        ret = t
+      in
+        ret
+"
+
+definition 
+  "nth_bit_of_num_imp_compute_loop_condition_time t s \<equiv>
+  (let
+     AND_neq_zero_a' = nth_bit_of_num_x s;
+     t = t + 2;
+     AND_neq_zero_b' = nth_bit_of_num_n s;
+     t = t + 2;
+     AND_neq_zero_ret' = 0;
+     t = t + 2;
+     AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a', AND_neq_zero_b = AND_neq_zero_b', AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+     AND_neq_zero_state_ret = AND_neq_zero_imp AND_neq_zero_state;
+     t = t + AND_neq_zero_imp_time 0 AND_neq_zero_state;
+     condition = AND_neq_zero_ret AND_neq_zero_state_ret;
+     t = t + 2;
+     ret = t
+  in
+     t)"
+
+definition 
+  "nth_bit_of_num_imp_after_loop_time t s \<equiv>
+       (let
+          hd_xs' = nth_bit_of_num_x s;
+          t = t + 2;
+          hd_ret' = 0;
+          t = t + 2;
+          hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+          hd_state_ret = hd_imp hd_state;
+          t = t + hd_imp_time 0 hd_state;
+          hd_x = hd_ret hd_state_ret;
+          t = t + 2;
+          nth_bit_of_num_ret'::nat = 
+                           (if nth_bit_of_num_x s \<noteq> 0 then 
+                              ((if hd_x \<noteq> 0 then
+                                   1 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>
+                                 else
+                                   0 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>))
+                            else
+                              (if nth_bit_of_num_n s \<noteq> 0 then
+                                 0 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>
+                               else
+                                 1 \<comment> \<open>x = 0 \<and> n = 0\<close>)
+                              );
+          t = t + 1 +
+                           (if nth_bit_of_num_x s \<noteq> 0 then 
+                              (1 +
+                               (if hd_x \<noteq> 0 then
+                                  2 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>
+                                else
+                                  2 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>))
+                            else
+                              1 + 
+                              (if nth_bit_of_num_n s \<noteq> 0 then
+                                 2 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>
+                               else
+                                 2 \<comment> \<open>x = 0 \<and> n = 0\<close>)
+                              );
+          ret = t
+        in
+          ret
 )"
 
-lemma nth_bit_of_num_nat_imp_correct:
-  "nth_bit_of_num_nat x n = nth_bit_of_num_nat_imp x n"
-  by (auto simp: Let_def)
+
+function nth_bit_of_num_imp_time:: "nat \<Rightarrow> nth_bit_of_num_state \<Rightarrow> nat" where
+  "nth_bit_of_num_imp_time t s = 
+  nth_bit_of_num_imp_compute_loop_condition_time 0 s+
+   (
+    (if nth_bit_of_num_imp_compute_loop_condition s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
+      (
+        let
+          t = t + 1; \<comment> \<open>While condition true\<close>
+          next_iteration = 
+           nth_bit_of_num_imp_time (t + 
+                                    nth_bit_of_num_state_upd_time 0 s) (nth_bit_of_num_state_upd s)
+        in
+          next_iteration
+      )
+    else
+      (
+        let
+          t = t + 2; \<comment> \<open>skipping while loop as it is false\<close>
+          ret = t + nth_bit_of_num_imp_after_loop_time 0 s
+        in
+          ret
+      )
+    )
+)"
+  by pat_completeness auto
+termination
+  by (relation "measure (\<lambda>(t, s). nth_bit_of_num_n s)")
+    (auto simp: nth_bit_of_num_imp_compute_loop_condition_def
+      AND_neq_zero_imp_correct tl_imp_correct
+      nth_bit_of_num_state_upd_def Let_def
+      split: if_splits)
 
 
-(* [''tl''] ''xs'' ::=  (A ( V ''x'')) ;;
-   invoke_subprogram ''tl'' tl_IMP;;
-   ''x'' ::= [''tl''] (A (V ''ans''));;
-   [''tl''] ''ans'' ::= A (N 0);;
-   ''n'' ::= (V ''n'' \<ominus> N 1 );; 
-   IF ''x''\<noteq>0 THEN 
-        (IF ''n''\<noteq>0 THEN ''b''::= A (N 1) ELSE ''b''::= A (N 0)) 
-        ELSE ''b''::= A (N 0) 
-   
-*)
+lemmas nth_bit_of_num_imp_subprogram_time_simps = nth_bit_of_num_imp_subprogram_simps
+  nth_bit_of_num_imp_after_loop_time_def nth_bit_of_num_state_upd_time_def
+  nth_bit_of_num_imp_compute_loop_condition_time_def 
 
-term invoke_subprogram
 
-abbreviation "invoke_program_1 pfx prog input1 output \<equiv>
-          [pfx] ''input1'' ::=  (A ( V input1)) ;;
-          invoke_subprogram pfx tl_IMP;;
-          output ::= [pfx] (A (V ''ans''));;
-          [pfx] ''ans'' ::= A (N 0)
+lemmas [simp del] = nth_bit_of_num_imp_time.simps
+
+lemma nth_bit_of_num_imp_time_acc: "(nth_bit_of_num_imp_time (Suc t) s) = Suc (nth_bit_of_num_imp_time t s)"
+  apply (induction t s arbitrary:  rule: nth_bit_of_num_imp_time.induct)
+  apply(subst nth_bit_of_num_imp_time.simps)
+  apply(subst (2) nth_bit_of_num_imp_time.simps)
+  apply (auto simp add: nth_bit_of_num_imp_compute_loop_condition_time_def
+      nth_bit_of_num_imp_after_loop_time_def
+      nth_bit_of_num_state_upd_time_def
+      nth_bit_of_num_state_upd_def Let_def eval_nat_numeral 
+      split: if_splits)
+  done
+
+lemma nth_bit_of_num_imp_time_acc_2: "(nth_bit_of_num_imp_time x s) = x + (nth_bit_of_num_imp_time 0 s)"
+  by (induction x arbitrary: s)
+    (auto simp add: nth_bit_of_num_imp_time_acc nth_bit_of_num_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+lemma nth_bit_of_num_imp_time_acc_2_simp: 
+  "(nth_bit_of_num_imp_time (nth_bit_of_num_state_upd_time 0 s) s') =
+   (nth_bit_of_num_state_upd_time 0 s) + (nth_bit_of_num_imp_time 0 s')"
+  by (rule nth_bit_of_num_imp_time_acc_2)
+
+\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
+    programs.\<close>
+
+abbreviation "nth_bit_of_num_while_cond \<equiv> ''condition''"
+
+definition "nth_bit_of_num_IMP_init_while_cond \<equiv>
+     \<comment> \<open>AND_neq_zero_a' = nth_bit_of_num_x s;\<close>
+     (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::= (A (V nth_bit_of_num_x_str));;
+     \<comment> \<open>AND_neq_zero_b' = nth_bit_of_num_n s;\<close>
+     (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::= (A (V nth_bit_of_num_n_str));;
+     \<comment> \<open>AND_neq_zero_ret' = 0;\<close>
+     (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= (A (N 0));;
+     \<comment> \<open>AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a', AND_neq_zero_b = AND_neq_zero_b', AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;\<close>
+     \<comment> \<open>AND_neq_zero_state_ret = AND_neq_zero_imp AND_neq_zero_state;\<close>
+     invoke_subprogram AND_neq_zero_prefix AND_neq_zero_IMP_Minus;;
+     \<comment> \<open>condition = AND_neq_zero_ret (AND_neq_zero_state_ret)\<close>
+     (nth_bit_of_num_while_cond) ::= (A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str)))
 "
 
-
-definition nth_bit_of_num_iteration::pcom  where "nth_bit_of_num_iteration \<equiv>
-     ''next_iteration'' ::= A (N 0);;
-     IF ''x''\<noteq>0 THEN
-       IF ''n''\<noteq>0 THEN
-            invoke_program_1 ''tl'' tl_IMP ''x'' ''x'';;
-            ''n'' ::= (V ''n'' \<ominus> N 1 );;
-            ''next_iteration'' ::= A(N 1)
-       ELSE
-            invoke_program_1 ''hd'' hd_IMP ''x'' ''hd_x'';;
-            IF ''hd_x''\<noteq>0 THEN
-                ''ret'' ::= A (N 1)
-            ELSE
-                ''ret'' ::= A (N 0)
-     ELSE
-       IF ''n''\<noteq>0 THEN
-            ''ret'' ::= A (N 0)
-       ELSE
-            ''ret'' ::= A (N 1)
+definition "nth_bit_of_num_IMP_loop_body \<equiv>
+      \<comment> \<open>(\<close>
+        \<comment> \<open>let\<close>
+          \<comment> \<open>tl_xs' = nth_bit_of_num_x s;\<close>
+          (tl_prefix @ tl_xs_str) ::= (A (V nth_bit_of_num_x_str));;
+          \<comment> \<open>tl_ret' = 0;\<close>
+          (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+          \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+          \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
+          invoke_subprogram tl_prefix tl_IMP_Minus;;
+          \<comment> \<open>nth_bit_of_num_x' = tl_ret tl_ret_state;\<close>
+          (nth_bit_of_num_x_str ::= (A (V (tl_prefix @ tl_ret_str))));;
+          \<comment> \<open>nth_bit_of_num_n' = nth_bit_of_num_n s - 1;\<close>
+          (nth_bit_of_num_n_str ::= ((V nth_bit_of_num_n_str \<ominus> (N 1))))
+          \<comment> \<open>next_iteration = nth_bit_of_num_imp (nth_bit_of_num_state_upd s)\<close>
+        \<comment> \<open>in\<close>
+          \<comment> \<open>next_iteration\<close>
+      \<comment> \<open>)\<close>
 "
 
-definition nth_bit_of_num_loop :: "pcom" where 
-"nth_bit_of_num_loop \<equiv> WHILE ''b''\<noteq>0 DO nth_bit_of_num_iteration"
+abbreviation "hd_x \<equiv> ''hd_x''"
 
-lemma tl_nat_le: "tl_nat x \<le> x"
-  sorry
-
-function (sequential) nth_bit_of_num_loop_t':: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_of_num_loop_t' 0 _ _  = 2 "|
-"nth_bit_of_num_loop_t' (Suc b) x n  = (let
-  x' = tl_nat x; n' = n - 1; b' = (if x'>0 \<and> n'>0 then Suc 0 else 0)
-in
-  b' + (nth_bit_of_num_iteration_t x n + nth_bit_of_num_loop_t' b' x' n')) "
-  by pat_completeness simp_all
-termination (* Proof proceeds by noticing that the sum of the three arguments is always decreasing, rest is hammering *)
-  by(relation "measure (\<lambda>(b, x, n) . b+x+n)") (auto simp add: add.commute add_increasing le_imp_less_Suc tl_nat_le)
-
-
-function (sequential) nth_bit_of_num_loop_state_transformer' ::
-    "char list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (char list \<Rightarrow> nat) \<Rightarrow> char list \<Rightarrow> nat" where
-  "nth_bit_of_num_loop_state_transformer' p 0 x n = id "|
-  "nth_bit_of_num_loop_state_transformer' p b x n = (let
-    x' = tl_nat x; n' = n-1;
-    b' = (if x'>0 \<and> n'>0 then Suc 0 else 0)
-  in
-    nth_bit_of_num_iteration_state_transformer p x n o nth_bit_of_num_loop_state_transformer' p b' x' n')"
- by pat_completeness simp_all
-termination (* Proof proceeds by noticing that the sum of the last three arguments is always decreasing, rest is hammering *)
-  by (relation "measure (\<lambda>(p, b, x, n) . b+x+n)") (auto simp add: add.commute add_increasing le_imp_less_Suc tl_nat_le) 
-
-
-definition nth_bit_of_num_if ::pcom where "nth_bit_of_num_if \<equiv>
- IF ''x''\<noteq>0 THEN 
-        (IF ''n''\<noteq>0 THEN ''b''::= A (N 1) ELSE ''b''::= A (N 0)) 
-        ELSE ''b''::= A (N 0) 
+definition "nth_bit_of_num_IMP_after_loop \<equiv>
+          \<comment> \<open>hd_xs' = nth_bit_of_num_x s;\<close>
+          (hd_prefix @ hd_xs_str) ::= (A (V nth_bit_of_num_x_str));;
+          \<comment> \<open>hd_ret' = 0;\<close>
+          (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+          \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+          \<comment> \<open>hd_state_ret = hd_imp hd_state;\<close>
+          \<comment> \<open>hd_x = hd_ret hd_state_ret;\<close>
+          invoke_subprogram hd_prefix hd_IMP_Minus;;
+          (hd_x) ::= (A (V (hd_prefix @ hd_ret_str)));;
+          \<comment> \<open>nth_bit_of_num_ret' = \<close>
+                           \<comment> \<open>(if nth_bit_of_num_x s \<noteq> 0 then \<close>
+                           IF nth_bit_of_num_x_str \<noteq>0 THEN
+                              \<comment> \<open>((if hd_ret hd_state_ret \<noteq> 0 then\<close>
+                              IF hd_x \<noteq>0 THEN
+                                   \<comment> \<open>1 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>\<close>
+                                   nth_bit_of_num_ret_str ::= (A (N 1))
+                                 \<comment> \<open>else\<close>
+                                 ELSE
+                                   \<comment> \<open>0 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>))\<close>
+                                   nth_bit_of_num_ret_str ::= (A (N 0))
+                            \<comment> \<open>else\<close>
+                            ELSE
+                              \<comment> \<open>(if nth_bit_of_num_n s \<noteq> 0 then\<close>
+                              IF nth_bit_of_num_n_str \<noteq>0 THEN
+                                 \<comment> \<open>0 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>\<close>
+                                 nth_bit_of_num_ret_str ::= (A (N 0))
+                               \<comment> \<open>else\<close>
+                               ELSE
+                                 \<comment> \<open>1 \<comment> \<open>x = 0 \<and> n = 0\<close>)\<close>
+                                 nth_bit_of_num_ret_str ::= (A (N 1))
+                              \<comment> \<open>);\<close>
 "
 
-abbreviation nth_bit_of_num_if_state_transformer 
-  where "nth_bit_of_num_if_state_transformer p x n \<equiv>
-    state_transformer p [(''b'',if x >0 \<and> n>0 then 1 else 0)]
+definition nth_bit_of_num_IMP_Minus where
+  "nth_bit_of_num_IMP_Minus \<equiv>
+  nth_bit_of_num_IMP_init_while_cond;;
+  \<comment> \<open>in\<close>
+    \<comment> \<open>(if condition \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>\<close>
+      WHILE nth_bit_of_num_while_cond \<noteq>0 DO(
+        nth_bit_of_num_IMP_loop_body;;
+        nth_bit_of_num_IMP_init_while_cond
+      );;
+    \<comment> \<open>else\<close>
+      \<comment> \<open>(\<close>
+        \<comment> \<open>let\<close>
+        nth_bit_of_num_IMP_after_loop
+          \<comment> \<open>ret = \<lparr>nth_bit_of_num_x = nth_bit_of_num_x s, nth_bit_of_num_n = nth_bit_of_num_n s,\<close>
+                 \<comment> \<open>nth_bit_of_num_ret = nth_bit_of_num_ret'\<rparr>\<close>
+        \<comment> \<open>in\<close>
+          \<comment> \<open>ret\<close>
+      \<comment> \<open>)\<close>
+    \<comment> \<open>)\<close>
 "
 
-fun nth_bit_of_num_if_time :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"nth_bit_of_num_if_time 0 _ = 3"|
-"nth_bit_of_num_if_time _ _ = 4"
+abbreviation 
+  "nth_bit_of_num_IMP_vars \<equiv>
+  {nth_bit_of_num_x_str, nth_bit_of_num_n_str, nth_bit_of_num_ret_str}"
 
-lemma nth_bit_of_num_if_correct[intro]:
-"\<lbrakk> s (add_prefix p ''x'')= x ; s (add_prefix p ''n'') = n  \<rbrakk> \<Longrightarrow>
-(nth_bit_of_num_if p, s) \<Rightarrow>\<^bsup>nth_bit_of_num_if_time x n \<^esup>
-nth_bit_of_num_if_state_transformer p x n s "
-  unfolding nth_bit_of_num_if_def 
-  apply (cases x;cases n)
-     apply (rule Big_StepT.IfFalse)
-       apply simp
-      apply (rule terminates_in_time_state_intro)
-        apply blast
-       apply simp
-      apply simp
-     apply simp
- apply (rule Big_StepT.IfFalse)
-       apply simp
-      apply (rule terminates_in_time_state_intro)
-        apply blast
-       apply simp
-      apply simp
-    apply simp
-   apply (rule Big_StepT.IfTrue)
-     apply simp
-    apply (rule Big_StepT.IfFalse)
-      apply simp
-        apply (rule terminates_in_time_state_intro)
-       apply fast
-      apply fast
-     apply force
-    apply simp
-   apply simp
-      apply (rule Big_StepT.IfTrue)
-    apply simp
-            apply (rule Big_StepT.IfTrue)
-     apply simp
-              apply (rule terminates_in_time_state_intro)
-  apply blast
-     apply simp
-    apply simp
-  apply simp
-  by simp
+lemmas nth_bit_of_num_IMP_subprogram_simps = 
+  nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def nth_bit_of_num_IMP_after_loop_def
+
+definition "nth_bit_of_num_imp_to_HOL_state p s =
+  \<lparr>nth_bit_of_num_x = (s (add_prefix p nth_bit_of_num_x_str)), 
+   nth_bit_of_num_n = (s (add_prefix p nth_bit_of_num_n_str)),
+   nth_bit_of_num_ret = (s (add_prefix p nth_bit_of_num_ret_str))\<rparr>"
+
+lemmas nth_bit_of_num_state_translators = tl_imp_to_HOL_state_def hd_imp_to_HOL_state_def
+  AND_neq_zero_imp_to_HOL_state_def
+  nth_bit_of_num_imp_to_HOL_state_def
+
+lemmas nth_bit_of_num_complete_simps =
+  nth_bit_of_num_IMP_subprogram_simps nth_bit_of_num_imp_subprogram_simps
+  nth_bit_of_num_state_translators
+
+lemma nth_bit_of_num_IMP_Minus_correct_function: 
+  "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p nth_bit_of_num_ret_str) = nth_bit_of_num_ret (nth_bit_of_num_imp (nth_bit_of_num_imp_to_HOL_state p s))"
+  apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
+  apply(subst nth_bit_of_num_imp.simps)
+  apply(simp only: nth_bit_of_num_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule While_tE)
+   apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
+   apply(erule Seq_tE)+
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(erule If_tE)
+    apply(erule If_tE)
+     apply(drule AssignD)+
+     apply(elim conjE)
+     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+      apply auto [1]
+     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
+    apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+   apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+
+  apply(erule Seq_tE)+
+  apply(dest_com_gen)
+    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
+    apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+
+   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+   apply(erule Seq_tE)+
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply force [1]
+   apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+
+  apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply auto [1]
+  apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply force [1]
+  apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+  done
+
+text \<open>Debugging lemma\<close>
+
+lemma nth_bit_of_num_IMP_Minus_correct_time_loop_condition:
+  "(invoke_subprogram p nth_bit_of_num_IMP_init_while_cond, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = nth_bit_of_num_imp_compute_loop_condition_time 0 (nth_bit_of_num_imp_to_HOL_state p s)"
+  apply(subst nth_bit_of_num_imp_compute_loop_condition_time_def)
+  apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(drule AssignD)+
+  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply auto [1]
+  apply(elim conjE)
+  apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def)
+  done
+
+lemmas nth_bit_of_num_complete_time_simps =
+  nth_bit_of_num_imp_subprogram_time_simps
+  nth_bit_of_num_imp_time_acc
+  nth_bit_of_num_imp_time_acc_2_simp
+
+lemma nth_bit_of_num_IMP_Minus_correct_time:
+  "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = nth_bit_of_num_imp_time 0 (nth_bit_of_num_imp_to_HOL_state p s)"
+  apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
+  apply(subst nth_bit_of_num_imp_time.simps)
+  apply(simp only: nth_bit_of_num_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+   apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
+   apply(erule Seq_tE)+
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(erule If_tE)
+    apply(erule If_tE)
+
+     apply(drule AssignD)+
+     apply(elim conjE)
+     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+      apply auto [1]
+     apply(subst nth_bit_of_num_imp_time_acc_2)
+     apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def, force)
+
+    apply(drule AssignD)+
+    apply(elim conjE)
+    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
+    apply(subst nth_bit_of_num_imp_time_acc_2)
+    apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def, force)
+
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(subst nth_bit_of_num_imp_time_acc_2)
+   apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def, force)
+
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
+    apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+
+   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+   apply(erule Seq_tE)+
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply force [1]
+   apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+
+  apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+  apply auto [1]
+  apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+  apply force [1]
+  apply(simp add: nth_bit_of_num_imp_time_acc_2[where x = "tl_imp_time t s" for t s]
+      nth_bit_of_num_complete_time_simps nth_bit_of_num_complete_simps Let_def,
+      force)
+  done
   
-definition nth_bit_of_num_iteration::pcom  where "nth_bit_of_num_iteration \<equiv>
-  [''tl''] ''xs'' ::=  (A ( V ''x'')) ;;
-   invoke_subprogram ''tl'' tl_IMP;;
-   ''x'' ::= [''tl''] (A (V ''ans''));;
-   [''tl''] ''ans'' ::= A (N 0);;
-   ''n'' ::= (V ''n'' \<ominus> N 1 );; 
-    nth_bit_of_num_if
-"
-
-definition nth_bit_of_num_iteration_t :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"nth_bit_of_num_iteration_t x n = 8 + tl_time x + nth_bit_of_num_if_time (tl_nat x) (n-1)"
-
-abbreviation nth_bit_of_num_iteration_state_transformer 
-  where "nth_bit_of_num_iteration_state_transformer p x n \<equiv>
-     nth_bit_of_num_if_state_transformer p (tl_nat x) (n-1) o  state_transformer (''tl'' @ p) [( ''ans'', 0)] o
- tl_state_transformer (''tl'' @ p) x o  state_transformer p [(''x'', tl_nat x),(''n'',n-1)] 
-"
-value "nth_bit_of_num_iteration_state_transformer"
-lemma nth_bit_of_num_iteration_correct[intro]:
- " s (add_prefix p ''x'') = x \<Longrightarrow> s (add_prefix p ''n'') = n \<Longrightarrow>
-(nth_bit_of_num_iteration p,s)  \<Rightarrow>\<^bsup>nth_bit_of_num_iteration_t x n \<^esup> 
-nth_bit_of_num_iteration_state_transformer p x n s"
-  unfolding nth_bit_of_num_iteration_def nth_bit_of_num_iteration_t_def
-  apply (rule terminates_in_time_state_intro)
-    apply (rule Big_StepT.Seq)+
-              apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
- apply fastforce
-   apply fastforce
-by fastforce
-  
-  
-
-
-
-
-definition nth_bit_of_num_loop :: "pcom" where 
-"nth_bit_of_num_loop \<equiv> WHILE ''b''\<noteq>0 DO nth_bit_of_num_iteration"
-
-lemma tl_nat_le: "tl_nat x \<le> x"
-  sorry
-
-function (sequential) nth_bit_of_num_loop_t':: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_of_num_loop_t' 0 _ _  = 2 "|
-"nth_bit_of_num_loop_t' (Suc b) x n  = (let
-  x' = tl_nat x; n' = n - 1; b' = (if x'>0 \<and> n'>0 then Suc 0 else 0)
-in
-  b' + (nth_bit_of_num_iteration_t x n + nth_bit_of_num_loop_t' b' x' n')) "
-  by pat_completeness simp_all
-termination (* Proof proceeds by noticing that the sum of the three arguments is always decreasing, rest is hammering *)
-  by(relation "measure (\<lambda>(b, x, n) . b+x+n)") (auto simp add: add.commute add_increasing le_imp_less_Suc tl_nat_le)
-
-
-function (sequential) nth_bit_of_num_loop_state_transformer' ::
-    "char list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (char list \<Rightarrow> nat) \<Rightarrow> char list \<Rightarrow> nat" where
-  "nth_bit_of_num_loop_state_transformer' p 0 x n = id "|
-  "nth_bit_of_num_loop_state_transformer' p b x n = (let
-    x' = tl_nat x; n' = n-1;
-    b' = (if x'>0 \<and> n'>0 then Suc 0 else 0)
-  in
-    nth_bit_of_num_iteration_state_transformer p x n o nth_bit_of_num_loop_state_transformer' p b' x' n')"
- by pat_completeness simp_all
-termination (* Proof proceeds by noticing that the sum of the last three arguments is always decreasing, rest is hammering *)
-  by (relation "measure (\<lambda>(p, b, x, n) . b+x+n)") (auto simp add: add.commute add_increasing le_imp_less_Suc tl_nat_le) 
-
-fun nth_bit_of_num_loop_t:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"nth_bit_of_num_loop_t 0 _ _  = 2 "|
-"nth_bit_of_num_loop_t (Suc b) x n  = (let x' = tl_nat x; 
-n' = n - 1 
-in ( if x'>0 \<and> n'>0 then 1 + nth_bit_of_num_iteration_t x n + nth_bit_of_num_loop_t (Suc 0) x' n'
-else 1 + nth_bit_of_num_iteration_t x n + nth_bit_of_num_loop_t 0 x' n'
-) ) "
-
-fun nth_bit_of_num_loop_state_transformer ::
-"char list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (char list \<Rightarrow> nat) \<Rightarrow> char list \<Rightarrow> nat" where 
-"nth_bit_of_num_loop_state_transformer p 0 x n = id "|
-"nth_bit_of_num_loop_state_transformer p (Suc b) x n = (let x' = tl_nat x; n' = n-1;
-iteration = nth_bit_of_num_iteration_state_transformer p x n  in 
-(if x'>0 \<and> n'>0 then nth_bit_of_num_loop_state_transformer p (Suc 0) x' n' o iteration else
-nth_bit_of_num_loop_state_transformer p 0 x' n' o iteration
- ))"
-
-lemma "
-(nth_bit_of_num_iteration_state_transformer p (tl_nat x) (n-1) o
-     nth_bit_of_num_iteration_state_transformer p x n) s = nth_bit_of_num_iteration_state_transformer p (tl_nat x) (n-1) s 
-"
-  sledgehammer
-lemma " x' = tl_nat x \<Longrightarrow> n' = n-1 \<Longrightarrow> x>0 \<Longrightarrow> n> 0 \<Longrightarrow>
-             (nth_bit_of_num_loop_state_transformer p (Suc 0) x' n'
-o nth_bit_of_num_iteration_state_transformer p x n ) s = 
-      (nth_bit_of_num_loop_state_transformer p (Suc 0) x' n') s"
-  apply (induction  x' n' arbitrary: x n s rule:nth_bit_of_num_nat.induct)
-  apply auto
-  apply fastforce
-fun nth_bit_of_num_loop_state_transformer' ::
-"char list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (char list \<Rightarrow> nat) \<Rightarrow> char list \<Rightarrow> nat" where 
-"nth_bit_of_num_loop_state_transformer' p 0 x n = id "|
-"nth_bit_of_num_loop_state_transformer' p b x n = (let x' = tl_nat x; n' = n-1;
-b' = (if x'>0 \<and> n'>0 then Suc 0 else 0); iteration = nth_bit_of_num_iteration_state_transformer p x n
- in 
- iteration o nth_bit_of_num_loop_state_transformer' p b' x' n')"
-
-
-thm Big_StepT.WhileTrue
-
-  
-  
-
-lemma 
-"\<lbrakk>s (add_prefix p ''x'') = x ; s (add_prefix p ''n'') = n ; s (add_prefix p ''b'') = b \<rbrakk>
-\<Longrightarrow> (nth_bit_of_num_loop p,s) \<Rightarrow>\<^bsup>nth_bit_of_num_loop_t b x n \<^esup>
-      nth_bit_of_num_loop_state_transformer p b x n s"
-  unfolding nth_bit_of_num_loop_def 
-  apply(induction b x n arbitrary:s rule: nth_bit_of_num_loop_t.induct)
-  apply(rule terminates_in_time_state_intro)
-     apply (rule Big_StepT.WhileFalse)
-     apply simp
-  apply simp
-   apply simp
-      apply(rule terminates_in_time_state_intro)
-    apply (rule Big_StepT.WhileTrue)
-       apply linarith
-      apply auto[1]
-     apply (split if_splits) apply (auto simp only:)
-  oops 
-
-lemma
-"(nth_bit_of_num_loop p,s) \<Rightarrow>\<^bsup>nth_bit_of_num_loop_t (s (add_prefix p ''b''))
- (s (add_prefix p ''x''))
- (s (add_prefix p ''n'')) \<^esup>
-      nth_bit_of_num_loop_state_transformer p (s (add_prefix p ''b'')) (s (add_prefix p ''x''))
-  (s (add_prefix p ''n'')) s"
-  unfolding nth_bit_of_num_loop_def 
-proof(induction "(s (add_prefix p ''b''))" "s (add_prefix p ''x'')" "s (add_prefix p ''n'')" arbitrary:s rule: nth_bit_of_num_loop_t.induct)
-case (1)
-  show ?case 
-  apply(rule terminates_in_time_state_intro)
- apply (rule Big_StepT.WhileFalse)
-   using 1  by auto
-next
-  case (2 v)
-  obtain s' where s'_def: "s' = (state_transformer p
-       [(''b'',
-         if 0 < tl_nat (s (add_prefix p ''x'')) \<and> 0 < s (add_prefix p ''n'') - 1 then 1
-         else 0)] \<circ>
-      state_transformer (''tl'' @ p) [(''ans'', 0)] \<circ>
-      tl_state_transformer (''tl'' @ p) (s (add_prefix p ''x'')) \<circ>
-      state_transformer p
-       [(''x'', tl_nat (s (add_prefix p ''x''))), (''n'', s (add_prefix p ''n'') - 1)])
-      s" by simp
-    show ?case 
-      apply(rule terminates_in_time_state_intro [where s'= "if  0 < tl_nat (s (add_prefix p ''x'')) \<and> 0 < s (add_prefix p ''n'') - 1 then s1 else s2"  
-     for s1 s2] )
-        apply (rule Big_StepT.WhileTrue[where 
- y= "if  0 < tl_nat (s (add_prefix p ''x'')) \<and> 0 < s (add_prefix p ''n'') - 1 then t1 else t2"  
-     for t1 t2])
-       using 2(3) apply linarith
-           apply rule
-            apply simp
-           apply simp
-       apply(rule terminates_split_if)
-       using 2(1)[of s'] s'_def apply fastforce
-       using 2(2)[of s'] s'_def apply fastforce
-         apply fastforce
-       using 2(3)[symmetric] apply auto[1]
-       apply (smt (z3) One_nat_def less_diff_conv plus_1_eq_Suc) 
-       using 2(3)[symmetric] apply auto
-       apply (auto simp only:Let_def comp_apply)
-       
-qed
-
-thm If_tE
 end 

@@ -3,7 +3,7 @@
 section "Binary Arithmetic"
                                                     
 theory Binary_Arithmetic 
-  imports Main "../IMP_Minus_Minus_Small_StepT" "HOL-Library.Discrete"
+  imports Main IMP_Minus_Minus_Small_StepT "HOL-Library.Discrete"
 
 begin 
 

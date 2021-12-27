@@ -1,5 +1,6 @@
 theory IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction_Nat
-  imports "../IMP-_To_IMP--/Primitives" IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations_Nat  IMP_Minus_Minus_Subprograms_Nat
+  imports 
+    Primitives IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations_Nat  IMP_Minus_Minus_Subprograms_Nat
  IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction  
 begin                               
 definition domain_nat :: "nat" where

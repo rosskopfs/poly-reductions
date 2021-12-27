@@ -1,5 +1,6 @@
 theory IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations_Nat
-  imports  IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations "../IMP-_To_IMP--/Primitives"
+  imports IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations 
+          Primitives
 begin
 
 

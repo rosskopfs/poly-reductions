@@ -1,6 +1,7 @@
-theory IMP_Minus_To_SAS_Plus_Nat imports  "IMP-_To_IMP--/Primitives" IMP_Minus_To_SAS_Plus IMP_Minus_Max_Constant_Nat
-"IMP-_To_IMP--/IMP_Minus_To_IMP_Minus_Minus_nat" "SAS++_To_SAS+/SAS_Plus_Plus_To_SAS_Plus_Nat" 
-    "IMP--_To_SAS++/IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction_Nat"
+theory IMP_Minus_To_SAS_Plus_Nat imports
+  Primitives IMP_Minus_To_SAS_Plus IMP_Minus_Max_Constant_Nat
+  IMP_Minus_To_IMP_Minus_Minus_nat SAS_Plus_Plus_To_SAS_Plus_Nat
+  IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction_Nat
 
 begin
 

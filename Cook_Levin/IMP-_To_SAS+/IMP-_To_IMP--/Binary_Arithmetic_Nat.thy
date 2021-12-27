@@ -4,9 +4,19 @@ begin
 
 
 fun nth_bit_of_num_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_of_num_nat x n  = (if x = 0 then (if n = 0 then 1 else 0) else
-                            if n = 0 then (if hd_nat x = 0 then 0 else 1) else
-                            nth_bit_of_num_nat (tl_nat x) (n-1)) "
+"nth_bit_of_num_nat x n  = (if x = 0 then 
+                              (if n = 0 then
+                                 1 \<comment> \<open>x = 0 \<and> n = 0\<close>
+                               else
+                                 0 \<comment> \<open>x = 0 \<and> n \<noteq> 0\<close>)
+                            else
+                              if n = 0 then
+                                (if hd_nat x = 0 then
+                                   0 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x = 0\<close>
+                                 else
+                                   1 \<comment> \<open>x \<noteq> 0 \<and> n = 0 \<and> hd_nat x \<noteq> 0\<close>)
+                              else
+                                nth_bit_of_num_nat (tl_nat x) (n-1))"
 
 definition nth_bit_of_num_tail ::"nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "nth_bit_of_num_tail x n =  nth_bit_of_num_nat x n"

@@ -1,5 +1,5 @@
 theory IMP_Minus_To_IMP_Minus_Minus_nat 
-  imports  IMP_Minus_To_IMP_Minus_Minus  "../IMP_Minus_Max_Constant_Nat" "Binary_Operations_Nat"
+  imports  IMP_Minus_To_IMP_Minus_Minus  IMP_Minus_Max_Constant_Nat Binary_Operations_Nat
 begin
 
 

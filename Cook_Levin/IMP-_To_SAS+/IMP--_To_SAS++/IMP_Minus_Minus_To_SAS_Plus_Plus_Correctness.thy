@@ -3,7 +3,7 @@
 section "IMP-- to SAS++ Correctness"
 
 theory IMP_Minus_Minus_To_SAS_Plus_Plus_Correctness 
-  imports IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction "../SAS_Plus_Plus"
+  imports IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction SAS_Plus_Plus
 begin 
 
 text \<open> We show correctness for the IMP-- to SAS++ reduction. \<close>

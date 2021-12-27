@@ -1,5 +1,5 @@
 theory SAS_Plus_Strips_Nat 
-  imports "Verified_SAT_Based_AI_Planning.SAS_Plus_STRIPS" "IMP-_To_IMP--/Primitives"
+  imports "Verified_SAT_Based_AI_Planning.SAS_Plus_STRIPS" Primitives
 begin
 
 definition possible_assignments_for_list

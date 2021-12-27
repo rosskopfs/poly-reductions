@@ -2,7 +2,8 @@
 
 section \<open>IMP-- Subprograms\<close>
 
-theory IMP_Minus_Minus_Subprograms imports "../IMP_Minus_Minus_Small_StepT"
+theory IMP_Minus_Minus_Subprograms
+  imports IMP_Minus_Minus_Small_StepT
 begin
 
 text \<open>We give functions that enumerate all subprograms of an IMP-- program, that is, all 

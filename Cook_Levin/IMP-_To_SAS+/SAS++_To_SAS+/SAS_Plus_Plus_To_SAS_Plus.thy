@@ -2,7 +2,8 @@
 
 section "SAS++ to SAS+"
 
-theory SAS_Plus_Plus_To_SAS_Plus imports "../SAS_Plus_Plus"
+theory SAS_Plus_Plus_To_SAS_Plus
+  imports SAS_Plus_Plus
 begin 
 
 text \<open> We give a reduction from SAS++ to SAS+. The challenge here is to replace the semantics of 

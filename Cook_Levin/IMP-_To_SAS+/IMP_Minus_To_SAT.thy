@@ -268,10 +268,10 @@ lemma main_lemma_synth :
 
 subsubsection \<open>Instantiating the Cook_Levin locale\<close>
 
-interpretation Cook_Levin_assumes_Main_lemma encode_sat decode_sat
+(*interpretation Cook_Levin_assumes_Main_lemma encode_sat decode_sat
   apply standard
   by (fact main_lemma_synth) 
    
-term strict_sorted
+term strict_sorted*)
 
 end

@@ -1,5 +1,5 @@
 theory SAS_Plus_Plus_To_SAS_Plus_Nat
-  imports   "../IMP-_To_IMP--/Primitives" SAS_Plus_Plus_To_SAS_Plus
+  imports   Primitives SAS_Plus_Plus_To_SAS_Plus
 begin
 
 definition SAS_Plus_Plus_State_To_SAS_Plus_list:: 

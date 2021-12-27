@@ -1,5 +1,5 @@
 theory IMP_Minus_Minus_Subprograms_Nat
-  imports "../IMP-_To_IMP--/Primitives" IMP_Minus_Minus_Subprograms 
+  imports Primitives IMP_Minus_Minus_Subprograms 
 begin 
 
 

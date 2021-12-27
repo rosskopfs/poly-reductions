@@ -3,7 +3,7 @@
 section "IMP-- to SAS++ State Translations"
 
 theory IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations 
-  imports "../SAS_Plus_Plus" "../IMP_Minus_Minus_Small_StepT"
+  imports SAS_Plus_Plus IMP_Minus_Minus_Small_StepT
 begin
 
 text \<open> We define a translation between IMP-- states and SAS++ states. For this purpose, it is useful

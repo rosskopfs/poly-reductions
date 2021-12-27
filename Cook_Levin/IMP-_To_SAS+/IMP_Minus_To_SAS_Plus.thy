@@ -3,9 +3,9 @@
 section "IMP- to SAS+"
 
 theory IMP_Minus_To_SAS_Plus
-  imports "IMP-_To_IMP--/IMP_Minus_To_IMP_Minus_Minus" 
-    "IMP--_To_SAS++/IMP_Minus_Minus_To_SAS_Plus_Plus_Correctness"
-    "SAS++_To_SAS+/SAS_Plus_Plus_To_SAS_Plus"
+  imports IMP_Minus_To_IMP_Minus_Minus
+    IMP_Minus_Minus_To_SAS_Plus_Plus_Correctness
+    SAS_Plus_Plus_To_SAS_Plus
 begin
 
 text \<open> We combine our reduction steps from IMP- to IMP--, then from IMP-- to SAS++ and finally 
