@@ -487,7 +487,6 @@ lemma nth_bit_of_num_IMP_Minus_correct_time:
      apply(elim conjE)
      apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
       apply auto [1]
-     apply(subst nth_bit_of_num_imp_time_acc_2)
      apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def, force)
 
@@ -495,7 +494,6 @@ lemma nth_bit_of_num_IMP_Minus_correct_time:
     apply(elim conjE)
     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
      apply auto [1]
-    apply(subst nth_bit_of_num_imp_time_acc_2)
     apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def, force)
 
@@ -503,7 +501,6 @@ lemma nth_bit_of_num_IMP_Minus_correct_time:
    apply(elim conjE)
    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
     apply auto [1]
-   apply(subst nth_bit_of_num_imp_time_acc_2)
    apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def, force)
 

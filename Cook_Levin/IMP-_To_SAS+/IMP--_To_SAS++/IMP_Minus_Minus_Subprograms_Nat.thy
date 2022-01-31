@@ -45,6 +45,7 @@ datatype all_sub = Bot  "com list" |
                    While_0  "vname list" com |
                    While_f  "vname list" com "com list"
 
+
 fun all_sub_encode :: "all_sub \<Rightarrow> nat" where 
 "all_sub_encode SKIP = list_encode [0] "|
 "all_sub_encode (Assign v b) = list_encode [1, vname_encode v, bit_encode b]"|
@@ -125,7 +126,23 @@ lemma sub_add_res:
     done
   done
 
-function all_subprograms_stack :: "all_sub list \<Rightarrow> com list" where 
+fun s :: "all_sub \<Rightarrow> nat" where
+  "s (Bot cs) = 1"
+| "s SKIP = 1"
+| "s (Assign _ _) = 1"
+| "s (Seq_0 _ _) = 2"
+                   SKIP|
+                   Assign vname bit |
+                   Seq_0 com com|
+                   Seq_m com com "com list"|
+                   Seq_f com com "com list" "com list"|
+                   If_0 "vname list" com com |
+                   If_m  "vname list" com com "com list"|
+                   If_f  "vname list" com com "com list" "com list"|
+                   While_0  "vname list" com |
+                   While_f  "vname list" com "com list"
+
+function (sequential, domintros) all_subprograms_stack :: "all_sub list \<Rightarrow> com list" where 
 "all_subprograms_stack (Bot x#s) = x"|
 "all_subprograms_stack (SKIP # s) = all_subprograms_stack (add_res  [com.SKIP] s )"|
 "all_subprograms_stack (Assign v b # s) = all_subprograms_stack (add_res [(com.Assign v b), com.SKIP] s )"|
@@ -140,8 +157,54 @@ function all_subprograms_stack :: "all_sub list \<Rightarrow> com list" where
 "all_subprograms_stack (While_0 v c # s) = all_subprograms_stack (push_stack c (While_0 v c # s) )"|
 "all_subprograms_stack (While_f v c c' # s) = all_subprograms_stack (add_res ([(While v c), com.SKIP] @ c' @ 
   (map (\<lambda> x. x ;; (While v c))  c')) s)"
-  sorry
-termination sorry
+  by pat_completeness auto
+
+lemma "all_subprograms_stack_dom s \<Longrightarrow> all_subprograms_stack_dom (push_stack c s)"
+proof (induct c arbitrary: s )
+  case SKIP
+  then show ?case apply (auto simp add: all_subprograms_stack.psimps intro!: all_subprograms_stack.domintros)
+    apply auto
+next
+  case (Assign x1 x2)
+  then show ?case sorry
+next
+  case (Seq c1 c2)
+  then show ?case sorry
+next
+  case (If x1 c1 c2)
+  then show ?case sorry
+next
+  case (While x1 c)
+  then show ?case sorry
+qed
+
+thm all_subprograms_stack.pinduct
+lemma all_subprograms_stack_correct_partial:
+"all_subprograms_stack_dom (push_stack c s) \<Longrightarrow>
+  all_subprograms_stack (push_stack c s) = all_subprograms_stack (add_res (all_subprograms c) s)"
+proof (induct c arbitrary: s )
+  case (Seq c1 c2)
+  then show ?case sorry
+next
+  case (If x1 c1 c2)
+  then show ?case sorry
+next
+  case (While x1 c)
+  then show ?case sorry
+qed (auto simp add: all_subprograms_stack.psimps)
+  sledgehammer
+
+  done
+
+lemma "all_subprograms_stack (push_stack c []) = all_subprograms c"
+
+termination apply lexicographic_order
+  apply safe subgoal for xs
+    apply (induction xs rule: all_subprograms_stack.pinduct)
+     apply simp using all_subprograms_stack.domintros(1)  apply assumption
+    
+  apply (rule ext)
+  apply (relation "measure (\<lambda>l . \<Sum>(size ` set l))") apply auto sorry
 
 function all_subprograms_stack_nat :: "nat  \<Rightarrow> nat" where 
 "all_subprograms_stack_nat s = (let h = hd_nat s; con = hd_nat h ; fs = nth_nat (Suc 0) h ; sn = nth_nat (Suc (Suc 0)) h;

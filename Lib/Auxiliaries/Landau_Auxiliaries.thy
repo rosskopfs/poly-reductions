@@ -9,6 +9,9 @@ theory Landau_Auxiliaries
   imports "Akra_Bazzi.Akra_Bazzi_Method" "HOL-Library.Discrete" "HOL-Real_Asymp.Real_Asymp"
 begin
 
+lemma dlog_Suc_bound: "Discrete.log (Suc a) \<le> Suc (Discrete.log a)"
+  by (metis Discrete.log_le_iff Suc_le_eq log_exp log_exp2_gt power_Suc)
+
 (* 
   Following are some hammered lemmas to connect logs and Discrete.log 
   Not much thought went into the proofs

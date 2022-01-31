@@ -1,8 +1,18 @@
 \<^marker>\<open>creator Mohammad Abdulaziz, Florian Keßler\<close>
 
 theory Primitives_IMP_Minus
-  imports "HOL-Library.Nat_Bijection" Primitives IMP_Minus.Call_By_Prefixes
+  imports "HOL-Library.Nat_Bijection" Primitives IMP_Minus.Call_By_Prefixes "HOL-Library.Sublist"
+    (* Merge those *)
+    "Poly_Reductions_Lib.Triangle_Extensions"
+    "Poly_Reductions_Lib.Discrete_Extensions"
 begin
+
+
+(* 
+  Disable syntax for IMP_Minus_Minus programs. This prevents parsing becoming exponential.
+*)
+unbundle IMP_Minus_Minus_Com.no_com_syntax
+
 subsection \<open>Multiplication\<close>
 
 record mul_state = mul_a::nat mul_b::nat mul_c::nat
@@ -43,7 +53,7 @@ function mul_imp:: "mul_state \<Rightarrow> mul_state" where
   )"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>s. mul_b s)") (auto simp: mul_state_upd_def Let_def split: if_splits)
+  by  (relation "Wellfounded.measure (\<lambda>s. mul_b s)") (auto simp: mul_state_upd_def Let_def split: if_splits)
 
 lemmas [simp del] = mul_imp.simps
 
@@ -88,7 +98,7 @@ function mul_imp_time:: "nat \<Rightarrow> mul_state\<Rightarrow> nat" where
 )"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>(t, s). mul_b s)") (auto simp: mul_state_upd_def Let_def split: if_splits)
+  by  (relation "Wellfounded.measure (\<lambda>(t, s). mul_b s)") (auto simp: mul_state_upd_def Let_def split: if_splits)
 
 lemmas [simp del] = mul_imp_time.simps
 
@@ -176,7 +186,691 @@ lemma mul_IMP_minus_correct:
   using mul_IMP_minus_correct_time mul_IMP_minus_correct_function mul_IMP_minus_correct_effects
   by auto
 
-subsection \<open>Encoding and decoding natural numbers\<close>
+
+subsubsection \<open>Squaring\<close>
+
+record square_state = square_x :: nat square_square :: nat
+
+abbreviation "square_prefix \<equiv> ''square.''"
+abbreviation "square_x_str \<equiv> ''x''"
+abbreviation "square_square_str \<equiv> ''square''"
+
+definition "square_state_upd s \<equiv> 
+  let
+    mul_a' = square_x s;
+    mul_b' = square_x s;
+    mul_c' = 0;
+    (square_mul_state::mul_state) = \<lparr>mul_a = mul_a', mul_b = mul_b', mul_c = mul_c'\<rparr>;
+    mul_ret = (mul_imp square_mul_state);
+    square_square' = mul_c mul_ret;
+    ret = \<lparr>square_x = square_x s, square_square = square_square'\<rparr>
+  in
+    ret
+"
+
+fun square_imp :: "square_state \<Rightarrow> square_state" where
+  "square_imp s = (let
+     ret = square_state_upd s
+   in
+     ret
+  )"
+
+declare square_imp.simps[simp del]
+
+lemma square_imp_correct: "square_square (square_imp s) = (square_x s)^2"
+  by (induction s rule: square_imp.induct)
+    (auto simp: square_imp.simps square_state_upd_def Let_def mul_imp_correct power2_eq_square split: if_splits)
+
+fun square_imp_time :: "nat \<Rightarrow> square_state \<Rightarrow> nat" where
+  "square_imp_time t s = (let
+     mul_a' = square_x s;
+     t = t + 2;
+     mul_b' = square_x s;
+     t = t + 2;
+     mul_c' = 0;
+     t = t + 2;
+     (square_mul_state::mul_state) = \<lparr>mul_a = mul_a', mul_b = mul_b', mul_c = mul_c'\<rparr>;
+     mul_ret = (mul_imp square_mul_state);
+     t = t + mul_imp_time 0 square_mul_state;
+     square_square = mul_c mul_ret;
+     t = t + 2;
+     ret = t
+   in
+     ret
+  )"
+
+declare square_imp_time.simps[simp del]
+
+lemma square_imp_time_acc: "(square_imp_time (Suc t) s) = Suc (square_imp_time t s)"
+  by (induction t s rule: square_imp_time.induct) 
+    (auto simp add: square_imp_time.simps Let_def split: if_splits)
+
+definition square_IMP_Minus where
+"square_IMP_Minus \<equiv>
+  (
+   \<comment> \<open>mul_a' = square_x s;\<close>
+   (mul_prefix @ mul_a_str) ::= A (V square_x_str);;
+   \<comment> \<open>mul_b' = (square_x s);\<close>
+   (mul_prefix @ mul_b_str) ::= A (V square_x_str);;
+   \<comment> \<open>mul_c' = 0;\<close>
+   (mul_prefix @  mul_c_str) ::= (A (N 0)) ;;
+   \<comment> \<open>(mul_state::mul_state) = \<lparr>mul_a = mul_a, mul_b = mul_b, mul_c = 0\<rparr>;\<close>
+   \<comment> \<open>mul_ret = (mul_imp mul_state);\<close>
+   invoke_subprogram mul_prefix mul_IMP_minus;;
+  square_square_str ::= A (V (mul_prefix @ mul_c_str))
+  )"
+
+definition "square_imp_to_HOL_state p s =
+  \<lparr>square_x = s (add_prefix p square_x_str), square_square = s (add_prefix p square_square_str)\<rparr>"
+
+lemma square_imp_to_HOL_state_add_prefix: 
+  "square_imp_to_HOL_state (add_prefix p1 p2) s = square_imp_to_HOL_state p2 (s o (add_prefix p1))"
+  by (auto simp only: square_imp_to_HOL_state_def append.assoc[symmetric] comp_def)
+
+(* But why the vars? Do they add anything? *)
+lemma square_IMP_Minus_correct_function: 
+  "(invoke_subprogram p square_IMP_Minus, s) 
+      \<Rightarrow>\<^bsup>t \<^esup> s'
+    \<Longrightarrow> s' (add_prefix p square_square_str) = square_square (square_imp (square_imp_to_HOL_state p s))"
+  apply(simp only: square_IMP_Minus_def square_imp.simps com_add_prefix.simps invoke_subprogram_append)
+  apply(erule Seq_tE)+
+  \<comment> \<open>Variables that we want to preserve: variables of this program minus the variables of the
+     program we call. If automation fails, this should be manually chosen variables.\<close>
+  apply(erule mul_IMP_minus_correct[where vars = "{p @ ''square''}"]) (* Fix rules for mul *)
+  apply(drule AssignD)+
+  apply(elim conjE impE)
+  apply(auto simp: square_state_upd_def Let_def square_imp_to_HOL_state_def)[1]
+  apply(auto simp: mul_imp_to_HOL_state_def)[1]
+  done
+
+lemma square_IMP_Minus_correct_time: 
+  "(invoke_subprogram p square_IMP_Minus, s) 
+      \<Rightarrow>\<^bsup>t\<^esup> s'
+    \<Longrightarrow> t = square_imp_time 0 (square_imp_to_HOL_state p s)"
+  apply(simp only: square_IMP_Minus_def com_add_prefix.simps invoke_subprogram_append)
+  apply(erule Seq_tE)+
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(subst square_imp_time.simps)
+  apply(erule mul_IMP_minus_correct[where vars = "{p @ square_square_str}"])
+  \<comment> \<open>Warning: in the following, I am unfolding mul_imp_to_HOL_state_def. With more experiments, it
+      should become clear if this will cascade down multiple layers\<close>
+  apply(simp add: square_imp_time_acc square_imp_to_HOL_state_def square_state_upd_def)[1]
+  apply (auto simp: mul_imp_to_HOL_state_def)[1]
+  done
+
+lemma square_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ square_pref) square_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (prefix square_pref v) 
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars 
+  by (metis prefix_def)
+
+lemma square_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) square_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (square_imp_time 0 (square_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) square_square_str) = 
+        square_square (square_imp (square_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using square_IMP_Minus_correct_time square_IMP_Minus_correct_function
+        square_IMP_Minus_correct_effects 
+  by auto
+
+subsection \<open>Square root\<close>
+
+record dsqrt'_state = dsqrt'_state_y :: nat dsqrt'_state_L :: nat dsqrt'_state_R :: nat
+
+abbreviation "dsqrt'_pref \<equiv> ''dsqrt'.''"
+abbreviation "dsqrt'_y_str \<equiv> ''y''"
+abbreviation "dsqrt'_L_str \<equiv> ''L''"
+abbreviation "dsqrt'_R_str \<equiv> ''R''"
+
+definition "dsqrt'_imp_state_upd s = (let
+    M = dsqrt'_state_L s + dsqrt'_state_R s;
+    M = M div 2;
+    
+    square_x' = M;
+    square_square' = 0; \<comment> \<open>Is this necessary? If yes, does it make sense to introduce a concept of input/output vars?\<close>
+    (dsqrt'_square_state::square_state) = \<lparr>square_x = square_x', square_square = square_square'\<rparr>;
+    square_ret = square_imp dsqrt'_square_state;
+    M2 = square_square square_ret;
+    
+    \<comment> \<open>Canonical way to do general (i.e. not just one assignment) branching?\<close>
+    cond = M2 - dsqrt'_state_y s;
+    L = if cond \<noteq> 0 then dsqrt'_state_L s else M;
+    R = if cond \<noteq> 0 then M else dsqrt'_state_R s;
+
+    ret = \<lparr>dsqrt'_state_y = dsqrt'_state_y s, dsqrt'_state_L = L, dsqrt'_state_R = R\<rparr>
+  in
+    ret)
+"
+     
+function dsqrt'_imp :: "dsqrt'_state \<Rightarrow> dsqrt'_state" where
+  "dsqrt'_imp s = 
+  (if dsqrt'_state_R s - (dsqrt'_state_L s + 1) \<noteq> 0 then \<comment> \<open>While L+1 < R\<close>
+    (
+      let
+        next_iteration = dsqrt'_imp (dsqrt'_imp_state_upd s)
+      in
+        next_iteration
+    )
+  else
+    (
+      let
+        ret = s
+      in
+        ret
+    )
+  )"
+  by pat_completeness auto
+termination (* Same termination proof as recursive version, just some additional decoration *)
+  by (relation "Wellfounded.measure (\<lambda>s. dsqrt'_state_R s - dsqrt'_state_L s)") 
+    (auto simp: dsqrt'_imp_state_upd_def Let_def split: if_splits)
+
+declare dsqrt'_imp.simps[simp del]
+
+lemma dsqrt'_imp_correct: "dsqrt'_state_L (dsqrt'_imp s) = dsqrt' (dsqrt'_state_y s) (dsqrt'_state_L s) (dsqrt'_state_R s)"
+proof (induction s rule: dsqrt'_imp.induct)
+  case (1 s)
+  then show ?case
+    apply(subst dsqrt'_imp.simps)
+    apply (auto simp: dsqrt'_imp_state_upd_def Let_def power2_eq_square square_imp_correct 
+        dsqrt'_simps split: if_splits) (* Slow, very slow, do better*)
+    done
+qed
+
+function dsqrt'_imp_time :: "nat \<Rightarrow> dsqrt'_state \<Rightarrow> nat" where
+  "dsqrt'_imp_time t s = 
+  (if dsqrt'_state_R s - (dsqrt'_state_L s + 1) \<noteq> 0 then \<comment> \<open>While L+1 < R\<close>
+    (
+      let
+        t = t + 5; \<comment> \<open>To account for while loop condition checking and difference computation\<close>
+         \<comment> \<open>Computation of M\<close>
+        M = dsqrt'_state_L s + dsqrt'_state_R s;
+        t = t + 2;
+        M = M div 2;
+        t = t + 2;
+        
+        square_x' = M;
+        t = t + 2;
+        square_square' = 0; \<comment> \<open>Is this necessary? If yes, does it make sense to introduce a concept of input/output vars?\<close>
+        t = t + 2;
+        (dsqrt'_square_state::square_state) = \<lparr>square_x = square_x', square_square = square_square'\<rparr>;
+        square_ret = square_imp dsqrt'_square_state;
+        t = t + square_imp_time 0 dsqrt'_square_state;
+        M2 = square_square square_ret;
+        t = t + 2;
+        
+        \<comment> \<open>Canonical way to do general (i.e. not just one assignment) branching?\<close>
+        cond = M2 - dsqrt'_state_y s;
+        t = t + 2;
+        L = if cond \<noteq> 0 then dsqrt'_state_L s else M;
+        t = t + 3;
+        R = if cond \<noteq> 0 then M else dsqrt'_state_R s;
+        t = t + 3;
+
+        next_iteration = dsqrt'_imp_time t (dsqrt'_imp_state_upd s)
+      in
+        next_iteration
+    )
+  else
+    (
+      let
+        t = t + 7;
+        ret = t
+      in
+        ret
+    )
+  )"
+  by pat_completeness auto
+termination (* Same termination proof as recursive version, just some additional decoration *)
+  by (relation "Wellfounded.measure (\<lambda>(t,s). dsqrt'_state_R s - dsqrt'_state_L s)") 
+    (auto simp: dsqrt'_imp_state_upd_def Let_def split: if_splits)
+
+declare dsqrt'_imp_time.simps[simp del]
+
+lemma dsqrt'_imp_time_acc: "(dsqrt'_imp_time (Suc t) s) = Suc (dsqrt'_imp_time t s)"
+proof (induction t s arbitrary: rule: dsqrt'_imp_time.induct)
+  case (1 t s)
+  then show ?case
+  proof(cases "dsqrt'_state_R s - (dsqrt'_state_L s + 1) \<noteq> 0")
+    case True
+    hence "(Suc (dsqrt'_state_L s)) < dsqrt'_state_R s"
+      by simp
+    with True show ?thesis
+      apply (subst (2) dsqrt'_imp_time.simps)
+      apply (subst dsqrt'_imp_time.simps)
+      using 1 by (simp add: dsqrt'_imp_state_upd_def Let_def split: if_splits)
+  next
+    case False
+    then show ?thesis 
+      by (auto simp add: dsqrt'_imp_time.simps split: if_splits)
+  qed
+qed
+
+lemma dsqrt'_imp_time_acc': "(dsqrt'_imp_time t s) = t + (dsqrt'_imp_time 0 s)"
+  by (induction t) (auto simp add: dsqrt'_imp_time_acc)
+lemma dsqrt'_imp_time_acc'': "NO_MATCH 0 t \<Longrightarrow> (dsqrt'_imp_time t s) = t + (dsqrt'_imp_time 0 s)"
+  using dsqrt'_imp_time_acc' .
+
+definition dsqrt'_IMP_Minus_while_condition where
+  "dsqrt'_IMP_Minus_while_condition \<equiv> 
+  ''inc'' ::= ((V dsqrt'_L_str) \<oplus> (N 1));;
+   ''diff'' ::= ((V dsqrt'_R_str) \<ominus> (V ''inc''))"
+
+definition dsqrt'_IMP_Minus_loop_body where
+  "dsqrt'_IMP_Minus_loop_body =
+    \<comment> \<open>M = (L+R) / 2;\<close>
+    ''M'' ::= ((V dsqrt'_L_str) \<oplus> (V dsqrt'_R_str));;
+    ''M'' ::= ((V ''M'')\<then>);;
+
+    \<comment> \<open>M*M,\<close>
+    (square_prefix @ square_x_str) ::= A (V ''M'');;
+    (square_prefix @ square_square_str) ::= A (N 0);;
+    invoke_subprogram square_prefix square_IMP_Minus;;
+    ''M2'' ::= A (V (square_prefix @ square_square_str));;
+
+    \<comment> \<open>New left bound\<close>
+    ''cond'' ::= ((V ''M2'') \<ominus> (V dsqrt'_y_str));;
+    (IF ''cond''\<noteq>0 THEN dsqrt'_L_str ::= A (V dsqrt'_L_str) ELSE dsqrt'_L_str ::= A (V ''M''));;
+    \<comment> \<open>New right bound\<close>
+    (IF ''cond''\<noteq>0 THEN dsqrt'_R_str ::= A (V ''M'') ELSE dsqrt'_R_str ::= A (V dsqrt'_R_str))"
+
+definition dsqrt'_IMP_Minus_after_loop where
+  "dsqrt'_IMP_Minus_after_loop = Com.SKIP"
+
+definition dsqrt'_IMP_Minus where
+"dsqrt'_IMP_Minus \<equiv>
+  \<comment> \<open>if L+1 < R\<close>
+  dsqrt'_IMP_Minus_while_condition;;
+  WHILE ''diff''\<noteq>0 DO (
+    dsqrt'_IMP_Minus_loop_body;;
+    dsqrt'_IMP_Minus_while_condition
+  );;
+  dsqrt'_IMP_Minus_after_loop"
+
+lemmas dsqrt'_IMP_Minus_subprogram_simps =
+  dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def dsqrt'_IMP_Minus_after_loop_def
+
+definition "dsqrt'_imp_to_HOL_state p s =
+  \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s (add_prefix p dsqrt'_L_str), 
+    dsqrt'_state_R = s (add_prefix p dsqrt'_R_str)\<rparr>"
+
+abbreviation 
+  "dsqrt'_IMP_vars \<equiv> {dsqrt'_y_str, dsqrt'_L_str, dsqrt'_R_str, ''inc'', ''diff'', ''cond'', ''M'', ''M2''}"
+
+lemma dsqrt'_IMP_Minus_correct_function_1: 
+  "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p dsqrt'_L_str) = 
+       dsqrt'_state_L (dsqrt'_imp (dsqrt'_imp_to_HOL_state p s))"
+proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_imp.induct)
+  case 1
+  then show ?case 
+  apply (subst dsqrt'_imp.simps)
+  apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule While_tE)
+   apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps split: if_splits)[]
+    apply (erule Seq_tE)+
+    apply dest_com_gen
+
+    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc
+    apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
+    apply (erule Seq_tE)+
+      by (auto simp add: dsqrt'_imp_to_HOL_state_def) 
+
+    thm square_imp_correct
+
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      thm p
+      using p(4,5,8,9) apply -
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+      apply(erule Seq_tE)+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(24) by auto (* Here we already see how auto gets confused by all the crap in p*)
+      apply(elim If_tE)
+      apply (all \<open>drule AssignD\<close>)+
+      apply (all \<open>erule conjE\<close>)+
+         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
+         apply (force simp add: square_imp_correct power2_eq_square)
+                 apply (force simp add: square_imp_correct power2_eq_square)[]
+                 apply (force simp add: square_imp_correct power2_eq_square)[]
+      apply (force simp add: square_imp_correct power2_eq_square)[]
+      done
+
+    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+      apply(erule Seq_tE)+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(29) by auto 
+      apply(elim If_tE)
+      apply (all \<open>drule AssignD\<close>)+
+      apply (all \<open>erule conjE\<close>)+
+         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
+      (* I managed the previous one easier, so this should be doable without the splits as well*)
+      using [[linarith_split_limit = 25]] apply (simp_all split: if_splits)
+       apply safe
+      proof(goal_cases)
+        case (1 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        from 1(10) show ?case 
+        proof - (* There really seems to be a problem with this naming thingy *)
+          have "\<forall>x0. (x0 = dsqrt'_y_str \<or> x0 = dsqrt'_L_str \<or> x0 = dsqrt'_R_str \<or> x0 = CHR ''i'' # CHR ''n'' # mul_c_str \<or> x0 = ''diff'' \<or> x0 = ''cond'' \<or> x0 = ''M'' \<or> x0 = ''M2'' \<longrightarrow> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0)) = (x0 \<noteq> dsqrt'_y_str \<and> x0 \<noteq> dsqrt'_L_str \<and> x0 \<noteq> dsqrt'_R_str \<and> x0 \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> x0 \<noteq> ''diff'' \<and> x0 \<noteq> ''cond'' \<and> x0 \<noteq> ''M'' \<and> x0 \<noteq> ''M2'' \<or> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0))"
+            by meson
+          then have "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs)) = s2e (add_prefix p cs)"
+            by (smt (z3) "1"(10)) (* failed *) (* lol no *)
+          then have f1: "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p cs) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs) = s2e (add_prefix p cs))"
+            by presburger
+          then have f2: "if dsqrt'_y_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_y_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_y_str) = s2e (add_prefix p dsqrt'_y_str)"
+            by blast
+          have "if dsqrt'_L_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_L_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_L_str) = s2e (add_prefix p dsqrt'_L_str)"
+            using f1 by blast
+          then show ?thesis
+            using f2 f1 by force
+        qed
+      next
+        case (2 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case
+          by (force simp add: square_imp_correct power2_eq_square)[]
+      next
+        case (3 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case
+          by (force simp add: square_imp_correct power2_eq_square)[]
+      next
+        case (4 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        from 4(10) show ?case
+        proof -
+          have f1: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
+            by simp
+          have "\<forall>x0. (x0 = dsqrt'_y_str \<or> x0 = dsqrt'_L_str \<or> x0 = dsqrt'_R_str \<or> x0 = CHR ''i'' # CHR ''n'' # mul_c_str \<or> x0 = ''diff'' \<or> x0 = ''cond'' \<or> x0 = ''M'' \<or> x0 = ''M2'' \<longrightarrow> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0)) = (x0 \<noteq> dsqrt'_y_str \<and> x0 \<noteq> dsqrt'_L_str \<and> x0 \<noteq> dsqrt'_R_str \<and> x0 \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> x0 \<noteq> ''diff'' \<and> x0 \<noteq> ''cond'' \<and> x0 \<noteq> ''M'' \<and> x0 \<noteq> ''M2'' \<or> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0))"
+            by meson
+          then have "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs)) = s2e (add_prefix p cs)"
+            by (smt (z3) "4"(10)) (* failed *)
+          then show ?thesis
+            using f1 by (smt (z3) fun_upd_apply list.inject same_append_eq)
+        qed
+      qed
+      done
+
+  qed
+
+lemma dsqrt'_IMP_Minus_correct_time: 
+  "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state p s)"
+proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_imp.induct)
+  case 1
+  from "1.prems" show ?case 
+  apply (subst dsqrt'_imp_time.simps)
+  apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule While_tE_time)
+     apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps 
+          dsqrt'_imp_time_acc split: if_splits)[]
+    apply (erule Seq_tE)+
+    using "1.hyps"[unfolded dsqrt'_IMP_Minus_def] apply -
+    apply (simp add: add.assoc)
+    apply (dest_com_gen_time)
+
+    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc
+    apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
+    apply (erule Seq_tE)+
+      by (auto simp add: dsqrt'_imp_to_HOL_state_def) 
+
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      thm p
+      using p(4,5,8,9) apply -
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+      apply(erule Seq_tE)+
+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(24) by auto (* Here we already see how auto gets confused by all the crap in p*)
+      apply(elim If_tE)
+      apply (all \<open>drule AssignD\<close>)+
+      apply (all \<open>erule conjE\<close>)+
+         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
+      using [[linarith_split_limit=23]]
+         apply (simp split: if_splits)
+      thm square_imp_correct
+      apply safe
+         apply (force simp add: square_imp_correct power2_eq_square)[]
+                 apply (force simp add: square_imp_correct power2_eq_square)[]
+      subgoal premises p using p(5,6,7) by (smt (z3) fun_upd_apply gr_implies_not0)
+                 apply (force simp add: square_imp_correct power2_eq_square)+
+    done
+
+    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+      apply(erule Seq_tE)+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(29) by auto 
+      apply(elim If_tE)
+      apply (all \<open>drule AssignD\<close>)+
+      apply (all \<open>erule conjE\<close>)+
+         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
+      using [[linarith_split_limit = 25]] apply (simp_all split: if_splits)
+       apply safe
+      proof(goal_cases)
+        case (1 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case  
+          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
+         (* Again, problems with the naming stuff, everywhere maybe try changing the style of correctness lemma *)
+         proof -
+           assume a1: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
+           have "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
+             by simp
+           then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p dsqrt'_L_str), dsqrt'_state_R = s2e (add_prefix p ''M'')\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s (add_prefix p dsqrt'_L_str), dsqrt'_state_R = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2\<rparr>"
+             using a1 by (smt (z3) fun_upd_apply list.inject same_append_eq)
+         qed
+      next
+        case (2 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case
+          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
+        proof -
+          assume a1: "(s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s (add_prefix p dsqrt'_y_str)"
+          assume a2: "s2e (add_prefix p dsqrt'_y_str) < (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)"
+          assume a3: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
+          have f4: "True \<noteq> False"
+            by presburger
+          have f5: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
+            by simp
+          have "CHR ''y'' \<noteq> CHR ''d''"
+            by force
+          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p dsqrt'_L_str), dsqrt'_state_R = s2e (add_prefix p ''M'')\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, dsqrt'_state_R = s (add_prefix p dsqrt'_R_str)\<rparr>"
+            using f5 f4 a3 a2 a1 by (smt (z3) fun_upd_other linorder_not_less list.inject same_append_eq)
+        qed
+      next
+        case (3 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case
+          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
+        proof -
+          assume a1: "\<not> (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s (add_prefix p dsqrt'_y_str)"
+          assume a2: "(s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s2e (add_prefix p dsqrt'_y_str)"
+          assume a3: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
+          have f4: "True \<noteq> False"
+            by meson
+          have f5: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
+            by simp
+          have f6: "CHR ''y'' \<noteq> CHR ''i''"
+            by blast
+          have f7: "CHR ''y'' \<noteq> CHR ''d''"
+            by force
+          have "CHR ''y'' \<noteq> CHR ''M''"
+            by blast
+          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p ''M''), dsqrt'_state_R = s2e (add_prefix p dsqrt'_R_str)\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s (add_prefix p dsqrt'_L_str), dsqrt'_state_R = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2\<rparr>"
+            using f7 f6 f5 f4 a3 a2 a1 by (smt (z3) fun_upd_other list.inject same_append_eq)
+        qed
+      next
+        case (4 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
+        then show ?case
+          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
+        proof -
+          assume "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
+          then have f1: "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p cs) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs) = s2e (add_prefix p cs))"
+            by (smt (z3))
+          then have f2: "if dsqrt'_y_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_y_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_y_str) = s2e (add_prefix p dsqrt'_y_str)"
+            by blast
+          have f3: "if ''M'' = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p ''M'') else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p ''M'') = s2e (add_prefix p ''M'')"
+            using f1 by blast
+          have "if dsqrt'_R_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_R_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_R_str) = s2e (add_prefix p dsqrt'_R_str)"
+            using f1 by blast
+          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p ''M''), dsqrt'_state_R = s2e (add_prefix p dsqrt'_R_str)\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, dsqrt'_state_R = s (add_prefix p dsqrt'_R_str)\<rparr>"
+            using f3 f2 by simp
+        qed
+      qed
+      done
+  qed
+
+lemma dsqrt'_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ dsqrt'_prefix) dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (prefix dsqrt'_prefix v) 
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars
+  by (metis prefix_def)
+
+lemma dsqrt'_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) dsqrt'_L_str) = 
+        dsqrt'_state_L (dsqrt'_imp (dsqrt'_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using dsqrt'_IMP_Minus_correct_time dsqrt'_IMP_Minus_correct_function_1
+        dsqrt'_IMP_Minus_correct_effects
+  by auto
+
+
+record dsqrt_state = dsqrt_state_y :: nat dsqrt_state_ret :: nat 
+
+abbreviation "dsqrt_prefix \<equiv> ''dsqrt.''"
+abbreviation "dsqrt_y_str \<equiv> ''y''"
+abbreviation "dsqrt_ret_str \<equiv> ''ret''"
+
+abbreviation 
+  "dsqrt_IMP_vars \<equiv> {dsqrt_y_str, dsqrt_ret_str}"
+
+definition "dsqrt_imp_state_upd s = (let
+    dsqrt'_y = dsqrt_state_y s;
+    dsqrt'_L = 0;
+    dsqrt'_R = Suc (dsqrt_state_y s);
+    
+    dsqrt_dsqrt'_state = \<lparr>dsqrt'_state_y = dsqrt'_y, dsqrt'_state_L = dsqrt'_L, dsqrt'_state_R = dsqrt'_R\<rparr>;
+    dsqrt'_ret = dsqrt'_imp dsqrt_dsqrt'_state;
+    
+    dsqrt_ret = dsqrt'_state_L dsqrt'_ret;
+    ret = \<lparr>dsqrt_state_y = dsqrt_state_y s, dsqrt_state_ret = dsqrt_ret\<rparr>
+  in
+    ret)
+"
+     
+fun dsqrt_imp :: "dsqrt_state \<Rightarrow> dsqrt_state" where
+  "dsqrt_imp s = 
+  (let
+    ret = dsqrt_imp_state_upd s
+  in
+    ret
+  )"
+
+declare dsqrt_imp.simps [simp del]
+
+lemma dsqrt_imp_correct:
+   "dsqrt_state_ret (dsqrt_imp s) = Discrete.sqrt (dsqrt_state_y s)"
+  by (subst dsqrt_imp.simps) (auto simp: dsqrt'_imp_correct dsqrt_def dsqrt_imp_state_upd_def
+      Let_def dsqrt_correct[symmetric] split: if_splits)
+
+fun dsqrt_imp_time:: "nat \<Rightarrow> dsqrt_state\<Rightarrow> nat" where
+  "dsqrt_imp_time t s = 
+    (
+      let
+        dsqrt'_y = dsqrt_state_y s;
+        t = t+2;
+        dsqrt'_L = 0;
+        t = t+2;
+        dsqrt'_R = Suc (dsqrt_state_y s);
+        t = t+2;
+        
+        dsqrt_dsqrt'_state = \<lparr>dsqrt'_state_y = dsqrt'_y, dsqrt'_state_L = dsqrt'_L, dsqrt'_state_R = dsqrt'_R\<rparr>;
+        dsqrt'_ret = dsqrt'_imp dsqrt_dsqrt'_state;
+        t = t + dsqrt'_imp_time 0 dsqrt_dsqrt'_state;
+        
+        dsqrt_ret = dsqrt'_state_L dsqrt'_ret;
+        t = t+2;
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = dsqrt_imp_time.simps
+
+lemma dsqrt_imp_time_acc: "(dsqrt_imp_time (Suc t) s) = Suc (dsqrt_imp_time t s)"
+  apply(subst dsqrt_imp_time.simps)
+  apply(subst dsqrt_imp_time.simps)
+  apply (auto simp add: dsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma dsqrt_imp_time_acc_2: "(dsqrt_imp_time x s) = x + (dsqrt_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: dsqrt_imp_time_acc dsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+
+definition dsqrt_IMP_Minus where
+"dsqrt_IMP_Minus \<equiv>
+  (
+    (dsqrt'_pref @ dsqrt'_y_str) ::= A (V dsqrt_y_str);;
+    (dsqrt'_pref @ dsqrt'_L_str) ::= A (N 0);;
+    (dsqrt'_pref @ dsqrt'_R_str) ::= (V dsqrt_y_str \<oplus> N 1);;
+    
+    invoke_subprogram dsqrt'_pref dsqrt'_IMP_Minus;;
+
+    dsqrt_ret_str ::= A (V (dsqrt'_pref @ dsqrt'_L_str))
+  )"
+
+definition "dsqrt_imp_to_HOL_state p s =
+  \<lparr>dsqrt_state_y = (s (add_prefix p dsqrt_y_str)), dsqrt_state_ret = (s (add_prefix p dsqrt_ret_str))\<rparr>"
+
+
+lemma dsqrt_IMP_Minus_correct_function: 
+  "(invoke_subprogram p dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p dsqrt_ret_str) = dsqrt_state_ret (dsqrt_imp (dsqrt_imp_to_HOL_state p s))"
+  apply(subst dsqrt_imp.simps)
+  apply(simp only: dsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
+   apply simp
+  apply (drule AssignD)+
+  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
+  done
+
+lemma dsqrt_IMP_Minus_correct_time: 
+  "(invoke_subprogram p dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = dsqrt_imp_time 0 (dsqrt_imp_to_HOL_state p s)"
+  apply(subst dsqrt_imp_time.simps)
+  apply(simp only: dsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
+   apply simp
+  apply (drule AssignD)+
+  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
+  done
+
+lemma dsqrt_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ dsqrt_pref) dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (set dsqrt_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid_subset com_only_vars
+  by blast
+
+lemma dsqrt_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (dsqrt_imp_time 0 (dsqrt_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) dsqrt_ret_str) = 
+        dsqrt_state_ret (dsqrt_imp (dsqrt_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using dsqrt_IMP_Minus_correct_time dsqrt_IMP_Minus_correct_function
+        dsqrt_IMP_Minus_correct_effects 
+  by auto
+
+subsection \<open>Triangle\<close>
 
 record triangle_state = triangle_a::nat triangle_triangle::nat
 
@@ -334,6 +1028,699 @@ lemma triangle_IMP_Minus_correct:
         triangle_IMP_Minus_correct_effects 
   by auto
 
+subsection \<open>Triangular root\<close>
+
+record tsqrt_state = tsqrt_state_y :: nat tsqrt_state_ret :: nat 
+
+abbreviation "tsqrt_prefix \<equiv> ''tsqrt.''"
+abbreviation "tsqrt_y_str \<equiv> ''y''"
+abbreviation "tsqrt_ret_str \<equiv> ''ret''"
+
+abbreviation 
+  "tsqrt_IMP_vars \<equiv> {tsqrt_y_str, tsqrt_ret_str}"
+
+definition "tsqrt_imp_state_upd s = (let
+    tsqrt_mul_a = tsqrt_state_y s;
+    tsqrt_mul_b = 8;
+    tsqrt_mul_c = 0;
+    tsqrt_mul_state = \<lparr>mul_a = tsqrt_mul_a, mul_b = tsqrt_mul_b, mul_c = tsqrt_mul_c\<rparr>;
+    mul_ret = mul_imp tsqrt_mul_state;
+    
+    tsqrt_y = mul_c mul_ret + 1;
+
+    tsqrt_dsqrt_y = tsqrt_y;
+    tsqrt_dsqrt_ret = 0;
+    tsqrt_dsqrt_state = \<lparr>dsqrt_state_y = tsqrt_dsqrt_y, dsqrt_state_ret = tsqrt_dsqrt_ret\<rparr>;
+    dsqrt_ret = dsqrt_imp tsqrt_dsqrt_state;
+
+    tsqrt_y = dsqrt_state_ret dsqrt_ret - 1;
+    tsqrt_ret = tsqrt_y div 2;
+    ret = \<lparr>tsqrt_state_y = tsqrt_y, tsqrt_state_ret = tsqrt_ret\<rparr>
+  in
+    ret)
+"
+
+fun tsqrt_imp :: "tsqrt_state \<Rightarrow> tsqrt_state" where
+  "tsqrt_imp s = 
+  (let
+    ret = tsqrt_imp_state_upd s
+  in
+    ret
+  )"
+
+declare tsqrt_imp.simps [simp del]
+
+thm dsqrt_correct
+lemma tsqrt_imp_correct:
+   "tsqrt_state_ret (tsqrt_imp s) = tsqrt (tsqrt_state_y s)"
+  by (subst tsqrt_imp.simps) (auto simp: dsqrt_imp_correct tsqrt_def tsqrt_imp_state_upd_def
+      Let_def mul_imp_correct mult.commute split: if_splits)
+
+fun tsqrt_imp_time:: "nat \<Rightarrow> tsqrt_state\<Rightarrow> nat" where
+  "tsqrt_imp_time t s = 
+    (
+      let
+        tsqrt_mul_a = tsqrt_state_y s;
+        t = t+2;
+        tsqrt_mul_b = 8;
+        t = t+2;
+        tsqrt_mul_c = 0;
+        t = t+2;
+        tsqrt_mul_state = \<lparr>mul_a = tsqrt_mul_a, mul_b = tsqrt_mul_b, mul_c = tsqrt_mul_c\<rparr>;
+        mul_ret = mul_imp tsqrt_mul_state;
+        t = t+ mul_imp_time 0 tsqrt_mul_state;
+        
+        tsqrt_y = mul_c mul_ret + 1;
+        t = t+2;
+    
+        tsqrt_dsqrt_y = tsqrt_y;
+        t = t+2;
+        tsqrt_dsqrt_ret = 0;
+        t = t+2;
+        tsqrt_dsqrt_state = \<lparr>dsqrt_state_y = tsqrt_dsqrt_y, dsqrt_state_ret = tsqrt_dsqrt_ret\<rparr>;
+        dsqrt_ret = dsqrt_imp tsqrt_dsqrt_state;
+        t = t + dsqrt_imp_time 0 tsqrt_dsqrt_state;
+    
+        tsqrt_y = dsqrt_state_ret dsqrt_ret - 1;
+        t = t+2;
+        tsqrt_ret = tsqrt_y div 2;
+        t = t+2;
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = tsqrt_imp_time.simps
+
+lemma tsqrt_imp_time_acc: "(tsqrt_imp_time (Suc t) s) = Suc (tsqrt_imp_time t s)"
+  apply(subst tsqrt_imp_time.simps)
+  apply(subst tsqrt_imp_time.simps)
+  apply (auto simp add: tsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma tsqrt_imp_time_acc_2: "(tsqrt_imp_time x s) = x + (tsqrt_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: tsqrt_imp_time_acc tsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+definition tsqrt_IMP_Minus where
+"tsqrt_IMP_Minus \<equiv>
+  (
+    (mul_prefix @ mul_a_str) ::= A (V tsqrt_y_str);;
+    (mul_prefix @ mul_b_str) ::= A (N 8);;
+    (mul_prefix @ mul_c_str) ::= A (N 0);;
+    invoke_subprogram mul_prefix mul_IMP_minus;;
+
+    \<comment> \<open>Could save an assignment here, combine with next one\<close>
+    tsqrt_y_str ::= (V (mul_prefix @ mul_c_str) \<oplus> N 1);;
+
+    (dsqrt_prefix @ dsqrt_y_str) ::= A (V tsqrt_y_str);;
+    (dsqrt_prefix @ dsqrt_ret_str) ::= A (N 0);;
+    invoke_subprogram dsqrt_prefix dsqrt_IMP_Minus;;
+
+    tsqrt_y_str ::= (V (dsqrt_prefix @ dsqrt_ret_str) \<ominus> N 1);;
+    tsqrt_ret_str ::= (V tsqrt_y_str\<then>)
+  )"
+
+definition "tsqrt_imp_to_HOL_state p s =
+  \<lparr>tsqrt_state_y = (s (add_prefix p tsqrt_y_str)), tsqrt_state_ret = (s (add_prefix p tsqrt_ret_str))\<rparr>"
+
+(* TODO: *)
+(* Use the new style correctness lemma to be safe, replace the old ones later, also we need to do
+  a standardization pass for naming *)
+lemma mul_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ mul_pref) mul_IMP_minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (prefix mul_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars
+  using prefix_def by blast
+
+lemma mul_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) mul_IMP_minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (mul_imp_time 0 (mul_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) mul_c_str) = 
+        mul_c (mul_imp (mul_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using mul_IMP_minus_correct_time mul_IMP_minus_correct_function
+        mul_IMP_Minus_correct_effects 
+  by auto
+
+
+lemma tsqrt_IMP_Minus_correct_function: 
+  "(invoke_subprogram p tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p tsqrt_ret_str) = tsqrt_state_ret (tsqrt_imp (tsqrt_imp_to_HOL_state p s))"
+  apply(subst tsqrt_imp.simps)
+  apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
+   apply auto[]
+  apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
+   apply auto[]
+  apply (drule AssignD)+
+   apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
+      mul_imp_to_HOL_state_def Let_def)
+  done
+
+lemma tsqrt_IMP_Minus_correct_time: 
+  "(invoke_subprogram p tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = tsqrt_imp_time 0 (tsqrt_imp_to_HOL_state p s)"
+  apply(subst tsqrt_imp_time.simps)
+  apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
+   apply auto[]
+  apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
+   apply auto[]
+  apply (drule AssignD)+
+   apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
+      mul_imp_to_HOL_state_def Let_def)
+  done
+
+lemma tsqrt_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ tsqrt_pref) tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (prefix tsqrt_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma tsqrt_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (tsqrt_imp_time 0 (tsqrt_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) tsqrt_ret_str) = 
+        tsqrt_state_ret (tsqrt_imp (tsqrt_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using tsqrt_IMP_Minus_correct_time tsqrt_IMP_Minus_correct_function
+        tsqrt_IMP_Minus_correct_effects 
+  by auto
+
+subsection \<open>Decoding products\<close>
+
+definition "fst'_nat p \<equiv> p - triangle (tsqrt p)"
+
+lemma fst'_nat_correct: "fst'_nat (prod_encode (m,n)) = m"
+  unfolding prod_encode_def apply simp unfolding fst'_nat_def
+  by (metis add.commute add_diff_cancel_left' le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
+
+(* Connect to existing \<^const>\<open>fst_nat\<close>, unify this at some point*)
+lemma fst_nat_fst'_nat: "fst_nat p = fst'_nat p"
+  by (metis fst'_nat_correct fst_nat_def o_def prod.collapse prod_decode_inverse)
+
+definition "snd'_nat p \<equiv> tsqrt p - fst'_nat p"
+
+lemma snd'_nat_correct: "snd'_nat (prod_encode (m,n)) = n"
+  unfolding prod_encode_def apply simp unfolding snd'_nat_def
+  using fst'_nat_correct 
+  by (metis add.commute add_diff_cancel_left' fst'_nat_def le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
+
+(* Connect to existing \<^const>\<open>snd_nat\<close>, unify this at some point*)
+lemma snd_nat_snd'_nat: "snd_nat p = snd'_nat p"
+  by (metis snd'_nat_correct snd_nat_def o_def prod.collapse prod_decode_inverse)
+
+record fst'_state = fst'_state_p :: nat
+
+abbreviation "fst'_prefix \<equiv> ''fst'.''"
+abbreviation "fst'_p_str \<equiv> ''p''"
+abbreviation "fst'_internal_str \<equiv> ''internal''"
+
+abbreviation 
+  "fst'_IMP_vars \<equiv> {fst'_p_str, fst'_internal_str}"
+
+(* Copying directly from function outputs *)
+definition "fst'_imp_state_upd s = (let
+    fst'_tsqrt_y = fst'_state_p s;
+    fst'_tsqrt_ret = 0;
+    fst'_tsqrt_state = \<lparr>tsqrt_state_y = fst'_tsqrt_y, tsqrt_state_ret = fst'_tsqrt_ret\<rparr>;
+    fst'_tsqrt_ret = tsqrt_imp fst'_tsqrt_state;
+    
+    fst'_triangle_a = tsqrt_state_ret fst'_tsqrt_ret;
+    fst'_triangle_triangle = 0;
+    fst'_triangle_state = \<lparr>triangle_a = fst'_triangle_a, triangle_triangle = fst'_triangle_triangle\<rparr>;
+    fst'_triangle_ret = triangle_imp fst'_triangle_state;
+
+    fst'_p = fst'_state_p s - triangle_triangle fst'_triangle_ret;
+    
+    ret = \<lparr>fst'_state_p = fst'_p\<rparr>
+  in
+    ret)
+"
+
+fun fst'_imp :: "fst'_state \<Rightarrow> fst'_state" where
+  "fst'_imp s = 
+  (let
+    ret = fst'_imp_state_upd s
+  in
+    ret
+  )"
+
+declare fst'_imp.simps [simp del]
+
+lemma fst'_imp_correct:
+   "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
+  by (subst fst'_imp.simps) (auto simp: dsqrt_imp_correct fst'_imp_state_upd_def tsqrt_imp_correct
+      Let_def triangle_imp_correct fst'_nat_def split: if_splits)
+
+fun fst'_imp_time:: "nat \<Rightarrow> fst'_state\<Rightarrow> nat" where
+  "fst'_imp_time t s = 
+    (
+      let
+        fst'_tsqrt_y = fst'_state_p s;
+        t = t+2;
+        fst'_tsqrt_ret = 0;
+        t = t+2;
+        fst'_tsqrt_state = \<lparr>tsqrt_state_y = fst'_tsqrt_y, tsqrt_state_ret = fst'_tsqrt_ret\<rparr>;
+        fst'_tsqrt_ret = tsqrt_imp fst'_tsqrt_state;
+        t = t + tsqrt_imp_time 0 fst'_tsqrt_state;
+        
+        fst'_triangle_a = tsqrt_state_ret fst'_tsqrt_ret;
+        t = t+2;
+        fst'_triangle_triangle = 0;
+        t = t+2;
+        fst'_triangle_state = \<lparr>triangle_a = fst'_triangle_a, triangle_triangle = fst'_triangle_triangle\<rparr>;
+        fst'_triangle_ret = triangle_imp fst'_triangle_state;
+        t = t + triangle_imp_time 0 fst'_triangle_state;
+    
+        fst'_p = fst'_state_p s - triangle_triangle fst'_triangle_ret;
+        t = t+2;
+        
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = fst'_imp_time.simps
+
+lemma fst'_imp_time_acc: "(fst'_imp_time (Suc t) s) = Suc (fst'_imp_time t s)"
+  apply(subst fst'_imp_time.simps)
+  apply(subst fst'_imp_time.simps)
+  apply (auto simp add: fst'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma fst'_imp_time_acc_2: "(fst'_imp_time x s) = x + (fst'_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: fst'_imp_time_acc fst'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+definition fst'_IMP_Minus where
+"fst'_IMP_Minus \<equiv>
+  (
+    (tsqrt_prefix @ tsqrt_y_str) ::= A (V fst'_p_str);;
+    (tsqrt_prefix @ tsqrt_ret_str) ::= A (N 0);;
+    invoke_subprogram tsqrt_prefix tsqrt_IMP_Minus;;
+
+    (triangle_prefix @ triangle_a_str) ::= A (V (tsqrt_prefix @ tsqrt_ret_str));;
+    (triangle_prefix @ triangle_triangle_str) ::= A (N 0);;
+    invoke_subprogram triangle_prefix triangle_IMP_Minus;;
+
+    fst'_p_str ::= ((V fst'_p_str) \<ominus> V (triangle_prefix @ triangle_triangle_str))
+  )"
+
+definition "fst'_imp_to_HOL_state p s = \<lparr>fst'_state_p = (s (add_prefix p fst'_p_str))\<rparr>"
+
+(* New correctness lemma, replace above *)
+lemma triangle_IMP_Minus_correct_effects':
+  "(invoke_subprogram (p @ triangle_pref) triangle_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars 
+  \<Longrightarrow> \<not> (prefix triangle_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def by blast
+
+lemma triangle_IMP_Minus_correct':
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) triangle_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (triangle_imp_time 0 (triangle_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) triangle_triangle_str) = 
+        triangle_triangle (triangle_imp (triangle_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using triangle_IMP_Minus_correct_time triangle_IMP_Minus_correct_function
+        triangle_IMP_Minus_correct_effects'
+  by auto
+
+lemma fst'_IMP_Minus_correct_function: 
+  "(invoke_subprogram p fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p fst'_p_str) = fst'_state_p (fst'_imp (fst'_imp_to_HOL_state p s))"
+  apply(subst fst'_imp.simps)
+  apply(simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"])
+   apply auto[]
+  apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"])
+  apply auto[]
+  (* Seems to work, but looks like automation needs to figure out that the input variable is not changed during the program
+    No idea if this is new
+  *)
+   apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      triangle_imp_to_HOL_state_def Let_def)
+  done
+
+lemma fst'_IMP_Minus_correct_time: 
+  "(invoke_subprogram p fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = fst'_imp_time 0 (fst'_imp_to_HOL_state p s)"
+  apply(subst fst'_imp_time.simps)
+  apply(simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"])
+   apply auto[]
+  apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"])
+  apply auto[]
+  (* Seems to work, but looks like automation needs to figure out that the input variable is not changed during the program
+    No idea if this is new
+  *)
+   apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      triangle_imp_to_HOL_state_def Let_def)
+  done
+
+lemma fst'_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ fst'_pref) fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (prefix fst'_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma fst'_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (fst'_imp_time 0 (fst'_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) fst'_p_str) = 
+        fst'_state_p (fst'_imp (fst'_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using fst'_IMP_Minus_correct_time fst'_IMP_Minus_correct_function
+        fst'_IMP_Minus_correct_effects 
+  by auto
+
+
+record snd'_state = snd'_state_p :: nat
+abbreviation "snd'_prefix \<equiv> ''snd'.''"
+abbreviation "snd'_p_str \<equiv> ''p''"
+
+abbreviation 
+  "snd'_IMP_vars \<equiv> {snd'_p_str}"
+
+(* Copying directly from function outputs *)
+definition "snd'_imp_state_upd s = (let
+    snd'_tsqrt_y = snd'_state_p s;
+    snd'_tsqrt_ret = 0;
+    snd'_tsqrt_state = \<lparr>tsqrt_state_y = snd'_tsqrt_y, tsqrt_state_ret = snd'_tsqrt_ret\<rparr>;
+    snd'_tsqrt_ret = tsqrt_imp snd'_tsqrt_state;
+    
+    snd'_fst'_p = snd'_state_p s;
+    snd'_fst'_state = \<lparr>fst'_state_p = snd'_fst'_p\<rparr>;
+    snd'_fst'_ret = fst'_imp snd'_fst'_state;
+
+    snd'_p = tsqrt_state_ret snd'_tsqrt_ret - fst'_state_p snd'_fst'_ret;
+    
+    ret = \<lparr>snd'_state_p = snd'_p\<rparr>
+  in
+    ret)
+"
+
+fun snd'_imp :: "snd'_state \<Rightarrow> snd'_state" where
+  "snd'_imp s = 
+  (let
+    ret = snd'_imp_state_upd s
+  in
+    ret
+  )"
+
+declare snd'_imp.simps [simp del]
+
+lemma snd'_imp_correct:
+   "snd'_state_p (snd'_imp s) = snd'_nat (snd'_state_p s)"
+  by (subst snd'_imp.simps) (auto simp: dsqrt_imp_correct snd'_imp_state_upd_def tsqrt_imp_correct
+      fst'_imp_correct snd'_nat_def)
+
+fun snd'_imp_time:: "nat \<Rightarrow> snd'_state\<Rightarrow> nat" where
+  "snd'_imp_time t s = 
+    (
+      let
+        snd'_tsqrt_y = snd'_state_p s;
+        t = t+2;
+        snd'_tsqrt_ret = 0;
+        t = t+2;
+        snd'_tsqrt_state = \<lparr>tsqrt_state_y = snd'_tsqrt_y, tsqrt_state_ret = snd'_tsqrt_ret\<rparr>;
+        snd'_tsqrt_ret = tsqrt_imp snd'_tsqrt_state;
+        t = t + tsqrt_imp_time 0 snd'_tsqrt_state;
+        
+        snd'_fst'_p = snd'_state_p s;
+        t = t+2;
+        snd'_fst'_state = \<lparr>fst'_state_p = snd'_fst'_p\<rparr>;
+        snd'_fst'_ret = fst'_imp snd'_fst'_state;
+        t = t + fst'_imp_time 0 snd'_fst'_state;
+    
+        snd'_p = tsqrt_state_ret snd'_tsqrt_ret - fst'_state_p snd'_fst'_ret;
+        t = t+2;
+        
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = snd'_imp_time.simps
+
+lemma snd'_imp_time_acc: "(snd'_imp_time (Suc t) s) = Suc (snd'_imp_time t s)"
+  apply(subst snd'_imp_time.simps)
+  apply(subst snd'_imp_time.simps)
+  apply (auto simp add: snd'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma snd'_imp_time_acc_2: "(snd'_imp_time x s) = x + (snd'_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: snd'_imp_time_acc snd'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+definition snd'_IMP_Minus where
+"snd'_IMP_Minus \<equiv>
+  (
+    (tsqrt_prefix @ tsqrt_y_str) ::= A (V snd'_p_str);;
+    (tsqrt_prefix @ tsqrt_ret_str) ::= A (N 0);;
+    invoke_subprogram tsqrt_prefix tsqrt_IMP_Minus;;
+
+    (fst'_prefix @ fst'_p_str) ::= A (V snd'_p_str);;
+    invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+
+    snd'_p_str ::= ((V (tsqrt_prefix @ tsqrt_ret_str)) \<ominus> V (fst'_prefix @ fst'_p_str))
+  )"
+
+definition "snd'_imp_to_HOL_state p s = \<lparr>snd'_state_p = (s (add_prefix p snd'_p_str))\<rparr>"
+
+lemma snd'_IMP_Minus_correct_function: 
+  "(invoke_subprogram p snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p snd'_p_str) = snd'_state_p (snd'_imp (snd'_imp_to_HOL_state p s))"
+  apply(subst snd'_imp.simps)
+  apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
+   apply auto[]
+  (* Not copying means I might have to pass the return variables here *)
+  apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
+  apply auto[]
+   apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def Let_def)
+  done
+    
+
+lemma snd'_IMP_Minus_correct_time: 
+  "(invoke_subprogram p snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = snd'_imp_time 0 (snd'_imp_to_HOL_state p s)"
+  apply(subst snd'_imp_time.simps)
+  apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
+   apply auto[]
+  (* Not copying means I might have to pass the return variables here *)
+  apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
+  apply auto[]
+   apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def Let_def)
+  done
+
+lemma snd'_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ snd'_pref) snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (prefix snd'_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma snd'_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (snd'_imp_time 0 (snd'_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) snd'_p_str) = 
+        snd'_state_p (snd'_imp (snd'_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using snd'_IMP_Minus_correct_time snd'_IMP_Minus_correct_function
+        snd'_IMP_Minus_correct_effects 
+  by auto
+
+(* Restore prod_decode *)
+
+record prod_decode_state = prod_decode_state_p :: nat prod_decode_state_fst :: nat prod_decode_state_snd :: nat
+
+abbreviation "prod_decode_prefix \<equiv> ''prod_decode.''"
+abbreviation "prod_decode_p_str \<equiv> ''p''"
+abbreviation "prod_decode_fst_str \<equiv> ''fst''"
+abbreviation "prod_decode_snd_str \<equiv> ''snd''"
+
+abbreviation 
+  "prod_decode_IMP_vars \<equiv> {prod_decode_p_str, prod_decode_fst_str, prod_decode_snd_str}"
+
+(* Copying directly from function outputs *)
+definition "prod_decode_imp_state_upd s = (let
+    prod_decode_fst'_p = prod_decode_state_p s;
+    prod_decode_fst'_state = \<lparr>fst'_state_p = prod_decode_fst'_p\<rparr>;
+    prod_decode_fst'_ret = fst'_imp prod_decode_fst'_state;
+    prod_decode_fst = fst'_state_p prod_decode_fst'_ret;
+
+    prod_decode_snd'_p = prod_decode_state_p s;
+    prod_decode_snd'_state = \<lparr>snd'_state_p = prod_decode_snd'_p\<rparr>;
+    prod_decode_snd'_ret = snd'_imp prod_decode_snd'_state;
+    prod_decode_snd = snd'_state_p prod_decode_snd'_ret;
+    
+    ret = \<lparr>prod_decode_state_p = prod_decode_state_p s, 
+      prod_decode_state_fst = prod_decode_fst, prod_decode_state_snd = prod_decode_snd\<rparr>
+  in
+    ret)
+"
+
+fun prod_decode_imp :: "prod_decode_state \<Rightarrow> prod_decode_state" where
+  "prod_decode_imp s = 
+  (let
+    ret = prod_decode_imp_state_upd s
+  in
+    ret
+  )"
+
+declare prod_decode_imp.simps [simp del]
+
+lemma prod_decode_imp_correct':
+   "prod_decode_state_fst (prod_decode_imp s) = fst'_nat (prod_decode_state_p s)"
+   "prod_decode_state_snd (prod_decode_imp s) = snd'_nat (prod_decode_state_p s)"
+  by (all \<open>subst prod_decode_imp.simps\<close>) (auto simp: fst'_imp_correct snd'_imp_correct 
+      prod_decode_imp_state_upd_def)
+
+lemma prod_decode_imp_correct:
+   "prod_decode_state_fst (prod_decode_imp s) = fst_nat (prod_decode_state_p s)"
+   "prod_decode_state_snd (prod_decode_imp s) = snd_nat (prod_decode_state_p s)"
+  by (simp_all add: fst_nat_fst'_nat snd_nat_snd'_nat prod_decode_imp_correct')
+
+fun prod_decode_imp_time:: "nat \<Rightarrow> prod_decode_state\<Rightarrow> nat" where
+  "prod_decode_imp_time t s = 
+    (
+      let
+        prod_decode_fst'_p = prod_decode_state_p s;
+        t = t+2;
+        prod_decode_fst'_state = \<lparr>fst'_state_p = prod_decode_fst'_p\<rparr>;
+        prod_decode_fst'_ret = fst'_imp prod_decode_fst'_state;
+        t = t + fst'_imp_time 0 prod_decode_fst'_state;
+        prod_decode_fst = fst'_state_p prod_decode_fst'_ret;
+        t = t+2;
+    
+        prod_decode_snd'_p = prod_decode_state_p s;
+        t = t+2;
+        prod_decode_snd'_state = \<lparr>snd'_state_p = prod_decode_snd'_p\<rparr>;
+        prod_decode_snd'_ret = snd'_imp prod_decode_snd'_state;
+        t = t + snd'_imp_time 0 prod_decode_snd'_state;
+        prod_decode_snd = snd'_state_p prod_decode_snd'_ret;
+        t = t+2;
+        
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = prod_decode_imp_time.simps
+
+lemma prod_decode_imp_time_acc: "(prod_decode_imp_time (Suc t) s) = Suc (prod_decode_imp_time t s)"
+  apply(subst prod_decode_imp_time.simps)
+  apply(subst prod_decode_imp_time.simps)
+  apply (auto simp add: prod_decode_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma prod_decode_imp_time_acc_2: "(prod_decode_imp_time x s) = x + (prod_decode_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: prod_decode_imp_time_acc prod_decode_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+definition prod_decode_IMP_Minus where
+"prod_decode_IMP_Minus \<equiv>
+  (
+    (fst'_prefix @ fst'_p_str) ::= A (V prod_decode_p_str);;
+    invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+    prod_decode_fst_str ::= A (V (fst'_prefix @ fst'_p_str));;
+
+    (snd'_prefix @ snd'_p_str) ::= A (V prod_decode_p_str);;
+    invoke_subprogram snd'_prefix snd'_IMP_Minus;;
+    prod_decode_snd_str ::= A (V (snd'_prefix @ snd'_p_str))
+  )"
+
+definition "prod_decode_imp_to_HOL_state p s = \<lparr>prod_decode_state_p = (s (add_prefix p prod_decode_p_str)),
+  prod_decode_state_fst = (s (add_prefix p prod_decode_fst_str)),
+  prod_decode_state_snd = (s (add_prefix p prod_decode_snd_str))\<rparr>"
+
+lemma prod_decode_IMP_Minus_correct_function_1: 
+  "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p prod_decode_fst_str) = prod_decode_state_fst (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
+  apply(subst prod_decode_imp.simps)
+  apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[]
+  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[] (* Check why this is taking so much longer *)
+  apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+  done
+
+lemma prod_decode_IMP_Minus_correct_function_2: 
+  "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p prod_decode_snd_str) = prod_decode_state_snd (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
+  apply(subst prod_decode_imp.simps)
+  apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[]
+  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[] (* Check why this is taking so much longer *)
+  apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+  done
+    
+
+lemma prod_decode_IMP_Minus_correct_time: 
+  "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = prod_decode_imp_time 0 (prod_decode_imp_to_HOL_state p s)"
+  apply(subst prod_decode_imp_time.simps)
+  apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[]
+  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
+   apply auto[]
+  apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+  done
+
+lemma prod_decode_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ prod_decode_pref) prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
+  \<Longrightarrow> \<not> (prefix prod_decode_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma prod_decode_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (prod_decode_imp_time 0 (prod_decode_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) prod_decode_fst_str) 
+        = prod_decode_state_fst (prod_decode_imp (prod_decode_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) prod_decode_snd_str)
+        = prod_decode_state_snd (prod_decode_imp (prod_decode_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using prod_decode_IMP_Minus_correct_time 
+        prod_decode_IMP_Minus_correct_function_1 prod_decode_IMP_Minus_correct_function_2
+        prod_decode_IMP_Minus_correct_effects 
+  by auto
+
 record prod_encode_state = prod_encode_a::nat prod_encode_b::nat prod_encode_ret::nat
 
 abbreviation "prod_encode_prefix \<equiv> ''prod_encode.''"
@@ -460,6 +1847,7 @@ lemma prod_encode_IMP_Minus_correct:
         prod_encode_IMP_Minus_correct_effects 
   by auto
 
+(*
 record prod_decode_aux_state = prod_decode_aux_k::nat prod_decode_aux_m::nat
 
 abbreviation "prod_decode_aux_pref \<equiv> ''prod_decode_aux.''"
@@ -487,7 +1875,7 @@ function prod_decode_aux_imp :: "prod_decode_aux_state \<Rightarrow> prod_decode
        s)"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>s. prod_decode_aux_m s)")  (auto simp: prod_decode_aux_state_upd_def Let_def split: if_splits)
+  by  (relation "Wellfounded.measure (\<lambda>s. prod_decode_aux_m s)")  (auto simp: prod_decode_aux_state_upd_def Let_def split: if_splits)
 
 declare prod_decode_aux_imp.simps [simp del]
 
@@ -543,7 +1931,7 @@ function prod_decode_aux_imp_time:: "nat \<Rightarrow> prod_decode_aux_state\<Ri
 )"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>(t, s). prod_decode_aux_m s)")  (auto simp: prod_decode_aux_state_upd_def Let_def split: if_splits)
+  by  (relation "Wellfounded.measure (\<lambda>(t, s). prod_decode_aux_m s)")  (auto simp: prod_decode_aux_state_upd_def Let_def split: if_splits)
 
 lemmas [simp del] = prod_decode_aux_imp_time.simps
 
@@ -789,6 +2177,7 @@ lemma prod_decode_IMP_Minus_correct:
         prod_decode_IMP_Minus_correct_function_2
         prod_decode_IMP_Minus_correct_effects 
   by auto
+*)
 
 subsection \<open>Head and tail of lists\<close>
 
@@ -798,14 +2187,16 @@ abbreviation "hd_prefix \<equiv> ''hd.''"
 abbreviation "hd_xs_str \<equiv> ''xs''"
 abbreviation "hd_ret_str \<equiv> ''hd_ret''"
 
+term prod_decode_state_p
 definition "hd_state_upd s \<equiv>
       let
         prod_decode_m' = hd_xs s - 1;
         prod_decode_fst_ret' = 0;
         prod_decode_snd_ret' = 0;
-        prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_fst_ret = prod_decode_fst_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;
+        prod_decode_state = \<lparr>prod_decode_state_p = prod_decode_m',
+          prod_decode_state_fst = prod_decode_fst_ret', prod_decode_state_snd = prod_decode_snd_ret'\<rparr>;
         prod_decode_ret = prod_decode_imp prod_decode_state;
-        hd_ret' = prod_decode_fst_ret prod_decode_ret;
+        hd_ret' = prod_decode_state_fst prod_decode_ret;
         ret = \<lparr>hd_xs = hd_xs s, hd_ret = hd_ret'\<rparr>
       in
         ret
@@ -823,7 +2214,8 @@ declare hd_imp.simps [simp del]
 
 lemma hd_imp_correct:
    "hd_ret (hd_imp s) = hd_nat (hd_xs s)"
-  by (subst hd_imp.simps) (auto simp: prod_decode_imp_correct hd_nat_def fst_nat_def hd_imp.simps hd_state_upd_def Let_def split: if_splits)[1]
+  by (subst hd_imp.simps) (auto simp: prod_decode_imp_correct hd_nat_def fst_nat_def hd_imp.simps 
+      hd_state_upd_def Let_def fst_nat_fst'_nat[symmetric] split: if_splits)[1]
 
 fun hd_imp_time:: "nat \<Rightarrow> hd_state\<Rightarrow> nat" where
   "hd_imp_time t s = 
@@ -835,10 +2227,11 @@ fun hd_imp_time:: "nat \<Rightarrow> hd_state\<Rightarrow> nat" where
         t = t + 2;
         prod_decode_snd_ret' = 0;
         t = t + 2;
-        prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_fst_ret = prod_decode_fst_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;
+        prod_decode_state = \<lparr>prod_decode_state_p = prod_decode_m',
+          prod_decode_state_fst = prod_decode_fst_ret', prod_decode_state_snd = prod_decode_snd_ret'\<rparr>;
         prod_decode_ret = prod_decode_imp prod_decode_state;
         t = t + prod_decode_imp_time 0 prod_decode_state;
-        hd_ret' = prod_decode_fst_ret prod_decode_ret;
+        hd_ret' = prod_decode_state_fst prod_decode_ret;
         t = t + 2;
         ret = t
       in
@@ -855,16 +2248,16 @@ lemma hd_imp_time_acc: "(hd_imp_time (Suc t) s) = Suc (hd_imp_time t s)"
 definition hd_IMP_Minus where
 "hd_IMP_Minus \<equiv>
   (     \<comment> \<open>prod_decode_m' = hd_xs s - 1;\<close>
-        (prod_decode_prefix @ prod_decode_m_str) ::= ((V hd_xs_str) \<ominus> (N 1));;
+        (prod_decode_prefix @ prod_decode_p_str) ::= ((V hd_xs_str) \<ominus> (N 1));;
         \<comment> \<open>prod_decode_fst_ret' = 0;\<close>
-        (prod_decode_prefix @ prod_decode_fst_ret_str) ::= (A (N 0));;
+        (prod_decode_prefix @ prod_decode_fst_str) ::= (A (N 0));;
         \<comment> \<open>prod_decode_snd_ret' = 0;\<close>
-        (prod_decode_prefix @ prod_decode_snd_ret_str) ::= (A (N 0));;
+        (prod_decode_prefix @ prod_decode_snd_str) ::= (A (N 0));;
         \<comment> \<open>prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_fst_ret = prod_decode_fst_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;\<close>
         \<comment> \<open>prod_decode_ret = prod_decode_imp prod_decode_state;\<close>
         invoke_subprogram prod_decode_prefix prod_decode_IMP_Minus;;
         \<comment> \<open>hd_ret' = prod_decode_fst_ret prod_decode_ret;\<close>
-        (hd_ret_str) ::= (A (V (prod_decode_prefix @ prod_decode_fst_ret_str)))
+        (hd_ret_str) ::= (A (V (prod_decode_prefix @ prod_decode_fst_str)))
   )"
 
 definition "hd_imp_to_HOL_state p s =
@@ -875,11 +2268,12 @@ lemma hd_IMP_Minus_correct_function:
      s' (add_prefix p hd_ret_str) = hd_ret (hd_imp (hd_imp_to_HOL_state p s))"
   apply(simp only: hd_IMP_Minus_def hd_imp.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
-  apply(erule prod_decode_IMP_Minus_correct[where vars = "{p @ hd_xs_str}"])
-   apply(drule AssignD)+
+  apply(erule prod_decode_IMP_Minus_correct[where vars = "{hd_xs_str}"])
+   apply auto[]
+  apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: hd_state_upd_def Let_def hd_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_decode_imp_to_HOL_state_def )[1]
   done
 
 lemma hd_IMP_Minus_correct_time: 
@@ -887,23 +2281,25 @@ lemma hd_IMP_Minus_correct_time:
      t = hd_imp_time 0 (hd_imp_to_HOL_state p s)"
   apply(simp only: hd_IMP_Minus_def hd_imp_time.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
-  apply(erule prod_decode_IMP_Minus_correct[where vars = "{p @ hd_xs_str}"])
-   apply(drule AssignD)+
+  apply(erule prod_decode_IMP_Minus_correct[where vars = "{hd_xs_str}"])
+   apply auto[]
+  apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: hd_state_upd_def Let_def hd_imp_to_HOL_state_def)[1]
   apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
   done
 
 lemma hd_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ hd_pref) hd_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow> \<not> (set hd_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid_subset com_only_vars
+  "(invoke_subprogram (p @ hd_pref) hd_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow> \<not> (prefix hd_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
 lemma hd_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) hd_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (hd_imp_time 0 (hd_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) hd_ret_str) = hd_ret (hd_imp (hd_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) hd_ret_str) = 
+        hd_ret (hd_imp (hd_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using hd_IMP_Minus_correct_time hd_IMP_Minus_correct_function
@@ -921,9 +2317,10 @@ definition "tl_state_upd s \<equiv>
         prod_decode_m' = tl_xs s - 1;
         prod_decode_fst_ret' = 0;
         prod_decode_snd_ret' = 0;
-        prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_fst_ret = prod_decode_fst_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;
+        prod_decode_state = \<lparr>prod_decode_state_p = prod_decode_m', 
+          prod_decode_state_fst = prod_decode_fst_ret', prod_decode_state_snd = prod_decode_snd_ret'\<rparr>;
         prod_decode_ret = prod_decode_imp prod_decode_state;
-        tl_ret' = prod_decode_snd_ret prod_decode_ret;
+        tl_ret' = prod_decode_state_snd prod_decode_ret;
         ret = \<lparr>tl_xs = tl_xs s, tl_ret = tl_ret'\<rparr>
       in
         ret
@@ -953,10 +2350,11 @@ fun tl_imp_time:: "nat \<Rightarrow> tl_state\<Rightarrow> nat" where
         t = t + 2;
         prod_decode_snd_ret' = 0;
         t = t + 2;
-        prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_fst_ret = prod_decode_fst_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;
+        prod_decode_state = \<lparr>prod_decode_state_p = prod_decode_m', 
+          prod_decode_state_fst = prod_decode_fst_ret', prod_decode_state_snd = prod_decode_snd_ret'\<rparr>;
         prod_decode_ret = prod_decode_imp prod_decode_state;
         t = t + prod_decode_imp_time 0 prod_decode_state;
-        tl_ret' = prod_decode_snd_ret prod_decode_ret;
+        tl_ret' = prod_decode_state_snd prod_decode_ret;
         t = t + 2;
         ret = t
       in
@@ -973,16 +2371,16 @@ lemma tl_imp_time_acc: "(tl_imp_time (Suc t) s) = Suc (tl_imp_time t s)"
 definition tl_IMP_Minus where
 "tl_IMP_Minus \<equiv>
   (     \<comment> \<open>prod_decode_m' = tl_xs s - 1;\<close>
-        (prod_decode_prefix @ prod_decode_m_str) ::= ((V tl_xs_str) \<ominus> (N 1));;
+        (prod_decode_prefix @ prod_decode_p_str) ::= ((V tl_xs_str) \<ominus> (N 1));;
         \<comment> \<open>prod_decode_snd_ret' = 0;\<close>
-        (prod_decode_prefix @ prod_decode_fst_ret_str) ::= (A (N 0));;
+        (prod_decode_prefix @ prod_decode_fst_str) ::= (A (N 0));;
         \<comment> \<open>prod_decode_snd_ret' = 0;\<close>
-        (prod_decode_prefix @ prod_decode_snd_ret_str) ::= (A (N 0));;
+        (prod_decode_prefix @ prod_decode_snd_str) ::= (A (N 0));;
         \<comment> \<open>prod_decode_state = \<lparr>prod_decode_m = prod_decode_m', prod_decode_snd_ret = prod_decode_snd_ret', prod_decode_snd_ret = prod_decode_snd_ret'\<rparr>;\<close>
         \<comment> \<open>prod_decode_ret = prod_decode_imp prod_decode_state;\<close>
         invoke_subprogram prod_decode_prefix prod_decode_IMP_Minus;;
         \<comment> \<open>tl_ret' = prod_decode_snd_ret prod_decode_ret;\<close>
-        (tl_ret_str) ::= (A (V (prod_decode_prefix @ prod_decode_snd_ret_str)))
+        (tl_ret_str) ::= (A (V (prod_decode_prefix @ prod_decode_snd_str)))
   )"
 
 definition "tl_imp_to_HOL_state p s =
@@ -993,8 +2391,9 @@ lemma tl_IMP_Minus_correct_function:
      s' (add_prefix p tl_ret_str) = tl_ret (tl_imp (tl_imp_to_HOL_state p s))"
   apply(simp only: tl_IMP_Minus_def tl_imp.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
-  apply(erule prod_decode_IMP_Minus_correct[where vars = "{p @ tl_xs_str}"])
-   apply(drule AssignD)+
+  apply(erule prod_decode_IMP_Minus_correct[where vars = "{tl_xs_str}"])
+   apply auto[]
+  apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: tl_state_upd_def Let_def tl_imp_to_HOL_state_def)[1]
   apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
@@ -1005,23 +2404,25 @@ lemma tl_IMP_Minus_correct_time:
      t = tl_imp_time 0 (tl_imp_to_HOL_state p s)"
   apply(simp only: tl_IMP_Minus_def tl_imp_time.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
-  apply(erule prod_decode_IMP_Minus_correct[where vars = "{p @ tl_xs_str}"])
-   apply(drule AssignD)+
+  apply(erule prod_decode_IMP_Minus_correct[where vars = "{tl_xs_str}"])
+   apply auto[]
+  apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: tl_state_upd_def Let_def tl_imp_to_HOL_state_def)[1]
   apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
   done
 
 lemma tl_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ tl_pref) tl_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow> \<not> (set tl_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid_subset com_only_vars
+  "(invoke_subprogram (p @ tl_pref) tl_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow> \<not> (prefix tl_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
 lemma tl_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) tl_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (tl_imp_time 0 (tl_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) tl_ret_str) = tl_ret (tl_imp (tl_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) tl_ret_str) = 
+        tl_ret (tl_imp (tl_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using tl_IMP_Minus_correct_time tl_IMP_Minus_correct_function
@@ -1068,7 +2469,7 @@ function length_imp:: "length_state \<Rightarrow> length_state" where
   )"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>s. length_xs s)")
+  by  (relation "Wellfounded.measure (\<lambda>s. length_xs s)")
       (auto simp: tl_imp_correct length_state_upd_def Let_def split: if_splits)
 
 declare length_imp.simps [simp del]
@@ -1118,7 +2519,7 @@ function length_imp_time:: "nat \<Rightarrow> length_state\<Rightarrow> nat" whe
 "
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>(t,s). length_xs s)")
+  by  (relation "Wellfounded.measure (\<lambda>(t,s). length_xs s)")
       (auto simp: tl_imp_correct length_state_upd_def Let_def split: if_splits)
 
 lemmas [simp del] = length_imp_time.simps
@@ -1389,7 +2790,7 @@ function append_imp:: "append_state \<Rightarrow> append_state" where
   )"
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>s. append_xs s)")
+  by  (relation "Wellfounded.measure (\<lambda>s. append_xs s)")
       (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
 
 declare append_imp.simps [simp del]
@@ -1455,7 +2856,7 @@ function append_imp_time:: "nat \<Rightarrow> append_state\<Rightarrow> nat" whe
 "
   by pat_completeness auto
 termination
-  by  (relation "measure (\<lambda>(t,s). append_xs s)")
+  by  (relation "Wellfounded.measure (\<lambda>(t,s). append_xs s)")
       (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
 
 lemmas [simp del] = append_imp_time.simps

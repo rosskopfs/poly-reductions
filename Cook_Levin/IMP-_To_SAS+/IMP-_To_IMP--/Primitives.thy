@@ -7,8 +7,7 @@ theory Primitives
  SAS_Plus_Plus "HOL-Library.Mapping"
 SAS_Plus_Plus_To_SAS_Plus
 IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
-
-begin 
+begin
 
 
 type_synonym sas_state = "(variable, domain_element) State_Variable_Representation.state"
