@@ -2,7 +2,7 @@
 subsection \<open>Timing\<close>
 
 theory Primitives_IMP_Minus_Time
-  imports Primitives_IMP_Minus "Poly_Reductions_Lib.Landau_Auxiliaries"
+  imports Primitives_IMP_Minus "Poly_Reductions_Lib.Landau_Auxiliaries" "Poly_Reductions_Lib.Polynomial_Growth_Functions"
     "HOL-Library.Rewrite"
 begin
 
@@ -793,6 +793,297 @@ fun append_imp_time' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 | "append_imp_time' acc xs = 19 + hd_imp_time' xs + cons_imp_time' (hd_nat xs) acc + tl_imp_time' xs
     + append_imp_time' (cons (hd_nat xs) acc) (tl_nat xs)"
 
+lemma O_square_subset_nat: "O((f::nat \<Rightarrow> nat)) \<subseteq> O(\<lambda>n . (f n)^2)"
+  apply (rule landau_o.big_subsetI)
+  apply (rule landau_o.big_mono)
+  apply (rule eventuallyI)
+  apply (auto simp add: power2_nat_le_imp_le)
+  done
+
+
+corollary "(\<exists>k . (\<lambda>n. real (f n)) \<in> O(\<lambda>n. real n ^ k)) \<longleftrightarrow> (\<exists>k . (\<lambda>n. real (f n)) \<in> o(\<lambda>n. real n ^ k))"
+  using poly_def poly_iff_ex_smallo by presburger
+
+(* The definition seperates the polynomial bit from the bit_length part, I did it combined so far. *)
+lemma natfun_bigo_poly_log_iff:
+  fixes f :: "nat \<Rightarrow> real"
+  shows "f \<in> O(\<lambda>n. Discrete.log n ^ k) \<longleftrightarrow> (\<exists>c. \<forall>n>1. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k))"
+proof
+  assume "\<exists>c. \<forall>n>1. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k)"
+  then obtain c where c: "\<forall>n>1. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k)"
+    by auto
+  have "eventually (\<lambda>n. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k)) at_top"
+    using eventually_gt_at_top[of 1] by eventually_elim (use c in auto)
+  thus "f \<in> O(\<lambda>n. Discrete.log n ^ k)"
+    by (intro bigoI[of _ c]) (auto intro!: always_eventually)
+next
+  assume 1: "f \<in> O(\<lambda>n. Discrete.log n ^ k)"
+  have 2: "real (Discrete.log n ^ k) \<noteq> 0" if "n \<ge> 2" for n :: nat using that
+    by (metis bot_nat_0.not_eq_extremum log_rec of_nat_0_eq_iff power_not_zero zero_less_Suc)
+  from natfun_bigoE[OF 1 2, of 2] obtain c where "\<forall>n\<ge>2. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k)"
+    by simp metis?
+  thus "\<exists>c. \<forall>n>1. \<bar>f n\<bar> \<le> c * real (Discrete.log n ^ k)"
+    apply (auto simp: Suc_le_eq)
+    by (metis Suc_leI numeral_2_eq_2)
+qed
+
+term poly
+
+
+definition poly_log :: "(nat \<Rightarrow> nat) \<Rightarrow> bool"
+  where "poly_log f \<longleftrightarrow> (\<exists>k. (\<lambda>n. real (f n)) \<in> O(\<lambda>n. real (Discrete.log n ^ k)))"
+
+lemma poly_log_iff_ex_smallo: "poly_log f \<longleftrightarrow> (\<exists>k. (\<lambda>n. real (f n)) \<in> o(\<lambda>n. real (Discrete.log n ^ k)))"
+  unfolding poly_log_def
+proof safe
+  fix k assume "f \<in> O(\<lambda>n. real (Discrete.log n ^ k))"
+  also have "(\<lambda>n. real (Discrete.log n ^ k)) \<in> o(\<lambda>n. real (Discrete.log n ^ (k + 1)))"
+    by real_asymp
+  finally have "f \<in> o(\<lambda>n. (Discrete.log n ^ (k + 1)))" .
+  thus "\<exists>k. f \<in> o(\<lambda>n. Discrete.log n ^ k)" ..
+qed (auto intro: landau_o.small_imp_big)
+
+lemma poly_log_const [simp, intro]: "poly_log (\<lambda>_. c)"
+  by (auto simp: poly_log_def intro!: exI[of _ 0])
+
+lemma poly_log_cmult [intro]: "poly_log f \<Longrightarrow> poly_log (\<lambda>x. c * f x)"
+  by (auto simp: poly_log_def)
+
+thm real_asymp_nat_reify
+thm real_asymp_reify_simps
+
+lemma test: "(\<lambda>x. real (Discrete.log x) ^ k) \<in> O(\<lambda>x. real (Discrete.log x) ^ max k l)"
+  apply (rule landau_o.big_mono[of])
+  apply (rule eventually_at_top_linorderI[of 2])
+  apply simp_all 
+  apply (rule power_increasing)
+  apply simp_all
+  by (metis One_nat_def Suc_leI log_rec real_of_nat_ge_one_iff zero_less_Suc)
+
+lemma "norm (real c) = real c"
+  by simp
+
+lemma power_weaken_heavy: "a \<le> b \<Longrightarrow> n > 0 \<Longrightarrow> a \<le> (b::nat)^(n::nat)"
+  by (metis One_nat_def Suc_leI bot_nat_0.extremum_uniqueI not_less_eq_eq order.trans power_increasing power_one_right zero_le_power)
+
+lemma const_in_poly_log_internal': "(\<lambda>_. real c) \<in> O(\<lambda>n . real (Discrete.log n ^ (Suc k)))"
+  apply (rule landau_o.big_mono[])
+  apply (rule eventually_at_top_linorderI[of "2^c"])
+  by (metis (mono_tags, opaque_lifting) Discrete.log_le_iff One_nat_def Suc_leI bot_nat_0.not_eq_extremum 
+      le_trans log_exp nat.simps(3) nle_le norm_of_nat of_nat_le_iff power_increasing power_one_right)
+
+corollary const_in_poly_log_internal: "(\<lambda>_. real c) \<in> O(\<lambda>n . real (Discrete.log n ^ k))"
+  apply (cases k)
+   apply simp
+  using const_in_poly_log_internal' by simp
+
+lemma poly_log_add [intro]:
+  assumes "poly_log f" "poly_log g"
+  shows   "poly_log (\<lambda>x. f x + g x)"
+proof -
+  from assms obtain k l where kl: "f \<in> O(\<lambda>n. Discrete.log n ^ k)" "g \<in> O(\<lambda>n. Discrete.log n ^ l)"
+    by (auto simp: poly_log_def)
+  have "f \<in> O(\<lambda>n. Discrete.log n ^ max k l)" "g \<in> O(\<lambda>n. Discrete.log n ^ max k l)"
+     apply (rule kl[THEN landau_o.big.trans], simp add: test)+
+    by (metis max.commute test)
+  from sum_in_bigo(1)[OF this] show ?thesis
+    by (auto simp: poly_log_def)
+qed
+
+lemma poly_log_diff [intro]:
+  assumes "poly_log f" "poly_log g"
+  shows   "poly_log (\<lambda>x. f x - g x)"
+proof -
+  from assms obtain k l where kl: "f \<in> O(\<lambda>n. Discrete.log n ^ k)" "g \<in> O(\<lambda>n. Discrete.log n ^ l)"
+    by (auto simp: poly_log_def)
+  have "(\<lambda>x. real (f x - g x)) \<in> O(\<lambda>x. real (f x) - real (g x))"
+    by (intro landau_o.big_mono) (auto intro!: always_eventually)
+  also have "f \<in> O(\<lambda>n. Discrete.log n ^ max k l)" "g \<in> O(\<lambda>n. Discrete.log n ^ max k l)"
+     apply (rule kl[THEN landau_o.big.trans], simp add: test)+
+    by (metis max.commute test)
+  from sum_in_bigo(2)[OF this] have "(\<lambda>x. real (f x) - real (g x)) \<in> O(\<lambda>x. real (Discrete.log x ^ max k l))" .
+  finally show ?thesis
+    by (auto simp: poly_log_def)
+qed
+
+lemma poly_log_mult [intro]:
+  assumes "poly_log f" "poly_log g"
+  shows   "poly_log (\<lambda>x. f x * g x)"
+proof -
+  from assms obtain k l where kl: "f \<in> O(\<lambda>n. Discrete.log n ^ k)" "g \<in> O(\<lambda>n. Discrete.log n ^ l)"
+    by (auto simp: poly_log_def)
+  from landau_o.big.mult[OF this] have "(\<lambda>n. f n * g n) \<in> O(\<lambda>n. Discrete.log n ^ (k + l))"
+    by (simp add: power_add)
+  thus ?thesis by (auto simp: poly_log_def)
+qed
+
+value "{..(n::nat)}"
+
+
+lemma poly_log_make_mono_iff: "poly_log (make_mono f) \<longleftrightarrow> poly_log f"
+proof safe
+  fix f
+  assume *: "poly_log (make_mono f)"
+  have "f \<in> O(make_mono f)"
+    by (rule landau_o.big_mono) (auto intro!: always_eventually)
+  also from * obtain k where "make_mono f \<in> O(\<lambda>n. Discrete.log n ^ k)"
+    by (auto simp: poly_log_def)
+  finally show "poly_log f"
+    by (auto simp: poly_log_def)
+next
+  assume "poly_log f"
+  then obtain k where "f \<in> O(\<lambda>n. Discrete.log n ^ k)"
+    by (auto simp: poly_log_def)
+  then obtain c' :: real where c': "\<And>n. n > 1 \<Longrightarrow> f n \<le> c' * Discrete.log n ^ k"
+    by (subst (asm) natfun_bigo_poly_log_iff) auto
+  define c where "c = max c' 1"
+  have "c > 0" by (simp add: c_def)
+  have c: "f n \<le> c * Discrete.log n ^ k" if "n > 1" for n
+  proof -
+    have "f n \<le> c' * Discrete.log n ^ k"
+      using c'[of n] that by blast
+    also have "\<dots> \<le> c * Discrete.log n ^ k"
+      by (intro mult_right_mono) (auto simp: c_def)
+    finally show ?thesis by simp
+  qed
+
+  have "eventually (\<lambda>n. real (make_mono f n) \<le> real (f 0) + real (f 1) + c * real (Discrete.log n ^ k)) at_top"
+    using eventually_gt_at_top[of 1]
+  proof eventually_elim
+    case (elim n)
+    have "real (make_mono f n) = real (Max (f ` {..n}))"
+      by (auto simp: make_mono_def)
+    also have "{..n} = insert 0 {0<..n}"
+      using elim by auto
+    also have "\<dots> = insert 0 (insert 1 {1<..n})"
+      using elim by auto
+    also have "Max (f ` \<dots>) = max (f 0) (max (f 1) (Max (f ` {1<..n})))"
+      using elim by (simp add: Max_insert)
+    also have "real \<dots> = max (real (f 0)) (max (real (f 1)) (real (Max (f ` {1<..n}))))"
+      by simp
+    also have "real (Max (f ` {1<..n})) = Max ((real \<circ> f) ` {1<..n})"
+      using elim by (subst mono_Max_commute) (auto simp: image_image incseq_def)
+    also have "\<dots> \<le> c * real (Discrete.log n ^ k)"
+      unfolding o_def
+    proof (intro Max.boundedI; safe?)
+      fix i assume i: "i \<in> {1<..n}"
+      from i have "real (f i) \<le> c * real (Discrete.log i ^ k)"
+        by (intro c) auto
+      also have "\<dots> \<le> c * real (Discrete.log n ^ k)"
+        using i \<open>c > 0\<close> by (auto intro!: mult_left_mono power_mono simp add: Discrete.log_le_iff)
+      finally show "real (f i) \<le> c * real (Discrete.log n ^ k)" .
+    qed (use elim in auto)
+    hence "max (real (f 0)) (max (real (f 1)) (Max ((real \<circ> f) ` {1<..n}))) \<le> max (real (f 0)) (max (real (f 1)) (c * real (Discrete.log n ^ k)))"
+      by (intro max.mono) auto
+    also have "\<dots> \<le> real (f 0) + real (f 1) +  c * real (Discrete.log n ^ k)"
+      using \<open>c > 0\<close> by simp
+    finally show ?case .
+  qed
+  hence "make_mono f \<in> O(\<lambda>n. real (f 0) + real (f 1) + c * real (Discrete.log n ^ k))"
+    using \<open>c > 0\<close> by (intro bigoI[of _ 1]) auto
+  also have "(\<lambda>n. real (f 0) + real (f 1) + c * real (Discrete.log n ^ k)) \<in> O(\<lambda>n. real (Discrete.log n ^ k))"
+    using \<open>c > 0\<close> apply (intro sum_in_bigo) apply (intro const_in_poly_log_internal)+ apply auto done
+  finally show "poly_log (make_mono f)"
+    by (auto simp: poly_log_def)
+qed
+
+lemma "n>0 \<Longrightarrow> (n::nat)^k \<le> n^(Suc k)"
+  by simp
+
+lemma "(\<lambda>_. 1) \<in> O(Discrete.log)"
+  by real_asymp
+
+find_theorems name: Landau name: trans
+lemma step: "(\<lambda>_. 1) \<in> O(g) \<Longrightarrow> f \<in> O(\<lambda>n . g n ^ k) \<Longrightarrow> f \<in> O(\<lambda>n . g n ^ Suc k)"
+  apply simp
+  apply (rule Landau_Symbols.landau_o.big_mult_1')
+  by simp_all
+lemma step': "(\<lambda>_. 1) \<in> O(g) \<Longrightarrow> f \<in> o(\<lambda>n . g n ^ k) \<Longrightarrow> f \<in> o(\<lambda>n . g n ^ Suc k)"
+  apply simp
+  apply (rule Landau_Symbols.landau_o.small_mult_1')
+  by simp_all
+
+lemma step'_nat: "(\<lambda>_. 1) \<in> O(g) \<Longrightarrow> (f::nat \<Rightarrow> nat) \<in> o(\<lambda>n . (g::nat \<Rightarrow> nat) n ^ k) \<Longrightarrow> f \<in> o(\<lambda>n . g n ^ Suc k)"
+  using step' by auto 
+
+
+lemma poly_log_compose [intro]:
+  assumes "poly_log f" "poly_log g"
+  shows   "poly_log (f \<circ> g)"
+proof -
+  from assms have "poly_log (make_mono f)"
+    by (simp add: poly_log_make_mono_iff)
+  then obtain k c where k: "\<And>n. n > 1 \<Longrightarrow> make_mono f n \<le> c * real (Discrete.log n ^ k)"
+    apply (auto simp: poly_log_def natfun_bigo_poly_log_iff) (* ? *)
+    by (smt (verit, del_insts) One_nat_def \<open>poly_log (make_mono f)\<close> natfun_bigo_poly_log_iff norm_of_nat of_nat_power poly_log_def)
+  have "c \<ge> 0"
+  proof-
+    have "Discrete.log n ^ k \<ge> 0" for n by simp
+    hence 1: "real (Discrete.log n ^ k) \<ge> 0" for n by simp
+    have 2: "make_mono f n \<ge> 0" for n by simp
+    show ?thesis 
+      using k[of 2] 1[of 2] 2[of 2] apply (auto simp add: field_simps)
+      by (metis (mono_tags, opaque_lifting) Multiseries_Expansion.intyness_1 landau_o.R_trans log_exp mult.right_neutral nle_le of_nat_0_le_iff one_le_power power_le_one_iff power_one_right)
+  qed
+
+  from assms obtain l where l: "g \<in> o(\<lambda>n. Discrete.log n ^ l)"
+    by (auto simp: poly_log_iff_ex_smallo) 
+  hence "g \<in> o(\<lambda>n. Discrete.log n ^ Suc l)" 
+    apply (intro step'_nat)
+      apply real_asymp
+    using l by simp
+  from this obtain l where l: "g \<in> o(\<lambda>n. Discrete.log n ^ l)" "l > 0" 
+    by blast
+  have "eventually (\<lambda>n. g n \<le> Discrete.log n ^ l) at_top"
+    using landau_o.smallD[OF l(1), of 1] by auto
+  hence "eventually (\<lambda>n. real (f (g n)) \<le> c * real (Discrete.log n ^ (k * l))) at_top"
+    using eventually_gt_at_top[of 4]
+  proof eventually_elim
+    case (elim n)
+    have "real (f (g n)) \<le> real (make_mono f (g n))"
+      by auto
+    also from elim(1) have "make_mono f (g n) \<le> make_mono f (Discrete.log n ^ l)"
+      by (rule monoD[OF mono_make_mono])
+    also have "\<dots> \<le> c * (Discrete.log (Discrete.log n ^ l)) ^ k"
+    proof-
+      have "Discrete.log n \<ge> Discrete.log 4" 
+        apply (rule log_le_iff)
+        using \<open>n>4\<close> by simp
+      hence "Discrete.log n > 1"
+        by code_simp auto
+      hence "1 < Discrete.log n ^ l"
+        using \<open>n>4\<close> l(2) apply code_simp apply auto
+        using less_trans_Suc power_gt_expt by presburger
+      hence "real (make_mono f (Discrete.log n ^ l)) \<le> c * real (Discrete.log (Discrete.log n ^ l) ^ k)"
+        using k[of "Discrete.log n ^ l"] by simp 
+      thus ?thesis
+        by simp
+    qed
+    also have "\<dots> \<le> c * (Discrete.log n ^ l) ^ k"
+    proof-
+      have "(Discrete.log (Discrete.log n ^ l) ^ k) \<le> ((Discrete.log n ^ l) ^ k)"
+        by (metis Discrete.log_le_iff le_neq_implies_less lessI less_or_eq_imp_le log_exp 
+            nat_power_eq_Suc_0_iff numeral_2_eq_2 power_gt_expt power_mono_iff zero_order(1))
+      thus ?thesis
+        by (meson \<open>0 \<le> c\<close> mult_left_mono of_nat_le_iff)
+    qed
+    also have "\<dots> = c * real (Discrete.log n ^ (k * l))"
+      by (subst mult.commute) (simp add: power_mult)
+    finally show ?case by simp
+  qed
+  hence "f \<circ> g \<in> O(\<lambda>n. Discrete.log n ^ (k * l))"
+    by (intro bigoI[of _ c]) auto
+  thus ?thesis by (auto simp: poly_log_def)
+qed
+
+lemma poly_log_dlog: "poly_log Discrete.log"
+  unfolding poly_log_def
+  apply (rule exI[of _ 1])
+  by simp
+
+lemma "(\<lambda>n . (Discrete.log::nat \<Rightarrow> nat) n + (Discrete.log n)^2) \<in> O(\<lambda>n . (Discrete.log n)^2)"
+  by real_asymp
+
 lemma append_imp_time_append_imp_time': 
   "append_imp_time t s = t + append_imp_time' (append_state.append_acc s) (append_xs s)"
 proof(induction "append_state.append_acc s" "append_xs s" arbitrary: t s rule: append_imp_time'.induct)
@@ -823,6 +1114,65 @@ fun append_imp_time'' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "append_imp_time'' _ 0 = 2"
 | "append_imp_time'' acc xs = append_imp_time'_iter_bound acc xs + append_imp_time'' (cons (hd_nat xs) acc) (tl_nat xs)"
 
+(* Extra Suc to account for rounding down :( *)
+lemma log_mult: "Discrete.log (n * m) \<le> Suc (Discrete.log n + Discrete.log m)"
+  by (auto simp add: log_altdef algebra_simps log_mult floor_add)
+thm log_twice
+
+
+lemma cons_bound: 
+  "Discrete.log (cons h t) \<le> Suc (Suc (Suc (Suc (Suc (Suc (3 * Discrete.log h + 2 * Discrete.log t))))))"
+proof-
+  have "Discrete.log (Suc ((h + t) * Suc (h + t) div 2 + h)) 
+    \<le> Suc (Suc (Discrete.log ((h + t) * Suc (h + t) div 2) + Discrete.log h))"
+    using dlog_add_bound dlog_Suc_bound by (meson Suc_le_mono le_trans)
+  also have "\<dots> \<le> Suc (Suc (Discrete.log ((h + t) * Suc (h + t)) + Discrete.log h))" (* Bounds are getting more and more loose lol*)
+    by (subst log_half) auto
+  also have "\<dots> \<le> Suc (Suc (Suc (Discrete.log (h + t) + Discrete.log (Suc (h + t)) + Discrete.log h)))"
+    using log_mult by (metis (no_types, opaque_lifting) Suc_plus add.commute nat_add_left_cancel_le)
+  also have "\<dots> \<le> Suc (Suc (Suc (Suc (2 * Discrete.log (h + t) + Discrete.log h))))"
+    using dlog_Suc_bound by force
+  also have "\<dots> \<le> Suc (Suc (Suc (Suc (2 * Suc (Discrete.log h + Discrete.log t) + Discrete.log h))))"
+    using dlog_add_bound by (meson Suc_le_mono add_mono_thms_linordered_semiring(3) mult_le_mono2)
+  also have "\<dots> \<le> Suc (Suc (Suc (Suc (Suc (Suc (3 * Discrete.log h + 2 * Discrete.log t))))))"
+    by simp 
+  finally show ?thesis
+    by (auto simp add: cons_def prod_encode_def triangle_def)
+qed
+
+
+
+lemma "cons prod_encode xs (cons (y#ys))"  
+
+lemma 
+  "Discrete.log (Primitives.append_acc acc xs) \<le> 3 * Suc (Discrete.log acc + Discrete.log xs)"
+proof(induction acc xs rule: Primitives.append_acc.induct)
+  case (1 acc)
+  then show ?case 
+    by simp
+next
+  case (2 acc xs)
+  then show ?case sorry
+qed
+
+lemma add_0_eq_nat: "x = 0+(x::nat)"
+  by simp
+
+lemma "append_imp_time'_iter_bound (cons x acc) xs \<le> 10 + (append_imp_time'_iter_bound acc (cons x xs))"
+  unfolding append_imp_time'_iter_bound_def 
+proof-
+
+
+qed
+  apply (subst (3) add.commute)
+  apply (rule add_mono)
+  apply simp
+  apply (rule add_mono)
+  
+  apply simp
+  apply (auto simp add: cons_def prod_encode_def triangle_def field_simps power2_eq_square)
+  
+
 
 lemma append_imp_time'_append_imp_time'': "append_imp_time' acc xs \<le> append_imp_time'' acc xs"
 proof (induction acc xs rule: append_imp_time''.induct)
@@ -848,6 +1198,32 @@ next
     using "2.IH" apply auto
     done
 qed
+
+lemma append_imp_time'_append_imp_time'': "append_imp_time'' acc xs \<le> "
+proof (induction acc xs rule: append_imp_time''.induct)
+  case (1 uu)
+  then show ?case by simp
+next
+  (* Why do I just now remember my rewrite? Try it here *)
+  case (2 acc v)
+  have s: "append_imp_time'_iter_bound acc xs = 19 + (2181 + 509 * Discrete.log xs + 30 * (Discrete.log xs)\<^sup>2)
+    + (58 + 10 * Discrete.log xs + 10 * Discrete.log acc)
+    + (2181 + 509 * Discrete.log xs + 30 * (Discrete.log xs)\<^sup>2)" for acc xs
+    by (auto simp add: append_imp_time'_iter_bound_def)
+  show ?case 
+    apply (simp only: s append_imp_time'.simps append_imp_time''.simps)
+    apply (rule add_le_mono)
+    apply (rule add_le_mono)
+    apply (rule add_le_mono)
+       apply (rule add_le_mono)
+    apply simp
+    using hd_imp_time'_non_rec_bound apply blast
+    using cons_imp_time'_non_rec_bound hd_nat_le apply auto[] apply (meson Discrete.log_le_iff add_le_mono1 add_left_mono le_refl le_trans mult_le_mono)
+    using tl_imp_time'_non_rec_bound apply blast
+    using "2.IH" apply auto
+    done
+qed
+
 
 (* Solving recursion will be a bit ugly, as acc grows... *)
 

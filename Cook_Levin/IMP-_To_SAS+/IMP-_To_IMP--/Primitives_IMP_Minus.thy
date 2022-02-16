@@ -500,6 +500,16 @@ definition "dsqrt'_imp_to_HOL_state p s =
 abbreviation 
   "dsqrt'_IMP_vars \<equiv> {dsqrt'_y_str, dsqrt'_L_str, dsqrt'_R_str, ''inc'', ''diff'', ''cond'', ''M'', ''M2''}"
 
+lemma square_imp_state_in_square_imp_to_HOL_state[simp]: "square_x (square_imp_to_HOL_state p S) = S (add_prefix p square_x_str)"
+  by (auto simp add: square_imp_to_HOL_state_def)
+lemma square_imp_state_out_square_imp_to_HOL_state[simp]: "square_square (square_imp_to_HOL_state p S) = S (add_prefix p square_square_str)"
+  by (auto simp add: square_imp_to_HOL_state_def)
+
+lemma cond_elim: "(\<And>v . v \<in> insert w W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)) 
+  \<Longrightarrow> (s (add_prefix p w) = s' (add_prefix p w) \<Longrightarrow> (\<And>v . v \<in> W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)) \<Longrightarrow> P)
+  \<Longrightarrow> P"
+  by auto
+
 lemma dsqrt'_IMP_Minus_correct_function_1: 
   "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p dsqrt'_L_str) = 
@@ -520,79 +530,86 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
     apply (erule Seq_tE)+
       by (auto simp add: dsqrt'_imp_to_HOL_state_def) 
 
-    thm square_imp_correct
-
     subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
       thm p
       using p(4,5,8,9) apply -
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p using p(24) by auto (* Here we already see how auto gets confused by all the crap in p*)
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+        also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
-      apply (all \<open>erule conjE\<close>)+
-         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
-         apply (force simp add: square_imp_correct power2_eq_square)
-                 apply (force simp add: square_imp_correct power2_eq_square)[]
-                 apply (force simp add: square_imp_correct power2_eq_square)[]
-      apply (force simp add: square_imp_correct power2_eq_square)[]
-      done
+         apply (all \<open>erule conjE\<close>)+
+          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
+            Otherwise do more "structured" accumulation of information with ML
+           *)
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+        done
 
-    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      thm p
+      using p(4,5,8,9) apply -
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p using p(29) by auto 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+        also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
-      apply (all \<open>erule conjE\<close>)+
-         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
-      (* I managed the previous one easier, so this should be doable without the splits as well*)
-      using [[linarith_split_limit = 25]] apply (simp_all split: if_splits)
-       apply safe
-      proof(goal_cases)
-        case (1 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        from 1(10) show ?case 
-        proof - (* There really seems to be a problem with this naming thingy *)
-          have "\<forall>x0. (x0 = dsqrt'_y_str \<or> x0 = dsqrt'_L_str \<or> x0 = dsqrt'_R_str \<or> x0 = CHR ''i'' # CHR ''n'' # mul_c_str \<or> x0 = ''diff'' \<or> x0 = ''cond'' \<or> x0 = ''M'' \<or> x0 = ''M2'' \<longrightarrow> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0)) = (x0 \<noteq> dsqrt'_y_str \<and> x0 \<noteq> dsqrt'_L_str \<and> x0 \<noteq> dsqrt'_R_str \<and> x0 \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> x0 \<noteq> ''diff'' \<and> x0 \<noteq> ''cond'' \<and> x0 \<noteq> ''M'' \<and> x0 \<noteq> ''M2'' \<or> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0))"
-            by meson
-          then have "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs)) = s2e (add_prefix p cs)"
-            by (smt (z3) "1"(10)) (* failed *) (* lol no *)
-          then have f1: "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p cs) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs) = s2e (add_prefix p cs))"
-            by presburger
-          then have f2: "if dsqrt'_y_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_y_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_y_str) = s2e (add_prefix p dsqrt'_y_str)"
-            by blast
-          have "if dsqrt'_L_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_L_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_L_str) = s2e (add_prefix p dsqrt'_L_str)"
-            using f1 by blast
-          then show ?thesis
-            using f2 f1 by force
-        qed
-      next
-        case (2 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case
-          by (force simp add: square_imp_correct power2_eq_square)[]
-      next
-        case (3 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case
-          by (force simp add: square_imp_correct power2_eq_square)[]
-      next
-        case (4 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        from 4(10) show ?case
-        proof -
-          have f1: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
-            by simp
-          have "\<forall>x0. (x0 = dsqrt'_y_str \<or> x0 = dsqrt'_L_str \<or> x0 = dsqrt'_R_str \<or> x0 = CHR ''i'' # CHR ''n'' # mul_c_str \<or> x0 = ''diff'' \<or> x0 = ''cond'' \<or> x0 = ''M'' \<or> x0 = ''M2'' \<longrightarrow> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0)) = (x0 \<noteq> dsqrt'_y_str \<and> x0 \<noteq> dsqrt'_L_str \<and> x0 \<noteq> dsqrt'_R_str \<and> x0 \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> x0 \<noteq> ''diff'' \<and> x0 \<noteq> ''cond'' \<and> x0 \<noteq> ''M'' \<and> x0 \<noteq> ''M2'' \<or> (if x0 = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p x0)) = s2e (add_prefix p x0))"
-            by meson
-          then have "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs)) = s2e (add_prefix p cs)"
-            by (smt (z3) "4"(10)) (* failed *)
-          then show ?thesis
-            using f1 by (smt (z3) fun_upd_apply list.inject same_append_eq)
-        qed
-      qed
+         apply (all \<open>erule conjE\<close>)+
+          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
+            Otherwise do more "structured" accumulation of information with ML
+           *)
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+        done
       done
-
   qed
+
+lemma square_x[simp]: "square_x \<lparr>square_x = x, square_square = out\<rparr> = x"
+  by auto
+lemma square_square[simp]: "square_square  \<lparr>square_x = x, square_square = out\<rparr> = out"
+  by auto
+lemma square_state[simp]: "\<lparr>square_x = (square_x s), square_square = (square_square s)\<rparr> = s"
+  by auto
 
 lemma dsqrt'_IMP_Minus_correct_time: 
   "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state p s)"
@@ -620,102 +637,76 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
       using p(4,5,8,9) apply -
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
-
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p using p(24) by auto (* Here we already see how auto gets confused by all the crap in p*)
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+        also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
-      apply (all \<open>erule conjE\<close>)+
-         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
-      using [[linarith_split_limit=23]]
-         apply (simp split: if_splits)
-      thm square_imp_correct
-      apply safe
-         apply (force simp add: square_imp_correct power2_eq_square)[]
-                 apply (force simp add: square_imp_correct power2_eq_square)[]
-      subgoal premises p using p(5,6,7) by (smt (z3) fun_upd_apply gr_implies_not0)
-                 apply (force simp add: square_imp_correct power2_eq_square)+
-    done
+         apply (all \<open>erule conjE\<close>)+
+          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
+            Otherwise do more "structured" accumulation of information with ML
+           *)
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+        done
 
-    subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      subgoal premises p' for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+        thm p' (* Strange, I am in timing but can still filter some timing infos, probably they already passed through a simp and their effects are 
+          ttherefore present?*) 
+      using p'(4,5,8,9) apply -
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p using p(29) by auto 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+        also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
-      apply (all \<open>erule conjE\<close>)+
-         apply (simp_all only: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_to_HOL_state_def)
-      using [[linarith_split_limit = 25]] apply (simp_all split: if_splits)
-       apply safe
-      proof(goal_cases)
-        case (1 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case  
-          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
-         (* Again, problems with the naming stuff, everywhere maybe try changing the style of correctness lemma *)
-         proof -
-           assume a1: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
-           have "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
-             by simp
-           then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p dsqrt'_L_str), dsqrt'_state_R = s2e (add_prefix p ''M'')\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s (add_prefix p dsqrt'_L_str), dsqrt'_state_R = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2\<rparr>"
-             using a1 by (smt (z3) fun_upd_apply list.inject same_append_eq)
-         qed
-      next
-        case (2 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case
-          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
-        proof -
-          assume a1: "(s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s (add_prefix p dsqrt'_y_str)"
-          assume a2: "s2e (add_prefix p dsqrt'_y_str) < (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)"
-          assume a3: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
-          have f4: "True \<noteq> False"
-            by presburger
-          have f5: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
-            by simp
-          have "CHR ''y'' \<noteq> CHR ''d''"
-            by force
-          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p dsqrt'_L_str), dsqrt'_state_R = s2e (add_prefix p ''M'')\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, dsqrt'_state_R = s (add_prefix p dsqrt'_R_str)\<rparr>"
-            using f5 f4 a3 a2 a1 by (smt (z3) fun_upd_other linorder_not_less list.inject same_append_eq)
-        qed
-      next
-        case (3 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case
-          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
-        proof -
-          assume a1: "\<not> (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s (add_prefix p dsqrt'_y_str)"
-          assume a2: "(s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2 * ((s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2) \<le> s2e (add_prefix p dsqrt'_y_str)"
-          assume a3: "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
-          have f4: "True \<noteq> False"
-            by meson
-          have f5: "\<forall>b ba bb bc bd be bf bg bh bi bj bk bl bm bn bo. (Char b ba bb bc bd be bf bg = Char bh bi bj bk bl bm bn bo) = ((\<not> b) \<noteq> bh \<and> (\<not> ba) \<noteq> bi \<and> (\<not> bb) \<noteq> bj \<and> (\<not> bc) \<noteq> bk \<and> (\<not> bd) \<noteq> bl \<and> (\<not> be) \<noteq> bm \<and> (\<not> bf) \<noteq> bn \<and> (\<not> bg) \<noteq> bo)"
-            by simp
-          have f6: "CHR ''y'' \<noteq> CHR ''i''"
-            by blast
-          have f7: "CHR ''y'' \<noteq> CHR ''d''"
-            by force
-          have "CHR ''y'' \<noteq> CHR ''M''"
-            by blast
-          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p ''M''), dsqrt'_state_R = s2e (add_prefix p dsqrt'_R_str)\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s (add_prefix p dsqrt'_L_str), dsqrt'_state_R = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2\<rparr>"
-            using f7 f6 f5 f4 a3 a2 a1 by (smt (z3) fun_upd_other list.inject same_append_eq)
-        qed
-      next
-        case (4 x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g yg xh s2h yh xi s2i yi xj xk)
-        then show ?case
-          apply (simp add: dsqrt'_imp_time_acc'' square_imp_correct power2_eq_square)
-        proof -
-          assume "\<And>v. v = dsqrt'_y_str \<or> v = dsqrt'_L_str \<or> v = dsqrt'_R_str \<or> v = CHR ''i'' # CHR ''n'' # mul_c_str \<or> v = ''diff'' \<or> v = ''cond'' \<or> v = ''M'' \<or> v = ''M2'' \<Longrightarrow> (if v = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p v)) = s2e (add_prefix p v)"
-          then have f1: "\<forall>cs. cs \<noteq> dsqrt'_y_str \<and> cs \<noteq> dsqrt'_L_str \<and> cs \<noteq> dsqrt'_R_str \<and> cs \<noteq> CHR ''i'' # CHR ''n'' # mul_c_str \<and> cs \<noteq> ''diff'' \<and> cs \<noteq> ''cond'' \<and> cs \<noteq> ''M'' \<and> cs \<noteq> ''M2'' \<or> (if cs = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p cs) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p cs) = s2e (add_prefix p cs))"
-            by (smt (z3))
-          then have f2: "if dsqrt'_y_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_y_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_y_str) = s2e (add_prefix p dsqrt'_y_str)"
-            by blast
-          have f3: "if ''M'' = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p ''M'') else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p ''M'') = s2e (add_prefix p ''M'')"
-            using f1 by blast
-          have "if dsqrt'_R_str = CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_square_str then 0 = s2e (add_prefix p dsqrt'_R_str) else (s(add_prefix p (CHR ''i'' # CHR ''n'' # mul_c_str) := Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''diff'' := s (add_prefix p dsqrt'_R_str) - Suc (s (add_prefix p dsqrt'_L_str)), add_prefix p ''M'' := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, add_prefix p (CHR ''s'' # CHR ''q'' # CHR ''u'' # CHR ''a'' # CHR ''r'' # CHR ''e'' # CHR ''.'' # square_x_str) := (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2)) (add_prefix p dsqrt'_R_str) = s2e (add_prefix p dsqrt'_R_str)"
-            using f1 by blast
-          then show "dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s2e (add_prefix p dsqrt'_y_str), dsqrt'_state_L = s2e (add_prefix p ''M''), dsqrt'_state_R = s2e (add_prefix p dsqrt'_R_str)\<rparr> = dsqrt'_imp_time 0 \<lparr>dsqrt'_state_y = s (add_prefix p dsqrt'_y_str), dsqrt'_state_L = (s (add_prefix p dsqrt'_L_str) + s (add_prefix p dsqrt'_R_str)) div 2, dsqrt'_state_R = s (add_prefix p dsqrt'_R_str)\<rparr>"
-            using f3 f2 by simp
-        qed
-      qed
+         apply (all \<open>erule conjE\<close>)+
+          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
+            Otherwise do more "structured" accumulation of information with ML
+
+            Interesting guess: Only cases 1/4 need to look at the timing(check added lemmas), the other ones are recognized to be impossible?
+           *)
+          subgoal premises p 
+          using p apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
+                Cons_eq_append_conv power2_eq_square square_imp_time.simps split: if_splits)
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p 
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
+                Cons_eq_append_conv power2_eq_square split: if_splits) 
+          done
+          subgoal premises p thm p (*Here I need them... Check again*)
+          using p(1,13,15-) p(14) apply (elim cond_elim)
+          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
+                Cons_eq_append_conv power2_eq_square square_imp_to_HOL_state_def split: if_splits)
+          using p(2-12) apply (auto simp add: square_imp_to_HOL_state_def)
+          done
+        done
       done
   qed
 
