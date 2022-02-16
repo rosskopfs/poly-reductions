@@ -142,6 +142,7 @@ function (sequential, domintros) all_subprograms_stack :: "all_sub list \<Righta
 "all_subprograms_stack (While_f v c c' # s) = all_subprograms_stack (add_res ([(While v c), com.SKIP] @ c' @ 
   (map (\<lambda> x. x ;; (While v c))  c')) s)"
   by pat_completeness auto
+termination sorry 
 
 function all_subprograms_stack_nat :: "nat  \<Rightarrow> nat" where 
 "all_subprograms_stack_nat s = (let h = hd_nat s; con = hd_nat h ; fs = nth_nat (Suc 0) h ; sn = nth_nat (Suc (Suc 0)) h;
