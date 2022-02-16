@@ -205,5 +205,9 @@ corollary dlog_in_\<Theta>ln: "Discrete.log \<in> \<Theta>(ln)"
 corollary dlog_\<Theta>_ln: "\<Theta>(Discrete.log) = \<Theta>(ln)"
   using dlog_in_\<Theta>ln by (meson landau_theta.cong_bigtheta)
 
+(* So termination proofs can use the correct measure function without changes *)
+term measure
+hide_const (open) measure
+term measure
 
 end
