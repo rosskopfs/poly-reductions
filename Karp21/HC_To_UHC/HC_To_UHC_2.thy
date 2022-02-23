@@ -205,7 +205,7 @@ lemma verts_G_G':
 
 lemma card_verts_G_G':
   shows "card (verts G') > 1"
-  by (metis (no_types, hide_lams) G'_properties(2) verts_G card_greater_1_contains_two_elements
+  by (metis (no_types, opaque_lifting) G'_properties(2) verts_G card_greater_1_contains_two_elements
       contains_two_card_greater_1 prod.inject verts_G_G'(2))
 
 

@@ -1057,7 +1057,7 @@ next
             by auto
           then have "sublist [v1, v2] [(Edge a e 0), (Edge u e 0), (Edge u e 1), (Edge a e 1)]"
             using 3 Cons sublist_set_ls1_4
-            by (metis (no_types, hide_lams) True hc_node.inject(2) v1_def)
+            by (metis (no_types, opaque_lifting) True hc_node.inject(2) v1_def)
           then have 5: "v2 \<in> set [(Edge a e 0), (Edge u e 0), (Edge u e 1), (Edge a e 1)]"
             using sublist_implies_in_set(2)
             by force

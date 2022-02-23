@@ -103,7 +103,7 @@ next
     case True
     then have "ls1 = []"
       using assms Cons
-      by (metis (no_types, hide_lams) Nil_is_append_conv append.assoc append_Cons_eq_iff
+      by (metis (no_types, opaque_lifting) Nil_is_append_conv append.assoc append_Cons_eq_iff
           append_self_conv2 distinct.simps(2) in_set_conv_decomp list.distinct(1) split_list)
     then have "a#L = ls2"
       using Cons
@@ -149,7 +149,7 @@ next
     case True
     then have "ls1 = []"
       using assms Cons
-      by (metis (no_types, hide_lams) Nil_is_append_conv append.assoc
+      by (metis (no_types, opaque_lifting) Nil_is_append_conv append.assoc
           append_Cons_eq_iff append_self_conv2 distinct.simps(2) in_set_conv_decomp
           list.distinct(1) split_list)
     then have "a#L = ls2"
@@ -560,7 +560,7 @@ lemma sublist_hd_last_only_2_elems:
   assumes "sublist [a,b] cs" "a = hd cs" "b = last cs" "distinct cs"
   shows "cs = [a, b]"
   by (smt assms distinct1_rotate hd_append last.simps list.exhaust_sel list.set_intros(1)
-        rotate1_hd_tl sublist_cons sublist_order.eq_iff
+        rotate1_hd_tl sublist_cons sublist_order.order.eq_iff
         sublist_set_last_ls1_2 sublist_v1_hd_v2_hd_tl)
 
 lemma two_sublist_distinct_same_last:
@@ -654,7 +654,7 @@ lemma a_in_set_cy_exists_sublist:
   assumes "a \<in> set Cy" "a\<noteq> last Cy"
   shows "\<exists>b. sublist [a, b] Cy"
   by (metis append_Cons append_Nil assms hd_Cons_tl in_set_conv_decomp last_snoc sublist_appendI
-        sublist_order.eq_iff sublist_order.order.trans)
+        sublist_order.order.eq_iff sublist_order.order.trans)
 
 lemma b_in_Cycle_exists_sublist:
   assumes "b \<in> set Cycle" "length Cycle \<ge> 2" "hd Cycle = last Cycle"
