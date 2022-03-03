@@ -2977,6 +2977,85 @@ lemma append_IMP_Minus_correct[functional_correctness]:
         append_IMP_Minus_correct_effects 
   by auto
 
+
+subsection \<open>List reverse\<close>
+
+record reverse_nat_acc_state =
+  reverse_nat_acc_acc::nat
+  reverse_nat_acc_n::nat
+  reverse_nat_acc_ret::nat
+
+abbreviation "reverse_nat_acc_prefix \<equiv> ''append.''"
+abbreviation "reverse_nat_acc_acc_str \<equiv> ''acc''"
+abbreviation "reverse_nat_acc_n_str \<equiv> ''n''"
+abbreviation "reverse_nat_acc_ret_str \<equiv> ''ret''"
+
+definition "reverse_nat_acc_state_upd s \<equiv>
+      let
+        hd_xs' = reverse_nat_acc_n s;
+        hd_ret' = 0;
+        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+        hd_state_ret = hd_imp (hd_state);
+        cons_h' = hd_ret hd_state_ret;
+        cons_t' = reverse_nat_acc_acc s;
+        cons_ret' = 0;
+        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+        cons_ret_state = cons_imp cons_state;
+        reverse_nat_acc_acc' = cons_ret cons_ret_state;
+        tl_xs' = reverse_nat_acc_n s;
+        tl_ret' = 0;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_state_ret = tl_imp tl_state;
+        reverse_nat_acc_n' = tl_ret tl_state_ret;
+        ret = \<lparr>reverse_nat_acc_acc = reverse_nat_acc_acc',
+               reverse_nat_acc_n = reverse_nat_acc_n',
+               reverse_nat_acc_ret = reverse_nat_acc_ret s\<rparr>
+      in
+        ret
+"
+
+definition "reverse_nat_acc_imp_compute_loop_condition s \<equiv>
+  (let
+    condition = reverse_nat_acc_n s
+   in condition
+  )"
+
+definition "reverse_nat_acc_imp_after_loop s \<equiv>
+  (let
+    ret = \<lparr>reverse_nat_acc_acc = reverse_nat_acc_acc s,
+           reverse_nat_acc_n = reverse_nat_acc_n s,
+           reverse_nat_acc_ret = reverse_nat_acc_acc s\<rparr>
+   in ret
+  )"
+
+lemmas reverse_nat_acc_imp_subprogram_simps =
+  reverse_nat_acc_imp_after_loop_def
+  reverse_nat_acc_state_upd_def
+  reverse_nat_acc_imp_compute_loop_condition_def
+
+function reverse_nat_acc_imp:: "reverse_nat_acc_state \<Rightarrow> reverse_nat_acc_state" where
+  "reverse_nat_acc_imp s =
+  (if reverse_nat_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let next_iteration = reverse_nat_acc_imp (reverse_nat_acc_state_upd s)
+      in next_iteration)
+  else
+    (let ret = reverse_nat_acc_imp_after_loop s in ret)
+  )"
+  by simp+
+termination by (relation "measure (\<lambda>s. reverse_nat_acc_n s)")
+    (simp add: tl_imp_correct reverse_nat_acc_imp_subprogram_simps)+
+
+declare reverse_nat_acc_imp.simps [simp del]
+
+lemma reverse_nat_acc_imp_correct:
+  "reverse_nat_acc_ret (reverse_nat_acc_imp s)
+    = reverse_nat_acc (reverse_nat_acc_acc s) (reverse_nat_acc_n s)"
+  by(induction s rule: reverse_nat_acc_imp.induct)
+    (subst reverse_nat_acc_imp.simps,
+      simp add: cons_imp_correct hd_imp_correct tl_imp_correct reverse_nat_acc_imp_subprogram_simps)
+
+
 subsection \<open>Logical And\<close>
 
 record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
