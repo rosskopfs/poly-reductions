@@ -3319,6 +3319,145 @@ lemma reverse_nat_acc_IMP_Minus_correct:
   by (auto simp: reverse_nat_acc_IMP_Minus_correct_time)
     (meson reverse_nat_acc_IMP_Minus_correct_effects set_mono_prefix)
 
+
+record reverse_nat_state =
+  reverse_nat_n::nat
+  reverse_nat_ret::nat
+
+abbreviation "reverse_nat_prefix \<equiv> ''reverse_nat.''"
+abbreviation "reverse_nat_n_str \<equiv> ''n''"
+abbreviation "reverse_nat_ret_str \<equiv> ''ret''"
+
+
+definition "reverse_nat_state_upd s \<equiv>
+  (let
+      reverse_nat_acc_acc' = 0;
+      reverse_nat_acc_n' = reverse_nat_n s;
+      reverse_nat_acc_ret' = 0;
+      reverse_nat_acc_state = \<lparr>reverse_nat_acc_acc = reverse_nat_acc_acc',
+                            reverse_nat_acc_n = reverse_nat_acc_n',
+                            reverse_nat_acc_ret = reverse_nat_acc_ret'\<rparr>;
+      reverse_nat_acc_ret_state = reverse_nat_acc_imp reverse_nat_acc_state;
+      reverse_nat_ret' = reverse_nat_acc_ret reverse_nat_acc_ret_state;
+      reverse_nat_n' = reverse_nat_n s;
+      ret = \<lparr>reverse_nat_n = reverse_nat_n',
+             reverse_nat_ret = reverse_nat_ret' \<rparr>
+    in
+      ret
+)"
+
+function reverse_nat_imp:: "reverse_nat_state \<Rightarrow> reverse_nat_state" where
+  "reverse_nat_imp s =
+  (let
+      ret = reverse_nat_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. reverse_nat_n s)") simp
+
+lemmas [simp del] = reverse_nat_imp.simps
+
+lemma reverse_nat_imp_correct:
+  "reverse_nat_ret (reverse_nat_imp s) = reverse_nat (reverse_nat_n s)"
+  by (simp add: reverse_nat_imp.simps reverse_nat_acc_imp_correct reverse_nat_def Let_def
+      reverse_nat_state_upd_def)
+
+function reverse_nat_imp_time:: "nat \<Rightarrow> reverse_nat_state \<Rightarrow> nat" where
+  "reverse_nat_imp_time t s =
+  (let
+      reverse_nat_acc_acc' = 0;
+      t = t + 2;
+      reverse_nat_acc_n' = reverse_nat_n s;
+      t = t + 2;
+      reverse_nat_acc_ret' = 0;
+      t = t + 2;
+      reverse_nat_acc_state = \<lparr>reverse_nat_acc_acc = reverse_nat_acc_acc',
+                            reverse_nat_acc_n = reverse_nat_acc_n',
+                            reverse_nat_acc_ret = reverse_nat_acc_ret'\<rparr>;
+      reverse_nat_acc_ret_state = reverse_nat_acc_imp reverse_nat_acc_state;
+      t = t + reverse_nat_acc_imp_time 0 reverse_nat_acc_state;
+      reverse_nat_ret' = reverse_nat_acc_ret reverse_nat_acc_ret_state;
+      t = t + 2;
+      ret = t
+    in
+      ret
+  )"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). reverse_nat_n s)") simp
+
+lemmas [simp del] = reverse_nat_imp_time.simps
+
+lemma reverse_nat_imp_time_acc:
+  "(reverse_nat_imp_time (Suc t) s) = Suc (reverse_nat_imp_time t s)"
+  by (simp add: reverse_nat_imp_time.simps)
+
+lemma reverse_nat_imp_time_acc_2:
+  "(reverse_nat_imp_time x s) = x + (reverse_nat_imp_time 0 s)"
+  by (simp add: reverse_nat_imp_time.simps)
+
+definition reverse_nat_IMP_Minus where
+  "reverse_nat_IMP_Minus \<equiv>
+  \<comment> \<open>reverse_nat_acc_acc' = 0;\<close>
+  (reverse_nat_acc_prefix @ reverse_nat_acc_acc_str) ::= (A (N 0));;
+  \<comment> \<open>reverse_nat_acc_n' = reverse_nat_n s;\<close>
+  (reverse_nat_acc_prefix @ reverse_nat_acc_n_str) ::= (A (V reverse_nat_n_str));;
+  \<comment> \<open>reverse_nat_acc_ret' = 0;\<close>
+  (reverse_nat_acc_prefix @ reverse_nat_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>reverse_nat_acc_state = \<lparr>reverse_nat_acc_acc = reverse_nat_acc_acc',\<close>
+  \<comment> \<open>                         reverse_nat_acc_n = reverse_nat_acc_n',\<close>
+  \<comment> \<open>                         reverse_nat_acc_ret = reverse_nat_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>reverse_nat_acc_ret_state = reverse_nat_acc_imp reverse_nat_acc_state;\<close>
+  invoke_subprogram reverse_nat_acc_prefix reverse_nat_acc_IMP_Minus;;
+  \<comment> \<open>reverse_nat_ret' = reverse_nat_acc_ret reverse_nat_acc_ret_state;\<close>
+  reverse_nat_ret_str ::= (A (V (reverse_nat_acc_prefix @ reverse_nat_acc_ret_str)))
+"
+
+abbreviation
+  "reverse_nat_IMP_vars \<equiv>
+  {reverse_nat_n_str, reverse_nat_ret_str}"
+
+definition "reverse_nat_imp_to_HOL_state p s =
+  \<lparr>reverse_nat_n = (s (add_prefix p reverse_nat_n_str)),
+   reverse_nat_ret = (s (add_prefix p reverse_nat_ret_str))\<rparr>"
+
+lemma reverse_nat_IMP_Minus_correct_function:
+  "(invoke_subprogram p reverse_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p reverse_nat_ret_str)
+      = reverse_nat_ret (reverse_nat_imp (reverse_nat_imp_to_HOL_state p s))"
+  by (fastforce elim: reverse_nat_acc_IMP_Minus_correct simp: reverse_nat_imp_to_HOL_state_def
+      reverse_nat_imp.simps reverse_nat_state_upd_def reverse_nat_acc_imp_to_HOL_state_def
+      reverse_nat_IMP_Minus_def invoke_subprogram_append)
+
+lemma reverse_nat_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ reverse_nat_pref) reverse_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix reverse_nat_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma reverse_nat_IMP_Minus_correct_time:
+  "(invoke_subprogram p reverse_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = reverse_nat_imp_time 0 (reverse_nat_imp_to_HOL_state p s)"
+  by (fastforce elim: reverse_nat_acc_IMP_Minus_correct simp: reverse_nat_imp_to_HOL_state_def
+      reverse_nat_imp_time.simps reverse_nat_acc_imp_to_HOL_state_def reverse_nat_IMP_Minus_def
+      invoke_subprogram_append)
+
+lemma reverse_nat_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) reverse_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (reverse_nat_imp_time 0 (reverse_nat_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) reverse_nat_ret_str) =
+        reverse_nat_ret (reverse_nat_imp (reverse_nat_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using reverse_nat_IMP_Minus_correct_time reverse_nat_IMP_Minus_correct_function
+    reverse_nat_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
 subsection \<open>Logical And\<close>
 
 record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
