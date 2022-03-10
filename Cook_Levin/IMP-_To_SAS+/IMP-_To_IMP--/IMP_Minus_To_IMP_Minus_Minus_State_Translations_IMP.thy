@@ -295,4 +295,167 @@ lemma n_hashes_acc_IMP_Minus_correct:
   by (auto simp: n_hashes_acc_IMP_Minus_correct_time)
     (meson n_hashes_acc_IMP_Minus_correct_effects set_mono_prefix)
 
+record n_hashes_tail_state =
+  n_hashes_tail_n::nat
+  n_hashes_tail_ret::nat
+
+abbreviation "n_hashes_tail_prefix \<equiv> ''n_hashes_tail.''"
+abbreviation "n_hashes_tail_n_str \<equiv> ''n''"
+abbreviation "n_hashes_tail_ret_str \<equiv> ''ret''"
+
+definition "n_hashes_tail_state_upd s =
+  (let
+      n_hashes_acc_acc' = 0;
+      n_hashes_acc_n' = n_hashes_tail_n s;
+      n_hashes_acc_ret' = 0;
+      n_hashes_acc_state = \<lparr>n_hashes_acc_acc = n_hashes_acc_acc',
+                            n_hashes_acc_n = n_hashes_acc_n',
+                            n_hashes_acc_ret = n_hashes_acc_ret'\<rparr>;
+      n_hashes_acc_ret_state = n_hashes_acc_imp n_hashes_acc_state;
+      reverse_nat_n' = n_hashes_acc_ret n_hashes_acc_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                             reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      n_hashes_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      n_hashes_tail_n' = n_hashes_tail_n s;
+      ret = \<lparr>n_hashes_tail_n = n_hashes_tail_n',
+             n_hashes_tail_ret = n_hashes_tail_ret'\<rparr>
+    in
+      ret
+  )"
+
+function n_hashes_tail_imp:: "n_hashes_tail_state \<Rightarrow> n_hashes_tail_state" where
+  "n_hashes_tail_imp s =
+  (let
+      ret = n_hashes_tail_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. n_hashes_tail_n s)") simp
+
+declare n_hashes_tail_imp.simps [simp del]
+
+lemma n_hashes_tail_imp_correct:
+  "n_hashes_tail_ret (n_hashes_tail_imp s) = n_hashes_tail (n_hashes_tail_n s)"
+  by (simp add: n_hashes_acc_imp_correct n_hashes_tail_def n_hashes_tail_imp.simps
+      n_hashes_tail_state_upd_def reverse_nat_imp_correct)
+
+function n_hashes_tail_imp_time:: "nat \<Rightarrow> n_hashes_tail_state \<Rightarrow> nat" where
+  "n_hashes_tail_imp_time t s =
+  (let
+      n_hashes_acc_acc' = 0;
+      t = t + 2;
+      n_hashes_acc_n' = n_hashes_tail_n s;
+      t = t + 2;
+      n_hashes_acc_ret' = 0;
+      t = t + 2;
+      n_hashes_acc_state = \<lparr>n_hashes_acc_acc = n_hashes_acc_acc',
+                            n_hashes_acc_n = n_hashes_acc_n',
+                            n_hashes_acc_ret = n_hashes_acc_ret'\<rparr>;
+      n_hashes_acc_ret_state = n_hashes_acc_imp n_hashes_acc_state;
+      t = t + n_hashes_acc_imp_time 0 n_hashes_acc_state;
+      reverse_nat_n' = n_hashes_acc_ret n_hashes_acc_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                             reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      n_hashes_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      ret = t
+    in
+      ret
+  )"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). n_hashes_tail_n s)") simp
+
+lemmas [simp del] = n_hashes_tail_imp_time.simps
+
+lemma n_hashes_tail_imp_time_acc:
+  "(n_hashes_tail_imp_time (Suc t) s) = Suc (n_hashes_tail_imp_time t s)"
+  by (simp add: n_hashes_tail_imp_time.simps Let_def)
+
+lemma n_hashes_tail_imp_time_acc_2:
+  "(n_hashes_tail_imp_time x s) = x + (n_hashes_tail_imp_time 0 s)"
+  by (simp add: n_hashes_tail_imp_time.simps Let_def)
+
+definition n_hashes_tail_IMP_Minus where
+  "n_hashes_tail_IMP_Minus \<equiv>
+    \<comment> \<open>n_hashes_acc_acc' = 0;\<close>
+    (n_hashes_acc_prefix @ n_hashes_acc_acc_str) ::= (A (N 0));;
+    \<comment> \<open>n_hashes_acc_n' = n_hashes_tail_n s;\<close>
+    (n_hashes_acc_prefix @ n_hashes_acc_n_str) ::= (A (V n_hashes_tail_n_str));;
+    \<comment> \<open>n_hashes_acc_ret' = 0;\<close>
+    (n_hashes_acc_prefix @ n_hashes_acc_ret_str) ::= (A (N 0));;
+    \<comment> \<open>n_hashes_acc_state = \<lparr>n_hashes_acc_acc = n_hashes_acc_acc',\<close>
+    \<comment> \<open>                      n_hashes_acc_n = n_hashes_acc_n',\<close>
+    \<comment> \<open>                      n_hashes_acc_ret = n_hashes_acc_ret'\<rparr>;\<close>
+    \<comment> \<open>n_hashes_acc_ret_state = n_hashes_acc_imp n_hashes_acc_state;\<close>
+    invoke_subprogram n_hashes_acc_prefix n_hashes_acc_IMP_Minus;;
+    \<comment> \<open>reverse_nat_n' = n_hashes_acc_ret n_hashes_acc_ret_state;\<close>
+    (reverse_nat_prefix @ reverse_nat_n_str)
+      ::= (A (V (n_hashes_acc_prefix @ n_hashes_acc_ret_str)));;
+    \<comment> \<open>reverse_nat_ret' = 0;\<close>
+    (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+    \<comment> \<open>reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',\<close>
+    \<comment> \<open>                       reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+    \<comment> \<open>reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+    invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+    \<comment> \<open>n_hashes_tail_ret' = reverse_nat_ret reverse_nat_ret_state;\<close>
+    n_hashes_tail_ret_str ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)))
+"
+
+abbreviation
+  "n_hashes_tail_IMP_vars \<equiv>
+  {n_hashes_tail_n_str, n_hashes_tail_ret_str}"
+
+definition "n_hashes_tail_imp_to_HOL_state p s =
+  \<lparr>n_hashes_tail_n = (s (add_prefix p n_hashes_tail_n_str)),
+   n_hashes_tail_ret = (s (add_prefix p n_hashes_tail_ret_str))\<rparr>"
+
+lemmas n_hashes_tail_state_translators =
+  n_hashes_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+  n_hashes_tail_imp_to_HOL_state_def
+
+lemma n_hashes_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p n_hashes_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p n_hashes_tail_ret_str)
+      = n_hashes_tail_ret (n_hashes_tail_imp (n_hashes_tail_imp_to_HOL_state p s))"
+  by (fastforce elim: reverse_nat_IMP_Minus_correct n_hashes_acc_IMP_Minus_correct
+      simp: n_hashes_tail_state_translators n_hashes_tail_state_upd_def
+      n_hashes_tail_IMP_Minus_def invoke_subprogram_append n_hashes_tail_imp.simps)
+
+lemma n_hashes_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ n_hashes_tail_pref) n_hashes_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix n_hashes_tail_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma n_hashes_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p n_hashes_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = n_hashes_tail_imp_time 0 (n_hashes_tail_imp_to_HOL_state p s)"
+  by (fastforce elim: n_hashes_acc_IMP_Minus_correct reverse_nat_IMP_Minus_correct
+      simp: n_hashes_tail_imp_time.simps n_hashes_tail_imp_time_acc n_hashes_tail_imp_time_acc_2
+      n_hashes_tail_state_translators Let_def n_hashes_tail_IMP_Minus_def invoke_subprogram_append)
+
+lemma n_hashes_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) n_hashes_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (n_hashes_tail_imp_time 0 (n_hashes_tail_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) n_hashes_tail_ret_str) =
+        n_hashes_tail_ret (n_hashes_tail_imp (n_hashes_tail_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using n_hashes_tail_IMP_Minus_correct_time n_hashes_tail_IMP_Minus_correct_function
+    n_hashes_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
 end
