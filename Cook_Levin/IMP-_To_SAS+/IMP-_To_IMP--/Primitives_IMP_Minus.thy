@@ -2995,7 +2995,7 @@ definition "reverse_nat_acc_state_upd s \<equiv>
         hd_xs' = reverse_nat_acc_n s;
         hd_ret' = 0;
         hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-        hd_state_ret = hd_imp (hd_state);
+        hd_state_ret = hd_imp hd_state;
         cons_h' = hd_ret hd_state_ret;
         cons_t' = reverse_nat_acc_acc s;
         cons_ret' = 0;
@@ -3055,6 +3055,269 @@ lemma reverse_nat_acc_imp_correct:
     (subst reverse_nat_acc_imp.simps,
       simp add: cons_imp_correct hd_imp_correct tl_imp_correct reverse_nat_acc_imp_subprogram_simps)
 
+definition "reverse_nat_acc_state_upd_time t s \<equiv>
+      let
+        hd_xs' = reverse_nat_acc_n s;
+        t = t + 2;
+        hd_ret' = 0;
+        t = t + 2;
+        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+        hd_state_ret = hd_imp hd_state;
+        t = t + hd_imp_time 0 hd_state;
+        cons_h' = hd_ret hd_state_ret;
+        t = t + 2;
+        cons_t' = reverse_nat_acc_acc s;
+        t = t + 2;
+        cons_ret' = 0;
+        t = t + 2;
+        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+        cons_ret_state = cons_imp cons_state;
+        t = t + cons_imp_time 0 cons_state;
+        reverse_nat_acc_acc' = cons_ret cons_ret_state;
+        t = t + 2;
+        tl_xs' = reverse_nat_acc_n s;
+        t = t + 2;
+        tl_ret' = 0;
+        t = t + 2;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_state_ret = tl_imp tl_state;
+        t = t + tl_imp_time 0 tl_state;
+        reverse_nat_acc_n' = tl_ret tl_state_ret;
+        t = t + 2;
+        ret = t
+      in
+        ret
+"
+
+definition "reverse_nat_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+    condition = reverse_nat_acc_n s;
+    t = t + 2;
+    ret = t
+   in ret
+  )"
+
+definition "reverse_nat_acc_imp_after_loop_time t s \<equiv>
+  (let
+    t = t + 2;
+    ret = t
+   in ret
+  )"
+
+function reverse_nat_acc_imp_time:: "nat \<Rightarrow> reverse_nat_acc_state \<Rightarrow> nat" where
+  "reverse_nat_acc_imp_time t s =
+  reverse_nat_acc_imp_compute_loop_condition_time 0 s +
+  (if reverse_nat_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let
+        t = t + 1;
+        next_iteration
+          = reverse_nat_acc_imp_time (t + reverse_nat_acc_state_upd_time 0 s)
+                                     (reverse_nat_acc_state_upd s)
+     in next_iteration)
+  else
+    (let
+        t = t + 2;
+        ret = t + reverse_nat_acc_imp_after_loop_time 0 s
+     in ret)
+  )"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t,s). reverse_nat_acc_n s)")
+    (simp add: tl_imp_correct reverse_nat_acc_imp_subprogram_simps)+
+
+lemmas reverse_nat_acc_imp_subprogram_time_simps =
+  reverse_nat_acc_imp_subprogram_simps
+  reverse_nat_acc_imp_after_loop_time_def
+  reverse_nat_acc_state_upd_time_def
+  reverse_nat_acc_imp_compute_loop_condition_time_def
+
+lemmas [simp del] = reverse_nat_acc_imp_time.simps
+
+lemma reverse_nat_acc_imp_time_acc:
+  "(reverse_nat_acc_imp_time (Suc t) s) = Suc (reverse_nat_acc_imp_time t s)"
+  by (induction t s rule: reverse_nat_acc_imp_time.induct)
+    ((subst (1 2) reverse_nat_acc_imp_time.simps); (simp add: reverse_nat_acc_state_upd_def))
+
+lemma reverse_nat_acc_imp_time_acc_2:
+  "(reverse_nat_acc_imp_time x s) = x + (reverse_nat_acc_imp_time 0 s)"
+  by (induction x arbitrary: s) (simp add: reverse_nat_acc_imp_time_acc)+
+
+lemma reverse_nat_acc_imp_time_acc_2_simp:
+  "(reverse_nat_acc_imp_time (reverse_nat_acc_state_upd_time 0 s) s') =
+   (reverse_nat_acc_state_upd_time 0 s) + (reverse_nat_acc_imp_time 0 s')"
+  by (rule reverse_nat_acc_imp_time_acc_2)
+
+abbreviation "reverse_nat_acc_while_cond \<equiv> ''condition''"
+
+definition "reverse_nat_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = n_hashes_n s\<close>
+  reverse_nat_acc_while_cond ::= (A (V reverse_nat_acc_n_str))"
+
+definition "reverse_nat_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>hd_xs' = reverse_nat_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V reverse_nat_acc_n_str));;
+  \<comment> \<open>hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>hd_state_ret = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>cons_h' = hd_ret hd_state_ret;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>cons_t' = reverse_nat_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V reverse_nat_acc_acc_str));;
+  \<comment> \<open>cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  \<comment> \<open>reverse_nat_acc_acc' = cons_ret cons_ret_state;\<close>
+  reverse_nat_acc_acc_str ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>tl_xs' = reverse_nat_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V reverse_nat_acc_n_str));;
+  \<comment> \<open>tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>tl_state_ret = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  \<comment> \<open>reverse_nat_acc_n' = tl_ret tl_state_ret;\<close>
+  reverse_nat_acc_n_str ::= (A (V (tl_prefix @ tl_ret_str)))
+"
+
+definition "reverse_nat_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>ret = s\<close>
+  ((reverse_nat_acc_ret_str) ::= (A (V reverse_nat_acc_acc_str)))"
+
+definition reverse_nat_acc_IMP_Minus where
+  "reverse_nat_acc_IMP_Minus \<equiv>
+  reverse_nat_acc_IMP_init_while_cond;;
+  WHILE reverse_nat_acc_while_cond \<noteq>0 DO (
+    reverse_nat_acc_IMP_loop_body;;
+    reverse_nat_acc_IMP_init_while_cond
+  );;
+  reverse_nat_acc_IMP_after_loop"
+
+abbreviation
+  "reverse_nat_acc_IMP_vars \<equiv>
+  {reverse_nat_acc_acc_str, reverse_nat_acc_n_str, reverse_nat_acc_ret_str}"
+
+lemmas reverse_nat_acc_IMP_subprogram_simps =
+  reverse_nat_acc_IMP_init_while_cond_def
+  reverse_nat_acc_IMP_loop_body_def
+  reverse_nat_acc_IMP_after_loop_def
+
+definition "reverse_nat_acc_imp_to_HOL_state p s =
+  \<lparr>reverse_nat_acc_acc = (s (add_prefix p reverse_nat_acc_acc_str)),
+   reverse_nat_acc_n = (s (add_prefix p reverse_nat_acc_n_str)),
+   reverse_nat_acc_ret = (s (add_prefix p reverse_nat_acc_ret_str))\<rparr>"
+
+lemmas reverse_nat_acc_state_translators =
+  cons_imp_to_HOL_state_def
+  reverse_nat_acc_imp_to_HOL_state_def
+
+lemmas reverse_nat_acc_complete_simps =
+  reverse_nat_acc_IMP_subprogram_simps
+  reverse_nat_acc_imp_subprogram_simps
+  reverse_nat_acc_state_translators
+
+lemma reverse_nat_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p reverse_nat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p reverse_nat_acc_ret_str)
+      = reverse_nat_acc_ret (reverse_nat_acc_imp (reverse_nat_acc_imp_to_HOL_state p s))"
+  apply(induction "reverse_nat_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: reverse_nat_acc_imp.induct)
+  apply(subst reverse_nat_acc_imp.simps)
+  apply(clarsimp simp: reverse_nat_acc_IMP_Minus_def)
+  apply(erule While_tE)
+   apply(clarsimp simp: reverse_nat_acc_IMP_subprogram_simps reverse_nat_acc_imp_subprogram_simps
+      reverse_nat_acc_state_translators )
+  apply(erule Seq_tE)+
+  apply(dest_com_gen)
+
+    apply(simp only: reverse_nat_acc_IMP_init_while_cond_def prefix_simps)
+    apply(force simp: reverse_nat_acc_imp_subprogram_simps reverse_nat_acc_state_translators)
+
+   apply(clarsimp simp: reverse_nat_acc_IMP_subprogram_simps invoke_subprogram_append)
+   apply(erule cons_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+   apply(erule tl_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+   apply(erule hd_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+   apply(fastforce simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
+      reverse_nat_acc_imp_subprogram_simps reverse_nat_acc_state_translators)
+
+  apply(clarsimp simp: reverse_nat_acc_IMP_subprogram_simps invoke_subprogram_append)
+  apply(erule cons_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+  apply(erule tl_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+  apply(erule hd_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], fastforce)
+  apply(fastforce simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
+      reverse_nat_acc_imp_subprogram_simps reverse_nat_acc_state_translators)
+  done
+
+lemma reverse_nat_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ reverse_nat_acc_pref) reverse_nat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix reverse_nat_acc_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma reverse_nat_acc_IMP_Minus_correct_time_loop_condition:
+  "(invoke_subprogram p reverse_nat_acc_IMP_init_while_cond, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = reverse_nat_acc_imp_compute_loop_condition_time 0 (reverse_nat_acc_imp_to_HOL_state p s)"
+  by (subst reverse_nat_acc_imp_compute_loop_condition_time_def)
+    (auto simp: reverse_nat_acc_IMP_init_while_cond_def)
+
+lemmas reverse_nat_acc_complete_time_simps =
+  reverse_nat_acc_imp_subprogram_time_simps
+  reverse_nat_acc_imp_time_acc
+  reverse_nat_acc_imp_time_acc_2_simp
+
+lemma reverse_nat_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p reverse_nat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = reverse_nat_acc_imp_time 0 (reverse_nat_acc_imp_to_HOL_state p s)"
+  apply(induction "reverse_nat_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: reverse_nat_acc_imp.induct)
+  apply(subst reverse_nat_acc_imp_time.simps)
+  apply(simp only:reverse_nat_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+   apply(clarsimp simp: reverse_nat_acc_IMP_subprogram_simps reverse_nat_acc_state_translators
+      reverse_nat_acc_imp_subprogram_time_simps)
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+    apply(force simp: reverse_nat_acc_IMP_init_while_cond_def reverse_nat_acc_imp_subprogram_time_simps
+      reverse_nat_acc_state_translators)
+
+   apply(simp only:reverse_nat_acc_IMP_init_while_cond_def
+      reverse_nat_acc_IMP_loop_body_def prefix_simps)
+   apply(erule Seq_tE)+
+   apply(erule cons_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+   apply(erule tl_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+   apply(erule hd_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+   apply (fastforce simp: reverse_nat_acc_state_upd_def reverse_nat_acc_imp_to_HOL_state_def
+      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def)
+
+  apply(simp only:reverse_nat_acc_IMP_init_while_cond_def reverse_nat_acc_IMP_loop_body_def
+      reverse_nat_acc_imp_time_acc reverse_nat_acc_imp_time_acc_2_simp prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+  apply(erule tl_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+  apply(erule hd_IMP_Minus_correct[where vars = "reverse_nat_acc_IMP_vars"], force)
+  apply (force simp: reverse_nat_acc_imp_to_HOL_state_def cons_imp_to_HOL_state_def
+      hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def reverse_nat_acc_complete_time_simps Let_def)
+  done
+
+lemma reverse_nat_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) reverse_nat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (reverse_nat_acc_imp_time 0 (reverse_nat_acc_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) reverse_nat_acc_ret_str) =
+        reverse_nat_acc_ret (reverse_nat_acc_imp (reverse_nat_acc_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using reverse_nat_acc_IMP_Minus_correct_function
+  by (auto simp: reverse_nat_acc_IMP_Minus_correct_time)
+    (meson reverse_nat_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 subsection \<open>Logical And\<close>
 
