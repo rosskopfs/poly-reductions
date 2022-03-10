@@ -215,8 +215,8 @@ lemmas n_hashes_acc_complete_simps =
 
 lemma n_hashes_acc_IMP_Minus_correct_function:
   "(invoke_subprogram p n_hashes_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p n_hashes_acc_acc_str)
-      = n_hashes_acc_acc (n_hashes_acc_imp (n_hashes_acc_imp_to_HOL_state p s))"
+     s' (add_prefix p n_hashes_acc_ret_str)
+      = n_hashes_acc_ret (n_hashes_acc_imp (n_hashes_acc_imp_to_HOL_state p s))"
   apply(induction "n_hashes_acc_imp_to_HOL_state p s" arbitrary: s s' t
       rule: n_hashes_acc_imp.induct)
   apply(subst n_hashes_acc_imp.simps)
@@ -287,8 +287,8 @@ lemma n_hashes_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) n_hashes_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (n_hashes_acc_imp_time 0 (n_hashes_acc_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) n_hashes_acc_acc_str) =
-        n_hashes_acc_state.n_hashes_acc_acc (n_hashes_acc_imp (n_hashes_acc_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) n_hashes_acc_ret_str) =
+        n_hashes_acc_ret (n_hashes_acc_imp (n_hashes_acc_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using n_hashes_acc_IMP_Minus_correct_function
