@@ -1,10 +1,222 @@
 theory IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
-  imports Primitives_IMP_Minus
-          IMP_Minus_To_IMP_Minus_Minus_State_Translations_nat
-          IMP_Minus.Com
+  imports
+    Primitives_IMP_Minus
+    IMP_Minus_To_IMP_Minus_Minus_State_Translations_nat
+    IMP_Minus.Com
 begin
 
 unbundle IMP_Minus_Minus_Com.no_com_syntax
+
+abbreviation "hash_as_nat \<equiv> 35"
+lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
+  by (simp add: encode_char_def)
+
+record dropWhile_char_state =
+  dropWhile_char_n::nat
+  dropWhile_char_ret::nat
+
+abbreviation "dropWhile_char_prefix \<equiv> ''dropWhile_char.''"
+abbreviation "dropWhile_char_n_str \<equiv> ''n''"
+abbreviation "dropWhile_char_ret_str \<equiv> ''ret''"
+
+function dropWhile_char':: "nat \<Rightarrow> nat" where
+  "dropWhile_char' n =
+  (let cond1 = hd_nat n - hash_as_nat;
+       cond2 = hash_as_nat - hd_nat n;
+       cond = (if n \<noteq> 0 then cond1 + cond2 else 1)
+   in if cond \<noteq> 0
+      then n
+      else dropWhile_char' (tl_nat n)
+  )"
+  by simp+
+termination
+  by (relation "measure id") (simp split: if_splits)+
+
+lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
+  by (induction n rule: dropWhile_char'.induct)
+    (subst dropWhile_char'.simps, simp del: dropWhile_char'.simps add: hash_encode_val)
+
+definition "dropWhile_char_state_upd s \<equiv>
+      let
+        tl_xs' = dropWhile_char_n s;
+        tl_ret' = 0;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_ret_state = tl_imp tl_state;
+        dropWhile_char_n' = tl_ret tl_ret_state;
+        dropWhile_char_ret' = dropWhile_char_ret s;
+        ret = \<lparr>dropWhile_char_n = dropWhile_char_n',
+               dropWhile_char_ret = dropWhile_char_ret'\<rparr>
+      in
+        ret
+"
+
+definition "dropWhile_char_imp_compute_loop_condition s \<equiv>
+  (if dropWhile_char_n s \<noteq> 0
+   then (let hd_xs' = dropWhile_char_n s;
+             hd_ret' = 0;
+             hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+             hd_ret_state = hd_imp hd_state;
+             cond1 = (hd_ret hd_ret_state) - hash_as_nat;
+             cond2 = hash_as_nat - (hd_ret hd_ret_state);
+             condition = cond1 + cond2
+         in condition
+        )
+   else (let condition = (1::nat)
+         in condition
+        )
+  )"
+
+definition "dropWhile_char_imp_after_loop s \<equiv>
+  (let
+    dropWhile_char_n' = dropWhile_char_n s;
+    dropWhile_char_ret' = dropWhile_char_n s;
+    ret = \<lparr>dropWhile_char_n = dropWhile_char_n',
+           dropWhile_char_ret = dropWhile_char_ret'\<rparr>
+   in ret
+  )"
+
+lemmas dropWhile_char_imp_subprogram_simps =
+  dropWhile_char_imp_after_loop_def
+  dropWhile_char_state_upd_def
+  dropWhile_char_imp_compute_loop_condition_def
+
+function dropWhile_char_imp:: "dropWhile_char_state \<Rightarrow> dropWhile_char_state" where
+  "dropWhile_char_imp s =
+  (if dropWhile_char_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let ret = dropWhile_char_imp_after_loop s in ret)
+  else
+    (let next_iteration = dropWhile_char_imp (dropWhile_char_state_upd s)
+      in next_iteration)
+  )"
+  by simp+
+termination
+  by(relation "measure dropWhile_char_n", simp)
+    (simp add: dropWhile_char_imp_subprogram_simps Let_def tl_imp_correct split: if_splits)
+
+declare dropWhile_char_imp.simps [simp del]
+
+lemma dropWhile_char_imp_correct:
+  "dropWhile_char_ret (dropWhile_char_imp s) = dropWhile_char (dropWhile_char_n s)"
+  apply (induction s rule: dropWhile_char_imp.induct)
+  apply (subst dropWhile_char_imp.simps)
+  apply (subst dropWhile_char.simps)
+  apply (simp del: dropWhile_char.simps add: dropWhile_char_imp_subprogram_simps tl_imp_correct
+      hd_imp_correct Let_def hash_encode_val split: if_split)
+  done
+
+definition "dropWhile_char_state_upd_time t s \<equiv>
+      let
+        tl_xs' = dropWhile_char_n s;
+        t = t + 2;
+        tl_ret' = 0;
+        t = t + 2;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_ret_state = tl_imp tl_state;
+        t = t + tl_imp_time 0 tl_state;
+        dropWhile_char_n' = tl_ret tl_ret_state;
+        t = t + 2;
+        dropWhile_char_ret' = dropWhile_char_ret s;
+        t = t + 2;
+        ret = t
+      in
+        ret
+"
+
+definition "dropWhile_char_imp_compute_loop_condition_time t s \<equiv>
+  (if dropWhile_char_n s \<noteq> 0
+   then (let t = t + 1;
+             hd_xs' = dropWhile_char_n s;
+             t = t + 2;
+             hd_ret' = 0;
+             t = t + 2;
+             hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+             hd_ret_state = hd_imp hd_state;
+             t = t + hd_imp_time 0 hd_state;
+             cond1 = (hd_ret hd_ret_state) - hash_as_nat;
+             t = t + 2;
+             cond2 = hash_as_nat - (hd_ret hd_ret_state);
+             t = t + 2;
+             condition = cond1 + cond2;
+             t = t + 2;
+             ret = t
+         in ret
+        )
+   else (let t = t + 2;
+             condition = (1::nat);
+             t = t + 2;
+             ret = t
+         in ret
+        )
+  )"
+
+definition "dropWhile_char_imp_after_loop_time (t::nat) (s::dropWhile_char_state) \<equiv>
+  (let
+    dropWhile_char_n' = dropWhile_char_n s;
+    t = t + 2;
+    dropWhile_char_ret' = dropWhile_char_n s;
+    t = t + 2;
+    ret = t
+   in ret
+  )"
+
+lemmas dropWhile_char_imp_subprogram_simps_time =
+  dropWhile_char_imp_after_loop_time_def
+  dropWhile_char_state_upd_time_def
+  dropWhile_char_imp_compute_loop_condition_time_def
+
+function dropWhile_char_imp_time:: "nat \<Rightarrow> dropWhile_char_state \<Rightarrow> nat" where
+  "dropWhile_char_imp_time t s =
+   dropWhile_char_imp_compute_loop_condition_time 0 s +
+  (if dropWhile_char_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let
+        t = t + 1;
+        ret = t + dropWhile_char_imp_after_loop_time 0 s
+     in ret)
+  else
+    (let
+        t = t + 2;
+        next_iteration
+          = dropWhile_char_imp_time (t + dropWhile_char_state_upd_time 0 s)
+                                    (dropWhile_char_state_upd s)
+     in next_iteration)
+  )"
+  by auto
+termination
+  by (relation "measure (dropWhile_char_n \<circ> snd)", simp)
+    (simp add: dropWhile_char_imp_compute_loop_condition_def tl_imp_correct
+      dropWhile_char_state_upd_def split: if_splits)
+
+declare dropWhile_char_imp_time.simps [simp del]
+
+lemmas dropWhile_char_imp_subprogram_time_simps =
+  dropWhile_char_imp_subprogram_simps
+  dropWhile_char_imp_after_loop_time_def
+  dropWhile_char_state_upd_time_def
+  dropWhile_char_imp_compute_loop_condition_time_def
+
+lemma dropWhile_char_imp_time_acc:
+  "(dropWhile_char_imp_time (Suc t) s) = Suc (dropWhile_char_imp_time t s)"
+  by (induction t s rule: dropWhile_char_imp_time.induct) (simp add: dropWhile_char_imp_time.simps)
+
+lemma dropWhile_char_imp_time_acc_2:
+  "(dropWhile_char_imp_time x s) = x + (dropWhile_char_imp_time 0 s)"
+  by (induction x arbitrary: s) (simp add: dropWhile_char_imp_time_acc)+
+
+lemma dropWhile_char_imp_time_acc_2_simp:
+  "(dropWhile_char_imp_time (n_hashes_state_upd_time 0 s) s') =
+   (n_hashes_state_upd_time 0 s) + (dropWhile_char_imp_time 0 s')"
+  by (rule dropWhile_char_imp_time_acc_2)
+
+abbreviation "dropWhile_char_while_cond \<equiv> ''condition''"
+
+
+(* TODO *)
+
+
+
+
 
 record n_hashes_acc_state =
   n_hashes_acc_acc::nat
@@ -15,10 +227,6 @@ abbreviation "n_hashes_acc_prefix \<equiv> ''n_hashes_acc.''"
 abbreviation "n_hashes_acc_acc_str \<equiv> ''acc''"
 abbreviation "n_hashes_acc_n_str \<equiv> ''n''"
 abbreviation "n_hashes_acc_ret_str \<equiv> ''ret''"
-
-abbreviation "hash_as_nat \<equiv> 35"
-lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
-  by (simp add: encode_char_def)
 
 definition "n_hashes_acc_state_upd s \<equiv>
       let
