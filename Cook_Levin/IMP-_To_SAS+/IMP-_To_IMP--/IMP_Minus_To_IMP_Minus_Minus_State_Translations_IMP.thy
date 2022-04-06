@@ -7,6 +7,7 @@ begin
 
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
+
 abbreviation "hash_as_nat \<equiv> 35"
 lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
   by (simp add: encode_char_def)
@@ -19,22 +20,15 @@ abbreviation "dropWhile_char_prefix \<equiv> ''dropWhile_char.''"
 abbreviation "dropWhile_char_n_str \<equiv> ''n''"
 abbreviation "dropWhile_char_ret_str \<equiv> ''ret''"
 
-function dropWhile_char':: "nat \<Rightarrow> nat" where
+fun dropWhile_char':: "nat \<Rightarrow> nat" where
   "dropWhile_char' n =
-  (let cond1 = hd_nat n - hash_as_nat;
-       cond2 = hash_as_nat - hd_nat n;
-       cond = (if n \<noteq> 0 then cond1 + cond2 else 1)
-   in if cond \<noteq> 0
-      then n
-      else dropWhile_char' (tl_nat n)
-  )"
-  by simp+
-termination
-  by (relation "measure id") (simp split: if_splits)+
+    (if n \<noteq> 0 \<and> hd_nat n = encode_char (CHR ''#'')
+     then dropWhile_char' (tl_nat n)
+     else n
+    )"
 
 lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
-  by (induction n rule: dropWhile_char'.induct)
-    (subst dropWhile_char'.simps, simp del: dropWhile_char'.simps add: hash_encode_val)
+  by (induction n rule: dropWhile_char.induct) (simp)
 
 definition "dropWhile_char_state_upd s \<equiv>
       let
@@ -47,23 +41,36 @@ definition "dropWhile_char_state_upd s \<equiv>
         ret = \<lparr>dropWhile_char_n = dropWhile_char_n',
                dropWhile_char_ret = dropWhile_char_ret'\<rparr>
       in
-        ret
-"
+        ret"
 
 definition "dropWhile_char_imp_compute_loop_condition s \<equiv>
-  (if dropWhile_char_n s \<noteq> 0
-   then (let hd_xs' = dropWhile_char_n s;
-             hd_ret' = 0;
-             hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-             hd_ret_state = hd_imp hd_state;
-             cond1 = (hd_ret hd_ret_state) - hash_as_nat;
-             cond2 = hash_as_nat - (hd_ret hd_ret_state);
-             condition = cond1 + cond2
-         in condition
-        )
-   else (let condition = (1::nat)
-         in condition
-        )
+  (let NOTEQUAL_neq_zero_a' = dropWhile_char_n s;
+       NOTEQUAL_neq_zero_b' = 0;
+       NOTEQUAL_neq_zero_ret' = 0;
+       NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                                  NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                                  NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+       NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+       hd_xs' = dropWhile_char_n s;
+       hd_ret' = 0;
+       hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+       hd_ret_state = hd_imp hd_state;
+       EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+       EQUAL_neq_zero_b' = hash_as_nat;
+       EQUAL_neq_zero_ret' = 0;
+       EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                               EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                               EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+       EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+       AND_neq_zero_a' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+       AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+       AND_neq_zero_ret' = 0;
+       AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                             AND_neq_zero_b = AND_neq_zero_b',
+                             AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+       AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+       condition = AND_neq_zero_ret AND_neq_zero_ret_state
+   in condition
   )"
 
 definition "dropWhile_char_imp_after_loop s \<equiv>
@@ -84,26 +91,25 @@ function dropWhile_char_imp:: "dropWhile_char_state \<Rightarrow> dropWhile_char
   "dropWhile_char_imp s =
   (if dropWhile_char_imp_compute_loop_condition s \<noteq> 0
    then
-    (let ret = dropWhile_char_imp_after_loop s in ret)
-  else
     (let next_iteration = dropWhile_char_imp (dropWhile_char_state_upd s)
       in next_iteration)
+  else
+    (let ret = dropWhile_char_imp_after_loop s in ret)
   )"
-  by simp+
+    by simp+
 termination
-  by(relation "measure dropWhile_char_n", simp)
-    (simp add: dropWhile_char_imp_subprogram_simps Let_def tl_imp_correct split: if_splits)
+  by (relation "measure dropWhile_char_n", simp)
+    (simp add: dropWhile_char_imp_subprogram_simps tl_imp_correct AND_neq_zero_imp_correct
+      NOTEQUAL_neq_zero_imp_correct split:if_splits)+
 
 declare dropWhile_char_imp.simps [simp del]
 
 lemma dropWhile_char_imp_correct:
-  "dropWhile_char_ret (dropWhile_char_imp s) = dropWhile_char (dropWhile_char_n s)"
-  apply (induction s rule: dropWhile_char_imp.induct)
-  apply (subst dropWhile_char_imp.simps)
-  apply (subst dropWhile_char.simps)
-  apply (simp del: dropWhile_char.simps add: dropWhile_char_imp_subprogram_simps tl_imp_correct
-      hd_imp_correct Let_def hash_encode_val split: if_split)
-  done
+  "dropWhile_char_ret (dropWhile_char_imp s) = dropWhile_char' (dropWhile_char_n s)"
+  by (induction "dropWhile_char_n s" arbitrary: s rule: dropWhile_char'.induct)
+    (subst dropWhile_char_imp.simps, simp add: dropWhile_char_imp_subprogram_simps tl_imp_correct 
+    hd_imp_correct AND_neq_zero_imp_correct EQUAL_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
+    hash_encode_val)
 
 definition "dropWhile_char_state_upd_time t s \<equiv>
       let
@@ -120,34 +126,51 @@ definition "dropWhile_char_state_upd_time t s \<equiv>
         t = t + 2;
         ret = t
       in
-        ret
-"
+        ret"
 
 definition "dropWhile_char_imp_compute_loop_condition_time t s \<equiv>
-  (if dropWhile_char_n s \<noteq> 0
-   then (let t = t + 1;
-             hd_xs' = dropWhile_char_n s;
-             t = t + 2;
-             hd_ret' = 0;
-             t = t + 2;
-             hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-             hd_ret_state = hd_imp hd_state;
-             t = t + hd_imp_time 0 hd_state;
-             cond1 = (hd_ret hd_ret_state) - hash_as_nat;
-             t = t + 2;
-             cond2 = hash_as_nat - (hd_ret hd_ret_state);
-             t = t + 2;
-             condition = cond1 + cond2;
-             t = t + 2;
-             ret = t
-         in ret
-        )
-   else (let t = t + 2;
-             condition = (1::nat);
-             t = t + 2;
-             ret = t
-         in ret
-        )
+  (let NOTEQUAL_neq_zero_a' = dropWhile_char_n s;
+       t = t + 2;
+       NOTEQUAL_neq_zero_b' = 0;
+       t = t + 2;
+       NOTEQUAL_neq_zero_ret' = 0;
+       t = t + 2;
+       NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                                  NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                                  NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+       NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+       t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+       hd_xs' = dropWhile_char_n s;
+       t = t + 2;
+       hd_ret' = 0;
+       t = t + 2;
+       hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+       hd_ret_state = hd_imp hd_state;
+       t = t + hd_imp_time 0 hd_state;
+       EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+       t = t + 2;
+       EQUAL_neq_zero_b' = hash_as_nat;
+       t = t + 2;
+       EQUAL_neq_zero_ret' = 0;
+       t = t + 2;
+       EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                               EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                               EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+       EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+       t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+       AND_neq_zero_a' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+       t = t + 2;
+       AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+       t = t + 2;
+       AND_neq_zero_ret' = 0;
+       t = t + 2;
+       AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                             AND_neq_zero_b = AND_neq_zero_b',
+                             AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+       AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+       t = t + AND_neq_zero_imp_time 0 AND_neq_zero_state;
+       ret = t
+   in ret
   )"
 
 definition "dropWhile_char_imp_after_loop_time (t::nat) (s::dropWhile_char_state) \<equiv>
@@ -172,21 +195,22 @@ function dropWhile_char_imp_time:: "nat \<Rightarrow> dropWhile_char_state \<Rig
    then
     (let
         t = t + 1;
-        ret = t + dropWhile_char_imp_after_loop_time 0 s
-     in ret)
-  else
-    (let
-        t = t + 2;
         next_iteration
           = dropWhile_char_imp_time (t + dropWhile_char_state_upd_time 0 s)
                                     (dropWhile_char_state_upd s)
      in next_iteration)
+  else
+    (let
+        t = t + 2;
+        ret = t + dropWhile_char_imp_after_loop_time 0 s
+     in ret)
   )"
   by auto
 termination
   by (relation "measure (dropWhile_char_n \<circ> snd)", simp)
     (simp add: dropWhile_char_imp_compute_loop_condition_def tl_imp_correct
-      dropWhile_char_state_upd_def split: if_splits)
+      dropWhile_char_state_upd_def AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
+      split: if_splits)
 
 declare dropWhile_char_imp_time.simps [simp del]
 
@@ -211,12 +235,263 @@ lemma dropWhile_char_imp_time_acc_2_simp:
 
 abbreviation "dropWhile_char_while_cond \<equiv> ''condition''"
 
+definition "dropWhile_char_IMP_init_while_cond \<equiv>
+  \<comment> \<open>(NOTEQUAL_neq_zero_a' = dropWhile_char_n s;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= (A (V dropWhile_char_n_str));;
+  \<comment> \<open>(NOTEQUAL_neq_zero_b' = 0;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= (A (N 0));;
+  \<comment> \<open>(NOTEQUAL_neq_zero_ret' = 0;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>(NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',\<close>
+  \<comment> \<open>(                          NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',\<close>
+  \<comment> \<open>(                          NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>(NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;\<close>
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  \<comment> \<open>(hd_xs' = dropWhile_char_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V dropWhile_char_n_str));;
+  \<comment> \<open>(hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>(hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>(hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>(EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>(EQUAL_neq_zero_b' = hash_as_nat;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_as_nat));;
+  \<comment> \<open>(EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>(EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>(                       EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>(                       EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>(EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
+  \<comment> \<open>(AND_neq_zero_a' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::=
+    (A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::=
+    (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(AND_neq_zero_ret' = 0;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>(AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',\<close>
+  \<comment> \<open>(                     AND_neq_zero_b = AND_neq_zero_b',\<close>
+  \<comment> \<open>(                     AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>(AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;\<close>
+  invoke_subprogram AND_neq_zero_prefix AND_neq_zero_IMP_Minus;;
+  \<comment> \<open>(condition = AND_neq_zero_ret AND_neq_zero_ret_state\<close>
+  dropWhile_char_while_cond ::= (A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str)))
+  "
 
-(* TODO *)
+definition "dropWhile_char_IMP_loop_body \<equiv>
+  \<comment> \<open>tl_xs' = dropWhile_char_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V dropWhile_char_n_str));;
+  \<comment> \<open>tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  \<comment> \<open>dropWhile_char_n' = tl_ret tl_ret_state;\<close>
+  dropWhile_char_n_str ::= (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>dropWhile_char_ret' = dropWhile_char_ret s;\<close>
+  dropWhile_char_ret_str ::= (A (V dropWhile_char_ret_str))
+  \<comment> \<open>ret = \<lparr>dropWhile_char_n = dropWhile_char_n',\<close>
+  \<comment> \<open>       dropWhile_char_ret = dropWhile_char_ret'\<rparr>\<close>
+  "
+
+
+definition "dropWhile_char_IMP_after_loop \<equiv>
+  \<comment> \<open>  dropWhile_char_n' = dropWhile_char_n s;\<close>
+  dropWhile_char_n_str ::= (A (V dropWhile_char_n_str));;
+  \<comment> \<open>  dropWhile_char_ret' = dropWhile_char_n s;\<close>
+  dropWhile_char_ret_str ::= (A (V dropWhile_char_n_str))
+  \<comment> \<open>  ret = \<lparr>dropWhile_char_n = dropWhile_char_n',\<close>
+  \<comment> \<open>         dropWhile_char_ret = dropWhile_char_ret'\<rparr>\<close>
+  "
+
+definition dropWhile_char_IMP_Minus where
+  "dropWhile_char_IMP_Minus \<equiv>
+  dropWhile_char_IMP_init_while_cond;;
+  WHILE dropWhile_char_while_cond \<noteq>0 DO (
+    dropWhile_char_IMP_loop_body;;
+    dropWhile_char_IMP_init_while_cond
+  );;
+  dropWhile_char_IMP_after_loop"
+
+abbreviation
+  "dropWhile_char_IMP_vars \<equiv>
+  {dropWhile_char_n_str, dropWhile_char_ret_str}"
+
+lemmas dropWhile_char_IMP_subprogram_simps =
+  dropWhile_char_IMP_init_while_cond_def
+  dropWhile_char_IMP_loop_body_def
+  dropWhile_char_IMP_after_loop_def
+
+definition "dropWhile_char_imp_to_HOL_state p s =
+  \<lparr>dropWhile_char_n = (s (add_prefix p dropWhile_char_n_str)),
+   dropWhile_char_ret = (s (add_prefix p dropWhile_char_ret_str))\<rparr>"
+
+lemmas dropWhile_char_state_translators =
+  hd_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+  dropWhile_char_imp_to_HOL_state_def
+  AND_neq_zero_imp_to_HOL_state_def
+  EQUAL_neq_zero_imp_to_HOL_state_def
+  NOTEQUAL_neq_zero_imp_to_HOL_state_def
+
+lemmas dropWhile_char_complete_simps =
+  dropWhile_char_IMP_subprogram_simps
+  dropWhile_char_imp_subprogram_simps
+  dropWhile_char_state_translators
+
+abbreviation
+  "dropWhile_char_IMP_subprogram_prefixes \<equiv>
+  {NOTEQUAL_neq_zero_prefix, EQUAL_neq_zero_prefix, AND_neq_zero_prefix, hd_prefix, tl_prefix}"
+
+lemma dropWhile_char_IMP_subprogram_prefixes_aux:
+  "v \<in> dropWhile_char_IMP_vars
+    \<Longrightarrow> \<forall> prfx \<in> dropWhile_char_IMP_subprogram_prefixes. \<not> set prfx \<subseteq> set v"
+  by fastforce
+
+lemma dropWhile_char_IMP_Minus_correct_function:
+  "(invoke_subprogram p dropWhile_char_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p dropWhile_char_ret_str)
+      = dropWhile_char_ret (dropWhile_char_imp (dropWhile_char_imp_to_HOL_state p s))"
+  apply(induction "dropWhile_char_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: dropWhile_char_imp.induct)
+
+
+  apply(subst dropWhile_char_imp.simps)
+  apply(simp only: dropWhile_char_IMP_Minus_def prefix_simps )
+  apply(erule Seq_tE)+
+  apply(erule While_tE)
+  subgoal for s0 result t1 t2 after_loop t_after t_cond_init fst_loop t3
+
+    apply(simp only: dropWhile_char_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(40) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(42) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(44) by fastforce
+
+
+    apply(drule AssignD)+
+    apply(elim conjE)
+    subgoal premises p
+      
+      thm p
+      using p(1, 3, 56) apply -
+
+    
+    apply(simp add: dropWhile_char_imp_subprogram_simps
+         dropWhile_char_imp_time_acc
+      dropWhile_char_state_translators Let_def)
+      sorry
+    sorry
+
+  apply(erule Seq_tE)+
+  apply(dest_com_gen)
+  
+  subgoal for s result t1 t2 after_loop t_after t_cond_init fst_loop t3 t4 fst_loop_end t5 t_body
+    fst_loop_after t_cond
+
+ 
+
+    apply(simp only: dropWhile_char_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(69) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(71) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(73) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(75) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(77) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(79) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(81) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(83) by fastforce
+
+    
+    (* apply(simp add: dropWhile_char_complete_simps Let_def)
+    apply force *)
+
+
+    sorry
+
+  subgoal for s result t1 t2 after_loop t_after t_cond_init fst_loop t3 t4 fst_loop_end t5 t_body
+    fst_loop_after t_cond
+
+    apply(simp only: dropWhile_char_IMP_init_while_cond_def dropWhile_char_IMP_loop_body_def
+        prefix_simps)
+    apply(erule Seq_tE)+
+
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(77) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(79) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(81) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(83) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(85) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(87) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(89) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(91) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(93) by fastforce
 
 
 
+(*     apply (simp add: dropWhile_char_complete_simps Let_def)
+ *)
 
+
+
+    sorry
+
+  subgoal for s result t1 t2 after_loop t_after t_cond_init fst_loop t3 t4 fst_loop_end t5 t_body
+
+    apply(simp only: dropWhile_char_IMP_init_while_cond_def dropWhile_char_IMP_loop_body_def
+        prefix_simps)
+    apply(erule Seq_tE)+
+
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(77) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(79) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(81) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(83) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(85) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(87) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(89) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(91) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+    subgoal premises p using p(93) by fastforce
+
+(*   apply (simp add: dropWhile_char_complete_simps Let_def)
+ *)
+    sorry
+  done
 
 record n_hashes_acc_state =
   n_hashes_acc_acc::nat

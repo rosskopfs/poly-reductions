@@ -579,11 +579,18 @@ lemma sub_nth:"nth_nat n (list_encode xs) = nth n xs "
   apply (metis Primitives.nth.simps(1) Primitives.nth.simps(2) head.elims)
   by (metis Primitives.nth.simps(1) Primitives.nth.simps(3) tail.elims)
 
+lemma pos_hd_less[termination_simp]: "x > 0 \<Longrightarrow> hd_nat x < x"
+proof-
+  have aux:"fst (prod_decode_aux y z) \<le> z" for y z
+    by (induction y z rule: prod_decode_aux.induct) (subst prod_decode_aux.simps, force)
+  assume "x > 0" then show ?thesis
+    unfolding hd_nat_def fst_nat_def prod_decode_def
+    by(induction x) (simp add: aux less_Suc_eq_le)+
+qed
 
-
-lemma pos_tl_less[termination_simp]: "x>0 \<Longrightarrow> tl_nat x < x"
-  apply (auto simp add:tl_nat_def snd_nat_def)
-  by (metis Suc_pred le_imp_less_Suc prod.exhaust_sel prod_snd_less2)
+lemma pos_tl_less[termination_simp]: "x > 0 \<Longrightarrow> tl_nat x < x"
+  by (simp add: tl_nat_def snd_nat_def)
+    (metis Suc_pred le_imp_less_Suc prod.exhaust_sel prod_snd_less2)
 
 lemma nth_less[simp]: "nth_nat n x \<le> x"
   apply(induct n arbitrary:x)
