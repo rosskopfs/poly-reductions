@@ -298,7 +298,6 @@ definition "dropWhile_char_IMP_loop_body \<equiv>
   \<comment> \<open>       dropWhile_char_ret = dropWhile_char_ret'\<rparr>\<close>
   "
 
-
 definition "dropWhile_char_IMP_after_loop \<equiv>
   \<comment> \<open>  dropWhile_char_n' = dropWhile_char_n s;\<close>
   dropWhile_char_n_str ::= (A (V dropWhile_char_n_str));;
@@ -346,6 +345,30 @@ lemmas dropWhile_char_complete_simps =
 abbreviation
   "dropWhile_char_IMP_subprogram_prefixes \<equiv>
   {NOTEQUAL_neq_zero_prefix, EQUAL_neq_zero_prefix, AND_neq_zero_prefix, hd_prefix, tl_prefix}"
+
+lemma Seq_E:"\<lbrakk>(c1;; c2, s1) \<Rightarrow>\<^bsup> p \<^esup> s3; \<And>x s2 y. \<lbrakk>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2; (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  by blast
+
+
+lemma dropWhile_char_IMP_Minus_correct_while_cond:
+  "(invoke_subprogram p dropWhile_char_IMP_init_while_cond, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p dropWhile_char_while_cond)
+      = (dropWhile_char_imp_compute_loop_condition (dropWhile_char_imp_to_HOL_state p s))"
+  apply(simp only: dropWhile_char_IMP_init_while_cond_def
+      dropWhile_char_imp_compute_loop_condition_def prefix_simps)
+  apply(erule Seq_E)+
+
+  apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+  subgoal premises p using p(16) by fastforce
+  apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+  subgoal premises p using p(18) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+  subgoal premises p using p(20) by fastforce
+  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_IMP_vars"])
+  subgoal premises p using p(22) by fastforce
+
+  apply(simp add: dropWhile_char_state_translators Let_def)
+  apply force
 
 lemma dropWhile_char_IMP_subprogram_prefixes_aux:
   "v \<in> dropWhile_char_IMP_vars
