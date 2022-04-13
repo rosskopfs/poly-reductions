@@ -36,16 +36,6 @@ termination
   by (relation "measure id", simp)
     (simp add: hash_encode_val pos_tl_less hd_nat_noteq_zero)
 
-fun dropWhile_char':: "nat \<Rightarrow> nat" where
-  "dropWhile_char' n =
-  (if n \<noteq> 0
-   then dropWhile_char_loop n
-   else n)"
-
-lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
-  by (induction n rule: dropWhile_char.induct)
-    (simp add: fst_nat_0 hash_encode_val hd_nat_def split: if_splits)
-
 definition "dropWhile_char_loop_state_upd s \<equiv>
       let
         tl_xs' = dropWhile_char_loop_n s;
@@ -361,13 +351,26 @@ lemma dropWhile_char_loop_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
+thm hd_IMP_Minus_correct_time EQUAL_neq_zero_IMP_Minus_correct_time
+
 lemma dropWhile_char_loop_IMP_Minus_correct_time_loop_condition:
   "(invoke_subprogram p dropWhile_char_loop_IMP_init_while_cond, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = dropWhile_char_loop_imp_compute_loop_condition_time 0 (dropWhile_char_loop_imp_to_HOL_state p s)"
-  apply (subst dropWhile_char_loop_imp_compute_loop_condition_time_def)
-  apply (auto simp: dropWhile_char_loop_IMP_init_while_cond_def Let_def)
-  apply(erule Seq_tE)
-apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+  apply(subst dropWhile_char_loop_imp_compute_loop_condition_time_def)
+  apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps)
+  apply(erule Seq_tE)+ 
+  apply(drule AssignD)+
+  apply(simp only: EQUAL_neq_zero_IMP_Minus_correct_time )
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+   apply fastforce
+  apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+  apply fastforce
+  apply(elim conjE)
+  apply(auto simp add: dropWhile_char_loop_imp_subprogram_simps dropWhile_char_loop_imp_time_acc 
+      dropWhile_char_loop_state_translators Let_def split:if_splits)
+  apply(simp add: EQUAL_neq_zero_imp_time.simps hd_imp_time.simps prod_decode_imp_time.simps Let_def
+      fst'_imp_time.simps tsqrt_imp_time.simps)
+  sorry
 
 lemmas dropWhile_char_loop_complete_time_simps =
   dropWhile_char_loop_imp_subprogram_time_simps
@@ -380,24 +383,65 @@ lemma dropWhile_char_loop_IMP_Minus_correct_time:
   apply(induction "dropWhile_char_loop_imp_to_HOL_state p s" arbitrary: s s' t
       rule: dropWhile_char_loop_imp.induct)
   apply(subst dropWhile_char_loop_imp_time.simps)
-  apply(clarsimp simp: dropWhile_char_loop_IMP_Minus_def)
+  apply(simp only: dropWhile_char_loop_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
   apply(erule While_tE_time)
-   apply(clarsimp simp: dropWhile_char_loop_IMP_subprogram_simps dropWhile_char_loop_state_translators
-      dropWhile_char_loop_imp_subprogram_time_simps)
-  apply(clarsimp simp: add.assoc)
+  subgoal
+    apply(simp only: dropWhile_char_loop_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(24) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(26) by fastforce
+    apply(drule AssignD)+
+     apply(elim conjE)
+    apply(simp add: dropWhile_char_loop_imp_subprogram_time_simps dropWhile_char_loop_imp_time_acc
+        Let_def dropWhile_char_loop_state_translators)
+    
+    sorry
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
   apply(dest_com_gen_time)
 
-    apply(force simp: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_imp_subprogram_time_simps
-      dropWhile_char_loop_state_translators)
+  subgoal
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(37) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    by (force simp: dropWhile_char_loop_complete_simps Let_def)
 
-   apply(clarsimp simp: dropWhile_char_loop_IMP_loop_body_def invoke_subprogram_append)
-   apply(erule cons_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"], fastforce)
-   apply (force simp: dropWhile_char_loop_complete_simps)
+  subgoal
 
-  apply(clarsimp simp: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def
-      invoke_subprogram_append)
-  apply(erule cons_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"], fastforce)
-  apply(force simp: dropWhile_char_loop_complete_time_simps dropWhile_char_loop_state_translators)
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def
+        prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply(simp add: dropWhile_char_loop_complete_simps Let_def)
+
+    by (force simp: dropWhile_char_loop_complete_simps Let_def)
+
+  subgoal
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply(simp add: dropWhile_char_loop_imp_time_acc_2[where x = "tl_imp_time t s" for t s]
+        dropWhile_char_loop_complete_time_simps dropWhile_char_loop_complete_simps Let_def)
+    sorry
+
   done
 
 lemma dropWhile_char_loop_IMP_Minus_correct:
@@ -415,6 +459,101 @@ lemma dropWhile_char_loop_IMP_Minus_correct:
 
 
 
+record dropWhile_char_state =
+  dropWhile_char_n::nat
+  dropWhile_char_ret::nat
+
+abbreviation "dropWhile_char_prefix \<equiv> ''dropWhile_char_loop.''"
+abbreviation "dropWhile_char_n_str \<equiv> ''n''"
+abbreviation "dropWhile_char_ret_str \<equiv> ''ret''"
+
+fun dropWhile_char':: "nat \<Rightarrow> nat" where
+  "dropWhile_char' n =
+  (if n \<noteq> 0
+   then dropWhile_char_loop n
+   else n)"
+
+lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
+  by (induction n rule: dropWhile_char.induct)
+    (simp add: fst_nat_0 hash_encode_val hd_nat_def split: if_splits)
+
+definition "dropWhile_char_state_upd s \<equiv>
+      let
+        dropWhile_char_loop_n' = dropWhile_char_n s;
+        dropWhile_char_loop_ret' = dropWhile_char_ret s;
+        dropWhile_char_loop_state = \<lparr>dropWhile_char_loop_n = dropWhile_char_loop_n',
+                                     dropWhile_char_loop_ret = dropWhile_char_loop_ret'\<rparr>;
+        dropWhile_char_loop_ret_state = dropWhile_char_loop_imp dropWhile_char_loop_state;
+        dropWhile_char_n' = dropWhile_char_n s;
+        dropWhile_char_ret' = dropWhile_char_loop_ret dropWhile_char_loop_ret_state;
+        ret = \<lparr>dropWhile_char_n = dropWhile_char_n',
+               dropWhile_char_ret = dropWhile_char_ret'\<rparr>
+      in
+        ret"
+
+fun dropWhile_char_imp:: "dropWhile_char_state \<Rightarrow> dropWhile_char_state" where
+  "dropWhile_char_imp s =
+  (if dropWhile_char_n s \<noteq> 0
+   then dropWhile_char_state_upd s
+   else \<lparr>dropWhile_char_n = dropWhile_char_n s,
+        dropWhile_char_ret = dropWhile_char_n s\<rparr>)"
+
+declare dropWhile_char_imp.simps [simp del]
+
+lemma dropWhile_char_imp_correct:
+  "dropWhile_char_ret (dropWhile_char_imp s) = dropWhile_char' (dropWhile_char_n s)"
+  by(simp add: dropWhile_char_imp.simps dropWhile_char_state_upd_def Let_def
+      dropWhile_char_loop_imp_correct)
+
+definition "dropWhile_char_state_upd_time t s \<equiv>
+      let
+        dropWhile_char_loop_n' = dropWhile_char_n s;
+        t = t + 2;
+        dropWhile_char_loop_ret' = dropWhile_char_ret s;
+        t = t + 2;
+        dropWhile_char_loop_state = \<lparr>dropWhile_char_loop_n = dropWhile_char_loop_n',
+                                     dropWhile_char_loop_ret = dropWhile_char_loop_ret'\<rparr>;
+        dropWhile_char_loop_ret_state = dropWhile_char_loop_imp dropWhile_char_loop_state;
+        t = t + dropWhile_char_loop_imp_time 0 dropWhile_char_loop_state;
+        dropWhile_char_n' = dropWhile_char_n s;
+        t = t + 2;
+        dropWhile_char_ret' = dropWhile_char_loop_ret dropWhile_char_loop_ret_state;
+        t = t + 2;
+        ret = t
+      in
+        ret"
+
+fun dropWhile_char_imp_time:: "nat \<Rightarrow> dropWhile_char_state \<Rightarrow> nat" where
+  "dropWhile_char_imp_time t s =
+  (if dropWhile_char_n s \<noteq> 0
+   then (let t = t + 1;
+             next = dropWhile_char_state_upd s;
+             t = t + dropWhile_char_state_upd_time 0 s;
+             ret = t
+         in ret)
+   else (let t = t + 1;
+             dropWhile_char_n' = dropWhile_char_n s;
+             t = t + 2;
+             dropWhile_char_ret' = dropWhile_char_n s;
+             t = t + 2;
+             ret = t
+         in ret))"
+
+declare dropWhile_char_imp_time.simps [simp del]
+
+lemma dropWhile_char_imp_time_acc:
+  "(dropWhile_char_imp_time (Suc t) s) = Suc (dropWhile_char_imp_time t s)"
+  by (induction t s rule: dropWhile_char_imp_time.induct)
+    (simp add: dropWhile_char_imp_time.simps)
+
+lemma dropWhile_char_imp_time_acc_2:
+  "(dropWhile_char_imp_time x s) = x + (dropWhile_char_imp_time 0 s)"
+  by (induction x arbitrary: s) (simp add: dropWhile_char_imp_time_acc)+
+
+lemma dropWhile_char_imp_time_acc_2_simp:
+  "(dropWhile_char_imp_time (dropWhile_char_state_upd_time 0 s) s') =
+   (dropWhile_char_state_upd_time 0 s) + (dropWhile_char_imp_time 0 s')"
+  by (rule dropWhile_char_imp_time_acc_2)
 
 
 
