@@ -3991,11 +3991,12 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct_time:
 lemma NOTEQUAL_neq_zero_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-     \<lbrakk>t = (NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) NOTEQUAL_neq_zero_ret_str) =
-        NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+    \<lbrakk>t = (NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) NOTEQUAL_neq_zero_ret_str) =
+        NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp
+                                  (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk> \<Longrightarrow> P\<rbrakk>
+  \<Longrightarrow> P"
   using NOTEQUAL_neq_zero_IMP_Minus_correct_function
   by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
     (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
