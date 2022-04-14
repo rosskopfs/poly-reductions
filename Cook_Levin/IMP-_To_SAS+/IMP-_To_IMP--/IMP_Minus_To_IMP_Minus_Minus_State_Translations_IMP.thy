@@ -8,6 +8,10 @@ begin
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 
+lemma Seq_E:
+  "\<lbrakk>(c1;; c2, s1) \<Rightarrow>\<^bsup> p \<^esup> s3; \<And>x s2 y. \<lbrakk>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2; (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  by blast
+
 abbreviation "hash_as_nat \<equiv> 35"
 lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
   by (simp add: encode_char_def)
@@ -136,6 +140,8 @@ definition "dropWhile_char_loop_imp_compute_loop_condition_time t s \<equiv>
                                EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
        EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
        t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+       condition = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+       t = t + 2;
        ret = t
    in ret
   )"
@@ -201,6 +207,11 @@ lemma dropWhile_char_loop_imp_time_acc_2_simp:
   "(dropWhile_char_loop_imp_time (dropWhile_char_loop_state_upd_time 0 s) s') =
    (dropWhile_char_loop_state_upd_time 0 s) + (dropWhile_char_loop_imp_time 0 s')"
   by (rule dropWhile_char_loop_imp_time_acc_2)
+
+lemmas dropWhile_char_loop_complete_time_simps =
+  dropWhile_char_loop_imp_subprogram_time_simps
+  dropWhile_char_loop_imp_time_acc
+  dropWhile_char_loop_imp_time_acc_2_simp
 
 abbreviation "dropWhile_char_loop_while_cond \<equiv> ''condition''"
 
@@ -281,10 +292,6 @@ lemmas dropWhile_char_loop_complete_simps =
   dropWhile_char_loop_imp_subprogram_simps
   dropWhile_char_loop_state_translators
 
-lemma Seq_E:
-  "\<lbrakk>(c1;; c2, s1) \<Rightarrow>\<^bsup> p \<^esup> s3; \<And>x s2 y. \<lbrakk>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2; (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  by blast
-
 lemma dropWhile_char_loop_IMP_Minus_correct_function:
   "(invoke_subprogram p dropWhile_char_loop_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p dropWhile_char_loop_ret_str) =
@@ -319,8 +326,8 @@ lemma dropWhile_char_loop_IMP_Minus_correct_function:
 
   subgoal
 
-    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def
-        prefix_simps)
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps
+        dropWhile_char_loop_IMP_loop_body_def)
     apply(erule Seq_E)+
     apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(24) by fastforce
@@ -331,8 +338,8 @@ lemma dropWhile_char_loop_IMP_Minus_correct_function:
     by (fastforce simp: dropWhile_char_loop_complete_simps Let_def)
 
   subgoal
-    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def
-        prefix_simps)
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps
+        dropWhile_char_loop_IMP_loop_body_def)
     apply(erule Seq_E)+
     apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(24) by fastforce
@@ -351,31 +358,15 @@ lemma dropWhile_char_loop_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-thm hd_IMP_Minus_correct_time EQUAL_neq_zero_IMP_Minus_correct_time
-
 lemma dropWhile_char_loop_IMP_Minus_correct_time_loop_condition:
   "(invoke_subprogram p dropWhile_char_loop_IMP_init_while_cond, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = dropWhile_char_loop_imp_compute_loop_condition_time 0 (dropWhile_char_loop_imp_to_HOL_state p s)"
-  apply(subst dropWhile_char_loop_imp_compute_loop_condition_time_def)
-  apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps)
-  apply(erule Seq_tE)+ 
-  apply(drule AssignD)+
-  apply(simp only: EQUAL_neq_zero_IMP_Minus_correct_time )
-  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
-   apply fastforce
-  apply(erule hd_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
-  apply fastforce
-  apply(elim conjE)
-  apply(auto simp add: dropWhile_char_loop_imp_subprogram_simps dropWhile_char_loop_imp_time_acc 
-      dropWhile_char_loop_state_translators Let_def split:if_splits)
-  apply(simp add: EQUAL_neq_zero_imp_time.simps hd_imp_time.simps prod_decode_imp_time.simps Let_def
-      fst'_imp_time.simps tsqrt_imp_time.simps)
-  sorry
-
-lemmas dropWhile_char_loop_complete_time_simps =
-  dropWhile_char_loop_imp_subprogram_time_simps
-  dropWhile_char_loop_imp_time_acc
-  dropWhile_char_loop_imp_time_acc_2_simp
+     t = dropWhile_char_loop_imp_compute_loop_condition_time
+          0 (dropWhile_char_loop_imp_to_HOL_state p s)"
+  by (fastforce elim: EQUAL_neq_zero_IMP_Minus_correct hd_IMP_Minus_correct simp: Let_def
+      dropWhile_char_loop_imp_compute_loop_condition_time_def invoke_subprogram_append
+      dropWhile_char_loop_IMP_init_while_cond_def EQUAL_neq_zero_IMP_Minus_correct_time
+      dropWhile_char_loop_imp_subprogram_simps dropWhile_char_loop_imp_time_acc
+      dropWhile_char_loop_state_translators)
 
 lemma dropWhile_char_loop_IMP_Minus_correct_time:
   "(invoke_subprogram p dropWhile_char_loop_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -394,12 +385,8 @@ lemma dropWhile_char_loop_IMP_Minus_correct_time:
     subgoal premises p using p(24) by fastforce
     apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(26) by fastforce
-    apply(drule AssignD)+
-     apply(elim conjE)
-    apply(simp add: dropWhile_char_loop_imp_subprogram_time_simps dropWhile_char_loop_imp_time_acc
-        Let_def dropWhile_char_loop_state_translators)
-    
-    sorry
+    by (force simp: dropWhile_char_loop_imp_subprogram_time_simps Let_def
+        dropWhile_char_loop_state_translators)
 
   apply(erule Seq_tE)+
   apply(simp add: add.assoc)
@@ -416,8 +403,8 @@ lemma dropWhile_char_loop_IMP_Minus_correct_time:
 
   subgoal
 
-    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def
-        prefix_simps)
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps
+        dropWhile_char_loop_IMP_loop_body_def)
     apply(erule Seq_tE)+
     apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(45) by fastforce
@@ -425,12 +412,12 @@ lemma dropWhile_char_loop_IMP_Minus_correct_time:
     subgoal premises p using p(47) by fastforce
     apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(49) by fastforce
-    apply(simp add: dropWhile_char_loop_complete_simps Let_def)
-
-    by (force simp: dropWhile_char_loop_complete_simps Let_def)
+    by (force simp: dropWhile_char_loop_imp_subprogram_time_simps Let_def
+        dropWhile_char_loop_state_translators)
 
   subgoal
-    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def dropWhile_char_loop_IMP_loop_body_def prefix_simps)
+    apply(simp only: dropWhile_char_loop_IMP_init_while_cond_def prefix_simps
+        dropWhile_char_loop_IMP_loop_body_def)
     apply(erule Seq_tE)+
     apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(45) by fastforce
@@ -438,26 +425,23 @@ lemma dropWhile_char_loop_IMP_Minus_correct_time:
     subgoal premises p using p(47) by fastforce
     apply(erule tl_IMP_Minus_correct[where vars = "dropWhile_char_loop_IMP_vars"])
     subgoal premises p using p(49) by fastforce
-    apply(simp add: dropWhile_char_loop_imp_time_acc_2[where x = "tl_imp_time t s" for t s]
-        dropWhile_char_loop_complete_time_simps dropWhile_char_loop_complete_simps Let_def)
-    sorry
+    by (force simp add: dropWhile_char_loop_imp_time_acc_2[where x = "tl_imp_time t s" for t s]
+        dropWhile_char_loop_complete_time_simps dropWhile_char_loop_state_translators Let_def)
 
   done
 
 lemma dropWhile_char_loop_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) dropWhile_char_loop_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-     \<lbrakk>t = (dropWhile_char_loop_imp_time 0 (dropWhile_char_loop_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) dropWhile_char_loop_ret_str) =
-        dropWhile_char_loop_ret (dropWhile_char_loop_imp (dropWhile_char_loop_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+    \<lbrakk>t = (dropWhile_char_loop_imp_time 0 (dropWhile_char_loop_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) dropWhile_char_loop_ret_str) =
+      dropWhile_char_loop_ret (dropWhile_char_loop_imp
+                                (dropWhile_char_loop_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk> \<Longrightarrow> P\<rbrakk>
+  \<Longrightarrow> P"
   using dropWhile_char_loop_IMP_Minus_correct_function
   by (auto simp: dropWhile_char_loop_IMP_Minus_correct_time)
     (meson dropWhile_char_loop_IMP_Minus_correct_effects set_mono_prefix)
-
-
-
 
 record dropWhile_char_state =
   dropWhile_char_n::nat
@@ -480,7 +464,7 @@ lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
 definition "dropWhile_char_state_upd s \<equiv>
       let
         dropWhile_char_loop_n' = dropWhile_char_n s;
-        dropWhile_char_loop_ret' = dropWhile_char_ret s;
+        dropWhile_char_loop_ret' = 0;
         dropWhile_char_loop_state = \<lparr>dropWhile_char_loop_n = dropWhile_char_loop_n',
                                      dropWhile_char_loop_ret = dropWhile_char_loop_ret'\<rparr>;
         dropWhile_char_loop_ret_state = dropWhile_char_loop_imp dropWhile_char_loop_state;
@@ -505,11 +489,13 @@ lemma dropWhile_char_imp_correct:
   by(simp add: dropWhile_char_imp.simps dropWhile_char_state_upd_def Let_def
       dropWhile_char_loop_imp_correct)
 
+lemmas dropWhile_char_imp_subprogram_simps = dropWhile_char_state_upd_def
+
 definition "dropWhile_char_state_upd_time t s \<equiv>
       let
         dropWhile_char_loop_n' = dropWhile_char_n s;
         t = t + 2;
-        dropWhile_char_loop_ret' = dropWhile_char_ret s;
+        dropWhile_char_loop_ret' = 0;
         t = t + 2;
         dropWhile_char_loop_state = \<lparr>dropWhile_char_loop_n = dropWhile_char_loop_n',
                                      dropWhile_char_loop_ret = dropWhile_char_loop_ret'\<rparr>;
@@ -541,6 +527,8 @@ fun dropWhile_char_imp_time:: "nat \<Rightarrow> dropWhile_char_state \<Rightarr
 
 declare dropWhile_char_imp_time.simps [simp del]
 
+lemmas dropWhile_char_imp_subprogram_simps_time = dropWhile_char_state_upd_time_def
+
 lemma dropWhile_char_imp_time_acc:
   "(dropWhile_char_imp_time (Suc t) s) = Suc (dropWhile_char_imp_time t s)"
   by (induction t s rule: dropWhile_char_imp_time.induct)
@@ -555,12 +543,75 @@ lemma dropWhile_char_imp_time_acc_2_simp:
    (dropWhile_char_state_upd_time 0 s) + (dropWhile_char_imp_time 0 s')"
   by (rule dropWhile_char_imp_time_acc_2)
 
+lemmas dropWhile_char_complete_time_simps =
+  dropWhile_char_imp_subprogram_simps
+  dropWhile_char_state_upd_time_def
+  dropWhile_char_imp_time_acc
+  dropWhile_char_imp_time_acc_2_simp
 
+definition dropWhile_char_IMP_Minus where
+  "dropWhile_char_IMP_Minus \<equiv>
+  IF dropWhile_char_n_str \<noteq>0
+  THEN (
+    (dropWhile_char_loop_prefix @ dropWhile_char_loop_n_str) ::= (A (V dropWhile_char_n_str));;
+    (dropWhile_char_loop_prefix @ dropWhile_char_loop_ret_str) ::= (A (N 0));;
+    invoke_subprogram dropWhile_char_loop_prefix dropWhile_char_loop_IMP_Minus;;
+    dropWhile_char_n_str ::= (A (V dropWhile_char_n_str));;
+    dropWhile_char_ret_str ::= (A (V (dropWhile_char_loop_prefix @ dropWhile_char_loop_ret_str)))
+  )
+  ELSE (
+    dropWhile_char_n_str ::= (A (V dropWhile_char_n_str));;
+    dropWhile_char_ret_str ::= (A (V dropWhile_char_n_str))
+  )"
 
+abbreviation
+  "dropWhile_char_IMP_vars \<equiv>
+  {dropWhile_char_n_str, dropWhile_char_ret_str}"
 
+definition "dropWhile_char_imp_to_HOL_state p s =
+  \<lparr>dropWhile_char_n = (s (add_prefix p dropWhile_char_n_str)),
+   dropWhile_char_ret = (s (add_prefix p dropWhile_char_ret_str))\<rparr>"
 
+lemmas dropWhile_char_state_translators =
+  dropWhile_char_imp_to_HOL_state_def
+  dropWhile_char_loop_imp_to_HOL_state_def
 
+lemmas dropWhile_char_complete_simps =
+  dropWhile_char_imp_subprogram_simps
+  dropWhile_char_state_translators
 
+lemma dropWhile_char_IMP_Minus_correct_function:
+  "(invoke_subprogram p dropWhile_char_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p dropWhile_char_ret_str) =
+       dropWhile_char_ret (dropWhile_char_imp (dropWhile_char_imp_to_HOL_state p s))"
+  by (fastforce elim: dropWhile_char_loop_IMP_Minus_correct simp: dropWhile_char_IMP_Minus_def
+      dropWhile_char_complete_simps invoke_subprogram_append dropWhile_char_imp.simps)
+
+lemma dropWhile_char_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ dropWhile_char_pref) dropWhile_char_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix dropWhile_char_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma dropWhile_char_IMP_Minus_correct_time:
+  "(invoke_subprogram p dropWhile_char_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = dropWhile_char_imp_time 0 (dropWhile_char_imp_to_HOL_state p s)"
+  by (fastforce elim: dropWhile_char_loop_IMP_Minus_correct simp: dropWhile_char_imp_time.simps
+      dropWhile_char_IMP_Minus_def invoke_subprogram_append dropWhile_char_complete_time_simps
+      dropWhile_char_state_translators Let_def)
+
+lemma dropWhile_char_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) dropWhile_char_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (dropWhile_char_imp_time 0 (dropWhile_char_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) dropWhile_char_ret_str) =
+        dropWhile_char_ret (dropWhile_char_imp (dropWhile_char_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using dropWhile_char_IMP_Minus_correct_function
+  by (auto simp: dropWhile_char_IMP_Minus_correct_time)
+    (meson dropWhile_char_IMP_Minus_correct_effects set_mono_prefix)
 
 
 record n_hashes_acc_state =
