@@ -2951,12 +2951,14 @@ lemma append_IMP_Minus_correct[functional_correctness]:
 
 subsection \<open>List reverse\<close>
 
+subsubsection \<open>reverse_nat_acc\<close>
+
 record reverse_nat_acc_state =
   reverse_nat_acc_acc::nat
   reverse_nat_acc_n::nat
   reverse_nat_acc_ret::nat
 
-abbreviation "reverse_nat_acc_prefix \<equiv> ''append.''"
+abbreviation "reverse_nat_acc_prefix \<equiv> ''reverse_nat_acc.''"
 abbreviation "reverse_nat_acc_acc_str \<equiv> ''acc''"
 abbreviation "reverse_nat_acc_n_str \<equiv> ''n''"
 abbreviation "reverse_nat_acc_ret_str \<equiv> ''ret''"
@@ -3291,6 +3293,8 @@ lemma reverse_nat_acc_IMP_Minus_correct:
     (meson reverse_nat_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 
+subsubsection \<open>reverse_nat\<close>
+
 record reverse_nat_state =
   reverse_nat_n::nat
   reverse_nat_ret::nat
@@ -3426,6 +3430,429 @@ lemma reverse_nat_IMP_Minus_correct:
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using reverse_nat_IMP_Minus_correct_time reverse_nat_IMP_Minus_correct_function
     reverse_nat_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
+subsection \<open>List append\<close>
+
+subsubsection \<open>append_acc\<close>
+
+record append_state =
+  append_acc::nat
+  append_xs::nat
+
+abbreviation "append_prefix \<equiv> ''append.''"
+abbreviation "append_acc_str \<equiv> ''acc''"
+abbreviation "append_xs_str \<equiv> ''xs''"
+
+definition "append_state_upd s \<equiv>
+      let
+        hd_xs' = append_xs s;
+        hd_ret' = 0;
+        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+        hd_state_ret = hd_imp (hd_state);
+        cons_h' = hd_ret hd_state_ret;
+        cons_t' = append_acc s;
+        cons_ret' = 0;
+        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+        cons_ret_state = cons_imp cons_state;
+        append_acc' = cons_ret cons_ret_state;
+        tl_xs' = append_xs s;
+        tl_ret' = 0;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_state_ret = tl_imp tl_state;
+        append_xs' = tl_ret tl_state_ret;
+        ret = \<lparr>append_acc = append_acc', append_xs = append_xs'\<rparr>
+      in
+        ret"
+
+function append_imp:: "append_state \<Rightarrow> append_state" where
+  "append_imp s =
+  (if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
+    (
+      let
+        next_iteration = append_imp (append_state_upd s)
+      in
+        next_iteration
+    )
+  else
+    (
+      let
+        ret = s
+      in
+        ret
+    )
+  )"
+  by pat_completeness auto
+termination
+  by (relation "Wellfounded.measure (\<lambda>s. append_xs s)")
+    (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
+
+declare append_imp.simps [simp del]
+
+lemma append_imp_correct:
+  "append_acc (append_imp s) = Primitives.append_acc (append_acc s) (append_xs s)"
+  by (induction s rule: append_imp.induct, subst append_imp.simps)
+    (simp, force simp add: append_state_upd_def cons_imp_correct hd_imp_correct tl_imp_correct
+      gr0_conv_Suc split: if_splits)
+
+function append_imp_time:: "nat \<Rightarrow> append_state \<Rightarrow> nat" where
+  "append_imp_time t s =
+  (if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
+    (
+      let
+        t = t + 1;
+        hd_xs' = append_xs s;
+        t = t + 2;
+        hd_ret' = 0;
+        t = t + 2;
+        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+        hd_state_ret = hd_imp (hd_state);
+        t = t + hd_imp_time 0 hd_state;
+        cons_h' = hd_ret hd_state_ret;
+        t = t + 2;
+        cons_t' = append_state.append_acc s;
+        t = t + 2;
+        cons_ret' = 0;
+        t = t + 2;
+        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+        cons_ret_state = cons_imp cons_state;
+        t = t + cons_imp_time 0 cons_state;
+        append_acc' = cons_ret cons_ret_state;
+        t = t + 2;
+        tl_xs' = append_xs s;
+        t = t + 2;
+        tl_ret' = 0;
+        t = t + 2;
+        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+        tl_state_ret = tl_imp tl_state;
+        t = t + tl_imp_time 0 tl_state;
+        append_xs' = tl_ret tl_state_ret;
+        t = t + 2;
+        next_iteration = append_imp_time t (append_state_upd s)
+      in
+        next_iteration
+    )
+  else
+    (
+      let
+        t = t + 2;
+        ret = t
+      in
+        ret
+    )
+  )
+"
+  by pat_completeness auto
+termination
+  by (relation "Wellfounded.measure (\<lambda>(t,s). append_xs s)")
+    (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
+
+lemmas [simp del] = append_imp_time.simps
+
+lemma append_imp_time_acc: "(append_imp_time (Suc t) s) = Suc (append_imp_time t s)"
+  by (induction t s rule: append_imp_time.induct)
+    (subst (2) append_imp_time.simps, subst append_imp_time.simps, simp add: Let_def)
+
+lemma append_imp_time_acc_2: "(append_imp_time x s) = x + (append_imp_time 0 s)"
+  by (induction x) (simp add: append_imp_time_acc)+
+
+
+\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
+    programs.\<close>
+
+abbreviation "append_IMP_Minus_1 \<equiv>
+        \<comment> \<open>hd_xs' = append_xs s;\<close>
+        ((hd_prefix @ hd_xs_str) ::= (A (V append_xs_str)));;
+        \<comment> \<open>hd_ret' = 0;\<close>
+        ((hd_prefix @ hd_ret_str) ::= (A (N 0)));;
+        \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+        \<comment> \<open>hd_state_ret = hd_imp (hd_state);\<close>
+        (invoke_subprogram hd_prefix hd_IMP_Minus);;
+        \<comment> \<open>cons_h' = hd_ret hd_state_ret;\<close>
+        ((cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str))));;
+        \<comment> \<open>cons_t' = append_acc s;\<close>
+        ((cons_prefix @ cons_t_str) ::= (A (V append_acc_str)));;
+        \<comment> \<open>cons_ret' = 0;\<close>
+        ((cons_prefix @ cons_ret_str) ::= (A (N 0)));;
+        \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+        \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+        (invoke_subprogram cons_prefix cons_IMP_Minus)
+"
+
+definition append_IMP_Minus where
+  "append_IMP_Minus \<equiv>
+  (
+  \<comment> \<open>if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>\<close>
+  WHILE append_xs_str \<noteq>0 DO (
+        append_IMP_Minus_1;;
+        \<comment> \<open>append_acc' = cons_ret cons_ret_state;\<close>
+        ((append_acc_str) ::= (A (V (cons_prefix @ cons_ret_str))));;
+        \<comment> \<open>tl_xs' = append_xs s;\<close>
+        ((tl_prefix @ tl_xs_str) ::= (A (V (append_xs_str))));;
+        \<comment> \<open>tl_ret' = 0;\<close>
+        ((tl_prefix @ tl_ret_str) ::= (A (N 0)));;
+        \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+        \<comment> \<open>tl_state_ret = tl_imp tl_state;\<close>
+        (invoke_subprogram tl_prefix tl_IMP_Minus);;
+        \<comment> \<open>append_xs' = tl_ret tl_state_ret;\<close>
+        ((append_xs_str) ::= (A (V (tl_prefix @ tl_ret_str))))
+      )
+
+  )"
+
+definition "append_imp_to_HOL_state p s =
+  \<lparr>append_acc = (s (add_prefix p append_acc_str)), append_xs = (s (add_prefix p append_xs_str))\<rparr>"
+
+lemma append_IMP_Minus_correct_function:
+  "(invoke_subprogram p append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p append_acc_str)
+      = append_state.append_acc (append_imp (append_imp_to_HOL_state p s))"
+  apply(induction "append_imp_to_HOL_state p s" arbitrary: s s' t rule: append_imp.induct)
+  apply(subst append_imp.simps)
+  apply(simp only: append_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
+      atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule While_tE, fastforce simp: append_imp_time_acc append_imp_to_HOL_state_def)
+  apply(dest_com')
+  apply(erule Seq_tE)+
+  apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(fastforce simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc
+      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def Let_def)
+  done
+
+lemma append_IMP_Minus_correct_time:
+  "(invoke_subprogram p append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = append_imp_time 0 (append_imp_to_HOL_state p s)"
+  apply(induction "append_imp_to_HOL_state p s" arbitrary: s s' t rule: append_imp.induct)
+  apply(subst append_imp_time.simps)
+  apply(simp only: append_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
+      atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule While_tE, fastforce simp: append_imp_time_acc append_imp_to_HOL_state_def)
+  apply(dest_com')
+  apply(erule Seq_tE)+
+  apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
+  apply(drule AssignD)+
+  apply(elim conjE)
+  apply(subst append_imp_time_acc_2)
+  apply(fastforce simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc
+      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def Let_def)
+  done
+
+lemma append_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ append_pref) append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s'
+  \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (set append_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid_subset com_only_vars
+  by blast
+
+lemma append_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (append_imp_time 0 (append_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) append_acc_str) =
+        append_state.append_acc (append_imp (append_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using append_IMP_Minus_correct_time append_IMP_Minus_correct_function
+    append_IMP_Minus_correct_effects
+  by auto
+
+
+subsubsection \<open>append_nat\<close>
+
+lemma append_nat_rev_acc:
+  "append_nat xs ys = reverse_nat (Primitives.append_acc (reverse_nat xs) ys)"
+proof-
+  from append_induct
+  have "reverse_nat (reverse_nat (append_nat xs ys))
+        = reverse_nat (Primitives.append_acc (reverse_nat xs) ys)"
+    by simp
+  then show ?thesis using rev_rev_nat by fastforce
+qed
+
+record append_nat_state =
+  append_nat_xs::nat
+  append_nat_ys::nat
+  append_nat_ret::nat
+
+abbreviation "append_nat_prefix \<equiv> ''append_nat.''"
+abbreviation "append_nat_xs_str \<equiv> ''xs''"
+abbreviation "append_nat_ys_str \<equiv> ''ys''"
+abbreviation "append_nat_ret_str \<equiv> ''ret''"
+
+definition "append_nat_state_upd s \<equiv>
+  (let
+      reverse_nat_n' = append_nat_xs s;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      append_acc' = reverse_nat_ret reverse_nat_ret_state;
+      append_xs' = append_nat_ys s;
+      append_state = \<lparr>append_acc = append_acc', append_xs = append_xs'\<rparr>;
+      append_ret_state = append_imp append_state;
+      reverse_nat_n' = append_acc append_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      append_nat_xs' = append_nat_xs s;
+      append_nat_ys' = append_nat_ys s;
+      append_nat_ret' = reverse_nat_ret reverse_nat_ret_state;
+      ret = \<lparr>append_nat_xs = append_nat_xs',
+             append_nat_ys = append_nat_ys',
+             append_nat_ret = append_nat_ret' \<rparr>
+    in
+      ret
+)"
+
+function append_nat_imp:: "append_nat_state \<Rightarrow> append_nat_state" where
+  "append_nat_imp s =
+  (let
+      ret = append_nat_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. append_nat_ys s)") simp
+
+lemmas [simp del] = append_nat_imp.simps
+
+lemma append_nat_imp_correct:
+  "append_nat_ret (append_nat_imp s) = append_nat (append_nat_xs s) (append_nat_ys s)"
+  by (simp add: append_nat_imp.simps reverse_nat_imp_correct append_imp_correct Let_def
+      append_nat_state_upd_def append_nat_rev_acc)
+
+function append_nat_imp_time:: "nat \<Rightarrow> append_nat_state \<Rightarrow> nat" where
+  "append_nat_imp_time t s =
+  (let
+      reverse_nat_n' = append_nat_xs s;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      append_acc' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      append_xs' = append_nat_ys s;
+      t = t + 2;
+      append_state = \<lparr>append_acc = append_acc', append_xs = append_xs'\<rparr>;
+      append_ret_state = append_imp append_state;
+      t = t + append_imp_time 0 append_state;
+      reverse_nat_n' = append_acc append_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      append_nat_xs' = append_nat_xs s;
+      t = t + 2;
+      append_nat_ys' = append_nat_ys s;
+      t = t + 2;
+      append_nat_ret' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      ret = t
+    in
+      ret
+  )"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). append_nat_ys s)") simp
+
+lemmas [simp del] = append_nat_imp_time.simps
+
+lemma append_nat_imp_time_acc:
+  "(append_nat_imp_time (Suc t) s) = Suc (append_nat_imp_time t s)"
+  by (simp add: append_nat_imp_time.simps Let_def)
+
+lemma append_nat_imp_time_acc_2:
+  "(append_nat_imp_time x s) = x + (append_nat_imp_time 0 s)"
+  by (simp add: append_nat_imp_time.simps Let_def)
+
+definition append_nat_IMP_Minus where
+  "append_nat_IMP_Minus \<equiv>
+  \<comment> \<open>reverse_nat_n' = append_nat_xs s;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V append_nat_xs_str));;
+  \<comment> \<open>reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+  \<comment> \<open>append_acc' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (append_prefix @ append_acc_str) ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)));;
+  \<comment> \<open>append_xs' = append_nat_ys s;\<close>
+  (append_prefix @ append_xs_str) ::= (A (V append_nat_ys_str));;
+  \<comment> \<open>append_state = \<lparr>append_acc = append_acc', append_xs = append_xs'\<rparr>;\<close>
+  \<comment> \<open>append_ret_state = append_imp append_state;\<close>
+  invoke_subprogram append_prefix append_IMP_Minus;;
+  \<comment> \<open>reverse_nat_n' = append_acc append_ret_state;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V (append_prefix @ append_acc_str)));;
+  \<comment> \<open>reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+  \<comment> \<open>append_nat_xs' = append_nat_xs s;\<close>
+  append_nat_xs_str ::= (A (V append_nat_xs_str));;
+  \<comment> \<open>append_nat_ys' = append_nat_ys s;\<close>
+  append_nat_ys_str ::= (A (V append_nat_ys_str));;
+  \<comment> \<open>append_nat_ret' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  append_nat_ret_str ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)))
+"
+
+abbreviation
+  "append_nat_IMP_vars \<equiv>
+  {append_nat_xs_str, append_nat_ys_str, append_nat_ret_str}"
+
+definition "append_nat_imp_to_HOL_state p s =
+  \<lparr>append_nat_xs = (s (add_prefix p append_nat_xs_str)),
+   append_nat_ys = (s (add_prefix p append_nat_ys_str)),
+   append_nat_ret = (s (add_prefix p append_nat_ret_str))\<rparr>"
+
+lemma append_nat_IMP_Minus_correct_function:
+  "(invoke_subprogram p append_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p append_nat_ret_str)
+      = append_nat_ret (append_nat_imp (append_nat_imp_to_HOL_state p s))"
+  apply (simp add: append_nat_IMP_Minus_def invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply (erule append_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  by (fastforce simp add: append_nat_imp_to_HOL_state_def append_nat_imp.simps
+      append_nat_state_upd_def append_imp_to_HOL_state_def reverse_nat_imp_to_HOL_state_def)
+
+lemma append_nat_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ append_nat_pref) append_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix append_nat_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma append_nat_IMP_Minus_correct_time:
+  "(invoke_subprogram p append_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = append_nat_imp_time 0 (append_nat_imp_to_HOL_state p s)"
+  apply (simp add: append_nat_IMP_Minus_def invoke_subprogram_append)
+  apply (erule Seq_tE)+
+  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply (erule append_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  by (fastforce simp add: append_nat_imp_to_HOL_state_def append_nat_imp_time.simps Let_def
+      append_imp_to_HOL_state_def reverse_nat_imp_to_HOL_state_def)
+
+lemma append_nat_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) append_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (append_nat_imp_time 0 (append_nat_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) append_nat_ret_str) =
+        append_nat_ret (append_nat_imp (append_nat_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using append_nat_IMP_Minus_correct_time append_nat_IMP_Minus_correct_function
+    append_nat_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
 
