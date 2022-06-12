@@ -1342,5 +1342,512 @@ lemma var_bit_to_var_nat_IMP_Minus_correct:
   by (meson set_mono_prefix)
 
 
+subsection \<open>operand_bit_to_var\<close>
+
+subsubsection \<open>operand_bit_to_var_acc\<close>
+
+
+fun operand_bit_to_var_acc':: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "operand_bit_to_var_acc' acc p  =
+  (if snd_nat p \<noteq> 0
+   then (operand_bit_to_var_acc' ((fst_nat p) ## acc) (prod_encode (fst_nat p, snd_nat p - 1)))
+   else acc
+  )"
+
+lemma operand_bit_to_var_acc'_correct:
+  "operand_bit_to_var_acc' acc n = operand_bit_to_var_acc acc n"
+  by (induction acc n rule : operand_bit_to_var_acc.induct) simp
+
+
+record operand_bit_to_var_acc_state =
+  operand_bit_to_var_acc_acc::nat
+  operand_bit_to_var_acc_n::nat
+  operand_bit_to_var_acc_ret::nat
+
+abbreviation "operand_bit_to_var_acc_prefix \<equiv> ''operand_bit_to_var_acc.''"
+abbreviation "operand_bit_to_var_acc_acc_str \<equiv> ''acc''"
+abbreviation "operand_bit_to_var_acc_n_str \<equiv> ''n''"
+abbreviation "operand_bit_to_var_acc_ret_str \<equiv> ''ret''"
+
+definition "operand_bit_to_var_acc_state_upd s \<equiv>
+  let
+    fst'_state_p' = operand_bit_to_var_acc_n s;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    fst'_result = fst'_state_p fst'_ret_state;
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    snd'_result = snd'_state_p snd'_ret_state;
+    prod_encode_a' = fst'_result;
+    prod_encode_b' = snd'_result - 1;
+    prod_encode_ret' = 0;
+    prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                         prod_encode_b = prod_encode_b',
+                         prod_encode_ret = prod_encode_ret'\<rparr>;
+    prod_encode_ret_state = prod_encode_imp prod_encode_state;
+    prod_result = prod_encode_ret prod_encode_ret_state;
+    cons_h' = fst'_result;
+    cons_t' = operand_bit_to_var_acc_acc s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    cons_result = cons_ret cons_ret_state;
+    operand_bit_to_var_acc_acc' = cons_result;
+    operand_bit_to_var_acc_n' = prod_result;
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_ret s;
+    ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+           operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+           operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>
+  in
+    ret
+"
+
+definition "operand_bit_to_var_acc_imp_compute_loop_condition s \<equiv>
+  let
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    condition = snd'_state_p snd'_ret_state
+  in condition
+"
+
+definition "operand_bit_to_var_acc_imp_after_loop s \<equiv>
+  let
+    operand_bit_to_var_acc_acc' = operand_bit_to_var_acc_acc s;
+    operand_bit_to_var_acc_n' = operand_bit_to_var_acc_n s;
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_acc s;
+    ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+           operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+           operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>
+  in ret
+"
+
+lemmas operand_bit_to_var_acc_imp_subprogram_simps =
+  operand_bit_to_var_acc_imp_after_loop_def
+  operand_bit_to_var_acc_state_upd_def
+  operand_bit_to_var_acc_imp_compute_loop_condition_def
+
+function operand_bit_to_var_acc_imp::
+  "operand_bit_to_var_acc_state \<Rightarrow> operand_bit_to_var_acc_state" where
+  "operand_bit_to_var_acc_imp s =
+  (if operand_bit_to_var_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let next_iteration = operand_bit_to_var_acc_imp (operand_bit_to_var_acc_state_upd s)
+      in next_iteration)
+  else
+    (let ret = operand_bit_to_var_acc_imp_after_loop s in ret)
+  )"
+  by simp+
+termination
+  apply (relation "measure operand_bit_to_var_acc_n")
+   apply (simp add: operand_bit_to_var_acc_imp_subprogram_simps Let_def snd'_imp_correct
+      fst'_imp_correct prod_encode_imp_correct fst'_nat_def snd'_nat_def prod_encode_def
+      nat_less_le triangle_tsqrt_le triangle_nat_le_eq_le le_diff_conv)+
+  by (metis add_cancel_right_left add_diff_cancel_left' diff_diff_cancel diff_is_0_eq less_Suc0
+      nat_le_linear not_gr_zero triangle_tsqrt_le tsqrt_alt_inverse_triangle)
+
+declare operand_bit_to_var_acc_imp.simps [simp del]
+
+lemma operand_bit_to_var_acc_imp_correct:
+  "operand_bit_to_var_acc_ret (operand_bit_to_var_acc_imp s) =
+    operand_bit_to_var_acc' (operand_bit_to_var_acc_acc s) (operand_bit_to_var_acc_n s)"
+  apply (induction s rule: operand_bit_to_var_acc_imp.induct)
+  apply (subst operand_bit_to_var_acc_imp.simps)
+  apply (subst operand_bit_to_var_acc'.simps)
+  by (simp del: operand_bit_to_var_acc'.simps add: operand_bit_to_var_acc_imp_subprogram_simps
+      snd'_imp_correct fst'_imp_correct prod_encode_imp_correct cons_imp_correct fst_nat_fst'_nat
+      snd_nat_snd'_nat Let_def)
+
+definition "operand_bit_to_var_acc_state_upd_time t s \<equiv>
+  let
+    fst'_state_p' = operand_bit_to_var_acc_n s;
+    t = t + 2;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    t = t + fst'_imp_time 0 fst'_state;
+    fst'_result = fst'_state_p fst'_ret_state;
+    t = t + 2;
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    t = t + 2;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    t = t + snd'_imp_time 0 snd'_state;
+    snd'_result = snd'_state_p snd'_ret_state;
+    t = t + 2;
+    prod_encode_a' = fst'_result;
+    t = t + 2;
+    prod_encode_b' = snd'_result - 1;
+    t = t + 2;
+    prod_encode_ret' = 0;
+    t = t + 2;
+    prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                         prod_encode_b = prod_encode_b',
+                         prod_encode_ret = prod_encode_ret'\<rparr>;
+    prod_encode_ret_state = prod_encode_imp prod_encode_state;
+    t = t + prod_encode_imp_time 0 prod_encode_state;
+    prod_result = prod_encode_ret prod_encode_ret_state;
+    t = t + 2;
+    cons_h' = fst'_result;
+    t = t + 2;
+    cons_t' = operand_bit_to_var_acc_acc s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+    cons_result = cons_ret cons_ret_state;
+    t = t + 2;
+    operand_bit_to_var_acc_acc' = cons_result;
+    t = t + 2;
+    operand_bit_to_var_acc_n' = prod_result;
+    t = t + 2;
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_ret s;
+    t = t + 2;
+    ret = t
+  in
+    ret
+"
+
+definition "operand_bit_to_var_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    t = t + 2;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    t = t + snd'_imp_time 0 snd'_state;
+    condition = snd'_state_p snd'_ret_state;
+    t = t + 2;
+    ret = t
+   in ret
+  )"
+
+definition "operand_bit_to_var_acc_imp_after_loop_time t s \<equiv>
+  (let
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_acc s;
+    t = t + 2;
+    ret = t
+   in ret
+  )"
+
+lemmas operand_bit_to_var_acc_imp_subprogram_time_simps =
+  operand_bit_to_var_acc_imp_subprogram_simps
+  operand_bit_to_var_acc_imp_after_loop_time_def
+  operand_bit_to_var_acc_state_upd_time_def
+  operand_bit_to_var_acc_imp_compute_loop_condition_time_def
+
+function operand_bit_to_var_acc_imp_time:: "nat \<Rightarrow> operand_bit_to_var_acc_state \<Rightarrow> nat" where
+  "operand_bit_to_var_acc_imp_time t s =
+  operand_bit_to_var_acc_imp_compute_loop_condition_time 0 s +
+  (if operand_bit_to_var_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    (let
+        t = t + 1;
+        next_iteration
+          = operand_bit_to_var_acc_imp_time (t + operand_bit_to_var_acc_state_upd_time 0 s)
+                                            (operand_bit_to_var_acc_state_upd s)
+     in next_iteration)
+  else
+    (let
+        t = t + 2;
+        ret = t + operand_bit_to_var_acc_imp_after_loop_time 0 s
+     in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (operand_bit_to_var_acc_n \<circ> snd)")
+   apply (simp add: operand_bit_to_var_acc_imp_subprogram_time_simps Let_def snd'_imp_correct
+      fst'_imp_correct prod_encode_imp_correct fst'_nat_def snd'_nat_def prod_encode_def
+      nat_less_le triangle_tsqrt_le triangle_nat_le_eq_le le_diff_conv)+
+  by (metis add_cancel_right_left add_diff_cancel_left' diff_diff_cancel diff_is_0_eq less_Suc0
+      nat_le_linear not_gr_zero triangle_tsqrt_le tsqrt_alt_inverse_triangle)
+
+lemmas [simp del] = operand_bit_to_var_acc_imp_time.simps
+
+lemma operand_bit_to_var_acc_imp_time_acc:
+  "(operand_bit_to_var_acc_imp_time (Suc t) s) = Suc (operand_bit_to_var_acc_imp_time t s)"
+  by (induction t s rule: operand_bit_to_var_acc_imp_time.induct)
+    ((subst (1 2) operand_bit_to_var_acc_imp_time.simps);
+      (simp add: operand_bit_to_var_acc_state_upd_def))
+
+lemma operand_bit_to_var_acc_imp_time_acc_2_aux:
+  "(operand_bit_to_var_acc_imp_time x s) = x + (operand_bit_to_var_acc_imp_time 0 s)"
+  by (induction x arbitrary: s)
+    (simp add: operand_bit_to_var_acc_imp_time_acc)+
+
+lemma operand_bit_to_var_acc_imp_time_acc_2:
+  "x \<noteq> 0 \<Longrightarrow> (operand_bit_to_var_acc_imp_time x s) = x + (operand_bit_to_var_acc_imp_time 0 s)"
+  by (rule operand_bit_to_var_acc_imp_time_acc_2_aux)
+
+lemma operand_bit_to_var_acc_imp_time_acc_3:
+  "operand_bit_to_var_acc_imp_time (a + b) s = a + (operand_bit_to_var_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: operand_bit_to_var_acc_imp_time_acc)+
+
+abbreviation "operand_bit_to_var_acc_while_cond \<equiv> ''condition''"
+
+definition "operand_bit_to_var_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>    snd'_state_p' = operand_bit_to_var_acc_n s;\<close>
+  (snd'_prefix @ snd'_p_str) ::= (A (V operand_bit_to_var_acc_n_str));;
+  \<comment> \<open>    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;\<close>
+  \<comment> \<open>    snd'_ret_state = snd'_imp snd'_state;\<close>
+  invoke_subprogram snd'_prefix snd'_IMP_Minus;;
+  \<comment> \<open>    condition = snd'_state_p snd'_ret_state\<close>
+  operand_bit_to_var_acc_while_cond ::= (A (V (snd'_prefix @ snd'_p_str)))
+"
+
+definition "operand_bit_to_var_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>fst'_state_p' = operand_bit_to_var_acc_n s;\<close>
+  (fst'_prefix @ fst'_p_str) ::= (A (V operand_bit_to_var_acc_n_str));;
+  \<comment> \<open>fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
+  \<comment> \<open>fst'_ret_state = fst'_imp fst'_state;\<close>
+  invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+  ''fst'_result'' ::= (A (V (fst'_prefix @ fst'_p_str)));;
+  \<comment> \<open>snd'_state_p' = operand_bit_to_var_acc_n s;\<close>
+  (snd'_prefix @ snd'_p_str) ::= (A (V operand_bit_to_var_acc_n_str));;
+  \<comment> \<open>snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;\<close>
+  \<comment> \<open>snd'_ret_state = snd'_imp snd'_state;\<close>
+  invoke_subprogram snd'_prefix snd'_IMP_Minus;;
+  ''snd'_result'' ::= (A (V (snd'_prefix @ snd'_p_str)));;
+  \<comment> \<open>prod_encode_a' = fst'_state_p fst'_ret_state;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V ''fst'_result''));;
+  \<comment> \<open>prod_encode_b' = snd'_state_p snd'_ret_state - 1;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V ''snd'_result'') (N 1));;
+  \<comment> \<open>prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                     prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                     prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
+  ''prod_encode_result'' ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>cons_h' = fst'_state_p fst'_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V ''fst'_result''));;
+  \<comment> \<open>cons_t' = operand_bit_to_var_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V operand_bit_to_var_acc_acc_str));;
+  \<comment> \<open>cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  ''cons_result'' ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>operand_bit_to_var_acc_acc' = cons_ret cons_ret_state;\<close>
+  operand_bit_to_var_acc_acc_str ::= (A (V ''cons_result''));;
+  \<comment> \<open>operand_bit_to_var_acc_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  operand_bit_to_var_acc_n_str ::= (A (V ''prod_encode_result''));;
+  \<comment> \<open>operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_ret s;\<close>
+  operand_bit_to_var_acc_ret_str ::= (A (V operand_bit_to_var_acc_ret_str))
+  \<comment> \<open>ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>\<close>
+"
+
+definition "operand_bit_to_var_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_acc s;\<close>
+  operand_bit_to_var_acc_ret_str ::= (A (V operand_bit_to_var_acc_acc_str))
+  \<comment> \<open>ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>\<close>
+"
+
+definition operand_bit_to_var_acc_IMP_Minus where
+  "operand_bit_to_var_acc_IMP_Minus \<equiv>
+  operand_bit_to_var_acc_IMP_init_while_cond;;
+  WHILE operand_bit_to_var_acc_while_cond \<noteq>0 DO (
+    operand_bit_to_var_acc_IMP_loop_body;;
+    operand_bit_to_var_acc_IMP_init_while_cond
+  );;
+  operand_bit_to_var_acc_IMP_after_loop"
+
+abbreviation
+  "operand_bit_to_var_acc_IMP_vars \<equiv>
+  {operand_bit_to_var_acc_acc_str, operand_bit_to_var_acc_n_str, operand_bit_to_var_acc_ret_str,
+  ''cons_result'', ''prod_encode_result'', ''fst'_result'', ''snd'_result''}"
+
+lemmas operand_bit_to_var_acc_IMP_subprogram_simps =
+  operand_bit_to_var_acc_IMP_init_while_cond_def
+  operand_bit_to_var_acc_IMP_loop_body_def
+  operand_bit_to_var_acc_IMP_after_loop_def
+
+definition "operand_bit_to_var_acc_imp_to_HOL_state p s =
+  \<lparr>operand_bit_to_var_acc_acc = (s (add_prefix p operand_bit_to_var_acc_acc_str)),
+   operand_bit_to_var_acc_n = (s (add_prefix p operand_bit_to_var_acc_n_str)),
+   operand_bit_to_var_acc_ret = (s (add_prefix p operand_bit_to_var_acc_ret_str))\<rparr>"
+
+lemmas operand_bit_to_var_acc_state_translators =
+  fst'_imp_to_HOL_state_def
+  snd'_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  operand_bit_to_var_acc_imp_to_HOL_state_def
+
+lemmas operand_bit_to_var_acc_complete_simps =
+  operand_bit_to_var_acc_IMP_subprogram_simps
+  operand_bit_to_var_acc_imp_subprogram_simps
+  operand_bit_to_var_acc_state_translators
+
+lemma operand_bit_to_var_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p operand_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p operand_bit_to_var_acc_ret_str)
+      = operand_bit_to_var_acc_ret
+          (operand_bit_to_var_acc_imp (operand_bit_to_var_acc_imp_to_HOL_state p s))"
+  apply(induction "operand_bit_to_var_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: operand_bit_to_var_acc_imp.induct)
+  apply(subst operand_bit_to_var_acc_imp.simps)
+  apply(simp only: operand_bit_to_var_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+   apply(simp only: operand_bit_to_var_acc_IMP_subprogram_simps prefix_simps)
+   apply(erule Seq_E)+
+   apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+  subgoal premises p using p(8) by fastforce
+   apply(fastforce simp: operand_bit_to_var_acc_IMP_subprogram_simps
+      operand_bit_to_var_acc_imp_subprogram_simps
+      operand_bit_to_var_acc_state_translators)
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+    apply(simp only: operand_bit_to_var_acc_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(10) by fastforce
+    by(fastforce simp add: operand_bit_to_var_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) operand_bit_to_var_acc_IMP_init_while_cond_def)
+    apply(simp only:
+        operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(26) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(28) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(30) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(32) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(34) by fastforce
+    by (simp only: operand_bit_to_var_acc_imp_subprogram_simps
+        operand_bit_to_var_acc_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: operand_bit_to_var_acc_IMP_init_while_cond_def prefix_simps
+        operand_bit_to_var_acc_IMP_loop_body_def)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(28) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(30) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(32) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(34) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(36) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    by (simp only: operand_bit_to_var_acc_imp_subprogram_simps
+        operand_bit_to_var_acc_state_translators Let_def, force)
+  done
+
+lemma operand_bit_to_var_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ operand_bit_to_var_acc_pref) operand_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix operand_bit_to_var_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemmas operand_bit_to_var_acc_complete_time_simps =
+  operand_bit_to_var_acc_imp_subprogram_time_simps
+  operand_bit_to_var_acc_IMP_subprogram_simps
+  operand_bit_to_var_acc_imp_time_acc
+  operand_bit_to_var_acc_imp_time_acc_2
+  operand_bit_to_var_acc_imp_time_acc_3
+  operand_bit_to_var_acc_state_translators
+
+lemma operand_bit_to_var_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p operand_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = operand_bit_to_var_acc_imp_time 0 (operand_bit_to_var_acc_imp_to_HOL_state p s)"
+  apply(induction "operand_bit_to_var_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: operand_bit_to_var_acc_imp.induct)
+  apply(subst operand_bit_to_var_acc_imp_time.simps)
+  apply(simp only: operand_bit_to_var_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+  subgoal
+    apply(simp only: operand_bit_to_var_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(12) by fastforce
+    by (force simp: operand_bit_to_var_acc_IMP_subprogram_simps
+        operand_bit_to_var_acc_imp_subprogram_time_simps operand_bit_to_var_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: operand_bit_to_var_acc_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(13) by fastforce
+    by(fastforce simp add: operand_bit_to_var_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) operand_bit_to_var_acc_IMP_init_while_cond_def)
+    apply(simp only:
+        operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(29) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(31) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(33) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(35) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(37) by fastforce
+    by (simp only: operand_bit_to_var_acc_imp_subprogram_time_simps
+        operand_bit_to_var_acc_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: prefix_simps operand_bit_to_var_acc_IMP_init_while_cond_def
+        operand_bit_to_var_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(simp only: operand_bit_to_var_acc_complete_time_simps Let_def)
+    by force (*Takes long!*)
+
+  done
+
+lemma operand_bit_to_var_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) operand_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (operand_bit_to_var_acc_imp_time 0 (operand_bit_to_var_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) operand_bit_to_var_acc_ret_str) =
+          operand_bit_to_var_acc_ret (operand_bit_to_var_acc_imp
+                                        (operand_bit_to_var_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using operand_bit_to_var_acc_IMP_Minus_correct_function
+  by (auto simp: operand_bit_to_var_acc_IMP_Minus_correct_time)
+    (meson operand_bit_to_var_acc_IMP_Minus_correct_effects set_mono_prefix)
+
+
 
 end

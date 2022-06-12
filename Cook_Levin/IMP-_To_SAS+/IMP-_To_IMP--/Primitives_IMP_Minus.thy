@@ -1813,13 +1813,15 @@ lemma prod_encode_IMP_Minus_correct_effects:
 
 lemma prod_encode_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
      \<lbrakk>t = (prod_encode_imp_time 0 (prod_encode_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) prod_encode_ret_str) = prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. p1 @ v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v) \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+      s' (add_prefix (p1 @ p2) prod_encode_ret_str) =
+        prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using prod_encode_IMP_Minus_correct_time prod_encode_IMP_Minus_correct_function
-        prod_encode_IMP_Minus_correct_effects 
-  by auto
+    prod_encode_IMP_Minus_correct_effects
+  by fastforce
 
 (*
 record prod_decode_aux_state = prod_decode_aux_k::nat prod_decode_aux_m::nat
@@ -2670,37 +2672,27 @@ definition cons_IMP_Minus where
  )"
 
 definition "cons_imp_to_HOL_state p s =
-  \<lparr>cons_h = (s (add_prefix p cons_h_str)), cons_t = (s (add_prefix p cons_t_str)), cons_ret = (s (add_prefix p cons_ret_str))\<rparr>"
+  \<lparr>cons_h = (s (add_prefix p cons_h_str)),
+   cons_t = (s (add_prefix p cons_t_str)),
+   cons_ret = (s (add_prefix p cons_ret_str))\<rparr>"
 
-lemma cons_IMP_Minus_correct_function: 
+lemma cons_IMP_Minus_correct_function:
   "(invoke_subprogram p cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p cons_ret_str) = cons_ret (cons_imp (cons_imp_to_HOL_state p s))"
-  apply(subst cons_imp.simps)
-  apply(simp only: cons_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-  apply(erule prod_encode_IMP_Minus_correct[where vars = "{cons_ret_str}"])
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_encode_imp_to_HOL_state_def )[1]
-  done
+  by(fastforce elim: prod_encode_IMP_Minus_correct simp add: cons_IMP_Minus_def cons_imp.simps
+      invoke_subprogram_append cons_state_upd_def cons_imp_to_HOL_state_def
+      prod_encode_imp_to_HOL_state_def)
 
-lemma cons_IMP_Minus_correct_time: 
+lemma cons_IMP_Minus_correct_time:
   "(invoke_subprogram p cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = cons_imp_time 0 (cons_imp_to_HOL_state p s)"
-  apply(subst cons_imp_time.simps)
-  apply(simp only: cons_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-  apply(erule prod_encode_IMP_Minus_correct[where vars = "{cons_ret_str}"])
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_encode_imp_to_HOL_state_def )[1]
-  done
-
+  by(fastforce elim: prod_encode_IMP_Minus_correct simp add: cons_IMP_Minus_def cons_imp_time.simps
+      invoke_subprogram_append cons_state_upd_def cons_imp_to_HOL_state_def
+      prod_encode_imp_to_HOL_state_def)
 
 lemma cons_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ cons_pref) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow> \<not> (set cons_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  "(invoke_subprogram (p @ cons_pref) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars
+  \<Longrightarrow> \<not> (set cons_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
@@ -2708,11 +2700,12 @@ lemma cons_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
      \<lbrakk>t = (cons_imp_time 0 (cons_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) cons_ret_str) = cons_ret (cons_imp (cons_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) cons_ret_str) =
+        cons_ret (cons_imp (cons_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using cons_IMP_Minus_correct_time cons_IMP_Minus_correct_function
-        cons_IMP_Minus_correct_effects 
+    cons_IMP_Minus_correct_effects
   by auto
 
 subsection \<open>List append\<close>
