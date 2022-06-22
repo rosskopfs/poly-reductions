@@ -1,6 +1,8 @@
 theory Binary_Arithmetic_IMP 
-  imports Primitives_IMP_Minus  Binary_Arithmetic_Nat IMP_Minus.Com
+  imports Primitives_IMP_Minus Binary_Arithmetic_Nat IMP_Minus.Com
 begin
+
+unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 subsection \<open>N-th bit of Natural Number\<close>
 
@@ -22,15 +24,12 @@ fun nth_bit_of_num_nat' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 
 lemma nth_bit_of_num_nat'_correct:
   "(nth_bit_of_num_nat' x n) = (nth_bit_of_num_nat x n)"
-proof (induction x n rule: nth_bit_of_num_nat.induct)
-  case (1 s)
-  then show ?case
-    apply(subst nth_bit_of_num_nat.simps)
-    apply(subst nth_bit_of_num_nat'.simps)
-    by (auto simp: Let_def split: if_splits)
-qed 
+  by (induction x n rule: nth_bit_of_num_nat.induct) simp
 
-record nth_bit_of_num_state = nth_bit_of_num_x::nat nth_bit_of_num_n::nat nth_bit_of_num_ret::nat
+record nth_bit_of_num_state =
+  nth_bit_of_num_x::nat
+  nth_bit_of_num_n::nat
+  nth_bit_of_num_ret::nat
 
 abbreviation "nth_bit_of_num_prefix \<equiv> ''nth_bit_of_num.''"
 abbreviation "nth_bit_of_num_x_str \<equiv> ''x''"
@@ -632,4 +631,342 @@ lemma nth_bit_of_num_IMP_Minus_correct_time:
   done
 
 
+
+
+
+subsection \<open>nth_bit_tail\<close>
+
+fun nth_bit_tail':: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "nth_bit_tail' acc n =
+  (if n \<noteq> 0
+   then nth_bit_tail' (acc div 2) (n - 1)
+   else acc mod 2
+  )"
+
+lemma nth_bit_tail'_correct:"nth_bit_tail acc n = nth_bit_tail' acc n"
+  by(induction acc n rule: nth_bit_tail.induct) simp+
+
+record nth_bit_tail_state =
+  nth_bit_tail_acc::nat
+  nth_bit_tail_n::nat
+  nth_bit_tail_ret::nat
+
+abbreviation "nth_bit_tail_prefix \<equiv> ''nth_bit_tail.''"
+abbreviation "nth_bit_tail_acc_str \<equiv> ''acc''"
+abbreviation "nth_bit_tail_n_str \<equiv> ''n''"
+abbreviation "nth_bit_tail_ret_str \<equiv> ''ret''"
+
+definition "nth_bit_tail_state_upd s \<equiv>
+  let
+    nth_bit_tail_acc' = nth_bit_tail_acc s div 2;
+    nth_bit_tail_n' = nth_bit_tail_n s - 1;
+    nth_bit_tail_ret' = nth_bit_tail_ret s;
+    ret = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+           nth_bit_tail_n = nth_bit_tail_n',
+           nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>
+  in ret
+"
+
+definition "nth_bit_tail_imp_compute_loop_condition s \<equiv>
+  let
+    condition = nth_bit_tail_n s
+  in condition
+"
+
+definition "nth_bit_tail_imp_after_loop s \<equiv>
+  let
+    nth_bit_tail_acc' = nth_bit_tail_acc s;
+    nth_bit_tail_n' = nth_bit_tail_n s;
+    nth_bit_tail_ret' = nth_bit_tail_acc s mod 2;
+    ret = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+           nth_bit_tail_n = nth_bit_tail_n',
+           nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>
+  in ret
+"
+
+lemmas nth_bit_tail_imp_subprogram_simps =
+  nth_bit_tail_state_upd_def
+  nth_bit_tail_imp_compute_loop_condition_def
+  nth_bit_tail_imp_after_loop_def
+
+function nth_bit_tail_imp::
+  "nth_bit_tail_state \<Rightarrow> nth_bit_tail_state" where
+  "nth_bit_tail_imp s =
+  (if nth_bit_tail_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = nth_bit_tail_imp (nth_bit_tail_state_upd s)
+    in next_iteration
+   else
+    let ret = nth_bit_tail_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  by (relation "measure nth_bit_tail_n")
+    (simp add: nth_bit_tail_imp_subprogram_simps)+
+
+declare nth_bit_tail_imp.simps [simp del]
+
+lemma nth_bit_tail_imp_correct:
+  "nth_bit_tail_ret (nth_bit_tail_imp s) =
+    nth_bit_tail' (nth_bit_tail_acc s) (nth_bit_tail_n s)"
+  apply (induction s rule: nth_bit_tail_imp.induct)
+  apply (subst nth_bit_tail_imp.simps)
+  apply (subst nth_bit_tail'.simps)
+  apply (simp del: nth_bit_tail.simps add: nth_bit_tail_imp_subprogram_simps Let_def)
+  done
+
+definition "nth_bit_tail_state_upd_time t s \<equiv>
+  let
+    nth_bit_tail_acc' = nth_bit_tail_acc s div 2;
+    t = t + 2;
+    nth_bit_tail_n' = nth_bit_tail_n s - 1;
+    t = t + 2;
+    nth_bit_tail_ret' = nth_bit_tail_ret s;
+    t = t + 2;
+    ret = t
+  in
+    ret
+"
+
+definition "nth_bit_tail_imp_compute_loop_condition_time t s \<equiv>
+  let
+    condition = nth_bit_tail_n s;
+    ret = t + 2
+  in
+    ret
+"
+
+definition "nth_bit_tail_imp_after_loop_time t s \<equiv>
+  let
+    nth_bit_tail_acc' = nth_bit_tail_acc s;
+    t = t + 2;
+    nth_bit_tail_n' = nth_bit_tail_n s;
+    t = t + 2;
+    nth_bit_tail_ret' = nth_bit_tail_acc s mod 2;
+    t = t + 2;
+    ret = t
+  in
+    ret
+"
+
+lemmas nth_bit_tail_imp_subprogram_time_simps =
+  nth_bit_tail_state_upd_time_def
+  nth_bit_tail_imp_compute_loop_condition_time_def
+  nth_bit_tail_imp_after_loop_time_def
+  nth_bit_tail_imp_subprogram_simps
+
+function nth_bit_tail_imp_time::
+  "nat \<Rightarrow> nth_bit_tail_state \<Rightarrow> nat" where
+  "nth_bit_tail_imp_time t s =
+  nth_bit_tail_imp_compute_loop_condition_time 0 s +
+  (if nth_bit_tail_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          nth_bit_tail_imp_time (t + nth_bit_tail_state_upd_time 0 s)
+                         (nth_bit_tail_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + nth_bit_tail_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  by (relation "measure (nth_bit_tail_n \<circ> snd)")
+    (simp add: nth_bit_tail_imp_subprogram_time_simps)+
+
+declare nth_bit_tail_imp_time.simps [simp del]
+
+lemma nth_bit_tail_imp_time_acc:
+  "(nth_bit_tail_imp_time (Suc t) s) = Suc (nth_bit_tail_imp_time t s)"
+  by (induction t s rule: nth_bit_tail_imp_time.induct)
+    ((subst (1 2) nth_bit_tail_imp_time.simps);
+      (simp add: nth_bit_tail_state_upd_def))
+
+lemma nth_bit_tail_imp_time_acc_2_aux:
+  "(nth_bit_tail_imp_time t s) = t + (nth_bit_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: nth_bit_tail_imp_time_acc)+
+
+lemma nth_bit_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (nth_bit_tail_imp_time t s) = t + (nth_bit_tail_imp_time 0 s)"
+  by (rule nth_bit_tail_imp_time_acc_2_aux)
+
+lemma nth_bit_tail_imp_time_acc_3:
+  "(nth_bit_tail_imp_time (a + b) s) = a + (nth_bit_tail_imp_time b s)"
+  by (induction a arbitrary: b s)
+      (simp add: nth_bit_tail_imp_time_acc)+
+
+abbreviation "nth_bit_tail_while_cond \<equiv> ''condition''"
+
+definition "nth_bit_tail_IMP_loop_body \<equiv>
+  \<comment> \<open>nth_bit_tail_acc' = nth_bit_tail_acc s div 2;\<close>
+  nth_bit_tail_acc_str ::= ((V nth_bit_tail_acc_str)\<then>);;
+  \<comment> \<open>nth_bit_tail_n' = nth_bit_tail_n s - 1;\<close>
+  nth_bit_tail_n_str ::= ((V nth_bit_tail_n_str) \<ominus> (N 1));;
+  \<comment> \<open>nth_bit_tail_ret' = nth_bit_tail_ret s;\<close>
+  nth_bit_tail_ret_str ::= (A (V nth_bit_tail_ret_str))
+  \<comment> \<open>ret = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',\<close>
+  \<comment> \<open>       nth_bit_tail_n = nth_bit_tail_n',\<close>
+  \<comment> \<open>       nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>\<close>
+"
+
+definition "nth_bit_tail_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = nth_bit_tail_n s\<close>
+  nth_bit_tail_while_cond ::= (A (V nth_bit_tail_n_str))
+"
+
+definition "nth_bit_tail_IMP_after_loop \<equiv>
+  \<comment> \<open>nth_bit_tail_acc' = nth_bit_tail_acc s;\<close>
+  nth_bit_tail_acc_str ::= (A (V nth_bit_tail_acc_str));;
+  \<comment> \<open>nth_bit_tail_n' = nth_bit_tail_n s;\<close>
+  nth_bit_tail_n_str ::= (A (V nth_bit_tail_n_str));;
+  \<comment> \<open>nth_bit_tail_ret' = nth_bit_tail_acc s mod 2;\<close>
+  nth_bit_tail_ret_str ::= ((V nth_bit_tail_acc_str) \<doteq>1)
+  \<comment> \<open>ret = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',\<close>
+  \<comment> \<open>       nth_bit_tail_n = nth_bit_tail_n',\<close>
+  \<comment> \<open>       nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>\<close>
+"
+
+definition nth_bit_tail_IMP_Minus where
+  "nth_bit_tail_IMP_Minus \<equiv>
+  nth_bit_tail_IMP_init_while_cond;;
+  WHILE nth_bit_tail_while_cond \<noteq>0 DO (
+    nth_bit_tail_IMP_loop_body;;
+    nth_bit_tail_IMP_init_while_cond
+  );;
+  nth_bit_tail_IMP_after_loop"
+
+abbreviation
+  "nth_bit_tail_IMP_vars \<equiv>
+  {nth_bit_tail_acc_str, nth_bit_tail_n_str, nth_bit_tail_ret_str}"
+
+lemmas nth_bit_tail_IMP_subprogram_simps =
+  nth_bit_tail_IMP_init_while_cond_def
+  nth_bit_tail_IMP_loop_body_def
+  nth_bit_tail_IMP_after_loop_def
+
+definition "nth_bit_tail_imp_to_HOL_state p s =
+  \<lparr>nth_bit_tail_acc = (s (add_prefix p nth_bit_tail_acc_str)),
+   nth_bit_tail_n = (s (add_prefix p nth_bit_tail_n_str)),
+   nth_bit_tail_ret = (s (add_prefix p nth_bit_tail_ret_str))\<rparr>"
+
+lemmas nth_bit_tail_state_translators =
+  nth_bit_tail_imp_to_HOL_state_def
+
+lemmas nth_bit_tail_complete_simps =
+  nth_bit_tail_IMP_subprogram_simps
+  nth_bit_tail_imp_subprogram_simps
+  nth_bit_tail_state_translators
+
+lemma nth_bit_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p nth_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p nth_bit_tail_ret_str)
+      = nth_bit_tail_ret
+          (nth_bit_tail_imp (nth_bit_tail_imp_to_HOL_state p s))"
+  apply(induction "nth_bit_tail_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: nth_bit_tail_imp.induct)
+  apply(subst nth_bit_tail_imp.simps)
+  apply(simp only: nth_bit_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule While_tE)
+   apply(simp only: nth_bit_tail_IMP_subprogram_simps prefix_simps)
+   apply(erule Seq_tE)+
+   apply(fastforce simp: nth_bit_tail_IMP_subprogram_simps
+      nth_bit_tail_imp_subprogram_simps
+      nth_bit_tail_state_translators)
+  apply(erule Seq_tE)+
+  apply(dest_com_gen)
+
+  subgoal
+    apply(simp only: nth_bit_tail_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: nth_bit_tail_complete_simps)
+
+  subgoal
+    apply(simp only: nth_bit_tail_IMP_init_while_cond_def nth_bit_tail_IMP_loop_body_def
+        prefix_simps)
+    apply(erule Seq_tE)+
+    apply (simp add: nth_bit_tail_complete_simps Let_def)
+    by force
+
+  subgoal
+    apply(simp only: nth_bit_tail_IMP_init_while_cond_def nth_bit_tail_IMP_loop_body_def
+        prefix_simps)
+    apply(erule Seq_tE)+
+    apply (simp add: nth_bit_tail_complete_simps Let_def)
+    by force
+  done
+
+lemma nth_bit_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ nth_bit_tail_pref) nth_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix nth_bit_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemmas nth_bit_tail_complete_time_simps =
+  nth_bit_tail_imp_subprogram_time_simps
+  nth_bit_tail_IMP_subprogram_simps
+  nth_bit_tail_imp_time_acc
+  nth_bit_tail_imp_time_acc_2
+  nth_bit_tail_imp_time_acc_3
+  nth_bit_tail_state_translators
+
+lemma nth_bit_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p nth_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = nth_bit_tail_imp_time 0 (nth_bit_tail_imp_to_HOL_state p s)"
+  apply(induction "nth_bit_tail_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: nth_bit_tail_imp.induct)
+  apply(subst nth_bit_tail_imp_time.simps)
+  apply(simp only: nth_bit_tail_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+  subgoal
+    apply(simp only: nth_bit_tail_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    by (force simp: nth_bit_tail_IMP_subprogram_simps
+        nth_bit_tail_imp_subprogram_time_simps nth_bit_tail_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: nth_bit_tail_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: nth_bit_tail_complete_simps)
+
+  subgoal
+    apply(subst (asm) nth_bit_tail_IMP_init_while_cond_def)
+    apply(simp only:
+        nth_bit_tail_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    by (simp only: nth_bit_tail_imp_subprogram_time_simps
+        nth_bit_tail_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: prefix_simps nth_bit_tail_IMP_init_while_cond_def
+        nth_bit_tail_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(simp only: nth_bit_tail_complete_time_simps Let_def)
+    by force
+
+  done
+
+lemma nth_bit_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) nth_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (nth_bit_tail_imp_time 0 (nth_bit_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) nth_bit_tail_ret_str) =
+          nth_bit_tail_ret (nth_bit_tail_imp
+                                        (nth_bit_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using nth_bit_tail_IMP_Minus_correct_function
+  by (auto simp: nth_bit_tail_IMP_Minus_correct_time)
+    (meson nth_bit_tail_IMP_Minus_correct_effects set_mono_prefix)
+  
 end 

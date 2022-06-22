@@ -1,6 +1,9 @@
+\<^marker>\<open>creator Andreas Vollert\<close>
+
 theory IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
   imports
     Primitives_IMP_Minus
+    Binary_Arithmetic_IMP
     IMP_Minus_To_IMP_Minus_Minus_State_Translations_nat
     IMP_Minus.Com
 begin
@@ -1697,13 +1700,17 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct_function:
   apply(simp only: operand_bit_to_var_acc_IMP_Minus_def prefix_simps)
   apply(erule Seq_E)+
   apply(erule While_tE)
-   apply(simp only: operand_bit_to_var_acc_IMP_subprogram_simps prefix_simps)
-   apply(erule Seq_E)+
-   apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-  subgoal premises p using p(8) by fastforce
-   apply(fastforce simp: operand_bit_to_var_acc_IMP_subprogram_simps
-      operand_bit_to_var_acc_imp_subprogram_simps
-      operand_bit_to_var_acc_state_translators)
+
+  subgoal
+    apply(simp only: operand_bit_to_var_acc_IMP_subprogram_simps)
+    apply(simp only: prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
+    subgoal premises p using p(8) by fastforce
+    by(fastforce simp: operand_bit_to_var_acc_IMP_subprogram_simps
+        operand_bit_to_var_acc_imp_subprogram_simps
+        operand_bit_to_var_acc_state_translators)
+
   apply(erule Seq_E)+
   apply(dest_com_gen)
 
@@ -1716,8 +1723,7 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct_function:
 
   subgoal
     apply(subst (asm) operand_bit_to_var_acc_IMP_init_while_cond_def)
-    apply(simp only:
-        operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
+    apply(simp only: operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
     apply(erule Seq_E)+
     apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
     subgoal premises p using p(26) by fastforce
@@ -1777,6 +1783,7 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct_time:
 
   apply(erule Seq_tE)+
   apply(erule While_tE_time)
+
   subgoal
     apply(simp only: operand_bit_to_var_acc_IMP_subprogram_simps prefix_simps)
     apply(erule Seq_tE)+
@@ -1791,28 +1798,27 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct_time:
 
   subgoal
     apply(simp only: operand_bit_to_var_acc_IMP_init_while_cond_def prefix_simps)
-    apply(erule Seq_E)+
+    apply(erule Seq_tE)+
     apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(13) by fastforce
+    subgoal premises p using p(17) by fastforce
     by(fastforce simp add: operand_bit_to_var_acc_complete_simps)
 
   subgoal
     apply(subst (asm) operand_bit_to_var_acc_IMP_init_while_cond_def)
-    apply(simp only:
-        operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
-    apply(erule Seq_E)+
+    apply(simp only: operand_bit_to_var_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
     apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(29) by fastforce
+    subgoal premises p using p(49) by fastforce
     apply(erule snd'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(31) by fastforce
+    subgoal premises p using p(51) by fastforce
     apply(erule fst'_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(33) by fastforce
+    subgoal premises p using p(53) by fastforce
     apply(erule cons_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(35) by fastforce
+    subgoal premises p using p(55) by fastforce
     apply(erule prod_encode_IMP_Minus_correct[where vars = "operand_bit_to_var_acc_IMP_vars"])
-    subgoal premises p using p(37) by fastforce
+    subgoal premises p using p(57) by fastforce
     by (simp only: operand_bit_to_var_acc_imp_subprogram_time_simps
-        operand_bit_to_var_acc_state_translators Let_def, force)
+        operand_bit_to_var_acc_state_translators Let_def, force) (*Takes long!*)
 
   subgoal
     apply(simp only: prefix_simps operand_bit_to_var_acc_IMP_init_while_cond_def
@@ -1847,6 +1853,754 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct:
   using operand_bit_to_var_acc_IMP_Minus_correct_function
   by (auto simp: operand_bit_to_var_acc_IMP_Minus_correct_time)
     (meson operand_bit_to_var_acc_IMP_Minus_correct_effects set_mono_prefix)
+
+
+subsubsection \<open>operand_bit_to_var_tail\<close>
+
+(* TODO *)
+
+
+
+subsection \<open>var_to_operand_bit_nat\<close>
+
+subsubsection \<open>var_to_operand_bit_tail\<close>
+
+(* TODO *)
+
+
+subsection \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial\<close>
+
+subsubsection \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc\<close>
+
+fun map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc':: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc' acc k n =
+    (if n \<noteq> 0
+     then
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'
+       ((prod_encode (fst_nat (hd_nat n), nth_bit_tail (snd_nat (hd_nat n)) k)) ## acc) k (tl_nat n)
+     else acc
+    )"
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'_correct:
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc' acc k n =
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc acc k n"
+  by(induction acc k n rule: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc.induct)
+    (simp add: subtail_nth_bit)
+
+record map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc::nat
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k::nat
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n::nat
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret::nat
+
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prefix \<equiv>
+  ''map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc.''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str \<equiv> ''acc''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str \<equiv> ''k''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str \<equiv> ''n''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str \<equiv> ''ret''"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd s \<equiv>
+  let
+    hd_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    hd_ret' = 0;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+    hd_result = hd_ret hd_ret_state;
+    tl_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    tl_ret' = 0;
+    tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+    tl_ret_state = tl_imp tl_state;
+    tl_result = tl_ret tl_ret_state;
+    fst'_state_p' = hd_result;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    fst'_result = fst'_state_p fst'_ret_state;
+    snd'_state_p' = hd_result;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    snd'_result = snd'_state_p snd'_ret_state;
+    nth_bit_tail_acc' = snd'_result;
+    nth_bit_tail_n' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    nth_bit_tail_ret' = 0;
+    nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+                          nth_bit_tail_n = nth_bit_tail_n',
+                          nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;
+    nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;
+    nth_bit_tail_result = nth_bit_tail_ret nth_bit_tail_ret_state;
+    prod_encode_a' = fst'_result;
+    prod_encode_b' = nth_bit_tail_result;
+    prod_encode_ret' = 0;
+    prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                         prod_encode_b = prod_encode_b',
+                         prod_encode_ret = prod_encode_ret'\<rparr>;
+    prod_encode_ret_state = prod_encode_imp prod_encode_state;
+    prod_result = prod_encode_ret prod_encode_ret_state;
+    cons_h' = prod_result;
+    cons_t' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    cons_result = cons_ret cons_ret_state;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' = cons_result;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' = tl_result;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret s;
+    ret = \<lparr>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret'\<rparr>
+  in ret
+"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition s \<equiv>
+  let
+    condition = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s
+  in condition
+"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop s \<equiv>
+  let
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    ret = \<lparr>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret'\<rparr>
+  in ret
+"
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop_def
+
+function map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp::
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state \<Rightarrow>
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state"
+  where
+    "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp s =
+  (if map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp
+        (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd s)
+    in next_iteration
+   else
+    let ret = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n")
+  by (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+      hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct nth_bit_tail_imp_correct
+      prod_encode_imp_correct cons_imp_correct Let_def)+
+
+declare map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.simps [simp del]
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_correct:
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret
+    (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp s) =
+   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'
+    (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s)
+    (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s)
+    (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s)"
+  apply (induction s rule: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.induct)
+  apply (subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.simps)
+  apply (subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'.simps)
+  by (simp del: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'.simps
+      add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps Let_def
+      fst_nat_fst'_nat snd_nat_snd'_nat hd_imp_correct tl_imp_correct fst'_imp_correct
+      snd'_imp_correct nth_bit_tail_imp_correct prod_encode_imp_correct cons_imp_correct
+      nth_bit_tail'_correct)
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_time t s \<equiv>
+  let
+    hd_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    t = t + 2;
+    hd_ret' = 0;
+    t = t + 2;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+    t = t + hd_imp_time 0 hd_state;
+    hd_result = hd_ret hd_ret_state;
+    t = t + 2;
+    tl_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    t = t + 2;
+    tl_ret' = 0;
+    t = t + 2;
+    tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+    tl_ret_state = tl_imp tl_state;
+    t = t + tl_imp_time 0 tl_state;
+    tl_result = tl_ret tl_ret_state;
+    t = t + 2;
+    fst'_state_p' = hd_result;
+    t = t + 2;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    t = t + fst'_imp_time 0 fst'_state;
+    fst'_result = fst'_state_p fst'_ret_state;
+    t = t + 2;
+    snd'_state_p' = hd_result;
+    t = t + 2;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    t = t + snd'_imp_time 0 snd'_state;
+    snd'_result = snd'_state_p snd'_ret_state;
+    t = t + 2;
+    nth_bit_tail_acc' = snd'_result;
+    t = t + 2;
+    nth_bit_tail_n' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    t = t + 2;
+    nth_bit_tail_ret' = 0;
+    t = t + 2;
+    nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+                          nth_bit_tail_n = nth_bit_tail_n',
+                          nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;
+    nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;
+    t = t + nth_bit_tail_imp_time 0 nth_bit_tail_state;
+    nth_bit_tail_result = nth_bit_tail_ret nth_bit_tail_ret_state;
+    t = t + 2;
+    prod_encode_a' = fst'_result;
+    t = t + 2;
+    prod_encode_b' =nth_bit_tail_result;
+    t = t + 2;
+    prod_encode_ret' = 0;
+    t = t + 2;
+    prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                         prod_encode_b = prod_encode_b',
+                         prod_encode_ret = prod_encode_ret'\<rparr>;
+    prod_encode_ret_state = prod_encode_imp prod_encode_state;
+    t = t + prod_encode_imp_time 0 prod_encode_state;
+    prod_result = prod_encode_ret prod_encode_ret_state;
+    t = t + 2;
+    cons_h' = prod_result;
+    t = t + 2;
+    cons_t' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+    cons_result = cons_ret cons_ret_state;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' = cons_result;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' = tl_result;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret s;
+    t = t + 2;
+    ret = \<lparr>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret'\<rparr>
+  in
+    t
+"
+
+definition
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition_time t s \<equiv>
+  let
+    condition = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    t = t + 2
+  in
+    t
+"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop_time t s \<equiv>
+  let
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;
+    t = t + 2;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;
+    t = t + 2;
+    ret = \<lparr>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n',
+           map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret =
+            map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret'\<rparr>
+  in
+    t
+"
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_time_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition_time_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop_time_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+
+function map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time::
+  "nat \<Rightarrow> map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state \<Rightarrow> nat" where
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time t s =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition_time 0 s +
+  (if map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time
+            (t + map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_time 0 s)
+            (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  by (relation "measure (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n \<circ> snd)")
+    (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps
+      tl_imp_correct Let_def)+
+
+declare map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time.simps [simp del]
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc:
+  "(map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time (Suc t) s) =
+    Suc (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time t s)"
+  by (induction t s rule: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time.induct)
+    ((subst (1 2) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time.simps);
+      (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_def))
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_2_aux:
+  "(map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time t s) =
+    t + (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time 0 s)"
+  by (induction t arbitrary: s)
+    (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc)+
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time t s) =
+    t + (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time 0 s)"
+  by (rule map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_2_aux)
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_3:
+  "(map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time (a + b) s) =
+    a + (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time b s)"
+  by (induction a arbitrary: b s)
+    (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc)+
+
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_while_cond \<equiv> ''condition''"
+
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result \<equiv> ''hd_result''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_tl_result \<equiv> ''tl_result''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result \<equiv> ''fst'_result''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_snd'_result \<equiv> ''snd'_result''"
+abbreviation
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_nth_bit_tail_result \<equiv> ''nth_bit_tail_result''"
+abbreviation
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prod_encode_result \<equiv> ''prod_encode_result''"
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_cons_result \<equiv> ''cons_result''"
+
+(* lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_variable_defs =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_tl_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_snd'_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_nth_bit_tail_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prod_encode_result_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_cons_result_def *)
+
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_while_cond ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str))
+"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>hd_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str));;
+  \<comment> \<open>hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>hd_result = hd_ret hd_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result ::=
+    (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>tl_xs' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str));;
+  \<comment> \<open>tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  \<comment> \<open>tl_result = tl_ret tl_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_tl_result ::=
+    (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>fst'_state_p' = hd_result;\<close>
+  (fst'_prefix @ fst'_p_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result));;
+  \<comment> \<open>fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
+  \<comment> \<open>fst'_ret_state = fst'_imp fst'_state;\<close>
+  invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+  \<comment> \<open>fst'_result = fst'_state_p fst'_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result ::=
+    (A (V (fst'_prefix @ fst'_p_str)));;
+  \<comment> \<open>snd'_state_p' = hd_result;\<close>
+  (snd'_prefix @ snd'_p_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result));;
+  \<comment> \<open>snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;\<close>
+  \<comment> \<open>snd'_ret_state = snd'_imp snd'_state;\<close>
+  invoke_subprogram snd'_prefix snd'_IMP_Minus;;
+  \<comment> \<open>snd'_result = snd'_state_p snd'_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_snd'_result ::=
+    (A (V (snd'_prefix @ snd'_p_str)));;
+  \<comment> \<open>nth_bit_tail_acc' = snd'_result;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_acc_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_snd'_result));;
+  \<comment> \<open>nth_bit_tail_n' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_n_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str));;
+  \<comment> \<open>nth_bit_tail_ret' = 0;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',\<close>
+  \<comment> \<open>                      nth_bit_tail_n = nth_bit_tail_n',\<close>
+  \<comment> \<open>                      nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;\<close>
+  invoke_subprogram nth_bit_tail_prefix nth_bit_tail_IMP_Minus;;
+  \<comment> \<open>nth_bit_tail_result = nth_bit_tail_ret nth_bit_tail_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_nth_bit_tail_result ::=
+    (A (V (nth_bit_tail_prefix @ nth_bit_tail_ret_str)));;
+  \<comment> \<open>prod_encode_a' = fst'_result;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result));;
+  \<comment> \<open>prod_encode_b' =nth_bit_tail_result;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_nth_bit_tail_result));;
+  \<comment> \<open>prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                     prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                     prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
+  \<comment> \<open>prod_result = prod_encode_ret prod_encode_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prod_encode_result ::=
+    (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>cons_h' = prod_result;\<close>
+  (cons_prefix @ cons_h_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prod_encode_result));;
+  \<comment> \<open>cons_t' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str));;
+  \<comment> \<open>cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  \<comment> \<open>cons_result = cons_ret cons_ret_state;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_cons_result ::=
+    (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' = cons_result;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_cons_result));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' =\<close>
+  \<comment> \<open>  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' = tl_result;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_tl_result));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' =\<close>
+  \<comment> \<open>  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str))
+"
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str));;
+  \<comment> \<open>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret' = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc s;\<close>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str ::=
+    (A (V map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str))
+"
+
+definition map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus where
+  "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus \<equiv>
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond;;
+  WHILE map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_while_cond \<noteq>0 DO (
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body;;
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond
+  );;
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_after_loop"
+
+abbreviation "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars \<equiv>
+  {map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_tl_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_snd'_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_nth_bit_tail_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_prod_encode_result,
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_cons_result}"
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_subprogram_simps =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_after_loop_def
+
+definition "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s =
+  \<lparr>map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc =
+    (s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str)),
+   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k =
+    (s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str)),
+   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n =
+    (s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str)),
+   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret =
+    (s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str))\<rparr>"
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+  fst'_imp_to_HOL_state_def
+  snd'_imp_to_HOL_state_def
+  nth_bit_tail_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_subprogram_simps
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators
+
+value "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc 0 5 1"
+
+values "{map t [map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str] |
+  t x. (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
+   <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := 0,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := 5,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := 1>) \<Rightarrow>\<^bsup> x \<^esup> t}"
+
+lemma "{map t [map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str] |
+  t x. (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
+   <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := b,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := a,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := c>) \<Rightarrow>\<^bsup> x \<^esup> t} =
+    {[map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc b a c]}"
+  oops
+
+fun big_step_fun:: "Com.com * state \<Rightarrow> Com.com * state" where
+"big_step_fun (Com.SKIP, s) = (Com.SKIP, s)" |
+"big_step_fun (x ::= v, s) = (Com.SKIP, s(x := aval v s))" |
+"big_step_fun (c\<^sub>1;;c\<^sub>2,s) = (if c\<^sub>1 = Com.SKIP then (c\<^sub>2,s) 
+  else  (fst (big_step_fun (c\<^sub>1, s)) ;;c\<^sub>2, snd (big_step_fun (c\<^sub>1, s))))" |
+"big_step_fun (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) = (if s b \<noteq> (0::nat) then (c\<^sub>1,s) else (c\<^sub>2,s))" |
+"big_step_fun (WHILE b \<noteq>0 DO c,s) = (if s b \<noteq> (0::nat) 
+  then (c ;; (WHILE b \<noteq>0 DO c), s) else (Com.SKIP,s))"
+
+value "(snd (big_step_fun (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
+  <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := 0,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := 5,
+    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := 1>))) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str"
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str)
+      = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret
+          (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp
+            (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s))"
+  apply(induction "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s"
+      arbitrary: s s' t rule: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.induct)
+  apply(subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.simps)
+  apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    by(fastforce simp: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
+        prefix_simps)
+      by(fastforce simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps)
+
+    subgoal
+      apply(subst (asm) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def)
+      apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(40) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(42) by fastforce
+      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(44) by fastforce
+      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(46) by fastforce
+      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(48) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(50) by fastforce
+      apply(drule AssignD)+
+      apply(elim conjE)
+      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+
+      apply force
+(*       apply force
+ *)      sorry
+
+  subgoal
+      apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def prefix_simps
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(40) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(42) by fastforce
+      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(44) by fastforce
+      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(46) by fastforce
+      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(48) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(50) by fastforce
+      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+(*       apply force
+ *)      sorry
+    oops
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_pref) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_time_simps =
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_2
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time_acc_3
+  map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time 0 (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s)"
+  apply(induction "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.induct)
+  apply(subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time.simps)
+  apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    by (force simp: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_subprogram_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def)
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(73) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(75) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(77) by fastforce
+      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(79) by fastforce
+      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(81) by fastforce
+      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(83) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(85) by fastforce
+      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+      (* apply force *)
+
+  subgoal
+    apply(simp only: prefix_simps map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule <?>_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(999) by fastforce
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_time_simps Let_def)
+    by force
+
+  done
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_time 0 (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str) =
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp
+                                        (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_function
+  by (auto simp: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_time)
+    (meson map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 
 

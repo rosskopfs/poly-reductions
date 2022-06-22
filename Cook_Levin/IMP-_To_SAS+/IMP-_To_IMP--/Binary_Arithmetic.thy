@@ -1,27 +1,25 @@
 \<^marker>\<open>creator Florian Keßler\<close>
 
 section "Binary Arithmetic"
-                                                    
-theory Binary_Arithmetic 
+
+theory Binary_Arithmetic
   imports Main IMP_Minus_Minus_Small_StepT "HOL-Library.Discrete"
 
-begin 
+begin
 
-text \<open> In this theory, we introduce functions to access bits out of nats, and Lemmas that relate 
+text \<open> In this theory, we introduce functions to access bits out of nats, and Lemmas that relate
         the bits in the result of addition and subtraction to the bits of the original numbers. \<close>
 
 fun nth_bit_nat:: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_nat x 0 = x mod 2" |
-"nth_bit_nat x (Suc n) = nth_bit_nat (x div 2) n"
+  "nth_bit_nat x 0 = x mod 2" |
+  "nth_bit_nat x (Suc n) = nth_bit_nat (x div 2) n"
 
 fun nth_bit_tail:: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"nth_bit_tail x 0 = x mod 2" |
-"nth_bit_tail x (Suc n) = nth_bit_nat (x div 2) n"
+  "nth_bit_tail x 0 = x mod 2" |
+  "nth_bit_tail x (Suc n) = nth_bit_tail (x div 2) n"
 
 lemma subtail_nth_bit: "nth_bit_tail x n = nth_bit_nat x n"
-  apply(induct n)
-   apply auto
-  done
+  by(induct x n rule: nth_bit_tail.induct) simp+
 
 lemma nth_bit_nat_is_right_shift: "nth_bit_nat x n = (x div 2 ^ n) mod 2"
   apply(induction n arbitrary: x)

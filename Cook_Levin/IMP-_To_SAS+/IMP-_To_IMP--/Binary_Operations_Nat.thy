@@ -6,53 +6,58 @@ begin
 
 
 fun com_list_to_seq_nat:: "nat \<Rightarrow> nat" where
-"com_list_to_seq_nat n = (if n =0 then  0 ## 0 else 
- 2 ## ((hd_nat n) ## ((com_list_to_seq_nat (tl_nat n)) ## 0)))"
+  "com_list_to_seq_nat n =
+    (if n = 0
+     then 0 ## 0
+     else 2 ## ((hd_nat n) ## ((com_list_to_seq_nat (tl_nat n)) ## 0))
+    )"
 
-fun com_list_to_seq_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"com_list_to_seq_acc acc n = (if n = 0 then  acc 
-else com_list_to_seq_acc ( 2 ## ((hd_nat n) ## (acc ## 0))) (tl_nat n))"
+fun com_list_to_seq_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "com_list_to_seq_acc acc n =
+    (if n = 0
+     then acc
+     else com_list_to_seq_acc (2 ## ((hd_nat n) ## (acc ## 0))) (tl_nat n)
+    )"
 
-lemma com_list_to_seq_induct: "com_list_to_seq_nat (append_nat (reverse_nat ys) xs) =
-       com_list_to_seq_acc  (com_list_to_seq_nat xs) ys"
+lemma com_list_to_seq_induct:
+  "com_list_to_seq_nat (append_nat (reverse_nat ys) xs) =
+    com_list_to_seq_acc  (com_list_to_seq_nat xs) ys"
   apply(induct ys arbitrary:xs rule: length_nat.induct)
-    apply (auto simp only: reverse_nat_0 append_nat.simps)
-  apply(subst com_list_to_seq_acc.simps)
+   apply (auto simp only: reverse_nat_0 append_nat.simps)
+   apply(subst com_list_to_seq_acc.simps)
    apply(auto simp del:com_list_to_seq_acc.simps com_list_to_seq_nat.simps 
-          simp add: append_rev_nat )
-  apply(subst (2) com_list_to_seq_acc.simps )
-     apply(auto simp del:com_list_to_seq_acc.simps com_list_to_seq_nat.simps 
-          simp add: append_rev_nat )
+      simp add: append_rev_nat)
+  apply(subst (2) com_list_to_seq_acc.simps)
+  apply(auto simp del:com_list_to_seq_acc.simps com_list_to_seq_nat.simps 
+      simp add: append_rev_nat)
   apply(subst com_list_to_seq_nat.simps)
-       apply(auto simp del:com_list_to_seq_acc.simps com_list_to_seq_nat.simps 
-          simp add: append_rev_nat cons_Nil hd_cons tl_cons )
+  apply(auto simp del:com_list_to_seq_acc.simps com_list_to_seq_nat.simps 
+      simp add: append_rev_nat cons_Nil hd_cons tl_cons)
   done
 
-lemma com_list_to_seq_rev: "com_list_to_seq_nat (append_nat ys xs) =
-       com_list_to_seq_acc  (com_list_to_seq_nat xs) (reverse_nat ys)"
+lemma com_list_to_seq_rev:
+  "com_list_to_seq_nat (append_nat ys xs) =
+    com_list_to_seq_acc (com_list_to_seq_nat xs) (reverse_nat ys)"
   using rev_rev_nat com_list_to_seq_induct by metis
 
-definition  com_list_to_seq_tail :: "nat \<Rightarrow> nat" where 
-"com_list_to_seq_tail ys = com_list_to_seq_acc  (0##0) (reverse_nat ys) "
+definition com_list_to_seq_tail :: "nat \<Rightarrow> nat" where
+  "com_list_to_seq_tail ys = com_list_to_seq_acc (0 ## 0) (reverse_nat ys)"
 
-lemma subtail_com_list_to_seq: "com_list_to_seq_nat ys=
-      com_list_to_seq_tail ys"
-  using  com_list_to_seq_rev[of ys 0]  append_nat_0  com_list_to_seq_tail_def 
-  by(auto)
-
+lemma subtail_com_list_to_seq: "com_list_to_seq_nat ys = com_list_to_seq_tail ys"
+  using com_list_to_seq_rev[of ys 0] append_nat_0 com_list_to_seq_tail_def
+  by auto
 
 definition comm_list_encode :: "IMP_Minus_Minus_com list \<Rightarrow> nat" where
-"comm_list_encode xs = list_encode (map comm_encode xs) "
+  "comm_list_encode xs = list_encode (map comm_encode xs)"
 
 definition comm_list_decode :: "nat \<Rightarrow> IMP_Minus_Minus_com list" where
-"comm_list_decode xs = map comm_decode (list_decode xs) "
+  "comm_list_decode xs = map comm_decode (list_decode xs)"
 
-lemma [simp]: "comm_list_decode (comm_list_encode x) = x"
-  apply (auto simp add:comm_list_encode_def comm_list_decode_def )
-  by (metis comm_id comp_def map_idI)
+lemma comm_list_id[simp]: "comm_list_decode (comm_list_encode x) = x"
+  by (auto simp add:comm_list_encode_def comm_list_decode_def) (metis comm_id comp_def map_idI)
     
 lemma sub_com_list_to_seq:
-    "com_list_to_seq_nat (comm_list_encode xs) = comm_encode (com_list_to_seq xs)"
+  "com_list_to_seq_nat (comm_list_encode xs) = comm_encode (com_list_to_seq xs)"
   apply (induct xs)
   apply (subst com_list_to_seq_nat.simps)
    apply (auto simp only: comm_list_encode_def sub_cons cons0)
@@ -62,7 +67,6 @@ lemma sub_com_list_to_seq:
         com_list_to_seq.simps comm_encode.simps)
   apply auto
   done
-
 
 fun binary_assign_constant_nat:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "binary_assign_constant_nat n v x = (if n = 0 then cons 0 0 else cons 2 ( cons (cons 1 
@@ -105,49 +109,55 @@ lemma  sub_binary_assign_constant:
  
 
 fun copy_var_to_operand_nat:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"copy_var_to_operand_nat i op v = (if i =0 then 0 ## 0 else
- (2 ## 
-    ( 3##((var_bit_to_var_nat(prod_encode(v,i-1))) ##0) ## (1 ## (operand_bit_to_var_nat(prod_encode(op,i-1)))##1##0 )
-## ( 1 ## (operand_bit_to_var_nat(prod_encode(op,i-1)))##0##0) ## 0)
+  "copy_var_to_operand_nat i op v =
+    (if i = 0
+      then 0 ## 0
+      else
+        2 ## 
+          (3 ## ((var_bit_to_var_nat (prod_encode (v, i - 1))) ## 0)
+             ## (1 ## (operand_bit_to_var_nat (prod_encode (op, i - 1))) ## 1 ## 0)
+             ## (1 ## (operand_bit_to_var_nat (prod_encode (op, i - 1))) ## 0 ## 0)
+             ## 0)
+          ## (copy_var_to_operand_nat (i - 1) op v)
+          ## 0)"
 
- ## (copy_var_to_operand_nat (i-1) op v) 
-  ## 0))
-"
 fun copy_var_to_operand_acc ::"nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"copy_var_to_operand_acc acc diff i op v = (if diff = 0 then acc 
-else copy_var_to_operand_acc  (2 ## 
-    ( 3##((var_bit_to_var_tail(prod_encode(v,i-diff))) ##0) ## (1 ## (operand_bit_to_var_tail(prod_encode(op,i-diff)))##1##0 )
-## ( 1 ## (operand_bit_to_var_tail(prod_encode(op,i-diff)))##0##0) ## 0)
-
- ## acc ## 0) (diff-1) i op v )"
+ "copy_var_to_operand_acc acc diff i op v =
+  (if diff = 0
+   then acc
+   else copy_var_to_operand_acc
+          (2 ## 
+            (3 ## ((var_bit_to_var_tail (prod_encode (v, i - diff))) ## 0)
+               ## (1 ## (operand_bit_to_var_tail (prod_encode (op, i - diff))) ## 1 ## 0)
+               ## (1 ## (operand_bit_to_var_tail (prod_encode (op, i - diff))) ## 0 ## 0)
+               ## 0)
+             ## acc
+             ## 0)
+          (diff - 1) i op v)"
 
 lemma copy_var_to_operand_induct :
-" diff \<le> i \<Longrightarrow> copy_var_to_operand_acc (copy_var_to_operand_nat (i-diff) op v) diff i op v 
-= copy_var_to_operand_nat i op v"
-  apply(induct diff)
-   apply (auto simp add:subtail_var_bit_to_var subtail_operand_bit_to_var
-simp del:  operand_bit_to_var_nat.simps  )
-  done
+  "diff \<le> i \<Longrightarrow> copy_var_to_operand_acc (copy_var_to_operand_nat (i - diff) op v) diff i op v 
+                  = copy_var_to_operand_nat i op v"
+  by (induct diff) (auto simp add:subtail_var_bit_to_var subtail_operand_bit_to_var
+    simp del: operand_bit_to_var_nat.simps)
 
-definition copy_var_to_operand_tail :: "nat => nat => nat => nat" where 
-"copy_var_to_operand_tail i op v = copy_var_to_operand_acc (0 ## 0) i i op v"
+definition copy_var_to_operand_tail :: "nat => nat => nat => nat" where
+  "copy_var_to_operand_tail i op v = copy_var_to_operand_acc (0 ## 0) i i op v"
 
 lemma subtail_copy_var_to_operand:
-"copy_var_to_operand_tail i op v  
-= copy_var_to_operand_nat i op v"
+  "copy_var_to_operand_tail i op v = copy_var_to_operand_nat i op v"
   using copy_var_to_operand_induct [of i i op v]
-  apply(auto simp add: copy_var_to_operand_tail_def)
-  done
-
+  by(auto simp add: copy_var_to_operand_tail_def)
 
 lemma sub_copy_var_to_operand:
- "copy_var_to_operand_nat i (encode_char op) (vname_encode v) = comm_encode (copy_var_to_operand i op v)  "
+  "copy_var_to_operand_nat i (encode_char op) (vname_encode v)
+    = comm_encode (copy_var_to_operand i op v)"
   apply (induct i)
    apply (simp add: cons0)
   apply (subst copy_var_to_operand_nat.simps)
   apply (auto simp only: sub_cons cons0 sub_var_bit_to_var  sub_operand_bit_to_var
- copy_var_to_operand.simps comm_encode.simps bit_encode.simps vname_list_encode_def
-simp flip:vname_nat_encode.simps char_nat_encode.simps )
+      copy_var_to_operand.simps comm_encode.simps bit_encode.simps vname_list_encode_def
+      simp flip:vname_nat_encode.simps char_nat_encode.simps)
   apply auto
   done
 
@@ -328,18 +338,20 @@ lemma subtail_map_adder :
 
 
 definition adder_nat:: "nat \<Rightarrow> nat  \<Rightarrow> nat" where
-"adder_nat n v = 2 ## (com_list_to_seq_nat (map_adder v(list_less_nat n) )) ## (
-1## (vname_encode ''carry'') ## 0 ## 0
-) ## 0"
+  "adder_nat n v =
+    2 ## (com_list_to_seq_nat (map_adder v (list_less_nat n)))
+      ## (1 ## (vname_encode ''carry'') ## 0 ## 0)
+      ## 0"
 
-definition adder_tail:: "nat \<Rightarrow> nat  \<Rightarrow> nat"  
-  where "adder_tail n v = 2 ## (com_list_to_seq_tail (map_adder_tail v(list_less_tail n) )) ## (
-1## (vname_encode ''carry'') ## 0 ## 0
-) ## 0"
-lemma subtail_adder: "adder_tail n v =adder_nat n v" 
-  apply(auto simp only: adder_tail_def adder_nat_def subtail_com_list_to_seq subtail_map_adder
-          subtail_list_less)
-  done
+definition adder_tail:: "nat \<Rightarrow> nat  \<Rightarrow> nat" where
+  "adder_tail n v =
+    2 ## (com_list_to_seq_tail (map_adder_tail v (list_less_tail n)))
+      ## (1 ## (vname_encode ''carry'') ## 0 ## 0)
+      ## 0"
+
+lemma subtail_adder: "adder_tail n v = adder_nat n v" 
+  by(auto simp only: adder_tail_def adder_nat_def subtail_com_list_to_seq subtail_map_adder
+      subtail_list_less)
 
 
   
