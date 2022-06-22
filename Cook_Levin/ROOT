@@ -1,8 +1,7 @@
 chapter Poly_Reductions
 
-session Cook_Levin = "HOL-Analysis" +
-  options [quick_and_dirty]
-  sessions    
+session Cook_Levin = "HOL-Analysis" + 
+  sessions
     "Poly_Reductions_Lib"
     "IMP_Minus"
     "HOL-Real_Asymp"
@@ -16,4 +15,4 @@ session Cook_Levin = "HOL-Analysis" +
     "IMP-_To_SAS+/SAS++_To_SAS+"
   theories
     "Complexity_classes/Cook_Levin"
-    "IMP-_To_SAS+/IMP_Minus_To_SAT_Nat"
+    "IMP-_To_SAS+/IMP_Minus_To_SAS_Plus"

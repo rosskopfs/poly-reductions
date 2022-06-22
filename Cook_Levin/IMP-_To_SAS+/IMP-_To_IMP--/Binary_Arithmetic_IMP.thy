@@ -390,6 +390,19 @@ lemmas nth_bit_of_num_complete_simps =
   nth_bit_of_num_IMP_subprogram_simps nth_bit_of_num_imp_subprogram_simps
   nth_bit_of_num_state_translators
 
+lemmas functional_correctness_lemmas = functional_correctness
+
+method rem_assumption = (thin_tac "_")
+
+method vcg for vars::"char list set" = 
+  (erule functional_correctness_lemmas[where vars = vars],
+     (match premises
+        in prem[thin]:
+          "_ \<in> vars" \<Rightarrow>
+                      \<open>match premises
+                          in c[thin]: "_" (multi) \<Rightarrow>
+                              \<open>insert prem, (auto)[1]\<close>\<close>))
+
 lemma nth_bit_of_num_IMP_Minus_correct_function: 
   "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p nth_bit_of_num_ret_str) = nth_bit_of_num_ret (nth_bit_of_num_imp (nth_bit_of_num_imp_to_HOL_state p s))"
@@ -400,24 +413,29 @@ lemma nth_bit_of_num_IMP_Minus_correct_function:
   apply(erule While_tE)
    apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
    apply(erule Seq_tE)+
-   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
+  (*apply (thin_tac "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P" for loop_cond state_upd P)+*)
+   (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+  apply auto [1]*)
+  apply (vcg nth_bit_of_num_IMP_vars)
    apply(erule If_tE)
     apply(erule If_tE)
      apply(drule AssignD)+
      apply(elim conjE)
-     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-      apply auto [1]
+     apply (vcg nth_bit_of_num_IMP_vars)
+     (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+      apply auto [1]*)
      apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-     apply auto [1]
+  apply (vcg nth_bit_of_num_IMP_vars)
+    (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])*)
+     (*apply auto [1]*)
     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-   apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
+  apply (vcg nth_bit_of_num_IMP_vars)
+   (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])*)
+    (*apply auto [1]*)
    apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
@@ -426,24 +444,29 @@ lemma nth_bit_of_num_IMP_Minus_correct_function:
   apply(dest_com_gen)
     apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
     apply(erule Seq_tE)+
-    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-     apply auto [1]
+  apply (vcg nth_bit_of_num_IMP_vars)
+    (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]*)
     apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
 
    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
    apply(erule Seq_tE)+
-   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
-   apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply force [1]
+  apply (vcg nth_bit_of_num_IMP_vars)
+   (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]*)
+  apply (vcg nth_bit_of_num_IMP_vars)
+   (*apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply force [1]*)
    apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
 
   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
   apply(erule Seq_tE)+
-  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-   apply auto [1]
-  apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-   apply force [1]
+  apply (vcg nth_bit_of_num_IMP_vars)
+  (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply auto [1]*)
+  apply (vcg nth_bit_of_num_IMP_vars)
+  (*apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply force [1]*)
   apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
   done
 

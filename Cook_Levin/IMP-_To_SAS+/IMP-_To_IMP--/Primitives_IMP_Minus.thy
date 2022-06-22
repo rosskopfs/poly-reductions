@@ -17,6 +17,9 @@ subsection \<open>Multiplication\<close>
 
 record mul_state = mul_a::nat mul_b::nat mul_c::nat
 
+named_theorems functional_correctness
+lemmas functional_correctness_lemmas = functional_correctness
+
 abbreviation "mul_prefix \<equiv> ''mul.''"
 abbreviation "mul_a_str \<equiv> ''a''"
 abbreviation "mul_b_str \<equiv> ''b''"
@@ -177,7 +180,7 @@ lemma mul_IMP_minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma mul_IMP_minus_correct:
+lemma mul_IMP_minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) mul_IMP_minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
      \<lbrakk>t = (mul_imp_time 0 (mul_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) mul_c_str) = mul_c (mul_imp (mul_imp_to_HOL_state (p1 @ p2) s));
@@ -185,7 +188,6 @@ lemma mul_IMP_minus_correct:
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using mul_IMP_minus_correct_time mul_IMP_minus_correct_function mul_IMP_minus_correct_effects
   by auto
-
 
 subsubsection \<open>Squaring\<close>
 
@@ -305,7 +307,7 @@ lemma square_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars 
   by (metis prefix_def)
 
-lemma square_IMP_Minus_correct:
+lemma square_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) square_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (square_imp_time 0 (square_imp_to_HOL_state (p1 @ p2) s));
@@ -716,7 +718,7 @@ lemma dsqrt'_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars
   by (metis prefix_def)
 
-lemma dsqrt'_IMP_Minus_correct:
+lemma dsqrt'_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state (p1 @ p2) s));
@@ -1009,7 +1011,7 @@ lemma triangle_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma triangle_IMP_Minus_correct:
+lemma triangle_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) triangle_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
      \<lbrakk>t = (triangle_imp_time 0 (triangle_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) triangle_triangle_str) = triangle_triangle (triangle_imp (triangle_imp_to_HOL_state (p1 @ p2) s));
@@ -1061,7 +1063,6 @@ fun tsqrt_imp :: "tsqrt_state \<Rightarrow> tsqrt_state" where
 
 declare tsqrt_imp.simps [simp del]
 
-thm dsqrt_correct
 lemma tsqrt_imp_correct:
    "tsqrt_state_ret (tsqrt_imp s) = tsqrt (tsqrt_state_y s)"
   by (subst tsqrt_imp.simps) (auto simp: dsqrt_imp_correct tsqrt_def tsqrt_imp_state_upd_def
@@ -1194,7 +1195,7 @@ lemma tsqrt_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma tsqrt_IMP_Minus_correct:
+lemma tsqrt_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (tsqrt_imp_time 0 (tsqrt_imp_to_HOL_state (p1 @ p2) s));
@@ -1387,7 +1388,7 @@ lemma fst'_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma fst'_IMP_Minus_correct:
+lemma fst'_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (fst'_imp_time 0 (fst'_imp_to_HOL_state (p1 @ p2) s));
@@ -1531,7 +1532,7 @@ lemma snd'_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma snd'_IMP_Minus_correct:
+lemma snd'_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (snd'_imp_time 0 (snd'_imp_to_HOL_state (p1 @ p2) s));
@@ -1697,7 +1698,7 @@ lemma prod_decode_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma prod_decode_IMP_Minus_correct:
+lemma prod_decode_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (prod_decode_imp_time 0 (prod_decode_imp_to_HOL_state (p1 @ p2) s));
@@ -1828,7 +1829,7 @@ lemma prod_encode_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma prod_encode_IMP_Minus_correct:
+lemma prod_encode_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
      \<lbrakk>t = (prod_encode_imp_time 0 (prod_encode_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) prod_encode_ret_str) = prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state (p1 @ p2) s));
@@ -2285,7 +2286,7 @@ lemma hd_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma hd_IMP_Minus_correct:
+lemma hd_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) hd_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (hd_imp_time 0 (hd_imp_to_HOL_state (p1 @ p2) s));
@@ -2408,7 +2409,7 @@ lemma tl_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma tl_IMP_Minus_correct:
+lemma tl_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) tl_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (tl_imp_time 0 (tl_imp_to_HOL_state (p1 @ p2) s));
@@ -2593,7 +2594,7 @@ lemma length_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma length_IMP_Minus_correct:
+lemma length_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) length_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
      \<lbrakk>t = (length_imp_time 0 (length_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) length_ret_str) = length_ret (length_imp (length_imp_to_HOL_state (p1 @ p2) s));
@@ -2721,7 +2722,7 @@ lemma cons_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma cons_IMP_Minus_correct:
+lemma cons_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
      \<lbrakk>t = (cons_imp_time 0 (cons_imp_to_HOL_state (p1 @ p2) s));
@@ -2964,7 +2965,7 @@ lemma append_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma append_IMP_Minus_correct:
+lemma append_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (append_imp_time 0 (append_imp_to_HOL_state (p1 @ p2) s));
@@ -3131,7 +3132,7 @@ lemma AND_neq_zero_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma AND_neq_zero_IMP_Minus_correct:
+lemma AND_neq_zero_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (AND_neq_zero_imp_time 0 (AND_neq_zero_imp_to_HOL_state (p1 @ p2) s));
@@ -3300,7 +3301,7 @@ lemma OR_neq_zero_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma OR_neq_zero_IMP_Minus_correct:
+lemma OR_neq_zero_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (OR_neq_zero_imp_time 0 (OR_neq_zero_imp_to_HOL_state (p1 @ p2) s));
