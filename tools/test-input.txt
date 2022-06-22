@@ -1,0 +1,62 @@
+record operand_bit_to_var_acc_state =
+  operand_bit_to_var_acc_acc::nat
+  operand_bit_to_var_acc_n::nat
+  operand_bit_to_var_acc_ret::nat
+
+abbreviation "operand_bit_to_var_acc_prefix \<equiv> ''operand_bit_to_var_acc.''"
+abbreviation "operand_bit_to_var_acc_acc_str \<equiv> ''acc''"
+abbreviation "operand_bit_to_var_acc_n_str \<equiv> ''n''"
+abbreviation "operand_bit_to_var_acc_ret_str \<equiv> ''ret''"
+
+definition "operand_bit_to_var_acc_state_upd s \<equiv>
+  let
+    fst'_state_p' = operand_bit_to_var_acc_n s;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    fst'_result = fst'_state_p fst'_ret_state;
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    snd'_result = snd'_state_p snd'_ret_state;
+    prod_encode_a' = fst'_result;
+    prod_encode_b' = snd'_result - 1;
+    prod_encode_ret' = 0;
+    prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                         prod_encode_b = prod_encode_b',
+                         prod_encode_ret = prod_encode_ret'\<rparr>;
+    prod_encode_ret_state = prod_encode_imp prod_encode_state;
+    prod_result = prod_encode_ret prod_encode_ret_state;
+    cons_h' = fst'_result;
+    cons_t' = operand_bit_to_var_acc_acc s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    cons_result = cons_ret cons_ret_state;
+    operand_bit_to_var_acc_acc' = cons_result;
+    operand_bit_to_var_acc_n' = prod_result;
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_ret s;
+    ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+           operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+           operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>
+  in ret
+"
+
+definition "operand_bit_to_var_acc_imp_compute_loop_condition s \<equiv>
+  (let
+    snd'_state_p' = operand_bit_to_var_acc_n s;
+    snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+    snd'_ret_state = snd'_imp snd'_state;
+    condition = snd'_state_p snd'_ret_state
+   in condition
+  )"
+
+definition "operand_bit_to_var_acc_imp_after_loop s \<equiv>
+  (let
+    operand_bit_to_var_acc_acc' = operand_bit_to_var_acc_acc s;
+    operand_bit_to_var_acc_n' = operand_bit_to_var_acc_n s;
+    operand_bit_to_var_acc_ret' = operand_bit_to_var_acc_acc s;
+    ret = \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+           operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+           operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>
+   in ret
+  )"
