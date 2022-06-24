@@ -439,7 +439,7 @@ method dest_com_gen' =
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a[unfolded While'_def]]\<close>\<close>))
 
 method vcg for vars::"char list set" = (*subroutine_step vars*)
-  ((subroutine_step vars, print_fact subroutine_step) | while_step | (dest_com_gen', print_fact dest_com_gen) | if_step | seq_step | assign_step)
+  (((subroutine_step vars, print_fact subroutine_step); (vcg vars)?) | (while_step ; (vcg vars)?) | ((dest_com_gen', print_fact dest_com_gen) ; (vcg vars)?) | (if_step ; (vcg vars)?) | (seq_step ; (vcg vars)?) | (assign_step; (vcg vars)?))
 
 lemma nth_bit_of_num_IMP_Minus_correct_function: 
   "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -447,39 +447,37 @@ lemma nth_bit_of_num_IMP_Minus_correct_function:
   apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
   apply(subst nth_bit_of_num_imp.simps)
   apply(simp only: nth_bit_of_num_IMP_Minus_def prefix_simps)
-  apply(vcg nth_bit_of_num_IMP_vars)+
+  apply(vcg nth_bit_of_num_IMP_vars)
    apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
-  apply(vcg nth_bit_of_num_IMP_vars)+
+  apply(vcg nth_bit_of_num_IMP_vars)
+
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
      apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-  apply(vcg nth_bit_of_num_IMP_vars)+
-    apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-  apply(vcg nth_bit_of_num_IMP_vars)+
-   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
-      nth_bit_of_num_state_translators Let_def,
-      force)
-  apply(vcg nth_bit_of_num_IMP_vars)+
-   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
 
-  apply(vcg nth_bit_of_num_IMP_vars)+
-    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
-    apply(vcg nth_bit_of_num_IMP_vars)+
-    apply(simp add: nth_bit_of_num_complete_simps Let_def; force)
+   apply(simp_all only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
 
-   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
-    apply(vcg nth_bit_of_num_IMP_vars)+
-   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+    apply(vcg nth_bit_of_num_IMP_vars)
+   apply(simp only: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def;
       force)
 
-  apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
-    apply(vcg nth_bit_of_num_IMP_vars)+
-   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+  apply(vcg nth_bit_of_num_IMP_vars)
+   apply(simp only: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def;
+      force)
+
+    apply(vcg nth_bit_of_num_IMP_vars)
+   apply(simp only: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def;
       force)
   done
