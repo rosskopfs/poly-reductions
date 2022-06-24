@@ -392,9 +392,27 @@ lemmas nth_bit_of_num_complete_simps =
 
 lemmas functional_correctness_lemmas = functional_correctness
 
-method rem_assumption = (thin_tac "_")
+definition "While' = Com.com.While"
 
-method vcg for vars::"char list set" = 
+notation While' ("(WHILEdummy _/\<noteq>0 DO _)"  [0, 61] 61)
+
+lemma While_tE_dummy:
+"(WHILE b\<noteq>0 DO c, s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow>
+(x = Suc (Suc 0) \<Longrightarrow> t = s \<Longrightarrow> s b = 0 \<Longrightarrow> P) \<Longrightarrow>
+(\<And>x' s2 y. 0 < s b \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup> x' \<^esup> s2 \<Longrightarrow> (WHILEdummy b\<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> t \<Longrightarrow> Suc (x' + y) = x \<Longrightarrow> P) \<Longrightarrow> P"
+  by (auto simp: While'_def)
+
+method while_step = (erule While_tE_dummy, print_fact While_tE)
+method seq_step = (erule Seq_tE, print_fact Seq_tE)
+method if_step = (erule If_tE, print_fact If_tE)
+method assign_step = (drule AssignD, elim conjE, print_fact AssignD)
+
+definition "dest_com_gen = 0"
+
+lemma dest_com_gen: "dest_com_gen = dest_com_gen"
+  by auto
+
+method subroutine_step for vars::"char list set" =
   (erule functional_correctness_lemmas[where vars = vars],
      (match premises
         in prem[thin]:
@@ -403,7 +421,70 @@ method vcg for vars::"char list set" =
                           in c[thin]: "_" (multi) \<Rightarrow>
                               \<open>insert prem, (auto)[1]\<close>\<close>))
 
+definition "subroutine_step = 0"
+
+lemma subroutine_step: "subroutine_step = subroutine_step"
+  by auto
+
+method dest_com_gen' = 
+  (erule compose_programs_1[where ?c2.0 = "(While' _ _)"], assumption,
+    erule compose_programs_2[where ?c1.0 = "(_;; While' _ _)"], assumption,
+    (match premises
+      in a[thin]: 
+      "(init_while_cond;; 
+                WHILEdummy _ \<noteq>0 DO (loop_body;; init_while_cond);;
+                after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
+    for init_while_cond loop_body after_loop  \<Rightarrow> 
+      \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
+       for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a[unfolded While'_def]]\<close>\<close>))
+
+method vcg for vars::"char list set" = (*subroutine_step vars*)
+  ((subroutine_step vars, print_fact subroutine_step) | while_step | (dest_com_gen', print_fact dest_com_gen) | if_step | seq_step | assign_step)
+
 lemma nth_bit_of_num_IMP_Minus_correct_function: 
+  "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p nth_bit_of_num_ret_str) = nth_bit_of_num_ret (nth_bit_of_num_imp (nth_bit_of_num_imp_to_HOL_state p s))"
+  apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
+  apply(subst nth_bit_of_num_imp.simps)
+  apply(simp only: nth_bit_of_num_IMP_Minus_def prefix_simps)
+  apply(vcg nth_bit_of_num_IMP_vars)+
+   apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
+  apply(vcg nth_bit_of_num_IMP_vars)+
+     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg nth_bit_of_num_IMP_vars)+
+    apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg nth_bit_of_num_IMP_vars)+
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg nth_bit_of_num_IMP_vars)+
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+
+  apply(vcg nth_bit_of_num_IMP_vars)+
+    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
+    apply(vcg nth_bit_of_num_IMP_vars)+
+    apply(simp add: nth_bit_of_num_complete_simps Let_def; force)
+
+   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+    apply(vcg nth_bit_of_num_IMP_vars)+
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def;
+      force)
+
+  apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
+    apply(vcg nth_bit_of_num_IMP_vars)+
+   apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def;
+      force)
+  done
+
+(*lemma nth_bit_of_num_IMP_Minus_correct_function:
   "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p nth_bit_of_num_ret_str) = nth_bit_of_num_ret (nth_bit_of_num_imp (nth_bit_of_num_imp_to_HOL_state p s))"
   apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
@@ -413,29 +494,24 @@ lemma nth_bit_of_num_IMP_Minus_correct_function:
   apply(erule While_tE)
    apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
    apply(erule Seq_tE)+
-  (*apply (thin_tac "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P" for loop_cond state_upd P)+*)
-   (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-  apply auto [1]*)
-  apply (vcg nth_bit_of_num_IMP_vars)
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
    apply(erule If_tE)
     apply(erule If_tE)
      apply(drule AssignD)+
      apply(elim conjE)
-     apply (vcg nth_bit_of_num_IMP_vars)
-     (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-      apply auto [1]*)
+     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+      apply auto [1]
      apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-  apply (vcg nth_bit_of_num_IMP_vars)
-    (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])*)
-     (*apply auto [1]*)
+    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
     apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
-  apply (vcg nth_bit_of_num_IMP_vars)
-   (*apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])*)
-    (*apply auto [1]*)
+   apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
    apply(simp add: nth_bit_of_num_imp_subprogram_simps nth_bit_of_num_imp_time_acc
       nth_bit_of_num_state_translators Let_def,
       force)
@@ -444,31 +520,28 @@ lemma nth_bit_of_num_IMP_Minus_correct_function:
   apply(dest_com_gen)
     apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
     apply(erule Seq_tE)+
-  apply (vcg nth_bit_of_num_IMP_vars)
-    (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-     apply auto [1]*)
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+     apply auto [1]
     apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
 
    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
    apply(erule Seq_tE)+
-  apply (vcg nth_bit_of_num_IMP_vars)
-   (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]*)
-  apply (vcg nth_bit_of_num_IMP_vars)
-   (*apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply force [1]*)
+   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply auto [1]
+   apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+    apply force [1]
    apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
 
   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
   apply(erule Seq_tE)+
-  apply (vcg nth_bit_of_num_IMP_vars)
-  (*apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-   apply auto [1]*)
-  apply (vcg nth_bit_of_num_IMP_vars)
-  (*apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-   apply force [1]*)
+  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply auto [1]
+  apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
+   apply force [1]
   apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
-  done
+  done*)
+
+
 
 text \<open>Debugging lemma\<close>
 
@@ -491,70 +564,74 @@ lemmas nth_bit_of_num_complete_time_simps =
   nth_bit_of_num_imp_time_acc
   nth_bit_of_num_imp_time_acc_2_simp
 
+lemma While_tE_time_dummy:
+"(WHILE b\<noteq>0 DO c, s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow>
+  (x = Suc (Suc 0) \<Longrightarrow> t = s \<Longrightarrow> s b = 0 \<Longrightarrow> P) \<Longrightarrow>
+  (\<And>x' s2 y. 0 < s b \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup> x' \<^esup> s2 \<Longrightarrow> (WHILEdummy b\<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> t \<Longrightarrow> x = Suc (x' + y) \<Longrightarrow> P) \<Longrightarrow> P"
+  by (auto simp: While'_def)
+
+method while_step_time = (erule While_tE_time_dummy, print_fact While_tE)
+
+method dest_com_gen_time' = 
+  (erule compose_programs_1[where ?c2.0 = "(While' _ _)"], assumption,
+    erule compose_programs_2[where ?c1.0 = "(_;; While' _ _)"], assumption,
+    (match premises
+      in a[thin]: 
+      "(init_while_cond;; 
+                WHILEdummy _ \<noteq>0 DO (loop_body;; init_while_cond);;
+                after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
+    for init_while_cond loop_body after_loop  \<Rightarrow> 
+      \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
+       for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a[unfolded While'_def], simplified add.assoc]\<close>\<close>))
+
+
+method vcg_time for vars::"char list set" = (*subroutine_step vars*)
+  ((subroutine_step vars, print_fact subroutine_step) |
+   while_step_time | (dest_com_gen_time', print_fact dest_com_gen) | if_step | seq_step | assign_step)
+
+
 lemma nth_bit_of_num_IMP_Minus_correct_time:
   "(invoke_subprogram p nth_bit_of_num_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = nth_bit_of_num_imp_time 0 (nth_bit_of_num_imp_to_HOL_state p s)"
   apply(induction "nth_bit_of_num_imp_to_HOL_state p s" arbitrary: s s' t rule: nth_bit_of_num_imp.induct)
   apply(subst nth_bit_of_num_imp_time.simps)
   apply(simp only: nth_bit_of_num_IMP_Minus_def prefix_simps)
-  apply(erule Seq_tE)+
-  apply(erule While_tE_time)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
    apply(simp only: nth_bit_of_num_IMP_subprogram_simps prefix_simps)
-   apply(erule Seq_tE)+
-   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
-   apply(erule If_tE)
-    apply(erule If_tE)
-
-     apply(drule AssignD)+
-     apply(elim conjE)
-     apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-      apply auto [1]
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
      apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
-      nth_bit_of_num_state_translators Let_def, force)
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
+     apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
+     apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
+     apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
+      nth_bit_of_num_state_translators Let_def,
+      force)
 
-    apply(drule AssignD)+
-    apply(elim conjE)
-    apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-     apply auto [1]
-    apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
-      nth_bit_of_num_state_translators Let_def, force)
-
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(erule hd_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
-   apply(simp add: nth_bit_of_num_imp_subprogram_time_simps nth_bit_of_num_imp_time_acc
-      nth_bit_of_num_state_translators Let_def, force)
-
-
-  apply(erule Seq_tE)+
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
   apply(simp add: add.assoc)
-  apply(dest_com_gen_time)
 
     apply(simp only: nth_bit_of_num_IMP_init_while_cond_def prefix_simps)
-    apply(erule Seq_tE)+
-    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-     apply auto [1]
-    apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
+    apply(simp add: nth_bit_of_num_complete_simps Let_def; force)
 
    apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
-   apply(erule Seq_tE)+
-   apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply auto [1]
-   apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-    apply force [1]
-   apply(simp add: nth_bit_of_num_complete_simps Let_def, force)
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
+   apply(simp add: nth_bit_of_num_complete_simps Let_def; force)
 
   apply(simp only: nth_bit_of_num_IMP_init_while_cond_def nth_bit_of_num_IMP_loop_body_def prefix_simps)
-  apply(erule Seq_tE)+
-  apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-  apply auto [1]
-  apply(erule tl_IMP_Minus_correct[where vars = "nth_bit_of_num_IMP_vars"])
-  apply force [1]
+  apply(vcg_time nth_bit_of_num_IMP_vars)+
   apply(simp add: nth_bit_of_num_imp_time_acc_2[where x = "tl_imp_time t s" for t s]
-      nth_bit_of_num_complete_time_simps nth_bit_of_num_complete_simps Let_def,
+      nth_bit_of_num_complete_time_simps nth_bit_of_num_complete_simps Let_def;
       force)
   done
-  
+
+
 end 
