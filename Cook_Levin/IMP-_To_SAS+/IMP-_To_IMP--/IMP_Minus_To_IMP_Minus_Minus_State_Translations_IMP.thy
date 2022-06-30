@@ -2412,35 +2412,136 @@ lemmas map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps =
   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
   map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators
 
-value "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc 0 5 1"
 
-values "{map t [map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str] |
-  t x. (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
-   <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := 0,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := 5,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := 1>) \<Rightarrow>\<^bsup> x \<^esup> t}"
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_correct_function:
+  "(invoke_subprogram p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str)
+      = map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc
+          (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd
+            (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s))"
+  apply(subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_def)
+  apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
 
-lemma "{map t [map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str] |
-  t x. (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
-   <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := b,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := a,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := c>) \<Rightarrow>\<^bsup> x \<^esup> t} =
-    {[map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc b a c]}"
-  oops
+  apply(simp only: cons_imp_correct cons_state.simps prod_encode_imp_correct prod_encode_state.simps
+      hd_imp_correct hd_state.simps fst'_imp_correct fst'_state.simps nth_bit_tail_imp_correct
+      nth_bit_tail_state.simps tl_imp_correct tl_state.simps snd'_imp_correct snd'_state.simps
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state.simps Let_def
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators)
+  apply(drule AssignD)+
+  apply(elim conjE)
 
-fun big_step_fun:: "Com.com * state \<Rightarrow> Com.com * state" where
-"big_step_fun (Com.SKIP, s) = (Com.SKIP, s)" |
-"big_step_fun (x ::= v, s) = (Com.SKIP, s(x := aval v s))" |
-"big_step_fun (c\<^sub>1;;c\<^sub>2,s) = (if c\<^sub>1 = Com.SKIP then (c\<^sub>2,s) 
-  else  (fst (big_step_fun (c\<^sub>1, s)) ;;c\<^sub>2, snd (big_step_fun (c\<^sub>1, s))))" |
-"big_step_fun (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) = (if s b \<noteq> (0::nat) then (c\<^sub>1,s) else (c\<^sub>2,s))" |
-"big_step_fun (WHILE b \<noteq>0 DO c,s) = (if s b \<noteq> (0::nat) 
-  then (c ;; (WHILE b \<noteq>0 DO c), s) else (Com.SKIP,s))"
+  subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g
+    yg xh s2h yh xi s2i yi xj s2j yj xk s2k yk xl s2l yl xm s2m ym xn s2n yn xo s2o yo xp s2p yp xq
+    s2q yq xr s2r yr xs s2s ys xt s2t yt xu s2u yu xv s2v yv xw s2w yw xx s2x yx xy s2y yy xz s2z yz
+    za s2aa zb zc s2ab zd ze s2ac zf zg s2ad zh zi s2ae zj
 
-value "(snd (big_step_fun (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus,
-  <map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str := 0,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str := 5,
-    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str := 1>))) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret_str"
+  proof-
+    (* automated (but slow) way *)
+    have ?thesis
+      (* splitting the premises this particular way (using [...]/simp add: [...] is critical! *)
+      (* If you just add them all with using or all with simp add, fastforce won't terminate *)
+      using p(3,6,9,12,15,18,21) p(2,5,8,11,14,17,20)
+      by (fastforce simp add: p(23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73))
+
+(* manual (but fast) way *)
+    have "s' (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str) =
+          (s2e (add_prefix (add_prefix p cons_prefix) cons_h_str)) ##
+                (s2e (add_prefix (add_prefix p cons_prefix) cons_t_str))"
+      using p(20) by (fastforce simp add: p(23,25,27,29,31))
+    moreover have "s2e (add_prefix (add_prefix p cons_prefix) cons_t_str) =
+            s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str)"
+      using p(3,6,9,12,15,18)[of "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str"]
+      by (fastforce simp add: p(33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73))
+    moreover have "s2e (add_prefix (add_prefix p cons_prefix) cons_h_str) =
+      prod_encode (s2j (add_prefix (add_prefix p prod_encode_prefix) prod_encode_a_str),
+                   s2j (add_prefix (add_prefix p prod_encode_prefix) prod_encode_b_str))"
+      using p(17) by (fastforce simp add: p(33,35,37,39))
+    moreover have "s2j (add_prefix (add_prefix p prod_encode_prefix) prod_encode_a_str) =
+            fst'_nat (s2w (add_prefix (add_prefix p fst'_prefix) prod_decode_p_str))"
+      using p(12,15)[of "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_fst'_result"] p(8)
+      by (fastforce simp add: p(41,43,45,47,49,51,53,55,57,59))
+    moreover have "s2w (add_prefix (add_prefix p fst'_prefix) prod_decode_p_str) =
+          hd_nat (s2ad (add_prefix (add_prefix p hd_prefix) append_nat_xs_str))"
+      using p(6)[of "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result"] p(2)
+      by (fastforce simp add: p(61,63,65,67,69))
+    moreover have "s2ad (add_prefix (add_prefix p hd_prefix) append_nat_xs_str) =
+          s ((add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str))"
+      by (fastforce simp add: p(71,73))
+    moreover have "s2j (add_prefix (add_prefix p prod_encode_prefix) prod_encode_b_str) =
+          nth_bit_tail' (s2o (add_prefix (add_prefix p nth_bit_tail_prefix) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str))
+                        (s2o (add_prefix (add_prefix p nth_bit_tail_prefix) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str))"
+      using p(14) by (fastforce simp add: p(41,43,45,47,49,51,53,55))
+    moreover have "s2o (add_prefix (add_prefix p nth_bit_tail_prefix) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_acc_str) =
+            snd'_nat (s2t (add_prefix (add_prefix p snd'_prefix) prod_decode_p_str))"
+      using p(11) by (fastforce simp add: p(49,51,53,55))
+    moreover have "s2t (add_prefix (add_prefix p snd'_prefix) prod_decode_p_str) =
+          hd_nat (s2ad (add_prefix (add_prefix p hd_prefix) append_nat_xs_str))"
+      using p(3,6,9)[of map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_hd_result] p(2)
+      by (fastforce simp add:  p(57,59,61,63,65,67,69))
+    moreover have "s2ad (add_prefix (add_prefix p hd_prefix) append_nat_xs_str) =
+            s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str)"
+      by (fastforce simp add: p(71,73))
+    moreover have "s2o (add_prefix (add_prefix p nth_bit_tail_prefix) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_n_str) =
+          s (add_prefix p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str)"
+      using p(3,6,9,12)[of map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_k_str]
+      by (fastforce simp add: p(49,51,53,55,57,59,61,63,65,67,69,71,73))
+    ultimately show ?thesis by argo
+  qed
+  done
+
+
+
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_correct_function2:
+  "(invoke_subprogram p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd
+      (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s) =
+      map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state p s'"
+  apply(subst map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_upd_def)
+  apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+
+  apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+  apply(drule AssignD)+
+  apply(elim conjE)
+
+  subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc xd s2d yd xe s2e ye xf s2f yf xg s2g
+    yg xh s2h yh xi s2i yi xj s2j yj xk s2k yk xl s2l yl xm s2m ym xn s2n yn xo s2o yo xp s2p yp xq
+    s2q yq xr s2r yr xs s2s ys xt s2t yt xu s2u yu xv s2v yv xw s2w yw xx s2x yx xy s2y yy xz s2z yz
+    za s2aa zb zc s2ab zd ze s2ac zf zg s2ad zh zi s2ae zj
+    using p(3,6,9,12,15,18,21) p(2,5,8,11,14,17,20)
+    by (fastforce simp add: p(23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73))
+
+  done
+
 
 lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_function:
   "(invoke_subprogram p map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2464,58 +2565,68 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_funct
   subgoal
     apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
         prefix_simps)
-      by(fastforce simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps)
+    by(fastforce simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps)
 
-    subgoal
-      apply(subst (asm) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def)
-      apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
-      apply(erule Seq_E)+
-      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(38) by fastforce
-      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(40) by fastforce
-      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(42) by fastforce
-      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(44) by fastforce
-      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(46) by fastforce
-      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(48) by fastforce
-      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(50) by fastforce
-      apply(drule AssignD)+
-      apply(elim conjE)
-      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
-          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+  subgoal for s s' t x s2 y xa s2a ya xb s2b yb xc s2c yc
 
-      apply force
+    thm map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_correct_function2
+
+    apply(subst (asm) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def)
+    apply(simp only: prefix_simps map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_to_HOL_state_def)
+
+
+
+    apply (simp add: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def )
+
+
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(40) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(42) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(44) by fastforce
+    apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(46) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(48) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(50) by fastforce
+    apply(drule AssignD)+
+    apply(elim conjE)
+    apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+
 (*       apply force
  *)      sorry
 
   subgoal
-      apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def prefix_simps
-          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
-      apply(erule Seq_E)+
-      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(38) by fastforce
-      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(40) by fastforce
-      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(42) by fastforce
-      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(44) by fastforce
-      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(46) by fastforce
-      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(48) by fastforce
-      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(50) by fastforce
-      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
-          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
-(*       apply force
+    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def prefix_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(40) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(42) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(44) by fastforce
+    apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(46) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(48) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(50) by fastforce
+    apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps
+        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
+      (*       apply force
  *)      sorry
-    oops
+  oops
 
 lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_pref) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -2560,34 +2671,34 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_time:
     apply(subst (asm) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def)
     apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def prefix_simps)
     apply(erule Seq_tE)+
-      apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(73) by fastforce
-      apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(75) by fastforce
-      apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(77) by fastforce
-      apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(79) by fastforce
-      apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(81) by fastforce
-      apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(83) by fastforce
-      apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-      subgoal premises p using p(85) by fastforce
-      apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps
+    apply(erule hd_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(73) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(75) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(77) by fastforce
+    apply(erule snd'_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(79) by fastforce
+    apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(81) by fastforce
+    apply(erule prod_encode_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(83) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+    subgoal premises p using p(85) by fastforce
+    apply (simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_time_simps
         map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators Let_def)
       (* apply force *)
 
-  subgoal
-    apply(simp only: prefix_simps map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
-        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
-    apply(erule Seq_tE)+
-    apply(erule <?>_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
-    subgoal premises p using p(999) by fastforce
-    apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_time_simps Let_def)
-    by force
+    subgoal
+      apply(simp only: prefix_simps map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_init_while_cond_def
+          map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_loop_body_def)
+      apply(erule Seq_tE)+
+      apply(erule <?>_IMP_Minus_correct[where vars = "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars"])
+      subgoal premises p using p(999) by fastforce
+      apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_time_simps Let_def)
+      by force
 
-  done
+    done
 
 lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';

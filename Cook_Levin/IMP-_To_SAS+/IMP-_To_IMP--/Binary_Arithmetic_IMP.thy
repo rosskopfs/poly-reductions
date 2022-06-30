@@ -958,7 +958,7 @@ lemma nth_bit_tail_IMP_Minus_correct_time:
 
 lemma nth_bit_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) nth_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
     \<lbrakk>t = (nth_bit_tail_imp_time 0 (nth_bit_tail_imp_to_HOL_state (p1 @ p2) s));
      s' (add_prefix (p1 @ p2) nth_bit_tail_ret_str) =
           nth_bit_tail_ret (nth_bit_tail_imp

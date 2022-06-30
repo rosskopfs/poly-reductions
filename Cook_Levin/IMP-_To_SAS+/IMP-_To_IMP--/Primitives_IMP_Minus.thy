@@ -1807,13 +1807,14 @@ lemma prod_encode_IMP_Minus_correct_time:
   done
 
 lemma prod_encode_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ prod_encode_pref) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> p @ v \<in> vars \<Longrightarrow> \<not> (set prod_encode_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid_subset com_only_vars
+  "(invoke_subprogram (p @ prod_encode_pref) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars
+  \<Longrightarrow> \<not> (prefix prod_encode_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
 lemma prod_encode_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (prod_encode_imp_time 0 (prod_encode_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) prod_encode_ret_str) =
         prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state (p1 @ p2) s));
@@ -2692,13 +2693,13 @@ lemma cons_IMP_Minus_correct_time:
 
 lemma cons_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ cons_pref) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars
-  \<Longrightarrow> \<not> (set cons_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid_subset com_only_vars
+  \<Longrightarrow> \<not> (prefix cons_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
 lemma cons_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) cons_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    (\<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v));
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (cons_imp_time 0 (cons_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) cons_ret_str) =
         cons_ret (cons_imp (cons_imp_to_HOL_state (p1 @ p2) s));
