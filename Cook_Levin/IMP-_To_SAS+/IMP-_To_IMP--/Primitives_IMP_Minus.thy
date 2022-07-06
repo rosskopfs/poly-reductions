@@ -18,12 +18,14 @@ subsection \<open>Multiplication\<close>
 record mul_state = mul_a::nat mul_b::nat mul_c::nat
 
 named_theorems functional_correctness
+named_theorems let_function_correctness
+named_theorems prefix_defs
 lemmas functional_correctness_lemmas = functional_correctness
 
-abbreviation "mul_prefix \<equiv> ''mul.''"
-abbreviation "mul_a_str \<equiv> ''a''"
-abbreviation "mul_b_str \<equiv> ''b''"
-abbreviation "mul_c_str \<equiv> ''c''"
+definition [prefix_defs]: "mul_prefix \<equiv> ''mul.''"
+definition [prefix_defs]:  "mul_a_str \<equiv> ''a''"
+definition [prefix_defs]:  "mul_b_str \<equiv> ''b''"
+definition [prefix_defs]:  "mul_c_str \<equiv> ''c''"
 
 
 definition "mul_state_upd s \<equiv>
@@ -60,7 +62,7 @@ termination
 
 lemmas [simp del] = mul_imp.simps
 
-lemma mul_imp_correct: "mul_c (mul_imp s) = mul_c s + mul_a s * mul_b s"
+lemma mul_imp_correct[let_function_correctness]: "mul_c (mul_imp s) = mul_c s + mul_a s * mul_b s"
 proof (induction s rule: mul_imp.induct)
   case (1 s)
   then show ?case
@@ -152,9 +154,9 @@ lemma mul_IMP_minus_correct_time:
    apply(drule AssignD)+
    apply(elim conjE)
    apply(subst mul_imp_time.simps)
-   apply(auto simp: mul_imp_time_acc mul_imp_to_HOL_state_def mul_state_upd_def)[1]
+   apply(auto simp: mul_imp_time_acc mul_imp_to_HOL_state_def mul_state_upd_def prefix_defs)[1]
   apply(subst mul_imp_time.simps)
-  apply(auto simp: mul_imp_time_acc mul_imp_to_HOL_state_def mul_state_upd_def)[1]
+  apply(auto simp: mul_imp_time_acc mul_imp_to_HOL_state_def mul_state_upd_def prefix_defs)[1]
   done
 
 lemma mul_IMP_minus_correct_function:
@@ -170,9 +172,9 @@ lemma mul_IMP_minus_correct_function:
    apply(drule AssignD)+
    apply(elim conjE)
    apply(subst mul_imp.simps mul_imp_time.simps)
-   apply(auto simp: mul_imp_to_HOL_state_def mul_state_upd_def)[1]
+   apply(auto simp: mul_imp_to_HOL_state_def mul_state_upd_def prefix_defs)[1]
   apply(subst mul_imp.simps mul_imp_time.simps)
-  apply(auto simp: mul_imp_to_HOL_state_def mul_state_upd_def)[1]
+  apply(auto simp: mul_imp_to_HOL_state_def mul_state_upd_def prefix_defs)[1]
   done
 
 lemma mul_IMP_minus_correct_effects:
@@ -193,9 +195,9 @@ subsubsection \<open>Squaring\<close>
 
 record square_state = square_x :: nat square_square :: nat
 
-abbreviation "square_prefix \<equiv> ''square.''"
-abbreviation "square_x_str \<equiv> ''x''"
-abbreviation "square_square_str \<equiv> ''square''"
+definition [prefix_defs]:  "square_prefix \<equiv> ''square.''"
+definition [prefix_defs]:  "square_x_str \<equiv> ''x''"
+definition [prefix_defs]:  "square_square_str \<equiv> ''square''"
 
 definition "square_state_upd s \<equiv> 
   let
@@ -219,7 +221,7 @@ fun square_imp :: "square_state \<Rightarrow> square_state" where
 
 declare square_imp.simps[simp del]
 
-lemma square_imp_correct: "square_square (square_imp s) = (square_x s)^2"
+lemma square_imp_correct[let_function_correctness]: "square_square (square_imp s) = (square_x s)^2"
   by (induction s rule: square_imp.induct)
     (auto simp: square_imp.simps square_state_upd_def Let_def mul_imp_correct power2_eq_square split: if_splits)
 
@@ -282,7 +284,7 @@ lemma square_IMP_Minus_correct_function:
   apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: square_state_upd_def Let_def square_imp_to_HOL_state_def)[1]
-  apply(auto simp: mul_imp_to_HOL_state_def)[1]
+  apply(auto simp: mul_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma square_IMP_Minus_correct_time: 
@@ -298,7 +300,7 @@ lemma square_IMP_Minus_correct_time:
   \<comment> \<open>Warning: in the following, I am unfolding mul_imp_to_HOL_state_def. With more experiments, it
       should become clear if this will cascade down multiple layers\<close>
   apply(simp add: square_imp_time_acc square_imp_to_HOL_state_def square_state_upd_def)[1]
-  apply (auto simp: mul_imp_to_HOL_state_def)[1]
+  apply (auto simp: mul_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma square_IMP_Minus_correct_effects:
@@ -323,10 +325,10 @@ subsection \<open>Square root\<close>
 
 record dsqrt'_state = dsqrt'_state_y :: nat dsqrt'_state_L :: nat dsqrt'_state_R :: nat
 
-abbreviation "dsqrt'_pref \<equiv> ''dsqrt'.''"
-abbreviation "dsqrt'_y_str \<equiv> ''y''"
-abbreviation "dsqrt'_L_str \<equiv> ''L''"
-abbreviation "dsqrt'_R_str \<equiv> ''R''"
+definition [prefix_defs]:  "dsqrt'_pref \<equiv> ''dsqrt'.''"
+definition [prefix_defs]:  "dsqrt'_y_str \<equiv> ''y''"
+definition [prefix_defs]:  "dsqrt'_L_str \<equiv> ''L''"
+definition [prefix_defs]:  "dsqrt'_R_str \<equiv> ''R''"
 
 definition "dsqrt'_imp_state_upd s = (let
     M = dsqrt'_state_L s + dsqrt'_state_R s;
@@ -372,7 +374,7 @@ termination (* Same termination proof as recursive version, just some additional
 
 declare dsqrt'_imp.simps[simp del]
 
-lemma dsqrt'_imp_correct: "dsqrt'_state_L (dsqrt'_imp s) = dsqrt' (dsqrt'_state_y s) (dsqrt'_state_L s) (dsqrt'_state_R s)"
+lemma dsqrt'_imp_correct[let_function_correctness]: "dsqrt'_state_L (dsqrt'_imp s) = dsqrt' (dsqrt'_state_y s) (dsqrt'_state_L s) (dsqrt'_state_R s)"
 proof (induction s rule: dsqrt'_imp.induct)
   case (1 s)
   then show ?case
@@ -523,7 +525,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
   apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule While_tE)
-   apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps split: if_splits)[]
+   apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps prefix_defs split: if_splits)[]
     apply (erule Seq_tE)+
     apply dest_com_gen
 
@@ -538,7 +540,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons prefix_defs) (* Here we already see how auto gets confused by all the crap in p, 
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
@@ -549,22 +551,22 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
         done
 
@@ -574,7 +576,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons prefix_defs) (* Here we already see how auto gets confused by all the crap in p, 
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
@@ -585,22 +587,22 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
         done
       done
@@ -623,7 +625,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
   apply (erule Seq_tE)+
   apply (erule While_tE_time)
      apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps 
-          dsqrt'_imp_time_acc split: if_splits)[]
+          dsqrt'_imp_time_acc prefix_defs split: if_splits)[]
     apply (erule Seq_tE)+
     using "1.hyps"[unfolded dsqrt'_IMP_Minus_def] apply -
     apply (simp add: add.assoc)
@@ -640,7 +642,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons prefix_defs) (* Here we already see how auto gets confused by all the crap in p, 
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
@@ -651,22 +653,22 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
         done
 
@@ -677,7 +679,7 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
       apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons prefix_defs) (* Here we already see how auto gets confused by all the crap in p, 
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
@@ -690,23 +692,23 @@ proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_im
           subgoal premises p 
           using p apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
-                Cons_eq_append_conv power2_eq_square square_imp_time.simps split: if_splits)
+                Cons_eq_append_conv power2_eq_square square_imp_time.simps prefix_defs split: if_splits)
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p 
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
+                Cons_eq_append_conv power2_eq_square prefix_defs split: if_splits) 
           done
           subgoal premises p thm p (*Here I need them... Check again*)
           using p(1,13,15-) p(14) apply (elim cond_elim)
           apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
-                Cons_eq_append_conv power2_eq_square square_imp_to_HOL_state_def split: if_splits)
-          using p(2-12) apply (auto simp add: square_imp_to_HOL_state_def)
+                Cons_eq_append_conv power2_eq_square square_imp_to_HOL_state_def prefix_defs split: if_splits)
+          using p(2-12) apply (auto simp add: square_imp_to_HOL_state_def prefix_defs)
           done
         done
       done
@@ -733,9 +735,9 @@ lemma dsqrt'_IMP_Minus_correct[functional_correctness]:
 
 record dsqrt_state = dsqrt_state_y :: nat dsqrt_state_ret :: nat 
 
-abbreviation "dsqrt_prefix \<equiv> ''dsqrt.''"
-abbreviation "dsqrt_y_str \<equiv> ''y''"
-abbreviation "dsqrt_ret_str \<equiv> ''ret''"
+definition [prefix_defs]:  "dsqrt_prefix \<equiv> ''dsqrt.''"
+definition [prefix_defs]:  "dsqrt_y_str \<equiv> ''y''"
+definition [prefix_defs]:  "dsqrt_ret_str \<equiv> ''ret''"
 
 abbreviation 
   "dsqrt_IMP_vars \<equiv> {dsqrt_y_str, dsqrt_ret_str}"
@@ -764,7 +766,7 @@ fun dsqrt_imp :: "dsqrt_state \<Rightarrow> dsqrt_state" where
 
 declare dsqrt_imp.simps [simp del]
 
-lemma dsqrt_imp_correct:
+lemma dsqrt_imp_correct[let_function_correctness]:
    "dsqrt_state_ret (dsqrt_imp s) = Discrete.sqrt (dsqrt_state_y s)"
   by (subst dsqrt_imp.simps) (auto simp: dsqrt'_imp_correct dsqrt_def dsqrt_imp_state_upd_def
       Let_def dsqrt_correct[symmetric] split: if_splits)
@@ -830,7 +832,7 @@ lemma dsqrt_IMP_Minus_correct_function:
   apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
    apply simp
   apply (drule AssignD)+
-  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
+  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def prefix_defs)
   done
 
 lemma dsqrt_IMP_Minus_correct_time: 
@@ -842,7 +844,7 @@ lemma dsqrt_IMP_Minus_correct_time:
   apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
    apply simp
   apply (drule AssignD)+
-  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
+  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def prefix_defs)
   done
 
 lemma dsqrt_IMP_Minus_correct_effects:
@@ -851,7 +853,7 @@ lemma dsqrt_IMP_Minus_correct_effects:
   using com_add_prefix_valid_subset com_only_vars
   by blast
 
-lemma dsqrt_IMP_Minus_correct:
+lemma dsqrt_IMP_Minus_correct[let_function_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (dsqrt_imp_time 0 (dsqrt_imp_to_HOL_state (p1 @ p2) s));
@@ -867,9 +869,9 @@ subsection \<open>Triangle\<close>
 
 record triangle_state = triangle_a::nat triangle_triangle::nat
 
-abbreviation "triangle_prefix \<equiv> ''triangle.''"
-abbreviation "triangle_a_str \<equiv> ''a''"
-abbreviation "triangle_triangle_str \<equiv> ''triangle''"
+definition [prefix_defs]:  "triangle_prefix \<equiv> ''triangle.''"
+definition [prefix_defs]:  "triangle_a_str \<equiv> ''a''"
+definition [prefix_defs]:  "triangle_triangle_str \<equiv> ''triangle''"
 
 
 definition "triangle_state_upd (s::triangle_state) \<equiv>
@@ -895,7 +897,7 @@ fun triangle_imp:: "triangle_state \<Rightarrow> triangle_state" where
 
 lemmas [simp del] = triangle_imp.simps
 
-lemma triangle_imp_correct: "triangle_triangle (triangle_imp s) = Nat_Bijection.triangle (triangle_a s)"
+lemma triangle_imp_correct[let_function_correctness]: "triangle_triangle (triangle_imp s) = Nat_Bijection.triangle (triangle_a s)"
 proof (induction s rule: triangle_imp.induct)
   case (1 s)
   then show ?case
@@ -986,8 +988,8 @@ lemma triangle_IMP_Minus_correct_function:
   apply(erule mul_IMP_minus_correct[where vars = "{p @ ''traingle''}"])
   apply(drule AssignD)+
   apply(elim conjE impE)
-  apply(auto simp: triangle_state_upd_def Let_def triangle_imp_to_HOL_state_def)[1]
-  apply(auto simp: mul_imp_to_HOL_state_def)[1]
+  apply(auto simp: triangle_state_upd_def Let_def triangle_imp_to_HOL_state_def prefix_defs)[1]
+  apply(auto simp: mul_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma triangle_IMP_Minus_correct_time: 
@@ -1003,7 +1005,7 @@ lemma triangle_IMP_Minus_correct_time:
   \<comment> \<open>Warning: in the following, I am unfolding mul_imp_to_HOL_state_def. With more experiments, it
       should become clear if this will cascade down multiple layers\<close>
   apply(simp add: triangle_imp_time_acc triangle_imp_to_HOL_state_def triangle_state_upd_def)[1]
-  apply (auto simp: mul_imp_to_HOL_state_def)[1]
+  apply (auto simp: mul_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma triangle_IMP_Minus_correct_effects:
@@ -1025,9 +1027,9 @@ subsection \<open>Triangular root\<close>
 
 record tsqrt_state = tsqrt_state_y :: nat tsqrt_state_ret :: nat 
 
-abbreviation "tsqrt_prefix \<equiv> ''tsqrt.''"
-abbreviation "tsqrt_y_str \<equiv> ''y''"
-abbreviation "tsqrt_ret_str \<equiv> ''ret''"
+definition [prefix_defs]:  "tsqrt_prefix \<equiv> ''tsqrt.''"
+definition [prefix_defs]:  "tsqrt_y_str \<equiv> ''y''"
+definition [prefix_defs]:  "tsqrt_ret_str \<equiv> ''ret''"
 
 abbreviation 
   "tsqrt_IMP_vars \<equiv> {tsqrt_y_str, tsqrt_ret_str}"
@@ -1063,7 +1065,7 @@ fun tsqrt_imp :: "tsqrt_state \<Rightarrow> tsqrt_state" where
 
 declare tsqrt_imp.simps [simp del]
 
-lemma tsqrt_imp_correct:
+lemma tsqrt_imp_correct[let_function_correctness]:
    "tsqrt_state_ret (tsqrt_imp s) = tsqrt (tsqrt_state_y s)"
   by (subst tsqrt_imp.simps) (auto simp: dsqrt_imp_correct tsqrt_def tsqrt_imp_state_upd_def
       Let_def mul_imp_correct mult.commute split: if_splits)
@@ -1146,7 +1148,7 @@ lemma mul_IMP_Minus_correct_effects:
   using com_add_prefix_valid'' com_only_vars
   using prefix_def by blast
 
-lemma mul_IMP_Minus_correct:
+lemma mul_IMP_Minus_correct[let_function_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) mul_IMP_minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (mul_imp_time 0 (mul_imp_to_HOL_state (p1 @ p2) s));
@@ -1166,12 +1168,12 @@ lemma tsqrt_IMP_Minus_correct_function:
   apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply (drule AssignD)+
    apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
-      mul_imp_to_HOL_state_def Let_def)
+      mul_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma tsqrt_IMP_Minus_correct_time: 
@@ -1181,12 +1183,12 @@ lemma tsqrt_IMP_Minus_correct_time:
   apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply (drule AssignD)+
    apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
-      mul_imp_to_HOL_state_def Let_def)
+      mul_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma tsqrt_IMP_Minus_correct_effects:
@@ -1211,7 +1213,7 @@ subsection \<open>Decoding products\<close>
 
 definition "fst'_nat p \<equiv> p - triangle (tsqrt p)"
 
-lemma fst'_nat_correct: "fst'_nat (prod_encode (m,n)) = m"
+lemma fst'_nat_correct[let_function_correctness]: "fst'_nat (prod_encode (m,n)) = m"
   unfolding prod_encode_def apply simp unfolding fst'_nat_def
   by (metis add.commute add_diff_cancel_left' le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
 
@@ -1221,7 +1223,7 @@ lemma fst_nat_fst'_nat: "fst_nat p = fst'_nat p"
 
 definition "snd'_nat p \<equiv> tsqrt p - fst'_nat p"
 
-lemma snd'_nat_correct: "snd'_nat (prod_encode (m,n)) = n"
+lemma snd'_nat_correct[let_function_correctness]: "snd'_nat (prod_encode (m,n)) = n"
   unfolding prod_encode_def apply simp unfolding snd'_nat_def
   using fst'_nat_correct 
   by (metis add.commute add_diff_cancel_left' fst'_nat_def le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
@@ -1232,9 +1234,9 @@ lemma snd_nat_snd'_nat: "snd_nat p = snd'_nat p"
 
 record fst'_state = fst'_state_p :: nat
 
-abbreviation "fst'_prefix \<equiv> ''fst'.''"
-abbreviation "fst'_p_str \<equiv> ''p''"
-abbreviation "fst'_internal_str \<equiv> ''internal''"
+definition [prefix_defs]:  "fst'_prefix \<equiv> ''fst'.''"
+definition [prefix_defs]:  "fst'_p_str \<equiv> ''p''"
+definition [prefix_defs]:  "fst'_internal_str \<equiv> ''internal''"
 
 abbreviation 
   "fst'_IMP_vars \<equiv> {fst'_p_str, fst'_internal_str}"
@@ -1268,7 +1270,7 @@ fun fst'_imp :: "fst'_state \<Rightarrow> fst'_state" where
 
 declare fst'_imp.simps [simp del]
 
-lemma fst'_imp_correct:
+lemma fst'_imp_correct[let_function_correctness]:
    "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
   by (subst fst'_imp.simps) (auto simp: dsqrt_imp_correct fst'_imp_state_upd_def tsqrt_imp_correct
       Let_def triangle_imp_correct fst'_nat_def split: if_splits)
@@ -1355,14 +1357,14 @@ lemma fst'_IMP_Minus_correct_function:
   apply(simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"])
-  apply auto[]
+   apply (auto simp: prefix_defs)[]
   (* Seems to work, but looks like automation needs to figure out that the input variable is not changed during the program
     No idea if this is new
   *)
    apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      triangle_imp_to_HOL_state_def Let_def)
+      triangle_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma fst'_IMP_Minus_correct_time: 
@@ -1372,14 +1374,14 @@ lemma fst'_IMP_Minus_correct_time:
   apply(simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"])
-  apply auto[]
+   apply (auto simp: prefix_defs)[]
   (* Seems to work, but looks like automation needs to figure out that the input variable is not changed during the program
     No idea if this is new
   *)
    apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      triangle_imp_to_HOL_state_def Let_def)
+      triangle_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma fst'_IMP_Minus_correct_effects:
@@ -1402,8 +1404,8 @@ lemma fst'_IMP_Minus_correct[functional_correctness]:
 
 
 record snd'_state = snd'_state_p :: nat
-abbreviation "snd'_prefix \<equiv> ''snd'.''"
-abbreviation "snd'_p_str \<equiv> ''p''"
+definition [prefix_defs]:  "snd'_prefix \<equiv> ''snd'.''"
+definition [prefix_defs]:  "snd'_p_str \<equiv> ''p''"
 
 abbreviation 
   "snd'_IMP_vars \<equiv> {snd'_p_str}"
@@ -1436,7 +1438,7 @@ fun snd'_imp :: "snd'_state \<Rightarrow> snd'_state" where
 
 declare snd'_imp.simps [simp del]
 
-lemma snd'_imp_correct:
+lemma snd'_imp_correct[let_function_correctness]:
    "snd'_state_p (snd'_imp s) = snd'_nat (snd'_state_p s)"
   by (subst snd'_imp.simps) (auto simp: dsqrt_imp_correct snd'_imp_state_upd_def tsqrt_imp_correct
       fst'_imp_correct snd'_nat_def)
@@ -1502,12 +1504,12 @@ lemma snd'_IMP_Minus_correct_function:
   apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   (* Not copying means I might have to pass the return variables here *)
   apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
-  apply auto[]
+   apply (auto simp: prefix_defs)[]
    apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def Let_def)
+      fst'_imp_to_HOL_state_def Let_def prefix_defs)
   done
     
 
@@ -1518,12 +1520,12 @@ lemma snd'_IMP_Minus_correct_time:
   apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   (* Not copying means I might have to pass the return variables here *)
   apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
-  apply auto[]
+   apply (auto simp: prefix_defs)[]
    apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def Let_def)
+      fst'_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma snd'_IMP_Minus_correct_effects:
@@ -1548,10 +1550,10 @@ lemma snd'_IMP_Minus_correct[functional_correctness]:
 
 record prod_decode_state = prod_decode_state_p :: nat prod_decode_state_fst :: nat prod_decode_state_snd :: nat
 
-abbreviation "prod_decode_prefix \<equiv> ''prod_decode.''"
-abbreviation "prod_decode_p_str \<equiv> ''p''"
-abbreviation "prod_decode_fst_str \<equiv> ''fst''"
-abbreviation "prod_decode_snd_str \<equiv> ''snd''"
+definition [prefix_defs]:  "prod_decode_prefix \<equiv> ''prod_decode.''"
+definition [prefix_defs]:  "prod_decode_p_str \<equiv> ''p''"
+definition [prefix_defs]:  "prod_decode_fst_str \<equiv> ''fst''"
+definition [prefix_defs]:  "prod_decode_snd_str \<equiv> ''snd''"
 
 abbreviation 
   "prod_decode_IMP_vars \<equiv> {prod_decode_p_str, prod_decode_fst_str, prod_decode_snd_str}"
@@ -1590,7 +1592,7 @@ lemma prod_decode_imp_correct':
   by (all \<open>subst prod_decode_imp.simps\<close>) (auto simp: fst'_imp_correct snd'_imp_correct 
       prod_decode_imp_state_upd_def)
 
-lemma prod_decode_imp_correct:
+lemma prod_decode_imp_correct[let_function_correctness]:
    "prod_decode_state_fst (prod_decode_imp s) = fst_nat (prod_decode_state_p s)"
    "prod_decode_state_snd (prod_decode_imp s) = snd_nat (prod_decode_state_p s)"
   by (simp_all add: fst_nat_fst'_nat snd_nat_snd'_nat prod_decode_imp_correct')
@@ -1656,11 +1658,12 @@ lemma prod_decode_IMP_Minus_correct_function_1:
   apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[] (* Check why this is taking so much longer *)
+   apply (auto simp: prefix_defs)[]
+   (* Check why this is taking so much longer *)
   apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma prod_decode_IMP_Minus_correct_function_2: 
@@ -1670,11 +1673,11 @@ lemma prod_decode_IMP_Minus_correct_function_2:
   apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[] (* Check why this is taking so much longer *)
+   apply (auto simp: prefix_defs)[] (* Check why this is taking so much longer *)
   apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def prefix_defs)
   done
     
 
@@ -1685,11 +1688,11 @@ lemma prod_decode_IMP_Minus_correct_time:
   apply(simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
+      fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def prefix_defs)
   done
 
 lemma prod_decode_IMP_Minus_correct_effects:
@@ -1715,10 +1718,10 @@ lemma prod_decode_IMP_Minus_correct[functional_correctness]:
 
 record prod_encode_state = prod_encode_a::nat prod_encode_b::nat prod_encode_ret::nat
 
-abbreviation "prod_encode_prefix \<equiv> ''prod_encode.''"
-abbreviation "prod_encode_a_str \<equiv> ''a''"
-abbreviation "prod_encode_b_str \<equiv> ''b''"
-abbreviation "prod_encode_ret_str \<equiv> ''prod_encode_ret''"
+definition [prefix_defs]:  "prod_encode_prefix \<equiv> ''prod_encode.''"
+definition [prefix_defs]:  "prod_encode_a_str \<equiv> ''a''"
+definition [prefix_defs]:  "prod_encode_b_str \<equiv> ''b''"
+definition [prefix_defs]:  "prod_encode_ret_str \<equiv> ''prod_encode_ret''"
 
 definition "prod_encode_state_upd (s::prod_encode_state) \<equiv>
       let
@@ -1743,7 +1746,7 @@ fun prod_encode_imp:: "prod_encode_state \<Rightarrow> prod_encode_state" where
 
 lemmas [simp del] = prod_encode_imp.simps
 
-lemma prod_encode_imp_correct: "prod_encode_ret (prod_encode_imp s) = prod_encode (prod_encode_a s, prod_encode_b s)"
+lemma prod_encode_imp_correct[let_function_correctness]: "prod_encode_ret (prod_encode_imp s) = prod_encode (prod_encode_a s, prod_encode_b s)"
 proof (induction s rule: prod_encode_imp.induct)
   case (1 s)
   then show ?case
@@ -1805,8 +1808,8 @@ lemma prod_encode_IMP_Minus_correct_function:
   apply(erule triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"])
   apply(drule AssignD)+
   apply(elim conjE impE)
-  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def)[1]
-  apply(auto simp: triangle_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def prefix_defs)[1]
+  apply(auto simp: triangle_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma prod_encode_IMP_Minus_correct_time: 
@@ -1820,8 +1823,8 @@ lemma prod_encode_IMP_Minus_correct_time:
   apply(erule triangle_IMP_Minus_correct[where vars = "{p @ ''a''}"])
   apply(drule AssignD)+
   apply(elim conjE impE)
-  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def)[1]
-  apply(auto simp: triangle_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def prefix_defs)[1]
+  apply(auto simp: triangle_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma prod_encode_IMP_Minus_correct_effects:
@@ -2175,9 +2178,9 @@ subsection \<open>Head and tail of lists\<close>
 
 record hd_state = hd_xs::nat hd_ret::nat
 
-abbreviation "hd_prefix \<equiv> ''hd.''"
-abbreviation "hd_xs_str \<equiv> ''xs''"
-abbreviation "hd_ret_str \<equiv> ''hd_ret''"
+definition [prefix_defs]:  "hd_prefix \<equiv> ''hd.''"
+definition [prefix_defs]:  "hd_xs_str \<equiv> ''xs''"
+definition [prefix_defs]:  "hd_ret_str \<equiv> ''hd_ret''"
 
 term prod_decode_state_p
 definition "hd_state_upd s \<equiv>
@@ -2204,7 +2207,7 @@ fun hd_imp :: "hd_state \<Rightarrow> hd_state"
 
 declare hd_imp.simps [simp del]
 
-lemma hd_imp_correct:
+lemma hd_imp_correct[let_function_correctness]:
    "hd_ret (hd_imp s) = hd_nat (hd_xs s)"
   by (subst hd_imp.simps) (auto simp: prod_decode_imp_correct hd_nat_def fst_nat_def hd_imp.simps 
       hd_state_upd_def Let_def fst_nat_fst'_nat[symmetric] split: if_splits)[1]
@@ -2261,11 +2264,11 @@ lemma hd_IMP_Minus_correct_function:
   apply(simp only: hd_IMP_Minus_def hd_imp.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
   apply(erule prod_decode_IMP_Minus_correct[where vars = "{hd_xs_str}"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: hd_state_upd_def Let_def hd_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_decode_imp_to_HOL_state_def )[1]
+  apply(auto simp: prod_decode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma hd_IMP_Minus_correct_time: 
@@ -2274,11 +2277,11 @@ lemma hd_IMP_Minus_correct_time:
   apply(simp only: hd_IMP_Minus_def hd_imp_time.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
   apply(erule prod_decode_IMP_Minus_correct[where vars = "{hd_xs_str}"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: hd_state_upd_def Let_def hd_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_decode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma hd_IMP_Minus_correct_effects:
@@ -2300,9 +2303,9 @@ lemma hd_IMP_Minus_correct[functional_correctness]:
 
 record tl_state = tl_xs::nat tl_ret::nat
 
-abbreviation "tl_prefix \<equiv> ''tl.''"
-abbreviation "tl_xs_str \<equiv> ''xs''"
-abbreviation "tl_ret_str \<equiv> ''tl_ret''"
+definition [prefix_defs]:  "tl_prefix \<equiv> ''tl.''"
+definition [prefix_defs]:  "tl_xs_str \<equiv> ''xs''"
+definition [prefix_defs]:  "tl_ret_str \<equiv> ''tl_ret''"
 
 definition "tl_state_upd s \<equiv>
       let
@@ -2328,7 +2331,7 @@ fun tl_imp :: "tl_state \<Rightarrow> tl_state"
 
 declare tl_imp.simps [simp del]
 
-lemma tl_imp_correct:
+lemma tl_imp_correct[let_function_correctness]:
    "tl_ret (tl_imp s) = tl_nat (tl_xs s)"
   by (subst tl_imp.simps) (auto simp: prod_decode_imp_correct tl_nat_def snd_nat_def tl_imp.simps tl_state_upd_def Let_def split: if_splits)[1]
 
@@ -2384,11 +2387,11 @@ lemma tl_IMP_Minus_correct_function:
   apply(simp only: tl_IMP_Minus_def tl_imp.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
   apply(erule prod_decode_IMP_Minus_correct[where vars = "{tl_xs_str}"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: tl_state_upd_def Let_def tl_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_decode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma tl_IMP_Minus_correct_time: 
@@ -2397,11 +2400,11 @@ lemma tl_IMP_Minus_correct_time:
   apply(simp only: tl_IMP_Minus_def tl_imp_time.simps com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply(erule Seq_tE)+
   apply(erule prod_decode_IMP_Minus_correct[where vars = "{tl_xs_str}"])
-   apply auto[]
+   apply (auto simp: prefix_defs)[]
   apply(drule AssignD)+
   apply(elim conjE impE)
   apply(auto simp: tl_state_upd_def Let_def tl_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_decode_imp_to_HOL_state_def)[1]
+  apply(auto simp: prod_decode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma tl_IMP_Minus_correct_effects:
@@ -2425,9 +2428,9 @@ subsection \<open>List length\<close>
 
 record length_state = length_xs::nat length_ret::nat
 
-abbreviation "length_prefix \<equiv> ''length.''"
-abbreviation "length_xs_str \<equiv> ''xs''"
-abbreviation "length_ret_str \<equiv> ''length_ret''"
+definition [prefix_defs]:  "length_prefix \<equiv> ''length.''"
+definition [prefix_defs]:  "length_xs_str \<equiv> ''xs''"
+definition [prefix_defs]:  "length_ret_str \<equiv> ''length_ret''"
 
 definition "length_state_upd s \<equiv>
       let
@@ -2466,7 +2469,7 @@ termination
 
 declare length_imp.simps [simp del]
 
-lemma length_imp_correct:
+lemma length_imp_correct[let_function_correctness]:
    "length_ret (length_imp s) - length_ret s = length_nat (length_xs s)"
 proof (induction s rule: length_imp.induct)
   case (1 s)
@@ -2561,11 +2564,11 @@ lemma length_IMP_Minus_correct_function:
   apply(dest_com')
   apply(erule Seq_tE)+
   apply(erule tl_IMP_Minus_correct[where vars = "{length_ret_str}"])
-  apply auto [1]
+  apply (auto simp: prefix_defs) [1]
    apply(drule AssignD)+
    apply(elim conjE)
    apply(auto simp: length_state_upd_def length_imp_to_HOL_state_def)[1]
-  apply(auto simp: tl_imp_to_HOL_state_def )[1]
+  apply(auto simp: tl_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma length_IMP_Minus_correct_time: 
@@ -2580,13 +2583,13 @@ lemma length_IMP_Minus_correct_time:
   apply(dest_com')
   apply(erule Seq_tE)+
   apply(erule tl_IMP_Minus_correct[where vars = "{length_ret_str}"])
-  apply auto [1]
+  apply (auto simp: prefix_defs) [1]
 
    apply(drule AssignD)+
   apply(elim conjE)
   apply(auto simp: length_state_upd_def length_imp_to_HOL_state_def length_imp_time_acc)[1]
   apply(subst length_imp_time_acc_2)
-  apply(auto simp: tl_imp_to_HOL_state_def)[1]
+  apply(auto simp: tl_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma length_IMP_Minus_correct_effects:
@@ -2608,10 +2611,10 @@ subsection \<open>List cons\<close>
 
 record cons_state = cons_h::nat cons_t::nat cons_ret::nat
 
-abbreviation "cons_prefix \<equiv> ''cons.''"
-abbreviation "cons_h_str \<equiv> ''h''"
-abbreviation "cons_t_str \<equiv> ''t''"
-abbreviation "cons_ret_str \<equiv> ''cons_ret''"
+definition [prefix_defs]:  "cons_prefix \<equiv> ''cons.''"
+definition [prefix_defs]:  "cons_h_str \<equiv> ''h''"
+definition [prefix_defs]:  "cons_t_str \<equiv> ''t''"
+definition [prefix_defs]:  "cons_ret_str \<equiv> ''cons_ret''"
 
 
 definition "cons_state_upd s \<equiv>
@@ -2637,7 +2640,7 @@ fun cons_imp:: "cons_state \<Rightarrow> cons_state" where
 
 declare cons_imp.simps [simp del]
 
-lemma cons_imp_correct:
+lemma cons_imp_correct[let_function_correctness]:
    "cons_ret (cons_imp s) = cons (cons_h s) (cons_t s)"
   by (auto simp: cons_imp.simps prod_encode_imp_correct cons_state_upd_def Let_def cons_def split: if_splits)
 
@@ -2699,8 +2702,8 @@ lemma cons_IMP_Minus_correct_function:
   apply(erule prod_encode_IMP_Minus_correct[where vars = "{cons_ret_str}"])
    apply(drule AssignD)+
    apply(elim conjE)
-   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_encode_imp_to_HOL_state_def )[1]
+   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def prefix_defs)[1]
+  apply(auto simp: prod_encode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 lemma cons_IMP_Minus_correct_time: 
@@ -2712,8 +2715,8 @@ lemma cons_IMP_Minus_correct_time:
   apply(erule prod_encode_IMP_Minus_correct[where vars = "{cons_ret_str}"])
    apply(drule AssignD)+
    apply(elim conjE)
-   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def)[1]
-  apply(auto simp: prod_encode_imp_to_HOL_state_def )[1]
+   apply(auto simp: cons_state_upd_def cons_imp_to_HOL_state_def prefix_defs)[1]
+  apply(auto simp: prod_encode_imp_to_HOL_state_def prefix_defs)[1]
   done
 
 
@@ -2737,9 +2740,9 @@ subsection \<open>List append\<close>
 
 record append_state = append_acc::nat append_xs::nat
 
-abbreviation "append_prefix \<equiv> ''append.''"
-abbreviation "append_acc_str \<equiv> ''acc''"
-abbreviation "append_xs_str \<equiv> ''xs''"
+definition [prefix_defs]:  "append_prefix \<equiv> ''append.''"
+definition [prefix_defs]:  "append_acc_str \<equiv> ''acc''"
+definition [prefix_defs]:  "append_xs_str \<equiv> ''xs''"
 
 definition "append_state_upd s \<equiv>
       let
@@ -2787,7 +2790,7 @@ termination
 
 declare append_imp.simps [simp del]
 
-lemma append_imp_correct:
+lemma append_imp_correct[let_function_correctness]:
    "append_acc (append_imp s) = Primitives.append_acc (append_acc s) (append_xs s)"
 proof (induction s rule: append_imp.induct)
   case (1 s)
@@ -2922,16 +2925,16 @@ lemma append_IMP_Minus_correct_function:
   apply(dest_com')
   apply(erule Seq_tE)+
   apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-  apply fastforce [1]
+  apply (fastforce simp: prefix_defs) [1]
   apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-   apply fastforce [1]
+   apply (fastforce simp: prefix_defs) [1]
   apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-   apply fastforce [1]
+   apply (fastforce simp: prefix_defs) [1]
    apply(drule AssignD)+
   apply(elim conjE)
   apply(simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc 
                         cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-                        Let_def)
+                        Let_def prefix_defs)
   apply fastforce [1]
   done
 
@@ -2946,17 +2949,17 @@ lemma append_IMP_Minus_correct_time:
   apply(dest_com')
   apply(erule Seq_tE)+
   apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-  apply fastforce [1]
+  apply (fastforce simp: prefix_defs) [1]
   apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-   apply fastforce [1]
+   apply (fastforce simp: prefix_defs) [1]
   apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"])
-   apply fastforce [1]
+   apply (fastforce simp: prefix_defs) [1]
    apply(drule AssignD)+
   apply(elim conjE)
   apply(subst append_imp_time_acc_2)
   apply(simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc 
                         cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-                        Let_def)
+                        Let_def prefix_defs)
   apply fastforce [1]
   done
 
@@ -2981,10 +2984,10 @@ subsection \<open>Logical And\<close>
 
 record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
 
-abbreviation "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
-abbreviation "AND_neq_zero_a_str \<equiv> ''AND_a''"
-abbreviation "AND_neq_zero_b_str \<equiv> ''AND_b''"
-abbreviation "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
+definition [prefix_defs]:  "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
+definition [prefix_defs]:  "AND_neq_zero_a_str \<equiv> ''AND_a''"
+definition [prefix_defs]:  "AND_neq_zero_b_str \<equiv> ''AND_b''"
+definition [prefix_defs]:  "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
 
 definition "AND_neq_zero_state_upd s \<equiv>
       let
@@ -3011,7 +3014,7 @@ fun AND_neq_zero_imp:: "AND_neq_zero_state \<Rightarrow> AND_neq_zero_state" whe
 
 declare AND_neq_zero_imp.simps [simp del]
 
-lemma AND_neq_zero_imp_correct:
+lemma AND_neq_zero_imp_correct[let_function_correctness]:
    "AND_neq_zero_ret (AND_neq_zero_imp s) = (if (AND_neq_zero_a s) \<noteq> 0 \<and> (AND_neq_zero_b s) \<noteq> 0 then 1 else 0)"
   by (subst AND_neq_zero_imp.simps) (auto simp: AND_neq_zero_state_upd_def Let_def split: if_splits)
 
@@ -3149,10 +3152,10 @@ subsection \<open>Logical Or\<close>
 
 record OR_neq_zero_state = OR_neq_zero_a::nat OR_neq_zero_b::nat OR_neq_zero_ret::nat
 
-abbreviation "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
-abbreviation "OR_neq_zero_a_str \<equiv> ''OR_a''"
-abbreviation "OR_neq_zero_b_str \<equiv> ''OR_b''"
-abbreviation "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
+definition [prefix_defs]:  "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
+definition [prefix_defs]:  "OR_neq_zero_a_str \<equiv> ''OR_a''"
+definition [prefix_defs]:  "OR_neq_zero_b_str \<equiv> ''OR_b''"
+definition [prefix_defs]:  "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
 
 definition "OR_neq_zero_state_upd s \<equiv>
       let
@@ -3179,7 +3182,7 @@ fun OR_neq_zero_imp:: "OR_neq_zero_state \<Rightarrow> OR_neq_zero_state" where
 
 declare OR_neq_zero_imp.simps [simp del]
 
-lemma OR_neq_zero_imp_correct:
+lemma OR_neq_zero_imp_correct[let_function_correctness]:
    "OR_neq_zero_ret (OR_neq_zero_imp s) = (if (OR_neq_zero_a s) \<noteq> 0 \<or> (OR_neq_zero_b s) \<noteq> 0 then 1 else 0)"
   by (subst OR_neq_zero_imp.simps) (auto simp: OR_neq_zero_state_upd_def Let_def split: if_splits)
 
