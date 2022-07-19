@@ -1926,8 +1926,251 @@ lemma operand_bit_to_var_acc_IMP_Minus_correct:
 
 subsubsection \<open>operand_bit_to_var_tail\<close>
 
-(* TODO *)
+record operand_bit_to_var_tail_state =
+  operand_bit_to_var_tail_n::nat
+  operand_bit_to_var_tail_ret::nat
 
+abbreviation "operand_bit_to_var_tail_prefix \<equiv> ''operand_bit_to_var_tail.''"
+abbreviation "operand_bit_to_var_tail_n_str \<equiv> ''n''"
+abbreviation "operand_bit_to_var_tail_ret_str \<equiv> ''ret''"
+
+definition "operand_bit_to_var_tail_state_upd s =
+  (let
+      fst'_state_p' = operand_bit_to_var_tail_n s;
+      fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+      fst'_ret_state = fst'_imp fst'_state;
+      fst'_result = fst'_state_p fst'_ret_state;
+      cons_h' = fst'_result;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      operand_bit_to_var_acc_acc' = cons_result;
+      operand_bit_to_var_acc_n' = operand_bit_to_var_tail_n s;
+      operand_bit_to_var_acc_ret' = 0;
+      operand_bit_to_var_acc_state =
+        \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+         operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+         operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>;
+      operand_bit_to_var_acc_ret_state = operand_bit_to_var_acc_imp operand_bit_to_var_acc_state;
+      operand_bit_to_var_acc_result = operand_bit_to_var_acc_ret operand_bit_to_var_acc_ret_state;
+      operand_bit_to_var_tail_n' = operand_bit_to_var_tail_n s;
+      operand_bit_to_var_tail_ret' = operand_bit_to_var_acc_result;
+      ret = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+             operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>
+    in
+      ret
+  )"
+
+function operand_bit_to_var_tail_imp::
+  "operand_bit_to_var_tail_state \<Rightarrow> operand_bit_to_var_tail_state" where
+  "operand_bit_to_var_tail_imp s =
+  (let
+      ret = operand_bit_to_var_tail_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. operand_bit_to_var_tail_n s)") simp
+
+declare operand_bit_to_var_tail_imp.simps [simp del]
+
+lemma operand_bit_to_var_tail_imp_correct:
+  "operand_bit_to_var_tail_ret (operand_bit_to_var_tail_imp s) =
+    operand_bit_to_var_tail (operand_bit_to_var_tail_n s)"
+  by(simp add: operand_bit_to_var_tail_imp.simps operand_bit_to_var_tail_state_upd_def
+      fst'_imp_correct cons_imp_correct)
+    (simp only: operand_bit_to_var_tail_def operand_bit_to_var_acc_imp_correct
+      operand_bit_to_var_acc'_correct operand_bit_to_var_acc_state.simps fst_nat_fst'_nat)
+
+function operand_bit_to_var_tail_imp_time:: "nat \<Rightarrow> operand_bit_to_var_tail_state \<Rightarrow> nat" where
+  "operand_bit_to_var_tail_imp_time t s =
+    (let
+      fst'_state_p' = operand_bit_to_var_tail_n s;
+      t = t + 2;
+      fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+      fst'_ret_state = fst'_imp fst'_state;
+      t = t + fst'_imp_time 0 fst'_state;
+      fst'_result = fst'_state_p fst'_ret_state;
+      t = t + 2;
+      cons_h' = fst'_result;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      operand_bit_to_var_acc_acc' = cons_result;
+      t = t + 2;
+      operand_bit_to_var_acc_n' = operand_bit_to_var_tail_n s;
+      t = t + 2;
+      operand_bit_to_var_acc_ret' = 0;
+      t = t + 2;
+      operand_bit_to_var_acc_state =
+        \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',
+         operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',
+         operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>;
+      operand_bit_to_var_acc_ret_state = operand_bit_to_var_acc_imp operand_bit_to_var_acc_state;
+      t = t + operand_bit_to_var_acc_imp_time 0 operand_bit_to_var_acc_state;
+      operand_bit_to_var_acc_result = operand_bit_to_var_acc_ret operand_bit_to_var_acc_ret_state;
+      t = t + 2;
+      operand_bit_to_var_tail_n' = operand_bit_to_var_tail_n s;
+      t = t + 2;
+      operand_bit_to_var_tail_ret' = operand_bit_to_var_acc_result;
+      t = t + 2;
+      ret = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+             operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>
+    in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). operand_bit_to_var_tail_n s)") simp
+
+lemmas [simp del] = operand_bit_to_var_tail_imp_time.simps
+
+lemma operand_bit_to_var_tail_imp_time_acc:
+  "(operand_bit_to_var_tail_imp_time (Suc t) s) = Suc (operand_bit_to_var_tail_imp_time t s)"
+  by (induction t s rule: operand_bit_to_var_tail_imp_time.induct)
+    ((subst (1 2) operand_bit_to_var_tail_imp_time.simps); (simp add: Let_def))
+
+lemma operand_bit_to_var_tail_imp_time_acc_2_aux:
+  "(operand_bit_to_var_tail_imp_time x s) = x + (operand_bit_to_var_tail_imp_time 0 s)"
+  by (induction x arbitrary: s)
+    (simp add: operand_bit_to_var_tail_imp_time_acc)+
+
+lemma operand_bit_to_var_tail_imp_time_acc_2:
+  "x \<noteq> 0 \<Longrightarrow> (operand_bit_to_var_tail_imp_time x s) = x + (operand_bit_to_var_tail_imp_time 0 s)"
+  by (rule operand_bit_to_var_tail_imp_time_acc_2_aux)
+
+lemma operand_bit_to_var_tail_imp_time_acc_3:
+  "operand_bit_to_var_tail_imp_time (a + b) s = a + (operand_bit_to_var_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: operand_bit_to_var_tail_imp_time_acc)+
+
+abbreviation "operand_bit_to_var_tail_fst'_result \<equiv> ''fst'_result''"
+abbreviation "operand_bit_to_var_tail_cons_result \<equiv> ''cons_result''"
+abbreviation
+  "operand_bit_to_var_tail_operand_bit_to_var_tail_result \<equiv> ''operand_bit_to_var_tail_result''"
+
+definition "operand_bit_to_var_tail_IMP_Minus \<equiv>
+  \<comment> \<open>    fst'_state_p' = operand_bit_to_var_tail_n s;\<close>
+  (fst'_prefix @ fst'_p_str) ::= (A (V operand_bit_to_var_tail_n_str));;
+  \<comment> \<open>    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
+  \<comment> \<open>    fst'_ret_state = fst'_imp fst'_state;\<close>
+  invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+  \<comment> \<open>    fst'_result = fst'_state_p fst'_ret_state;\<close>
+  operand_bit_to_var_tail_fst'_result ::= (A (V (fst'_prefix @ fst'_p_str)));;
+  \<comment> \<open>    cons_h' = fst'_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V operand_bit_to_var_tail_fst'_result));;
+  \<comment> \<open>    cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>    cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>    cons_ret_state = cons_imp cons_state;\<close>
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  \<comment> \<open>    cons_result = cons_ret cons_ret_state;\<close>
+  operand_bit_to_var_tail_cons_result ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>    operand_bit_to_var_acc_acc' = cons_result;\<close>
+  (operand_bit_to_var_acc_prefix @ operand_bit_to_var_acc_acc_str) ::=
+    (A (V operand_bit_to_var_tail_cons_result));;
+  \<comment> \<open>    operand_bit_to_var_acc_n' = operand_bit_to_var_tail_n s;\<close>
+  (operand_bit_to_var_acc_prefix @ operand_bit_to_var_acc_n_str) ::=
+    (A (V operand_bit_to_var_tail_n_str));;
+  \<comment> \<open>    operand_bit_to_var_acc_ret' = 0;\<close>
+  (operand_bit_to_var_acc_prefix @ operand_bit_to_var_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>    operand_bit_to_var_acc_state =\<close>
+  \<comment> \<open>      \<lparr>operand_bit_to_var_acc_acc = operand_bit_to_var_acc_acc',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_n = operand_bit_to_var_acc_n',\<close>
+  \<comment> \<open>       operand_bit_to_var_acc_ret = operand_bit_to_var_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>    operand_bit_to_var_acc_ret_state =
+            operand_bit_to_var_acc_imp operand_bit_to_var_acc_state;\<close>
+  invoke_subprogram operand_bit_to_var_acc_prefix operand_bit_to_var_acc_IMP_Minus;;
+  \<comment> \<open>    operand_bit_to_var_acc_result =
+            operand_bit_to_var_acc_ret operand_bit_to_var_acc_ret_state;\<close>
+  operand_bit_to_var_tail_operand_bit_to_var_tail_result ::=
+    (A (V (operand_bit_to_var_acc_prefix @ operand_bit_to_var_acc_ret_str)));;
+  \<comment> \<open>    operand_bit_to_var_tail_n' = operand_bit_to_var_tail_n s;\<close>
+  operand_bit_to_var_tail_n_str ::= (A (V operand_bit_to_var_tail_n_str));;
+  \<comment> \<open>    operand_bit_to_var_tail_ret' = operand_bit_to_var_acc_result;\<close>
+  operand_bit_to_var_tail_ret_str ::= (A (V operand_bit_to_var_tail_operand_bit_to_var_tail_result))
+  \<comment> \<open>    ret = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',\<close>
+  \<comment> \<open>           operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>\<close>
+  "
+
+abbreviation
+  "operand_bit_to_var_tail_IMP_vars \<equiv>
+  {operand_bit_to_var_tail_n_str, operand_bit_to_var_tail_ret_str,
+   operand_bit_to_var_tail_fst'_result, operand_bit_to_var_tail_cons_result,
+   operand_bit_to_var_tail_operand_bit_to_var_tail_result}"
+
+definition "operand_bit_to_var_tail_imp_to_HOL_state p s =
+  \<lparr>operand_bit_to_var_tail_n = (s (add_prefix p operand_bit_to_var_tail_n_str)),
+   operand_bit_to_var_tail_ret = (s (add_prefix p operand_bit_to_var_tail_ret_str))\<rparr>"
+
+lemmas operand_bit_to_var_tail_state_translators =
+  fst'_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  operand_bit_to_var_acc_imp_to_HOL_state_def
+  operand_bit_to_var_tail_imp_to_HOL_state_def
+
+lemma operand_bit_to_var_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p operand_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p operand_bit_to_var_tail_ret_str)
+      = operand_bit_to_var_tail_ret
+  (operand_bit_to_var_tail_imp (operand_bit_to_var_tail_imp_to_HOL_state p s))"
+  apply(simp only: operand_bit_to_var_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule fst'_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(15) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(17) by fastforce
+  apply(erule operand_bit_to_var_acc_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(19) by fastforce
+  by (fastforce simp: operand_bit_to_var_tail_state_translators operand_bit_to_var_tail_imp.simps
+      operand_bit_to_var_tail_state_upd_def)
+
+lemma operand_bit_to_var_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ operand_bit_to_var_tail_pref) operand_bit_to_var_tail_IMP_Minus, s)
+      \<Rightarrow>\<^bsup>t\<^esup> s'; v \<in> vars; \<not> (prefix operand_bit_to_var_tail_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma operand_bit_to_var_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p operand_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = operand_bit_to_var_tail_imp_time 0 (operand_bit_to_var_tail_imp_to_HOL_state p s)"
+  apply(simp only: operand_bit_to_var_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(29) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(31) by fastforce
+  apply(erule operand_bit_to_var_acc_IMP_Minus_correct[where vars=operand_bit_to_var_tail_IMP_vars])
+  subgoal premises p using p(33) by fastforce
+  by (fastforce simp: operand_bit_to_var_tail_state_translators Let_def
+      operand_bit_to_var_tail_imp_time.simps operand_bit_to_var_tail_state_upd_def )
+
+lemma operand_bit_to_var_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) operand_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+     \<lbrakk>t = (operand_bit_to_var_tail_imp_time 0
+            (operand_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) operand_bit_to_var_tail_ret_str) =
+        operand_bit_to_var_tail_ret
+          (operand_bit_to_var_tail_imp (operand_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using operand_bit_to_var_tail_IMP_Minus_correct_time
+    operand_bit_to_var_tail_IMP_Minus_correct_function
+    operand_bit_to_var_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
 
 
 subsection \<open>var_to_operand_bit_nat\<close>
