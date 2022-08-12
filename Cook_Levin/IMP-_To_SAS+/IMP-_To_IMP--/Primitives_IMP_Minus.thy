@@ -432,26 +432,11 @@ termination (* Same termination proof as recursive version, just some additional
 declare dsqrt'_imp_time.simps[simp del]
 
 lemma dsqrt'_imp_time_acc: "(dsqrt'_imp_time (Suc t) s) = Suc (dsqrt'_imp_time t s)"
-proof (induction t s arbitrary: rule: dsqrt'_imp_time.induct)
-  case (1 t s)
-  then show ?case
-  proof(cases "dsqrt'_state_R s - (dsqrt'_state_L s + 1) \<noteq> 0")
-    case True
-    hence "(Suc (dsqrt'_state_L s)) < dsqrt'_state_R s"
-      by simp
-    with True show ?thesis
-      apply (subst (2) dsqrt'_imp_time.simps)
-      apply (subst dsqrt'_imp_time.simps)
-      using 1 by (simp add: dsqrt'_imp_state_upd_def Let_def split: if_splits)
-  next
-    case False
-    then show ?thesis 
-      by (auto simp add: dsqrt'_imp_time.simps split: if_splits)
-  qed
-qed
+  by (induction t s rule: dsqrt'_imp_time.induct) (simp add: dsqrt'_imp_time.simps)
 
 lemma dsqrt'_imp_time_acc': "(dsqrt'_imp_time t s) = t + (dsqrt'_imp_time 0 s)"
   by (induction t) (auto simp add: dsqrt'_imp_time_acc)
+
 lemma dsqrt'_imp_time_acc'': "NO_MATCH 0 t \<Longrightarrow> (dsqrt'_imp_time t s) = t + (dsqrt'_imp_time 0 s)"
   using dsqrt'_imp_time_acc' .
 
@@ -511,99 +496,82 @@ lemma cond_elim: "(\<And>v . v \<in> insert w W \<Longrightarrow> s (add_prefix 
   \<Longrightarrow> P"
   by auto
 
-lemma dsqrt'_IMP_Minus_correct_function_1: 
+lemma dsqrt'_IMP_Minus_correct_function_1:
   "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p dsqrt'_L_str) = 
+     s' (add_prefix p dsqrt'_L_str) =
        dsqrt'_state_L (dsqrt'_imp (dsqrt'_imp_to_HOL_state p s))"
 proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_imp.induct)
   case 1
-  then show ?case 
-  apply (subst dsqrt'_imp.simps)
-  apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
-  apply (erule Seq_tE)+
-  apply (erule While_tE)
-   apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps split: if_splits)[]
+  then show ?case
+    apply (subst dsqrt'_imp.simps)
+    apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
+    apply (erule Seq_tE)+
+    apply (erule While_tE)
+    subgoal by (auto simp add: dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps)
+
     apply (erule Seq_tE)+
     apply dest_com_gen
 
     subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc
-    apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
-    apply (erule Seq_tE)+
-      by (auto simp add: dsqrt'_imp_to_HOL_state_def) 
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
+      apply (erule Seq_tE)+
+      by (auto simp add: dsqrt'_imp_to_HOL_state_def)
 
-    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
-      thm p
-      using p(4,5,8,9) apply -
-      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
+      using p(4,5,8,9)
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def
+          prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
-        also a free prefix made it more difficult, abuse . *)
+      subgoal premises p using p(24) by fastforce
+          (* Here we already see how auto gets confused by all the crap in p, also a free prefix
+             made it more difficult, abuse . *)
       apply(elim If_tE)
-      apply (all \<open>drule AssignD\<close>)+
+         apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
-          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
-            Otherwise do more "structured" accumulation of information with ML
-           *)
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-        done
-
-      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
-      thm p
-      using p(4,5,8,9) apply -
-      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
-      apply(erule Seq_tE)+
-      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
-        also a free prefix made it more difficult, abuse . *)
-      apply(elim If_tE)
-      apply (all \<open>drule AssignD\<close>)+
-         apply (all \<open>erule conjE\<close>)+
-          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
-            Otherwise do more "structured" accumulation of information with ML
-           *)
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-        done
+        (* All proofs the same now, instantiations maybe with simprocs, problem is still to much
+           stuff in goal state, maybe a filter tactic is the least work? Otherwise do more
+           "structured" accumulation of information with ML *)
+      subgoal premises p
+        using p(13-) apply (elim cond_elim)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(15-)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(15-)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(13-) apply (elim cond_elim)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
       done
-  qed
+
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
+      using p(4,5,8,9)
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def
+          prefix_simps)
+      apply(erule Seq_tE)+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(24) by fastforce
+      apply(elim If_tE)
+         apply (all \<open>drule AssignD\<close>)+
+         apply (all \<open>erule conjE\<close>)+
+
+      subgoal premises p
+        using p(1,13-) apply (elim cond_elim)
+        by (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(15-)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(15-)
+        by (simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(1,13-) apply (elim cond_elim)
+        by (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      done
+    done
+qed
 
 lemma square_x[simp]: "square_x \<lparr>square_x = x, square_square = out\<rparr> = x"
   by auto
@@ -612,104 +580,85 @@ lemma square_square[simp]: "square_square  \<lparr>square_x = x, square_square =
 lemma square_state[simp]: "\<lparr>square_x = (square_x s), square_square = (square_square s)\<rparr> = s"
   by auto
 
-lemma dsqrt'_IMP_Minus_correct_time: 
-  "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state p s)"
+lemma dsqrt'_IMP_Minus_correct_time:
+  "(invoke_subprogram p dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+    t = dsqrt'_imp_time 0 (dsqrt'_imp_to_HOL_state p s)"
 proof (induction "dsqrt'_imp_to_HOL_state p s" arbitrary: s s' t rule: dsqrt'_imp.induct)
   case 1
-  from "1.prems" show ?case 
-  apply (subst dsqrt'_imp_time.simps)
-  apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
-  apply (erule Seq_tE)+
-  apply (erule While_tE_time)
-     apply (auto simp add: dsqrt'_imp_state_upd_def prefix_simps Let_def dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps 
-          dsqrt'_imp_time_acc split: if_splits)[]
+  from "1.prems" show ?case
+    apply (subst dsqrt'_imp_time.simps)
+    apply (simp only: dsqrt'_IMP_Minus_def prefix_simps)
     apply (erule Seq_tE)+
-    using "1.hyps"[unfolded dsqrt'_IMP_Minus_def] apply -
+    apply (erule While_tE_time)
+    subgoal by (auto simp add: dsqrt'_imp_to_HOL_state_def dsqrt'_IMP_Minus_subprogram_simps)
+
+    apply (erule Seq_tE)+
+    using "1.hyps"[unfolded dsqrt'_IMP_Minus_def]
     apply (simp add: add.assoc)
     apply (dest_com_gen_time)
 
     subgoal for x s2 y xa s2a ya xb s2b yb xc s2c yc
-    apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
-    apply (erule Seq_tE)+
-      by (auto simp add: dsqrt'_imp_to_HOL_state_def) 
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
+      apply (erule Seq_tE)+
+      by (auto simp add: dsqrt'_imp_to_HOL_state_def)
 
-    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
-      thm p
-      using p(4,5,8,9) apply -
-      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
+      using p(4,5,8,9)
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def
+          prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
-        also a free prefix made it more difficult, abuse . *)
+      subgoal premises p using p(24) by (auto simp add: prefix_Cons)
       apply(elim If_tE)
-      apply (all \<open>drule AssignD\<close>)+
+         apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
-          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
-            Otherwise do more "structured" accumulation of information with ML
-           *)
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-        done
-
-      subgoal premises p' for x s2 y xa s2a ya xb s2b yb xc s2c yc 
-        thm p' (* Strange, I am in timing but can still filter some timing infos, probably they already passed through a simp and their effects are 
-          ttherefore present?*) 
-      using p'(4,5,8,9) apply -
-      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def prefix_simps)
-      apply(erule Seq_tE)+
-      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
-        also a free prefix made it more difficult, abuse . *)
-      apply(elim If_tE)
-      apply (all \<open>drule AssignD\<close>)+
-         apply (all \<open>erule conjE\<close>)+
-          (* All proofs the same now, instantiations maybe with simprocs, problem is still to much stuff in goal state, maybe a filter tactic is the least work?
-            Otherwise do more "structured" accumulation of information with ML
-
-            Interesting guess: Only cases 1/4 need to look at the timing(check added lemmas), the other ones are recognized to be impossible?
-           *)
-          subgoal premises p 
-          using p apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
-                Cons_eq_append_conv power2_eq_square square_imp_time.simps split: if_splits)
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p 
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct
-                Cons_eq_append_conv power2_eq_square split: if_splits) 
-          done
-          subgoal premises p thm p (*Here I need them... Check again*)
-          using p(1,13,15-) p(14) apply (elim cond_elim)
-          apply (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def Let_def square_imp_correct dsqrt'_imp_time_acc''
-                Cons_eq_append_conv power2_eq_square square_imp_to_HOL_state_def split: if_splits)
-          using p(2-12) apply (auto simp add: square_imp_to_HOL_state_def)
-          done
-        done
+        (* All proofs the same now, instantiations maybe with simprocs, problem is still to much
+           stuff in goal state, maybe a filter tactic is the least work?
+           Otherwise do more "structured" accumulation of information with ML *)
+      subgoal premises p
+        using p(13-) apply (elim cond_elim)
+        by (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
+      subgoal premises p
+        using p(15-) by (simp add: square_imp_correct)
+      subgoal premises p
+        using p(15-) by (simp add: square_imp_correct)
+      subgoal premises p
+        using p(13-) apply (elim cond_elim)
+        by (auto simp add: dsqrt'_imp_state_upd_def dsqrt'_imp_to_HOL_state_def square_imp_correct)
       done
-  qed
+
+    subgoal premises p' for x s2 y xa s2a ya xb s2b yb xc s2c yc
+      (* Strange, I am in timing but can still filter some timing infos, probably they already
+         passed through a simp and their effects are therefore present?*)
+      using p'(4,5,8,9)
+      apply (simp only: dsqrt'_IMP_Minus_while_condition_def dsqrt'_IMP_Minus_loop_body_def
+          prefix_simps)
+      apply(erule Seq_tE)+
+      apply(all \<open>erule square_IMP_Minus_correct[where vars = "dsqrt'_IMP_vars"]\<close>)
+      subgoal premises p using p(24) by (auto simp add: prefix_Cons)
+      apply(elim If_tE)
+         apply (all \<open>drule AssignD\<close>)+
+         apply (all \<open>erule conjE\<close>)+
+        (* All proofs the same now, instantiations maybe with simprocs, problem is still to much
+           stuff in goal state, maybe a filter tactic is the least work?
+           Otherwise do more "structured" accumulation of information with ML
+           Interesting guess: Only cases 1/4 need to look at the timing(check added lemmas), the
+           other ones are recognized to be impossible? *)
+      subgoal premises p
+        using p(14-) apply (elim cond_elim)
+        using p(1-13) by (simp add: dsqrt'_imp_state_upd_def square_imp_to_HOL_state_def
+            dsqrt'_imp_time_acc'' square_imp_correct dsqrt'_imp_to_HOL_state_def)
+      subgoal premises p
+        using p(15-) by (simp add: square_imp_correct)
+      subgoal premises p
+        using p(15-) by (simp add: square_imp_correct)
+      subgoal premises p (*Here I need them... Check again*)
+        using p(14-) apply (elim cond_elim)
+        using p(1-13) by (simp add: dsqrt'_imp_state_upd_def square_imp_to_HOL_state_def
+            dsqrt'_imp_time_acc'' square_imp_correct dsqrt'_imp_to_HOL_state_def)
+      done
+    done
+qed
 
 lemma dsqrt'_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ dsqrt'_prefix) dsqrt'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (prefix dsqrt'_prefix v) 
@@ -794,15 +743,10 @@ fun dsqrt_imp_time:: "nat \<Rightarrow> dsqrt_state\<Rightarrow> nat" where
 lemmas [simp del] = dsqrt_imp_time.simps
 
 lemma dsqrt_imp_time_acc: "(dsqrt_imp_time (Suc t) s) = Suc (dsqrt_imp_time t s)"
-  apply(subst dsqrt_imp_time.simps)
-  apply(subst dsqrt_imp_time.simps)
-  apply (auto simp add: dsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
+  by (subst dsqrt_imp_time.simps, subst dsqrt_imp_time.simps) simp
 
 lemma dsqrt_imp_time_acc_2: "(dsqrt_imp_time x s) = x + (dsqrt_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: dsqrt_imp_time_acc dsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-
+  by (induction x arbitrary: s) (auto simp add: dsqrt_imp_time_acc)
 
 definition dsqrt_IMP_Minus where
 "dsqrt_IMP_Minus \<equiv>
@@ -819,30 +763,23 @@ definition dsqrt_IMP_Minus where
 definition "dsqrt_imp_to_HOL_state p s =
   \<lparr>dsqrt_state_y = (s (add_prefix p dsqrt_y_str)), dsqrt_state_ret = (s (add_prefix p dsqrt_ret_str))\<rparr>"
 
-
-lemma dsqrt_IMP_Minus_correct_function: 
+lemma dsqrt_IMP_Minus_correct_function:
   "(invoke_subprogram p dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p dsqrt_ret_str) = dsqrt_state_ret (dsqrt_imp (dsqrt_imp_to_HOL_state p s))"
   apply(subst dsqrt_imp.simps)
-  apply(simp only: dsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
-   apply simp
-  apply (drule AssignD)+
-  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
-  done
+  apply(simp only: dsqrt_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"], simp)
+  by (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
 
-lemma dsqrt_IMP_Minus_correct_time: 
+lemma dsqrt_IMP_Minus_correct_time:
   "(invoke_subprogram p dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = dsqrt_imp_time 0 (dsqrt_imp_to_HOL_state p s)"
   apply(subst dsqrt_imp_time.simps)
-  apply(simp only: dsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
-   apply simp
-  apply (drule AssignD)+
-  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
-  done
+  apply(simp only: dsqrt_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"], simp)
+  by (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def)
 
 lemma dsqrt_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ dsqrt_pref) dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
@@ -894,12 +831,10 @@ fun triangle_imp:: "triangle_state \<Rightarrow> triangle_state" where
 
 lemmas [simp del] = triangle_imp.simps
 
-lemma triangle_imp_correct: "triangle_triangle (triangle_imp s) = Nat_Bijection.triangle (triangle_a s)"
-proof (induction s rule: triangle_imp.induct)
-  case (1 s)
-  then show ?case
-    by (auto simp: triangle_imp.simps triangle_def triangle_state_upd_def Let_def mul_imp_correct split: if_splits)
-qed 
+lemma triangle_imp_correct:
+  "triangle_triangle (triangle_imp s) = Nat_Bijection.triangle (triangle_a s)"
+  by (induction s rule: triangle_imp.induct)
+    (simp add: triangle_imp.simps triangle_def triangle_state_upd_def Let_def mul_imp_correct)
 
 fun triangle_imp_time:: "nat \<Rightarrow> triangle_state \<Rightarrow> nat" where
 "triangle_imp_time t s = 
@@ -925,8 +860,7 @@ fun triangle_imp_time:: "nat \<Rightarrow> triangle_state \<Rightarrow> nat" whe
 lemmas [simp del] = triangle_imp_time.simps
 
 lemma triangle_imp_time_acc: "(triangle_imp_time (Suc t) s) = Suc (triangle_imp_time t s)"
-  by (induction t s rule: triangle_imp_time.induct)
-     (auto simp add: triangle_imp_time.simps mul_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  by (induction t s rule: triangle_imp_time.induct) (simp add: triangle_imp_time.simps)
 
 definition triangle_IMP_Minus where
 "triangle_IMP_Minus \<equiv>
@@ -953,10 +887,10 @@ definition triangle_IMP_Minus where
 definition "triangle_imp_to_HOL_state p s =
               \<lparr>triangle_a = s (add_prefix p triangle_a_str), triangle_triangle = (s (add_prefix p triangle_triangle_str))\<rparr>"
 
-lemma triangle_imp_to_HOL_state_add_prefix: 
-  "triangle_imp_to_HOL_state (add_prefix p1 p2) s = triangle_imp_to_HOL_state p2 (s o (add_prefix p1))"
-  by (auto simp only: triangle_imp_to_HOL_state_def append.assoc[symmetric] comp_def
-                      mul_imp_to_HOL_state_add_prefix)
+lemma triangle_imp_to_HOL_state_add_prefix:
+  "triangle_imp_to_HOL_state (add_prefix p1 p2) s =
+    triangle_imp_to_HOL_state p2 (s o (add_prefix p1))"
+  by (simp only: triangle_imp_to_HOL_state_def append.assoc comp_def)
 
 (*lemma rev_add_prefix_all_variables:
   "p1 \<noteq> [] \<Longrightarrow> (add_prefix p2 v \<notin> set (all_variables (invoke_subprogram p1 (c::pcom) p2)))"
@@ -974,36 +908,21 @@ lemma rev_add_prefix_all_variables:"(add_prefix p v \<in> set (all_variables (in
 lemma cons_append: "xs \<noteq> [] \<Longrightarrow> x # xs = [x] @ xs"
   by simp
 
-lemma triangle_IMP_Minus_correct_function: 
-  "(invoke_subprogram p triangle_IMP_Minus, s) 
+lemma triangle_IMP_Minus_correct_function:
+  "(invoke_subprogram p triangle_IMP_Minus, s)
       \<Rightarrow>\<^bsup>t \<^esup> s'
-    \<Longrightarrow> s' (add_prefix p triangle_triangle_str) = triangle_triangle (triangle_imp (triangle_imp_to_HOL_state p s))"
-  apply(simp only: triangle_IMP_Minus_def triangle_imp.simps com_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-  \<comment> \<open>Variables that we want to preserve: variables of this program minus the variables of the
-     program we call. If automation fails, this should be manually chosen variables.\<close>
-  apply(erule mul_IMP_minus_correct[where vars = "{p @ ''traingle''}"])
-  apply(drule AssignD)+
-  apply(elim conjE impE)
-  apply(auto simp: triangle_state_upd_def Let_def triangle_imp_to_HOL_state_def)[1]
-  apply(auto simp: mul_imp_to_HOL_state_def)[1]
-  done
+    \<Longrightarrow> s' (add_prefix p triangle_triangle_str) =
+          triangle_triangle (triangle_imp (triangle_imp_to_HOL_state p s))"
+  by (fastforce elim: mul_IMP_minus_correct simp: triangle_IMP_Minus_def triangle_imp.simps
+      invoke_subprogram_append mul_imp_to_HOL_state_def triangle_state_upd_def
+      triangle_imp_to_HOL_state_def)
 
-lemma triangle_IMP_Minus_correct_time: 
-  "(invoke_subprogram p triangle_IMP_Minus, s) 
+lemma triangle_IMP_Minus_correct_time:
+  "(invoke_subprogram p triangle_IMP_Minus, s)
       \<Rightarrow>\<^bsup>t\<^esup> s'
     \<Longrightarrow> t = triangle_imp_time 0 (triangle_imp_to_HOL_state p s)"
-  apply(simp only: triangle_IMP_Minus_def com_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(subst triangle_imp_time.simps)
-  apply(erule mul_IMP_minus_correct[where vars = "{p @ triangle_triangle_str}"])
-  \<comment> \<open>Warning: in the following, I am unfolding mul_imp_to_HOL_state_def. With more experiments, it
-      should become clear if this will cascade down multiple layers\<close>
-  apply(simp add: triangle_imp_time_acc triangle_imp_to_HOL_state_def triangle_state_upd_def)[1]
-  apply (auto simp: mul_imp_to_HOL_state_def)[1]
-  done
+  by (fastforce elim: mul_IMP_minus_correct simp: triangle_IMP_Minus_def invoke_subprogram_append
+      triangle_imp_to_HOL_state_def mul_imp_to_HOL_state_def triangle_imp_time.simps)
 
 lemma triangle_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ triangle_pref) triangle_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> p @ v \<in> vars \<Longrightarrow> \<not> (set triangle_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
@@ -1105,14 +1024,10 @@ fun tsqrt_imp_time:: "nat \<Rightarrow> tsqrt_state\<Rightarrow> nat" where
 lemmas [simp del] = tsqrt_imp_time.simps
 
 lemma tsqrt_imp_time_acc: "(tsqrt_imp_time (Suc t) s) = Suc (tsqrt_imp_time t s)"
-  apply(subst tsqrt_imp_time.simps)
-  apply(subst tsqrt_imp_time.simps)
-  apply (auto simp add: tsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
+  by (subst tsqrt_imp_time.simps, subst tsqrt_imp_time.simps) (simp add: Let_def)
 
 lemma tsqrt_imp_time_acc_2: "(tsqrt_imp_time x s) = x + (tsqrt_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: tsqrt_imp_time_acc tsqrt_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  by (induction x arbitrary: s) (simp add: tsqrt_imp_time_acc)+
 
 definition tsqrt_IMP_Minus where
 "tsqrt_IMP_Minus \<equiv>
@@ -1157,34 +1072,19 @@ lemma mul_IMP_Minus_correct:
         mul_IMP_Minus_correct_effects 
   by auto
 
-
 lemma tsqrt_IMP_Minus_correct_function:
   "(invoke_subprogram p tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p tsqrt_ret_str) = tsqrt_state_ret (tsqrt_imp (tsqrt_imp_to_HOL_state p s))"
-  apply(subst tsqrt_imp.simps)
-  apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"], fastforce)
-  apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"], fastforce)
-  apply (drule AssignD)+
-  apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def
-      dsqrt_imp_to_HOL_state_def mul_imp_to_HOL_state_def Let_def)
-  done
+  by (fastforce elim: mul_IMP_Minus_correct dsqrt_IMP_Minus_correct simp: tsqrt_imp.simps
+      tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
+      mul_imp_to_HOL_state_def Let_def tsqrt_IMP_Minus_def invoke_subprogram_append)
 
 lemma tsqrt_IMP_Minus_correct_time:
   "(invoke_subprogram p tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = tsqrt_imp_time 0 (tsqrt_imp_to_HOL_state p s)"
-  apply(subst tsqrt_imp_time.simps)
-  apply(simp only: tsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(erule mul_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"], fastforce)
-  apply(erule dsqrt_IMP_Minus_correct[where vars = "tsqrt_IMP_vars"], fastforce)
-  apply (drule AssignD)+
-  apply (auto simp add: tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def
-      dsqrt_imp_to_HOL_state_def mul_imp_to_HOL_state_def Let_def)
-  done
+  by (fastforce elim: mul_IMP_Minus_correct dsqrt_IMP_Minus_correct simp: tsqrt_imp_time.simps
+      tsqrt_imp_state_upd_def tsqrt_imp_to_HOL_state_def dsqrt_imp_to_HOL_state_def
+      mul_imp_to_HOL_state_def Let_def tsqrt_IMP_Minus_def invoke_subprogram_append)
 
 lemma tsqrt_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ tsqrt_pref) tsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
@@ -1209,8 +1109,9 @@ subsection \<open>Decoding products\<close>
 definition "fst'_nat p \<equiv> p - triangle (tsqrt p)"
 
 lemma fst'_nat_correct: "fst'_nat (prod_encode (m,n)) = m"
-  unfolding prod_encode_def apply simp unfolding fst'_nat_def
-  by (metis add.commute add_diff_cancel_left' le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
+  by (simp add: prod_encode_def fst'_nat_def)
+    (metis add.commute add_diff_cancel_left' le_add1 less_add_Suc2 nat_add_left_cancel_less
+      triangle_Suc tsqrt_unique)
 
 (* Connect to existing \<^const>\<open>fst_nat\<close>, unify this at some point*)
 lemma fst_nat_fst'_nat: "fst_nat p = fst'_nat p"
@@ -1219,9 +1120,9 @@ lemma fst_nat_fst'_nat: "fst_nat p = fst'_nat p"
 definition "snd'_nat p \<equiv> tsqrt p - fst'_nat p"
 
 lemma snd'_nat_correct: "snd'_nat (prod_encode (m,n)) = n"
-  unfolding prod_encode_def apply simp unfolding snd'_nat_def
-  using fst'_nat_correct 
-  by (metis add.commute add_diff_cancel_left' fst'_nat_def le_add1 less_add_Suc2 nat_add_left_cancel_less triangle_Suc tsqrt_unique)
+  by (simp add: prod_encode_def snd'_nat_def fst'_nat_correct)
+    (metis add.commute add_diff_cancel_left' fst'_nat_def le_add1 less_add_Suc2
+      nat_add_left_cancel_less triangle_Suc tsqrt_unique)
 
 (* Connect to existing \<^const>\<open>snd_nat\<close>, unify this at some point*)
 lemma snd_nat_snd'_nat: "snd_nat p = snd'_nat p"
@@ -1265,10 +1166,9 @@ fun fst'_imp :: "fst'_state \<Rightarrow> fst'_state" where
 
 declare fst'_imp.simps [simp del]
 
-lemma fst'_imp_correct:
-   "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
-  by (subst fst'_imp.simps) (auto simp: dsqrt_imp_correct fst'_imp_state_upd_def tsqrt_imp_correct
-      Let_def triangle_imp_correct fst'_nat_def split: if_splits)
+lemma fst'_imp_correct: "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
+  by (subst fst'_imp.simps) (simp add: fst'_imp_state_upd_def tsqrt_imp_correct fst'_nat_def
+      triangle_imp_correct)
 
 fun fst'_imp_time:: "nat \<Rightarrow> fst'_state\<Rightarrow> nat" where
   "fst'_imp_time t s = 
@@ -1302,14 +1202,10 @@ fun fst'_imp_time:: "nat \<Rightarrow> fst'_state\<Rightarrow> nat" where
 lemmas [simp del] = fst'_imp_time.simps
 
 lemma fst'_imp_time_acc: "(fst'_imp_time (Suc t) s) = Suc (fst'_imp_time t s)"
-  apply(subst fst'_imp_time.simps)
-  apply(subst fst'_imp_time.simps)
-  apply (auto simp add: fst'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
+  by (subst fst'_imp_time.simps, subst fst'_imp_time.simps) (simp add: Let_def)
 
 lemma fst'_imp_time_acc_2: "(fst'_imp_time x s) = x + (fst'_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: fst'_imp_time_acc fst'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  by (induction x arbitrary: s) (simp add: fst'_imp_time_acc)+
 
 definition fst'_IMP_Minus where
 "fst'_IMP_Minus \<equiv>
@@ -1348,28 +1244,24 @@ lemma triangle_IMP_Minus_correct':
 lemma fst'_IMP_Minus_correct_function:
   "(invoke_subprogram p fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p fst'_p_str) = fst'_state_p (fst'_imp (fst'_imp_to_HOL_state p s))"
-  apply (subst fst'_imp.simps)
-  apply (simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply (erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"], fastforce)
-  apply (erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"], fastforce)
-  apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def
-      tsqrt_imp_to_HOL_state_def triangle_imp_to_HOL_state_def Let_def)
-  done
+  apply(subst fst'_imp.simps)
+  apply(simp only: fst'_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"], fastforce)
+  apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"], fastforce)
+  by (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def
+      tsqrt_imp_to_HOL_state_def triangle_imp_to_HOL_state_def)
 
 lemma fst'_IMP_Minus_correct_time:
   "(invoke_subprogram p fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = fst'_imp_time 0 (fst'_imp_to_HOL_state p s)"
   apply(subst fst'_imp_time.simps)
-  apply(simp only: fst'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
+  apply(simp only: fst'_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
   apply(erule tsqrt_IMP_Minus_correct[where vars = "fst'_IMP_vars"], fastforce)
   apply(erule triangle_IMP_Minus_correct'[where vars = "fst'_IMP_vars"], fastforce)
-  apply (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def
+  by (fastforce simp add: fst'_imp_state_upd_def fst'_imp_to_HOL_state_def
       tsqrt_imp_to_HOL_state_def triangle_imp_to_HOL_state_def Let_def)
-  done
 
 lemma fst'_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ fst'_pref) fst'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
@@ -1460,14 +1352,10 @@ fun snd'_imp_time:: "nat \<Rightarrow> snd'_state\<Rightarrow> nat" where
 lemmas [simp del] = snd'_imp_time.simps
 
 lemma snd'_imp_time_acc: "(snd'_imp_time (Suc t) s) = Suc (snd'_imp_time t s)"
-  apply(subst snd'_imp_time.simps)
-  apply(subst snd'_imp_time.simps)
-  apply (auto simp add: snd'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
+  by (subst snd'_imp_time.simps, subst snd'_imp_time.simps) simp
 
 lemma snd'_imp_time_acc_2: "(snd'_imp_time x s) = x + (snd'_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: snd'_imp_time_acc snd'_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  by (induction x arbitrary: s) (simp add: snd'_imp_time_acc)+
 
 definition snd'_IMP_Minus where
 "snd'_IMP_Minus \<equiv>
@@ -1484,36 +1372,32 @@ definition snd'_IMP_Minus where
 
 definition "snd'_imp_to_HOL_state p s = \<lparr>snd'_state_p = (s (add_prefix p snd'_p_str))\<rparr>"
 
-lemma snd'_IMP_Minus_correct_function: 
+lemma snd'_IMP_Minus_correct_function:
   "(invoke_subprogram p snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p snd'_p_str) = snd'_state_p (snd'_imp (snd'_imp_to_HOL_state p s))"
   apply(subst snd'_imp.simps)
-  apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
-   apply auto[]
-  (* Not copying means I might have to pass the return variables here *)
-  apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
-  apply auto[]
-   apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def Let_def)
-  done
-    
+  apply(simp only: snd'_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"], fastforce)
+  apply simp
+    (* Not copying means I might have to pass the return variables here *)
+  apply(erule fst'_IMP_Minus_correct
+      [where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"], fastforce)
+  by (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def)
 
-lemma snd'_IMP_Minus_correct_time: 
+lemma snd'_IMP_Minus_correct_time:
   "(invoke_subprogram p snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = snd'_imp_time 0 (snd'_imp_to_HOL_state p s)"
   apply(subst snd'_imp_time.simps)
-  apply(simp only: snd'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(simp only: snd'_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
-  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"])
-   apply auto[]
-  (* Not copying means I might have to pass the return variables here *)
-  apply(erule fst'_IMP_Minus_correct[where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"])
-  apply auto[]
-   apply (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
-      fst'_imp_to_HOL_state_def Let_def)
-  done
+  apply(erule tsqrt_IMP_Minus_correct[where vars = "snd'_IMP_vars"], fastforce)
+    (* Not copying means I might have to pass the return variables here *)
+  apply(erule fst'_IMP_Minus_correct
+      [where vars = "insert (tsqrt_prefix @ tsqrt_ret_str) snd'_IMP_vars"], fastforce)
+  by (force simp add: snd'_imp_state_upd_def snd'_imp_to_HOL_state_def tsqrt_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def)
 
 lemma snd'_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ snd'_pref) snd'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars 
@@ -1613,14 +1497,10 @@ fun prod_decode_imp_time:: "nat \<Rightarrow> prod_decode_state\<Rightarrow> nat
 lemmas [simp del] = prod_decode_imp_time.simps
 
 lemma prod_decode_imp_time_acc: "(prod_decode_imp_time (Suc t) s) = Suc (prod_decode_imp_time t s)"
-  apply(subst prod_decode_imp_time.simps)
-  apply(subst prod_decode_imp_time.simps)
-  apply (auto simp add: prod_decode_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
+  by (subst prod_decode_imp_time.simps, subst prod_decode_imp_time.simps) simp
 
 lemma prod_decode_imp_time_acc_2: "(prod_decode_imp_time x s) = x + (prod_decode_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: prod_decode_imp_time_acc prod_decode_imp_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  by (induction x arbitrary: s) (simp add: prod_decode_imp_time_acc)+
 
 definition prod_decode_IMP_Minus where
 "prod_decode_IMP_Minus \<equiv>
@@ -1642,29 +1522,25 @@ lemma prod_decode_IMP_Minus_correct_function_1:
   "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p prod_decode_fst_str)
       = prod_decode_state_fst (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
-  apply (subst prod_decode_imp.simps)
-  apply (simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply (erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply (erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
-      tsqrt_imp_to_HOL_state_def fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
-  done
+  apply(subst prod_decode_imp.simps)
+  apply(simp only: prod_decode_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
+  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
+  by (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
+      fst'_imp_to_HOL_state_def)
 
 lemma prod_decode_IMP_Minus_correct_function_2:
   "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p prod_decode_snd_str)
       = prod_decode_state_snd (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
-  apply (subst prod_decode_imp.simps)
-  apply (simp only: prod_decode_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply (erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply (erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
-      tsqrt_imp_to_HOL_state_def fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def Let_def)
-  done
+  apply(subst prod_decode_imp.simps)
+  apply(simp only: prod_decode_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
+  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
+  by (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
+      snd'_imp_to_HOL_state_def )
 
 lemma prod_decode_IMP_Minus_correct_time:
   "(invoke_subprogram p prod_decode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1776,35 +1652,21 @@ definition "prod_encode_imp_to_HOL_state p s =
 lemma notD: "x \<notin> s \<Longrightarrow> (x \<in> s \<Longrightarrow> False)"
   by auto
 
-lemma prod_encode_IMP_Minus_correct_function: 
-  "(invoke_subprogram p prod_encode_IMP_Minus, s) 
+lemma prod_encode_IMP_Minus_correct_function:
+  "(invoke_subprogram p prod_encode_IMP_Minus, s)
       \<Rightarrow>\<^bsup>t \<^esup> s'
     \<Longrightarrow> s' (add_prefix p prod_encode_ret_str) = prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state p s))"
-  apply(simp only: prod_encode_IMP_Minus_def prod_encode_imp.simps com_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-  \<comment> \<open>Variables that we want to preserve: variables of this program minus the variables of the
-     program we call. If automation fails, this should be manually chosen variables.\<close>
-  apply(erule triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"])
-  apply(drule AssignD)+
-  apply(elim conjE impE)
-  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def)[1]
-  apply(auto simp: triangle_imp_to_HOL_state_def)[1]
-  done
+  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"]
+      simp: prod_encode_state_upd_def prod_encode_imp_to_HOL_state_def triangle_imp_to_HOL_state_def
+      prod_encode_IMP_Minus_def prod_encode_imp.simps invoke_subprogram_append)
 
 lemma prod_encode_IMP_Minus_correct_time: 
   "(invoke_subprogram p prod_encode_IMP_Minus, s) 
       \<Rightarrow>\<^bsup>t\<^esup> s'
     \<Longrightarrow> t = prod_encode_imp_time 0 (prod_encode_imp_to_HOL_state p s)"
-  apply(simp only: prod_encode_IMP_Minus_def prod_encode_imp_time.simps com_add_prefix.simps invoke_subprogram_append)
-  apply(erule Seq_tE)+
-  \<comment> \<open>Variables that we want to preserve: variables of this program minus the variables of the
-     program we call. If automation fails, this should be manually chosen variables.\<close>
-  apply(erule triangle_IMP_Minus_correct[where vars = "{p @ ''a''}"])
-  apply(drule AssignD)+
-  apply(elim conjE impE)
-  apply(auto simp: prod_encode_state_upd_def Let_def prod_encode_imp_to_HOL_state_def)[1]
-  apply(auto simp: triangle_imp_to_HOL_state_def)[1]
-  done
+  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"]
+      simp: prod_encode_state_upd_def prod_encode_imp_to_HOL_state_def triangle_imp_to_HOL_state_def
+      prod_encode_IMP_Minus_def prod_encode_imp_time.simps invoke_subprogram_append)
 
 lemma prod_encode_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ prod_encode_pref) prod_encode_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars
@@ -2707,239 +2569,6 @@ lemma cons_IMP_Minus_correct[functional_correctness]:
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using cons_IMP_Minus_correct_time cons_IMP_Minus_correct_function
     cons_IMP_Minus_correct_effects
-  by auto
-
-subsection \<open>List append\<close>
-
-record append_state = append_acc::nat append_xs::nat
-
-abbreviation "append_prefix \<equiv> ''append.''"
-abbreviation "append_acc_str \<equiv> ''acc''"
-abbreviation "append_xs_str \<equiv> ''xs''"
-
-definition "append_state_upd s \<equiv>
-      let
-        hd_xs' = append_xs s;
-        hd_ret' = 0;
-        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-        hd_state_ret = hd_imp (hd_state);
-        cons_h' = hd_ret hd_state_ret;
-        cons_t' = append_acc s;
-        cons_ret' = 0;
-        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-        cons_ret_state = cons_imp cons_state;
-        append_acc' = cons_ret cons_ret_state;
-        tl_xs' = append_xs s;
-        tl_ret' = 0;
-        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
-        tl_state_ret = tl_imp tl_state;
-        append_xs' = tl_ret tl_state_ret;
-        ret = \<lparr>append_acc = append_acc', append_xs = append_xs'\<rparr>
-      in
-        ret
-"
-
-function append_imp:: "append_state \<Rightarrow> append_state" where
-"append_imp s = 
-  (if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
-    (
-      let
-        next_iteration = append_imp (append_state_upd s)
-      in
-        next_iteration
-    )
-  else
-    (
-      let
-        ret = s
-      in
-        ret
-    )
-  )"
-  by pat_completeness auto
-termination
-  by  (relation "Wellfounded.measure (\<lambda>s. append_xs s)")
-      (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
-
-declare append_imp.simps [simp del]
-
-lemma append_imp_correct:
-   "append_acc (append_imp s) = Primitives.append_acc (append_acc s) (append_xs s)"
-proof (induction s rule: append_imp.induct)
-  case (1 s)
-  then show ?case
-    apply(subst append_imp.simps)
-    apply (auto simp: append_state_upd_def Let_def split: if_splits)
-    by (metis Suc_pred' append_acc.simps(2) cons_imp_correct cons_state.select_convs(2)
-              cons_state.simps(1) hd_imp_correct hd_state.simps(1) tl_imp_correct
-              tl_state.select_convs(1))
-qed 
-
-function append_imp_time:: "nat \<Rightarrow> append_state\<Rightarrow> nat" where
-  "append_imp_time t s = 
-  (if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>
-    (
-      let
-        t = t + 1;
-        hd_xs' = append_xs s;
-        t = t + 2;
-        hd_ret' = 0;
-        t = t + 2;
-        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-        hd_state_ret = hd_imp (hd_state);
-        t = t + hd_imp_time 0 hd_state;
-        cons_h' = hd_ret hd_state_ret;
-        t = t + 2;
-        cons_t' = append_state.append_acc s;
-        t = t + 2;
-        cons_ret' = 0;
-        t = t + 2;
-        cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-        cons_ret_state = cons_imp cons_state;
-        t = t + cons_imp_time 0 cons_state;
-        append_acc' = cons_ret cons_ret_state;
-        t = t + 2;
-        tl_xs' = append_xs s;
-        t = t + 2;
-        tl_ret' = 0;
-        t = t + 2;
-        tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
-        tl_state_ret = tl_imp tl_state;
-        t = t + tl_imp_time 0 tl_state;
-        append_xs' = tl_ret tl_state_ret;
-        t = t + 2;
-        next_iteration = append_imp_time t (append_state_upd s)
-      in
-        next_iteration
-    )
-  else
-    (
-      let
-        t = t + 2;
-        ret = t
-      in
-        ret
-    )
-  )
-"
-  by pat_completeness auto
-termination
-  by  (relation "Wellfounded.measure (\<lambda>(t,s). append_xs s)")
-      (auto simp: tl_imp_correct append_state_upd_def Let_def split: if_splits)
-
-lemmas [simp del] = append_imp_time.simps
-
-lemma append_imp_time_acc: "(append_imp_time (Suc t) s) = Suc (append_imp_time t s)"
-  apply (induction t s arbitrary:  rule: append_imp_time.induct)
-  apply(subst append_imp_time.simps)
-  apply(subst (2) append_imp_time.simps)
-  apply (auto simp add: append_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
-
-lemma append_imp_time_acc_2: "(append_imp_time x s) = x + (append_imp_time 0 s)"
-  by (induction x arbitrary: s)
-     (auto simp add: append_imp_time_acc append_state_upd_def Let_def eval_nat_numeral split: if_splits)
-
-
-\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
-    programs.\<close>
-
-abbreviation "append_IMP_Minus_1 \<equiv>
-        \<comment> \<open>hd_xs' = append_xs s;\<close>
-        ((hd_prefix @ hd_xs_str) ::= (A (V append_xs_str)));;
-        \<comment> \<open>hd_ret' = 0;\<close>
-        ((hd_prefix @ hd_ret_str) ::= (A (N 0)));;
-        \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
-        \<comment> \<open>hd_state_ret = hd_imp (hd_state);\<close>
-        (invoke_subprogram hd_prefix hd_IMP_Minus);;
-        \<comment> \<open>cons_h' = hd_ret hd_state_ret;\<close>
-        ((cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str))));;
-        \<comment> \<open>cons_t' = append_acc s;\<close>
-        ((cons_prefix @ cons_t_str) ::= (A (V append_acc_str)));;
-        \<comment> \<open>cons_ret' = 0;\<close>
-        ((cons_prefix @ cons_ret_str) ::= (A (N 0)));;
-        \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
-        \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
-        (invoke_subprogram cons_prefix cons_IMP_Minus)
-"
-
-definition append_IMP_Minus where
-"append_IMP_Minus \<equiv>
-  (
-  \<comment> \<open>if append_xs s \<noteq> 0 then \<comment> \<open>While xs \<noteq> 0\<close>\<close>
-  WHILE append_xs_str \<noteq>0 DO (
-        append_IMP_Minus_1;;
-        \<comment> \<open>append_acc' = cons_ret cons_ret_state;\<close>
-        ((append_acc_str) ::= (A (V (cons_prefix @ cons_ret_str))));;
-        \<comment> \<open>tl_xs' = append_xs s;\<close>
-        ((tl_prefix @ tl_xs_str) ::= (A (V (append_xs_str))));;
-        \<comment> \<open>tl_ret' = 0;\<close>
-        ((tl_prefix @ tl_ret_str) ::= (A (N 0)));;
-        \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
-        \<comment> \<open>tl_state_ret = tl_imp tl_state;\<close>
-        (invoke_subprogram tl_prefix tl_IMP_Minus);;
-        \<comment> \<open>append_xs' = tl_ret tl_state_ret;\<close>
-        ((append_xs_str) ::= (A (V (tl_prefix @ tl_ret_str))))
-      )
-     
-  )"
-
-definition "append_imp_to_HOL_state p s =
-  \<lparr>append_acc = (s (add_prefix p append_acc_str)), append_xs = (s (add_prefix p append_xs_str))\<rparr>"
-
-lemma append_IMP_Minus_correct_function: 
-  "(invoke_subprogram p append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p append_acc_str)
-      = append_state.append_acc (append_imp (append_imp_to_HOL_state p s))"
-  apply(induction "append_imp_to_HOL_state p s" arbitrary: s s' t rule: append_imp.induct)
-  apply(subst append_imp.simps)
-  apply(simp only: append_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule While_tE, fastforce simp: append_imp_time_acc append_imp_to_HOL_state_def)
-  apply(dest_com')
-  apply(erule Seq_tE)+
-  apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(fastforce simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def Let_def)
-  done
-
-lemma append_IMP_Minus_correct_time:
-  "(invoke_subprogram p append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = append_imp_time 0 (append_imp_to_HOL_state p s)"
-  apply(induction "append_imp_to_HOL_state p s" arbitrary: s s' t rule: append_imp.induct)
-  apply(subst append_imp_time.simps)
-  apply(simp only: append_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
-      atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule While_tE, fastforce simp: append_imp_time_acc append_imp_to_HOL_state_def)
-  apply(dest_com')
-  apply(erule Seq_tE)+
-  apply(erule tl_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(erule hd_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(erule cons_IMP_Minus_correct[where vars = "{append_xs_str, append_acc_str}"], fastforce)
-  apply(drule AssignD)+
-  apply(elim conjE)
-  apply(subst append_imp_time_acc_2)
-  apply(fastforce simp add: append_state_upd_def append_imp_to_HOL_state_def append_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def Let_def)
-  done
-
-lemma append_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ append_pref) append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (set append_pref \<subseteq> set v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid_subset com_only_vars
-  by blast
-
-lemma append_IMP_Minus_correct[functional_correctness]:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) append_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-     \<lbrakk>t = (append_imp_time 0 (append_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) append_acc_str) = 
-        append_state.append_acc (append_imp (append_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using append_IMP_Minus_correct_time append_IMP_Minus_correct_function
-        append_IMP_Minus_correct_effects 
   by auto
 
 
