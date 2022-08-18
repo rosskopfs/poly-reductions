@@ -2425,12 +2425,13 @@ lemma length_IMP_Minus_correct_effects:
 
 lemma length_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) length_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (length_imp_time 0 (length_imp_to_HOL_state (p1 @ p2) s));
       s' (add_prefix (p1 @ p2) length_ret_str) = length_ret (length_imp (length_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v) \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using length_IMP_Minus_correct_time length_IMP_Minus_correct_function
-    length_IMP_Minus_correct_effects
+        length_IMP_Minus_correct_effects 
   by auto
 
 subsection \<open>List cons\<close>

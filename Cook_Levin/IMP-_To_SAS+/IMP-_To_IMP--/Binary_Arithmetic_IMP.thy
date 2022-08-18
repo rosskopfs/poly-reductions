@@ -391,8 +391,10 @@ lemmas nth_bit_of_num_state_translators =
   AND_neq_zero_imp_to_HOL_state_def
   nth_bit_of_num_imp_to_HOL_state_def
 
+thm 
+  nth_bit_of_num_IMP_subprogram_simps (* TODO *)
+
 lemmas nth_bit_of_num_complete_simps =
-  nth_bit_of_num_IMP_subprogram_simps
   nth_bit_of_num_imp_subprogram_simps
   nth_bit_of_num_state_translators
 
@@ -473,8 +475,7 @@ lemma nth_bit_of_num_IMP_Minus_correct_time:
     apply(subst (asm) (2) nth_bit_of_num_IMP_after_loop_def)
     apply(simp only: prefix_simps)
     apply(vcg_time nth_bit_of_num_IMP_vars)
-    by (force simp: nth_bit_of_num_IMP_subprogram_simps
-        nth_bit_of_num_imp_subprogram_time_simps
+    by (force simp: nth_bit_of_num_imp_subprogram_time_simps
         nth_bit_of_num_state_translators)+
 
   apply(simp add: add.assoc)
