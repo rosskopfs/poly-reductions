@@ -1436,10 +1436,8 @@ lemma prod_decode_IMP_Minus_correct_function_1:
       = prod_decode_state_fst (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
   apply(subst prod_decode_imp.simps)
   apply(simp only: prod_decode_IMP_Minus_def prefix_simps)
-  apply(erule Seq_tE)+
-  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  by (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
+  apply(vcg prod_decode_IMP_vars)
+  by (fastforce simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
       fst'_imp_to_HOL_state_def)
 
 lemma prod_decode_IMP_Minus_correct_function_2:
@@ -1448,10 +1446,8 @@ lemma prod_decode_IMP_Minus_correct_function_2:
       = prod_decode_state_snd (prod_decode_imp (prod_decode_imp_to_HOL_state p s))"
   apply(subst prod_decode_imp.simps)
   apply(simp only: prod_decode_IMP_Minus_def prefix_simps)
-  apply(erule Seq_tE)+
-  apply(erule fst'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  apply(erule snd'_IMP_Minus_correct[where vars = "prod_decode_IMP_vars"], fastforce)
-  by (force simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
+  apply(vcg_time prod_decode_IMP_vars)
+  by (fastforce simp add: prod_decode_imp_state_upd_def prod_decode_imp_to_HOL_state_def
       snd'_imp_to_HOL_state_def )
 
 lemma prod_decode_IMP_Minus_correct_time:
@@ -3030,10 +3026,7 @@ lemma append_nat_IMP_Minus_correct_function:
      s' (add_prefix p append_nat_ret_str)
       = append_nat_ret (append_nat_imp (append_nat_imp_to_HOL_state p s))"
   apply (simp add: append_nat_IMP_Minus_def invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
-  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
-  apply (erule append_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply(vcg append_nat_IMP_vars functional_correctness: append_IMP_Minus_correct)
   by (fastforce simp add: append_nat_imp_to_HOL_state_def append_nat_imp.simps
       append_nat_state_upd_def append_imp_to_HOL_state_def reverse_nat_imp_to_HOL_state_def)
 
@@ -3048,10 +3041,7 @@ lemma append_nat_IMP_Minus_correct_time:
   "(invoke_subprogram p append_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = append_nat_imp_time 0 (append_nat_imp_to_HOL_state p s)"
   apply (simp add: append_nat_IMP_Minus_def invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
-  apply (erule reverse_nat_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
-  apply (erule append_IMP_Minus_correct[where vars = "append_nat_IMP_vars"], fastforce)
+  apply(vcg_time append_nat_IMP_vars functional_correctness: append_IMP_Minus_correct)
   by (fastforce simp add: append_nat_imp_to_HOL_state_def append_nat_imp_time.simps Let_def
       append_imp_to_HOL_state_def reverse_nat_imp_to_HOL_state_def)
 

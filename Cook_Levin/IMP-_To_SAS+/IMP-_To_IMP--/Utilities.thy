@@ -159,7 +159,7 @@ lemma dest_com_gen: "dest_com_gen = dest_com_gen"
 
 named_theorems functional_correctness
 
-method subroutine_step for vars::"char list set" =
+method subroutine_step for vars::"char list set" declares functional_correctness =
   (match premises in foo[thin]:
     "(invoke_subprogram (add_prefix _ _) subprog, _) \<Rightarrow>\<^bsup> _ \<^esup> _" for subprog
     \<Rightarrow> \<open>match functional_correctness in invokeE[thin]:
@@ -197,14 +197,14 @@ method dest_com_gen_time' =
       \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a[unfolded While'_def], simplified add.assoc]\<close>\<close>))
 
-method vcg for vars::"char list set" =
+method vcg for vars::"char list set" declares functional_correctness =
   (((subroutine_step vars, print_fact subroutine_step); (vcg vars)?) |
     (while_step ; (vcg vars)?) |
     ((dest_com_gen', print_fact dest_com_gen) ; (vcg vars)?) |
     (if_step ; (vcg vars)?) |
     (seq_step ; (vcg vars)?))
 
-method vcg_time for vars::"char list set" =
+method vcg_time for vars::"char list set" declares functional_correctness =
   (((subroutine_step vars, print_fact subroutine_step); (vcg_time vars)?) |
     (while_step_time; (vcg_time vars)?) |
     ((dest_com_gen_time', print_fact dest_com_gen); (vcg_time vars)?) |
