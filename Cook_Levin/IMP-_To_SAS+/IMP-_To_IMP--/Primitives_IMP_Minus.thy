@@ -17,34 +17,6 @@ begin
 *)
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
-method auto_sorted_premises2 uses simp =
-  (((drule AssignD)+, (erule conjE)+)?,
-    (match premises in
-      var_doesnt_change[thin]:"\<And>v. v \<in>  _ \<Longrightarrow> _ (add_prefix p1 v) = _ (add_prefix p1 v)"(multi) for p1
-      \<Rightarrow> \<open>match premises in
-              subroutine_results[thin]: "_ (add_prefix (add_prefix p _) _) = _" (multi) for p
-                \<Rightarrow> \<open>match premises in
-                    assignments[thin]: "_ = _(_ :=_)" (multi)
-                      \<Rightarrow> \<open>match premises in
-                          cond[thin]: "_ < _ " (multi)
-                            \<Rightarrow> \<open>match premises in
-                                invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
-                                  \<Rightarrow> \<open>match premises in
-                                      remaining[thin]: "_" (multi)
-                                        \<Rightarrow> \<open>insert var_doesnt_change subroutine_results cond invoke
-                                            remaining, auto simp: assignments simp\<close>\<close>
-                                \<bar>remaining[thin]: "_" (multi)
-                                  \<Rightarrow> \<open>insert var_doesnt_change subroutine_results cond remaining,
-                                      auto simp: assignments simp\<close>\<close>
-                          \<bar>invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
-                            \<Rightarrow> \<open>match premises in
-                                remaining[thin]:"_" (multi)
-                                  \<Rightarrow> \<open>insert var_doesnt_change subroutine_results invoke remaining,
-                                      auto simp: assignments simp\<close>\<close>
-                          \<bar>remaining[thin]:"_" (multi)
-                                    \<Rightarrow> \<open>insert var_doesnt_change subroutine_results remaining,
-                                        auto simp: assignments simp\<close>\<close>\<close>\<close>))
-
 subsection \<open>Multiplication\<close>
 
 record mul_state = mul_a::nat mul_b::nat mul_c::nat
@@ -1638,7 +1610,7 @@ lemma prod_encode_IMP_Minus_correct_function:
   "(invoke_subprogram p prod_encode_IMP_Minus, s)
       \<Rightarrow>\<^bsup>t \<^esup> s'
     \<Longrightarrow> s' (add_prefix p prod_encode_ret_str) = prod_encode_ret (prod_encode_imp (prod_encode_imp_to_HOL_state p s))"
-  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"]
+  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{prod_encode_a_str}"]
       simp: prod_encode_state_upd_def prod_encode_imp_to_HOL_state_def triangle_imp_to_HOL_state_def
       prod_encode_IMP_Minus_def prod_encode_imp.simps invoke_subprogram_append)
 
@@ -1646,7 +1618,7 @@ lemma prod_encode_IMP_Minus_correct_time:
   "(invoke_subprogram p prod_encode_IMP_Minus, s)
       \<Rightarrow>\<^bsup>t\<^esup> s'
     \<Longrightarrow> t = prod_encode_imp_time 0 (prod_encode_imp_to_HOL_state p s)"
-  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{p @ prod_encode_a_str}"]
+  by (fastforce elim: triangle_IMP_Minus_correct[where vars = "{prod_encode_a_str}"]
       simp: prod_encode_state_upd_def prod_encode_imp_to_HOL_state_def triangle_imp_to_HOL_state_def
       prod_encode_IMP_Minus_def prod_encode_imp_time.simps invoke_subprogram_append)
 
@@ -2306,6 +2278,10 @@ proof (induction s rule: length_imp.induct)
         length_nat.elims length_state.select_convs(1) length_state.select_convs(2)
         neq0_conv tl_imp_correct tl_state.select_convs(1) zero_less_diff)
 qed
+
+lemma length_imp_correct2:
+  "length_ret s = 0 \<Longrightarrow> length_ret (length_imp s) = length_nat (length_xs s)"
+    by (metis length_imp_correct minus_nat.diff_0)
 
 function length_imp_time:: "nat \<Rightarrow> length_state\<Rightarrow> nat" where
   "length_imp_time t s =
@@ -3903,7 +3879,7 @@ lemma EQUAL_neq_zero_IMP_Minus_correct_time:
   by(force simp: EQUAL_neq_zero_imp_time.simps EQUAL_neq_zero_IMP_Minus_def
       EQUAL_neq_zero_imp_to_HOL_state_def EQUAL_neq_zero_state_upd_def)
 
-lemma EQUAL_neq_zero_IMP_Minus_correct:
+lemma EQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
      \<lbrakk>t = (EQUAL_neq_zero_imp_time 0 (EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));

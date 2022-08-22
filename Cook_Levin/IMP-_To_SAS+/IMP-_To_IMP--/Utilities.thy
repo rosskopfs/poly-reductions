@@ -62,6 +62,35 @@ method fastforce_sorted_premises2 uses simp =
                                     \<Rightarrow> \<open>insert var_doesnt_change subroutine_results remaining,
                                         fastforce simp: assignments simp\<close>\<close>\<close>\<close>))
 
+
+method auto_sorted_premises2 uses simp =
+  (((drule AssignD)+, (erule conjE)+)?,
+    (match premises in
+      var_doesnt_change[thin]:"\<And>v. v \<in>  _ \<Longrightarrow> _ (add_prefix p1 v) = _ (add_prefix p1 v)"(multi) for p1
+      \<Rightarrow> \<open>match premises in
+              subroutine_results[thin]: "_ (add_prefix (add_prefix p _) _) = _" (multi) for p
+                \<Rightarrow> \<open>match premises in
+                    assignments[thin]: "_ = _(_ :=_)" (multi)
+                      \<Rightarrow> \<open>match premises in
+                          cond[thin]: "_ < _ " (multi)
+                            \<Rightarrow> \<open>match premises in
+                                invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
+                                  \<Rightarrow> \<open>match premises in
+                                      remaining[thin]: "_" (multi)
+                                        \<Rightarrow> \<open>insert var_doesnt_change subroutine_results cond invoke
+                                            remaining, auto simp: assignments simp\<close>\<close>
+                                \<bar>remaining[thin]: "_" (multi)
+                                  \<Rightarrow> \<open>insert var_doesnt_change subroutine_results cond remaining,
+                                      auto simp: assignments simp\<close>\<close>
+                          \<bar>invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
+                            \<Rightarrow> \<open>match premises in
+                                remaining[thin]:"_" (multi)
+                                  \<Rightarrow> \<open>insert var_doesnt_change subroutine_results invoke remaining,
+                                      auto simp: assignments simp\<close>\<close>
+                          \<bar>remaining[thin]:"_" (multi)
+                                    \<Rightarrow> \<open>insert var_doesnt_change subroutine_results remaining,
+                                        auto simp: assignments simp\<close>\<close>\<close>\<close>))
+
 method force_sorted_premises uses simp =
   (match premises in
     var_doesnt_change[thin]: "\<And>x. x \<in>  _ \<Longrightarrow> _ (_ x) = _ (_ x)"(multi)
