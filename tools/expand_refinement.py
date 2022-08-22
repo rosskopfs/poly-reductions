@@ -88,14 +88,12 @@ class LetTimeFun:
     def __build_def(self, original_name):
         defn = f"definition \"{original_name}_time t s \\<equiv>\n  let\n"
         for index, line in enumerate(self.let_fun.subprograms[original_name]):
-            defn += line
+            defn += line + "\n"
             if not index == len(self.let_fun.subprograms[original_name]) - 1:
                 next_line = self.let_fun.subprograms[original_name][index + 1]
-            if index == len(self.let_fun.subprograms[original_name]) - 1 or not next_line[4] == ' ':
-                defn += "\n    t = t + ;\n"
-            else:
-                defn += "\n"
-        defn += "  in\n    ret\n\""
+                if len(next_line) > 4 and not next_line[4] == ' ':
+                    defn += "    t = t + ;\n"
+        defn += "  in\n    t\n\""
         return defn
 
     def __build_subprogram_defs(self):
