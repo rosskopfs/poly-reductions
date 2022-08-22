@@ -13,10 +13,6 @@ unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 subsection \<open>Useful Definitions and Lemmas\<close>
 
-lemma Seq_E:
-  "\<lbrakk>(c1;; c2, s1) \<Rightarrow>\<^bsup> p \<^esup> s3; \<And>x s2 y. \<lbrakk>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2; (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  by blast
-
 abbreviation "hash_as_nat \<equiv> 35"
 lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
   by (simp add: encode_char_def)
@@ -28,39 +24,6 @@ lemma dollar_encode_val: "vname_encode ''$'' = dollar_as_nat"
 lemma hd_nat_noteq_zero: "hd_nat n \<noteq> 0 \<Longrightarrow> n > 0"
   by (induction n)
     (simp add: hd_nat_def fst_nat_def prod_decode_def prod_decode_aux.simps, simp)
-
-method fastforce_sorted_premises uses simp =
-  (match premises in
-    var_doesnt_change[thin]: "\<And>x. x \<in>  _ \<Longrightarrow> _ (_ x) = _ (_ x)"(multi)
-    \<Rightarrow> \<open>match premises in
-        subroutine_results[thin]: "_ (add_prefix (add_prefix p _) _) = _" (multi) for p
-          \<Rightarrow> \<open>match premises in
-            assignments[thin]: "((add_prefix p1 _) ::= _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p1
-              \<Rightarrow> \<open>match premises in
-                while_cond[thin]: "_ < _ (add_prefix p2 _)" (multi) for p2
-                  \<Rightarrow> \<open>match premises in
-                    invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
-                      \<Rightarrow> \<open>match premises in
-                        remaining[thin]: "_" (multi)
-                          \<Rightarrow> \<open>insert var_doesnt_change subroutine_results while_cond invoke,
-                             (fastforce simp add: assignments[THEN AssignD, simplified]
-                                remaining simp)\<close>\<close>\<close>\<close>\<close>\<close>)
-
-method sort_premises =
-  (match premises in
-    var_doesnt_change[thin]: "\<And>x. x \<in>  _ \<Longrightarrow> _ (_ x) = _ (_ x)"(multi)
-    \<Rightarrow> \<open>match premises in
-        subroutine_results[thin]: "_ (add_prefix (add_prefix p _) _) = _" (multi) for p
-          \<Rightarrow> \<open>match premises in
-            assignments[thin]: "((add_prefix p1 _) ::= _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p1
-              \<Rightarrow> \<open>match premises in
-                while_cond[thin]: "_ < _ (add_prefix p2 _)" (multi) for p2
-                  \<Rightarrow> \<open>match premises in
-                    invoke[thin]: "(invoke_subprogram p3 _, _) \<Rightarrow>\<^bsup> _ \<^esup> _" (multi) for p3
-                      \<Rightarrow> \<open>match premises in
-                    remaining[thin]: "_" (multi)
-                      \<Rightarrow> \<open>insert var_doesnt_change subroutine_results while_cond invoke assignments
-                          remaining\<close>\<close>\<close>\<close>\<close>\<close>)
 
 subsection \<open>dropWhile_char\<close>
 
@@ -3248,5 +3211,13 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct:
   by (auto simp: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_time)
     (meson map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_effects
       set_mono_prefix)
+
+
+subsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial\<close>
+
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail\<close>
+
+(* TODO *)
+
 
 end
