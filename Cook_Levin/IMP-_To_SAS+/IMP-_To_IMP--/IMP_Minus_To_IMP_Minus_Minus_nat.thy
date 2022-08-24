@@ -8,7 +8,7 @@ fun map_var_bit_to_var:: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 
 fun map_var_bit_to_var_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "map_var_bit_to_var_acc acc v n = (if n =0 then acc 
-else map_var_bit_to_var_acc ((var_bit_to_var_tail (prod_encode (v,hd_nat n)))## acc) v (tl_nat n)  )"
+else map_var_bit_to_var_acc ((var_bit_to_var_nat (prod_encode (v,hd_nat n)))## acc) v (tl_nat n)  )"
 
 lemma submap_var_bit_to_var :
 "map_var_bit_to_var v n =  map_nat (\<lambda>i. var_bit_to_var_nat (prod_encode (v,i))) n "
