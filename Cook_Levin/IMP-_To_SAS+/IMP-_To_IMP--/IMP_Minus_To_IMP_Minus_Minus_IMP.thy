@@ -141,7 +141,7 @@ termination
 
 declare map_var_bit_to_var_acc_imp.simps [simp del]
 
-lemma map_var_bit_to_var_acc_imp_correct:
+lemma map_var_bit_to_var_acc_imp_correct[imp_let_correct_lemmas]:
   "map_var_bit_to_var_acc_ret (map_var_bit_to_var_acc_imp s) =
     map_var_bit_to_var_acc' (map_var_bit_to_var_acc_acc s) 
   (map_var_bit_to_var_acc_v s) (map_var_bit_to_var_acc_n s)"
@@ -552,7 +552,7 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_time:
 
   done        
 
-lemma map_var_bit_to_var_acc_IMP_Minus_correct:
+lemma map_var_bit_to_var_acc_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_var_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
     \<lbrakk>t = (map_var_bit_to_var_acc_imp_time 0 (map_var_bit_to_var_acc_imp_to_HOL_state (p1 @ p2) s));

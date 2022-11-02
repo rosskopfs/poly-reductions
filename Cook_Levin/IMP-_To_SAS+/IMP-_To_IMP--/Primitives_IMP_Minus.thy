@@ -61,7 +61,7 @@ termination
 
 lemmas [simp del] = mul_imp.simps
 
-lemma mul_imp_correct: "mul_c (mul_imp s) = mul_c s + mul_a s * mul_b s"
+lemma mul_imp_correct[imp_let_correct_lemmas]: "mul_c (mul_imp s) = mul_c s + mul_a s * mul_b s"
   apply (induction s rule: mul_imp.induct)
   apply (subst mul_imp.simps)
   apply (auto simp add: mul_state_upd_def Let_def add_mult_distrib simp del: One_nat_def)[1]
@@ -215,7 +215,7 @@ fun square_imp :: "square_state \<Rightarrow> square_state" where
 
 declare square_imp.simps[simp del]
 
-lemma square_imp_correct: "square_square (square_imp s) = (square_x s)^2"
+lemma square_imp_correct[imp_let_correct_lemmas]: "square_square (square_imp s) = (square_x s)^2"
   by (induction s rule: square_imp.induct)
     (simp add: square_imp.simps square_state_upd_def mul_imp_correct power2_eq_square)
 
@@ -360,7 +360,7 @@ termination (* Same termination proof as recursive version, just some additional
 
 declare dsqrt'_imp.simps[simp del]
 
-lemma dsqrt'_imp_correct:
+lemma dsqrt'_imp_correct[imp_let_correct_lemmas]:
   "dsqrt'_state_L (dsqrt'_imp s) = dsqrt' (dsqrt'_state_y s) (dsqrt'_state_L s) (dsqrt'_state_R s)"
   by (induction "(dsqrt'_state_y s)" "(dsqrt'_state_L s)" "(dsqrt'_state_R s)" arbitrary: s
       rule: dsqrt'.induct)
@@ -684,7 +684,7 @@ fun dsqrt_imp :: "dsqrt_state \<Rightarrow> dsqrt_state" where
 
 declare dsqrt_imp.simps [simp del]
 
-lemma dsqrt_imp_correct:
+lemma dsqrt_imp_correct[imp_let_correct_lemmas]:
   "dsqrt_state_ret (dsqrt_imp s) = Discrete.sqrt (dsqrt_state_y s)"
   by (subst dsqrt_imp.simps) (simp add: dsqrt'_imp_correct dsqrt_def dsqrt_imp_state_upd_def
       dsqrt_correct[symmetric])
@@ -806,7 +806,7 @@ fun triangle_imp:: "triangle_state \<Rightarrow> triangle_state" where
 
 declare triangle_imp.simps[simp del]
 
-lemma triangle_imp_correct:
+lemma triangle_imp_correct[imp_let_correct_lemmas]:
   "triangle_triangle (triangle_imp s) = Nat_Bijection.triangle (triangle_a s)"
   by (induction s rule: triangle_imp.induct)
     (simp add: triangle_imp.simps triangle_def triangle_state_upd_def Let_def mul_imp_correct)
@@ -935,7 +935,7 @@ fun tsqrt_imp :: "tsqrt_state \<Rightarrow> tsqrt_state" where
 
 declare tsqrt_imp.simps [simp del]
 
-lemma tsqrt_imp_correct:
+lemma tsqrt_imp_correct[imp_let_correct_lemmas]:
   "tsqrt_state_ret (tsqrt_imp s) = tsqrt (tsqrt_state_y s)"
   by (subst tsqrt_imp.simps) (auto simp: dsqrt_imp_correct tsqrt_def tsqrt_imp_state_upd_def
       Let_def mul_imp_correct mult.commute split: if_splits)
@@ -1103,8 +1103,14 @@ fun fst'_imp :: "fst'_state \<Rightarrow> fst'_state" where
   )"
 
 declare fst'_imp.simps [simp del]
+declare 
+  arg_cong[where f=fst'_state.make, state_congs]
+  arg_cong[where f=fst'_state_p, state_congs]
+  arg_cong[where f=fst'_imp, state_congs]
+  arg_cong[where f=fst'_nat, let_lemmas]
+  fst'_state.simps[state_simps]
 
-lemma fst'_imp_correct: "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
+lemma fst'_imp_correct[imp_let_correct_lemmas]: "fst'_state_p (fst'_imp s) = fst'_nat (fst'_state_p s)"
   by (subst fst'_imp.simps) (simp add: fst'_imp_state_upd_def tsqrt_imp_correct fst'_nat_def
       triangle_imp_correct)
 
@@ -1234,8 +1240,14 @@ fun snd'_imp :: "snd'_state \<Rightarrow> snd'_state" where
   )"
 
 declare snd'_imp.simps [simp del]
+declare 
+  arg_cong[where f=snd'_state.make, state_congs]
+  arg_cong[where f=snd'_state_p, state_congs]
+  arg_cong[where f=snd'_imp, state_congs]
+  arg_cong[where f=snd'_nat, let_lemmas]
+  snd'_state.simps[state_simps]
 
-lemma snd'_imp_correct:
+lemma snd'_imp_correct[imp_let_correct_lemmas]:
   "snd'_state_p (snd'_imp s) = snd'_nat (snd'_state_p s)"
   by (subst snd'_imp.simps) (auto simp: dsqrt_imp_correct snd'_imp_state_upd_def tsqrt_imp_correct
       fst'_imp_correct snd'_nat_def)
@@ -1368,14 +1380,18 @@ fun prod_decode_imp :: "prod_decode_state \<Rightarrow> prod_decode_state" where
   )"
 
 declare prod_decode_imp.simps [simp del]
+declare 
+  arg_cong3[where f=prod_decode_state.make, state_congs]
+  arg_cong[where f=prod_decode_imp, state_congs]
+  prod_decode_state.simps[state_simps]
 
-lemma prod_decode_imp_correct':
+lemma prod_decode_imp_correct'[imp_let_correct_lemmas]:
   "prod_decode_state_fst (prod_decode_imp s) = fst'_nat (prod_decode_state_p s)"
   "prod_decode_state_snd (prod_decode_imp s) = snd'_nat (prod_decode_state_p s)"
   by (all \<open>subst prod_decode_imp.simps\<close>) (auto simp: fst'_imp_correct snd'_imp_correct
       prod_decode_imp_state_upd_def)
 
-lemma prod_decode_imp_correct:
+lemma prod_decode_imp_correct[imp_let_correct_lemmas]:
   "prod_decode_state_fst (prod_decode_imp s) = fst_nat (prod_decode_state_p s)"
   "prod_decode_state_snd (prod_decode_imp s) = snd_nat (prod_decode_state_p s)"
   by (simp_all add: fst_nat_fst'_nat snd_nat_snd'_nat prod_decode_imp_correct')
@@ -1510,9 +1526,15 @@ fun prod_encode_imp:: "prod_encode_state \<Rightarrow> prod_encode_state" where
      ret
   )"
 
-lemmas [simp del] = prod_encode_imp.simps
+declare prod_encode_imp.simps[simp del]
+declare 
+  arg_cong3[where f=prod_encode_state.make, state_congs]
+  arg_cong[where f=prod_encode_ret, state_congs]
+  arg_cong[where f=prod_encode_imp, state_congs]
+  prod_arg_cong2[where f=prod_encode, let_lemmas]
+  prod_encode_state.simps[state_simps]
 
-lemma prod_encode_imp_correct: "prod_encode_ret (prod_encode_imp s) = prod_encode (prod_encode_a s, prod_encode_b s)"
+lemma prod_encode_imp_correct[imp_let_correct_lemmas]: "prod_encode_ret (prod_encode_imp s) = prod_encode (prod_encode_a s, prod_encode_b s)"
 proof (induction s rule: prod_encode_imp.induct)
   case (1 s)
   then show ?case
@@ -1626,8 +1648,14 @@ fun hd_imp :: "hd_state \<Rightarrow> hd_state"
 "
 
 declare hd_imp.simps [simp del]
+declare 
+  arg_cong2[where f=hd_state.make, state_congs]
+  arg_cong[where f=hd_ret, state_congs]
+  arg_cong[where f=hd_imp, state_congs]
+  arg_cong[where f=hd_nat, let_lemmas]
+  hd_state.simps[state_simps]
 
-lemma hd_imp_correct:
+lemma hd_imp_correct[imp_let_correct_lemmas]:
   "hd_ret (hd_imp s) = hd_nat (hd_xs s)"
   by (subst hd_imp.simps) (auto simp: prod_decode_imp_correct hd_nat_def fst_nat_def hd_imp.simps
       hd_state_upd_def Let_def fst_nat_fst'_nat[symmetric] split: if_splits)[1]
@@ -1745,8 +1773,14 @@ fun tl_imp :: "tl_state \<Rightarrow> tl_state"
 "
 
 declare tl_imp.simps [simp del]
+declare 
+  arg_cong2[where f=tl_state.make, state_congs]
+  arg_cong[where f=tl_ret, state_congs]
+  arg_cong[where f=tl_imp, state_congs]
+  arg_cong[where f=tl_nat, let_lemmas]
+  tl_state.simps[state_simps]
 
-lemma tl_imp_correct:
+lemma tl_imp_correct[imp_let_correct_lemmas]:
   "tl_ret (tl_imp s) = tl_nat (tl_xs s)"
   by (subst tl_imp.simps) (auto simp: prod_decode_imp_correct tl_nat_def snd_nat_def tl_imp.simps tl_state_upd_def Let_def split: if_splits)[1]
 
@@ -1833,6 +1867,8 @@ lemma tl_IMP_Minus_correct[functional_correctness]:
 
 
 subsubsection \<open>length\<close>
+(* changes its argument which makes very messy correctness lemmas *)
+(* therefore we now wrap this length in the below length' *)
 
 record length_state = length_xs::nat length_ret::nat
 
@@ -1876,8 +1912,11 @@ termination
     (auto simp: tl_imp_correct length_state_upd_def Let_def split: if_splits)
 
 declare length_imp.simps [simp del]
+declare 
+  arg_cong[where f=length_nat, let_lemmas]
+  length_state.simps[state_simps]
 
-lemma length_imp_correct:
+lemma length_imp_correct[imp_let_correct_lemmas]:
   "length_ret (length_imp s) - length_ret s = length_nat (length_xs s)"
 proof (induction s rule: length_imp.induct)
   case (1 s)
@@ -2021,6 +2060,155 @@ lemma length_IMP_Minus_correct[functional_correctness]:
   by auto
 
 
+subsubsection \<open>length'\<close> (* wrapper for length *)
+
+
+record length'_state = length'_xs::nat length'_ret::nat
+
+abbreviation "length'_prefix \<equiv> ''length'.''"
+abbreviation "length'_xs_str \<equiv> ''xs''"
+abbreviation "length'_ret_str \<equiv> ''length'_ret''"
+
+function length'_imp:: "length'_state \<Rightarrow> length'_state" where
+  "length'_imp s =
+    (
+     let
+        length_xs' = (length'_xs s);
+        length_ret' = 0;
+        length_state = \<lparr>length_xs = length_xs', length_ret = length_ret'\<rparr>;
+        length_state_ret = length_imp length_state;
+        length'_xs' = (length'_xs s);
+        length'_ret' = length_ret length_state_ret;
+        ret = \<lparr>length'_xs = length'_xs', length'_ret = length'_ret'\<rparr>
+      in
+        ret
+    )
+  "
+  by pat_completeness auto
+termination
+  using "termination" by blast
+
+declare length'_imp.simps [simp del]
+
+declare 
+  arg_cong2[where f=length'_state.make, state_congs]
+  arg_cong[where f=length'_ret, state_congs]
+  arg_cong[where f=length'_imp, state_congs]
+  length'_state.simps[state_simps]
+
+lemma length'_imp_correct[imp_let_correct_lemmas]:
+  "length'_ret (length'_imp s)  = length_nat (length'_xs s)"
+  by (metis length'_imp.elims length'_state.select_convs(2)
+      length_imp_correct2 length_state.select_convs(1) length_state.select_convs(2))
+
+
+function length'_imp_time:: "nat \<Rightarrow> length'_state\<Rightarrow> nat" where
+  "length'_imp_time t s =
+  (
+     let
+        length_xs' = (length'_xs s);
+        t = t + 2;
+        length_ret' = 0;
+        t = t + 2;
+        length_state = \<lparr>length_xs = length_xs', length_ret = length_ret'\<rparr>;
+        length_state_ret = length_imp length_state;
+        t = t + length_imp_time 0 length_state;
+        length'_xs' = (length'_xs s);
+        t = t + 2;
+        length'_ret' = length_ret length_state_ret;
+        t = t + 2;
+        ret = t
+      in
+        ret
+    )
+"
+  by pat_completeness auto
+termination
+  by  (relation "Wellfounded.measure (\<lambda>(t,s). length'_xs s)")
+    (auto simp: length_imp_correct Let_def split: if_splits)
+
+lemmas [simp del] = length'_imp_time.simps
+
+lemma length'_imp_time_acc: "(length'_imp_time (Suc t) s) = Suc (length'_imp_time t s)"
+  apply (induction t s arbitrary:  rule: length'_imp_time.induct)
+  apply (subst length'_imp_time.simps)
+  by (simp add: length'_imp_time.simps Let_def eval_nat_numeral)
+
+lemma length'_imp_time_acc_2: "(length'_imp_time x s) = x + (length'_imp_time 0 s)"
+  by (induction x arbitrary: s)
+     (auto simp add: length'_imp_time_acc length_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+definition length'_IMP_Minus where
+  "length'_IMP_Minus \<equiv>
+  (
+        \<comment> \<open>length_xs' = (length'_xs s);\<close>
+     (length_prefix @ length_xs_str) ::= (A (V length'_xs_str));;
+        \<comment> \<open>length_ret' = 0;\<close>
+     (length_prefix @ length_ret_str) ::= (A (N 0));;
+        \<comment> \<open>length_state = \<lparr>length_xs = length_xs', length_ret = length_ret'\<rparr>;\<close>
+        \<comment> \<open>length_state_ret = length_imp length_state;\<close>
+     invoke_subprogram length_prefix length_IMP_Minus;;
+        \<comment> \<open>length'_xs' = (length'_xs s);\<close>
+     length'_xs_str ::= (A (V (length'_xs_str)));;
+        \<comment> \<open>length'_ret' = length_ret length_state_ret;\<close>
+     length'_ret_str ::= (A (V (length_prefix @ length_ret_str)))
+     
+  )"
+
+definition "length'_imp_to_HOL_state p s =
+  \<lparr>length'_xs = (s (add_prefix p length'_xs_str)), length'_ret = (s (add_prefix p length'_ret_str))\<rparr>"
+
+lemma length'_IMP_Minus_correct_function:
+  "(invoke_subprogram p length'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p length'_ret_str) = length'_ret (length'_imp (length'_imp_to_HOL_state p s))"
+  apply(induction "length'_imp_to_HOL_state p s" arbitrary: s s' t rule: length'_imp.induct)
+  apply(subst length'_imp.simps)
+  apply(simp only: length'_IMP_Minus_def prefix_simps)
+   apply(subst length_imp.simps)
+   apply(auto simp: length'_imp_time_acc length'_imp_to_HOL_state_def)
+  apply(erule length_IMP_Minus_correct[where vars = "{length'_ret_str}"])
+  subgoal by auto
+  apply (simp only: Let_def)
+  apply(auto simp: length'_imp_to_HOL_state_def)[1]
+  apply(auto simp: length_imp_to_HOL_state_def length_state_upd_def )[1]
+  subgoal
+    (* the stupid case where the correctness lemma from imp_correct fails *)
+    by (metis One_nat_def add_0 length_imp.elims length_state.select_convs(1)
+         length_state.select_convs(2) length_state_upd_def not_gr0)
+  apply(auto simp: length_imp_to_HOL_state_def length_state_upd_def)[1]
+  by (auto simp: length_imp_correct2)
+
+
+
+lemma length'_IMP_Minus_correct_time:
+  "(invoke_subprogram p length'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = length'_imp_time 0 (length'_imp_to_HOL_state p s)"
+  apply(induction "length'_imp_to_HOL_state p s" arbitrary: s s' t rule: length'_imp.induct)
+  apply(subst length'_imp_time.simps)
+  apply(simp only: length'_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps
+      atomExp_add_prefix.simps invoke_subprogram_append)
+   apply(auto simp: length'_imp_to_HOL_state_def)[1]
+  apply(erule length_IMP_Minus_correct[where vars = "{length'_ret_str}"])
+   apply auto [1]
+  by(auto simp: length_imp_to_HOL_state_def)[1]
+
+lemma length'_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ p2) length'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> v \<in> vars \<Longrightarrow>
+  \<not> (prefix p2 v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma length'_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) length'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (length'_imp_time 0 (length'_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) length'_ret_str) = length'_ret (length'_imp (length'_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using length'_IMP_Minus_correct_time length'_IMP_Minus_correct_function
+    length'_IMP_Minus_correct_effects
+  by auto
+
 subsubsection \<open>cons\<close>
 
 record cons_state = cons_h::nat cons_t::nat cons_ret::nat
@@ -2052,8 +2240,14 @@ fun cons_imp:: "cons_state \<Rightarrow> cons_state" where
 "
 
 declare cons_imp.simps [simp del]
+declare 
+  arg_cong3[where f=cons_state.make, state_congs]
+  arg_cong[where f=cons_imp, state_congs]
+  arg_cong[where f=cons_ret, state_congs]
+  arg_cong2[where f=cons, let_lemmas]
+  cons_state.simps[state_simps]
 
-lemma cons_imp_correct:
+lemma cons_imp_correct[imp_let_correct_lemmas]:
   "cons_ret (cons_imp s) = cons (cons_h s) (cons_t s)"
   by (auto simp: cons_imp.simps prod_encode_imp_correct cons_state_upd_def Let_def cons_def split: if_splits)
 
@@ -2213,7 +2407,7 @@ termination by (relation "measure (\<lambda>s. reverse_nat_acc_n s)")
 
 declare reverse_nat_acc_imp.simps [simp del]
 
-lemma reverse_nat_acc_imp_correct:
+lemma reverse_nat_acc_imp_correct[imp_let_correct_lemmas]:
   "reverse_nat_acc_ret (reverse_nat_acc_imp s)
     = reverse_nat_acc (reverse_nat_acc_acc s) (reverse_nat_acc_n s)"
   by(induction s rule: reverse_nat_acc_imp.induct)
@@ -2543,7 +2737,7 @@ termination
 
 lemmas [simp del] = reverse_nat_imp.simps
 
-lemma reverse_nat_imp_correct:
+lemma reverse_nat_imp_correct[imp_let_correct_lemmas]:
   "reverse_nat_ret (reverse_nat_imp s) = reverse_nat (reverse_nat_n s)"
   by (simp add: reverse_nat_imp.simps reverse_nat_acc_imp_correct reverse_nat_def Let_def
       reverse_nat_state_upd_def)
@@ -2699,7 +2893,7 @@ termination
 
 declare append_imp.simps [simp del]
 
-lemma append_imp_correct:
+lemma append_imp_correct[imp_let_correct_lemmas]:
   "append_acc (append_imp s) = Primitives.append_acc (append_acc s) (append_xs s)"
   by (induction s rule: append_imp.induct, subst append_imp.simps)
     (simp, force simp add: append_state_upd_def cons_imp_correct hd_imp_correct tl_imp_correct
@@ -2928,7 +3122,7 @@ termination
 
 lemmas [simp del] = append_nat_imp.simps
 
-lemma append_nat_imp_correct:
+lemma append_nat_imp_correct[imp_let_correct_lemmas]:
   "append_nat_ret (append_nat_imp s) = append_nat (append_nat_xs s) (append_nat_ys s)"
   by (simp add: append_nat_imp.simps reverse_nat_imp_correct append_imp_correct Let_def
       append_nat_state_upd_def append_nat_rev_acc)
@@ -3094,7 +3288,7 @@ fun AND_neq_zero_imp:: "AND_neq_zero_state \<Rightarrow> AND_neq_zero_state" whe
 
 declare AND_neq_zero_imp.simps [simp del]
 
-lemma AND_neq_zero_imp_correct:
+lemma AND_neq_zero_imp_correct[imp_let_correct_lemmas]:
   "AND_neq_zero_ret (AND_neq_zero_imp s) = (if (AND_neq_zero_a s) \<noteq> 0 \<and> (AND_neq_zero_b s) \<noteq> 0 then 1 else 0)"
   by (subst AND_neq_zero_imp.simps) (auto simp: AND_neq_zero_state_upd_def Let_def split: if_splits)
 
@@ -3263,7 +3457,7 @@ fun OR_neq_zero_imp:: "OR_neq_zero_state \<Rightarrow> OR_neq_zero_state" where
 
 declare OR_neq_zero_imp.simps [simp del]
 
-lemma OR_neq_zero_imp_correct:
+lemma OR_neq_zero_imp_correct[imp_let_correct_lemmas]:
   "OR_neq_zero_ret (OR_neq_zero_imp s) = (if (OR_neq_zero_a s) \<noteq> 0 \<or> (OR_neq_zero_b s) \<noteq> 0 then 1 else 0)"
   by (subst OR_neq_zero_imp.simps) (auto simp: OR_neq_zero_state_upd_def Let_def split: if_splits)
 
@@ -3428,8 +3622,10 @@ fun EQUAL_neq_zero_imp:: "EQUAL_neq_zero_state \<Rightarrow> EQUAL_neq_zero_stat
     )"
 
 declare EQUAL_neq_zero_imp.simps [simp del]
+declare 
+  EQUAL_neq_zero_state.simps[state_simps]
 
-lemma EQUAL_neq_zero_imp_correct:
+lemma EQUAL_neq_zero_imp_correct[imp_let_correct_lemmas]:
   "EQUAL_neq_zero_ret (EQUAL_neq_zero_imp s) =
     (if (EQUAL_neq_zero_a s) = (EQUAL_neq_zero_b s) then 1 else 0)"
   by (simp add: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_state_upd_def)
@@ -3546,7 +3742,7 @@ fun NOTEQUAL_neq_zero_imp:: "NOTEQUAL_neq_zero_state \<Rightarrow> NOTEQUAL_neq_
 
 declare NOTEQUAL_neq_zero_imp.simps [simp del]
 
-lemma NOTEQUAL_neq_zero_imp_correct:
+lemma NOTEQUAL_neq_zero_imp_correct[imp_let_correct_lemmas]:
   "NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp s) =
     (if (NOTEQUAL_neq_zero_a s) \<noteq> (NOTEQUAL_neq_zero_b s) then 1 else 0)"
   by (simp add: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_state_upd_def)

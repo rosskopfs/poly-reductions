@@ -8,7 +8,7 @@ The theories in this repository are developed with [Isabelle2021](https://isabel
 For checking and browsing the theories following sessions are needed:
 
 - from the AFP: `Landau_Symbols`, `Verified_SAT_Based_AI_Planning`, `Graph_Theory`
-- from [here](https://github.com/maxhaslbeck/NREST): `NREST`
+- from [here](https://github.com/hydrogenoxide/NREST): `NREST`
 
 Download those sessions and follow [AFP's Using Guide](https://www.isa-afp.org/using.html) to make them available for your Isabelle setup.
 

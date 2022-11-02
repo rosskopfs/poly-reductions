@@ -127,8 +127,12 @@ termination
       Let_def split: if_splits)+
 
 declare nth_bit_of_num_imp.simps [simp del]
+declare 
+  arg_cong3[where f=nth_bit_of_num_state.make, state_congs]
+  arg_cong[where f=nth_bit_of_num_ret, state_congs]
+  arg_cong[where f=nth_bit_of_num_imp, state_congs]
 
-lemma nth_bit_of_num_imp_correct:
+lemma nth_bit_of_num_imp_correct[imp_let_correct_lemmas]:
   "nth_bit_of_num_ret (nth_bit_of_num_imp s) =
     nth_bit_of_num_nat (nth_bit_of_num_x s) (nth_bit_of_num_n s)"
   apply (induction s rule: nth_bit_of_num_imp.induct)
@@ -323,8 +327,8 @@ definition "nth_bit_of_num_IMP_after_loop \<equiv>
           (hd_prefix @ hd_ret_str) ::= (A (N 0));;
           \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
           \<comment> \<open>hd_state_ret = hd_imp hd_state;\<close>
-          \<comment> \<open>hd_x = hd_ret hd_state_ret;\<close>
           invoke_subprogram hd_prefix hd_IMP_Minus;;
+          \<comment> \<open>hd_x = hd_ret hd_state_ret;\<close>
           (hd_x) ::= (A (V (hd_prefix @ hd_ret_str)));;
           \<comment> \<open>nth_bit_of_num_ret' = \<close>
                            \<comment> \<open>(if nth_bit_of_num_x s \<noteq> 0 then \<close>
@@ -576,8 +580,14 @@ termination
     (simp add: nth_bit_tail_imp_subprogram_simps)+
 
 declare nth_bit_tail_imp.simps [simp del]
+declare 
+  arg_cong3[where f=nth_bit_tail_state.make, state_congs]
+  arg_cong[where f=nth_bit_tail_ret, state_congs]
+  arg_cong[where f=nth_bit_tail_imp, state_congs]
+  arg_cong2[where f=nth_bit_tail', let_lemmas]
+  nth_bit_tail_state.simps[state_simps]
 
-lemma nth_bit_tail_imp_correct:
+lemma nth_bit_tail_imp_correct[imp_let_correct_lemmas]:
   "nth_bit_tail_ret (nth_bit_tail_imp s) =
     nth_bit_tail' (nth_bit_tail_acc s) (nth_bit_tail_n s)"
   apply (induction s rule: nth_bit_tail_imp.induct)

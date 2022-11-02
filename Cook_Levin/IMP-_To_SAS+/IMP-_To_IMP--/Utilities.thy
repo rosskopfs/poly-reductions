@@ -211,4 +211,101 @@ method vcg_time for vars::"char list set" declares functional_correctness =
     (ift_step; (vcg_time vars)?) |
     (seqt_step; (vcg_time vars)?))
 
+(* --------------------------- STATE PROPAGATION ------------------------- *)
+(* Named Theorems for state propagation *)
+named_theorems let_lemmas
+named_theorems imp_let_correct_lemmas
+named_theorems state_simps
+named_theorems state_congs
+declare 
+  arg_cong2[where f="(=)", let_lemmas]
+(* state_congs for imp_times most likely also needed? *)
+
+named_theorems state_defs
+
+
+lemma State_Propagate_Assign:"\<lbrakk>s = s'(add_prefix p var := aval aexp s');
+  a = aval aexp s'\<rbrakk>
+  \<Longrightarrow> a = s (add_prefix p var) " by simp
+
+lemma State_Propagate_AssignOther:"\<lbrakk>s = s'(add_prefix p ovar := aval aexp s'); ovar \<noteq> var;
+  a = s' (add_prefix p var)\<rbrakk>
+  \<Longrightarrow> a = s (add_prefix p var) " by simp
+
+lemma prod_arg_cong2:"\<lbrakk>a1 = a2; b1 = b2\<rbrakk> \<Longrightarrow> f (a1, b1) = f (a2, b2)"
+  by blast
+
+lemma State_Propagate_InvokeSubUnchanged:"\<lbrakk>\<And>x. x \<in> varset \<Longrightarrow> s' (add_prefix p x) = s (add_prefix p x); var \<in> varset;
+  a = s' (add_prefix p var)\<rbrakk> \<Longrightarrow> a = s (add_prefix p var)" by blast
+
+lemma State_Propagate_IfCond:
+  "\<lbrakk>0 < s' (add_prefix p cond); s' = s(add_prefix p cond := aval (A (V (add_prefix p var))) s);
+  \<lbrakk>0 < s (add_prefix p var)\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P" by simp
+
+lemma arg_cong3: "\<lbrakk>a1 = a2; b1 = b2; c1 = c2\<rbrakk> \<Longrightarrow> f a1 b1 c1 = f a2 b2 c2"
+  by (iprover intro: refl elim: subst)
+
+lemma arg_cong4: "\<lbrakk>a1 = a2; b1 = b2; c1 = c2; d1 = d2\<rbrakk> \<Longrightarrow> f a1 b1 c1 d1 = f a2 b2 c2 d2"
+  by (iprover intro: refl elim: subst)
+
+
+
+
+
+(* Unfolding states, definitions to nat level  *)
+method propagate_state_pipeline for p::string uses state_translators =
+  ( ((drule AssignD)+, (erule conjE)+)?,
+    unfold List.append.assoc imp_let_correct_lemmas state_simps state_translators,
+    ( (((rule let_lemmas)+)?,
+        (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
+           match premises in
+             prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_Assign, subst aval.simps, (subst atomVal.simps)+\<close>
+             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule State_Propagate_AssignOther, force\<close>
+             \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
+             \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_InvokeSubUnchanged, fast\<close>\<close>))+,
+          force)+
+        )
+
+
+
+
+method propagate_conclusion_state for p::string uses state_translators =
+  ( ((drule AssignD)+, (erule conjE)+)?,
+    unfold List.append.assoc imp_let_correct_lemmas state_simps state_translators,
+    ( (((rule let_lemmas)+)?,
+        (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
+           match premises in
+             prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_Assign, subst aval.simps, (subst atomVal.simps)+\<close>
+             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule State_Propagate_AssignOther, force\<close>
+             \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
+             \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_InvokeSubUnchanged, fast\<close>\<close>))+)+
+        )
+
+method propagate_branch_premise_state for p::string uses state_translators =
+  (match premises in cond[thin]:"0 < state (add_prefix p var)" for state var \<Rightarrow> \<open>
+           match premises in
+             prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
+               \<Rightarrow> \<open>insert cond prem, erule State_Propagate_IfCond, assumption\<close>
+             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>
+             \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>
+             \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
+               \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>\<close>)
+
+
+method mini_pcs for p::string = 
+  (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
+           match premises in
+             prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_Assign, subst aval.simps, (subst atomVal.simps)+\<close>
+             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule State_Propagate_AssignOther, force\<close>
+             \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
+             \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_InvokeSubUnchanged, fast\<close>\<close>)
+
+
+
 end

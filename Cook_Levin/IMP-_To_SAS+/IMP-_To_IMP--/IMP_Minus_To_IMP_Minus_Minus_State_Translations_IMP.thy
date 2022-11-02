@@ -105,7 +105,7 @@ termination
 
 declare dropWhile_char_loop_imp.simps [simp del]
 
-lemma dropWhile_char_loop_imp_correct:
+lemma dropWhile_char_loop_imp_correct[imp_let_correct_lemmas]:
   "dropWhile_char_loop_ret (dropWhile_char_loop_imp s) =
     dropWhile_char_loop (dropWhile_char_loop_n s)"
   by (induction "dropWhile_char_loop_n s" arbitrary: s rule: dropWhile_char_loop.induct)
@@ -503,7 +503,7 @@ fun dropWhile_char_imp:: "dropWhile_char_state \<Rightarrow> dropWhile_char_stat
 
 declare dropWhile_char_imp.simps [simp del]
 
-lemma dropWhile_char_imp_correct:
+lemma dropWhile_char_imp_correct[imp_let_correct_lemmas]:
   "dropWhile_char_ret (dropWhile_char_imp s) = dropWhile_char' (dropWhile_char_n s)"
   by(simp add: dropWhile_char_imp.simps dropWhile_char_state_upd_def Let_def
       dropWhile_char_loop_imp_correct)
@@ -697,11 +697,11 @@ termination by (relation "measure (\<lambda>s. n_hashes_acc_n s)")
 
 declare n_hashes_acc_imp.simps [simp del]
 
-lemma n_hashes_acc_imp_correct:
+lemma n_hashes_acc_imp_correct[imp_let_correct_lemmas]:
   "n_hashes_acc_ret (n_hashes_acc_imp s) = n_hashes_acc (n_hashes_acc_acc s) (n_hashes_acc_n s)"
   apply(induction s rule: n_hashes_acc_imp.induct)
   apply(subst n_hashes_acc_imp.simps)
-  apply(simp add: n_hashes_acc_imp_subprogram_simps cons_imp_correct hash_encode_val Suc_diff_Suc)
+  apply(simp add: n_hashes_acc_imp_subprogram_simps cons_imp_correct)
   by (metis Suc_pred hash_encode_val n_hashes_acc.simps(2))
 
 definition "n_hashes_acc_state_upd_time t s \<equiv>
@@ -793,7 +793,7 @@ definition "n_hashes_acc_IMP_init_while_cond \<equiv>
 
 definition "n_hashes_acc_IMP_loop_body \<equiv>
   \<comment> \<open>cons_h' = hash_as_nat;\<close>
-  ((cons_prefix @ cons_h_str) ::= (A (N 35)));;
+  ((cons_prefix @ cons_h_str) ::= (A (N hash_as_nat)));;
   \<comment> \<open>cons_t' = n_hashes_acc_acc s;\<close>
   ((cons_prefix @ cons_t_str) ::= (A (V n_hashes_acc_acc_str)));;
   \<comment> \<open>cons_ret' = 0;\<close>
@@ -807,7 +807,9 @@ definition "n_hashes_acc_IMP_loop_body \<equiv>
   ((n_hashes_acc_n_str) ::= (Sub (V n_hashes_acc_n_str) (N 1)))"
 
 definition "n_hashes_acc_IMP_after_loop \<equiv>
-  \<comment> \<open>ret = s\<close>
+  \<comment> \<open>ret = \<lparr>n_hashes_acc_acc = n_hashes_acc_acc s,
+           n_hashes_acc_n = n_hashes_acc_n s,
+           n_hashes_acc_ret = n_hashes_acc_acc s\<rparr>\<close>
   ((n_hashes_acc_ret_str) ::= (A (V n_hashes_acc_acc_str)))"
 
 definition n_hashes_acc_IMP_Minus where
@@ -850,34 +852,22 @@ lemma n_hashes_acc_IMP_Minus_correct_function:
       rule: n_hashes_acc_imp.induct)
   apply(subst n_hashes_acc_imp.simps)
   apply(simp only: n_hashes_acc_IMP_Minus_def prefix_simps)
-  apply(erule Seq_E)+
-  apply(erule While_tE)
-
-  subgoal by (clarsimp simp: n_hashes_acc_complete_simps)
-
-  apply(erule Seq_E)+
-  apply(dest_com_gen)
-
+  apply (subst n_hashes_acc_imp_subprogram_simps)
+  apply(vcg n_hashes_acc_IMP_vars)
+  apply (subst n_hashes_acc_imp_to_HOL_state_def)+
   subgoal
-    apply(simp only: n_hashes_acc_IMP_init_while_cond_def
-        n_hashes_acc_IMP_loop_body_def prefix_simps)
-    apply(erule Seq_E)+
-    apply(erule cons_IMP_Minus_correct[where vars = "n_hashes_acc_IMP_vars"], fastforce)
-    by (fastforce_sorted_premises simp: n_hashes_acc_complete_simps)
-
+    by (fastforce simp: n_hashes_acc_complete_simps Let_def)
   subgoal
-    apply(subst (asm) n_hashes_acc_IMP_init_while_cond_def)
+    by (fastforce simp: n_hashes_acc_complete_simps Let_def)
+  subgoal
+    apply(subst n_hashes_acc_imp_subprogram_simps)
     apply(simp only: prefix_simps n_hashes_acc_IMP_loop_body_def)
-    apply(erule Seq_E)+
-    apply(erule cons_IMP_Minus_correct[where vars = "n_hashes_acc_IMP_vars"], fastforce)
-    by (fastforce_sorted_premises simp: n_hashes_acc_complete_simps)
-
+    apply(vcg n_hashes_acc_IMP_vars)
+    by (fastforce_sorted_premises simp: n_hashes_acc_complete_simps Let_def)
   subgoal
-    apply(simp only: n_hashes_acc_IMP_init_while_cond_def prefix_simps
-        n_hashes_acc_IMP_loop_body_def)
-    apply(erule Seq_E)+
-    apply(erule cons_IMP_Minus_correct[where vars = "n_hashes_acc_IMP_vars"], fastforce)
-    by (fastforce_sorted_premises simp: n_hashes_acc_complete_simps)
+    apply(simp only: prefix_simps n_hashes_acc_IMP_loop_body_def)
+    apply(vcg n_hashes_acc_IMP_vars)
+    by (fastforce_sorted_premises simp: n_hashes_acc_complete_simps Let_def)
   done
 
 lemma n_hashes_acc_IMP_Minus_correct_effects:
@@ -996,7 +986,7 @@ termination
 
 declare n_hashes_tail_imp.simps [simp del]
 
-lemma n_hashes_tail_imp_correct:
+lemma n_hashes_tail_imp_correct[imp_let_correct_lemmas]:
   "n_hashes_tail_ret (n_hashes_tail_imp s) = n_hashes_tail (n_hashes_tail_n s)"
   by (simp add: n_hashes_acc_imp_correct n_hashes_tail_def n_hashes_tail_imp.simps
       n_hashes_tail_state_upd_def reverse_nat_imp_correct)
@@ -1175,7 +1165,7 @@ termination
 
 declare var_bit_to_var_nat_imp.simps [simp del]
 
-lemma var_bit_to_var_nat_imp_correct:
+lemma var_bit_to_var_nat_imp_correct[imp_let_correct_lemmas]:
   "var_bit_to_var_nat_ret (var_bit_to_var_nat_imp s) = var_bit_to_var_nat (var_bit_to_var_nat_n s)"
   by (simp add: n_hashes_tail_imp_correct var_bit_to_var_nat_def var_bit_to_var_nat_imp.simps
       fst_nat_fst'_nat snd_nat_snd'_nat var_bit_to_var_nat_state_upd_def subtail_n_hashes
@@ -1483,7 +1473,7 @@ termination
 
 declare operand_bit_to_var_acc_imp.simps [simp del]
 
-lemma operand_bit_to_var_acc_imp_correct:
+lemma operand_bit_to_var_acc_imp_correct[imp_let_correct_lemmas]:
   "operand_bit_to_var_acc_ret (operand_bit_to_var_acc_imp s) =
     operand_bit_to_var_acc' (operand_bit_to_var_acc_acc s) (operand_bit_to_var_acc_n s)"
   apply (induction s rule: operand_bit_to_var_acc_imp.induct)
@@ -1940,7 +1930,7 @@ termination
 
 declare operand_bit_to_var_tail_imp.simps [simp del]
 
-lemma operand_bit_to_var_tail_imp_correct:
+lemma operand_bit_to_var_tail_imp_correct[imp_let_correct_lemmas]:
   "operand_bit_to_var_tail_ret (operand_bit_to_var_tail_imp s) =
     operand_bit_to_var_tail (operand_bit_to_var_tail_n s)"
   by(simp add: operand_bit_to_var_tail_imp.simps operand_bit_to_var_tail_state_upd_def
@@ -2233,8 +2223,11 @@ termination
   by (relation "measure (\<lambda>(s). var_to_operand_bit_tail_v s)") simp
 
 declare var_to_operand_bit_tail_imp.simps [simp del]
+declare 
+  arg_cong[where f=var_to_operand_bit_tail, let_lemmas]
+  var_to_operand_bit_tail_state.simps[state_simps]
 
-lemma var_to_operand_bit_tail_imp_correct:
+lemma var_to_operand_bit_tail_imp_correct[imp_let_correct_lemmas]:
   "var_to_operand_bit_tail_ret (var_to_operand_bit_tail_imp s) =
     var_to_operand_bit_tail' (var_to_operand_bit_tail_v s)"
   apply (simp add: var_to_operand_bit_tail_imp.simps
@@ -2456,7 +2449,6 @@ lemmas var_to_operand_bit_tail_state_translators =
   prod_encode_imp_to_HOL_state_def
   operand_bit_to_var_tail_imp_to_HOL_state_def
   EQUAL_neq_zero_imp_to_HOL_state_def
-  AND_neq_zero_imp_to_HOL_state_def
   var_to_operand_bit_tail_imp_to_HOL_state_def
 
 lemma var_to_operand_bit_tail_state_cong:
@@ -2468,141 +2460,6 @@ lemma var_to_operand_bit_tail_state_cong:
   by blast
 
 
-lemma aux9:"\<lbrakk>s = s'(add_prefix p var := aval aexp s');
-  a = aval aexp s'\<rbrakk>
-  \<Longrightarrow> a = s (add_prefix p var) " by simp
-
-lemma aux10:"\<lbrakk>s = s'(add_prefix p ovar := aval aexp s'); ovar \<noteq> var;
-  a = s' (add_prefix p var)\<rbrakk>
-  \<Longrightarrow> a = s (add_prefix p var) " by simp
-
-lemma prod_arg_cong2:"\<lbrakk>a1 = a2; b1 = b2\<rbrakk> \<Longrightarrow> f (a1, b1) = f (a2, b2)"
-  by blast
-
-lemma aux12:"\<lbrakk>\<And>x. x \<in> varset \<Longrightarrow> s' (add_prefix p x) = s (add_prefix p x); var \<in> varset;
-  a = s' (add_prefix p var)\<rbrakk> \<Longrightarrow> a = s (add_prefix p var)" by blast
-
-lemma aux13:
-  "\<lbrakk>0 < s' (add_prefix p cond); s' = s(add_prefix p cond := aval (A (V (add_prefix p var))) s);
-  \<lbrakk>0 < s (add_prefix p var)\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P" by simp
-
-lemma arg_cong3: "\<lbrakk>a1 = a2; b1 = b2; c1 = c2\<rbrakk> \<Longrightarrow> f a1 b1 c1 = f a2 b2 c2"
-  by (iprover intro: refl elim: subst)
-
-lemma arg_cong4: "\<lbrakk>a1 = a2; b1 = b2; c1 = c2; d1 = d2\<rbrakk> \<Longrightarrow> f a1 b1 c1 d1 = f a2 b2 c2 d2"
-  by (iprover intro: refl elim: subst)
-
-named_theorems let_lemmas
-named_theorems imp_let_correct_lemmas
-named_theorems state_simps
-named_theorems state_congs
-named_theorems state_defs
-
-declare
-  arg_cong[where f=hd_nat, let_lemmas]
-  arg_cong[where f=tl_nat, let_lemmas]
-  arg_cong[where f=fst'_nat, let_lemmas]
-  arg_cong[where f=snd'_nat, let_lemmas]
-  arg_cong2[where f=nth_bit_tail', let_lemmas]
-  arg_cong[where f=operand_bit_to_var_tail, let_lemmas]
-  arg_cong[where f=length_nat, let_lemmas]
-  arg_cong2[where f="(=)", let_lemmas]
-  prod_arg_cong2[where f=prod_encode, let_lemmas]
-  arg_cong2[where f=cons, let_lemmas]
-  var_to_operand_bit_tail_state_cong[let_lemmas]
-
-
-declare
-  hd_imp_correct[imp_let_correct_lemmas]
-  tl_imp_correct[imp_let_correct_lemmas]
-  fst'_imp_correct[imp_let_correct_lemmas]
-  snd'_imp_correct[imp_let_correct_lemmas]
-  nth_bit_tail_imp_correct[imp_let_correct_lemmas]
-  prod_encode_imp_correct[imp_let_correct_lemmas]
-  cons_imp_correct[imp_let_correct_lemmas]
-  operand_bit_to_var_tail_imp_correct[imp_let_correct_lemmas]
-  length_imp_correct[imp_let_correct_lemmas]
-  EQUAL_neq_zero_imp_correct[imp_let_correct_lemmas]
-
-declare
-  hd_state.simps[state_simps]
-  tl_state.simps[state_simps]
-  fst'_state.simps[state_simps]
-  snd'_state.simps[state_simps]
-  nth_bit_tail_state.simps[state_simps]
-  prod_encode_state.simps[state_simps]
-  cons_state.simps[state_simps]
-  operand_bit_to_var_tail_state.simps[state_simps]
-  length_state.simps[state_simps]
-  EQUAL_neq_zero_state.simps[state_simps]
-
-declare
-  hd_state.defs(1)[symmetric, state_defs]
-  tl_state.defs(1)[symmetric, state_defs]
-  fst'_state.defs(1)[symmetric, state_defs]
-  snd'_state.defs(1)[symmetric, state_defs]
-  nth_bit_tail_state.defs(1)[symmetric, state_defs]
-  prod_encode_state.defs(1)[symmetric, state_defs]
-  cons_state.defs(1)[symmetric, state_defs]
-  operand_bit_to_var_tail_state.defs(1)[symmetric, state_defs]
-  length_state.defs(1)[symmetric, state_defs]
-  EQUAL_neq_zero_state.defs(1)[symmetric, state_defs]
-
-declare
-  arg_cong2[where f=hd_state.make, state_congs]
-  arg_cong2[where f=tl_state.make, state_congs]
-  arg_cong[where f=fst'_state.make, state_congs]
-  arg_cong[where f=snd'_state.make, state_congs]
-  arg_cong3[where f=nth_bit_tail_state.make, state_congs]
-  arg_cong3[where f=prod_encode_state.make, state_congs]
-  arg_cong3[where f=cons_state.make, state_congs]
-  arg_cong[where f=hd_ret, state_congs]
-  arg_cong[where f=tl_ret, state_congs]
-  arg_cong[where f=fst'_state_p, state_congs]
-  arg_cong[where f=snd'_state_p, state_congs]
-  arg_cong[where f=nth_bit_tail_ret, state_congs]
-  arg_cong[where f=prod_encode_ret, state_congs]
-  arg_cong[where f=cons_ret, state_congs]
-  arg_cong[where f=hd_imp, state_congs]
-  arg_cong[where f=tl_imp, state_congs]
-  arg_cong[where f=fst'_imp, state_congs]
-  arg_cong[where f=snd'_imp, state_congs]
-  arg_cong[where f=nth_bit_tail_imp, state_congs]
-  arg_cong[where f=prod_encode_imp, state_congs]
-  arg_cong[where f=cons_imp, state_congs]
-
-
-method bar for p::string uses state_translators =
-  ( ((drule AssignD)+, (erule conjE)+)?,
-    unfold List.append.assoc imp_let_correct_lemmas state_simps state_translators,
-    ( (((rule let_lemmas)+)?,
-        (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
-           match premises in
-             prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
-               \<Rightarrow> \<open>insert prem, elim aux9, subst aval.simps, (subst atomVal.simps)+\<close>
-             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule aux10, force\<close>
-             \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
-             \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
-               \<Rightarrow> \<open>insert prem, elim aux12, fast\<close>\<close>))+,
-          force)+
-        )
-
-method baz for p::string uses state_translators =
-  ( ((drule AssignD)+, (erule conjE)+)?,
-    unfold state_translators state_simps,
-    unfold List.append.assoc state_defs,
-    ( (((rule state_congs)+)?,
-        (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
-          match premises in
-            prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
-              \<Rightarrow> \<open>insert prem, elim aux9, subst aval.simps, (subst atomVal.simps)+\<close>
-           \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule aux10, force\<close>
-           \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
-           \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
-             \<Rightarrow> \<open>insert prem, elim aux12, fast\<close>\<close>))
-        |force)+
-        )
-
 lemma var_to_operand_bit_tail_IMP_Minus_correct_function:
   "(invoke_subprogram p var_to_operand_bit_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p var_to_operand_bit_tail_ret_str)
@@ -2611,7 +2468,6 @@ lemma var_to_operand_bit_tail_IMP_Minus_correct_function:
   apply(subst var_to_operand_bit_tail_imp.simps)
   apply(simp only: var_to_operand_bit_tail_IMP_Minus_def prefix_simps)
   apply(vcg var_to_operand_bit_tail_IMP_vars)
-
   subgoal
     by (fastforce_sorted_premises2 simp: var_to_operand_bit_tail_imp_subprogram_simps
         var_to_operand_bit_tail_state_translators Let_def)
@@ -2818,7 +2674,7 @@ termination
 
 declare map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp.simps [simp del]
 
-lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_correct:
+lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_correct[imp_let_correct_lemmas]:
   "map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_ret
     (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp s) =
    map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc'
@@ -3266,7 +3122,7 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_funct
 
     subgoal
       apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps Let_def)
-      by(timeit \<open>bar p state_translators: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators\<close>)
+      by(timeit \<open>propagate_state_pipeline p state_translators: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators\<close>)
     done
 
   subgoal
@@ -3298,11 +3154,11 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_funct
             (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
            match premises in
              prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
-               \<Rightarrow> \<open>insert prem, elim aux9, subst aval.simps, (subst atomVal.simps)+\<close>
-             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule aux10, force\<close>
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_Assign, subst aval.simps, (subst atomVal.simps)+\<close>
+             \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>insert prem, erule State_Propagate_AssignOther, force\<close>
              \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>subst prem\<close>
              \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
-               \<Rightarrow> \<open>insert prem, elim aux12, fast\<close>\<close>))+, force)+
+               \<Rightarrow> \<open>insert prem, elim State_Propagate_InvokeSubUnchanged, fast\<close>\<close>))+, force)+
 
       apply(rule)
       apply(rule let_lemmas)+
@@ -3310,22 +3166,20 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_funct
           (match premises in cond[thin]:"0 < state (add_prefix p var)" for state var \<Rightarrow> \<open>
            match premises in
              prem[thin]:"state = nstate((add_prefix p var) := update)" for update nstate
-               \<Rightarrow> \<open>insert cond prem, erule aux13, assumption\<close>
+               \<Rightarrow> \<open>insert cond prem, erule State_Propagate_IfCond, assumption\<close>
              \<bar>prem[thin]:"state = update" for update \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>
              \<bar>prem[thin]:"state(add_prefix p var) = _" \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>
              \<bar>prem[thin]:"_ \<in> _ \<Longrightarrow> _ (add_prefix p _) = state (add_prefix p _)"
                \<Rightarrow> \<open>print_fact cond, print_fact prem\<close>\<close>))
       by linarith
-    sorry
-
-  by(timeit \<open>fastforce_sorted_premises simp: Let_def
-        map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_complete_simps\<close>)
+    done
   done
 
 lemma
   "\<lbrakk>0 < s' (add_prefix p cond); s' = s(add_prefix p cond := aval (A (V (add_prefix p var))) s);
   \<lbrakk>0 < s (add_prefix p var)\<rbrakk> \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  apply(erule aux13)
+  apply(erule State_Propagate_IfCond)
+  sorry
 
 lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_pref)
@@ -3378,7 +3232,7 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_Minus_correct_time:
     apply(vcg map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_IMP_vars)
     subgoal
       apply(simp only: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_imp_subprogram_simps Let_def)
-      by(timeit \<open>bar p state_translators: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators\<close>)
+      by(timeit \<open>propagate_state_pipeline p state_translators: map_IMP_Minus_State_To_IMP_Minus_Minus_partial_acc_state_translators\<close>)
     done
 
   subgoal
