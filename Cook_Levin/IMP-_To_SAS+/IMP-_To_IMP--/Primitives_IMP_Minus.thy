@@ -1275,7 +1275,7 @@ lemma fst'_imp_correct[let_function_correctness]:
   by (subst fst'_imp.simps) (auto simp: dsqrt_imp_correct fst'_imp_state_upd_def tsqrt_imp_correct
       Let_def triangle_imp_correct fst'_nat_def split: if_splits)
 
-fun fst'_imp_time:: "nat \<Rightarrow> fst'_state\<Rightarrow> nat" where
+fun fst'_imp_time :: "nat \<Rightarrow> fst'_state\<Rightarrow> nat" where
   "fst'_imp_time t s = 
     (
       let

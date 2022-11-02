@@ -3,7 +3,7 @@ This repository sets out to formalize some classic results about NP-completeness
 
 ## Using
 
-The theories in this repository are developed with [Isabelle2021](https://isabelle.in.tum.de)
+The theories in this repository are developed with [Isabelle2022](https://isabelle.in.tum.de)
 
 For checking and browsing the theories following sessions are needed:
 
@@ -25,7 +25,7 @@ The following reductions are currently formalized:
 ![Graph of all formalized reductions](doc/reductions.png)
 
 ## Work Plan
-The current work plan is summarized [here](doc/PLAN.md) and tracked by Github issues and milestones.
+A work plan is summarized [here](doc/PLAN.md).
 
 ## Index
 ### Polynomial-Time Reductions
@@ -45,4 +45,4 @@ So far the following classic reductions between NP-hard problems have been forma
    The standard definition is based on `awalk`. 
 
 ## NREST
-For reasoning about the runtime complexity of the reductions, we use: https://github.com/maxhaslbeck/NREST.
+For reasoning about the runtime complexity of the reductions, we use an [updated fork](https://github.com/hydrogenoxide/NREST) of [NREST](https://github.com/maxhaslbeck/NREST).
