@@ -1,6 +1,16 @@
-theory Prod_Poly 
+
+(* 
+This theory is not used currently. I fear this is also the missing polynomial triangular root.
+As this was implemented again now in Primitives, I suggest deprecating this file. 
+
+*)
+
+theory Prod_Poly
   imports "HOL-Library.Nat_Bijection" "Recursion-Theory-I.CPair"
 begin 
+(* 
+
+Commented out to avoid errors in proofs
 
 fun mult_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "mult_acc acc c  b  = (if b = 0 then acc else if b mod 2 = 0 then
@@ -161,5 +171,5 @@ lemma snd_nat'_correct:"snd_nat' n = c_snd n"
 lemma sub_snd':
 "snd_nat' n  = snd (prod_decode n)"
   using prod_c_pair snd_nat'_correct  by simp
-
+ *)
 end

@@ -1,15 +1,25 @@
+
+(*
+  IMP_Minus_Nat_Bijection is now Primities_IMP_Minus
+  It was not updated to use the new format... 
+  In particular the "letification" step is missing
+  TODO: Change everything to fit this
+
+*)
+
 theory IMP_Minus_Max_Constant_IMP_Minus
   imports IMP_Minus_Max_Constant_Nat
-    "../../IMP-/IMP_Minus_Nat_Bijection"
+    "IMP-_To_IMP--/Primitives_IMP_Minus"
+    (* "../../IMP-/IMP_Minus_Nat_Bijection" This theory does not exist... Search for it*)
 begin
 
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 definition atomExp_to_constant_IMP_Minus where "atomExp_to_constant_IMP_Minus \<equiv>
   ''atomExp_to_constant'' ::= (A (V ''a'')) ;;
-  IMP_Minus_fst_nat ;;
+  fst'_IMP_Minus ;;
   ''a'' ::= (A (V ''atomExp_to_constant'')) ;;
-  IMP_Minus_snd_nat ;;
+  snd'_IMP_Minus ;;
   (IF ''fst_nat'' \<noteq>0 
   THEN 
     ''atomExp_to_constant'' ::= (A (V ''snd_nat''))  
@@ -19,7 +29,7 @@ definition atomExp_to_constant_IMP_Minus where "atomExp_to_constant_IMP_Minus \<
   ''snd_nat'' ::= (A (N 0))"
 
 definition atomExp_to_constant_IMP_Minus_time where "atomExp_to_constant_IMP_Minus_time x \<equiv>
-  11 + 2 * IMP_Minus_fst_nat_time x"
+  11 + 2 * fst'_imp_time x"
 
 (*lemma atomExp_to_constant_IMP_Minus_time_polynomial: "poly atomExp_to_constant_IMP_Minus_time"*)
 

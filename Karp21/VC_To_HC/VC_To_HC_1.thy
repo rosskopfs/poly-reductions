@@ -2027,7 +2027,7 @@ next
           using 3 Cons sublist_v1_in_subsets
           by fast
         then have "sublist [v1, v2] (construct_cycle_add_edge_nodes E' a C)"
-          using 3 Cons sublist_set_ls2_3 by meson
+          using 3 Cons sublist_set_ls2_3 by metis
         then show ?thesis
           using Cons 3 by auto
       qed
