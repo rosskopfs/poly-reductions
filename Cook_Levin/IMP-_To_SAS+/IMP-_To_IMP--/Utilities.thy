@@ -197,12 +197,14 @@ method dest_com_gen_time' =
       \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a[unfolded While'_def], simplified add.assoc]\<close>\<close>))
 
+named_theorems prefix_defs
+
 method vcg for vars::"char list set" declares functional_correctness =
-  (((subroutine_step vars, print_fact subroutine_step); (vcg vars)?) |
+  ((subst prefix_defs)?, (((subroutine_step vars, print_fact subroutine_step); (vcg vars)?) |
     (while_step ; (vcg vars)?) |
     ((dest_com_gen', print_fact dest_com_gen) ; (vcg vars)?) |
     (if_step ; (vcg vars)?) |
-    (seq_step ; (vcg vars)?))
+    (seq_step ; (vcg vars)?)))
 
 method vcg_time for vars::"char list set" declares functional_correctness =
   (((subroutine_step vars, print_fact subroutine_step); (vcg_time vars)?) |
@@ -211,10 +213,20 @@ method vcg_time for vars::"char list set" declares functional_correctness =
     (ift_step; (vcg_time vars)?) |
     (seqt_step; (vcg_time vars)?))
 
+
+
+
+named_theorems let_function_correctness
+lemmas functional_correctness_lemmas = functional_correctness
+
+
 (* --------------------------- STATE PROPAGATION ------------------------- *)
 (* Named Theorems for state propagation *)
 named_theorems let_lemmas
-named_theorems imp_let_correct_lemmas
+
+(* named_theorems imp_let_correct_lemmas *)
+(* replaced by let_function_correctness *)
+
 named_theorems state_simps
 named_theorems state_congs
 declare 
@@ -255,7 +267,7 @@ lemma arg_cong4: "\<lbrakk>a1 = a2; b1 = b2; c1 = c2; d1 = d2\<rbrakk> \<Longrig
 (* Unfolding states, definitions to nat level  *)
 method propagate_state_pipeline for p::string uses state_translators =
   ( ((drule AssignD)+, (erule conjE)+)?,
-    unfold List.append.assoc imp_let_correct_lemmas state_simps state_translators,
+    unfold List.append.assoc let_function_correctness state_simps state_translators,
     ( (((rule let_lemmas)+)?,
         (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
            match premises in
@@ -273,7 +285,7 @@ method propagate_state_pipeline for p::string uses state_translators =
 
 method propagate_conclusion_state for p::string uses state_translators =
   ( ((drule AssignD)+, (erule conjE)+)?,
-    unfold List.append.assoc imp_let_correct_lemmas state_simps state_translators,
+    unfold List.append.assoc let_function_correctness state_simps state_translators,
     ( (((rule let_lemmas)+)?,
         (match conclusion in "_ = state (add_prefix p var)" for state var \<Rightarrow> \<open>
            match premises in

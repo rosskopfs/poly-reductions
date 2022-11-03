@@ -21,14 +21,10 @@ subsection \<open>Multiplication\<close>
 
 record mul_state = mul_a::nat mul_b::nat mul_c::nat
 
-named_theorems let_function_correctness
-named_theorems prefix_defs
-lemmas functional_correctness_lemmas = functional_correctness
-
-definition [prefix_defs]: "mul_prefix \<equiv> ''mul.''"
-definition [prefix_defs]:  "mul_a_str \<equiv> ''a''"
-definition [prefix_defs]:  "mul_b_str \<equiv> ''b''"
-definition [prefix_defs]:  "mul_c_str \<equiv> ''c''"
+(*definition [prefix_defs]:*) abbreviation  "mul_prefix \<equiv> ''mul.''"
+(*definition [prefix_defs]:*) abbreviation   "mul_a_str \<equiv> ''a''"
+(*definition [prefix_defs]:*) abbreviation   "mul_b_str \<equiv> ''b''"
+(*definition [prefix_defs]:*) abbreviation   "mul_c_str \<equiv> ''c''"
 
 definition "mul_state_upd s \<equiv>
       let
@@ -153,7 +149,7 @@ lemma mul_IMP_Minus_correct_time:
   apply(erule Seq_tE)+
   apply(erule If_tE)
   by (subst mul_imp_time.simps, fastforce simp add: mul_imp_time_acc mul_imp_to_HOL_state_def
-      mul_state_upd_def)+
+      mul_state_upd_def prefix_defs)+
 
 lemma mul_IMP_Minus_correct_function:
   "(invoke_subprogram p mul_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -168,7 +164,7 @@ lemma mul_IMP_Minus_correct_function:
   apply(erule Seq_tE)+
   apply(erule If_tE)
   by (subst mul_imp.simps mul_imp_time.simps, fastforce simp add: mul_imp_to_HOL_state_def
-      mul_state_upd_def)+
+      mul_state_upd_def prefix_defs)+
 
 lemma mul_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ mul_pref) mul_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -193,9 +189,9 @@ record square_state =
   square_x :: nat
   square_square :: nat
 
-definition [prefix_defs]:  "square_prefix \<equiv> ''square.''"
-definition [prefix_defs]:  "square_x_str \<equiv> ''x''"
-definition [prefix_defs]:  "square_square_str \<equiv> ''square''"
+abbreviation "square_prefix \<equiv> ''square.''"
+abbreviation "square_x_str \<equiv> ''x''"
+abbreviation "square_square_str \<equiv> ''square''"
 
 definition "square_state_upd s \<equiv>
   let
@@ -270,14 +266,17 @@ lemma square_imp_to_HOL_state_add_prefix:
   "square_imp_to_HOL_state (add_prefix p1 p2) s = square_imp_to_HOL_state p2 (s o (add_prefix p1))"
   by (simp only: square_imp_to_HOL_state_def append.assoc[symmetric] comp_def)
 
+declare prefix_defs[simp]
+
 lemma square_IMP_Minus_correct_function:
   "(invoke_subprogram p square_IMP_Minus, s) \<Rightarrow>\<^bsup>t \<^esup> s' \<Longrightarrow>
     s' (add_prefix p square_square_str) = square_square (square_imp (square_imp_to_HOL_state p s))"
-  apply(subst square_imp.simps)
+  apply(subst square_imp.simps prefix_defs)
   apply(simp only: square_IMP_Minus_def prefix_simps)
   apply(vcg "{square_square_str}")
   by (fastforce simp add: mul_imp_to_HOL_state_def square_state_upd_def Let_def
       square_imp_to_HOL_state_def)
+
 
 lemma square_IMP_Minus_correct_time:
   "(invoke_subprogram p square_IMP_Minus, s)
@@ -286,7 +285,9 @@ lemma square_IMP_Minus_correct_time:
   apply(subst square_imp_time.simps)
   apply(simp only: square_IMP_Minus_def prefix_simps)
   apply(vcg_time "{square_square_str}")
-  by(fastforce simp add: mul_imp_to_HOL_state_def prefix_defs square_imp_to_HOL_state_def)
+  by(fastforce simp add: mul_imp_to_HOL_state_def square_imp_to_HOL_state_def)
+  
+declare prefix_defs[simp del]
 
 lemma square_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ square_pref) square_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -315,10 +316,10 @@ record dsqrt'_state =
   dsqrt'_state_L :: nat
   dsqrt'_state_R :: nat
 
-definition [prefix_defs]:  "dsqrt'_pref \<equiv> ''dsqrt'.''"
-definition [prefix_defs]:  "dsqrt'_y_str \<equiv> ''y''"
-definition [prefix_defs]:  "dsqrt'_L_str \<equiv> ''L''"
-definition [prefix_defs]:  "dsqrt'_R_str \<equiv> ''R''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt'_pref \<equiv> ''dsqrt'.''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt'_y_str \<equiv> ''y''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt'_L_str \<equiv> ''L''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt'_R_str \<equiv> ''R''"
 
 definition "dsqrt'_imp_state_upd s = (let
     M = dsqrt'_state_L s + dsqrt'_state_R s;
@@ -508,6 +509,7 @@ lemma dsqrt'_IMP_Minus_correct_function_1:
   subgoal
     apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
     by (auto simp add: dsqrt'_imp_to_HOL_state_def)
+    
 
   subgoal
     apply(subst (asm) (1) dsqrt'_IMP_Minus_while_condition_def)
@@ -654,9 +656,9 @@ record dsqrt_state =
   dsqrt_state_y :: nat
   dsqrt_state_ret :: nat
 
-definition [prefix_defs]:  "dsqrt_prefix \<equiv> ''dsqrt.''"
-definition [prefix_defs]:  "dsqrt_y_str \<equiv> ''y''"
-definition [prefix_defs]:  "dsqrt_ret_str \<equiv> ''ret''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt_prefix \<equiv> ''dsqrt.''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt_y_str \<equiv> ''y''"
+(*definition [prefix_defs]:*) abbreviation   "dsqrt_ret_str \<equiv> ''ret''"
 
 abbreviation
   "dsqrt_IMP_vars \<equiv> {dsqrt_y_str, dsqrt_ret_str}"
@@ -757,13 +759,6 @@ lemma dsqrt_IMP_Minus_correct_time:
   apply(vcg_time dsqrt_IMP_vars)
   by (fastforce simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def
       dsqrt'_imp_to_HOL_state_def prefix_defs)
-  apply(simp only: dsqrt_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply (erule Seq_tE)+
-  apply(all \<open>erule dsqrt'_IMP_Minus_correct[where vars = "dsqrt_IMP_vars"]\<close>) (* Probably do not need this here *)
-   apply simp
-  apply (drule AssignD)+
-  apply (auto simp add: dsqrt_imp_state_upd_def dsqrt_imp_to_HOL_state_def dsqrt'_imp_to_HOL_state_def prefix_defs)
-  done
 
 lemma dsqrt_IMP_Minus_correct_effects:
   "(invoke_subprogram (p @ dsqrt_pref) dsqrt_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -790,9 +785,9 @@ record triangle_state =
   triangle_a::nat
   triangle_triangle::nat
 
-definition [prefix_defs]:  "triangle_prefix \<equiv> ''triangle.''"
-definition [prefix_defs]:  "triangle_a_str \<equiv> ''a''"
-definition [prefix_defs]:  "triangle_triangle_str \<equiv> ''triangle''"
+(*definition [prefix_defs]:*) abbreviation   "triangle_prefix \<equiv> ''triangle.''"
+(*definition [prefix_defs]:*) abbreviation   "triangle_a_str \<equiv> ''a''"
+(*definition [prefix_defs]:*) abbreviation   "triangle_triangle_str \<equiv> ''triangle''"
 
 definition "triangle_state_upd (s::triangle_state) \<equiv>
       let
@@ -908,9 +903,9 @@ subsection \<open>Triangular root\<close>
 
 record tsqrt_state = tsqrt_state_y :: nat tsqrt_state_ret :: nat
 
-definition [prefix_defs]:  "tsqrt_prefix \<equiv> ''tsqrt.''"
-definition [prefix_defs]:  "tsqrt_y_str \<equiv> ''y''"
-definition [prefix_defs]:  "tsqrt_ret_str \<equiv> ''ret''"
+(*definition [prefix_defs]:*) abbreviation   "tsqrt_prefix \<equiv> ''tsqrt.''"
+(*definition [prefix_defs]:*) abbreviation   "tsqrt_y_str \<equiv> ''y''"
+(*definition [prefix_defs]:*) abbreviation   "tsqrt_ret_str \<equiv> ''ret''"
 
 abbreviation
   "tsqrt_IMP_vars \<equiv> {tsqrt_y_str, tsqrt_ret_str}"
@@ -1079,9 +1074,9 @@ subsubsection \<open>fst'\<close>
 
 record fst'_state = fst'_state_p :: nat
 
-definition [prefix_defs]:  "fst'_prefix \<equiv> ''fst'.''"
-definition [prefix_defs]:  "fst'_p_str \<equiv> ''p''"
-definition [prefix_defs]:  "fst'_internal_str \<equiv> ''internal''"
+(*definition [prefix_defs]:*) abbreviation   "fst'_prefix \<equiv> ''fst'.''"
+(*definition [prefix_defs]:*) abbreviation   "fst'_p_str \<equiv> ''p''"
+(*definition [prefix_defs]:*) abbreviation   "fst'_internal_str \<equiv> ''internal''"
 
 abbreviation
   "fst'_IMP_vars \<equiv> {fst'_p_str, fst'_internal_str}"
@@ -1218,8 +1213,8 @@ lemma fst'_IMP_Minus_correct[functional_correctness]:
 subsubsection \<open>snd'\<close>
 
 record snd'_state = snd'_state_p :: nat
-definition [prefix_defs]:  "snd'_prefix \<equiv> ''snd'.''"
-definition [prefix_defs]:  "snd'_p_str \<equiv> ''p''"
+(*definition [prefix_defs]:*) abbreviation   "snd'_prefix \<equiv> ''snd'.''"
+(*definition [prefix_defs]:*) abbreviation   "snd'_p_str \<equiv> ''p''"
 
 abbreviation
   "snd'_IMP_vars \<equiv> {snd'_p_str}"
@@ -1356,10 +1351,10 @@ subsubsection \<open>prod_decode\<close>
 
 record prod_decode_state = prod_decode_state_p :: nat prod_decode_state_fst :: nat prod_decode_state_snd :: nat
 
-definition [prefix_defs]:  "prod_decode_prefix \<equiv> ''prod_decode.''"
-definition [prefix_defs]:  "prod_decode_p_str \<equiv> ''p''"
-definition [prefix_defs]:  "prod_decode_fst_str \<equiv> ''fst''"
-definition [prefix_defs]:  "prod_decode_snd_str \<equiv> ''snd''"
+(*definition [prefix_defs]:*) abbreviation   "prod_decode_prefix \<equiv> ''prod_decode.''"
+(*definition [prefix_defs]:*) abbreviation   "prod_decode_p_str \<equiv> ''p''"
+(*definition [prefix_defs]:*) abbreviation   "prod_decode_fst_str \<equiv> ''fst''"
+(*definition [prefix_defs]:*) abbreviation   "prod_decode_snd_str \<equiv> ''snd''"
 
 abbreviation
   "prod_decode_IMP_vars \<equiv> {prod_decode_p_str, prod_decode_fst_str, prod_decode_snd_str}"
@@ -1396,7 +1391,7 @@ declare
   arg_cong[where f=prod_decode_imp, state_congs]
   prod_decode_state.simps[state_simps]
 
-lemma prod_decode_imp_correct'[imp_let_correct_lemmas]:
+lemma prod_decode_imp_correct'[let_function_correctness]:
   "prod_decode_state_fst (prod_decode_imp s) = fst'_nat (prod_decode_state_p s)"
   "prod_decode_state_snd (prod_decode_imp s) = snd'_nat (prod_decode_state_p s)"
   by (all \<open>subst prod_decode_imp.simps\<close>) (auto simp: fst'_imp_correct snd'_imp_correct
@@ -1511,10 +1506,10 @@ subsubsection \<open>prod_encode\<close>
 
 record prod_encode_state = prod_encode_a::nat prod_encode_b::nat prod_encode_ret::nat
 
-definition [prefix_defs]:  "prod_encode_prefix \<equiv> ''prod_encode.''"
-definition [prefix_defs]:  "prod_encode_a_str \<equiv> ''a''"
-definition [prefix_defs]:  "prod_encode_b_str \<equiv> ''b''"
-definition [prefix_defs]:  "prod_encode_ret_str \<equiv> ''prod_encode_ret''"
+(*definition [prefix_defs]:*) abbreviation   "prod_encode_prefix \<equiv> ''prod_encode.''"
+(*definition [prefix_defs]:*) abbreviation   "prod_encode_a_str \<equiv> ''a''"
+(*definition [prefix_defs]:*) abbreviation   "prod_encode_b_str \<equiv> ''b''"
+(*definition [prefix_defs]:*) abbreviation   "prod_encode_ret_str \<equiv> ''prod_encode_ret''"
 
 definition "prod_encode_state_upd (s::prod_encode_state) \<equiv>
       let
@@ -1631,9 +1626,9 @@ subsubsection \<open>hd\<close>
 
 record hd_state = hd_xs::nat hd_ret::nat
 
-definition [prefix_defs]:  "hd_prefix \<equiv> ''hd.''"
-definition [prefix_defs]:  "hd_xs_str \<equiv> ''xs''"
-definition [prefix_defs]:  "hd_ret_str \<equiv> ''hd_ret''"
+(*definition [prefix_defs]:*) abbreviation   "hd_prefix \<equiv> ''hd.''"
+(*definition [prefix_defs]:*) abbreviation   "hd_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "hd_ret_str \<equiv> ''hd_ret''"
 
 term prod_decode_state_p
 definition "hd_state_upd s \<equiv>
@@ -1757,9 +1752,9 @@ subsubsection \<open>tl\<close>
 
 record tl_state = tl_xs::nat tl_ret::nat
 
-definition [prefix_defs]:  "tl_prefix \<equiv> ''tl.''"
-definition [prefix_defs]:  "tl_xs_str \<equiv> ''xs''"
-definition [prefix_defs]:  "tl_ret_str \<equiv> ''tl_ret''"
+(*definition [prefix_defs]:*) abbreviation   "tl_prefix \<equiv> ''tl.''"
+(*definition [prefix_defs]:*) abbreviation   "tl_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "tl_ret_str \<equiv> ''tl_ret''"
 
 definition "tl_state_upd s \<equiv>
       let
@@ -1883,9 +1878,9 @@ subsubsection \<open>length\<close>
 
 record length_state = length_xs::nat length_ret::nat
 
-definition [prefix_defs]:  "length_prefix \<equiv> ''length.''"
-definition [prefix_defs]:  "length_xs_str \<equiv> ''xs''"
-definition [prefix_defs]:  "length_ret_str \<equiv> ''length_ret''"
+(*definition [prefix_defs]:*) abbreviation   "length_prefix \<equiv> ''length.''"
+(*definition [prefix_defs]:*) abbreviation   "length_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "length_ret_str \<equiv> ''length_ret''"
 
 definition "length_state_upd s \<equiv>
       let
@@ -2076,9 +2071,9 @@ subsubsection \<open>length'\<close> (* wrapper for length *)
 
 record length'_state = length'_xs::nat length'_ret::nat
 
-abbreviation "length'_prefix \<equiv> ''length'.''"
-abbreviation "length'_xs_str \<equiv> ''xs''"
-abbreviation "length'_ret_str \<equiv> ''length'_ret''"
+(*definition [prefix_defs]:*) abbreviation "length'_prefix \<equiv> ''length'.''"
+(*definition [prefix_defs]:*) abbreviation "length'_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation "length'_ret_str \<equiv> ''length'_ret''"
 
 function length'_imp:: "length'_state \<Rightarrow> length'_state" where
   "length'_imp s =
@@ -2107,7 +2102,7 @@ declare
   arg_cong[where f=length'_imp, state_congs]
   length'_state.simps[state_simps]
 
-lemma length'_imp_correct[imp_let_correct_lemmas]:
+lemma length'_imp_correct[let_function_correctness]:
   "length'_ret (length'_imp s)  = length_nat (length'_xs s)"
   by (metis length'_imp.elims length'_state.select_convs(2)
       length_imp_correct2 length_state.select_convs(1) length_state.select_convs(2))
@@ -2224,10 +2219,10 @@ subsubsection \<open>cons\<close>
 
 record cons_state = cons_h::nat cons_t::nat cons_ret::nat
 
-definition [prefix_defs]:  "cons_prefix \<equiv> ''cons.''"
-definition [prefix_defs]:  "cons_h_str \<equiv> ''h''"
-definition [prefix_defs]:  "cons_t_str \<equiv> ''t''"
-definition [prefix_defs]:  "cons_ret_str \<equiv> ''cons_ret''"
+(*definition [prefix_defs]:*) abbreviation   "cons_prefix \<equiv> ''cons.''"
+(*definition [prefix_defs]:*) abbreviation   "cons_h_str \<equiv> ''h''"
+(*definition [prefix_defs]:*) abbreviation   "cons_t_str \<equiv> ''t''"
+(*definition [prefix_defs]:*) abbreviation   "cons_ret_str \<equiv> ''cons_ret''"
 
 definition "cons_state_upd s \<equiv>
       let
@@ -2418,7 +2413,7 @@ termination by (relation "measure (\<lambda>s. reverse_nat_acc_n s)")
 
 declare reverse_nat_acc_imp.simps [simp del]
 
-lemma reverse_nat_acc_imp_correct[imp_let_correct_lemmas]:
+lemma reverse_nat_acc_imp_correct[let_function_correctness]:
   "reverse_nat_acc_ret (reverse_nat_acc_imp s)
     = reverse_nat_acc (reverse_nat_acc_acc s) (reverse_nat_acc_n s)"
   by(induction s rule: reverse_nat_acc_imp.induct)
@@ -2748,7 +2743,7 @@ termination
 
 lemmas [simp del] = reverse_nat_imp.simps
 
-lemma reverse_nat_imp_correct[imp_let_correct_lemmas]:
+lemma reverse_nat_imp_correct[let_function_correctness]:
   "reverse_nat_ret (reverse_nat_imp s) = reverse_nat (reverse_nat_n s)"
   by (simp add: reverse_nat_imp.simps reverse_nat_acc_imp_correct reverse_nat_def Let_def
       reverse_nat_state_upd_def)
@@ -2855,9 +2850,9 @@ record append_state =
   append_acc::nat
   append_xs::nat
 
-definition [prefix_defs]:  "append_prefix \<equiv> ''append.''"
-definition [prefix_defs]:  "append_acc_str \<equiv> ''acc''"
-definition [prefix_defs]:  "append_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "append_prefix \<equiv> ''append.''"
+(*definition [prefix_defs]:*) abbreviation   "append_acc_str \<equiv> ''acc''"
+(*definition [prefix_defs]:*) abbreviation   "append_xs_str \<equiv> ''xs''"
 
 definition "append_state_upd s \<equiv>
       let
@@ -3133,7 +3128,7 @@ termination
 
 lemmas [simp del] = append_nat_imp.simps
 
-lemma append_nat_imp_correct[imp_let_correct_lemmas]:
+lemma append_nat_imp_correct[let_function_correctness]:
   "append_nat_ret (append_nat_imp s) = append_nat (append_nat_xs s) (append_nat_ys s)"
   by (simp add: append_nat_imp.simps reverse_nat_imp_correct append_imp_correct Let_def
       append_nat_state_upd_def append_nat_rev_acc)
@@ -3269,10 +3264,10 @@ subsubsection \<open>Logical And\<close>
 
 record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
 
-definition [prefix_defs]:  "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
-definition [prefix_defs]:  "AND_neq_zero_a_str \<equiv> ''AND_a''"
-definition [prefix_defs]:  "AND_neq_zero_b_str \<equiv> ''AND_b''"
-definition [prefix_defs]:  "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_a_str \<equiv> ''AND_a''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_b_str \<equiv> ''AND_b''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
 
 definition "AND_neq_zero_state_upd s \<equiv>
       let
@@ -3438,10 +3433,10 @@ subsubsection \<open>Logical Or\<close>
 
 record OR_neq_zero_state = OR_neq_zero_a::nat OR_neq_zero_b::nat OR_neq_zero_ret::nat
 
-definition [prefix_defs]:  "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
-definition [prefix_defs]:  "OR_neq_zero_a_str \<equiv> ''OR_a''"
-definition [prefix_defs]:  "OR_neq_zero_b_str \<equiv> ''OR_b''"
-definition [prefix_defs]:  "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_a_str \<equiv> ''OR_a''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_b_str \<equiv> ''OR_b''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
 
 definition "OR_neq_zero_state_upd s \<equiv>
       let
@@ -3636,7 +3631,7 @@ declare EQUAL_neq_zero_imp.simps [simp del]
 declare
   EQUAL_neq_zero_state.simps[state_simps]
 
-lemma EQUAL_neq_zero_imp_correct[imp_let_correct_lemmas]:
+lemma EQUAL_neq_zero_imp_correct[let_function_correctness]:
   "EQUAL_neq_zero_ret (EQUAL_neq_zero_imp s) =
     (if (EQUAL_neq_zero_a s) = (EQUAL_neq_zero_b s) then 1 else 0)"
   by (simp add: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_state_upd_def)
@@ -3753,7 +3748,7 @@ fun NOTEQUAL_neq_zero_imp:: "NOTEQUAL_neq_zero_state \<Rightarrow> NOTEQUAL_neq_
 
 declare NOTEQUAL_neq_zero_imp.simps [simp del]
 
-lemma NOTEQUAL_neq_zero_imp_correct[imp_let_correct_lemmas]:
+lemma NOTEQUAL_neq_zero_imp_correct[let_function_correctness]:
   "NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp s) =
     (if (NOTEQUAL_neq_zero_a s) \<noteq> (NOTEQUAL_neq_zero_b s) then 1 else 0)"
   by (simp add: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_state_upd_def)

@@ -141,7 +141,7 @@ termination
 
 declare map_var_bit_to_var_acc_imp.simps [simp del]
 
-lemma map_var_bit_to_var_acc_imp_correct[imp_let_correct_lemmas]:
+lemma map_var_bit_to_var_acc_imp_correct[let_function_correctness]:
   "map_var_bit_to_var_acc_ret (map_var_bit_to_var_acc_imp s) =
     map_var_bit_to_var_acc' (map_var_bit_to_var_acc_acc s) 
   (map_var_bit_to_var_acc_v s) (map_var_bit_to_var_acc_n s)"

@@ -132,7 +132,7 @@ declare
   arg_cong[where f=nth_bit_of_num_ret, state_congs]
   arg_cong[where f=nth_bit_of_num_imp, state_congs]
 
-lemma nth_bit_of_num_imp_correct[imp_let_correct_lemmas]:
+lemma nth_bit_of_num_imp_correct[let_function_correctness]:
   "nth_bit_of_num_ret (nth_bit_of_num_imp s) =
     nth_bit_of_num_nat (nth_bit_of_num_x s) (nth_bit_of_num_n s)"
   apply (induction s rule: nth_bit_of_num_imp.induct)
@@ -587,7 +587,7 @@ declare
   arg_cong2[where f=nth_bit_tail', let_lemmas]
   nth_bit_tail_state.simps[state_simps]
 
-lemma nth_bit_tail_imp_correct[imp_let_correct_lemmas]:
+lemma nth_bit_tail_imp_correct[let_function_correctness]:
   "nth_bit_tail_ret (nth_bit_tail_imp s) =
     nth_bit_tail' (nth_bit_tail_acc s) (nth_bit_tail_n s)"
   apply (induction s rule: nth_bit_tail_imp.induct)
