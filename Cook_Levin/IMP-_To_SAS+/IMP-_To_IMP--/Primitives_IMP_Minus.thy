@@ -3258,6 +3258,392 @@ lemma append_nat_IMP_Minus_correct[functional_correctness]:
   by (meson set_mono_prefix)
 
 
+subsubsection \<open>list_from_acc\<close>
+
+(*
+fun list_from_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
+"list_from_acc acc s n = (if n = 0 then acc else list_from_acc (s ## acc) (s+1) (n-1) )  "
+*)
+
+record list_from_acc_state =
+  list_from_acc_acc::nat
+  list_from_acc_s::nat
+  list_from_acc_n::nat
+  list_from_acc_ret::nat
+
+abbreviation "list_from_acc_prefix \<equiv> ''list_from_acc.''"
+abbreviation "list_from_acc_acc_str \<equiv> ''acc''"
+abbreviation "list_from_acc_s_str \<equiv> ''s''"
+abbreviation "list_from_acc_n_str \<equiv> ''n''"
+abbreviation "list_from_acc_ret_str \<equiv> ''ret''"
+
+definition "list_from_acc_state_upd s \<equiv>
+  (let
+      cons_h' = list_from_acc_s s;
+      cons_t' = list_from_acc_acc s;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      list_from_acc_s' = list_from_acc_s s + 1;
+      list_from_acc_n' = list_from_acc_n s - 1;
+      list_from_acc_acc' = cons_ret cons_ret_state;
+      list_from_acc_ret' = 0;
+      ret = \<lparr>list_from_acc_acc = list_from_acc_acc',
+              list_from_acc_s = list_from_acc_s',
+             list_from_acc_n = list_from_acc_n',
+             list_from_acc_ret = list_from_acc_ret' \<rparr>
+    in
+      ret
+)"
+
+definition "list_from_acc_imp_compute_loop_condition s \<equiv>
+  (let
+    condition = list_from_acc_n s
+   in condition
+  )"
+
+definition "list_from_acc_imp_after_loop s \<equiv>
+  (let
+    ret = \<lparr>list_from_acc_acc = list_from_acc_acc s,
+           list_from_acc_s = list_from_acc_s s,
+           list_from_acc_n = list_from_acc_n s,
+          list_from_acc_ret = list_from_acc_acc s\<rparr>
+   in ret
+  )"
+
+lemmas list_from_acc_imp_subprogram_simps =
+  list_from_acc_imp_after_loop_def
+  list_from_acc_state_upd_def
+  list_from_acc_imp_compute_loop_condition_def
+
+function list_from_acc_imp:: "list_from_acc_state \<Rightarrow> list_from_acc_state" where
+  "list_from_acc_imp s =
+  (if list_from_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let next_iteration = list_from_acc_imp (list_from_acc_state_upd s)
+      in
+        next_iteration)
+    else 
+      (let ret = list_from_acc_imp_after_loop s in ret)
+    )"
+  by simp+
+termination
+  apply (relation "measure (\<lambda>s. list_from_acc_n s)")
+  by (auto simp add: list_from_acc_imp_subprogram_simps)
+
+declare list_from_acc_imp.simps [simp del]
+
+lemma list_from_acc_imp_correct[let_function_correctness]:
+  "list_from_acc_ret (list_from_acc_imp s) =
+   list_from_acc (list_from_acc_acc s) (list_from_acc_s s) (list_from_acc_n s)"
+  apply(induction s rule: list_from_acc_imp.induct)
+  by (simp add: cons_imp_correct list_from_acc_imp_subprogram_simps list_from_acc_imp.simps)
+
+definition "list_from_acc_state_upd_time t s \<equiv> (
+  let
+      cons_h' = list_from_acc_s s;
+    t = t + 2;
+      cons_t' = list_from_acc_acc s;
+    t = t + 2;
+      cons_ret' = 0;
+    t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+      list_from_acc_s' = list_from_acc_s s + 1;
+    t = t + 2;
+      list_from_acc_n' = list_from_acc_n s - 1;
+    t = t + 2;
+      list_from_acc_acc' = cons_ret cons_ret_state;
+    t = t + 2;
+      list_from_acc_ret' = 0;
+    t = t + 2;
+      ret = \<lparr>list_from_acc_acc = list_from_acc_acc',
+              list_from_acc_s = list_from_acc_s',
+             list_from_acc_n = list_from_acc_n',
+             list_from_acc_ret = list_from_acc_ret' \<rparr>;
+    t = t + 2
+    in
+    t
+)"
+
+    
+definition "list_from_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+    condition = list_from_acc_n s;
+    t = t + 2
+  in
+    t)
+"
+
+definition "list_from_acc_imp_after_loop_time t s \<equiv>
+  let
+    ret = \<lparr>list_from_acc_acc = list_from_acc_acc s,
+           list_from_acc_s = list_from_acc_s s,
+           list_from_acc_n = list_from_acc_n s,
+          list_from_acc_ret = list_from_acc_acc s\<rparr>
+  in
+    t
+"
+
+lemmas list_from_acc_imp_subprogram_time_simps = 
+  list_from_acc_state_upd_time_def
+  list_from_acc_imp_compute_loop_condition_time_def
+  list_from_acc_imp_after_loop_time_def
+  list_from_acc_imp_subprogram_simps
+
+function list_from_acc_imp_time::
+  "nat \<Rightarrow> list_from_acc_state \<Rightarrow> nat" where
+  "list_from_acc_imp_time t s =
+  list_from_acc_imp_compute_loop_condition_time 0 s +
+  (if list_from_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          list_from_acc_imp_time (t + list_from_acc_state_upd_time 0 s)
+                         (list_from_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + list_from_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (\<lambda>(t, s). list_from_acc_n s)")
+  by (simp add: list_from_acc_imp_subprogram_time_simps)+
+
+declare list_from_acc_imp_time.simps [simp del]            
+
+lemma list_from_acc_imp_time_acc:
+  "(list_from_acc_imp_time (Suc t) s) = Suc (list_from_acc_imp_time t s)"
+  by (induction t s rule: list_from_acc_imp_time.induct)
+    ((subst (1 2) list_from_acc_imp_time.simps);
+      (simp add: list_from_acc_state_upd_def))            
+
+lemma list_from_acc_imp_time_acc_2_aux:
+  "(list_from_acc_imp_time t s) = t + (list_from_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: list_from_acc_imp_time_acc)+            
+
+lemma list_from_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (list_from_acc_imp_time t s) = t + (list_from_acc_imp_time 0 s)"
+  by (rule list_from_acc_imp_time_acc_2_aux)            
+
+lemma list_from_acc_imp_time_acc_3:
+  "(list_from_acc_imp_time (a + b) s) = a + (list_from_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: list_from_acc_imp_time_acc)+            
+
+abbreviation "list_from_acc_while_cond \<equiv> ''condition''"
+
+definition "list_from_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = list_from_acc_n s\<close>
+  list_from_acc_while_cond ::= A (V list_from_acc_n_str)
+"
+
+definition "list_from_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  cons_h' = list_from_acc_s s;\<close>
+  (cons_prefix @ cons_h_str) ::= A (V list_from_acc_s_str);;
+  \<comment> \<open>  cons_t' = list_from_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= A (V list_from_acc_acc_str);;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  list_from_acc_s' = list_from_acc_s s + 1;\<close>
+  list_from_acc_s_str ::= Plus (V list_from_acc_s_str) (N 1);;
+  \<comment> \<open>  list_from_acc_n' = list_from_acc_n s - 1;\<close>
+  list_from_acc_n_str ::= Sub (V list_from_acc_n_str) (N 1);;
+  \<comment> \<open>  list_from_acc_acc' = cons_ret cons_ret_state;\<close>
+  list_from_acc_acc_str ::= A (V (cons_prefix @ cons_ret_str));;
+  \<comment> \<open>  list_from_acc_ret' = 0;\<close>
+  list_from_acc_ret_str ::= A (N 0)
+  \<comment> \<open>  ret = \<lparr>list_from_acc_acc = list_from_acc_acc',\<close>
+  \<comment> \<open>          list_from_acc_s = list_from_acc_s',\<close>
+  \<comment> \<open>         list_from_acc_n = list_from_acc_n',\<close>
+  \<comment> \<open>         list_from_acc_ret = list_from_acc_ret' \<rparr>\<close>
+"
+
+definition "list_from_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>ret = \<lparr>list_from_acc_acc = list_from_acc_acc s,\<close>
+  \<comment> \<open>       list_from_acc_s = list_from_acc_s s,\<close>
+  \<comment> \<open>       list_from_acc_n = list_from_acc_n s,\<close>
+  \<comment> \<open>      list_from_acc_ret = list_from_acc_acc s\<rparr>\<close>
+  list_from_acc_ret_str ::= A (V (list_from_acc_acc_str))
+"
+
+definition list_from_acc_IMP_Minus where
+  "list_from_acc_IMP_Minus \<equiv>
+  list_from_acc_IMP_init_while_cond;;
+  WHILE list_from_acc_while_cond \<noteq>0 DO (
+    list_from_acc_IMP_loop_body;;
+    list_from_acc_IMP_init_while_cond
+  );;
+  list_from_acc_IMP_after_loop"
+
+abbreviation "list_from_acc_IMP_vars\<equiv>
+  {list_from_acc_while_cond, list_from_acc_s_str, list_from_acc_n_str,
+  list_from_acc_acc_str, list_from_acc_ret_str}"
+
+lemmas list_from_acc_IMP_subprogram_simps =
+  list_from_acc_IMP_init_while_cond_def
+  list_from_acc_IMP_loop_body_def
+  list_from_acc_IMP_after_loop_def
+
+definition "list_from_acc_imp_to_HOL_state p s =
+  \<lparr>list_from_acc_acc = (s (add_prefix p list_from_acc_acc_str)),
+   list_from_acc_s = (s (add_prefix p list_from_acc_s_str)),
+   list_from_acc_n = (s (add_prefix p list_from_acc_n_str)),
+   list_from_acc_ret = (s (add_prefix p list_from_acc_ret_str))\<rparr>"
+
+lemmas list_from_acc_state_translators =
+  list_from_acc_imp_to_HOL_state_def
+
+lemmas list_from_acc_complete_simps =
+  list_from_acc_IMP_subprogram_simps
+  list_from_acc_imp_subprogram_simps
+  list_from_acc_state_translators
+
+lemma list_from_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p list_from_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p list_from_acc_ret_str)
+      = list_from_acc_ret
+          (list_from_acc_imp (list_from_acc_imp_to_HOL_state p s))"
+  apply(induction "list_from_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: list_from_acc_imp.induct)
+  apply(subst list_from_acc_imp.simps)
+  apply(simp only: list_from_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: list_from_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: list_from_acc_IMP_subprogram_simps
+        list_from_acc_imp_subprogram_simps
+        list_from_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: list_from_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: list_from_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) list_from_acc_IMP_init_while_cond_def)
+      apply(simp only: list_from_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
+    subgoal premises p using p(13) by fastforce
+      apply (simp only: list_from_acc_imp_subprogram_simps list_from_acc_IMP_subprogram_simps
+          list_from_acc_state_translators Let_def cons_imp_correct list_from_acc_state.simps
+          cons_state.simps prefix_simps cons_imp_to_HOL_state_def)
+    by force
+
+  subgoal
+      apply(simp only: list_from_acc_IMP_init_while_cond_def prefix_simps
+          list_from_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
+      subgoal premises p using p(13) by fastforce
+      apply (simp only:  list_from_acc_state.simps
+          list_from_acc_state_translators Let_def cons_imp_to_HOL_state_def 
+           cons_state.simps cons_imp_correct list_from_acc_imp_subprogram_simps)
+      apply (clarsimp)
+      subgoal premises p using p(4)
+        by (smt (z3) fun_upd_other list.discI remove_nth.simps(2) same_append_eq)
+      done        
+done
+
+lemma list_from_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ list_from_acc_pref) list_from_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix list_from_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas list_from_acc_complete_time_simps =
+  list_from_acc_imp_subprogram_time_simps
+  list_from_acc_imp_time_acc
+  list_from_acc_imp_time_acc_2
+  list_from_acc_imp_time_acc_3
+  list_from_acc_state_translators
+
+lemma list_from_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p list_from_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = list_from_acc_imp_time 0 (list_from_acc_imp_to_HOL_state p s)"
+  apply(induction "list_from_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: list_from_acc_imp.induct)
+  apply(subst list_from_acc_imp_time.simps)
+  apply(simp only: list_from_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    sorry
+    (*
+    apply(simp only: list_from_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule <?>_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
+    subgoal premises p using p(999) by fastforce
+    by (force simp: list_from_acc_IMP_subprogram_simps
+        list_from_acc_imp_subprogram_time_simps list_from_acc_state_translators)
+    *)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: list_from_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: list_from_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) list_from_acc_IMP_init_while_cond_def)
+    apply(simp only: list_from_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
+    subgoal premises p using p(23) by fastforce
+    apply (simp only: list_from_acc_imp_subprogram_time_simps
+          list_from_acc_state_translators Let_def cons_imp_correct list_from_acc_state.simps
+          cons_state.simps prefix_simps cons_imp_to_HOL_state_def )
+    apply (clarsimp)
+    subgoal premises p using p(9)
+      by (smt (z3) fun_upd_other list.simps(3) p(10) remove_nth.simps(2) same_append_eq)
+    done
+
+  
+  subgoal
+    apply(simp only: prefix_simps list_from_acc_IMP_init_while_cond_def
+        list_from_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
+    subgoal premises p using p(23) by fastforce
+    apply(simp only: list_from_acc_complete_time_simps Let_def)
+    sorry
+    (* by force *)
+  
+
+  done        
+
+lemma list_from_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) list_from_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (list_from_acc_imp_time 0 (list_from_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) list_from_acc_ret_str) =
+          list_from_acc_ret (list_from_acc_imp
+                                        (list_from_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using list_from_acc_IMP_Minus_correct_function
+  by (auto simp: list_from_acc_IMP_Minus_correct_time)
+
+
+
+
 subsection \<open>Logic\<close>
 
 subsubsection \<open>Logical And\<close>
