@@ -3361,8 +3361,7 @@ definition "list_from_acc_state_upd_time t s \<equiv> (
       ret = \<lparr>list_from_acc_acc = list_from_acc_acc',
               list_from_acc_s = list_from_acc_s',
              list_from_acc_n = list_from_acc_n',
-             list_from_acc_ret = list_from_acc_ret' \<rparr>;
-    t = t + 2
+             list_from_acc_ret = list_from_acc_ret' \<rparr>
     in
     t
 )"
@@ -3381,7 +3380,8 @@ definition "list_from_acc_imp_after_loop_time t s \<equiv>
     ret = \<lparr>list_from_acc_acc = list_from_acc_acc s,
            list_from_acc_s = list_from_acc_s s,
            list_from_acc_n = list_from_acc_n s,
-          list_from_acc_ret = list_from_acc_acc s\<rparr>
+          list_from_acc_ret = list_from_acc_acc s\<rparr>;
+    t = t + 2
   in
     t
 "
@@ -3583,7 +3583,12 @@ lemma list_from_acc_IMP_Minus_correct_time:
   apply(erule While_tE_time)
 
   subgoal
-    sorry
+    apply(simp only: list_from_acc_IMP_subprogram_simps prefix_simps
+    list_from_acc_complete_time_simps Let_def cons_imp_correct
+             list_from_acc_state.simps cons_state.simps cons_IMP_Minus_correct_time)
+    by(clarsimp)
+    (* by(fastforce simp add: list_from_acc_complete_time_simps) *)
+    
     (*
     apply(simp only: list_from_acc_IMP_subprogram_simps prefix_simps)
     apply(erule Seq_tE)+
@@ -3622,10 +3627,14 @@ lemma list_from_acc_IMP_Minus_correct_time:
     apply(erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
     subgoal premises p using p(23) by fastforce
-    apply(simp only: list_from_acc_complete_time_simps Let_def)
-    sorry
-    (* by force *)
-  
+    apply(simp only: list_from_acc_complete_time_simps Let_def 
+           cons_imp_correct list_from_acc_state.simps
+          cons_state.simps prefix_simps cons_imp_to_HOL_state_def 
+          cons_IMP_Minus_correct_time)
+    apply(clarsimp)
+    subgoal premises p using p(9)[of list_from_acc_n_str] p(9)[of list_from_acc_s_str]
+      by fastforce
+    done
 
   done        
 
@@ -3638,8 +3647,10 @@ lemma list_from_acc_IMP_Minus_correct:
                                         (list_from_acc_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using list_from_acc_IMP_Minus_correct_function
-  by (auto simp: list_from_acc_IMP_Minus_correct_time)
+  using list_from_acc_IMP_Minus_correct_function list_from_acc_IMP_Minus_correct_effects
+    list_from_acc_IMP_Minus_correct_time
+  by (meson set_mono_prefix)
+  (* by (auto simp: list_from_acc_IMP_Minus_correct_time) *)
 
 
 
