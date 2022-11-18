@@ -3260,11 +3260,6 @@ lemma append_nat_IMP_Minus_correct[functional_correctness]:
 
 subsubsection \<open>list_from_acc\<close>
 
-(*
-fun list_from_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"list_from_acc acc s n = (if n = 0 then acc else list_from_acc (s ## acc) (s+1) (n-1) )  "
-*)
-
 record list_from_acc_state =
   list_from_acc_acc::nat
   list_from_acc_s::nat
@@ -3587,16 +3582,6 @@ lemma list_from_acc_IMP_Minus_correct_time:
     list_from_acc_complete_time_simps Let_def cons_imp_correct
              list_from_acc_state.simps cons_state.simps cons_IMP_Minus_correct_time)
     by(clarsimp)
-    (* by(fastforce simp add: list_from_acc_complete_time_simps) *)
-    
-    (*
-    apply(simp only: list_from_acc_IMP_subprogram_simps prefix_simps)
-    apply(erule Seq_tE)+
-    apply(erule <?>_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
-    subgoal premises p using p(999) by fastforce
-    by (force simp: list_from_acc_IMP_subprogram_simps
-        list_from_acc_imp_subprogram_time_simps list_from_acc_state_translators)
-    *)
 
   apply(erule Seq_tE)+
   apply(simp add: add.assoc)
@@ -3650,7 +3635,6 @@ lemma list_from_acc_IMP_Minus_correct:
   using list_from_acc_IMP_Minus_correct_function list_from_acc_IMP_Minus_correct_effects
     list_from_acc_IMP_Minus_correct_time
   by (meson set_mono_prefix)
-  (* by (auto simp: list_from_acc_IMP_Minus_correct_time) *)
 
 
 
