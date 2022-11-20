@@ -3258,7 +3258,9 @@ lemma append_nat_IMP_Minus_correct[functional_correctness]:
   by (meson set_mono_prefix)
 
 
-subsubsection \<open>list_from_acc\<close>
+subsubsection \<open>list_from\<close>
+
+paragraph \<open>list_from_acc\<close>
 
 record list_from_acc_state =
   list_from_acc_acc::nat
@@ -3637,12 +3639,7 @@ lemma list_from_acc_IMP_Minus_correct:
   by (meson set_mono_prefix)
 
 
-(* TODO proper sections *)
-
-(* 
-definition list_from_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"list_from_tail s n = reverse_nat (list_from_acc 0 s n)"
-*)
+paragraph \<open>list_from_tail\<close>
 
 record list_from_tail_state =
   list_from_tail_s::nat
@@ -3730,7 +3727,10 @@ function list_from_tail_imp_time:: "nat \<Rightarrow> list_from_tail_state \<Rig
       list_from_tail_n' = list_from_tail_n s;
       t = t + 2;
       list_from_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
-      t = t + 2
+      t = t + 2;
+      ret = \<lparr>list_from_tail_s = list_from_tail_s',
+             list_from_tail_n = list_from_tail_n',
+             list_from_tail_ret = list_from_tail_ret'\<rparr>
     in
       t
   )"
