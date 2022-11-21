@@ -3854,11 +3854,6 @@ subsubsection \<open>list_less\<close>
 
 paragraph \<open>list_less_tail\<close>
 
-(*
-definition list_less_tail :: "nat \<Rightarrow> nat" where
-"list_less_tail n = list_from_tail 0 n"
-*)
-
 record list_less_tail_state =
   list_less_tail_n::nat
   list_less_tail_ret::nat
