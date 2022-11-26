@@ -3291,6 +3291,7 @@ definition "list_from_acc_state_upd s \<equiv>
              list_from_acc_ret = list_from_acc_ret' \<rparr>
     in
       ret
+      
 )"
 
 definition "list_from_acc_imp_compute_loop_condition s \<equiv>
@@ -3849,6 +3850,25 @@ lemma list_from_tail_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using list_from_tail_IMP_Minus_correct_function list_from_tail_IMP_Minus_correct_time
   by (meson list_from_tail_IMP_Minus_correct_effects set_mono_prefix)
+
+paragraph \<open>concat_acc\<close>
+record concat_acc_state =
+  concat_acc_acc::nat
+  concat_acc_n::nat
+  concat_acc_ret::nat
+
+abbreviation "concat_acc_prefix \<equiv> ''concat_acc.''"
+abbreviation "concat_acc_acc_str \<equiv> ''acc''"
+abbreviation "concat_acc_n_str \<equiv> ''n''"
+abbreviation "concat_acc_ret_str \<equiv> ''ret''"
+
+definition "concat_acc_state_upd s \<equiv>
+  (let
+      concat_acc_acc' = tl_nat  (concat_acc_acc s);
+      ret = s
+    in
+      ret
+)"
 
 
 
