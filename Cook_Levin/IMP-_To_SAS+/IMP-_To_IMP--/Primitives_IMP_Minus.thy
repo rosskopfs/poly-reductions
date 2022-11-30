@@ -4599,4 +4599,539 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
   by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
     (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
 
+
+subsection \<open>Lists, continued\<close>
+
+subsubsection \<open>elemof\<close>
+
+(*
+fun elemof :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
+"elemof e l = (if l = 0 then 0 else if hd_nat l = e then 1 else elemof e (tl_nat l))"
+*)
+
+fun elemof' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+"elemof' e l = 
+  (if l \<noteq> 0 \<and> hd_nat l \<noteq> e
+  then elemof' e (tl_nat l)
+  else (if l \<noteq> 0
+       then 1
+       else 0)
+  )"
+
+lemma elemof'_correct: "elemof' e l = elemof e l"
+  by (induction e l rule: elemof.induct) simp
+
+record elemof_state =
+  elemof_e::nat
+  elemof_l::nat
+  elemof_ret::nat
+
+abbreviation "elemof_prefix \<equiv> ''elemof.''"
+abbreviation "elemof_e_str \<equiv> ''e''"
+abbreviation "elemof_l_str \<equiv> ''l''"
+abbreviation "elemof_ret_str \<equiv> ''ret''"
+
+definition "elemof_state_upd s \<equiv>
+  (let
+      tl_xs' = elemof_l s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      elemof_l' = tl_ret tl_ret_state;
+      elemof_e' = elemof_e s;
+      elemof_ret' = elemof_ret s;
+      ret = \<lparr>elemof_e = elemof_e',
+             elemof_l = elemof_l',
+             elemof_ret = elemof_ret'\<rparr>
+  in
+      ret
+)"
+
+definition "elemof_imp_compute_loop_condition s \<equiv>
+  (let
+      hd_xs' = elemof_l s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', 
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      NOTEQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      NOTEQUAL_neq_zero_b' = elemof_e s;
+      NOTEQUAL_neq_zero_ret' = 0;
+      NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                                 NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                                 NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+      NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+      AND_neq_zero_a' = elemof_l s;
+      AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+      AND_neq_zero_ret' = 0;
+      AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                            AND_neq_zero_b = AND_neq_zero_b',
+                            AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+      AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+      condition = AND_neq_zero_ret AND_neq_zero_ret_state
+   in
+      condition
+)"
+
+definition "elemof_imp_after_loop s \<equiv>
+  (let
+      elemof_e' = elemof_e s;
+      elemof_l' = elemof_l s;
+      elemof_ret' = 
+        (if elemof_l' \<noteq> 0
+        then 1
+        else 0);
+      ret = \<lparr>elemof_e = elemof_e',
+             elemof_l = elemof_l',
+             elemof_ret = elemof_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas elemof_imp_subprogram_simps = 
+  elemof_state_upd_def
+  elemof_imp_compute_loop_condition_def
+  elemof_imp_after_loop_def
+
+function elemof_imp :: "elemof_state \<Rightarrow> elemof_state" where
+  "elemof_imp s =
+  (if elemof_imp_compute_loop_condition s \<noteq> 0
+  then let next_iteration = elemof_imp (elemof_state_upd s)
+       in next_iteration
+  else let ret = elemof_imp_after_loop s
+       in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure elemof_l")
+  apply (simp add: elemof_imp_subprogram_simps AND_neq_zero_imp_correct
+    NOTEQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct split: if_splits)+
+  done
+
+declare elemof_imp.simps [simp del]
+
+lemma elemof_imp_correct[let_function_correctness]:
+  "elemof_ret (elemof_imp s) =
+    elemof (elemof_e s) (elemof_l s)"
+  apply (induction s rule: elemof_imp.induct)
+  apply (subst elemof_imp.simps)
+  apply (subst elemof.simps)
+  apply (simp del: elemof.simps add: elemof_imp_subprogram_simps Let_def
+  AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct)
+  done 
+
+definition "elemof_state_upd_time t s \<equiv>
+  let
+      tl_xs' = elemof_l s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      elemof_l' = tl_ret tl_ret_state;
+      t = t + 2;
+      elemof_e' = elemof_e s;
+      t = t + 2;
+      elemof_ret' = elemof_ret s;
+      t = t + 2;
+      ret = \<lparr>elemof_e = elemof_e',
+             elemof_l = elemof_l',
+             elemof_ret = elemof_ret'\<rparr>
+  in
+      t
+"
+
+definition "elemof_imp_compute_loop_condition_time t s \<equiv>
+  let
+      hd_xs' = elemof_l s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', 
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      NOTEQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      NOTEQUAL_neq_zero_b' = elemof_e s;
+      t = t + 2;
+      NOTEQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                                 NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                                 NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+      NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+      t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+      AND_neq_zero_a' = elemof_l s;
+      t = t + 2;
+      AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+      t = t + 2;
+      AND_neq_zero_ret' = 0;
+      t = t + 2;
+      AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                            AND_neq_zero_b = AND_neq_zero_b',
+                            AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+      AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+      t = t + AND_neq_zero_imp_time 0 AND_neq_zero_state;
+      condition = AND_neq_zero_ret AND_neq_zero_ret_state;
+      t = t + 2
+  in
+      t
+"
+
+definition "elemof_imp_after_loop_time t s \<equiv>
+  let
+      elemof_e' = elemof_e s;
+      t = t + 2;
+      elemof_l' = elemof_l s;
+      t = t + 2;
+      elemof_ret' = 
+        (if elemof_l' \<noteq> 0
+        then 1
+        else 0);
+      t = t + 1 +
+        (if elemof_l' \<noteq> 0
+        then 2
+        else 2);
+      ret = \<lparr>elemof_e = elemof_e',
+             elemof_l = elemof_l',
+             elemof_ret = elemof_ret'\<rparr>
+  in
+      t
+"
+
+lemmas elemof_imp_subprogram_time_simps = 
+  elemof_state_upd_time_def
+  elemof_imp_compute_loop_condition_time_def
+  elemof_imp_after_loop_time_def
+  elemof_imp_subprogram_simps
+
+function elemof_imp_time :: "nat \<Rightarrow> elemof_state \<Rightarrow> nat" where
+  "elemof_imp_time t s =
+  elemof_imp_compute_loop_condition_time 0 s +
+  (if elemof_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          elemof_imp_time (t + elemof_state_upd_time 0 s)
+                         (elemof_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + elemof_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (elemof_l \<circ> snd)")
+  by (simp add: elemof_imp_subprogram_time_simps AND_neq_zero_imp_correct
+    NOTEQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct split: if_splits)+
+
+declare elemof_imp_time.simps [simp del]
+
+lemma elemof_imp_time_acc:
+  "(elemof_imp_time (Suc t) s) = Suc (elemof_imp_time t s)"
+  by (induction t s rule: elemof_imp_time.induct)
+    ((subst (1 2) elemof_imp_time.simps);
+      (simp add: elemof_state_upd_def))            
+
+lemma elemof_imp_time_acc_2_aux:
+  "(elemof_imp_time t s) = t + (elemof_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: elemof_imp_time_acc)+            
+
+lemma elemof_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (elemof_imp_time t s) = t + (elemof_imp_time 0 s)"
+  by (rule elemof_imp_time_acc_2_aux)            
+
+lemma elemof_imp_time_acc_3:
+  "(elemof_imp_time (a + b) s) = a + (elemof_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: elemof_imp_time_acc)+  
+
+abbreviation "elemof_while_cond \<equiv> ''condition''"
+
+definition "elemof_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  hd_xs' = elemof_l s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V elemof_l_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close> 
+  \<comment> \<open>              hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  NOTEQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  NOTEQUAL_neq_zero_b' = elemof_e s;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= (A (V elemof_e_str));;
+  \<comment> \<open>  NOTEQUAL_neq_zero_ret' = 0;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                             NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;\<close>
+  (invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  AND_neq_zero_a' = elemof_l s;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::= (A (V elemof_l_str));;
+  \<comment> \<open>  AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::= 
+    (A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>  AND_neq_zero_ret' = 0;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',\<close>
+  \<comment> \<open>                        AND_neq_zero_b = AND_neq_zero_b',\<close>
+  \<comment> \<open>                        AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;\<close>
+  (invoke_subprogram AND_neq_zero_prefix AND_neq_zero_IMP_Minus);;
+  \<comment> \<open>  condition = AND_neq_zero_ret AND_neq_zero_ret_state\<close>
+  (elemof_while_cond) ::= (A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str)))
+"
+
+definition "elemof_IMP_loop_body \<equiv>
+  \<comment> \<open>  tl_xs' = elemof_l s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V elemof_l_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs',\<close>
+  \<comment> \<open>              tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  (invoke_subprogram tl_prefix tl_IMP_Minus);;
+  \<comment> \<open>  elemof_l' = tl_ret tl_ret_state;\<close>
+  (elemof_l_str) ::= (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>  elemof_e' = elemof_e s;\<close>
+  (elemof_e_str) ::= (A (V elemof_e_str));;
+  \<comment> \<open>  elemof_ret' = elemof_ret s;\<close>
+  (elemof_ret_str) ::= (A (V elemof_ret_str))
+  \<comment> \<open>  ret = \<lparr>elemof_e = elemof_e',\<close>
+  \<comment> \<open>         elemof_l = elemof_l',\<close>
+  \<comment> \<open>         elemof_ret = elemof_ret'\<rparr>\<close>
+"
+
+definition "elemof_IMP_after_loop \<equiv>
+  \<comment> \<open>  elemof_e' = elemof_e s;\<close>
+  (elemof_e_str) ::= (A (V elemof_e_str));;
+  \<comment> \<open>  elemof_l' = elemof_l s;\<close>
+  (elemof_l_str) ::= (A (V elemof_l_str));;
+  \<comment> \<open>  elemof_ret' = \<close>
+  \<comment> \<open>    (if elemof_l' \<noteq> 0\<close>
+  \<comment> \<open>    then 1\<close>
+  \<comment> \<open>    else 0);\<close>
+  (IF elemof_l_str \<noteq>0 THEN
+    (elemof_ret_str) ::= (A (N 1))
+  ELSE
+    (elemof_ret_str) ::= (A (N 0))
+  )
+  \<comment> \<open>  ret = \<lparr>elemof_e = elemof_e',\<close>
+  \<comment> \<open>         elemof_l = elemof_l',\<close>
+  \<comment> \<open>         elemof_ret = elemof_ret'\<rparr>\<close>
+"
+
+definition elemof_IMP_Minus where
+  "elemof_IMP_Minus \<equiv>
+  elemof_IMP_init_while_cond;;
+  WHILE elemof_while_cond \<noteq>0 DO (
+    elemof_IMP_loop_body;;
+    elemof_IMP_init_while_cond
+  );;
+  elemof_IMP_after_loop"
+
+abbreviation "elemof_IMP_vars \<equiv>
+  {elemof_e_str, elemof_l_str, elemof_ret_str}"
+
+lemmas elemof_IMP_subprogram_simps =
+  elemof_IMP_init_while_cond_def
+  elemof_IMP_loop_body_def
+  elemof_IMP_after_loop_def
+
+definition "elemof_imp_to_HOL_state p s =
+  \<lparr>elemof_e = (s (add_prefix p elemof_e_str)),
+   elemof_l = (s (add_prefix p elemof_l_str)),
+   elemof_ret = (s (add_prefix p elemof_ret_str))\<rparr>"
+
+lemmas elemof_state_translators =
+  elemof_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+  NOTEQUAL_neq_zero_imp_to_HOL_state_def
+  AND_neq_zero_imp_to_HOL_state_def
+
+lemmas elemof_complete_simps =
+  elemof_IMP_subprogram_simps
+  elemof_imp_subprogram_simps
+  elemof_state_translators
+
+lemma elemof_IMP_Minus_correct_function:
+  "(invoke_subprogram p elemof_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p elemof_ret_str)
+      = elemof_ret
+          (elemof_imp (elemof_imp_to_HOL_state p s))"
+  apply(induction "elemof_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: elemof_imp.induct)
+  apply(subst elemof_imp.simps)
+  apply(simp only: elemof_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: elemof_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(19) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(21) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(23) by fastforce
+    by(fastforce simp: elemof_IMP_subprogram_simps
+        elemof_imp_subprogram_simps
+        elemof_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+    apply(simp only: elemof_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(28) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(30) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(32) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(34) by fastforce
+    by(fastforce simp add: elemof_complete_simps)
+
+  subgoal
+    apply(subst (asm) elemof_IMP_init_while_cond_def)
+    apply(simp only: elemof_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(22) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(24) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(26) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(28) by fastforce
+    by (simp only: elemof_imp_subprogram_simps
+        elemof_state_translators Let_def, fastforce)
+
+  subgoal
+    apply(simp only: elemof_IMP_init_while_cond_def prefix_simps
+        elemof_IMP_loop_body_def)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(33) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(35) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(37) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    by (simp only: elemof_imp_subprogram_simps
+        elemof_state_translators Let_def, fastforce)
+  done
+
+lemma elemof_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ elemof_pref) elemof_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix elemof_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemmas elemof_complete_time_simps =
+  elemof_imp_subprogram_time_simps
+  elemof_imp_time_acc
+  elemof_imp_time_acc_2
+  elemof_imp_time_acc_3
+  elemof_state_translators
+
+lemma elemof_IMP_Minus_correct_time:
+  "(invoke_subprogram p elemof_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = elemof_imp_time 0 (elemof_imp_to_HOL_state p s)"
+  apply(induction "elemof_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: elemof_imp.induct)
+  apply(subst elemof_imp_time.simps)
+  apply(simp only: elemof_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: elemof_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(34) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(36) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    by (force simp: elemof_imp_subprogram_time_simps Let_def
+        elemof_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: elemof_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    by(fastforce simp add: elemof_complete_simps)
+
+  subgoal
+    apply(subst (asm) elemof_IMP_init_while_cond_def)
+    apply(simp only: elemof_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    by (simp only: elemof_imp_subprogram_time_simps
+        elemof_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: prefix_simps elemof_IMP_init_while_cond_def
+        elemof_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(65) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(67) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "elemof_IMP_vars"])
+    subgoal premises p using p(69) by fastforce
+    apply(simp only: elemof_complete_time_simps Let_def)
+    by force
+
+  done 
+
+lemma elemof_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) elemof_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (elemof_imp_time 0 (elemof_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) elemof_ret_str) =
+          elemof_ret (elemof_imp
+                                        (elemof_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using elemof_IMP_Minus_correct_function
+    elemof_IMP_Minus_correct_time
+    elemof_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+
 end
