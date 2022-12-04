@@ -4020,9 +4020,10 @@ lemma list_less_tail_IMP_Minus_correct:
   using list_less_tail_IMP_Minus_correct_function list_less_tail_IMP_Minus_correct_time
   by (meson list_less_tail_IMP_Minus_correct_effects set_mono_prefix)
 
-subsection \<open>concat_acc\<close>
+subsection \<open>concat\<close>
 
-paragraph concat_acc_state
+paragraph concat_acc
+
 record concat_acc_state =
   concat_acc_acc::nat
   concat_acc_n::nat
@@ -4383,6 +4384,7 @@ lemma concat_acc_IMP_Minus_correct_function:
       by (smt (z3) fun_upd_other fun_upd_same list.inject list.simps(3) same_append_eq) 
       done
     done
+
 
 lemma concat_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ concat_acc_pref) concat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
