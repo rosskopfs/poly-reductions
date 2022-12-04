@@ -3893,7 +3893,7 @@ termination
 
 declare list_less_tail_imp.simps [simp del]
 
-lemma list_less_tail_imp_correct:
+lemma list_less_tail_imp_correct[let_function_correctness]:
   "list_less_tail_ret (list_less_tail_imp s) =
     list_less_tail (list_less_tail_n s)"
   by (simp add: list_less_tail_imp.simps 
@@ -4020,9 +4020,9 @@ lemma list_less_tail_IMP_Minus_correct:
   using list_less_tail_IMP_Minus_correct_function list_less_tail_IMP_Minus_correct_time
   by (meson list_less_tail_IMP_Minus_correct_effects set_mono_prefix)
 
-subsection \<open>concat\<close>
+subsubsection \<open>concat\<close>
 
-paragraph concat_acc
+paragraph \<open>concat_acc\<close>
 
 record concat_acc_state =
   concat_acc_acc::nat
@@ -4106,7 +4106,7 @@ termination
 
 declare concat_acc_imp.simps [simp del]
 
-lemma concat_acc_imp_correct:
+lemma concat_acc_imp_correct[let_function_correctness]:
   "concat_acc_ret (concat_acc_imp s) =
     concat_acc (concat_acc_acc s) (concat_acc_n s)"
   apply (induction s rule: concat_acc_imp.induct)
@@ -5069,11 +5069,6 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
 subsection \<open>Lists, continued\<close>
 
 subsubsection \<open>elemof\<close>
-
-(*
-fun elemof :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"elemof e l = (if l = 0 then 0 else if hd_nat l = e then 1 else elemof e (tl_nat l))"
-*)
 
 fun elemof' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 "elemof' e l = 
