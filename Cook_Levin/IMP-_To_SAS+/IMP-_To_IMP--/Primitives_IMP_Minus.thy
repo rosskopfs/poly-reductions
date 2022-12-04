@@ -3291,6 +3291,7 @@ definition "list_from_acc_state_upd s \<equiv>
              list_from_acc_ret = list_from_acc_ret' \<rparr>
     in
       ret
+      
 )"
 
 definition "list_from_acc_imp_compute_loop_condition s \<equiv>
@@ -4019,6 +4020,471 @@ lemma list_less_tail_IMP_Minus_correct:
   using list_less_tail_IMP_Minus_correct_function list_less_tail_IMP_Minus_correct_time
   by (meson list_less_tail_IMP_Minus_correct_effects set_mono_prefix)
 
+subsection \<open>concat\<close>
+
+paragraph concat_acc
+
+record concat_acc_state =
+  concat_acc_acc::nat
+  concat_acc_n::nat
+  concat_acc_ret::nat
+
+abbreviation "concat_acc_prefix \<equiv> ''concat_acc.''"
+abbreviation "concat_acc_acc_str \<equiv> ''acc''"
+abbreviation "concat_acc_n_str \<equiv> ''n''"
+abbreviation "concat_acc_ret_str \<equiv> ''ret''"
+
+definition "concat_acc_state_upd s \<equiv>
+  (let
+      hd_xs' = concat_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      reverse_nat_n' = hd_ret hd_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      append_nat_xs' = reverse_nat_ret reverse_nat_ret_state;
+      append_nat_ys' = concat_acc_acc s;
+      append_nat_ret' = 0;
+      append_nat_state = \<lparr>append_nat_xs = append_nat_xs',
+                          append_nat_ys = append_nat_ys',
+                          append_nat_ret = append_nat_ret'\<rparr>;
+      append_nat_ret_state = append_nat_imp append_nat_state;
+      concat_acc_acc' = append_nat_ret append_nat_ret_state;
+      tl_xs' = concat_acc_n s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      concat_acc_n' = tl_ret tl_ret_state;
+      concat_acc_ret' = 0;
+      ret = \<lparr>concat_acc_acc = concat_acc_acc',
+             concat_acc_n = concat_acc_n',
+             concat_acc_ret = concat_acc_ret'\<rparr>
+    in
+      ret
+)"
+
+definition "concat_acc_imp_compute_loop_condition s \<equiv> (
+  let 
+    condition = concat_acc_n s
+  in 
+    condition
+)"
+
+definition "concat_acc_imp_after_loop s \<equiv>
+  (let
+     ret = \<lparr>concat_acc_acc = concat_acc_acc s,
+         concat_acc_n = concat_acc_n s,
+         concat_acc_ret = concat_acc_acc s\<rparr>
+  in
+    ret
+)"
+
+lemmas concat_acc_imp_subprogram_simps = 
+  concat_acc_state_upd_def
+  concat_acc_imp_compute_loop_condition_def
+  concat_acc_imp_after_loop_def
+
+function concat_acc_imp::
+  "concat_acc_state \<Rightarrow> concat_acc_state" where
+  "concat_acc_imp s =
+  (if concat_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = concat_acc_imp (concat_acc_state_upd s)
+    in next_iteration
+   else
+    let ret = concat_acc_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure (\<lambda>s. concat_acc_n s)")
+  by (simp add: concat_acc_imp_subprogram_simps tl_imp_correct)+
+ 
+
+declare concat_acc_imp.simps [simp del]
+
+lemma concat_acc_imp_correct:
+  "concat_acc_ret (concat_acc_imp s) =
+    concat_acc (concat_acc_acc s) (concat_acc_n s)"
+  apply (induction s rule: concat_acc_imp.induct)
+  apply (subst concat_acc_imp.simps)
+  apply (subst concat_acc.simps)
+  apply (simp del: concat_acc.simps add: concat_acc_imp_subprogram_simps 
+        Let_def tl_imp_correct hd_imp_correct append_nat_imp_correct
+        reverse_nat_imp_correct)
+  using subtail_append by presburger
+
+definition "concat_acc_state_upd_time t s \<equiv> (
+  let
+      hd_xs' = concat_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      reverse_nat_n' = hd_ret hd_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      append_nat_xs' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      append_nat_ys' = concat_acc_acc s;
+      t = t + 2;
+      append_nat_ret' = 0;
+      t = t + 2;
+      append_nat_state = \<lparr>append_nat_xs = append_nat_xs',
+                          append_nat_ys = append_nat_ys',
+                          append_nat_ret = append_nat_ret'\<rparr>;
+      append_nat_ret_state = append_nat_imp append_nat_state;
+      t = t + append_nat_imp_time 0 append_nat_state;
+      concat_acc_acc' = append_nat_ret append_nat_ret_state;
+      t = t + 2;
+      tl_xs' = concat_acc_n s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      concat_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      concat_acc_ret' = 0;
+      t = t + 2;
+      ret = \<lparr>concat_acc_acc = concat_acc_acc',
+             concat_acc_n = concat_acc_n',
+             concat_acc_ret = concat_acc_ret'\<rparr>
+    in
+      t
+)"
+
+definition "concat_acc_imp_compute_loop_condition_time t s \<equiv> 
+  (let 
+    condition = concat_acc_n s;
+    t = t + 2
+  in
+    t)
+"
+
+definition "concat_acc_imp_after_loop_time t s \<equiv> (
+  let
+    ret = \<lparr>concat_acc_acc = concat_acc_acc s,
+          concat_acc_n = concat_acc_n s,
+          concat_acc_ret = concat_acc_acc s\<rparr>;
+    t = t + 2
+  in
+    t)
+"
+
+
+lemmas concat_acc_imp_subprogram_time_simps = 
+  concat_acc_state_upd_time_def
+  concat_acc_imp_compute_loop_condition_time_def
+  concat_acc_imp_after_loop_time_def
+  concat_acc_imp_subprogram_simps
+
+function concat_acc_imp_time::
+  "nat \<Rightarrow> concat_acc_state \<Rightarrow> nat" where
+  "concat_acc_imp_time t s =
+  concat_acc_imp_compute_loop_condition_time 0 s +
+  (if concat_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          concat_acc_imp_time (t + concat_acc_state_upd_time 0 s)
+                         (concat_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + concat_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (\<lambda>(t, s). concat_acc_n s)")
+   by (simp add: concat_acc_imp_subprogram_simps tl_imp_correct)+
+
+declare concat_acc_imp_time.simps [simp del]            
+
+lemma concat_acc_imp_time_acc:
+  "(concat_acc_imp_time (Suc t) s) = Suc (concat_acc_imp_time t s)"
+  by (induction t s rule: concat_acc_imp_time.induct)
+    ((subst (1 2) concat_acc_imp_time.simps);
+      (simp add: concat_acc_state_upd_def))            
+
+lemma concat_acc_imp_time_acc_2_aux:
+  "(concat_acc_imp_time t s) = t + (concat_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: concat_acc_imp_time_acc)+            
+
+lemma concat_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (concat_acc_imp_time t s) = t + (concat_acc_imp_time 0 s)"
+  by (rule concat_acc_imp_time_acc_2_aux)            
+
+lemma concat_acc_imp_time_acc_3:
+  "(concat_acc_imp_time (a + b) s) = a + (concat_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: concat_acc_imp_time_acc)+            
+
+abbreviation "concat_acc_while_cond \<equiv> ''condition''"
+
+definition "concat_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = concat_acc_n s\<close>
+  concat_acc_while_cond ::= A (V concat_acc_n_str)
+"
+
+definition "concat_acc_IMP_loop_body \<equiv>
+ \<comment> \<open>hd_xs' = concat_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= A (V concat_acc_n_str);;
+  \<comment> \<open>hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= A (N 0);;
+      \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+      \<comment> \<open> hd_ret_state = hd_imp hd_state;\<close>
+
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+       \<comment> \<open>reverse_nat_n' = hd_ret hd_ret_state;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V (hd_prefix @ hd_ret_str));;
+       \<comment> \<open>reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
+       \<comment> \<open>reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+       \<comment> \<open>reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+       \<comment> \<open>append_nat_xs' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (append_nat_prefix @ append_nat_xs_str) ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str));;
+       \<comment> \<open>append_nat_ys' = concat_acc_acc s;\<close>
+  (append_nat_prefix @ append_nat_ys_str) ::= A (V concat_acc_acc_str);;
+       \<comment> \<open>append_nat_ret' = 0;\<close>
+  (append_nat_prefix @ append_nat_ret_str) ::= A (N 0);;
+       \<comment> \<open>append_nat_state = \<lparr>append_nat_xs = append_nat_xs',
+                          append_nat_ys = append_nat_ys',
+                          append_nat_ret = append_nat_ret'\<rparr>;\<close>
+       \<comment> \<open>append_nat_ret_state = append_nat_imp append_nat_state;\<close>
+  invoke_subprogram append_nat_prefix append_nat_IMP_Minus;;
+  \<comment> \<open>concat_acc_acc' = append_nat_ret append_nat_ret_state;\<close>
+  concat_acc_acc_str ::= A (V (append_nat_prefix @ append_nat_ret_str));;
+       \<comment> \<open>tl_xs' = concat_acc_n s;\<close>     
+  (tl_prefix @ tl_xs_str) ::= A (V concat_acc_n_str);;
+       \<comment> \<open>tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= A (N 0);;
+       \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+       \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+       \<comment> \<open>concat_acc_n' = tl_ret tl_ret_state;\<close>
+  concat_acc_n_str ::= A (V (tl_prefix @ tl_ret_str));;
+  concat_acc_ret_str ::= A (N 0)
+       \<comment> \<open>ret = \<lparr>concat_acc_acc = concat_acc_acc',
+             concat_acc_n = concat_acc_n',
+             concat_acc_ret = concat_acc_ret'\<rparr>\<close>
+"
+
+definition "concat_acc_IMP_after_loop \<equiv> 
+              concat_acc_ret_str ::= A (V concat_acc_acc_str)"
+
+definition "concat_acc_IMP_Minus \<equiv>
+              concat_acc_IMP_init_while_cond;;
+              WHILE concat_acc_while_cond \<noteq>0 DO (
+                concat_acc_IMP_loop_body;;
+                concat_acc_IMP_init_while_cond
+              );;
+              concat_acc_IMP_after_loop
+            "
+abbreviation "concat_acc_IMP_vars \<equiv>
+  {concat_acc_while_cond, concat_acc_acc_str, concat_acc_n_str,
+  concat_acc_ret_str}"
+
+lemmas concat_acc_IMP_subprogram_simps = 
+  concat_acc_IMP_init_while_cond_def
+  concat_acc_IMP_loop_body_def
+  concat_acc_IMP_after_loop_def
+
+definition "concat_acc_imp_to_HOL_state p s = 
+  \<lparr>concat_acc_acc = (s (add_prefix p concat_acc_acc_str)),
+  concat_acc_n = (s (add_prefix p concat_acc_n_str)),
+  concat_acc_ret = (s (add_prefix p concat_acc_ret_str))\<rparr>"
+
+lemmas concat_acc_state_translators =
+  concat_acc_imp_to_HOL_state_def
+
+lemmas concat_acc_complete_simps =
+  concat_acc_IMP_subprogram_simps
+  concat_acc_imp_subprogram_simps
+  concat_acc_state_translators
+
+lemma concat_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p concat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p concat_acc_ret_str)
+      = concat_acc_ret
+          (concat_acc_imp (concat_acc_imp_to_HOL_state p s))"
+  
+  apply(induction "concat_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: concat_acc_imp.induct)
+  apply(subst concat_acc_imp.simps)
+  apply(simp only: concat_acc_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: concat_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: concat_acc_complete_simps)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+    subgoal
+     apply(simp only: concat_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: concat_acc_complete_simps)
+    subgoal
+       apply(subst (asm) concat_acc_IMP_init_while_cond_def)
+       apply(simp only: concat_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule reverse_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule append_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply (simp only: concat_acc_imp_subprogram_simps
+          concat_acc_state_translators Let_def prefix_simps
+      concat_acc_state.simps
+      append_nat_imp_to_HOL_state_def append_nat_imp_correct append_nat_state.simps
+      hd_imp_to_HOL_state_def hd_imp_correct hd_state.simps
+      tl_imp_to_HOL_state_def tl_imp_correct tl_state.simps
+      reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps)
+      by force
+    subgoal 
+       apply(simp only: concat_acc_IMP_init_while_cond_def prefix_simps
+          concat_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule reverse_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule append_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply (simp only: concat_acc_imp_subprogram_simps
+          concat_acc_state_translators Let_def prefix_simps
+      concat_acc_state.simps
+      append_nat_imp_to_HOL_state_def append_nat_imp_correct append_nat_state.simps
+      hd_imp_to_HOL_state_def hd_imp_correct hd_state.simps
+      tl_imp_to_HOL_state_def tl_imp_correct tl_state.simps
+      reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps)
+      apply clarsimp
+      subgoal premises p using p(6) p(10) p(12) p(8)
+      by (smt (z3) fun_upd_other fun_upd_same list.inject list.simps(3) same_append_eq) 
+      done
+    done
+
+
+lemma concat_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ concat_acc_pref) concat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix concat_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas concat_acc_complete_time_simps =
+  concat_acc_imp_subprogram_time_simps
+  concat_acc_imp_time_acc
+  concat_acc_imp_time_acc_2
+  concat_acc_imp_time_acc_3
+  concat_acc_state_translators
+
+lemma concat_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p concat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = concat_acc_imp_time 0 (concat_acc_imp_to_HOL_state p s)"
+  apply(induction "concat_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: concat_acc_imp.induct)
+  apply(subst concat_acc_imp_time.simps)
+  apply(simp only: concat_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: concat_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: concat_acc_IMP_subprogram_simps
+        concat_acc_imp_subprogram_time_simps concat_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: concat_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: concat_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) concat_acc_IMP_init_while_cond_def)
+       apply(simp only: concat_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_tE)+
+      apply(erule hd_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(39) by fastforce
+      apply(erule reverse_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(41) by fastforce
+      apply(erule append_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(43) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(45) by fastforce
+      apply (simp only: concat_acc_imp_subprogram_simps
+          concat_acc_state_translators Let_def prefix_simps
+      concat_acc_state.simps
+      append_nat_imp_to_HOL_state_def append_nat_imp_correct append_nat_state.simps
+      hd_imp_to_HOL_state_def hd_imp_correct hd_state.simps
+      tl_imp_to_HOL_state_def tl_imp_correct tl_state.simps
+      reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps)
+      by force
+  subgoal
+    apply(simp only: prefix_simps concat_acc_IMP_init_while_cond_def
+          concat_acc_IMP_loop_body_def) 
+      apply(erule Seq_tE)+ 
+      apply(erule hd_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(39) by fastforce
+      apply(erule reverse_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(41) by fastforce
+      apply(erule append_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(43) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
+      subgoal premises p using p(45) by fastforce
+      apply (simp only: concat_acc_complete_time_simps 
+       Let_def prefix_simps
+      concat_acc_state.simps 
+      append_nat_imp_to_HOL_state_def append_nat_imp_correct append_nat_state.simps
+      append_nat_IMP_Minus_correct_time
+      hd_imp_to_HOL_state_def hd_imp_correct hd_state.simps hd_IMP_Minus_correct_time
+      tl_imp_to_HOL_state_def tl_imp_correct tl_state.simps tl_IMP_Minus_correct_time
+      reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps
+      reverse_nat_IMP_Minus_correct_time
+      )
+      apply clarsimp
+      subgoal premises p
+              by (smt (z3) fun_upd_other fun_upd_same list.inject 
+              list.simps(3) p(11) p(13) p(15) p(9) same_append_eq)
+      done
+    done
+
+lemma concat_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) concat_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (concat_acc_imp_time 0 (concat_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) concat_acc_ret_str) =
+          concat_acc_ret (concat_acc_imp
+                                        (concat_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using concat_acc_IMP_Minus_correct_function
+  by (auto simp: concat_acc_IMP_Minus_correct_time)
+    (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
 
 subsection \<open>Logic\<close>
