@@ -5055,9 +5055,6 @@ lemma concat_acc_IMP_Minus_correct:
     (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
 
-
-subsection \<open>Lists, continued\<close>
-
 subsubsection \<open>elemof\<close>
 
 fun elemof' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
