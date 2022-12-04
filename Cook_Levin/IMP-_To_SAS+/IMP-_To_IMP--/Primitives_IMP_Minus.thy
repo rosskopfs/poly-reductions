@@ -5134,4 +5134,555 @@ lemma elemof_IMP_Minus_correct:
   by (meson set_mono_prefix) 
 
 
+subsubsection \<open>remdups\<close>
+
+paragraph \<open>remdups_acc\<close>
+
+(*
+fun remdups_acc :: "nat \<Rightarrow> nat => nat" where 
+"remdups_acc acc n =(if n=0 then acc else if elemof (hd_nat n) (tl_nat n) \<noteq> 0 then remdups_acc acc (tl_nat n)
+                 else remdups_acc (cons (hd_nat n) acc) (tl_nat n))"
+*)
+
+record remdups_acc_state =
+  remdups_acc_acc::nat
+  remdups_acc_n::nat
+  remdups_acc_ret::nat
+
+abbreviation "remdups_acc_prefix \<equiv> ''remdups_acc.''"
+abbreviation "remdups_acc_acc_str \<equiv> ''acc''"
+abbreviation "remdups_acc_n_str \<equiv> ''n''"
+abbreviation "remdups_acc_ret_str \<equiv> ''ret''"
+
+definition "remdups_acc_state_upd s \<equiv>
+  (let
+      hd_xs' = remdups_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      tl_xs' = remdups_acc_n s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      elemof_e' = hd_ret hd_ret_state;
+      elemof_l' = tl_ret tl_ret_state;
+      elemof_ret' = 0;
+      elemof_state = \<lparr>elemof_e = elemof_e',
+                      elemof_l = elemof_l',
+                      elemof_ret = elemof_ret'\<rparr>;
+      elemof_ret_state = elemof_imp elemof_state;
+      elemof_result = elemof_ret elemof_ret_state
+  in
+  (if elemof_result \<noteq> 0 then
+    (let
+      remdups_acc_acc' = remdups_acc_acc s;
+      remdups_acc_n' = tl_ret tl_ret_state;
+      remdups_acc_ret' = remdups_acc_ret s;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+    in
+      ret
+    )
+    else
+    (let
+      cons_h' = hd_ret hd_ret_state;
+      cons_t' = remdups_acc_acc s;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h',
+                    cons_t = cons_t',
+                    cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      remdups_acc_acc' = cons_ret cons_ret_state;
+      remdups_acc_n' = tl_ret tl_ret_state;
+      remdups_acc_ret' = remdups_acc_ret s;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+    in
+      ret
+    )
+  )
+)"
+
+definition "remdups_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      condition = remdups_acc_n s
+   in
+      condition
+)"
+
+definition "remdups_acc_imp_after_loop s \<equiv>
+  (let
+      remdups_acc_acc' = remdups_acc_acc s;
+      remdups_acc_n' = remdups_acc_n s;
+      remdups_acc_ret' = remdups_acc_acc s;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas remdups_acc_imp_subprogram_simps = 
+  remdups_acc_state_upd_def
+  remdups_acc_imp_compute_loop_condition_def
+  remdups_acc_imp_after_loop_def
+
+function remdups_acc_imp::
+  "remdups_acc_state \<Rightarrow> remdups_acc_state" where
+  "remdups_acc_imp s =
+  (if remdups_acc_imp_compute_loop_condition s \<noteq> 0
+  then let next_iteration = remdups_acc_imp (remdups_acc_state_upd s)
+       in next_iteration
+  else let ret = remdups_acc_imp_after_loop s
+       in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure remdups_acc_n")
+  apply (simp add: remdups_acc_imp_subprogram_simps tl_imp_correct
+  Let_def split: if_splits)+
+  done
+
+declare remdups_acc_imp.simps [simp del]
+
+lemma remdups_acc_imp_correct[let_function_correctness]:
+  "remdups_acc_ret (remdups_acc_imp s) =
+    remdups_acc (remdups_acc_acc s) (remdups_acc_n s)"
+  apply (induction s rule: remdups_acc_imp.induct)
+  apply (subst remdups_acc_imp.simps)
+  apply (subst remdups_acc.simps)
+  using remdups_acc_imp_subprogram_simps Let_def
+  hd_imp_correct tl_imp_correct elemof_imp_correct cons_imp_correct
+  by (smt (verit, ccfv_SIG) cons_state.select_convs(1) cons_state.select_convs(2)
+  elemof_state.select_convs(1) elemof_state.select_convs(2) hd_state.select_convs(1)
+  remdups_acc_state.ext_inject remdups_acc_state.surjective tl_state.select_convs(1))
+
+definition "remdups_acc_state_upd_time t s \<equiv>
+  (let
+      hd_xs' = remdups_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      tl_xs' = remdups_acc_n s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      elemof_e' = hd_ret hd_ret_state;
+      t = t + 2;
+      elemof_l' = tl_ret tl_ret_state;
+      t = t + 2;
+      elemof_ret' = 0;
+      t = t + 2;
+      elemof_state = \<lparr>elemof_e = elemof_e',
+                      elemof_l = elemof_l',
+                      elemof_ret = elemof_ret'\<rparr>;
+      elemof_ret_state = elemof_imp elemof_state;
+      t = elemof_imp_time 0 elemof_state;
+      elemof_result = elemof_ret elemof_ret_state;
+      t = t + 2
+  in
+  (if elemof_result \<noteq> 0 then
+    (let
+      t = t + 1;
+      remdups_acc_acc' = remdups_acc_acc s;
+      t = t + 2;
+      remdups_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      remdups_acc_ret' = remdups_acc_ret s;
+      t = t + 2;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+    in
+      t
+    )
+    else
+    (let
+      t = t + 1;
+      cons_h' = hd_ret hd_ret_state;
+      t = t + 2;
+      cons_t' = remdups_acc_acc s;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h',
+                    cons_t = cons_t',
+                    cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = cons_imp_time 0 cons_state;
+      remdups_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      remdups_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      remdups_acc_ret' = remdups_acc_ret s;
+      t = t + 2;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+    in
+      t
+    )
+  )
+)"
+
+definition "remdups_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = remdups_acc_n s;
+      t = t + 2
+   in
+      t
+)"
+
+definition "remdups_acc_imp_after_loop_time t s \<equiv>
+  (let
+      remdups_acc_acc' = remdups_acc_acc s;
+      t = t + 2;
+      remdups_acc_n' = remdups_acc_n s;
+      t = t + 2;
+      remdups_acc_ret' = remdups_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>remdups_acc_acc = remdups_acc_acc',
+             remdups_acc_n = remdups_acc_n',
+             remdups_acc_ret = remdups_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas remdups_acc_imp_subprogram_time_simps = 
+  remdups_acc_state_upd_time_def
+  remdups_acc_imp_compute_loop_condition_time_def
+  remdups_acc_imp_after_loop_time_def
+  remdups_acc_imp_subprogram_simps
+
+function remdups_acc_imp_time::
+  "nat \<Rightarrow> remdups_acc_state \<Rightarrow> nat" where
+  "remdups_acc_imp_time t s =
+  remdups_acc_imp_compute_loop_condition_time 0 s +
+  (if remdups_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          remdups_acc_imp_time (t + remdups_acc_state_upd_time 0 s)
+                         (remdups_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + remdups_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (remdups_acc_n \<circ> snd)")
+  by (simp add: remdups_acc_imp_subprogram_time_simps Let_def tl_imp_correct 
+  split: if_splits)+
+
+declare remdups_acc_imp_time.simps [simp del]
+
+lemma remdups_acc_imp_time_acc:
+  "(remdups_acc_imp_time (Suc t) s) = Suc (remdups_acc_imp_time t s)"
+  by (induction t s rule: remdups_acc_imp_time.induct)
+    ((subst (1 2) remdups_acc_imp_time.simps);
+      (simp add: remdups_acc_state_upd_def))            
+
+lemma remdups_acc_imp_time_acc_2_aux:
+  "(remdups_acc_imp_time t s) = t + (remdups_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: remdups_acc_imp_time_acc)+            
+
+lemma remdups_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (remdups_acc_imp_time t s) = t + (remdups_acc_imp_time 0 s)"
+  by (rule remdups_acc_imp_time_acc_2_aux)            
+
+lemma remdups_acc_imp_time_acc_3:
+  "(remdups_acc_imp_time (a + b) s) = a + (remdups_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: remdups_acc_imp_time_acc)+    
+
+abbreviation "remdups_acc_while_cond \<equiv> ''condition''"
+abbreviation "remdups_acc_elemof_result \<equiv> ''elemof_result''"
+
+definition "remdups_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  condition = remdups_acc_n s\<close>
+  (remdups_acc_while_cond) ::= (A (V remdups_acc_n_str))
+"
+
+definition "remdups_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  hd_xs' = remdups_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V remdups_acc_n_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close>
+  \<comment> \<open>              hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  tl_xs' = remdups_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V remdups_acc_n_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs',\<close>
+  \<comment> \<open>              tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  (invoke_subprogram tl_prefix tl_IMP_Minus);;
+  \<comment> \<open>  elemof_e' = hd_ret hd_ret_state;\<close>
+  (elemof_prefix @ elemof_e_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  elemof_l' = tl_ret tl_ret_state;\<close>
+  (elemof_prefix @ elemof_l_str) ::= (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>  elemof_ret' = 0;\<close>
+  (elemof_prefix @ elemof_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  elemof_state = \<lparr>elemof_e = elemof_e',\<close>
+  \<comment> \<open>                  elemof_l = elemof_l',\<close>
+  \<comment> \<open>                  elemof_ret = elemof_ret'\<rparr>;\<close>
+  \<comment> \<open>  elemof_ret_state = elemof_imp elemof_state;\<close>
+  (invoke_subprogram elemof_prefix elemof_IMP_Minus);;
+  \<comment> \<open>  elemof_result = elemof_ret elemof_ret_state\<close>
+  (remdups_acc_elemof_result) ::= (A (V (elemof_prefix @ elemof_ret_str)));;
+  \<comment> \<open>(if elemof_result \<noteq> 0 then\<close>
+  (IF remdups_acc_elemof_result \<noteq>0 THEN
+  \<comment> \<open>  remdups_acc_acc' = remdups_acc_acc s;\<close>
+  (remdups_acc_acc_str) ::= (A (V remdups_acc_acc_str));;
+  \<comment> \<open>  remdups_acc_n' = tl_ret tl_ret_state;\<close>
+  (remdups_acc_n_str) ::= (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>  remdups_acc_ret' = remdups_acc_ret s;\<close>
+  (remdups_acc_ret_str) ::= (A (V remdups_acc_ret_str))
+  \<comment> \<open>  ret = \<lparr>remdups_acc_acc = remdups_acc_acc',\<close>
+  \<comment> \<open>         remdups_acc_n = remdups_acc_n',\<close>
+  \<comment> \<open>         remdups_acc_ret = remdups_acc_ret'\<rparr>\<close>
+  \<comment> \<open>else\<close>
+  ELSE
+  \<comment> \<open>  cons_h' = hd_ret hd_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  cons_t' = remdups_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V remdups_acc_acc_str));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h',\<close>
+  \<comment> \<open>                cons_t = cons_t',\<close>
+  \<comment> \<open>                cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  remdups_acc_acc' = cons_ret cons_ret_state;\<close>
+  (remdups_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  remdups_acc_n' = tl_ret tl_ret_state;\<close>
+  (remdups_acc_n_str) ::= (A (V (tl_prefix @ tl_ret_str)));;
+  \<comment> \<open>  remdups_acc_ret' = remdups_acc_ret s;\<close>
+  (remdups_acc_ret_str) ::= (A (V remdups_acc_ret_str))
+  \<comment> \<open>  ret = \<lparr>remdups_acc_acc = remdups_acc_acc',\<close>
+  \<comment> \<open>         remdups_acc_n = remdups_acc_n',\<close>
+  \<comment> \<open>         remdups_acc_ret = remdups_acc_ret'\<rparr>\<close>
+  )
+"
+
+definition "remdups_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  remdups_acc_acc' = remdups_acc_acc s;\<close>
+  (remdups_acc_acc_str) ::= (A (V remdups_acc_acc_str));;
+  \<comment> \<open>  remdups_acc_n' = remdups_acc_n s;\<close>
+  (remdups_acc_n_str) ::= (A (V remdups_acc_n_str));;
+  \<comment> \<open>  remdups_acc_ret' = remdups_acc_acc s;\<close>
+  (remdups_acc_ret_str) ::= (A (V remdups_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>remdups_acc_acc = remdups_acc_acc',\<close>
+  \<comment> \<open>         remdups_acc_n = remdups_acc_n',\<close>
+  \<comment> \<open>         remdups_acc_ret = remdups_acc_ret'\<rparr>\<close>
+"
+
+definition remdups_acc_IMP_Minus where
+  "remdups_acc_IMP_Minus \<equiv>
+  remdups_acc_IMP_init_while_cond;;
+  WHILE remdups_acc_while_cond \<noteq>0 DO (
+    remdups_acc_IMP_loop_body;;
+    remdups_acc_IMP_init_while_cond
+  );;
+  remdups_acc_IMP_after_loop"
+
+abbreviation "remdups_acc_IMP_vars \<equiv>
+  {remdups_acc_acc_str, remdups_acc_n_str, remdups_acc_ret_str, remdups_acc_elemof_result}"
+
+lemmas remdups_acc_IMP_subprogram_simps =
+  remdups_acc_IMP_init_while_cond_def
+  remdups_acc_IMP_loop_body_def
+  remdups_acc_IMP_after_loop_def
+
+definition "remdups_acc_imp_to_HOL_state p s =
+  \<lparr>remdups_acc_acc = (s (add_prefix p remdups_acc_acc_str)),
+   remdups_acc_n = (s (add_prefix p remdups_acc_n_str)),
+   remdups_acc_ret = (s (add_prefix p remdups_acc_ret_str))\<rparr>"
+
+lemmas remdups_acc_state_translators =
+  remdups_acc_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+  elemof_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemmas remdups_acc_complete_simps =
+  remdups_acc_IMP_subprogram_simps
+  remdups_acc_imp_subprogram_simps
+  remdups_acc_state_translators
+
+lemma remdups_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p remdups_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p remdups_acc_ret_str)
+      = remdups_acc_ret
+          (remdups_acc_imp (remdups_acc_imp_to_HOL_state p s))"
+  apply(induction "remdups_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: remdups_acc_imp.induct)
+  apply(subst remdups_acc_imp.simps)
+  apply(simp only: remdups_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: remdups_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_E)+
+    by(fastforce simp: remdups_acc_IMP_subprogram_simps
+        remdups_acc_imp_subprogram_simps
+        remdups_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: remdups_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: remdups_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) remdups_acc_IMP_init_while_cond_def)
+      apply(simp only: remdups_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule elemof_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      sorry
+      (*
+      by (simp only: remdups_acc_imp_subprogram_simps
+          remdups_acc_state_translators Let_def, force)
+      *)
+
+  subgoal
+      apply(simp only: remdups_acc_IMP_init_while_cond_def prefix_simps
+          remdups_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule elemof_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      sorry
+      (*
+      by (simp only: remdups_acc_imp_subprogram_simps
+          remdups_acc_state_translators Let_def, force)
+      *)
+    done
+
+lemma remdups_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ remdups_acc_pref) remdups_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix remdups_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemmas remdups_acc_complete_time_simps =
+  remdups_acc_imp_subprogram_time_simps
+  remdups_acc_imp_time_acc
+  remdups_acc_imp_time_acc_2
+  remdups_acc_imp_time_acc_3
+  remdups_acc_state_translators
+
+lemma remdups_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p remdups_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = remdups_acc_imp_time 0 (remdups_acc_imp_to_HOL_state p s)"
+  apply(induction "remdups_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: remdups_acc_imp.induct)
+  apply(subst remdups_acc_imp_time.simps)
+  apply(simp only: remdups_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: remdups_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    by (force simp: remdups_acc_IMP_subprogram_simps
+        remdups_acc_imp_subprogram_time_simps remdups_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: remdups_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: remdups_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) remdups_acc_IMP_init_while_cond_def)
+    apply(simp only: remdups_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule elemof_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    sorry
+    (*
+    by (simp only: remdups_acc_imp_subprogram_time_simps
+        remdups_acc_state_translators Let_def, force)
+    *)
+
+  subgoal
+    apply(simp only: prefix_simps remdups_acc_IMP_init_while_cond_def
+        remdups_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule elemof_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "remdups_acc_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply(simp only: remdups_acc_complete_time_simps Let_def)
+    sorry
+    (*
+    by force
+    *)
+
+  done        
+
+lemma remdups_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) remdups_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (remdups_acc_imp_time 0 (remdups_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) remdups_acc_ret_str) =
+          remdups_acc_ret (remdups_acc_imp
+                                        (remdups_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using remdups_acc_IMP_Minus_correct_function 
+    remdups_acc_IMP_Minus_correct_time
+    remdups_acc_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
 end
