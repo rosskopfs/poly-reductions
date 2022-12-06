@@ -5138,8 +5138,6 @@ lemma nth_nat_imp_correct:
   tl_imp_correct) 
   using gr0_conv_Suc by fastforce 
 
-thm nth_nat.simps
-
 definition "nth_nat_state_upd_time t s \<equiv>
   (let
      tl_xs' = nth_nat_x s;
