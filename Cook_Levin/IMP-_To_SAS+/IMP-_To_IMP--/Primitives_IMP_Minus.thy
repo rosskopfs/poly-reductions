@@ -1620,6 +1620,574 @@ lemma prod_encode_IMP_Minus_correct[functional_correctness]:
   by fastforce
 
 
+subsection \<open>Logic\<close>
+
+subsubsection \<open>Logical And\<close>
+
+record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
+
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_a_str \<equiv> ''AND_a''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_b_str \<equiv> ''AND_b''"
+(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
+
+definition "AND_neq_zero_state_upd s \<equiv>
+      let
+        AND_neq_zero_ret' =
+          (if AND_neq_zero_a s \<noteq> 0 then
+            (if AND_neq_zero_b s \<noteq> 0 then
+               1
+             else
+               0)
+           else
+             0);
+        ret = \<lparr>AND_neq_zero_a = AND_neq_zero_a s, AND_neq_zero_b = AND_neq_zero_b s, AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>
+      in
+        ret
+"
+
+fun AND_neq_zero_imp:: "AND_neq_zero_state \<Rightarrow> AND_neq_zero_state" where
+  "AND_neq_zero_imp s =
+      (let
+        ret = AND_neq_zero_state_upd s
+      in
+        ret
+      )"
+
+declare AND_neq_zero_imp.simps [simp del]
+
+lemma AND_neq_zero_imp_correct[let_function_correctness]:
+   "AND_neq_zero_ret (AND_neq_zero_imp s) = (if (AND_neq_zero_a s) \<noteq> 0 \<and> (AND_neq_zero_b s) \<noteq> 0 then 1 else 0)"
+  by (subst AND_neq_zero_imp.simps) (auto simp: AND_neq_zero_state_upd_def Let_def split: if_splits)
+
+fun AND_neq_zero_imp_time:: "nat \<Rightarrow> AND_neq_zero_state\<Rightarrow> nat" where
+  "AND_neq_zero_imp_time t s =
+    (
+      let
+        AND_neq_zero_ret' =
+          (if AND_neq_zero_a s \<noteq> 0 then
+            (if AND_neq_zero_b s \<noteq> 0 then
+               (1::nat)
+             else
+               0)
+           else
+             0);
+        t = t + 1 + (if AND_neq_zero_a s \<noteq> 0 then
+            1 +
+            (if AND_neq_zero_b s \<noteq> 0 then
+               2
+             else
+               2)
+           else
+             2);
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = AND_neq_zero_imp_time.simps
+
+lemma AND_neq_zero_imp_time_acc: "(AND_neq_zero_imp_time (Suc t) s) = Suc (AND_neq_zero_imp_time t s)"
+  apply(subst AND_neq_zero_imp_time.simps)
+  apply(subst AND_neq_zero_imp_time.simps)
+  apply (auto simp add: AND_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma AND_neq_zero_imp_time_acc_2: "(AND_neq_zero_imp_time x s) = x + (AND_neq_zero_imp_time 0 s)"
+  by (induction x arbitrary: s)
+    (auto simp add: AND_neq_zero_imp_time_acc AND_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+
+\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
+    programs.\<close>
+
+definition AND_neq_zero_IMP_Minus where
+  "AND_neq_zero_IMP_Minus \<equiv>
+  (
+          \<comment> \<open>(if AND_neq_zero_a s \<noteq> 0 then\<close>
+          IF AND_neq_zero_a_str \<noteq>0 THEN
+            \<comment> \<open>(if AND_neq_zero_b s \<noteq> 0 then\<close>
+            IF AND_neq_zero_b_str \<noteq>0 THEN
+               \<comment> \<open>1\<close>
+               AND_neq_zero_ret_str ::= (A (N 1))
+            \<comment> \<open>else\<close>
+            ELSE
+               \<comment> \<open>0)\<close>
+               AND_neq_zero_ret_str ::= (A (N 0))
+           \<comment> \<open>else\<close>
+           ELSE
+             \<comment> \<open>0);\<close>
+             AND_neq_zero_ret_str ::= (A (N 0))
+  )"
+
+definition "AND_neq_zero_imp_to_HOL_state p s =
+  \<lparr>AND_neq_zero_a = (s (add_prefix p AND_neq_zero_a_str)), AND_neq_zero_b = (s (add_prefix p AND_neq_zero_b_str)), AND_neq_zero_ret = (s (add_prefix p AND_neq_zero_ret_str))\<rparr>"
+
+lemma AND_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p AND_neq_zero_ret_str) = AND_neq_zero_ret (AND_neq_zero_imp (AND_neq_zero_imp_to_HOL_state p s))"
+  apply(subst AND_neq_zero_imp.simps)
+  apply(simp only: AND_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule If_tE)
+   apply(erule If_tE)
+    apply(drule AssignD)+
+    apply(elim conjE)
+    apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(drule AssignD)+
+  apply(elim conjE)
+  apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+  done
+
+lemma AND_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = AND_neq_zero_imp_time 0 (AND_neq_zero_imp_to_HOL_state p s)"
+  apply(subst AND_neq_zero_imp_time.simps)
+  apply(simp only: AND_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule If_tE)
+   apply(erule If_tE)
+    apply(drule AssignD)+
+    apply(elim conjE)
+    apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(drule AssignD)+
+  apply(elim conjE)
+  apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
+      Let_def)[1]
+  done
+
+lemma AND_neq_zero_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ AND_neq_zero_pref) AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+  v \<in> vars \<Longrightarrow> \<not> (prefix AND_neq_zero_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma AND_neq_zero_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (AND_neq_zero_imp_time 0 (AND_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) AND_neq_zero_ret_str) =
+        AND_neq_zero_ret (AND_neq_zero_imp (AND_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using AND_neq_zero_IMP_Minus_correct_time AND_neq_zero_IMP_Minus_correct_function
+    AND_neq_zero_IMP_Minus_correct_effects
+  by auto
+
+
+subsubsection \<open>Logical Or\<close>
+
+record OR_neq_zero_state = OR_neq_zero_a::nat OR_neq_zero_b::nat OR_neq_zero_ret::nat
+
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_a_str \<equiv> ''OR_a''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_b_str \<equiv> ''OR_b''"
+(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
+
+definition "OR_neq_zero_state_upd s \<equiv>
+      let
+        OR_neq_zero_ret' =
+          (if OR_neq_zero_a s \<noteq> 0 then
+            1
+           else
+             (if OR_neq_zero_b s \<noteq> 0 then
+               1
+             else
+               0));
+        ret = \<lparr>OR_neq_zero_a = OR_neq_zero_a s, OR_neq_zero_b = OR_neq_zero_b s, OR_neq_zero_ret = OR_neq_zero_ret'\<rparr>
+      in
+        ret
+"
+
+fun OR_neq_zero_imp:: "OR_neq_zero_state \<Rightarrow> OR_neq_zero_state" where
+  "OR_neq_zero_imp s =
+      (let
+        ret = OR_neq_zero_state_upd s
+      in
+        ret
+      )"
+
+declare OR_neq_zero_imp.simps [simp del]
+
+lemma OR_neq_zero_imp_correct[let_function_correctness]:
+   "OR_neq_zero_ret (OR_neq_zero_imp s) = (if (OR_neq_zero_a s) \<noteq> 0 \<or> (OR_neq_zero_b s) \<noteq> 0 then 1 else 0)"
+  by (subst OR_neq_zero_imp.simps) (auto simp: OR_neq_zero_state_upd_def Let_def split: if_splits)
+
+fun OR_neq_zero_imp_time:: "nat \<Rightarrow> OR_neq_zero_state\<Rightarrow> nat" where
+  "OR_neq_zero_imp_time t s =
+    (
+      let
+        OR_neq_zero_ret' =
+          (if OR_neq_zero_a s \<noteq> 0 then
+             1::nat
+           else
+             (if OR_neq_zero_b s \<noteq> 0 then
+               (1::nat)
+             else
+               0));
+        t = t + 1 + (if OR_neq_zero_a s \<noteq> 0 then
+            2
+           else
+             1 +
+            (if OR_neq_zero_b s \<noteq> 0 then
+               2
+             else
+               2));
+        ret = t
+      in
+        ret
+    )
+"
+
+lemmas [simp del] = OR_neq_zero_imp_time.simps
+
+lemma OR_neq_zero_imp_time_acc: "(OR_neq_zero_imp_time (Suc t) s) = Suc (OR_neq_zero_imp_time t s)"
+  apply(subst OR_neq_zero_imp_time.simps)
+  apply(subst OR_neq_zero_imp_time.simps)
+  apply (auto simp add: OR_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
+  done
+
+lemma OR_neq_zero_imp_time_acc_2: "(OR_neq_zero_imp_time x s) = x + (OR_neq_zero_imp_time 0 s)"
+  by (induction x arbitrary: s)
+    (auto simp add: OR_neq_zero_imp_time_acc OR_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
+
+
+\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
+    programs.\<close>
+
+definition OR_neq_zero_IMP_Minus where
+  "OR_neq_zero_IMP_Minus \<equiv>
+  (
+          \<comment> \<open>(if OR_neq_zero_a s \<noteq> 0 then\<close>
+          IF OR_neq_zero_a_str \<noteq>0 THEN
+             \<comment> \<open>1);\<close>
+            OR_neq_zero_ret_str ::= (A (N 1))
+           \<comment> \<open>else\<close>
+           ELSE
+            \<comment> \<open>(if OR_neq_zero_b s \<noteq> 0 then\<close>
+            IF OR_neq_zero_b_str \<noteq>0 THEN
+               \<comment> \<open>1\<close>
+               OR_neq_zero_ret_str ::= (A (N 1))
+            \<comment> \<open>else\<close>
+            ELSE
+               \<comment> \<open>0)\<close>
+               OR_neq_zero_ret_str ::= (A (N 0))
+
+  )"
+
+definition "OR_neq_zero_imp_to_HOL_state p s =
+  \<lparr>OR_neq_zero_a = (s (add_prefix p OR_neq_zero_a_str)), OR_neq_zero_b = (s (add_prefix p OR_neq_zero_b_str)), OR_neq_zero_ret = (s (add_prefix p OR_neq_zero_ret_str))\<rparr>"
+
+lemma OR_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p OR_neq_zero_ret_str) = OR_neq_zero_ret (OR_neq_zero_imp (OR_neq_zero_imp_to_HOL_state p s))"
+  apply(subst OR_neq_zero_imp.simps)
+  apply(simp only: OR_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule If_tE)
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(erule If_tE)
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(drule AssignD)+
+  apply(elim conjE)
+  apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  done
+
+lemma OR_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = OR_neq_zero_imp_time 0 (OR_neq_zero_imp_to_HOL_state p s)"
+  apply(subst OR_neq_zero_imp_time.simps)
+  apply(simp only: OR_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
+  apply(erule If_tE)
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(erule If_tE)
+   apply(drule AssignD)+
+   apply(elim conjE)
+   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  apply(drule AssignD)+
+  apply(elim conjE)
+  apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
+      Let_def)[1]
+  done
+
+lemma OR_neq_zero_IMP_Minus_correct_effects:
+  "(invoke_subprogram (p @ OR_neq_zero_pref) OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+  v \<in> vars \<Longrightarrow> \<not> (prefix OR_neq_zero_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma OR_neq_zero_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (OR_neq_zero_imp_time 0 (OR_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) OR_neq_zero_ret_str) =
+        OR_neq_zero_ret (OR_neq_zero_imp (OR_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using OR_neq_zero_IMP_Minus_correct_time OR_neq_zero_IMP_Minus_correct_function
+    OR_neq_zero_IMP_Minus_correct_effects
+  by auto
+
+
+subsubsection \<open>Equality\<close>
+
+record EQUAL_neq_zero_state =
+  EQUAL_neq_zero_a::nat
+  EQUAL_neq_zero_b::nat
+  EQUAL_neq_zero_ret::nat
+
+abbreviation "EQUAL_neq_zero_prefix \<equiv> ''EQUAL_neq_zero.''"
+abbreviation "EQUAL_neq_zero_a_str \<equiv> ''EQUAL_a''"
+abbreviation "EQUAL_neq_zero_b_str \<equiv> ''EQUAL_b''"
+abbreviation "EQUAL_neq_zero_ret_str \<equiv> ''EQUAL_ret''"
+
+definition "EQUAL_neq_zero_state_upd s \<equiv>
+  let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;
+      cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;
+      cond = cond1 + cond2;
+      EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
+      ret = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a s,
+             EQUAL_neq_zero_b = EQUAL_neq_zero_b s,
+             EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>
+  in ret"
+
+fun EQUAL_neq_zero_imp:: "EQUAL_neq_zero_state \<Rightarrow> EQUAL_neq_zero_state" where
+  "EQUAL_neq_zero_imp s =
+    (let ret = EQUAL_neq_zero_state_upd s
+     in ret
+    )"
+
+declare EQUAL_neq_zero_imp.simps [simp del]
+declare
+  EQUAL_neq_zero_state.simps[state_simps]
+
+lemma EQUAL_neq_zero_imp_correct[let_function_correctness]:
+  "EQUAL_neq_zero_ret (EQUAL_neq_zero_imp s) =
+    (if (EQUAL_neq_zero_a s) = (EQUAL_neq_zero_b s) then 1 else 0)"
+  by (simp add: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_state_upd_def)
+
+fun EQUAL_neq_zero_imp_time:: "nat \<Rightarrow> EQUAL_neq_zero_state \<Rightarrow> nat" where
+  "EQUAL_neq_zero_imp_time t s =
+    (let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;
+         t = t + 2;
+         cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;
+         t = t + 2;
+         cond = cond1 + cond2;
+         t = t + 2;
+         EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
+         t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
+         ret = t
+     in ret
+    )"
+
+lemmas [simp del] = EQUAL_neq_zero_imp_time.simps
+
+lemma EQUAL_neq_zero_imp_time_acc:
+  "(EQUAL_neq_zero_imp_time (Suc t) s) = Suc (EQUAL_neq_zero_imp_time t s)"
+  by (simp add: EQUAL_neq_zero_imp_time.simps)
+
+lemma EQUAL_neq_zero_imp_time_acc_2:
+  "(EQUAL_neq_zero_imp_time x s) = x + (EQUAL_neq_zero_imp_time 0 s)"
+  by (simp add: EQUAL_neq_zero_imp_time.simps)
+
+abbreviation "EQUAL_neq_zero_cond1 \<equiv> ''cond1''"
+abbreviation "EQUAL_neq_zero_cond2 \<equiv> ''cond2''"
+abbreviation "EQUAL_neq_zero_cond \<equiv> ''condition''"
+
+definition "EQUAL_neq_zero_IMP_Minus \<equiv>
+  \<comment> \<open>(let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;\<close>
+  EQUAL_neq_zero_cond1 ::= (Sub (V EQUAL_neq_zero_a_str) (V EQUAL_neq_zero_b_str));;
+  \<comment> \<open>(    cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;\<close>
+  EQUAL_neq_zero_cond2 ::= (Sub (V EQUAL_neq_zero_b_str) (V EQUAL_neq_zero_a_str));;
+  \<comment> \<open>(    cond = cond1 + cond2;\<close>
+  EQUAL_neq_zero_cond ::= (Plus (V EQUAL_neq_zero_cond1) (V EQUAL_neq_zero_cond2));;
+  \<comment> \<open>(    EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  \<comment> \<open>(    ret = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  IF EQUAL_neq_zero_cond \<noteq>0
+  THEN EQUAL_neq_zero_ret_str ::= (A (N 0))
+  ELSE EQUAL_neq_zero_ret_str ::= (A (N 1))"
+
+abbreviation
+  "EQUAL_neq_zero_IMP_vars \<equiv> {EQUAL_neq_zero_a_str, EQUAL_neq_zero_b_str, EQUAL_neq_zero_ret_str}"
+
+definition "EQUAL_neq_zero_imp_to_HOL_state p s =
+  \<lparr>EQUAL_neq_zero_a = (s (add_prefix p EQUAL_neq_zero_a_str)),
+   EQUAL_neq_zero_b = (s (add_prefix p EQUAL_neq_zero_b_str)),
+   EQUAL_neq_zero_ret = (s (add_prefix p EQUAL_neq_zero_ret_str))\<rparr>"
+
+lemma EQUAL_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p EQUAL_neq_zero_ret_str)
+      = EQUAL_neq_zero_ret (EQUAL_neq_zero_imp (EQUAL_neq_zero_imp_to_HOL_state p s))"
+  by (force simp: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_IMP_Minus_def
+      EQUAL_neq_zero_imp_to_HOL_state_def EQUAL_neq_zero_state_upd_def)
+
+lemma EQUAL_neq_zero_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ EQUAL_neq_zero_pref) EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix EQUAL_neq_zero_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma EQUAL_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = EQUAL_neq_zero_imp_time 0 (EQUAL_neq_zero_imp_to_HOL_state p s)"
+  by(force simp: EQUAL_neq_zero_imp_time.simps EQUAL_neq_zero_IMP_Minus_def
+      EQUAL_neq_zero_imp_to_HOL_state_def EQUAL_neq_zero_state_upd_def)
+
+lemma EQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+     \<lbrakk>t = (EQUAL_neq_zero_imp_time 0 (EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) EQUAL_neq_zero_ret_str) =
+        EQUAL_neq_zero_ret (EQUAL_neq_zero_imp (EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using EQUAL_neq_zero_IMP_Minus_correct_function
+  by (auto simp: EQUAL_neq_zero_IMP_Minus_correct_time)
+    (meson EQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
+
+
+subsubsection \<open>Inequality\<close>
+
+record NOTEQUAL_neq_zero_state =
+  NOTEQUAL_neq_zero_a::nat
+  NOTEQUAL_neq_zero_b::nat
+  NOTEQUAL_neq_zero_ret::nat
+
+abbreviation "NOTEQUAL_neq_zero_prefix \<equiv> ''NOTEQUAL_neq_zero.''"
+abbreviation "NOTEQUAL_neq_zero_a_str \<equiv> ''NOTEQUAL_a''"
+abbreviation "NOTEQUAL_neq_zero_b_str \<equiv> ''NOTEQUAL_b''"
+abbreviation "NOTEQUAL_neq_zero_ret_str \<equiv> ''NOTEQUAL_ret''"
+
+definition "NOTEQUAL_neq_zero_state_upd s \<equiv>
+  let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;
+      cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;
+      cond = cond1 + cond2;
+      NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
+      ret = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a s,
+             NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b s,
+             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>
+  in ret"
+
+fun NOTEQUAL_neq_zero_imp:: "NOTEQUAL_neq_zero_state \<Rightarrow> NOTEQUAL_neq_zero_state" where
+  "NOTEQUAL_neq_zero_imp s =
+    (let ret = NOTEQUAL_neq_zero_state_upd s
+     in ret
+    )"
+
+declare NOTEQUAL_neq_zero_imp.simps [simp del]
+
+lemma NOTEQUAL_neq_zero_imp_correct[let_function_correctness]:
+  "NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp s) =
+    (if (NOTEQUAL_neq_zero_a s) \<noteq> (NOTEQUAL_neq_zero_b s) then 1 else 0)"
+  by (simp add: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_state_upd_def)
+
+fun NOTEQUAL_neq_zero_imp_time:: "nat \<Rightarrow> NOTEQUAL_neq_zero_state \<Rightarrow> nat" where
+  "NOTEQUAL_neq_zero_imp_time t s =
+    (let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;
+         t = t + 2;
+         cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;
+         t = t + 2;
+         cond = cond1 + cond2;
+         t = t + 2;
+         NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
+         t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
+         ret = t
+     in ret
+    )"
+
+lemmas [simp del] = NOTEQUAL_neq_zero_imp_time.simps
+
+lemma NOTEQUAL_neq_zero_imp_time_acc:
+  "(NOTEQUAL_neq_zero_imp_time (Suc t) s) = Suc (NOTEQUAL_neq_zero_imp_time t s)"
+  by (simp add: NOTEQUAL_neq_zero_imp_time.simps)
+
+lemma NOTEQUAL_neq_zero_imp_time_acc_2:
+  "(NOTEQUAL_neq_zero_imp_time x s) = x + (NOTEQUAL_neq_zero_imp_time 0 s)"
+  by (simp add: NOTEQUAL_neq_zero_imp_time.simps)
+
+abbreviation "NOTEQUAL_neq_zero_cond1 \<equiv> ''cond1''"
+abbreviation "NOTEQUAL_neq_zero_cond2 \<equiv> ''cond2''"
+abbreviation "NOTEQUAL_neq_zero_cond \<equiv> ''condition''"
+
+definition "NOTEQUAL_neq_zero_IMP_Minus \<equiv>
+  \<comment> \<open>(let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;\<close>
+  NOTEQUAL_neq_zero_cond1 ::= (Sub (V NOTEQUAL_neq_zero_a_str) (V NOTEQUAL_neq_zero_b_str));;
+  \<comment> \<open>(    cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;\<close>
+  NOTEQUAL_neq_zero_cond2 ::= (Sub (V NOTEQUAL_neq_zero_b_str) (V NOTEQUAL_neq_zero_a_str));;
+  \<comment> \<open>(    cond = cond1 + cond2;\<close>
+  NOTEQUAL_neq_zero_cond ::= (Plus (V NOTEQUAL_neq_zero_cond1) (V NOTEQUAL_neq_zero_cond2));;
+  \<comment> \<open>(    NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  \<comment> \<open>(    ret = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  IF NOTEQUAL_neq_zero_cond \<noteq>0
+  THEN NOTEQUAL_neq_zero_ret_str ::= (A (N 1))
+  ELSE NOTEQUAL_neq_zero_ret_str ::= (A (N 0))"
+
+abbreviation
+  "NOTEQUAL_neq_zero_IMP_vars \<equiv>
+    {NOTEQUAL_neq_zero_a_str, NOTEQUAL_neq_zero_b_str, NOTEQUAL_neq_zero_ret_str}"
+
+definition "NOTEQUAL_neq_zero_imp_to_HOL_state p s =
+  \<lparr>NOTEQUAL_neq_zero_a = (s (add_prefix p NOTEQUAL_neq_zero_a_str)),
+   NOTEQUAL_neq_zero_b = (s (add_prefix p NOTEQUAL_neq_zero_b_str)),
+   NOTEQUAL_neq_zero_ret = (s (add_prefix p NOTEQUAL_neq_zero_ret_str))\<rparr>"
+
+lemma NOTEQUAL_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p NOTEQUAL_neq_zero_ret_str)
+      = NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp (NOTEQUAL_neq_zero_imp_to_HOL_state p s))"
+  by (force simp: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_IMP_Minus_def
+      NOTEQUAL_neq_zero_imp_to_HOL_state_def NOTEQUAL_neq_zero_state_upd_def)
+
+lemma NOTEQUAL_neq_zero_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ NOTEQUAL_neq_zero_pref) NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix NOTEQUAL_neq_zero_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma NOTEQUAL_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state p s)"
+  by(force simp: NOTEQUAL_neq_zero_imp_time.simps NOTEQUAL_neq_zero_IMP_Minus_def
+      NOTEQUAL_neq_zero_imp_to_HOL_state_def NOTEQUAL_neq_zero_state_upd_def)
+
+lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+    \<lbrakk>t = (NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) NOTEQUAL_neq_zero_ret_str) =
+        NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp
+                                  (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk> \<Longrightarrow> P\<rbrakk>
+  \<Longrightarrow> P"
+  using NOTEQUAL_neq_zero_IMP_Minus_correct_function
+  by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
+    (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
+
+
+
 subsection \<open>Lists\<close>
 
 subsubsection \<open>hd\<close>
@@ -3639,6 +4207,402 @@ lemma list_from_acc_IMP_Minus_correct:
     list_from_acc_IMP_Minus_correct_time
   by (meson set_mono_prefix)
 
+subsection \<open>nth\<close>
+paragraph nth_nat
+
+record nth_nat_state =
+nth_nat_n::nat
+nth_nat_x::nat
+nth_nat_ret::nat
+
+abbreviation "nth_nat_prefix \<equiv> ''nth_nat.''"
+abbreviation "nth_nat_n_str \<equiv> ''n''"
+abbreviation "nth_nat_x_str \<equiv> ''x''"
+abbreviation "nth_nat_ret_str \<equiv> ''ret''"
+
+definition "nth_nat_state_upd s \<equiv> 
+  (let 
+     tl_xs' = nth_nat_x s;
+     tl_ret' = 0;
+     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+     tl_ret_state = tl_imp tl_state;
+     nth_nat_n' = nth_nat_n s - 1;
+     nth_nat_x' = tl_ret tl_ret_state;
+     nth_nat_ret' = 0;
+     ret = \<lparr>nth_nat_n = nth_nat_n',
+           nth_nat_x = nth_nat_x',
+           nth_nat_ret = nth_nat_ret'\<rparr>
+     in
+     ret
+  )"
+
+definition "nth_nat_imp_compute_loop_condition s \<equiv>
+  (
+    let 
+      condition = nth_nat_n s
+    in 
+      condition
+  )"
+
+definition "nth_nat_imp_after_loop s \<equiv>
+  (
+    let
+      hd_xs' = nth_nat_x s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      nth_nat_ret' = hd_ret hd_ret_state;
+      ret = \<lparr>nth_nat_n = nth_nat_n s,
+            nth_nat_x = nth_nat_x s,
+            nth_nat_ret = nth_nat_ret'\<rparr>
+    in
+      ret
+  )"
+
+lemmas nth_nat_imp_subprogram_simps = 
+  nth_nat_state_upd_def
+  nth_nat_imp_compute_loop_condition_def
+  nth_nat_imp_after_loop_def
+
+function nth_nat_imp::
+  "nth_nat_state \<Rightarrow> nth_nat_state" where
+  "nth_nat_imp s =
+  (if nth_nat_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = nth_nat_imp (nth_nat_state_upd s)
+    in next_iteration
+   else
+    let ret = nth_nat_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure (\<lambda>s. nth_nat_n s)")
+  apply (simp add: nth_nat_imp_subprogram_simps)+
+  done
+
+declare nth_nat_imp.simps [simp del]
+
+lemma nth_nat_imp_correct:
+  "nth_nat_ret (nth_nat_imp s) =
+    nth_nat (nth_nat_n s) (nth_nat_x s)"
+  apply (induction s rule: nth_nat_imp.induct)
+  apply (subst nth_nat_imp.simps)
+  apply (simp del: nth_nat.simps add: nth_nat_imp_subprogram_simps Let_def hd_imp_correct
+  tl_imp_correct) 
+  using gr0_conv_Suc by fastforce 
+
+thm nth_nat.simps
+
+definition "nth_nat_state_upd_time t s \<equiv>
+  (let
+     tl_xs' = nth_nat_x s;
+     t = t + 2;
+     tl_ret' = 0;
+     t = t + 2;
+     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+     tl_ret_state = tl_imp tl_state;
+     t = t + tl_imp_time 0 tl_state;
+     nth_nat_n' = nth_nat_n s - 1;
+     t = t + 2;
+     nth_nat_x' = tl_ret tl_ret_state;
+     t = t + 2;
+     nth_nat_ret' = 0;
+     t = t + 2;
+     ret = \<lparr>nth_nat_n = nth_nat_n',
+           nth_nat_x = nth_nat_x',
+           nth_nat_ret = nth_nat_ret'\<rparr>
+     in
+     t
+  )"
+
+
+definition "nth_nat_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = nth_nat_n s;
+      t = t + 2
+  in
+    t)
+"
+
+definition "nth_nat_imp_after_loop_time t s \<equiv>
+  (let
+     hd_xs' = nth_nat_x s;
+     t = t + 2;
+     hd_ret' = 0;
+     t = t + 2;
+     hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+     hd_ret_state = hd_imp hd_state;
+     t = t + hd_imp_time 0 hd_state;
+     nth_nat_ret' = hd_ret hd_ret_state;
+     t = t + 2;
+     ret = \<lparr>nth_nat_n = nth_nat_n s,
+            nth_nat_x = nth_nat_x s,
+            nth_nat_ret = nth_nat_ret'\<rparr>
+    in
+      t
+  )
+"
+
+lemmas nth_nat_imp_subprogram_time_simps = 
+  nth_nat_state_upd_time_def
+  nth_nat_imp_compute_loop_condition_time_def
+  nth_nat_imp_after_loop_time_def
+  nth_nat_imp_subprogram_simps
+
+function nth_nat_imp_time::
+  "nat \<Rightarrow> nth_nat_state \<Rightarrow> nat" where
+  "nth_nat_imp_time t s =
+  nth_nat_imp_compute_loop_condition_time 0 s +
+  (if nth_nat_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          nth_nat_imp_time (t + nth_nat_state_upd_time 0 s)
+                         (nth_nat_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + nth_nat_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (\<lambda>(t, s). nth_nat_n s)")
+  by (simp add: nth_nat_imp_subprogram_time_simps)+
+
+declare nth_nat_imp_time.simps [simp del]            
+
+lemma nth_nat_imp_time_acc:
+  "(nth_nat_imp_time (Suc t) s) = Suc (nth_nat_imp_time t s)"
+  by (induction t s rule: nth_nat_imp_time.induct)
+    ((subst (1 2) nth_nat_imp_time.simps);
+      (simp add: nth_nat_state_upd_def))            
+
+lemma nth_nat_imp_time_acc_2_aux:
+  "(nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: nth_nat_imp_time_acc)+            
+
+lemma nth_nat_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
+  by (rule nth_nat_imp_time_acc_2_aux)            
+
+lemma nth_nat_imp_time_acc_3:
+  "(nth_nat_imp_time (a + b) s) = a + (nth_nat_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: nth_nat_imp_time_acc)+            
+
+abbreviation "nth_nat_while_cond \<equiv> ''condition''"
+
+definition "nth_nat_IMP_init_while_cond \<equiv>
+  \<comment> \<open>let \<close>
+  \<comment> \<open>  condition = nth_nat_n s\<close>
+  nth_nat_while_cond ::= A (V nth_nat_n_str)
+"
+
+definition "nth_nat_IMP_loop_body \<equiv>
+  \<comment> \<open> tl_xs' = nth_nat_x s;\<close>
+  (tl_prefix @ tl_xs_str) ::= A (V nth_nat_x_str);;
+  \<comment> \<open> tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= A (N 0);;
+  \<comment> \<open> tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open> tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  \<comment> \<open> nth_nat_n' = nth_nat_n s - 1;\<close>
+  nth_nat_n_str ::= Sub (V nth_nat_n_str) (N 1);;
+  \<comment> \<open> nth_nat_x' = tl_ret tl_ret_state;\<close>
+  nth_nat_x_str ::= A (V (tl_prefix @ tl_ret_str));;
+  \<comment> \<open> nth_nat_ret' = 0;\<close>
+  nth_nat_ret_str ::= A (N 0)
+  \<comment> \<open> ret = \<lparr>nth_nat_n = nth_nat_n',\<close>
+  \<comment> \<open>       nth_nat_x = nth_nat_x',\<close>
+  \<comment> \<open>       nth_nat_ret = nth_nat_ret'\<rparr>\<close>
+  \<comment> \<open> in\<close>
+  \<comment> \<open> ret\<close>
+"
+
+definition "nth_nat_IMP_after_loop \<equiv>
+  \<comment>\<open>hd_xs' = nth_nat_x s;\<close>
+  (hd_prefix @ hd_xs_str) ::= A (V nth_nat_x_str);;
+  \<comment>\<open>hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= A (N 0);;
+  \<comment>\<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment>\<open>nth_nat_ret' = hd_ret hd_ret_state;\<close>
+  \<comment>\<open>ret = \<lparr>nth_nat_n = nth_nat_n s,
+            nth_nat_x = nth_nat_x s,
+            nth_nat_ret = nth_nat_ret'\<rparr>\<close>
+  nth_nat_ret_str ::= A (V (hd_prefix @ hd_ret_str))
+"
+
+definition nth_nat_IMP_Minus where
+  "nth_nat_IMP_Minus \<equiv>
+  nth_nat_IMP_init_while_cond;;
+  WHILE nth_nat_while_cond \<noteq>0 DO (
+    nth_nat_IMP_loop_body;;
+    nth_nat_IMP_init_while_cond
+  );;
+  nth_nat_IMP_after_loop"
+
+abbreviation "nth_nat_IMP_vars\<equiv>
+  {nth_nat_while_cond, nth_nat_n_str, nth_nat_x_str, nth_nat_ret_str}"
+
+lemmas nth_nat_IMP_subprogram_simps =
+  nth_nat_IMP_init_while_cond_def
+  nth_nat_IMP_loop_body_def
+  nth_nat_IMP_after_loop_def
+
+definition "nth_nat_imp_to_HOL_state p s =
+  \<lparr>nth_nat_n = (s (add_prefix p nth_nat_n_str)),
+   nth_nat_x = (s (add_prefix p nth_nat_x_str)),
+   nth_nat_ret = (s (add_prefix p nth_nat_ret_str))\<rparr>"
+
+lemmas nth_nat_state_translators =
+  nth_nat_imp_to_HOL_state_def
+
+lemmas nth_nat_complete_simps =
+  nth_nat_IMP_subprogram_simps
+  nth_nat_imp_subprogram_simps
+  nth_nat_state_translators
+
+lemma nth_nat_IMP_Minus_correct_function:
+  "(invoke_subprogram p nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p nth_nat_ret_str)
+      = nth_nat_ret
+          (nth_nat_imp (nth_nat_imp_to_HOL_state p s))"
+  apply(induction "nth_nat_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: nth_nat_imp.induct)
+  apply(subst nth_nat_imp.simps)
+  apply(simp only: nth_nat_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: nth_nat_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+    subgoal premises p using p(9) by fastforce
+    apply (simp only: nth_nat_imp_subprogram_simps
+          nth_nat_state_translators Let_def prefix_simps
+          hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def
+          )
+      by force
+    
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: nth_nat_complete_simps)
+
+  subgoal
+      apply(subst (asm) nth_nat_IMP_init_while_cond_def)
+      apply(simp only: nth_nat_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+      subgoal premises p using p(11) by fastforce
+      apply (simp only: nth_nat_imp_subprogram_simps
+          nth_nat_state_translators Let_def prefix_simps
+          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
+          )
+      by force
+
+  subgoal
+      apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps
+          nth_nat_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+      subgoal premises p using p(11) by fastforce
+      apply (simp only: nth_nat_imp_subprogram_simps
+          nth_nat_state_translators Let_def prefix_simps
+          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
+          )
+      by force
+  done        
+
+lemma nth_nat_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ nth_nat_pref) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix nth_nat_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas nth_nat_complete_time_simps =
+  nth_nat_imp_subprogram_time_simps
+  nth_nat_imp_time_acc
+  nth_nat_imp_time_acc_2
+  nth_nat_imp_time_acc_3
+  nth_nat_state_translators
+
+lemma nth_nat_IMP_Minus_correct_time:
+  "(invoke_subprogram p nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = nth_nat_imp_time 0 (nth_nat_imp_to_HOL_state p s)"
+  apply(induction "nth_nat_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: nth_nat_imp.induct)
+  apply(subst nth_nat_imp_time.simps)
+  apply(simp only: nth_nat_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: nth_nat_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+    subgoal premises p using p(14) by fastforce
+    apply (simp only: nth_nat_complete_time_simps Let_def prefix_simps
+    hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def hd_IMP_Minus_correct_time) 
+   by force
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: nth_nat_complete_simps)
+
+  subgoal
+    apply(subst (asm) nth_nat_IMP_init_while_cond_def)
+    apply(simp only: nth_nat_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+    subgoal premises p using p(19) by fastforce
+    apply (simp only: nth_nat_imp_subprogram_simps
+          nth_nat_state_translators Let_def prefix_simps
+          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
+          ) 
+    by force
+
+  subgoal
+    apply(simp only: prefix_simps nth_nat_IMP_init_while_cond_def
+        nth_nat_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
+    subgoal premises p using p(19) by fastforce
+    apply (simp only: nth_nat_complete_time_simps nth_nat_state.simps Let_def prefix_simps
+          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
+          tl_IMP_Minus_correct_time
+          )
+    by force
+
+done        
+
+lemma nth_nat_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (nth_nat_imp_time 0 (nth_nat_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) nth_nat_ret_str) =
+          nth_nat_ret (nth_nat_imp
+                                        (nth_nat_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using nth_nat_IMP_Minus_correct_function
+  by (auto simp: nth_nat_IMP_Minus_correct_time)
+    (meson nth_nat_IMP_Minus_correct_effects set_mono_prefix)
 
 paragraph \<open>list_from_tail\<close>
 
@@ -4486,983 +5450,6 @@ lemma concat_acc_IMP_Minus_correct:
   by (auto simp: concat_acc_IMP_Minus_correct_time)
     (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
-subsection \<open>nth\<close>
-paragraph nth_nat
-
-record nth_nat_state =
-nth_nat_n::nat
-nth_nat_x::nat
-nth_nat_ret::nat
-
-abbreviation "nth_nat_prefix \<equiv> ''nth_nat.''"
-abbreviation "nth_nat_n_str \<equiv> ''n''"
-abbreviation "nth_nat_x_str \<equiv> ''x''"
-abbreviation "nth_nat_ret_str \<equiv> ''ret''"
-
-definition "nth_nat_state_upd s \<equiv> 
-  (let 
-     tl_xs' = nth_nat_x s;
-     tl_ret' = 0;
-     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
-     tl_ret_state = tl_imp tl_state;
-     nth_nat_n' = nth_nat_n s - 1;
-     nth_nat_x' = tl_ret tl_ret_state;
-     nth_nat_ret' = 0;
-     ret = \<lparr>nth_nat_n = nth_nat_n',
-           nth_nat_x = nth_nat_x',
-           nth_nat_ret = nth_nat_ret'\<rparr>
-     in
-     ret
-  )"
-
-definition "nth_nat_imp_compute_loop_condition s \<equiv>
-  (
-    let 
-      condition = nth_nat_n s
-    in 
-      condition
-  )"
-
-definition "nth_nat_imp_after_loop s \<equiv>
-  (
-    let
-      hd_xs' = nth_nat_x s;
-      hd_ret' = 0;
-      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-      hd_ret_state = hd_imp hd_state;
-      nth_nat_ret' = hd_ret hd_ret_state;
-      ret = \<lparr>nth_nat_n = nth_nat_n s,
-            nth_nat_x = nth_nat_x s,
-            nth_nat_ret = nth_nat_ret'\<rparr>
-    in
-      ret
-  )"
-
-lemmas nth_nat_imp_subprogram_simps = 
-  nth_nat_state_upd_def
-  nth_nat_imp_compute_loop_condition_def
-  nth_nat_imp_after_loop_def
-
-function nth_nat_imp::
-  "nth_nat_state \<Rightarrow> nth_nat_state" where
-  "nth_nat_imp s =
-  (if nth_nat_imp_compute_loop_condition s \<noteq> 0
-   then
-    let next_iteration = nth_nat_imp (nth_nat_state_upd s)
-    in next_iteration
-   else
-    let ret = nth_nat_imp_after_loop s
-    in ret
-  )"
-  by simp+
-termination
-  apply (relation "measure (\<lambda>s. nth_nat_n s)")
-  apply (simp add: nth_nat_imp_subprogram_simps)+
-  done
-
-declare nth_nat_imp.simps [simp del]
-
-lemma nth_nat_imp_correct:
-  "nth_nat_ret (nth_nat_imp s) =
-    nth_nat (nth_nat_n s) (nth_nat_x s)"
-  apply (induction s rule: nth_nat_imp.induct)
-  apply (subst nth_nat_imp.simps)
-  apply (simp del: nth_nat.simps add: nth_nat_imp_subprogram_simps Let_def hd_imp_correct
-  tl_imp_correct) 
-  using gr0_conv_Suc by fastforce 
-
-thm nth_nat.simps
-
-definition "nth_nat_state_upd_time t s \<equiv>
-  (let
-     tl_xs' = nth_nat_x s;
-     t = t + 2;
-     tl_ret' = 0;
-     t = t + 2;
-     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
-     tl_ret_state = tl_imp tl_state;
-     t = t + tl_imp_time 0 tl_state;
-     nth_nat_n' = nth_nat_n s - 1;
-     t = t + 2;
-     nth_nat_x' = tl_ret tl_ret_state;
-     t = t + 2;
-     nth_nat_ret' = 0;
-     t = t + 2;
-     ret = \<lparr>nth_nat_n = nth_nat_n',
-           nth_nat_x = nth_nat_x',
-           nth_nat_ret = nth_nat_ret'\<rparr>
-     in
-     t
-  )"
-
-
-definition "nth_nat_imp_compute_loop_condition_time t s \<equiv>
-  (let
-      condition = nth_nat_n s;
-      t = t + 2
-  in
-    t)
-"
-
-definition "nth_nat_imp_after_loop_time t s \<equiv>
-  (let
-     hd_xs' = nth_nat_x s;
-     t = t + 2;
-     hd_ret' = 0;
-     t = t + 2;
-     hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-     hd_ret_state = hd_imp hd_state;
-     t = t + hd_imp_time 0 hd_state;
-     nth_nat_ret' = hd_ret hd_ret_state;
-     t = t + 2;
-     ret = \<lparr>nth_nat_n = nth_nat_n s,
-            nth_nat_x = nth_nat_x s,
-            nth_nat_ret = nth_nat_ret'\<rparr>
-    in
-      t
-  )
-"
-
-lemmas nth_nat_imp_subprogram_time_simps = 
-  nth_nat_state_upd_time_def
-  nth_nat_imp_compute_loop_condition_time_def
-  nth_nat_imp_after_loop_time_def
-  nth_nat_imp_subprogram_simps
-
-function nth_nat_imp_time::
-  "nat \<Rightarrow> nth_nat_state \<Rightarrow> nat" where
-  "nth_nat_imp_time t s =
-  nth_nat_imp_compute_loop_condition_time 0 s +
-  (if nth_nat_imp_compute_loop_condition s \<noteq> 0
-    then
-      (let
-        t = t + 1;
-        next_iteration =
-          nth_nat_imp_time (t + nth_nat_state_upd_time 0 s)
-                         (nth_nat_state_upd s)
-       in next_iteration)
-    else
-      (let
-        t = t + 2;
-        ret = t + nth_nat_imp_after_loop_time 0 s
-       in ret)
-  )"
-  by auto
-termination
-  apply (relation "measure (\<lambda>(t, s). nth_nat_n s)")
-  by (simp add: nth_nat_imp_subprogram_time_simps)+
-
-declare nth_nat_imp_time.simps [simp del]            
-
-lemma nth_nat_imp_time_acc:
-  "(nth_nat_imp_time (Suc t) s) = Suc (nth_nat_imp_time t s)"
-  by (induction t s rule: nth_nat_imp_time.induct)
-    ((subst (1 2) nth_nat_imp_time.simps);
-      (simp add: nth_nat_state_upd_def))            
-
-lemma nth_nat_imp_time_acc_2_aux:
-  "(nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: nth_nat_imp_time_acc)+            
-
-lemma nth_nat_imp_time_acc_2:
-  "t \<noteq> 0 \<Longrightarrow> (nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
-  by (rule nth_nat_imp_time_acc_2_aux)            
-
-lemma nth_nat_imp_time_acc_3:
-  "(nth_nat_imp_time (a + b) s) = a + (nth_nat_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: nth_nat_imp_time_acc)+            
-
-abbreviation "nth_nat_while_cond \<equiv> ''condition''"
-
-definition "nth_nat_IMP_init_while_cond \<equiv>
-  \<comment> \<open>let \<close>
-  \<comment> \<open>  condition = nth_nat_n s\<close>
-  nth_nat_while_cond ::= A (V nth_nat_n_str)
-"
-
-definition "nth_nat_IMP_loop_body \<equiv>
-  \<comment> \<open> tl_xs' = nth_nat_x s;\<close>
-  (tl_prefix @ tl_xs_str) ::= A (V nth_nat_x_str);;
-  \<comment> \<open> tl_ret' = 0;\<close>
-  (tl_prefix @ tl_ret_str) ::= A (N 0);;
-  \<comment> \<open> tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
-  \<comment> \<open> tl_ret_state = tl_imp tl_state;\<close>
-  invoke_subprogram tl_prefix tl_IMP_Minus;;
-  \<comment> \<open> nth_nat_n' = nth_nat_n s - 1;\<close>
-  nth_nat_n_str ::= Sub (V nth_nat_n_str) (N 1);;
-  \<comment> \<open> nth_nat_x' = tl_ret tl_ret_state;\<close>
-  nth_nat_x_str ::= A (V (tl_prefix @ tl_ret_str));;
-  \<comment> \<open> nth_nat_ret' = 0;\<close>
-  nth_nat_ret_str ::= A (N 0)
-  \<comment> \<open> ret = \<lparr>nth_nat_n = nth_nat_n',\<close>
-  \<comment> \<open>       nth_nat_x = nth_nat_x',\<close>
-  \<comment> \<open>       nth_nat_ret = nth_nat_ret'\<rparr>\<close>
-  \<comment> \<open> in\<close>
-  \<comment> \<open> ret\<close>
-"
-
-definition "nth_nat_IMP_after_loop \<equiv>
-  \<comment>\<open>hd_xs' = nth_nat_x s;\<close>
-  (hd_prefix @ hd_xs_str) ::= A (V nth_nat_x_str);;
-  \<comment>\<open>hd_ret' = 0;\<close>
-  (hd_prefix @ hd_ret_str) ::= A (N 0);;
-  \<comment>\<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
-      hd_ret_state = hd_imp hd_state;\<close>
-  invoke_subprogram hd_prefix hd_IMP_Minus;;
-  \<comment>\<open>nth_nat_ret' = hd_ret hd_ret_state;\<close>
-  \<comment>\<open>ret = \<lparr>nth_nat_n = nth_nat_n s,
-            nth_nat_x = nth_nat_x s,
-            nth_nat_ret = nth_nat_ret'\<rparr>\<close>
-  nth_nat_ret_str ::= A (V (hd_prefix @ hd_ret_str))
-"
-
-definition nth_nat_IMP_Minus where
-  "nth_nat_IMP_Minus \<equiv>
-  nth_nat_IMP_init_while_cond;;
-  WHILE nth_nat_while_cond \<noteq>0 DO (
-    nth_nat_IMP_loop_body;;
-    nth_nat_IMP_init_while_cond
-  );;
-  nth_nat_IMP_after_loop"
-
-abbreviation "nth_nat_IMP_vars\<equiv>
-  {nth_nat_while_cond, nth_nat_n_str, nth_nat_x_str, nth_nat_ret_str}"
-
-lemmas nth_nat_IMP_subprogram_simps =
-  nth_nat_IMP_init_while_cond_def
-  nth_nat_IMP_loop_body_def
-  nth_nat_IMP_after_loop_def
-
-definition "nth_nat_imp_to_HOL_state p s =
-  \<lparr>nth_nat_n = (s (add_prefix p nth_nat_n_str)),
-   nth_nat_x = (s (add_prefix p nth_nat_x_str)),
-   nth_nat_ret = (s (add_prefix p nth_nat_ret_str))\<rparr>"
-
-lemmas nth_nat_state_translators =
-  nth_nat_imp_to_HOL_state_def
-
-lemmas nth_nat_complete_simps =
-  nth_nat_IMP_subprogram_simps
-  nth_nat_imp_subprogram_simps
-  nth_nat_state_translators
-
-lemma nth_nat_IMP_Minus_correct_function:
-  "(invoke_subprogram p nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p nth_nat_ret_str)
-      = nth_nat_ret
-          (nth_nat_imp (nth_nat_imp_to_HOL_state p s))"
-  apply(induction "nth_nat_imp_to_HOL_state p s" arbitrary: s s' t
-    rule: nth_nat_imp.induct)
-  apply(subst nth_nat_imp.simps)
-  apply(simp only: nth_nat_IMP_Minus_def prefix_simps)
-  apply(erule Seq_E)+
-  apply(erule While_tE)
-
-  subgoal
-    apply(simp only: nth_nat_IMP_subprogram_simps prefix_simps)
-    apply(erule Seq_E)+
-    apply(erule hd_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-    subgoal premises p using p(9) by fastforce
-    apply (simp only: nth_nat_imp_subprogram_simps
-          nth_nat_state_translators Let_def prefix_simps
-          hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def
-          )
-      by force
-    
-
-  apply(erule Seq_E)+
-  apply(dest_com_gen)
-
-  subgoal
-      apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps)
-      by(fastforce simp add: nth_nat_complete_simps)
-
-  subgoal
-      apply(subst (asm) nth_nat_IMP_init_while_cond_def)
-      apply(simp only: nth_nat_IMP_loop_body_def prefix_simps)
-      apply(erule Seq_E)+
-      apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-      subgoal premises p using p(11) by fastforce
-      apply (simp only: nth_nat_imp_subprogram_simps
-          nth_nat_state_translators Let_def prefix_simps
-          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
-          )
-      by force
-
-  subgoal
-      apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps
-          nth_nat_IMP_loop_body_def)
-      apply(erule Seq_E)+
-      apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-      subgoal premises p using p(11) by fastforce
-      apply (simp only: nth_nat_imp_subprogram_simps
-          nth_nat_state_translators Let_def prefix_simps
-          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
-          )
-      by force
-  done        
-
-lemma nth_nat_IMP_Minus_correct_effects:
-  "\<lbrakk>(invoke_subprogram (p @ nth_nat_pref) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    v \<in> vars; \<not> (prefix nth_nat_pref v)\<rbrakk>
-   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
-
-lemmas nth_nat_complete_time_simps =
-  nth_nat_imp_subprogram_time_simps
-  nth_nat_imp_time_acc
-  nth_nat_imp_time_acc_2
-  nth_nat_imp_time_acc_3
-  nth_nat_state_translators
-
-lemma nth_nat_IMP_Minus_correct_time:
-  "(invoke_subprogram p nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = nth_nat_imp_time 0 (nth_nat_imp_to_HOL_state p s)"
-  apply(induction "nth_nat_imp_to_HOL_state p s" arbitrary: s s' t
-      rule: nth_nat_imp.induct)
-  apply(subst nth_nat_imp_time.simps)
-  apply(simp only: nth_nat_IMP_Minus_def prefix_simps)
-
-  apply(erule Seq_tE)+
-  apply(erule While_tE_time)
-
-  subgoal
-    apply(simp only: nth_nat_IMP_subprogram_simps prefix_simps)
-    apply(erule Seq_tE)+
-    apply(erule hd_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-    subgoal premises p using p(14) by fastforce
-    apply (simp only: nth_nat_complete_time_simps Let_def prefix_simps
-    hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def hd_IMP_Minus_correct_time) 
-   by force
-
-  apply(erule Seq_tE)+
-  apply(simp add: add.assoc)
-  apply(dest_com_gen_time)
-
-  subgoal
-    apply(simp only: nth_nat_IMP_init_while_cond_def prefix_simps)
-    by(fastforce simp add: nth_nat_complete_simps)
-
-  subgoal
-    apply(subst (asm) nth_nat_IMP_init_while_cond_def)
-    apply(simp only: nth_nat_IMP_loop_body_def prefix_simps)
-    apply(erule Seq_tE)+
-    apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-    subgoal premises p using p(19) by fastforce
-    apply (simp only: nth_nat_imp_subprogram_simps
-          nth_nat_state_translators Let_def prefix_simps
-          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
-          ) 
-    by force
-
-  subgoal
-    apply(simp only: prefix_simps nth_nat_IMP_init_while_cond_def
-        nth_nat_IMP_loop_body_def)
-    apply(erule Seq_tE)+
-    apply(erule tl_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
-    subgoal premises p using p(19) by fastforce
-    apply (simp only: nth_nat_complete_time_simps nth_nat_state.simps Let_def prefix_simps
-          tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
-          tl_IMP_Minus_correct_time
-          )
-    by force
-
-done        
-
-lemma nth_nat_IMP_Minus_correct:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-    \<lbrakk>t = (nth_nat_imp_time 0 (nth_nat_imp_to_HOL_state (p1 @ p2) s));
-     s' (add_prefix (p1 @ p2) nth_nat_ret_str) =
-          nth_nat_ret (nth_nat_imp
-                                        (nth_nat_imp_to_HOL_state (p1 @ p2) s));
-     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using nth_nat_IMP_Minus_correct_function
-  by (auto simp: nth_nat_IMP_Minus_correct_time)
-    (meson nth_nat_IMP_Minus_correct_effects set_mono_prefix)
-
-subsection \<open>Logic\<close>
-
-subsubsection \<open>Logical And\<close>
-
-record AND_neq_zero_state = AND_neq_zero_a::nat AND_neq_zero_b::nat AND_neq_zero_ret::nat
-
-(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_prefix \<equiv> ''AND_neq_zero.''"
-(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_a_str \<equiv> ''AND_a''"
-(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_b_str \<equiv> ''AND_b''"
-(*definition [prefix_defs]:*) abbreviation   "AND_neq_zero_ret_str \<equiv> ''AND_ret''"
-
-definition "AND_neq_zero_state_upd s \<equiv>
-      let
-        AND_neq_zero_ret' =
-          (if AND_neq_zero_a s \<noteq> 0 then
-            (if AND_neq_zero_b s \<noteq> 0 then
-               1
-             else
-               0)
-           else
-             0);
-        ret = \<lparr>AND_neq_zero_a = AND_neq_zero_a s, AND_neq_zero_b = AND_neq_zero_b s, AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>
-      in
-        ret
-"
-
-fun AND_neq_zero_imp:: "AND_neq_zero_state \<Rightarrow> AND_neq_zero_state" where
-  "AND_neq_zero_imp s =
-      (let
-        ret = AND_neq_zero_state_upd s
-      in
-        ret
-      )"
-
-declare AND_neq_zero_imp.simps [simp del]
-
-lemma AND_neq_zero_imp_correct[let_function_correctness]:
-   "AND_neq_zero_ret (AND_neq_zero_imp s) = (if (AND_neq_zero_a s) \<noteq> 0 \<and> (AND_neq_zero_b s) \<noteq> 0 then 1 else 0)"
-  by (subst AND_neq_zero_imp.simps) (auto simp: AND_neq_zero_state_upd_def Let_def split: if_splits)
-
-fun AND_neq_zero_imp_time:: "nat \<Rightarrow> AND_neq_zero_state\<Rightarrow> nat" where
-  "AND_neq_zero_imp_time t s =
-    (
-      let
-        AND_neq_zero_ret' =
-          (if AND_neq_zero_a s \<noteq> 0 then
-            (if AND_neq_zero_b s \<noteq> 0 then
-               (1::nat)
-             else
-               0)
-           else
-             0);
-        t = t + 1 + (if AND_neq_zero_a s \<noteq> 0 then
-            1 +
-            (if AND_neq_zero_b s \<noteq> 0 then
-               2
-             else
-               2)
-           else
-             2);
-        ret = t
-      in
-        ret
-    )
-"
-
-lemmas [simp del] = AND_neq_zero_imp_time.simps
-
-lemma AND_neq_zero_imp_time_acc: "(AND_neq_zero_imp_time (Suc t) s) = Suc (AND_neq_zero_imp_time t s)"
-  apply(subst AND_neq_zero_imp_time.simps)
-  apply(subst AND_neq_zero_imp_time.simps)
-  apply (auto simp add: AND_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
-
-lemma AND_neq_zero_imp_time_acc_2: "(AND_neq_zero_imp_time x s) = x + (AND_neq_zero_imp_time 0 s)"
-  by (induction x arbitrary: s)
-    (auto simp add: AND_neq_zero_imp_time_acc AND_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
-
-
-\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
-    programs.\<close>
-
-definition AND_neq_zero_IMP_Minus where
-  "AND_neq_zero_IMP_Minus \<equiv>
-  (
-          \<comment> \<open>(if AND_neq_zero_a s \<noteq> 0 then\<close>
-          IF AND_neq_zero_a_str \<noteq>0 THEN
-            \<comment> \<open>(if AND_neq_zero_b s \<noteq> 0 then\<close>
-            IF AND_neq_zero_b_str \<noteq>0 THEN
-               \<comment> \<open>1\<close>
-               AND_neq_zero_ret_str ::= (A (N 1))
-            \<comment> \<open>else\<close>
-            ELSE
-               \<comment> \<open>0)\<close>
-               AND_neq_zero_ret_str ::= (A (N 0))
-           \<comment> \<open>else\<close>
-           ELSE
-             \<comment> \<open>0);\<close>
-             AND_neq_zero_ret_str ::= (A (N 0))
-  )"
-
-definition "AND_neq_zero_imp_to_HOL_state p s =
-  \<lparr>AND_neq_zero_a = (s (add_prefix p AND_neq_zero_a_str)), AND_neq_zero_b = (s (add_prefix p AND_neq_zero_b_str)), AND_neq_zero_ret = (s (add_prefix p AND_neq_zero_ret_str))\<rparr>"
-
-lemma AND_neq_zero_IMP_Minus_correct_function:
-  "(invoke_subprogram p AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p AND_neq_zero_ret_str) = AND_neq_zero_ret (AND_neq_zero_imp (AND_neq_zero_imp_to_HOL_state p s))"
-  apply(subst AND_neq_zero_imp.simps)
-  apply(simp only: AND_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule If_tE)
-   apply(erule If_tE)
-    apply(drule AssignD)+
-    apply(elim conjE)
-    apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(drule AssignD)+
-  apply(elim conjE)
-  apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  done
-
-lemma AND_neq_zero_IMP_Minus_correct_time:
-  "(invoke_subprogram p AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = AND_neq_zero_imp_time 0 (AND_neq_zero_imp_to_HOL_state p s)"
-  apply(subst AND_neq_zero_imp_time.simps)
-  apply(simp only: AND_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule If_tE)
-   apply(erule If_tE)
-    apply(drule AssignD)+
-    apply(elim conjE)
-    apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(drule AssignD)+
-  apply(elim conjE)
-  apply(simp add: AND_neq_zero_state_upd_def AND_neq_zero_imp_to_HOL_state_def AND_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  done
-
-lemma AND_neq_zero_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ AND_neq_zero_pref) AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-  v \<in> vars \<Longrightarrow> \<not> (prefix AND_neq_zero_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast
-
-lemma AND_neq_zero_IMP_Minus_correct[functional_correctness]:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) AND_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
-     \<lbrakk>t = (AND_neq_zero_imp_time 0 (AND_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) AND_neq_zero_ret_str) =
-        AND_neq_zero_ret (AND_neq_zero_imp (AND_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using AND_neq_zero_IMP_Minus_correct_time AND_neq_zero_IMP_Minus_correct_function
-    AND_neq_zero_IMP_Minus_correct_effects
-  by auto
-
-
-subsubsection \<open>Logical Or\<close>
-
-record OR_neq_zero_state = OR_neq_zero_a::nat OR_neq_zero_b::nat OR_neq_zero_ret::nat
-
-(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_prefix \<equiv> ''OR_neq_zero.''"
-(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_a_str \<equiv> ''OR_a''"
-(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_b_str \<equiv> ''OR_b''"
-(*definition [prefix_defs]:*) abbreviation   "OR_neq_zero_ret_str \<equiv> ''OR_ret''"
-
-definition "OR_neq_zero_state_upd s \<equiv>
-      let
-        OR_neq_zero_ret' =
-          (if OR_neq_zero_a s \<noteq> 0 then
-            1
-           else
-             (if OR_neq_zero_b s \<noteq> 0 then
-               1
-             else
-               0));
-        ret = \<lparr>OR_neq_zero_a = OR_neq_zero_a s, OR_neq_zero_b = OR_neq_zero_b s, OR_neq_zero_ret = OR_neq_zero_ret'\<rparr>
-      in
-        ret
-"
-
-fun OR_neq_zero_imp:: "OR_neq_zero_state \<Rightarrow> OR_neq_zero_state" where
-  "OR_neq_zero_imp s =
-      (let
-        ret = OR_neq_zero_state_upd s
-      in
-        ret
-      )"
-
-declare OR_neq_zero_imp.simps [simp del]
-
-lemma OR_neq_zero_imp_correct[let_function_correctness]:
-   "OR_neq_zero_ret (OR_neq_zero_imp s) = (if (OR_neq_zero_a s) \<noteq> 0 \<or> (OR_neq_zero_b s) \<noteq> 0 then 1 else 0)"
-  by (subst OR_neq_zero_imp.simps) (auto simp: OR_neq_zero_state_upd_def Let_def split: if_splits)
-
-fun OR_neq_zero_imp_time:: "nat \<Rightarrow> OR_neq_zero_state\<Rightarrow> nat" where
-  "OR_neq_zero_imp_time t s =
-    (
-      let
-        OR_neq_zero_ret' =
-          (if OR_neq_zero_a s \<noteq> 0 then
-             1::nat
-           else
-             (if OR_neq_zero_b s \<noteq> 0 then
-               (1::nat)
-             else
-               0));
-        t = t + 1 + (if OR_neq_zero_a s \<noteq> 0 then
-            2
-           else
-             1 +
-            (if OR_neq_zero_b s \<noteq> 0 then
-               2
-             else
-               2));
-        ret = t
-      in
-        ret
-    )
-"
-
-lemmas [simp del] = OR_neq_zero_imp_time.simps
-
-lemma OR_neq_zero_imp_time_acc: "(OR_neq_zero_imp_time (Suc t) s) = Suc (OR_neq_zero_imp_time t s)"
-  apply(subst OR_neq_zero_imp_time.simps)
-  apply(subst OR_neq_zero_imp_time.simps)
-  apply (auto simp add: OR_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
-  done
-
-lemma OR_neq_zero_imp_time_acc_2: "(OR_neq_zero_imp_time x s) = x + (OR_neq_zero_imp_time 0 s)"
-  by (induction x arbitrary: s)
-    (auto simp add: OR_neq_zero_imp_time_acc OR_neq_zero_state_upd_def Let_def eval_nat_numeral split: if_splits)
-
-
-\<comment> \<open>The following separation is due to parsing time, whic grows exponentially in the length of IMP-
-    programs.\<close>
-
-definition OR_neq_zero_IMP_Minus where
-  "OR_neq_zero_IMP_Minus \<equiv>
-  (
-          \<comment> \<open>(if OR_neq_zero_a s \<noteq> 0 then\<close>
-          IF OR_neq_zero_a_str \<noteq>0 THEN
-             \<comment> \<open>1);\<close>
-            OR_neq_zero_ret_str ::= (A (N 1))
-           \<comment> \<open>else\<close>
-           ELSE
-            \<comment> \<open>(if OR_neq_zero_b s \<noteq> 0 then\<close>
-            IF OR_neq_zero_b_str \<noteq>0 THEN
-               \<comment> \<open>1\<close>
-               OR_neq_zero_ret_str ::= (A (N 1))
-            \<comment> \<open>else\<close>
-            ELSE
-               \<comment> \<open>0)\<close>
-               OR_neq_zero_ret_str ::= (A (N 0))
-
-  )"
-
-definition "OR_neq_zero_imp_to_HOL_state p s =
-  \<lparr>OR_neq_zero_a = (s (add_prefix p OR_neq_zero_a_str)), OR_neq_zero_b = (s (add_prefix p OR_neq_zero_b_str)), OR_neq_zero_ret = (s (add_prefix p OR_neq_zero_ret_str))\<rparr>"
-
-lemma OR_neq_zero_IMP_Minus_correct_function:
-  "(invoke_subprogram p OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p OR_neq_zero_ret_str) = OR_neq_zero_ret (OR_neq_zero_imp (OR_neq_zero_imp_to_HOL_state p s))"
-  apply(subst OR_neq_zero_imp.simps)
-  apply(simp only: OR_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule If_tE)
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(erule If_tE)
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(drule AssignD)+
-  apply(elim conjE)
-  apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  done
-
-lemma OR_neq_zero_IMP_Minus_correct_time:
-  "(invoke_subprogram p OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = OR_neq_zero_imp_time 0 (OR_neq_zero_imp_to_HOL_state p s)"
-  apply(subst OR_neq_zero_imp_time.simps)
-  apply(simp only: OR_neq_zero_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
-  apply(erule If_tE)
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(erule If_tE)
-   apply(drule AssignD)+
-   apply(elim conjE)
-   apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  apply(drule AssignD)+
-  apply(elim conjE)
-  apply(simp add: OR_neq_zero_state_upd_def OR_neq_zero_imp_to_HOL_state_def OR_neq_zero_imp_time_acc
-      cons_imp_to_HOL_state_def hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
-      Let_def)[1]
-  done
-
-lemma OR_neq_zero_IMP_Minus_correct_effects:
-  "(invoke_subprogram (p @ OR_neq_zero_pref) OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-  v \<in> vars \<Longrightarrow> \<not> (prefix OR_neq_zero_pref v) \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast
-
-lemma OR_neq_zero_IMP_Minus_correct[functional_correctness]:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) OR_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
-     \<lbrakk>t = (OR_neq_zero_imp_time 0 (OR_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) OR_neq_zero_ret_str) =
-        OR_neq_zero_ret (OR_neq_zero_imp (OR_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using OR_neq_zero_IMP_Minus_correct_time OR_neq_zero_IMP_Minus_correct_function
-    OR_neq_zero_IMP_Minus_correct_effects
-  by auto
-
-
-subsubsection \<open>Equality\<close>
-
-record EQUAL_neq_zero_state =
-  EQUAL_neq_zero_a::nat
-  EQUAL_neq_zero_b::nat
-  EQUAL_neq_zero_ret::nat
-
-abbreviation "EQUAL_neq_zero_prefix \<equiv> ''EQUAL_neq_zero.''"
-abbreviation "EQUAL_neq_zero_a_str \<equiv> ''EQUAL_a''"
-abbreviation "EQUAL_neq_zero_b_str \<equiv> ''EQUAL_b''"
-abbreviation "EQUAL_neq_zero_ret_str \<equiv> ''EQUAL_ret''"
-
-definition "EQUAL_neq_zero_state_upd s \<equiv>
-  let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;
-      cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;
-      cond = cond1 + cond2;
-      EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
-      ret = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a s,
-             EQUAL_neq_zero_b = EQUAL_neq_zero_b s,
-             EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>
-  in ret"
-
-fun EQUAL_neq_zero_imp:: "EQUAL_neq_zero_state \<Rightarrow> EQUAL_neq_zero_state" where
-  "EQUAL_neq_zero_imp s =
-    (let ret = EQUAL_neq_zero_state_upd s
-     in ret
-    )"
-
-declare EQUAL_neq_zero_imp.simps [simp del]
-declare
-  EQUAL_neq_zero_state.simps[state_simps]
-
-lemma EQUAL_neq_zero_imp_correct[let_function_correctness]:
-  "EQUAL_neq_zero_ret (EQUAL_neq_zero_imp s) =
-    (if (EQUAL_neq_zero_a s) = (EQUAL_neq_zero_b s) then 1 else 0)"
-  by (simp add: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_state_upd_def)
-
-fun EQUAL_neq_zero_imp_time:: "nat \<Rightarrow> EQUAL_neq_zero_state \<Rightarrow> nat" where
-  "EQUAL_neq_zero_imp_time t s =
-    (let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;
-         t = t + 2;
-         cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;
-         t = t + 2;
-         cond = cond1 + cond2;
-         t = t + 2;
-         EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
-         t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
-         ret = t
-     in ret
-    )"
-
-lemmas [simp del] = EQUAL_neq_zero_imp_time.simps
-
-lemma EQUAL_neq_zero_imp_time_acc:
-  "(EQUAL_neq_zero_imp_time (Suc t) s) = Suc (EQUAL_neq_zero_imp_time t s)"
-  by (simp add: EQUAL_neq_zero_imp_time.simps)
-
-lemma EQUAL_neq_zero_imp_time_acc_2:
-  "(EQUAL_neq_zero_imp_time x s) = x + (EQUAL_neq_zero_imp_time 0 s)"
-  by (simp add: EQUAL_neq_zero_imp_time.simps)
-
-abbreviation "EQUAL_neq_zero_cond1 \<equiv> ''cond1''"
-abbreviation "EQUAL_neq_zero_cond2 \<equiv> ''cond2''"
-abbreviation "EQUAL_neq_zero_cond \<equiv> ''condition''"
-
-definition "EQUAL_neq_zero_IMP_Minus \<equiv>
-  \<comment> \<open>(let cond1 = EQUAL_neq_zero_a s - EQUAL_neq_zero_b s;\<close>
-  EQUAL_neq_zero_cond1 ::= (Sub (V EQUAL_neq_zero_a_str) (V EQUAL_neq_zero_b_str));;
-  \<comment> \<open>(    cond2 = EQUAL_neq_zero_b s - EQUAL_neq_zero_a s;\<close>
-  EQUAL_neq_zero_cond2 ::= (Sub (V EQUAL_neq_zero_b_str) (V EQUAL_neq_zero_a_str));;
-  \<comment> \<open>(    cond = cond1 + cond2;\<close>
-  EQUAL_neq_zero_cond ::= (Plus (V EQUAL_neq_zero_cond1) (V EQUAL_neq_zero_cond2));;
-  \<comment> \<open>(    EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
-  \<comment> \<open>(    ret = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
-  IF EQUAL_neq_zero_cond \<noteq>0
-  THEN EQUAL_neq_zero_ret_str ::= (A (N 0))
-  ELSE EQUAL_neq_zero_ret_str ::= (A (N 1))"
-
-abbreviation
-  "EQUAL_neq_zero_IMP_vars \<equiv> {EQUAL_neq_zero_a_str, EQUAL_neq_zero_b_str, EQUAL_neq_zero_ret_str}"
-
-definition "EQUAL_neq_zero_imp_to_HOL_state p s =
-  \<lparr>EQUAL_neq_zero_a = (s (add_prefix p EQUAL_neq_zero_a_str)),
-   EQUAL_neq_zero_b = (s (add_prefix p EQUAL_neq_zero_b_str)),
-   EQUAL_neq_zero_ret = (s (add_prefix p EQUAL_neq_zero_ret_str))\<rparr>"
-
-lemma EQUAL_neq_zero_IMP_Minus_correct_function:
-  "(invoke_subprogram p EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p EQUAL_neq_zero_ret_str)
-      = EQUAL_neq_zero_ret (EQUAL_neq_zero_imp (EQUAL_neq_zero_imp_to_HOL_state p s))"
-  by (force simp: EQUAL_neq_zero_imp.simps EQUAL_neq_zero_IMP_Minus_def
-      EQUAL_neq_zero_imp_to_HOL_state_def EQUAL_neq_zero_state_upd_def)
-
-lemma EQUAL_neq_zero_IMP_Minus_correct_effects:
-  "\<lbrakk>(invoke_subprogram (p @ EQUAL_neq_zero_pref) EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    v \<in> vars; \<not> (prefix EQUAL_neq_zero_pref v)\<rbrakk>
-  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast
-
-lemma EQUAL_neq_zero_IMP_Minus_correct_time:
-  "(invoke_subprogram p EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = EQUAL_neq_zero_imp_time 0 (EQUAL_neq_zero_imp_to_HOL_state p s)"
-  by(force simp: EQUAL_neq_zero_imp_time.simps EQUAL_neq_zero_IMP_Minus_def
-      EQUAL_neq_zero_imp_to_HOL_state_def EQUAL_neq_zero_state_upd_def)
-
-lemma EQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
-     \<lbrakk>t = (EQUAL_neq_zero_imp_time 0 (EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) EQUAL_neq_zero_ret_str) =
-        EQUAL_neq_zero_ret (EQUAL_neq_zero_imp (EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
-     \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using EQUAL_neq_zero_IMP_Minus_correct_function
-  by (auto simp: EQUAL_neq_zero_IMP_Minus_correct_time)
-    (meson EQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
-
-
-subsubsection \<open>Inequality\<close>
-
-record NOTEQUAL_neq_zero_state =
-  NOTEQUAL_neq_zero_a::nat
-  NOTEQUAL_neq_zero_b::nat
-  NOTEQUAL_neq_zero_ret::nat
-
-abbreviation "NOTEQUAL_neq_zero_prefix \<equiv> ''NOTEQUAL_neq_zero.''"
-abbreviation "NOTEQUAL_neq_zero_a_str \<equiv> ''NOTEQUAL_a''"
-abbreviation "NOTEQUAL_neq_zero_b_str \<equiv> ''NOTEQUAL_b''"
-abbreviation "NOTEQUAL_neq_zero_ret_str \<equiv> ''NOTEQUAL_ret''"
-
-definition "NOTEQUAL_neq_zero_state_upd s \<equiv>
-  let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;
-      cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;
-      cond = cond1 + cond2;
-      NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
-      ret = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a s,
-             NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b s,
-             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>
-  in ret"
-
-fun NOTEQUAL_neq_zero_imp:: "NOTEQUAL_neq_zero_state \<Rightarrow> NOTEQUAL_neq_zero_state" where
-  "NOTEQUAL_neq_zero_imp s =
-    (let ret = NOTEQUAL_neq_zero_state_upd s
-     in ret
-    )"
-
-declare NOTEQUAL_neq_zero_imp.simps [simp del]
-
-lemma NOTEQUAL_neq_zero_imp_correct[let_function_correctness]:
-  "NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp s) =
-    (if (NOTEQUAL_neq_zero_a s) \<noteq> (NOTEQUAL_neq_zero_b s) then 1 else 0)"
-  by (simp add: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_state_upd_def)
-
-fun NOTEQUAL_neq_zero_imp_time:: "nat \<Rightarrow> NOTEQUAL_neq_zero_state \<Rightarrow> nat" where
-  "NOTEQUAL_neq_zero_imp_time t s =
-    (let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;
-         t = t + 2;
-         cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;
-         t = t + 2;
-         cond = cond1 + cond2;
-         t = t + 2;
-         NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
-         t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
-         ret = t
-     in ret
-    )"
-
-lemmas [simp del] = NOTEQUAL_neq_zero_imp_time.simps
-
-lemma NOTEQUAL_neq_zero_imp_time_acc:
-  "(NOTEQUAL_neq_zero_imp_time (Suc t) s) = Suc (NOTEQUAL_neq_zero_imp_time t s)"
-  by (simp add: NOTEQUAL_neq_zero_imp_time.simps)
-
-lemma NOTEQUAL_neq_zero_imp_time_acc_2:
-  "(NOTEQUAL_neq_zero_imp_time x s) = x + (NOTEQUAL_neq_zero_imp_time 0 s)"
-  by (simp add: NOTEQUAL_neq_zero_imp_time.simps)
-
-abbreviation "NOTEQUAL_neq_zero_cond1 \<equiv> ''cond1''"
-abbreviation "NOTEQUAL_neq_zero_cond2 \<equiv> ''cond2''"
-abbreviation "NOTEQUAL_neq_zero_cond \<equiv> ''condition''"
-
-definition "NOTEQUAL_neq_zero_IMP_Minus \<equiv>
-  \<comment> \<open>(let cond1 = NOTEQUAL_neq_zero_a s - NOTEQUAL_neq_zero_b s;\<close>
-  NOTEQUAL_neq_zero_cond1 ::= (Sub (V NOTEQUAL_neq_zero_a_str) (V NOTEQUAL_neq_zero_b_str));;
-  \<comment> \<open>(    cond2 = NOTEQUAL_neq_zero_b s - NOTEQUAL_neq_zero_a s;\<close>
-  NOTEQUAL_neq_zero_cond2 ::= (Sub (V NOTEQUAL_neq_zero_b_str) (V NOTEQUAL_neq_zero_a_str));;
-  \<comment> \<open>(    cond = cond1 + cond2;\<close>
-  NOTEQUAL_neq_zero_cond ::= (Plus (V NOTEQUAL_neq_zero_cond1) (V NOTEQUAL_neq_zero_cond2));;
-  \<comment> \<open>(    NOTEQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
-  \<comment> \<open>(    ret = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
-  IF NOTEQUAL_neq_zero_cond \<noteq>0
-  THEN NOTEQUAL_neq_zero_ret_str ::= (A (N 1))
-  ELSE NOTEQUAL_neq_zero_ret_str ::= (A (N 0))"
-
-abbreviation
-  "NOTEQUAL_neq_zero_IMP_vars \<equiv>
-    {NOTEQUAL_neq_zero_a_str, NOTEQUAL_neq_zero_b_str, NOTEQUAL_neq_zero_ret_str}"
-
-definition "NOTEQUAL_neq_zero_imp_to_HOL_state p s =
-  \<lparr>NOTEQUAL_neq_zero_a = (s (add_prefix p NOTEQUAL_neq_zero_a_str)),
-   NOTEQUAL_neq_zero_b = (s (add_prefix p NOTEQUAL_neq_zero_b_str)),
-   NOTEQUAL_neq_zero_ret = (s (add_prefix p NOTEQUAL_neq_zero_ret_str))\<rparr>"
-
-lemma NOTEQUAL_neq_zero_IMP_Minus_correct_function:
-  "(invoke_subprogram p NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p NOTEQUAL_neq_zero_ret_str)
-      = NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp (NOTEQUAL_neq_zero_imp_to_HOL_state p s))"
-  by (force simp: NOTEQUAL_neq_zero_imp.simps NOTEQUAL_neq_zero_IMP_Minus_def
-      NOTEQUAL_neq_zero_imp_to_HOL_state_def NOTEQUAL_neq_zero_state_upd_def)
-
-lemma NOTEQUAL_neq_zero_IMP_Minus_correct_effects:
-  "\<lbrakk>(invoke_subprogram (p @ NOTEQUAL_neq_zero_pref) NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    v \<in> vars; \<not> (prefix NOTEQUAL_neq_zero_pref v)\<rbrakk>
-  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast
-
-lemma NOTEQUAL_neq_zero_IMP_Minus_correct_time:
-  "(invoke_subprogram p NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state p s)"
-  by(force simp: NOTEQUAL_neq_zero_imp_time.simps NOTEQUAL_neq_zero_IMP_Minus_def
-      NOTEQUAL_neq_zero_imp_to_HOL_state_def NOTEQUAL_neq_zero_state_upd_def)
-
-lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) NOTEQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
-    \<lbrakk>t = (NOTEQUAL_neq_zero_imp_time 0 (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-     s' (add_prefix (p1 @ p2) NOTEQUAL_neq_zero_ret_str) =
-        NOTEQUAL_neq_zero_ret (NOTEQUAL_neq_zero_imp
-                                  (NOTEQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
-     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk> \<Longrightarrow> P\<rbrakk>
-  \<Longrightarrow> P"
-  using NOTEQUAL_neq_zero_IMP_Minus_correct_function
-  by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
-    (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
-
-
-subsection \<open>Lists, continued\<close>
 
 subsubsection \<open>elemof\<close>
 
