@@ -5053,7 +5053,7 @@ lemma concat_acc_IMP_Minus_correct:
   by (auto simp: concat_acc_IMP_Minus_correct_time)
     (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
-subsection \<open>nth\<close>
+subsubsection \<open>nth\<close>
 paragraph nth_nat
 
 record nth_nat_state =
