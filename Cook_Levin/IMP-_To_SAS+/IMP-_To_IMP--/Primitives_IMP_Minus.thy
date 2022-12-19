@@ -2185,9 +2185,6 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
   using NOTEQUAL_neq_zero_IMP_Minus_correct_function
   by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
     (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
-
-
-
 subsection \<open>Lists\<close>
 
 subsubsection \<open>hd\<close>
@@ -6526,5 +6523,740 @@ lemma remdups_acc_IMP_Minus_correct:
     remdups_acc_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+section \<open>Logic, continued\<close>
+text \<open>This is a structural issue to be handled, for elemof uses logical operations
+BigAnd uses the cons of lists
+\<close>
+
+subsection\<open>BigAnd\<close>
+subsubsection \<open>BigAnd\<close>
+paragraph BigAnd_aux
+
+record BigAnd_aux_state = BigAnd_aux_acc::nat BigAnd_aux_xs::nat BigAnd_aux_ret::nat
+
+abbreviation "BigAnd_aux_prefix \<equiv> ''BigAnd_aux.''"
+abbreviation "BigAnd_aux_acc_str \<equiv> ''acc''"
+abbreviation "BigAnd_aux_xs_str \<equiv> ''xs''"
+abbreviation "BigAnd_aux_ret_str \<equiv> ''ret''"
+
+definition "BigAnd_aux_state_upd s \<equiv> 
+  (let
+    cons_h' = BigAnd_aux_acc s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    hd_xs' = BigAnd_aux_xs s;
+    hd_ret' = 0;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+
+    cons_h' = hd_ret hd_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 3;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    BigAnd_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
+          BigAnd_aux_xs = BigAnd_aux_xs s, 
+          BigAnd_aux_ret = BigAnd_aux_ret'
+          \<rparr>
+    in
+      ret
+  )"
+
+lemmas BigAnd_aux_imp_subprogram_simps = 
+  BigAnd_aux_state_upd_def
+
+function BigAnd_aux_imp::
+  "BigAnd_aux_state \<Rightarrow> BigAnd_aux_state" where
+  "BigAnd_aux_imp s =
+  (let
+     next_iteration = BigAnd_aux_state_upd s
+    in 
+     next_iteration)"
+  by simp+
+termination
+  apply (relation "measure (\<lambda>s. BigAnd_aux_acc s)")
+  apply simp
+  done
+
+declare BigAnd_aux_imp.simps [simp del]
+
+lemma BigAnd_aux_imp_correct:
+  "BigAnd_aux_ret (BigAnd_aux_imp s) =
+   3 ## (hd_nat (BigAnd_aux_xs s)) ## (BigAnd_aux_acc s) ## 0"
+  apply (induction s rule: BigAnd_aux_imp.induct)
+  apply (subst BigAnd_aux_imp.simps)
+  apply (simp add: BigAnd_aux_imp_subprogram_simps Let_def 
+        cons_imp_correct hd_imp_correct)
+  done            
+
+definition "BigAnd_aux_state_upd_time t s \<equiv>
+  let
+    cons_h' = BigAnd_aux_acc s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    t = t + cons_imp_time 0 cons_state;
+    hd_xs' = BigAnd_aux_xs s;
+    t = t + 2;
+    hd_ret' = 0;
+    t = t + 2;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+    t = t + hd_imp_time 0 hd_state;
+
+    cons_h' = hd_ret hd_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 3;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    BigAnd_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
+          BigAnd_aux_xs = BigAnd_aux_xs s, 
+          BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>
+  in
+    t
+"
+
+lemmas BigAnd_aux_imp_subprogram_time_simps = 
+  BigAnd_aux_state_upd_time_def
+  BigAnd_aux_imp_subprogram_simps
+
+function BigAnd_aux_imp_time::
+  "nat \<Rightarrow> BigAnd_aux_state \<Rightarrow> nat" where
+  "BigAnd_aux_imp_time t s =
+  (let
+    ret = t + BigAnd_aux_state_upd_time 0 s
+  in
+    ret)"
+  by auto
+termination
+  apply (relation "measure (\<lambda>(t, s). BigAnd_aux_xs s)")
+  apply simp
+  done
+
+declare BigAnd_aux_imp_time.simps [simp del]            
+
+lemma BigAnd_aux_imp_time_acc:
+  "(BigAnd_aux_imp_time (Suc t) s) = Suc (BigAnd_aux_imp_time t s)"
+  by (induction t s rule: BigAnd_aux_imp_time.induct)
+    ((subst (1 2) BigAnd_aux_imp_time.simps);
+      (simp add: BigAnd_aux_state_upd_def))            
+
+lemma BigAnd_aux_imp_time_acc_2_aux:
+  "(BigAnd_aux_imp_time t s) = t + (BigAnd_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: BigAnd_aux_imp_time_acc)+            
+
+lemma BigAnd_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (BigAnd_aux_imp_time t s) = t + (BigAnd_aux_imp_time 0 s)"
+  by (rule BigAnd_aux_imp_time_acc_2_aux)            
+
+lemma BigAnd_aux_imp_time_acc_3:
+  "(BigAnd_aux_imp_time (a + b) s) = a + (BigAnd_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: BigAnd_aux_imp_time_acc)+            
+
+definition BigAnd_aux_IMP_Minus where
+  "BigAnd_aux_IMP_Minus \<equiv>
+
+    \<comment> \<open>cons_h' = BigAnd_aux_acc s;\<close>
+    (cons_prefix @ cons_h_str) ::= A (V BigAnd_aux_acc_str);;
+  \<comment> \<open>cons_t' = 0;\<close>
+    (cons_prefix @ cons_t_str) ::= A (N 0);;
+  \<comment> \<open>cons_ret' = 0;\<close>
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+     invoke_subprogram cons_prefix cons_IMP_Minus;;
+    \<comment> \<open>hd_xs' = BigAnd_aux_xs s;\<close>
+    (hd_prefix @ hd_xs_str) ::= A (V BigAnd_aux_xs_str);;
+  \<comment> \<open>hd_ret' = 0;\<close>
+    (hd_prefix @ hd_ret_str) ::= A (N 0);;
+  \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>hd_ret_state = hd_imp hd_state;\<close>
+     invoke_subprogram hd_prefix hd_IMP_Minus;;
+
+  \<comment> \<open>cons_h' = hd_ret hd_ret_state;\<close>
+    (cons_prefix @ cons_h_str) ::= A (V (hd_prefix @ hd_ret_str));;
+  \<comment> \<open>cons_t' = cons_ret cons_ret_state;\<close>
+    (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  \<comment> \<open>cons_ret' = 0;\<close>
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+    invoke_subprogram (cons_prefix) cons_IMP_Minus;;
+
+  \<comment> \<open>cons_t' = cons_ret cons_ret_state;\<close>
+    (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  \<comment> \<open>cons_h' = 3;\<close>
+    (cons_prefix @ cons_h_str) ::= A (N 3);;
+  \<comment> \<open>cons_ret' = 0;\<close>
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  \<comment> \<open>cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>cons_ret_state = cons_imp cons_state;\<close>
+    invoke_subprogram (cons_prefix) cons_IMP_Minus;;
+
+  \<comment>\<open>BigAnd_aux_ret' = cons_ret cons_ret_state'';
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
+          BigAnd_aux_xs = BigAnd_aux_xs s, 
+          BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>\<close>
+    BigAnd_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))
+  
+  "
+
+abbreviation "BigAnd_aux_IMP_vars\<equiv>
+  {BigAnd_aux_acc_str, BigAnd_aux_xs_str, BigAnd_aux_ret_str}"
+
+lemmas BigAnd_aux_IMP_subprogram_simps =
+  BigAnd_aux_IMP_Minus_def
+  
+definition "BigAnd_aux_imp_to_HOL_state p s =
+  \<lparr>BigAnd_aux_acc = (s (add_prefix p BigAnd_aux_acc_str)),
+   BigAnd_aux_xs = (s (add_prefix p BigAnd_aux_xs_str)),
+   BigAnd_aux_ret = (s (add_prefix p BigAnd_aux_ret_str))\<rparr>"
+
+lemmas BigAnd_aux_state_translators =
+  BigAnd_aux_imp_to_HOL_state_def
+
+lemmas BigAnd_aux_complete_simps =
+  BigAnd_aux_IMP_subprogram_simps
+  BigAnd_aux_imp_subprogram_simps
+  BigAnd_aux_state_translators
+
+lemma BigAnd_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p BigAnd_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p BigAnd_aux_ret_str)
+      = BigAnd_aux_ret
+          (BigAnd_aux_imp (BigAnd_aux_imp_to_HOL_state p s))"
+  apply(subst BigAnd_aux_imp.simps)
+  apply(simp only: BigAnd_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(16) by fastforce
+  apply (erule hd_IMP_Minus_correct[where vars="BigAnd_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+  subgoal premises p using p(18) by fastforce
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(20) by fastforce
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(22) by fastforce
+  apply (simp only: BigAnd_aux_state_translators BigAnd_aux_state.simps
+  Let_def BigAnd_aux_state_upd_def prefix_simps
+  cons_imp_to_HOL_state_def cons_imp_correct
+  hd_imp_to_HOL_state_def hd_imp_correct )
+  apply fastforce
+  done
+  (*
+    A stepwise alternative for better understanding
+    apply clarsimp
+    subgoal premises p
+    using p(8)[of BigAnd_aux_xs_str] apply simp
+    apply (subst p(7)[symmetric])
+    using p(4)[of "cons_prefix @ cons_ret_str"] 
+    by force
+  *)
+
+lemma BigAnd_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ BigAnd_aux_pref) BigAnd_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix BigAnd_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas BigAnd_aux_complete_time_simps =
+  BigAnd_aux_imp_subprogram_time_simps
+  BigAnd_aux_imp_time_acc
+  BigAnd_aux_imp_time_acc_2
+  BigAnd_aux_imp_time_acc_3
+  BigAnd_aux_state_translators
+
+lemma BigAnd_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p BigAnd_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = BigAnd_aux_imp_time 0 (BigAnd_aux_imp_to_HOL_state p s)"
+  apply(subst BigAnd_aux_imp_time.simps)
+  apply(simp only: BigAnd_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(31) by fastforce
+  apply (erule hd_IMP_Minus_correct[where vars="BigAnd_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+  subgoal premises p using p(33) by fastforce
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(35) by fastforce
+  apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
+  subgoal premises p using p(37) by fastforce
+  apply (simp only: BigAnd_aux_state_translators BigAnd_aux_state_upd_def
+  Let_def BigAnd_aux_state_upd_time_def prefix_simps
+  cons_imp_to_HOL_state_def cons_imp_correct
+  cons_IMP_Minus_correct_time
+  hd_imp_to_HOL_state_def hd_imp_correct
+  hd_IMP_Minus_correct_time)
+  apply fastforce
+  done
+  (*
+  A similar stepwise alternative
+  apply clarsimp
+  subgoal premises p
+  using p(9)[of BigAnd_aux_xs_str, symmetric] apply simp
+  using p(5)[of "cons_prefix @ cons_ret_str", symmetric] apply simp
+  apply (subst p(8))+
+  apply blast
+  done
+  *)
+
+lemma BigAnd_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) BigAnd_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (BigAnd_aux_imp_time 0 (BigAnd_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) BigAnd_aux_ret_str) =
+          BigAnd_aux_ret (BigAnd_aux_imp
+                                        (BigAnd_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using BigAnd_aux_IMP_Minus_correct_function
+  by (auto simp: BigAnd_aux_IMP_Minus_correct_time)
+    (meson BigAnd_aux_IMP_Minus_correct_effects set_mono_prefix)
+
+paragraph BigAnd_acc
+record BigAnd_acc_state = BigAnd_acc_acc::nat BigAnd_acc_xs::nat BigAnd_acc_ret::nat
+
+abbreviation "BigAnd_acc_prefix \<equiv> ''BigAnd_acc.''"
+abbreviation "BigAnd_acc_acc_str \<equiv> ''acc''"
+abbreviation "BigAnd_acc_xs_str \<equiv> ''xs''"
+abbreviation "BigAnd_acc_ret_str \<equiv> ''ret''"
+
+definition "BigAnd_acc_state_upd s \<equiv>
+  (let
+    BigAnd_aux_acc' = BigAnd_acc_acc s;
+    BigAnd_aux_xs' = BigAnd_acc_xs s;
+    BigAnd_aux_ret' = 0;
+    BigAnd_state = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc',
+                    BigAnd_aux_xs = BigAnd_aux_xs',
+                    BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>;
+    BigAnd_aux_ret_state = BigAnd_aux_imp BigAnd_state;
+
+    tl_xs' = BigAnd_acc_xs s;
+    tl_ret' = 0;
+    tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+    tl_ret_state = tl_imp tl_state;
+
+    BigAnd_acc_acc' = BigAnd_aux_ret BigAnd_aux_ret_state;
+    BigAnd_acc_xs' = tl_ret tl_ret_state;
+    ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',
+          BigAnd_acc_xs = BigAnd_acc_xs',
+          BigAnd_acc_ret = BigAnd_acc_ret s\<rparr>
+  in
+    ret
+  )" 
+
+definition "BigAnd_acc_imp_compute_loop_condition s \<equiv> (
+  let
+    condition = BigAnd_acc_xs s
+  in 
+    condition
+)"
+
+definition "BigAnd_acc_imp_after_loop s \<equiv> (
+  let
+    ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc s,
+          BigAnd_acc_xs = BigAnd_acc_xs s,
+          BigAnd_acc_ret = BigAnd_acc_acc s\<rparr>
+  in
+    ret
+)"
+
+lemmas BigAnd_acc_imp_subprogram_simps = 
+  BigAnd_acc_state_upd_def
+  BigAnd_acc_imp_compute_loop_condition_def
+  BigAnd_acc_imp_after_loop_def
+
+function BigAnd_acc_imp::
+  "BigAnd_acc_state \<Rightarrow> BigAnd_acc_state" where
+  "BigAnd_acc_imp s =
+  (if BigAnd_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = BigAnd_acc_imp (BigAnd_acc_state_upd s)
+    in next_iteration
+   else
+    let ret = BigAnd_acc_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure (\<lambda>s. BigAnd_acc_xs s)")
+  apply (simp add: BigAnd_acc_imp_subprogram_simps tl_imp_correct)+
+  done
+
+declare BigAnd_acc_imp.simps [simp del]
+
+lemma BigAnd_acc_imp_correct:
+  "BigAnd_acc_ret (BigAnd_acc_imp s) =
+    BigAnd_acc (BigAnd_acc_acc s) (BigAnd_acc_xs s)"
+  apply (induction s rule: BigAnd_acc_imp.induct)
+  apply (subst BigAnd_acc_imp.simps)
+  apply (subst BigAnd_acc.simps)
+  apply (simp del: BigAnd_acc.simps 
+      add: BigAnd_acc_imp_subprogram_simps Let_def
+      tl_imp_correct BigAnd_aux_imp_correct)
+  done            
+
+definition "BigAnd_acc_state_upd_time t s \<equiv>
+(
+  let
+    BigAnd_aux_acc' = BigAnd_acc_acc s;
+    t = t + 2;
+    BigAnd_aux_xs' = BigAnd_acc_xs s;
+    t = t + 2;
+    BigAnd_aux_ret' = 0;
+    t = t + 2;
+    BigAnd_state = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc',
+                    BigAnd_aux_xs = BigAnd_aux_xs',
+                    BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>;
+    BigAnd_aux_ret_state = BigAnd_aux_imp BigAnd_state;
+    t = t + BigAnd_aux_imp_time 0 BigAnd_state;
+
+    tl_xs' = BigAnd_acc_xs s;
+    t = t + 2;
+    tl_ret' = 0;
+    t = t + 2;
+    tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+    tl_ret_state = tl_imp tl_state;
+    t = t + tl_imp_time 0 tl_state;
+
+    BigAnd_acc_acc' = BigAnd_aux_ret BigAnd_aux_ret_state;
+    t = t + 2;
+    BigAnd_acc_xs' = tl_ret tl_ret_state;
+    t = t + 2;
+    ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',
+          BigAnd_acc_xs = BigAnd_acc_xs',
+          BigAnd_acc_ret = BigAnd_acc_ret s\<rparr>
+  in
+    t
+  )" 
+
+
+definition "BigAnd_acc_imp_compute_loop_condition_time t s \<equiv>
+  let
+    t = t + 2;
+    condition = BigAnd_acc_xs s
+  in
+    t
+"
+
+definition "BigAnd_acc_imp_after_loop_time t s \<equiv>
+  let
+    t = t + 2;
+    ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc s,
+          BigAnd_acc_xs = BigAnd_acc_xs s,
+          BigAnd_acc_ret = BigAnd_acc_acc s\<rparr>
+  in
+    t
+"
+
+lemmas BigAnd_acc_imp_subprogram_time_simps = 
+  BigAnd_acc_state_upd_time_def
+  BigAnd_acc_imp_compute_loop_condition_time_def
+  BigAnd_acc_imp_after_loop_time_def
+  BigAnd_acc_imp_subprogram_simps
+
+function BigAnd_acc_imp_time::
+  "nat \<Rightarrow> BigAnd_acc_state \<Rightarrow> nat" where
+  "BigAnd_acc_imp_time t s =
+  BigAnd_acc_imp_compute_loop_condition_time 0 s +
+  (if BigAnd_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          BigAnd_acc_imp_time (t + BigAnd_acc_state_upd_time 0 s)
+                         (BigAnd_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + BigAnd_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (\<lambda>(t, s). BigAnd_acc_xs s)")
+  apply (simp add: BigAnd_acc_imp_subprogram_time_simps tl_imp_correct)+
+  done
+
+declare BigAnd_acc_imp_time.simps [simp del]            
+
+lemma BigAnd_acc_imp_time_acc:
+  "(BigAnd_acc_imp_time (Suc t) s) = Suc (BigAnd_acc_imp_time t s)"
+  by (induction t s rule: BigAnd_acc_imp_time.induct)
+    ((subst (1 2) BigAnd_acc_imp_time.simps);
+      (simp add: BigAnd_acc_state_upd_def))            
+
+lemma BigAnd_acc_imp_time_acc_2_aux:
+  "(BigAnd_acc_imp_time t s) = t + (BigAnd_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: BigAnd_acc_imp_time_acc)+            
+
+lemma BigAnd_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (BigAnd_acc_imp_time t s) = t + (BigAnd_acc_imp_time 0 s)"
+  by (rule BigAnd_acc_imp_time_acc_2_aux)            
+
+lemma BigAnd_acc_imp_time_acc_3:
+  "(BigAnd_acc_imp_time (a + b) s) = a + (BigAnd_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: BigAnd_acc_imp_time_acc)+            
+
+abbreviation "BigAnd_acc_while_cond \<equiv> ''condition''"
+
+definition "BigAnd_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>condition = BigAnd_acc_xs s\<close>
+  BigAnd_acc_while_cond ::= A (V BigAnd_acc_xs_str)
+"
+
+definition "BigAnd_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>BigAnd_aux_acc' = BigAnd_acc_acc s;
+    BigAnd_aux_xs' = BigAnd_acc_xs s;
+    BigAnd_aux_ret' = 0;
+    BigAnd_state = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc',
+                    BigAnd_aux_xs = BigAnd_aux_xs',
+                    BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>;
+    BigAnd_aux_ret_state = BigAnd_aux_imp BigAnd_state;\<close>
+    (BigAnd_aux_prefix @ BigAnd_aux_acc_str) ::= A (V BigAnd_acc_acc_str);;
+    (BigAnd_aux_prefix @ BigAnd_aux_xs_str) ::= A (V BigAnd_acc_xs_str);;
+    (BigAnd_aux_prefix @ BigAnd_aux_ret_str) ::= A (N 0);;
+    invoke_subprogram BigAnd_aux_prefix BigAnd_aux_IMP_Minus;;
+    \<comment> \<open>BigAnd_acc_acc' = cons_ret cons_ret_state;\<close>
+    BigAnd_acc_acc_str ::= A (V (BigAnd_aux_prefix @ BigAnd_aux_ret_str));;
+
+  \<comment> \<open>tl_xs' = BigAnd_acc_xs s;\<close>
+    (tl_prefix @ tl_xs_str) ::= A (V BigAnd_acc_xs_str);;
+  \<comment> \<open>tl_ret' = 0;\<close>
+    (tl_prefix @ tl_ret_str) ::= A (N 0);;
+  \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
+    invoke_subprogram tl_prefix tl_IMP_Minus;;
+  
+  \<comment> \<open>BigAnd_acc_xs' = tl_ret tl_ret_state;\<close>
+    BigAnd_acc_xs_str ::= A (V (tl_prefix @ tl_ret_str))
+  \<comment> \<open>ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',\<close>
+  \<comment> \<open>      BigAnd_acc_xs = BigAnd_acc_xs',\<close>
+  \<comment> \<open>      BigAnd_acc_ret = BigAnd_acc_ret s\<rparr>\<close>
+"
+
+definition "BigAnd_acc_IMP_after_loop \<equiv>
+ \<comment>\<open>ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc s,
+          BigAnd_acc_xs = BigAnd_acc_xs s,
+          BigAnd_acc_ret = BigAnd_acc_acc s\<rparr>\<close>
+    BigAnd_acc_ret_str ::= A (V BigAnd_acc_acc_str)
+"
+
+definition BigAnd_acc_IMP_Minus where
+  "BigAnd_acc_IMP_Minus \<equiv>
+  BigAnd_acc_IMP_init_while_cond;;
+  WHILE BigAnd_acc_while_cond \<noteq>0 DO (
+    BigAnd_acc_IMP_loop_body;;
+    BigAnd_acc_IMP_init_while_cond
+  );;
+  BigAnd_acc_IMP_after_loop"
+
+abbreviation "BigAnd_acc_IMP_vars\<equiv>
+  {BigAnd_acc_while_cond, BigAnd_acc_acc_str, BigAnd_acc_xs_str, BigAnd_acc_ret_str}"
+
+lemmas BigAnd_acc_IMP_subprogram_simps =
+  BigAnd_acc_IMP_init_while_cond_def
+  BigAnd_acc_IMP_loop_body_def
+  BigAnd_acc_IMP_after_loop_def
+
+definition "BigAnd_acc_imp_to_HOL_state p s =
+  \<lparr>BigAnd_acc_acc = (s (add_prefix p BigAnd_acc_acc_str)),
+   BigAnd_acc_xs = (s (add_prefix p BigAnd_acc_xs_str)),
+   BigAnd_acc_ret = (s (add_prefix p BigAnd_acc_ret_str))\<rparr>"
+
+lemmas BigAnd_acc_state_translators =
+  BigAnd_acc_imp_to_HOL_state_def
+
+lemmas BigAnd_acc_complete_simps =
+  BigAnd_acc_IMP_subprogram_simps
+  BigAnd_acc_imp_subprogram_simps
+  BigAnd_acc_state_translators
+
+lemma BigAnd_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p BigAnd_acc_ret_str)
+      = BigAnd_acc_ret
+          (BigAnd_acc_imp (BigAnd_acc_imp_to_HOL_state p s))"
+  apply(induction "BigAnd_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: BigAnd_acc_imp.induct)
+  apply(subst BigAnd_acc_imp.simps)
+  apply(simp only: BigAnd_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: BigAnd_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: BigAnd_acc_complete_simps)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: BigAnd_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: BigAnd_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) BigAnd_acc_IMP_init_while_cond_def)
+      apply(simp only: BigAnd_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule tl_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(14) by fastforce
+      apply(erule BigAnd_aux_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(16) by fastforce
+      apply (simp only: Let_def prefix_simps
+          BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
+          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_imp_correct
+          tl_imp_to_HOL_state_def tl_imp_correct)+
+      apply force
+      done
+
+  subgoal
+      apply(simp only: BigAnd_acc_IMP_init_while_cond_def prefix_simps
+          BigAnd_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule tl_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(14) by fastforce
+      apply(erule BigAnd_aux_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(16) by fastforce
+      apply (simp only: Let_def prefix_simps
+          BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
+          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_state.simps BigAnd_aux_imp_correct
+          tl_imp_to_HOL_state_def tl_state.simps tl_imp_correct)+
+      apply clarsimp 
+      subgoal premises p 
+        using p(6)[of BigAnd_acc_xs_str]
+              p(6)[of BigAnd_acc_acc_str]
+              p(4) p(6) same_append_eq by fastforce
+  done
+done        
+
+lemma BigAnd_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ BigAnd_acc_pref) BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix BigAnd_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas BigAnd_acc_complete_time_simps =
+  BigAnd_acc_imp_subprogram_time_simps
+  BigAnd_acc_imp_time_acc
+  BigAnd_acc_imp_time_acc_2
+  BigAnd_acc_imp_time_acc_3
+  BigAnd_acc_state_translators
+
+lemma BigAnd_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = BigAnd_acc_imp_time 0 (BigAnd_acc_imp_to_HOL_state p s)"
+  apply(induction "BigAnd_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: BigAnd_acc_imp.induct)
+  apply(subst BigAnd_acc_imp_time.simps)
+  apply(simp only: BigAnd_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: BigAnd_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: BigAnd_acc_IMP_subprogram_simps
+        BigAnd_acc_imp_subprogram_time_simps BigAnd_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: BigAnd_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: BigAnd_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) BigAnd_acc_IMP_init_while_cond_def)
+    apply(simp only: BigAnd_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_E)+
+      apply(erule tl_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(17) by fastforce
+      apply(erule BigAnd_aux_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(19) by fastforce
+      apply (simp only: Let_def prefix_simps
+          BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
+          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_state.simps BigAnd_aux_imp_correct
+          tl_imp_to_HOL_state_def tl_state.simps tl_imp_correct)+
+      apply force
+      done
+
+  subgoal
+    apply(simp only: BigAnd_acc_IMP_init_while_cond_def prefix_simps
+          BigAnd_acc_IMP_loop_body_def)
+      apply(erule Seq_tE)+
+      apply(erule tl_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule BigAnd_aux_IMP_Minus_correct[where vars = "BigAnd_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply (simp only: Let_def prefix_simps
+          BigAnd_acc_complete_time_simps
+          BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_imp_correct
+          BigAnd_aux_IMP_Minus_correct_time
+          tl_imp_to_HOL_state_def tl_imp_correct
+          tl_IMP_Minus_correct_time)+
+      apply clarsimp
+        subgoal premises p 
+        using p(11)[of BigAnd_acc_xs_str] apply simp
+        using p(11)[of BigAnd_acc_ret_str] apply simp
+        using p(9)[of BigAnd_acc_ret_str] apply simp
+        using p(9)[of BigAnd_acc_acc_str] apply simp
+        done
+      
+      done
+
+  done        
+
+lemma BigAnd_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (BigAnd_acc_imp_time 0 (BigAnd_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) BigAnd_acc_ret_str) =
+          BigAnd_acc_ret (BigAnd_acc_imp
+                                        (BigAnd_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using BigAnd_acc_IMP_Minus_correct_function
+  by (auto simp: BigAnd_acc_IMP_Minus_correct_time)
+    (meson BigAnd_acc_IMP_Minus_correct_effects set_mono_prefix)                        
 
 end
