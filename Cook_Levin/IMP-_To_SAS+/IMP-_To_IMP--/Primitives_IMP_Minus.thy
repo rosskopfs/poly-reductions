@@ -6868,7 +6868,195 @@ lemma remdups_acc_IMP_Minus_correct:
   by (meson set_mono_prefix)
 
 
+paragraph \<open>remdups_tail\<close>
 
+record remdups_tail_state =
+  remdups_tail_xs::nat
+  remdups_tail_ret::nat
+
+abbreviation "remdups_tail_prefix \<equiv> ''remdups_tail.''"
+abbreviation "remdups_tail_xs_str \<equiv> ''xs''"
+abbreviation "remdups_tail_ret_str \<equiv> ''ret''"
+
+definition "remdups_tail_state_upd s \<equiv>
+  (let
+      remdups_acc_acc' = 0;
+      remdups_acc_n' = remdups_tail_xs s;
+      remdups_acc_ret' = 0;
+      remdups_acc_state = \<lparr>remdups_acc_acc = remdups_acc_acc',
+                           remdups_acc_n = remdups_acc_n',
+                           remdups_acc_ret = remdups_acc_ret'\<rparr>;
+      remdups_acc_ret_state = remdups_acc_imp remdups_acc_state;
+      reverse_nat_n' = remdups_acc_ret remdups_acc_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      remdups_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      ret = \<lparr>remdups_tail_xs = remdups_tail_xs s,
+             remdups_tail_ret = remdups_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function remdups_tail_imp:: "remdups_tail_state \<Rightarrow> remdups_tail_state" where
+  "remdups_tail_imp s =
+  (let
+      ret = remdups_tail_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. remdups_tail_xs s)") simp
+
+declare remdups_tail_imp.simps [simp del]
+
+lemma remdups_tail_imp_correct[let_function_correctness]:
+  "remdups_tail_ret (remdups_tail_imp s) =
+    remdups_tail (remdups_tail_xs s)"
+  apply (simp only: remdups_tail_imp.simps reverse_nat_imp_correct
+  remdups_acc_imp_correct remdups_tail_def Let_def remdups_tail_state_upd_def)
+  by simp
+
+function remdups_tail_imp_time :: "nat \<Rightarrow> remdups_tail_state \<Rightarrow> nat" where
+  "remdups_tail_imp_time t s =
+  (let
+      remdups_acc_acc' = 0;
+      t = t + 2;
+      remdups_acc_n' = remdups_tail_xs s;
+      t = t + 2;
+      remdups_acc_ret' = 0;
+      t = t + 2;
+      remdups_acc_state = \<lparr>remdups_acc_acc = remdups_acc_acc',
+                           remdups_acc_n = remdups_acc_n',
+                           remdups_acc_ret = remdups_acc_ret'\<rparr>;
+      remdups_acc_ret_state = remdups_acc_imp remdups_acc_state;
+      t = t + remdups_acc_imp_time 0 remdups_acc_state;
+      reverse_nat_n' = remdups_acc_ret remdups_acc_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      remdups_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      ret = \<lparr>remdups_tail_xs = remdups_tail_xs s,
+             remdups_tail_ret = remdups_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (remdups_tail_xs \<circ> snd)") simp
+
+declare remdups_tail_imp_time.simps [simp del]
+
+lemma remdups_tail_imp_time_acc:
+  "(remdups_tail_imp_time (Suc t) s) = Suc (remdups_tail_imp_time t s)"
+  by (induction t s rule: remdups_tail_imp_time.induct)
+    ((subst (1 2) remdups_tail_imp_time.simps);
+      (simp add: remdups_tail_state_upd_def Let_def))            
+
+lemma remdups_tail_imp_time_acc_2_aux:
+  "(remdups_tail_imp_time t s) = t + (remdups_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: remdups_tail_imp_time_acc)+            
+
+lemma remdups_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (remdups_tail_imp_time t s) = t + (remdups_tail_imp_time 0 s)"
+  by (rule remdups_tail_imp_time_acc_2_aux)            
+
+lemma remdups_tail_imp_time_acc_3:
+  "(remdups_tail_imp_time (a + b) s) = a + (remdups_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: remdups_tail_imp_time_acc)+  
+
+definition remdups_tail_IMP_Minus where
+  "remdups_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  remdups_acc_acc' = 0;\<close>
+  (remdups_acc_prefix @ remdups_acc_acc_str) ::= (A (N 0));;
+  \<comment> \<open>  remdups_acc_n' = remdups_tail_xs s;\<close>
+  (remdups_acc_prefix @ remdups_acc_n_str) ::= (A (V remdups_tail_xs_str));;
+  \<comment> \<open>  remdups_acc_ret' = 0;\<close>
+  (remdups_acc_prefix @ remdups_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  remdups_acc_state = \<lparr>remdups_acc_acc = remdups_acc_acc',\<close>
+  \<comment> \<open>                       remdups_acc_n = remdups_acc_n',\<close>
+  \<comment> \<open>                       remdups_acc_ret = remdups_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  remdups_acc_ret_state = remdups_acc_imp remdups_acc_state;\<close>
+  (invoke_subprogram remdups_acc_prefix remdups_acc_IMP_Minus);;
+  \<comment> \<open>  reverse_nat_n' = remdups_acc_ret remdups_acc_ret_state;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V (remdups_acc_prefix @ remdups_acc_ret_str)));;
+  \<comment> \<open>  reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',\<close>
+  \<comment> \<open>                       reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  (invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus);;
+  \<comment> \<open>  remdups_tail_ret' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (remdups_tail_ret_str) ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)))
+  \<comment> \<open>  ret = \<lparr>remdups_tail_xs = remdups_tail_xs s,\<close>
+  \<comment> \<open>         remdups_tail_ret = remdups_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "remdups_tail_IMP_vars \<equiv>
+  {remdups_tail_xs_str, remdups_tail_ret_str}"
+
+definition "remdups_tail_imp_to_HOL_state p s =
+  \<lparr>remdups_tail_xs = (s (add_prefix p remdups_tail_xs_str)),
+   remdups_tail_ret = (s (add_prefix p remdups_tail_ret_str))\<rparr>"
+
+lemmas remdups_tail_state_translators =
+  remdups_tail_imp_to_HOL_state_def
+  remdups_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+
+lemma remdups_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p remdups_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p remdups_tail_ret_str)
+      = remdups_tail_ret
+          (remdups_tail_imp (remdups_tail_imp_to_HOL_state p s))"
+  apply(subst remdups_tail_imp.simps)
+  apply(simp only: remdups_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule remdups_acc_IMP_Minus_correct[where vars = "remdups_tail_IMP_vars"])
+  subgoal premises p using p(8) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "remdups_tail_IMP_vars"])
+  subgoal premises p using p(10) by fastforce
+  by (fastforce simp: remdups_tail_state_translators remdups_tail_state_upd_def)
+
+lemma remdups_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ remdups_tail_pref) remdups_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix remdups_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma remdups_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p remdups_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = remdups_tail_imp_time 0 (remdups_tail_imp_to_HOL_state p s)"
+  apply(subst remdups_tail_imp_time.simps)
+  apply(simp only: remdups_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule remdups_acc_IMP_Minus_correct[where vars = "remdups_tail_IMP_vars"])
+  subgoal premises p using p(15) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "remdups_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  by (fastforce simp add: Let_def remdups_tail_state_translators)
+
+lemma remdups_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) remdups_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (remdups_tail_imp_time 0 (remdups_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) remdups_tail_ret_str) =
+          remdups_tail_ret (remdups_tail_imp
+                                        (remdups_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using remdups_tail_IMP_Minus_correct_function
+    remdups_tail_IMP_Minus_correct_time
+    remdups_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
 
 
 section \<open>Logic, continued\<close>
