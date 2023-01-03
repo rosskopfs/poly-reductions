@@ -633,6 +633,585 @@ lemma dropWhile_char_IMP_Minus_correct:
     (meson dropWhile_char_IMP_Minus_correct_effects set_mono_prefix)
 
 
+subsection \<open>takeWhile_char\<close>
+
+subsubsection \<open>takeWhile_char_acc\<close>
+
+fun takeWhile_char_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "takeWhile_char_acc' acc n =
+    (if n \<noteq> 0 \<and> hd_nat n = encode_char (CHR ''#'')
+     then takeWhile_char_acc ((hd_nat n) ## acc) (tl_nat n)
+     else acc
+    )"
+
+lemma takeWhile_char_acc'_correct: 
+  "takeWhile_char_acc acc n = takeWhile_char_acc' acc n"
+  by (induction acc n rule: takeWhile_char_acc.induct) simp
+
+record takeWhile_char_acc_state =
+  takeWhile_char_acc_acc::nat
+  takeWhile_char_acc_n::nat
+  takeWhile_char_acc_ret::nat
+
+abbreviation "takeWhile_char_acc_prefix \<equiv> ''takeWhile_char_acc.''"
+abbreviation "takeWhile_char_acc_acc_str \<equiv> ''acc''"
+abbreviation "takeWhile_char_acc_n_str \<equiv> ''n''"
+abbreviation "takeWhile_char_acc_ret_str \<equiv> ''ret''"
+
+definition "takeWhile_char_acc_state_upd s \<equiv>
+  (let
+      hd_xs' = takeWhile_char_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      cons_h' = hd_ret hd_ret_state;
+      cons_t' = takeWhile_char_acc_acc s;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h',
+                    cons_t = cons_t',
+                    cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      takeWhile_char_acc_acc' = cons_ret cons_ret_state;
+      tl_xs' = takeWhile_char_acc_n s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      takeWhile_char_acc_n' = tl_ret tl_ret_state;
+      ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',
+             takeWhile_char_acc_n = takeWhile_char_acc_n',
+             takeWhile_char_acc_ret = takeWhile_char_acc_ret s\<rparr>
+  in
+      ret
+)"
+
+definition "takeWhile_char_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      hd_xs' = takeWhile_char_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      EQUAL_neq_zero_b' = hash_as_nat;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      AND_neq_zero_a' = takeWhile_char_acc_n s;
+      AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      AND_neq_zero_ret' = 0;
+      AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                            AND_neq_zero_b = AND_neq_zero_b',
+                            AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+      AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+      condition = AND_neq_zero_ret AND_neq_zero_ret_state
+  in
+      condition
+)"
+
+definition "takeWhile_char_acc_imp_after_loop s \<equiv>
+  (let
+      takeWhile_char_acc_ret' = takeWhile_char_acc_acc s;
+      ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc s,
+             takeWhile_char_acc_n = takeWhile_char_acc_n s,
+             takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas takeWhile_char_acc_imp_subprogram_simps = 
+  takeWhile_char_acc_state_upd_def
+  takeWhile_char_acc_imp_compute_loop_condition_def
+  takeWhile_char_acc_imp_after_loop_def
+
+function takeWhile_char_acc_imp :: "takeWhile_char_acc_state \<Rightarrow> takeWhile_char_acc_state" where
+  "takeWhile_char_acc_imp s =
+  (if takeWhile_char_acc_imp_compute_loop_condition s \<noteq> 0
+   then let next_iteration = takeWhile_char_acc_imp (takeWhile_char_acc_state_upd s)
+        in next_iteration
+   else let ret = takeWhile_char_acc_imp_after_loop s
+        in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure takeWhile_char_acc_n")
+  apply (simp add: takeWhile_char_acc_imp_subprogram_simps tl_imp_correct
+  EQUAL_neq_zero_imp_correct AND_neq_zero_imp_correct split: if_splits)+
+  done
+
+declare takeWhile_char_acc_imp.simps [simp del]
+
+lemma takeWhile_char_acc_imp_correct[let_function_correctness]:
+  "takeWhile_char_acc_ret (takeWhile_char_acc_imp s) =
+    takeWhile_char_acc (takeWhile_char_acc_acc s) (takeWhile_char_acc_n s)"
+  apply (induction s rule: takeWhile_char_acc_imp.induct)
+  apply (subst takeWhile_char_acc_imp.simps)
+  apply (subst takeWhile_char_acc.simps)
+  apply (simp del: takeWhile_char_acc.simps add: takeWhile_char_acc_imp_subprogram_simps Let_def
+  AND_neq_zero_imp_correct EQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct
+  cons_imp_correct hash_encode_val)
+  by fastforce
+
+definition "takeWhile_char_acc_state_upd_time t s \<equiv>
+  (let
+      hd_xs' = takeWhile_char_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      cons_h' = hd_ret hd_ret_state;
+      t = t + 2;
+      cons_t' = takeWhile_char_acc_acc s;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h',
+                    cons_t = cons_t',
+                    cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      takeWhile_char_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      tl_xs' = takeWhile_char_acc_n s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      takeWhile_char_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',
+             takeWhile_char_acc_n = takeWhile_char_acc_n',
+             takeWhile_char_acc_ret = takeWhile_char_acc_ret s\<rparr>
+  in
+      t
+)"
+
+definition "takeWhile_char_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      hd_xs' = takeWhile_char_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs',
+                  hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_b' = hash_as_nat;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      AND_neq_zero_a' = takeWhile_char_acc_n s;
+      t = t + 2;
+      AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2;
+      AND_neq_zero_ret' = 0;
+      t = t + 2;
+      AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                            AND_neq_zero_b = AND_neq_zero_b',
+                            AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+      AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+      t = t + AND_neq_zero_imp_time 0 AND_neq_zero_state;
+      condition = AND_neq_zero_ret AND_neq_zero_ret_state;
+      t = t + 2
+  in
+      t
+)"
+
+definition "takeWhile_char_acc_imp_after_loop_time t s \<equiv>
+  (let
+      takeWhile_char_acc_ret' = takeWhile_char_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc s,
+             takeWhile_char_acc_n = takeWhile_char_acc_n s,
+             takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas takeWhile_char_acc_imp_subprogram_time_simps = 
+  takeWhile_char_acc_state_upd_time_def
+  takeWhile_char_acc_imp_compute_loop_condition_time_def
+  takeWhile_char_acc_imp_after_loop_time_def
+  takeWhile_char_acc_imp_subprogram_simps
+
+function takeWhile_char_acc_imp_time :: "nat \<Rightarrow> takeWhile_char_acc_state \<Rightarrow> nat" where
+  "takeWhile_char_acc_imp_time t s =
+  takeWhile_char_acc_imp_compute_loop_condition_time 0 s +
+  (if takeWhile_char_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          takeWhile_char_acc_imp_time (t + takeWhile_char_acc_state_upd_time 0 s)
+                         (takeWhile_char_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + takeWhile_char_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (takeWhile_char_acc_n \<circ> snd)")
+  by (simp add: takeWhile_char_acc_imp_subprogram_time_simps Let_def AND_neq_zero_imp_correct
+  EQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct
+  cons_imp_correct hash_encode_val split: if_splits)+
+
+declare takeWhile_char_acc_imp_time.simps [simp del]  
+
+lemma takeWhile_char_acc_imp_time_acc:
+  "(takeWhile_char_acc_imp_time (Suc t) s) = Suc (takeWhile_char_acc_imp_time t s)"
+  by (induction t s rule: takeWhile_char_acc_imp_time.induct)
+    ((subst (1 2) takeWhile_char_acc_imp_time.simps);
+      (simp add: takeWhile_char_acc_state_upd_def))            
+
+lemma takeWhile_char_acc_imp_time_acc_2_aux:
+  "(takeWhile_char_acc_imp_time t s) = t + (takeWhile_char_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: takeWhile_char_acc_imp_time_acc)+            
+
+lemma takeWhile_char_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (takeWhile_char_acc_imp_time t s) = t + (takeWhile_char_acc_imp_time 0 s)"
+  by (rule takeWhile_char_acc_imp_time_acc_2_aux)            
+
+lemma takeWhile_char_acc_imp_time_acc_3:
+  "(takeWhile_char_acc_imp_time (a + b) s) = a + (takeWhile_char_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: takeWhile_char_acc_imp_time_acc)+ 
+
+abbreviation "takeWhile_char_acc_while_cond \<equiv> ''condition''"
+
+definition "takeWhile_char_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  hd_xs' = takeWhile_char_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V takeWhile_char_acc_n_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close>
+  \<comment> \<open>              hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = hash_as_nat;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_as_nat));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  AND_neq_zero_a' = takeWhile_char_acc_n s;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::= (A (V takeWhile_char_acc_n_str));;
+  \<comment> \<open>  AND_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>  AND_neq_zero_ret' = 0;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',\<close>
+  \<comment> \<open>                        AND_neq_zero_b = AND_neq_zero_b',\<close>
+  \<comment> \<open>                        AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;\<close>
+  (invoke_subprogram AND_neq_zero_prefix AND_neq_zero_IMP_Minus);;
+  \<comment> \<open>  condition = AND_neq_zero_ret AND_neq_zero_ret_state\<close>
+  (takeWhile_char_acc_while_cond) ::= (A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str)))
+"
+
+definition "takeWhile_char_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  hd_xs' = takeWhile_char_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V takeWhile_char_acc_n_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close>
+  \<comment> \<open>              hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  cons_h' = hd_ret hd_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  cons_t' = takeWhile_char_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V takeWhile_char_acc_acc_str));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h',\<close>
+  \<comment> \<open>                cons_t = cons_t',\<close>
+  \<comment> \<open>                cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  takeWhile_char_acc_acc' = cons_ret cons_ret_state;\<close>
+  (takeWhile_char_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  tl_xs' = takeWhile_char_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V takeWhile_char_acc_n_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs',\<close>
+  \<comment> \<open>              tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  (invoke_subprogram tl_prefix tl_IMP_Minus);;
+  \<comment> \<open>  takeWhile_char_acc_n' = tl_ret tl_ret_state;\<close>
+  (takeWhile_char_acc_n_str) ::= (A (V (tl_prefix @ tl_ret_str)))
+  \<comment> \<open>  ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',\<close>
+  \<comment> \<open>         takeWhile_char_acc_n = takeWhile_char_acc_n',\<close>
+  \<comment> \<open>         takeWhile_char_acc_ret = takeWhile_char_acc_ret s\<rparr>\<close>
+"
+
+definition "takeWhile_char_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  takeWhile_char_acc_ret' = takeWhile_char_acc_acc s;\<close>
+  (takeWhile_char_acc_ret_str) ::= (A (V takeWhile_char_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc s,\<close>
+  \<comment> \<open>         takeWhile_char_acc_n = takeWhile_char_acc_n s,\<close>
+  \<comment> \<open>         takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>\<close>
+"
+
+definition takeWhile_char_acc_IMP_Minus where
+  "takeWhile_char_acc_IMP_Minus \<equiv>
+  takeWhile_char_acc_IMP_init_while_cond;;
+  WHILE takeWhile_char_acc_while_cond \<noteq>0 DO (
+    takeWhile_char_acc_IMP_loop_body;;
+    takeWhile_char_acc_IMP_init_while_cond
+  );;
+  takeWhile_char_acc_IMP_after_loop"
+
+abbreviation "takeWhile_char_acc_IMP_vars \<equiv>
+  {takeWhile_char_acc_acc_str, takeWhile_char_acc_n_str, takeWhile_char_acc_ret_str}"
+
+lemmas takeWhile_char_acc_IMP_subprogram_simps =
+  takeWhile_char_acc_IMP_init_while_cond_def
+  takeWhile_char_acc_IMP_loop_body_def
+  takeWhile_char_acc_IMP_after_loop_def
+
+definition "takeWhile_char_acc_imp_to_HOL_state p s =
+  \<lparr>takeWhile_char_acc_acc = (s (add_prefix p takeWhile_char_acc_acc_str)),
+   takeWhile_char_acc_n = (s (add_prefix p takeWhile_char_acc_n_str)),
+   takeWhile_char_acc_ret = (s (add_prefix p takeWhile_char_acc_ret_str))\<rparr>"
+
+lemmas takeWhile_char_acc_state_translators =
+  takeWhile_char_acc_imp_to_HOL_state_def
+  EQUAL_neq_zero_imp_to_HOL_state_def
+  AND_neq_zero_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+
+lemmas takeWhile_char_acc_complete_simps =
+  takeWhile_char_acc_IMP_subprogram_simps
+  takeWhile_char_acc_imp_subprogram_simps
+  takeWhile_char_acc_state_translators
+
+lemma takeWhile_char_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p takeWhile_char_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p takeWhile_char_acc_ret_str)
+      = takeWhile_char_acc_ret
+          (takeWhile_char_acc_imp (takeWhile_char_acc_imp_to_HOL_state p s))"
+  apply(induction "takeWhile_char_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: takeWhile_char_acc_imp.induct)
+  apply(subst takeWhile_char_acc_imp.simps)
+  apply(simp only: takeWhile_char_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: takeWhile_char_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(17) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(19) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(21) by fastforce
+    by(fastforce simp: takeWhile_char_acc_IMP_subprogram_simps
+        takeWhile_char_acc_imp_subprogram_simps
+        takeWhile_char_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: takeWhile_char_acc_IMP_init_while_cond_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(28) by fastforce
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(30) by fastforce
+      apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(32) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(34) by fastforce
+      by(fastforce simp add: takeWhile_char_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) takeWhile_char_acc_IMP_init_while_cond_def)
+      apply(simp only: takeWhile_char_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(28) by fastforce
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(30) by fastforce
+      apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(32) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(34) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(36) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      by (fastforce_sorted_premises2 simp: takeWhile_char_acc_imp_subprogram_simps Let_def
+        takeWhile_char_acc_state_translators)
+
+  subgoal
+      apply(simp only: takeWhile_char_acc_IMP_init_while_cond_def prefix_simps
+          takeWhile_char_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(39) by fastforce
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(41) by fastforce
+      apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(43) by fastforce
+      apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(45) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(47) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(49) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+      subgoal premises p using p(51) by fastforce
+      by (fastforce_sorted_premises2 simp: takeWhile_char_acc_imp_subprogram_simps Let_def
+        takeWhile_char_acc_state_translators)
+  done
+
+lemma takeWhile_char_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ takeWhile_char_acc_pref) takeWhile_char_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix takeWhile_char_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemmas takeWhile_char_acc_complete_time_simps =
+  takeWhile_char_acc_imp_subprogram_time_simps
+  takeWhile_char_acc_imp_time_acc
+  takeWhile_char_acc_imp_time_acc_2
+  takeWhile_char_acc_imp_time_acc_3
+  takeWhile_char_acc_state_translators
+
+lemma takeWhile_char_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p takeWhile_char_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = takeWhile_char_acc_imp_time 0 (takeWhile_char_acc_imp_to_HOL_state p s)"
+  apply(induction "takeWhile_char_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: takeWhile_char_acc_imp.induct)
+  apply(subst takeWhile_char_acc_imp_time.simps)
+  apply(simp only: takeWhile_char_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: takeWhile_char_acc_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(30) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(32) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(34) by fastforce
+    by (force simp: takeWhile_char_acc_imp_subprogram_time_simps Let_def 
+        takeWhile_char_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: takeWhile_char_acc_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    by(fastforce simp add: takeWhile_char_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) takeWhile_char_acc_IMP_init_while_cond_def)
+    apply(simp only: takeWhile_char_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    by (fastforce_sorted_premises simp: Let_def
+        takeWhile_char_acc_complete_time_simps)
+
+  subgoal
+    apply(simp only: prefix_simps takeWhile_char_acc_IMP_init_while_cond_def
+        takeWhile_char_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(75) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(77) by fastforce
+    apply(erule hd_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(79) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(81) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(83) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(85) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(87) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(89) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "takeWhile_char_acc_IMP_vars"])
+    subgoal premises p using p(91) by fastforce
+    apply(simp only: takeWhile_char_acc_complete_time_simps Let_def)
+    by (fastforce_sorted_premises simp: Let_def
+        takeWhile_char_acc_complete_time_simps)
+
+  done 
+
+lemma takeWhile_char_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) takeWhile_char_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (takeWhile_char_acc_imp_time 0 (takeWhile_char_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) takeWhile_char_acc_ret_str) =
+          takeWhile_char_acc_ret (takeWhile_char_acc_imp
+                                        (takeWhile_char_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using takeWhile_char_acc_IMP_Minus_correct_function
+    takeWhile_char_acc_IMP_Minus_correct_time
+    takeWhile_char_acc_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
+
+
+
 subsection \<open>n_hashes\<close>
 
 subsubsection \<open>n_hashes_acc\<close>
