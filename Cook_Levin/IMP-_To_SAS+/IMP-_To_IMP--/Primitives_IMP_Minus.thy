@@ -6523,6 +6523,19 @@ lemma remdups_acc_IMP_Minus_correct:
     remdups_acc_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsubsection \<open>restrict_nat\<close>
+
+paragraph \<open>restrict_aux\<close>
+(*
+restrict_aux = let 
+*)
+
+paragraph \<open>restrict_nat\<close>
+(*
+restrict_acc acc l s = (if l = 0 then acc else(if elemof (fst_nat (hd_nat l)) s \<noteq> 0 then 
+   restrict_acc  ((hd_nat l)## acc) (tl_nat l) s else restrict_acc acc (tl_nat l) s))
+*)
+
 section \<open>Logic, continued\<close>
 text \<open>This is a structural issue to be handled, for elemof uses logical operations
 BigAnd uses the cons of lists
