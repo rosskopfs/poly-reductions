@@ -1208,8 +1208,196 @@ lemma takeWhile_char_acc_IMP_Minus_correct:
     takeWhile_char_acc_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsubsection \<open>takeWhile_char_tail\<close>
 
+record takeWhile_char_tail_state =
+  takeWhile_char_tail_ys::nat
+  takeWhile_char_tail_ret::nat
 
+abbreviation "takeWhile_char_tail_prefix \<equiv> ''takeWhile_char_tail.''"
+abbreviation "takeWhile_char_tail_ys_str \<equiv> ''ys''"
+abbreviation "takeWhile_char_tail_ret_str \<equiv> ''ret''"
+
+definition "takeWhile_char_tail_state_upd s =
+  (let
+      takeWhile_char_acc_acc' = 0;
+      takeWhile_char_acc_n' = takeWhile_char_tail_ys s;
+      takeWhile_char_acc_ret' = 0;
+      takeWhile_char_acc_state = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',
+                                  takeWhile_char_acc_n = takeWhile_char_acc_n',
+                                  takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>;
+      takeWhile_char_acc_ret_state = takeWhile_char_acc_imp takeWhile_char_acc_state;
+      reverse_nat_n' = takeWhile_char_acc_ret takeWhile_char_acc_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      takeWhile_char_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      ret = \<lparr>takeWhile_char_tail_ys = takeWhile_char_tail_ys s,
+             takeWhile_char_tail_ret = takeWhile_char_tail_ret'\<rparr>
+  in
+      ret
+  )"
+
+function takeWhile_char_tail_imp:: "takeWhile_char_tail_state \<Rightarrow> takeWhile_char_tail_state" where
+  "takeWhile_char_tail_imp s =
+  (let
+      ret = takeWhile_char_tail_state_upd s
+    in
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure takeWhile_char_tail_ys") simp
+
+declare takeWhile_char_tail_imp.simps [simp del]
+
+lemma takeWhile_char_tail_imp_correct:
+  "takeWhile_char_tail_ret (takeWhile_char_tail_imp s) =
+    takeWhile_char_tail (takeWhile_char_tail_ys s)"
+  apply (simp only: takeWhile_char_acc_imp_correct takeWhile_char_tail_def 
+    takeWhile_char_tail_imp.simps takeWhile_char_tail_state_upd_def 
+    reverse_nat_imp_correct Let_def)
+  by simp
+
+function takeWhile_char_tail_imp_time :: "nat \<Rightarrow> takeWhile_char_tail_state \<Rightarrow> nat" where
+  "takeWhile_char_tail_imp_time t s =
+  (let
+      takeWhile_char_acc_acc' = 0;
+      t = t + 2;
+      takeWhile_char_acc_n' = takeWhile_char_tail_ys s;
+      t = t + 2;
+      takeWhile_char_acc_ret' = 0;
+      t = t + 2;
+      takeWhile_char_acc_state = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',
+                                  takeWhile_char_acc_n = takeWhile_char_acc_n',
+                                  takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>;
+      takeWhile_char_acc_ret_state = takeWhile_char_acc_imp takeWhile_char_acc_state;
+      t = t + takeWhile_char_acc_imp_time 0 takeWhile_char_acc_state;
+      reverse_nat_n' = takeWhile_char_acc_ret takeWhile_char_acc_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      takeWhile_char_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      ret = \<lparr>takeWhile_char_tail_ys = takeWhile_char_tail_ys s,
+             takeWhile_char_tail_ret = takeWhile_char_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (takeWhile_char_tail_ys \<circ> snd)") simp
+
+declare takeWhile_char_tail_imp_time.simps [simp del]
+
+lemma takeWhile_char_tail_imp_time_acc:
+  "(takeWhile_char_tail_imp_time (Suc t) s) = Suc (takeWhile_char_tail_imp_time t s)"
+  by (induction t s rule: takeWhile_char_tail_imp_time.induct)
+    ((subst (1 2) takeWhile_char_tail_imp_time.simps);
+      (simp add: takeWhile_char_tail_state_upd_def Let_def))            
+
+lemma takeWhile_char_tail_imp_time_acc_2_aux:
+  "(takeWhile_char_tail_imp_time t s) = t + (takeWhile_char_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: takeWhile_char_tail_imp_time_acc)+            
+
+lemma takeWhile_char_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (takeWhile_char_tail_imp_time t s) = t + (takeWhile_char_tail_imp_time 0 s)"
+  by (rule takeWhile_char_tail_imp_time_acc_2_aux)            
+
+lemma takeWhile_char_tail_imp_time_acc_3:
+  "(takeWhile_char_tail_imp_time (a + b) s) = a + (takeWhile_char_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: takeWhile_char_tail_imp_time_acc)+  
+
+definition takeWhile_char_tail_IMP_Minus where
+  "takeWhile_char_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  takeWhile_char_acc_acc' = 0;\<close>
+  (takeWhile_char_acc_prefix @ takeWhile_char_acc_acc_str) ::= (A (N 0));;
+  \<comment> \<open>  takeWhile_char_acc_n' = takeWhile_char_tail_ys s;\<close>
+  (takeWhile_char_acc_prefix @ takeWhile_char_acc_n_str) ::= (A (V takeWhile_char_tail_ys_str));;
+  \<comment> \<open>  takeWhile_char_acc_ret' = 0;\<close>
+  (takeWhile_char_acc_prefix @ takeWhile_char_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  takeWhile_char_acc_state = \<lparr>takeWhile_char_acc_acc = takeWhile_char_acc_acc',\<close>
+  \<comment> \<open>                              takeWhile_char_acc_n = takeWhile_char_acc_n',\<close>
+  \<comment> \<open>                              takeWhile_char_acc_ret = takeWhile_char_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  takeWhile_char_acc_ret_state = takeWhile_char_acc_imp takeWhile_char_acc_state;\<close>
+  (invoke_subprogram takeWhile_char_acc_prefix takeWhile_char_acc_IMP_Minus);;
+  \<comment> \<open>  reverse_nat_n' = takeWhile_char_acc_ret takeWhile_char_acc_ret_state;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V (takeWhile_char_acc_prefix @ takeWhile_char_acc_ret_str)));;
+  \<comment> \<open>  reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',\<close>
+  \<comment> \<open>                       reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  (invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus);;
+  \<comment> \<open>  takeWhile_char_tail_ret' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (takeWhile_char_tail_ret_str) ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)))
+  \<comment> \<open>  ret = \<lparr>takeWhile_char_tail_ys = takeWhile_char_tail_ys s,\<close>
+  \<comment> \<open>         takeWhile_char_tail_ret = takeWhile_char_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "takeWhile_char_tail_IMP_vars \<equiv>
+  {takeWhile_char_tail_ys_str, takeWhile_char_tail_ret_str}"
+
+definition "takeWhile_char_tail_imp_to_HOL_state p s =
+  \<lparr>takeWhile_char_tail_ys = (s (add_prefix p takeWhile_char_tail_ys_str)),
+   takeWhile_char_tail_ret = (s (add_prefix p takeWhile_char_tail_ret_str))\<rparr>"
+
+lemmas takeWhile_char_tail_state_translators =
+  takeWhile_char_tail_imp_to_HOL_state_def
+  takeWhile_char_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+
+lemma takeWhile_char_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p takeWhile_char_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p takeWhile_char_tail_ret_str)
+      = takeWhile_char_tail_ret
+          (takeWhile_char_tail_imp (takeWhile_char_tail_imp_to_HOL_state p s))"
+  apply(subst takeWhile_char_tail_imp.simps)
+  apply(simp only: takeWhile_char_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule takeWhile_char_acc_IMP_Minus_correct[where vars = "takeWhile_char_tail_IMP_vars"])
+  subgoal premises p using p(8) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "takeWhile_char_tail_IMP_vars"])
+  subgoal premises p using p(10) by fastforce
+  by (fastforce simp: takeWhile_char_tail_state_translators takeWhile_char_tail_state_upd_def)
+
+lemma takeWhile_char_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ takeWhile_char_tail_pref) takeWhile_char_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix takeWhile_char_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma takeWhile_char_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p takeWhile_char_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = takeWhile_char_tail_imp_time 0 (takeWhile_char_tail_imp_to_HOL_state p s)"
+  apply(subst takeWhile_char_tail_imp_time.simps)
+  apply(simp only: takeWhile_char_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule takeWhile_char_acc_IMP_Minus_correct[where vars = "takeWhile_char_tail_IMP_vars"])
+  subgoal premises p using p(15) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "takeWhile_char_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  by (fastforce simp add: Let_def takeWhile_char_tail_state_translators)
+
+lemma takeWhile_char_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) takeWhile_char_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (takeWhile_char_tail_imp_time 0 (takeWhile_char_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) takeWhile_char_tail_ret_str) =
+          takeWhile_char_tail_ret (takeWhile_char_tail_imp
+                                        (takeWhile_char_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using takeWhile_char_tail_IMP_Minus_correct_function
+    takeWhile_char_tail_IMP_Minus_correct_time
+    takeWhile_char_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
 
 
 subsection \<open>n_hashes\<close>
