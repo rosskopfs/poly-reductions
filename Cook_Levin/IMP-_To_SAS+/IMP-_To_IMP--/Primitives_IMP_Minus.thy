@@ -1075,7 +1075,7 @@ subsubsection \<open>fst'\<close>
 record fst'_state = fst'_state_p :: nat
 
 (*definition [prefix_defs]:*) abbreviation   "fst'_prefix \<equiv> ''fst'.''"
-(*definition [prefix_defs]:*) abbreviation   "fst'_p_str \<equiv> ''p''"
+(*definition [prefix_defs]:*) abbreviation   "fst'_p_str \<equiv> ''fst'_p''"
 (*definition [prefix_defs]:*) abbreviation   "fst'_internal_str \<equiv> ''internal''"
 
 abbreviation
@@ -2331,7 +2331,7 @@ subsubsection \<open>hd\<close>
 record hd_state = hd_xs::nat hd_ret::nat
 
 (*definition [prefix_defs]:*) abbreviation   "hd_prefix \<equiv> ''hd.''"
-(*definition [prefix_defs]:*) abbreviation   "hd_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "hd_xs_str \<equiv> ''hd_xs''"
 (*definition [prefix_defs]:*) abbreviation   "hd_ret_str \<equiv> ''hd_ret''"
 
 term prod_decode_state_p
@@ -2457,7 +2457,7 @@ subsubsection \<open>tl\<close>
 record tl_state = tl_xs::nat tl_ret::nat
 
 (*definition [prefix_defs]:*) abbreviation   "tl_prefix \<equiv> ''tl.''"
-(*definition [prefix_defs]:*) abbreviation   "tl_xs_str \<equiv> ''xs''"
+(*definition [prefix_defs]:*) abbreviation   "tl_xs_str \<equiv> ''tl_xs''"
 (*definition [prefix_defs]:*) abbreviation   "tl_ret_str \<equiv> ''tl_ret''"
 
 definition "tl_state_upd s \<equiv>
@@ -2575,6 +2575,694 @@ lemma tl_IMP_Minus_correct[functional_correctness]:
     tl_IMP_Minus_correct_effects
   by auto
 
+subsubsection \<open>map_list_find\<close>
+paragraph map_list_find_aux 
+
+fun map_list_find_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+"map_list_find_aux xs a = (
+  if xs \<noteq> 0 \<and> fst_nat (hd_nat xs) \<noteq> a 
+  then map_list_find_nat (tl_nat xs) a 
+  else (
+    if xs \<noteq> 0 then some_nat (snd_nat (hd_nat xs))
+    else 0
+  )
+)"
+
+lemma map_list_find_aux_eq_map_list_find_nat:
+ "map_list_find_aux xs a = map_list_find_nat xs a"
+ by (induction xs) auto
+
+record map_list_find_aux_state = 
+  map_list_find_aux_xs::nat
+  map_list_find_aux_a::nat
+  map_list_find_aux_ret::nat
+
+
+abbreviation "map_list_find_aux_prefix \<equiv> ''map_list_find_aux.''"
+abbreviation "map_list_find_aux_xs_str \<equiv> ''map_list_find_aux_xs''"
+abbreviation "map_list_find_aux_a_str \<equiv> ''map_list_find_aux_a''"
+abbreviation "map_list_find_aux_ret_str \<equiv> ''map_list_find_aux_ret''"
+
+definition "map_list_find_aux_state_upd s \<equiv>
+  (let
+     tl_xs' = map_list_find_aux_xs s;
+     tl_ret' = 0;
+     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+     tl_ret_state = tl_imp tl_state;
+     map_list_find_aux_xs' = tl_ret tl_ret_state;
+     ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs',
+            map_list_find_aux_a = map_list_find_aux_a s,
+            map_list_find_aux_ret = map_list_find_aux_ret s\<rparr>
+   in
+     ret)"
+
+definition "map_list_find_aux_imp_compute_loop_condition s \<equiv>
+  (let
+    hd_xs' = map_list_find_aux_xs s;
+    hd_ret' = 0;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+
+    fst'_state_p' = hd_ret hd_ret_state;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+
+    NOTEQUAL_neq_zero_a' = fst'_state_p fst'_ret_state;
+    NOTEQUAL_neq_zero_b' = map_list_find_aux_a s;
+    NOTEQUAL_neq_zero_ret' = 0;
+    NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                               NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                               NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+    NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+
+    AND_neq_zero_a' =  map_list_find_aux_xs s;
+    AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+    AND_neq_zero_ret' = 0;
+    AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                         AND_neq_zero_b = AND_neq_zero_b',
+                         AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+    AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+    condition = AND_neq_zero_ret AND_neq_zero_ret_state
+  in
+    condition
+  )"
+
+definition "map_list_find_aux_imp_after_loop s \<equiv>
+  (
+    let 
+      map_list_find_aux_xs' = map_list_find_aux_xs s
+    in
+    (if map_list_find_aux_xs' \<noteq> 0 then  
+      let 
+       hd_xs' = map_list_find_aux_xs s;
+       hd_ret' = 0;
+       hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+       hd_ret_state = hd_imp hd_state;
+
+       snd'_state_p' = hd_ret hd_ret_state;
+       snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+       snd'_ret_state = snd'_imp snd'_state;
+
+       some_nat_n' = snd'_state_p snd'_ret_state;
+       some_nat_ret' = 0;
+       some_nat_state = \<lparr>some_nat_n = some_nat_n', some_nat_ret = some_nat_ret'\<rparr>;
+       some_nat_ret_state = some_nat_imp some_nat_state;
+       map_list_find_aux_ret' = some_nat_ret some_nat_ret_state;
+       
+       ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
+             map_list_find_aux_a = map_list_find_aux_a s,
+             map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
+      in 
+        ret
+    else (
+      let 
+        map_list_find_aux_ret' = 0;
+        ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
+               map_list_find_aux_a = map_list_find_aux_a s,
+               map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
+      in 
+        ret
+    )))"
+
+lemmas map_list_find_aux_imp_subprogram_simps = 
+  map_list_find_aux_state_upd_def
+  map_list_find_aux_imp_compute_loop_condition_def
+  map_list_find_aux_imp_after_loop_def
+
+function map_list_find_aux_imp::
+  "map_list_find_aux_state \<Rightarrow> map_list_find_aux_state" where
+  "map_list_find_aux_imp s =
+  (if map_list_find_aux_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = map_list_find_aux_imp (map_list_find_aux_state_upd s)
+    in next_iteration
+   else
+    let ret = map_list_find_aux_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure map_list_find_aux_xs")
+  apply (simp add: map_list_find_aux_imp_subprogram_simps 
+     AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
+    hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct split: if_splits)+
+  done
+
+declare map_list_find_aux_imp.simps [simp del]
+
+lemma map_list_find_aux_imp_correct[let_function_correctness]:
+  "map_list_find_aux_ret (map_list_find_aux_imp s) =
+    map_list_find_nat (map_list_find_aux_xs s) (map_list_find_aux_a s)"
+  apply (subst map_list_find_aux_eq_map_list_find_nat[symmetric])
+  apply (induction s rule: map_list_find_aux_imp.induct)
+  apply (subst map_list_find_aux_imp.simps)
+  apply (subst map_list_find_aux.simps)
+  apply (simp del: map_list_find_aux.simps only: map_list_find_aux_imp_subprogram_simps Let_def
+  AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
+    hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct some_nat_imp_correct
+    fst_nat_fst'_nat snd_nat_snd'_nat)
+  apply simp
+  done          
+
+definition "map_list_find_aux_state_upd_time t s \<equiv>
+  (let
+     tl_xs' = map_list_find_aux_xs s;
+     t = t + 2;
+     tl_ret' = 0;
+     t = t + 2;
+     tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+     tl_ret_state = tl_imp tl_state;
+     t = t + tl_imp_time 0 tl_state;
+     map_list_find_aux_xs' = tl_ret tl_ret_state;
+     t = t + 2;
+     ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs',
+            map_list_find_aux_a = map_list_find_aux_a s,
+            map_list_find_aux_ret = map_list_find_aux_ret s\<rparr>
+   in
+     t)"
+
+definition "map_list_find_aux_imp_compute_loop_condition_time t s \<equiv>
+  (let
+    hd_xs' = map_list_find_aux_xs s;
+    t = t + 2;
+    hd_ret' = 0;
+    t = t + 2;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+
+    t = t + hd_imp_time 0 hd_state;
+    fst'_state_p' = hd_ret hd_ret_state;
+    t = t + 2;
+    fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+    fst'_ret_state = fst'_imp fst'_state;
+    t = t + fst'_imp_time 0 fst'_state;
+
+    NOTEQUAL_neq_zero_a' = fst'_state_p fst'_ret_state;
+    t = t + 2;
+    NOTEQUAL_neq_zero_b' = map_list_find_aux_a s;
+    t = t + 2;
+    NOTEQUAL_neq_zero_ret' = 0;
+    t = t + 2;
+    NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                               NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                               NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+    NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+    t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+
+    AND_neq_zero_a' =  map_list_find_aux_xs s;
+    t = t + 2;
+    AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;
+    t = t + 2;
+    AND_neq_zero_ret' = 0;
+    t = t + 2;
+    AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',
+                         AND_neq_zero_b = AND_neq_zero_b',
+                         AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;
+    AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;
+    t = t + AND_neq_zero_imp_time 0 AND_neq_zero_state;
+    condition = AND_neq_zero_ret AND_neq_zero_ret_state;
+    t = t + 2
+  in
+    t
+  )"
+
+definition "map_list_find_aux_imp_after_loop_time t s \<equiv>
+  (
+    let 
+      map_list_find_aux_xs' = map_list_find_aux_xs s;
+      t = t + 2
+    in
+    (if map_list_find_aux_xs' \<noteq> 0 then  
+      let 
+       t = t + 1;
+       hd_xs' = map_list_find_aux_xs s;
+       t = t + 2;
+       hd_ret' = 0;
+       t = t + 2;
+       hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+       hd_ret_state = hd_imp hd_state;
+       t = t + hd_imp_time 0 hd_state;
+
+       snd'_state_p' = hd_ret hd_ret_state;
+       t = t + 2;
+       snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
+       snd'_ret_state = snd'_imp snd'_state;
+       t = t + snd'_imp_time 0 snd'_state;
+
+       some_nat_n' = snd'_state_p snd'_ret_state;
+       t = t + 2;
+       some_nat_ret' = 0;
+       t = t + 2;
+       some_nat_state = \<lparr>some_nat_n = some_nat_n', some_nat_ret = some_nat_ret'\<rparr>;
+       some_nat_ret_state = some_nat_imp some_nat_state;
+       t = t + some_nat_imp_time 0 some_nat_state;
+       map_list_find_aux_ret' = some_nat_ret some_nat_ret_state;
+       t = t + 2;
+       
+       ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
+             map_list_find_aux_a = map_list_find_aux_a s,
+             map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
+      in
+        t
+     else (
+      let 
+        t = t + 1;
+        map_list_find_aux_ret' = 0;
+        t = t + 2;
+        ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
+               map_list_find_aux_a = map_list_find_aux_a s,
+               map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
+      in 
+        t
+     )))
+"
+
+lemmas map_list_find_aux_imp_subprogram_time_simps = 
+  map_list_find_aux_state_upd_time_def
+  map_list_find_aux_imp_compute_loop_condition_time_def
+  map_list_find_aux_imp_after_loop_time_def
+  map_list_find_aux_imp_subprogram_simps
+
+function map_list_find_aux_imp_time::
+  "nat \<Rightarrow> map_list_find_aux_state \<Rightarrow> nat" where
+  "map_list_find_aux_imp_time t s =
+  map_list_find_aux_imp_compute_loop_condition_time 0 s +
+  (if map_list_find_aux_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          map_list_find_aux_imp_time (t + map_list_find_aux_state_upd_time 0 s)
+                         (map_list_find_aux_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + map_list_find_aux_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (map_list_find_aux_xs \<circ> snd)")
+  apply (simp add: map_list_find_aux_imp_subprogram_time_simps AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
+    hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct some_nat_imp_correct
+    fst_nat_fst'_nat snd_nat_snd'_nat split: if_splits)+
+  done
+
+declare map_list_find_aux_imp_time.simps [simp del]            
+
+lemma map_list_find_aux_imp_time_acc:
+  "(map_list_find_aux_imp_time (Suc t) s) = Suc (map_list_find_aux_imp_time t s)"
+  by (induction t s rule: map_list_find_aux_imp_time.induct)
+    ((subst (1 2) map_list_find_aux_imp_time.simps);
+      (simp add: map_list_find_aux_state_upd_def))            
+
+lemma map_list_find_aux_imp_time_acc_2_aux:
+  "(map_list_find_aux_imp_time t s) = t + (map_list_find_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: map_list_find_aux_imp_time_acc)+            
+
+lemma map_list_find_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (map_list_find_aux_imp_time t s) = t + (map_list_find_aux_imp_time 0 s)"
+  by (rule map_list_find_aux_imp_time_acc_2_aux)            
+
+lemma map_list_find_aux_imp_time_acc_3:
+  "(map_list_find_aux_imp_time (a + b) s) = a + (map_list_find_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: map_list_find_aux_imp_time_acc)+            
+
+abbreviation "map_list_find_aux_while_cond \<equiv> ''condition''"
+
+definition "map_list_find_aux_IMP_init_while_cond \<equiv>
+  \<comment> \<open>hd_xs' = map_list_find_aux_xs s;\<close>
+  (hd_prefix @ hd_xs_str) ::= A (V map_list_find_aux_xs_str);;
+  \<comment> \<open>hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= A (N 0);;
+  \<comment> \<open>hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>fst'_state_p' = hd_ret hd_ret_state;\<close>
+  (fst'_prefix @ fst'_p_str) ::= A (V (hd_prefix @ hd_ret_str));;
+  \<comment> \<open>fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
+  \<comment> \<open>fst'_ret_state = fst'_imp fst'_state;\<close>
+  invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>NOTEQUAL_neq_zero_a' = fst'_state_p fst'_ret_state;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V (fst'_prefix @ fst'_p_str));;
+  \<comment> \<open>NOTEQUAL_neq_zero_b' = map_list_find_aux_a s;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (V map_list_find_aux_a_str);;
+  \<comment> \<open>NOTEQUAL_neq_zero_ret' = 0;\<close>
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  \<comment> \<open>NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                           NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                           NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;\<close>
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>AND_neq_zero_a' =  map_list_find_aux_xs s;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::= A (V map_list_find_aux_xs_str);;
+  \<comment> \<open>AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  \<comment> \<open>AND_neq_zero_ret' = 0;\<close>
+  (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= A (N 0);;
+  \<comment> \<open>AND_neq_zero_state = \<lparr>AND_neq_zero_a = AND_neq_zero_a',\<close>
+  \<comment> \<open>                     AND_neq_zero_b = AND_neq_zero_b',\<close>
+  \<comment> \<open>                     AND_neq_zero_ret = AND_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>AND_neq_zero_ret_state = AND_neq_zero_imp AND_neq_zero_state;\<close>
+  invoke_subprogram AND_neq_zero_prefix AND_neq_zero_IMP_Minus;;
+  \<comment> \<open>condition = AND_neq_zero_ret AND_neq_zero_ret_state\<close>
+  map_list_find_aux_while_cond ::= A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str))
+  \<comment> \<open>\<close>
+  \<comment> \<open>condition\<close>
+"
+
+definition "map_list_find_aux_IMP_loop_body \<equiv>
+  \<comment> \<open> tl_xs' = map_list_find_aux_xs s;\<close>
+  (tl_prefix @ tl_xs_str) ::= A (V map_list_find_aux_xs_str);;
+  \<comment> \<open> tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= A (N 0);;
+  \<comment> \<open> tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open> tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  \<comment> \<open> map_list_find_aux_xs' = tl_ret tl_ret_state;\<close>
+  map_list_find_aux_xs_str ::= A (V (tl_prefix @ tl_ret_str))
+  \<comment> \<open> ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs',\<close>
+  \<comment> \<open>        map_list_find_aux_a = map_list_find_aux_a s,\<close>
+  \<comment> \<open>        map_list_find_aux_ret = map_list_find_aux_ret s\<rparr>\<close>
+  \<comment> \<open>in\<close>
+  \<comment> \<open> ret)\<close>
+  \<comment> \<open>\<close>
+"
+
+abbreviation "map_list_find_aux_xs_temp_str \<equiv> ''map_list_find_aux_xs_temp''"
+
+definition "map_list_find_aux_IMP_after_loop \<equiv>
+  \<comment> \<open>let \<close>
+  \<comment> \<open>  map_list_find_aux_xs' = map_list_find_aux_xs s\<close>
+  map_list_find_aux_xs_temp_str ::= A (V map_list_find_aux_xs_str);;
+
+  \<comment> \<open>in\<close>
+  \<comment> \<open>(if map_list_find_aux_xs' \<noteq> 0 then  \<close>
+  (IF  map_list_find_aux_xs_temp_str \<noteq>0 
+    THEN (    
+  \<comment> \<open>  let \<close>
+  \<comment> \<open>   hd_xs' = map_list_find_aux_xs s;\<close>
+  (hd_prefix @ hd_xs_str) ::= A (V map_list_find_aux_xs_str);;
+  \<comment> \<open>   hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= A (N 0);;
+  \<comment> \<open>   hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>   hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>   snd'_state_p' = hd_ret hd_ret_state;\<close>
+  (snd'_prefix @ snd'_p_str) ::= A (V (hd_prefix @ hd_ret_str));;
+  \<comment> \<open>   snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;\<close>
+  \<comment> \<open>   snd'_ret_state = snd'_imp snd'_state;\<close>
+  invoke_subprogram snd'_prefix snd'_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>   some_nat_n' = snd'_state_p snd'_ret_state;\<close>
+  (some_nat_prefix @ some_nat_n_str) ::= A (V (snd'_prefix @ snd'_p_str));;
+  \<comment> \<open>   some_nat_ret' = 0;\<close>
+  (some_nat_prefix @ some_nat_ret_str) ::= A (N 0);;
+  \<comment> \<open>   some_nat_state = \<lparr>some_nat_n = some_nat_n', some_nat_ret = some_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>   some_nat_ret_state = some_nat_imp some_nat_state;\<close>
+  invoke_subprogram some_nat_prefix some_nat_IMP_Minus;;
+  \<comment> \<open>   map_list_find_aux_ret' = some_nat_ret some_nat_ret_state;\<close>
+  map_list_find_aux_ret_str ::= A (V (some_nat_prefix @ some_nat_ret_str))
+  \<comment> \<open>   \<close>
+  \<comment> \<open>   ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,\<close>
+  \<comment> \<open>         map_list_find_aux_a = map_list_find_aux_a s,\<close>
+  \<comment> \<open>         map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>\<close>
+  )
+  ELSE (
+  \<comment>\<open>map_list_find_aux_ret' = 0;
+        t = t + 2;
+        ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
+               map_list_find_aux_a = map_list_find_aux_a s,
+               map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>\<close>
+  map_list_find_aux_ret_str ::= A (N 0)
+  ))
+"
+
+definition map_list_find_aux_IMP_Minus where
+  "map_list_find_aux_IMP_Minus \<equiv>
+  map_list_find_aux_IMP_init_while_cond;;
+  WHILE map_list_find_aux_while_cond \<noteq>0 DO (
+    map_list_find_aux_IMP_loop_body;;
+    map_list_find_aux_IMP_init_while_cond
+  );;
+  map_list_find_aux_IMP_after_loop"
+
+abbreviation "map_list_find_aux_IMP_vars\<equiv>
+  {map_list_find_aux_xs_str, map_list_find_aux_a_str, map_list_find_aux_ret_str,
+  map_list_find_aux_xs_temp_str, map_list_find_aux_while_cond}"
+
+lemmas map_list_find_aux_IMP_subprogram_simps =
+  map_list_find_aux_IMP_init_while_cond_def
+  map_list_find_aux_IMP_loop_body_def
+  map_list_find_aux_IMP_after_loop_def
+
+definition "map_list_find_aux_imp_to_HOL_state p s =
+  \<lparr>map_list_find_aux_xs = (s (add_prefix p map_list_find_aux_xs_str)),
+   map_list_find_aux_a = (s (add_prefix p map_list_find_aux_a_str)),
+   map_list_find_aux_ret = (s (add_prefix p map_list_find_aux_ret_str))\<rparr>"
+
+lemmas map_list_find_aux_state_translators =
+  map_list_find_aux_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
+  fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def
+  some_nat_imp_to_HOL_state_def 
+  NOTEQUAL_neq_zero_imp_to_HOL_state_def
+  AND_neq_zero_imp_to_HOL_state_def
+
+lemmas map_list_find_aux_complete_simps =
+  map_list_find_aux_IMP_subprogram_simps
+  map_list_find_aux_imp_subprogram_simps
+  map_list_find_aux_state_translators      
+
+lemma map_list_find_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_list_find_aux_ret_str)
+      = map_list_find_aux_ret
+          (map_list_find_aux_imp (map_list_find_aux_imp_to_HOL_state p s))"
+  apply(induction "map_list_find_aux_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: map_list_find_aux_imp.induct)
+  apply(subst map_list_find_aux_imp.simps)
+  apply(simp only: map_list_find_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: map_list_find_aux_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(20) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(22) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(24) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(26) by fastforce
+    apply (erule If_E) 
+      subgoal 
+        apply (erule Seq_E)+
+        apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(37) by fastforce
+        apply(erule snd'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(39) by fastforce
+        apply(erule some_nat_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(41) by fastforce
+        apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
+          map_list_find_aux_imp_subprogram_simps
+          map_list_find_aux_state_translators)
+      done
+      subgoal 
+        apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
+          map_list_find_aux_imp_subprogram_simps
+          map_list_find_aux_state_translators)
+      done
+    done
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: map_list_find_aux_IMP_init_while_cond_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(32) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(34) by fastforce
+      apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(36) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      apply (simp only: map_list_find_aux_complete_simps Let_def) 
+      apply fastforce
+      done
+
+  subgoal
+      apply(subst (asm) map_list_find_aux_IMP_init_while_cond_def)
+      apply(simp only: map_list_find_aux_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(22) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(24) by fastforce
+      apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(26) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(28) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(30) by fastforce
+      apply (simp only: map_list_find_aux_imp_subprogram_simps
+          map_list_find_aux_state_translators Let_def, force)
+      done
+
+  subgoal
+      apply(simp only: map_list_find_aux_IMP_init_while_cond_def prefix_simps
+          map_list_find_aux_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(35) by fastforce
+      apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(37) by fastforce
+      apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(39) by fastforce
+      apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(41) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+      subgoal premises p using p(43) by fastforce
+      apply (simp only: map_list_find_aux_imp_subprogram_simps
+          map_list_find_aux_state_translators Let_def split: if_split)
+      apply fastforce
+      done
+  done        
+
+lemma map_list_find_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ map_list_find_aux_pref) map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix map_list_find_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas map_list_find_aux_complete_time_simps =
+  map_list_find_aux_imp_subprogram_time_simps
+  map_list_find_aux_imp_time_acc
+  map_list_find_aux_imp_time_acc_2
+  map_list_find_aux_imp_time_acc_3
+  map_list_find_aux_state_translators
+
+lemma map_list_find_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = map_list_find_aux_imp_time 0 (map_list_find_aux_imp_to_HOL_state p s)"
+  apply(induction "map_list_find_aux_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: map_list_find_aux_imp.induct)
+  apply(subst map_list_find_aux_imp_time.simps)
+  apply(simp only: map_list_find_aux_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: map_list_find_aux_IMP_subprogram_simps prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(36) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(38) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(40) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(42) by fastforce
+    apply (erule If_tE) 
+      subgoal 
+        apply (erule Seq_tE)+
+        apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(62) by fastforce
+        apply(erule snd'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(64) by fastforce
+        apply(erule some_nat_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+        subgoal premises p using p(66) by fastforce
+        apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
+          map_list_find_aux_imp_subprogram_time_simps
+          map_list_find_aux_state_translators Let_def)
+      done
+      subgoal 
+        apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
+          map_list_find_aux_imp_subprogram_time_simps
+          map_list_find_aux_state_translators Let_def)
+      done
+    done
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: map_list_find_aux_IMP_init_while_cond_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(65) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(67) by fastforce
+    apply (simp only: map_list_find_aux_complete_simps Let_def) 
+    apply fastforce
+    done
+
+  subgoal
+    apply(subst (asm) map_list_find_aux_IMP_init_while_cond_def)
+    apply(simp only: map_list_find_aux_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply (simp only: map_list_find_aux_imp_subprogram_simps
+          map_list_find_aux_state_translators Let_def split: if_split)
+    apply fastforce
+    done
+
+  subgoal
+    apply(simp only: prefix_simps map_list_find_aux_IMP_init_while_cond_def
+        map_list_find_aux_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(67) by fastforce
+    apply(erule fst'_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(69) by fastforce
+    apply(erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(71) by fastforce
+    apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(73) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
+    subgoal premises p using p(75) by fastforce
+    apply (simp only: map_list_find_aux_complete_time_simps Let_def)
+    apply fastforce
+    done
+  done  
+
+lemma map_list_find_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (map_list_find_aux_imp_time 0 (map_list_find_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) map_list_find_aux_ret_str) =
+          map_list_find_aux_ret (map_list_find_aux_imp
+                                        (map_list_find_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using map_list_find_aux_IMP_Minus_correct_function
+  by (auto simp: map_list_find_aux_IMP_Minus_correct_time)
+    (meson map_list_find_aux_IMP_Minus_correct_effects set_mono_prefix)    
 
 subsubsection \<open>length\<close>
 (* changes its argument which makes very messy correctness lemmas *)
@@ -7058,6 +7746,880 @@ lemma remdups_tail_IMP_Minus_correct:
     remdups_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsubsection \<open>restrict_acc\<close>
+paragraph restrict_aux
+record restrict_aux_state = restrict_aux_acc::nat restrict_aux_l::nat restrict_aux_s::nat
+abbreviation "restrict_aux_prefix \<equiv> ''restrict_aux.''"
+abbreviation "restrict_aux_acc_str \<equiv> ''restrict_aux_acc''"
+abbreviation "restrict_aux_l_str \<equiv> ''restrict_aux_l''"
+abbreviation "restrict_aux_s_str \<equiv> ''restrict_aux_s''"
+
+definition "restrict_aux_state_upd s \<equiv>
+  (
+    let
+      hd_xs' = restrict_aux_l s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      hd_result = hd_ret hd_ret_state;
+
+      tl_xs' = restrict_aux_l s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      tl_result = tl_ret tl_ret_state;
+
+      fst'_state_p' = hd_result;
+      fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+      fst'_ret_state = fst'_imp fst'_state;
+      fst'_result = fst'_state_p fst'_ret_state;
+
+      elemof_e' = fst'_result;
+      elemof_l' = restrict_aux_s s;
+      elemof_ret' = 0;
+      elemof_state = \<lparr>elemof_e = elemof_e', elemof_l = elemof_l', elemof_ret = elemof_ret'\<rparr>;
+      elemof_ret_state = elemof_imp elemof_state;
+
+      elemof_result = elemof_ret elemof_ret_state
+    in
+      (if elemof_result \<noteq> 0 then (
+        let
+          cons_h' = hd_result;
+          cons_t' = restrict_aux_acc s;
+          cons_ret' = 0;
+          cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+          cons_ret_state = cons_imp cons_state;
+          restrict_aux_acc' = cons_ret cons_ret_state;
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+                 restrict_aux_l = tl_result,
+                 restrict_aux_s = restrict_aux_s s\<rparr>
+        in 
+          ret
+      ) 
+      else (
+        let
+          restrict_aux_acc' = restrict_aux_acc s;
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+                 restrict_aux_l = tl_result,
+                 restrict_aux_s = restrict_aux_s s\<rparr>
+        in 
+          ret
+      ))
+  )"
+
+lemmas restrict_aux_imp_subprogram_simps = 
+  restrict_aux_state_upd_def
+
+function restrict_aux_imp::
+  "restrict_aux_state \<Rightarrow> restrict_aux_state" where
+  "restrict_aux_imp s =
+    (let 
+      ret = restrict_aux_state_upd s
+    in 
+     ret)"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. restrict_aux_acc s)") simp
+
+declare restrict_aux_imp.simps [simp del]
+
+lemma restrict_aux_imp_correct_acc[let_function_correctness]:
+  "restrict_aux_acc (restrict_aux_imp s) =
+    (if elemof (fst_nat (hd_nat (restrict_aux_l s))) (restrict_aux_s s) \<noteq> 0 then 
+   (hd_nat (restrict_aux_l s))## (restrict_aux_acc s) else (restrict_aux_acc s))"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
+        fst'_imp_correct cons_imp_correct Let_def split: if_splits)
+  by (metis cons_state.select_convs(1) cons_state.select_convs(2) elemof_state.select_convs(1) 
+  elemof_state.select_convs(2) fst'_state.select_convs(1) 
+  fst_nat_fst'_nat hd_state.select_convs(1) restrict_aux_state.select_convs(1))
+
+lemma restrict_aux_imp_correct_l[let_function_correctness]:
+  "restrict_aux_l (restrict_aux_imp s) = (tl_nat (restrict_aux_l s))"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
+        fst'_imp_correct cons_imp_correct Let_def split: if_splits) 
+  by (metis restrict_aux_state.select_convs(2) tl_state.select_convs(1))
+
+
+lemma restrict_aux_imp_correct_s[let_function_correctness]:
+  "restrict_aux_s (restrict_aux_imp s) = (restrict_aux_s s)"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
+        fst'_imp_correct cons_imp_correct Let_def split: if_splits) 
+  by (meson restrict_aux_state.select_convs(3))
+
+definition "restrict_aux_state_upd_time t s \<equiv>
+  (
+    let
+      hd_xs' = restrict_aux_l s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      hd_result = hd_ret hd_ret_state;
+      t = t + 2;
+
+      tl_xs' = restrict_aux_l s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      tl_result = tl_ret tl_ret_state;
+      t = t + 2;
+
+      fst'_state_p' = hd_result;
+      t = t + 2;
+      fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
+      fst'_ret_state = fst'_imp fst'_state;
+      t = t + fst'_imp_time 0 fst'_state;
+      fst'_result = fst'_state_p fst'_ret_state;
+      t = t + 2;
+      elemof_e' = fst'_result;
+      t = t + 2;
+      elemof_l' = restrict_aux_s s;
+      t = t + 2;
+      elemof_ret' = 0;
+      t = t + 2;
+      elemof_state = \<lparr>elemof_e = elemof_e', elemof_l = elemof_l', elemof_ret = elemof_ret'\<rparr>;
+      elemof_ret_state = elemof_imp elemof_state;
+      t = t + elemof_imp_time 0 elemof_state;
+      elemof_result = elemof_ret elemof_ret_state;
+      t = t + 2
+    in
+      (if elemof_result \<noteq> 0 then (
+        let
+          t = t + 1;
+          cons_h' = hd_result;
+          t = t + 2;
+          cons_t' = restrict_aux_acc s;
+          t = t + 2;
+          cons_ret' = 0;
+          t = t + 2;
+          cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+          cons_ret_state = cons_imp cons_state;
+          t = t + cons_imp_time 0 cons_state;
+          restrict_aux_acc' = cons_ret cons_ret_state;
+          t = t + 2;
+          restrict_aux_l' = tl_result;
+          t = t + 2;
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+                 restrict_aux_l = restrict_aux_l',
+                 restrict_aux_s = restrict_aux_s s\<rparr>
+        in 
+          t
+      ) 
+      else (
+        let
+          t = t + 1;
+          restrict_aux_l' = tl_result;
+          t = t + 2;
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s, 
+                 restrict_aux_l = restrict_aux_l',
+                 restrict_aux_s = restrict_aux_s s\<rparr>
+        in 
+          t
+      )))
+"
+
+lemmas restrict_aux_imp_subprogram_time_simps = 
+  restrict_aux_state_upd_time_def
+  restrict_aux_imp_subprogram_simps
+
+function restrict_aux_imp_time::
+  "nat \<Rightarrow> restrict_aux_state \<Rightarrow> nat" where
+  "restrict_aux_imp_time t s = 
+    (let 
+      ret = t + restrict_aux_state_upd_time 0 s
+    in
+      ret)"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). restrict_aux_acc s)") simp
+
+declare restrict_aux_imp_time.simps [simp del]            
+
+lemma restrict_aux_imp_time_acc:
+  "(restrict_aux_imp_time (Suc t) s) = Suc (restrict_aux_imp_time t s)"
+  by (induction t s rule: restrict_aux_imp_time.induct)
+    ((subst (1 2) restrict_aux_imp_time.simps);
+      (simp add: restrict_aux_state_upd_def))            
+
+lemma restrict_aux_imp_time_acc_2_aux:
+  "(restrict_aux_imp_time t s) = t + (restrict_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: restrict_aux_imp_time_acc)+            
+
+lemma restrict_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (restrict_aux_imp_time t s) = t + (restrict_aux_imp_time 0 s)"
+  by (rule restrict_aux_imp_time_acc_2_aux)            
+
+lemma restrict_aux_imp_time_acc_3:
+  "(restrict_aux_imp_time (a + b) s) = a + (restrict_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: restrict_aux_imp_time_acc)+            
+
+
+abbreviation "restrict_aux_hd_result \<equiv> ''restrict_aux_hd_result''"
+abbreviation "restrict_aux_tl_result \<equiv> ''restrict_aux_tl_resultt''"
+abbreviation "restrict_aux_elemof_result \<equiv> ''restrict_aux_elemof_resultt''"
+abbreviation "restrict_aux_fst'_result \<equiv> ''restrict_aux_fst'_result''"
+
+abbreviation "restrict_aux_IMP_if \<equiv> 
+  \<comment> \<open>    let\<close>
+  \<comment> \<open>      cons_h' = hd_result;\<close>
+  (cons_prefix @ cons_h_str) ::= A (V restrict_aux_hd_result);;
+  \<comment> \<open>      cons_t' = restrict_aux_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= A (V restrict_aux_acc_str);;
+  \<comment> \<open>      cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  \<comment> \<open>      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>      cons_ret_state = cons_imp cons_state;\<close>
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  \<comment> \<open>      restrict_aux_acc' = cons_ret cons_ret_state;\<close>
+  restrict_aux_acc_str ::= A (V (cons_prefix @ cons_ret_str));;
+  \<comment>\<open>       restrict_aux_l' = tl_result;\<close>
+  restrict_aux_l_str ::= A (V restrict_aux_tl_result)
+  \<comment> \<open>      ret = \<lparr>restrict_aux_acc = restrict_aux_acc', \<close>
+  \<comment> \<open>             restrict_aux_l = restrict_aux_l',\<close>
+  \<comment> \<open>             restrict_aux_s = restrict_aux_s'\<rparr>\<close>"
+
+abbreviation "restrict_aux_IMP_else \<equiv> 
+  restrict_aux_l_str ::= A (V restrict_aux_tl_result)
+  \<comment>\<open>restrict_aux_l' = restrict_aux_l s;
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s, 
+                 restrict_aux_l = restrict_aux_l'
+                 restrict_aux_s = restrict_aux_s s\<rparr>\<close> "
+
+definition "restrict_aux_IMP_Minus \<equiv>
+  \<comment> \<open>let\<close>
+  \<comment> \<open>  hd_xs' = restrict_aux_l s;\<close>
+  (hd_prefix @ hd_xs_str) ::= A (V restrict_aux_l_str);;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= A (N 0);;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  invoke_subprogram hd_prefix hd_IMP_Minus;;
+  \<comment> \<open>  fst'_state_p' = hd_ret hd_ret_state;\<close>
+  \<comment> \<open>\<close>
+  (restrict_aux_hd_result) ::= A (V (hd_prefix @ hd_ret_str));;
+  \<comment> \<open>  tl_xs' = restrict_aux_l s;\<close>
+  (tl_prefix @ tl_xs_str) ::= A (V (restrict_aux_l_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= A (N 0);;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  invoke_subprogram tl_prefix tl_IMP_Minus;;
+  (restrict_aux_tl_result) ::= A (V (tl_prefix @ tl_ret_str));;
+
+  \<comment> \<open> fst'_state_p' = hd_result;\<close>
+  (fst'_prefix @ fst'_p_str) ::= A (V restrict_aux_hd_result);;
+  \<comment> \<open>  fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
+  \<comment> \<open>  fst'_ret_state = fst'_imp fst'_state;\<close>
+  invoke_subprogram fst'_prefix fst'_IMP_Minus;;
+  \<comment> \<open>\<close>
+  \<comment> \<open>  elemof_e' = fst'_state_p fst'_ret_state;\<close>
+  restrict_aux_fst'_result ::= A (V (fst'_prefix @ fst'_p_str));;
+  (elemof_prefix @ elemof_e_str) ::= A (V restrict_aux_fst'_result);;
+  \<comment> \<open>  elemof_l' = restrict_aux_s s;\<close>
+  (elemof_prefix @ elemof_l_str) ::= A (V restrict_aux_s_str);;
+  \<comment> \<open>  elemof_ret' = 0;\<close>
+  (elemof_prefix @ elemof_ret_str) ::= A (N 0);;
+  \<comment> \<open>  elemof_state = \<lparr>elemof_e = elemof_e', elemof_l = elemof_l', elemof_ret = elemof_ret'\<rparr>;\<close>
+  \<comment> \<open>  elemof_ret_state = elemof_imp elemof_state;\<close>
+  \<comment> \<open>\<close>
+  invoke_subprogram elemof_prefix elemof_IMP_Minus;;
+  \<comment> \<open>  elemof_ret' = elemof_ret elemof_ret_state\<close>
+  (restrict_aux_elemof_result) ::= A (V (elemof_prefix @ elemof_ret_str));;
+  \<comment> \<open>in\<close>
+  \<comment> \<open>  (if elemof_ret' \<noteq> 0 then (\<close>
+  (IF restrict_aux_elemof_result \<noteq>0 THEN  
+    restrict_aux_IMP_if
+  ELSE 
+    restrict_aux_IMP_else)
+"
+
+abbreviation "restrict_aux_IMP_vars \<equiv>
+  {restrict_aux_acc_str, restrict_aux_l_str, restrict_aux_s_str,
+   restrict_aux_hd_result, restrict_aux_tl_result, restrict_aux_elemof_result,
+   restrict_aux_fst'_result}"
+
+lemmas restrict_aux_IMP_subprogram_simps =
+  restrict_aux_IMP_Minus_def
+
+definition "restrict_aux_imp_to_HOL_state p s =
+  \<lparr>restrict_aux_acc = (s (add_prefix p restrict_aux_acc_str)),
+   restrict_aux_l = (s (add_prefix p restrict_aux_l_str)),
+   restrict_aux_s = (s (add_prefix p restrict_aux_s_str))\<rparr>"
+
+lemmas restrict_aux_state_translators =
+  restrict_aux_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+  fst'_imp_to_HOL_state_def
+  elemof_imp_to_HOL_state_def
+
+lemmas restrict_aux_complete_simps =
+  restrict_aux_IMP_subprogram_simps
+  restrict_aux_imp_subprogram_simps
+  restrict_aux_state_translators
+
+lemma restrict_aux_IMP_Minus_correct_function_acc:
+  "(invoke_subprogram p restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p restrict_aux_acc_str)
+      = restrict_aux_acc
+          (restrict_aux_imp (restrict_aux_imp_to_HOL_state p s))"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule hd_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(17) by fastforce
+  apply (erule tl_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(19) by fastforce
+  apply (erule fst'_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(21) by fastforce
+  apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(23) by fastforce
+  apply (erule If_E)
+  subgoal 
+    apply (erule Seq_E)+
+    apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+    subgoal premises p using p(31) by fastforce
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators cons_imp_to_HOL_state_def)
+    done
+  subgoal
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators)
+    done
+  done
+
+lemma restrict_aux_IMP_Minus_correct_function_l:
+  "(invoke_subprogram p restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p restrict_aux_l_str)
+      = restrict_aux_l
+          (restrict_aux_imp (restrict_aux_imp_to_HOL_state p s))"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule hd_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(17) by fastforce
+  apply (erule tl_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(19) by fastforce
+  apply (erule fst'_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(21) by fastforce
+  apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(23) by fastforce
+  apply (erule If_E)
+  subgoal 
+    apply (erule Seq_E)+
+    apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+    subgoal premises p using p(31) by fastforce
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators cons_imp_to_HOL_state_def)
+    done
+  subgoal
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators)
+    done
+  done
+
+lemma restrict_aux_IMP_Minus_correct_function_s:
+  "(invoke_subprogram p restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p restrict_aux_s_str)
+      = restrict_aux_s
+          (restrict_aux_imp (restrict_aux_imp_to_HOL_state p s))"
+  apply (subst restrict_aux_imp.simps)
+  apply (simp only: restrict_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule hd_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(17) by fastforce
+  apply (erule tl_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(19) by fastforce
+  apply (erule fst'_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(21) by fastforce
+  apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(23) by fastforce
+  apply (erule If_E)
+  subgoal 
+    apply (erule Seq_E)+
+    apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+    subgoal premises p using p(31) by fastforce
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators cons_imp_to_HOL_state_def)
+    done
+  subgoal
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_def Let_def
+      restrict_aux_state_translators)
+    done
+  done
+
+lemma restrict_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ restrict_aux_pref) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix restrict_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma restrict_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = restrict_aux_imp_time 0 (restrict_aux_imp_to_HOL_state p s)"
+  apply (subst restrict_aux_imp_time.simps)
+  apply (simp only: restrict_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule hd_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(33) by fastforce
+  apply (erule tl_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(35) by fastforce
+  apply (erule fst'_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(37) by fastforce
+  apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+  subgoal premises p using p(39) by fastforce
+  apply (erule If_tE)
+  subgoal 
+    apply (erule Seq_tE)+
+    apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
+    subgoal premises p using p(53) by fastforce
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_time_def Let_def
+      restrict_aux_state_translators cons_imp_to_HOL_state_def)
+    done
+  subgoal
+    apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_time_def Let_def
+      restrict_aux_state_translators)
+    done
+  done      
+
+lemma restrict_aux_IMP_Minus_correct_acc:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_aux_imp_time 0 (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_acc_str) =
+          restrict_aux_acc (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using restrict_aux_IMP_Minus_correct_function_acc
+  by (auto simp: restrict_aux_IMP_Minus_correct_time)
+    (meson restrict_aux_IMP_Minus_correct_effects set_mono_prefix) 
+
+lemma restrict_aux_IMP_Minus_correct_l:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_aux_imp_time 0 (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_l_str) =
+          restrict_aux_l (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using restrict_aux_IMP_Minus_correct_function_l
+  by (auto simp: restrict_aux_IMP_Minus_correct_time)
+    (meson restrict_aux_IMP_Minus_correct_effects set_mono_prefix)
+
+lemma restrict_aux_IMP_Minus_correct_s:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_aux_imp_time 0 (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_s_str) =
+          restrict_aux_s (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using restrict_aux_IMP_Minus_correct_function_s
+  by (auto simp: restrict_aux_IMP_Minus_correct_time)
+    (meson restrict_aux_IMP_Minus_correct_effects set_mono_prefix)
+
+lemma restrict_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_aux_imp_time 0 (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_acc_str) =
+          restrict_aux_acc (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_l_str) =
+          restrict_aux_l (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_aux_s_str) =
+          restrict_aux_s (restrict_aux_imp
+                                        (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+   using restrict_aux_IMP_Minus_correct_acc 
+     restrict_aux_IMP_Minus_correct_l restrict_aux_IMP_Minus_correct_s
+     by (smt (verit, del_insts))
+
+paragraph restrict_acc
+record restrict_acc_state = restrict_acc_acc::nat restrict_acc_l::nat restrict_acc_s::nat restrict_acc_ret::nat
+
+abbreviation "restrict_acc_prefix \<equiv> ''restrict_acc.''"
+abbreviation "restrict_acc_acc_str \<equiv> ''restrict_acc_acc''"
+abbreviation "restrict_acc_l_str \<equiv> ''restrict_acc_l''"
+abbreviation "restrict_acc_s_str \<equiv> ''restrict_acc_s''"
+abbreviation "restrict_acc_ret_str \<equiv> ''restrict_acc_ret''"
+
+definition "restrict_acc_state_upd s \<equiv> 
+  (let
+    restrict_aux_acc' = restrict_acc_acc s;
+    restrict_aux_l' = restrict_acc_l s;
+    restrict_aux_s' = restrict_acc_s s;
+    restrict_aux_state = \<lparr>restrict_aux_acc = restrict_aux_acc',
+                          restrict_aux_l = restrict_aux_l',
+                          restrict_aux_s = restrict_aux_s'\<rparr>;
+    restrict_aux_ret_state = restrict_aux_imp restrict_aux_state;
+    restrict_acc_acc' = restrict_aux_acc restrict_aux_ret_state;
+    restrict_acc_l' = restrict_aux_l restrict_aux_ret_state;
+    restrict_acc_s' = restrict_aux_s restrict_aux_ret_state;
+    ret = \<lparr>restrict_acc_acc = restrict_aux_acc restrict_aux_ret_state,
+           restrict_acc_l = restrict_aux_l restrict_aux_ret_state,
+           restrict_acc_s = restrict_aux_s restrict_aux_ret_state,
+           restrict_acc_ret = restrict_acc_ret s\<rparr>
+  in
+    ret)"
+
+definition "restrict_acc_imp_compute_loop_condition s \<equiv> (
+  let
+    condition = restrict_acc_l s
+  in
+  condition
+)"
+
+definition "restrict_acc_imp_after_loop s \<equiv> (
+  let
+   restrict_acc_ret' = restrict_acc_acc s;
+   ret = \<lparr>restrict_acc_acc = restrict_acc_acc s,
+          restrict_acc_l = restrict_acc_l s,
+          restrict_acc_s = restrict_acc_s s,
+          restrict_acc_ret = restrict_acc_acc s\<rparr>
+  in
+    ret
+)"
+
+lemmas restrict_acc_imp_subprogram_simps = 
+  restrict_acc_state_upd_def
+  restrict_acc_imp_compute_loop_condition_def
+  restrict_acc_imp_after_loop_def
+
+function restrict_acc_imp::
+  "restrict_acc_state \<Rightarrow> restrict_acc_state" where
+  "restrict_acc_imp s =
+  (if restrict_acc_imp_compute_loop_condition s \<noteq> 0
+   then
+    let next_iteration = restrict_acc_imp (restrict_acc_state_upd s)
+    in next_iteration
+   else
+    let ret = restrict_acc_imp_after_loop s
+    in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure restrict_acc_l")
+  apply (simp add: restrict_acc_imp_subprogram_simps restrict_aux_imp_correct_l Let_def)+
+  done
+
+declare restrict_acc_imp.simps [simp del]
+
+lemma restrict_acc_imp_correct:
+  "restrict_acc_ret (restrict_acc_imp s) =
+    restrict_acc (restrict_acc_acc s) (restrict_acc_l s) (restrict_acc_s s)"
+  apply (induction s rule: restrict_acc_imp.induct)
+  apply (subst restrict_acc_imp.simps)
+  apply (subst restrict_acc.simps)
+  apply (simp del: restrict_acc.simps only: restrict_acc_imp_subprogram_simps Let_def
+  restrict_aux_imp_correct_acc restrict_aux_imp_correct_l restrict_aux_imp_correct_s)
+  by (smt (z3) restrict_acc_state.select_convs(1) restrict_acc_state.select_convs(2) 
+  restrict_acc_state.select_convs(3) restrict_acc_state.select_convs(4) 
+  restrict_aux_state.select_convs(1) restrict_aux_state.select_convs(2) 
+  restrict_aux_state.select_convs(3)) 
+
+definition "restrict_acc_state_upd_time t s \<equiv>
+  let
+    restrict_aux_acc' = restrict_acc_acc s;
+    t = t + 2;
+    restrict_aux_l' = restrict_acc_l s;
+    t = t + 2;
+    restrict_aux_s' = restrict_acc_s s;
+    t = t + 2;
+    restrict_aux_state = \<lparr>restrict_aux_acc = restrict_aux_acc',
+                          restrict_aux_l = restrict_aux_l',
+                          restrict_aux_s = restrict_aux_s'\<rparr>;
+    restrict_aux_ret_state = restrict_aux_imp restrict_aux_state;
+    t = t + restrict_aux_imp_time 0 restrict_aux_state;
+    restrict_acc_acc' = restrict_aux_acc restrict_aux_ret_state;
+    t = t + 2;
+    restrict_acc_l' = restrict_aux_l restrict_aux_ret_state;
+    t = t + 2;
+    restrict_acc_s' = restrict_aux_s restrict_aux_ret_state;
+    t = t + 2;
+    ret = \<lparr>restrict_acc_acc = restrict_acc_acc',
+           restrict_acc_l = restrict_acc_l',
+           restrict_acc_s = restrict_acc_s',
+           restrict_acc_ret = restrict_acc_ret s\<rparr>
+  in
+    t
+"
+
+definition "restrict_acc_imp_compute_loop_condition_time t s \<equiv>
+  let
+    condition = restrict_acc_l s;
+    t = t + 2
+  in
+    t
+"
+
+definition "restrict_acc_imp_after_loop_time t s \<equiv>
+ let
+   restrict_acc_ret' = restrict_acc_acc s;
+   t = t + 2;
+   ret = \<lparr>restrict_acc_acc = restrict_acc_acc s,
+          restrict_acc_l = restrict_acc_l s,
+          restrict_acc_s = restrict_acc_s s,
+          restrict_acc_ret = restrict_acc_acc s\<rparr>
+  in
+    t
+"
+
+lemmas restrict_acc_imp_subprogram_time_simps = 
+  restrict_acc_state_upd_time_def
+  restrict_acc_imp_compute_loop_condition_time_def
+  restrict_acc_imp_after_loop_time_def
+  restrict_acc_imp_subprogram_simps
+
+function restrict_acc_imp_time::
+  "nat \<Rightarrow> restrict_acc_state \<Rightarrow> nat" where
+  "restrict_acc_imp_time t s =
+  restrict_acc_imp_compute_loop_condition_time 0 s +
+  (if restrict_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          restrict_acc_imp_time (t + restrict_acc_state_upd_time 0 s)
+                         (restrict_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + restrict_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (restrict_acc_l \<circ> snd)")
+  apply (simp add: restrict_acc_imp_subprogram_time_simps
+     restrict_aux_imp_correct_l Let_def)+
+  done
+
+declare restrict_acc_imp_time.simps [simp del]            
+
+lemma restrict_acc_imp_time_acc:
+  "(restrict_acc_imp_time (Suc t) s) = Suc (restrict_acc_imp_time t s)"
+  by (induction t s rule: restrict_acc_imp_time.induct)
+    ((subst (1 2) restrict_acc_imp_time.simps);
+      (simp add: restrict_acc_state_upd_def))            
+
+lemma restrict_acc_imp_time_acc_2_aux:
+  "(restrict_acc_imp_time t s) = t + (restrict_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: restrict_acc_imp_time_acc)+            
+
+lemma restrict_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (restrict_acc_imp_time t s) = t + (restrict_acc_imp_time 0 s)"
+  by (rule restrict_acc_imp_time_acc_2_aux)            
+
+lemma restrict_acc_imp_time_acc_3:
+  "(restrict_acc_imp_time (a + b) s) = a + (restrict_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: restrict_acc_imp_time_acc)+            
+
+abbreviation "restrict_acc_while_cond \<equiv> ''restrict_acc_condition''"
+
+definition "restrict_acc_IMP_init_while_cond \<equiv>
+  \<comment>\<open>condition = restrict_acc_l s\<close>
+  restrict_acc_while_cond ::= A (V restrict_acc_l_str)
+"
+
+definition "restrict_acc_IMP_loop_body \<equiv>
+  \<comment>\<open>  restrict_aux_acc' = restrict_acc_acc s;\<close>
+  (restrict_aux_prefix @ restrict_aux_acc_str) ::= A (V restrict_acc_acc_str);;
+  \<comment>\<open>  restrict_aux_l' = restrict_acc_l s;\<close>
+  (restrict_aux_prefix @ restrict_aux_l_str) ::= A (V restrict_acc_l_str);;
+  \<comment>\<open>  restrict_aux_s' = restrict_acc_s s;\<close>
+  (restrict_aux_prefix @ restrict_aux_s_str) ::= A (V restrict_acc_s_str);;
+  \<comment>\<open>  restrict_aux_state = \<lparr>restrict_aux_acc = restrict_aux_acc',
+                          restrict_aux_l = restrict_aux_l',
+                          restrict_aux_s = restrict_aux_s'\<rparr>;\<close>
+  \<comment>\<open>  restrict_aux_ret_state = restrict_aux_imp restrict_aux_state;\<close>
+  invoke_subprogram restrict_aux_prefix restrict_aux_IMP_Minus;;
+  \<comment>\<open>  restrict_acc_acc' = restrict_aux_acc restrict_aux_ret_state;\<close>
+  (restrict_acc_acc_str) ::= A (V (restrict_aux_prefix @ restrict_aux_acc_str));;
+  \<comment>\<open>  restrict_acc_l' = restrict_aux_l restrict_aux_ret_state;\<close>
+  (restrict_acc_l_str) ::= A (V (restrict_aux_prefix @ restrict_aux_l_str));;
+  \<comment>\<open>  restrict_acc_s' = restrict_aux_s restrict_aux_ret_state;\<close>
+  (restrict_acc_s_str) ::= A (V (restrict_aux_prefix @ restrict_aux_s_str))
+  \<comment>\<open>  ret = \<lparr>restrict_acc_acc = restrict_acc_acc',
+           restrict_acc_l = restrict_acc_l',
+           restrict_acc_s = restrict_acc_s',
+           restrict_acc_ret = restrict_acc_ret s\<rparr>\<close>
+"
+
+definition "restrict_acc_IMP_after_loop \<equiv>
+  \<comment>\<open>restrict_acc_ret' = restrict_acc_acc s;\<close>
+  restrict_acc_ret_str ::= A (V restrict_acc_acc_str)
+  \<comment>\<open>ret = \<lparr>restrict_acc_acc = restrict_acc_acc s,
+          restrict_acc_l = restrict_acc_l s,
+          restrict_acc_s = restrict_acc_s s,
+          restrict_acc_ret = restrict_acc_acc s\<rparr>\<close>
+"
+
+definition restrict_acc_IMP_Minus where
+  "restrict_acc_IMP_Minus \<equiv>
+  restrict_acc_IMP_init_while_cond;;
+  WHILE restrict_acc_while_cond \<noteq>0 DO (
+    restrict_acc_IMP_loop_body;;
+    restrict_acc_IMP_init_while_cond
+  );;
+  restrict_acc_IMP_after_loop"
+
+abbreviation "restrict_acc_IMP_vars\<equiv>
+  {restrict_acc_acc_str, restrict_acc_l_str, restrict_acc_s_str, 
+  restrict_acc_ret_str, restrict_acc_while_cond}"
+
+lemmas restrict_acc_IMP_subprogram_simps =
+  restrict_acc_IMP_init_while_cond_def
+  restrict_acc_IMP_loop_body_def
+  restrict_acc_IMP_after_loop_def
+
+definition "restrict_acc_imp_to_HOL_state p s =
+  \<lparr>restrict_acc_acc = (s (add_prefix p restrict_acc_acc_str)),
+   restrict_acc_l = (s (add_prefix p restrict_acc_l_str)),
+   restrict_acc_s = (s (add_prefix p restrict_acc_s_str)),
+   restrict_acc_ret = (s (add_prefix p restrict_acc_ret_str))\<rparr>"
+
+lemmas restrict_acc_state_translators =
+  restrict_acc_imp_to_HOL_state_def
+  restrict_aux_imp_to_HOL_state_def
+
+lemmas restrict_acc_complete_simps =
+  restrict_acc_IMP_subprogram_simps
+  restrict_acc_imp_subprogram_simps
+  restrict_acc_state_translators
+
+lemma restrict_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p restrict_acc_ret_str)
+      = restrict_acc_ret
+          (restrict_acc_imp (restrict_acc_imp_to_HOL_state p s))"
+  apply(induction "restrict_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: restrict_acc_imp.induct)
+  apply(subst restrict_acc_imp.simps)
+  apply(simp only: restrict_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    by(fastforce simp: restrict_acc_IMP_subprogram_simps
+        restrict_acc_imp_subprogram_simps
+        restrict_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      by(fastforce simp add: restrict_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) restrict_acc_IMP_init_while_cond_def)
+      apply(simp only: restrict_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule restrict_aux_IMP_Minus_correct[where vars = "restrict_acc_IMP_vars"])
+      subgoal premises p using p(12) by fastforce
+      apply (simp only: restrict_acc_imp_subprogram_simps
+          restrict_acc_state_translators Let_def)
+      apply force
+      done
+
+  subgoal
+      apply(simp only: restrict_acc_IMP_init_while_cond_def prefix_simps
+          restrict_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule restrict_aux_IMP_Minus_correct[where vars = "restrict_acc_IMP_vars"])
+      subgoal premises p using p(12) by fastforce
+      apply (simp only: restrict_acc_imp_subprogram_simps
+          restrict_acc_state_translators Let_def)
+      apply force
+      done
+  done        
+
+lemma restrict_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ restrict_acc_pref) restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix restrict_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas restrict_acc_complete_time_simps =
+  restrict_acc_imp_subprogram_time_simps
+  restrict_acc_imp_time_acc
+  restrict_acc_imp_time_acc_2
+  restrict_acc_imp_time_acc_3
+  restrict_acc_state_translators
+
+lemma restrict_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = restrict_acc_imp_time 0 (restrict_acc_imp_to_HOL_state p s)"
+  apply(induction "restrict_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: restrict_acc_imp.induct)
+  apply(subst restrict_acc_imp_time.simps)
+  apply(simp only: restrict_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: restrict_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: restrict_acc_IMP_subprogram_simps
+        restrict_acc_imp_subprogram_time_simps restrict_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: restrict_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: restrict_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) restrict_acc_IMP_init_while_cond_def)
+    apply(simp only: restrict_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule restrict_aux_IMP_Minus_correct[where vars = "restrict_acc_IMP_vars"])
+    subgoal premises p using p(21) by fastforce
+    by (simp only: restrict_acc_imp_subprogram_time_simps
+        restrict_acc_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: prefix_simps restrict_acc_IMP_init_while_cond_def
+        restrict_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule restrict_aux_IMP_Minus_correct[where vars = "restrict_acc_IMP_vars"])
+    subgoal premises p using p(21) by fastforce
+    apply(simp only: restrict_acc_complete_time_simps Let_def)
+    apply force
+    done
+
+  done        
+
+lemma restrict_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_acc_imp_time 0 (restrict_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_acc_ret_str) =
+          restrict_acc_ret (restrict_acc_imp
+                                        (restrict_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using restrict_acc_IMP_Minus_correct_function
+  by (auto simp: restrict_acc_IMP_Minus_correct_time)
+    (meson restrict_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
 section \<open>Logic, continued\<close>
 text \<open>This is a structural issue to be handled, for elemof uses logical operations
@@ -7306,10 +8868,10 @@ lemma BigAnd_aux_IMP_Minus_correct_function:
   subgoal premises p using p(20) by fastforce
   apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
   subgoal premises p using p(22) by fastforce
-  apply (simp only: BigAnd_aux_state_translators BigAnd_aux_state.simps
-  Let_def BigAnd_aux_state_upd_def prefix_simps
-  cons_imp_to_HOL_state_def cons_imp_correct
-  hd_imp_to_HOL_state_def hd_imp_correct )
+  apply (simp only: BigAnd_aux_state_translators
+  Let_def BigAnd_aux_state_upd_def
+  cons_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def)
   apply fastforce
   done
   (*
@@ -7349,13 +8911,11 @@ lemma BigAnd_aux_IMP_Minus_correct_time:
   apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
   subgoal premises p using p(35) by fastforce
   apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
-  subgoal premises p using p(37) by fastforce
-  apply (simp only: BigAnd_aux_state_translators BigAnd_aux_state_upd_def
-  Let_def BigAnd_aux_state_upd_time_def prefix_simps
-  cons_imp_to_HOL_state_def cons_imp_correct
-  cons_IMP_Minus_correct_time
-  hd_imp_to_HOL_state_def hd_imp_correct
-  hd_IMP_Minus_correct_time)
+  subgoal premises p using p(37) by fastforce 
+  apply (simp only: BigAnd_aux_state_translators
+  Let_def BigAnd_aux_state_upd_time_def
+  cons_imp_to_HOL_state_def 
+  hd_imp_to_HOL_state_def )
   apply fastforce
   done
   (*
