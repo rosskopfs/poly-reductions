@@ -10041,6 +10041,7 @@ lemma BigAnd_tail_IMP_Minus_correct:
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using BigAnd_tail_IMP_Minus_correct_function BigAnd_tail_IMP_Minus_correct_time
-  by (meson BigAnd_tail_IMP_Minus_correct_effects set_mono_prefix)
+  BigAnd_tail_IMP_Minus_correct_effects 
+  by (meson com_add_prefix_valid_subset com_only_vars)
 
 end
