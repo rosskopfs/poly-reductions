@@ -5877,6 +5877,202 @@ lemma concat_acc_IMP_Minus_correct:
   by (auto simp: concat_acc_IMP_Minus_correct_time)
     (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
+paragraph concat_tail
+record concat_tail_state = 
+concat_tail_ys :: nat 
+concat_tail_ret :: nat
+
+abbreviation "concat_tail_prefix \<equiv> ''concat_tail.''"
+abbreviation "concat_tail_ys_str \<equiv> ''concat_tail_ys_str''"
+abbreviation "concat_tail_ret_str \<equiv> ''concat_tail_ret_str''"
+
+definition "concat_tail_state_upd s \<equiv> 
+ (let
+  concat_acc_acc' = 0;
+  concat_acc_n' = concat_tail_ys s;
+  concat_acc_ret' = 0;
+  concat_acc_state = \<lparr>concat_acc_acc = concat_acc_acc',
+                      concat_acc_n = concat_acc_n',
+                      concat_acc_ret = concat_acc_ret'\<rparr>;
+  concat_acc_ret_state = concat_acc_imp concat_acc_state;
+  reverse_nat_n' = concat_acc_ret concat_acc_ret_state;
+  reverse_nat_ret' = 0;
+  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                       reverse_nat_ret = reverse_nat_ret'\<rparr>;
+  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+  concat_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+  ret = \<lparr>concat_tail_ys = concat_tail_ys s,
+         concat_tail_ret = concat_tail_ret'\<rparr>
+ in
+   ret)"
+
+function concat_tail_imp::
+  "concat_tail_state \<Rightarrow> concat_tail_state" where
+  "concat_tail_imp s =
+    (let 
+      ret = concat_tail_state_upd s
+    in 
+     ret)"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. concat_tail_ys s)") simp
+
+declare concat_tail_imp.simps [simp del]
+
+lemma concat_tail_imp_correct[let_function_correctness]:
+  "concat_tail_ret (concat_tail_imp s) = concat_tail (concat_tail_ys s)"
+  apply (subst concat_tail_imp.simps)
+  apply (simp add: concat_tail_state_upd_def concat_tail_def
+    concat_acc_imp_correct reverse_nat_imp_correct Let_def)
+  done
+
+definition "concat_tail_state_upd_time t s \<equiv> 
+ (let
+  concat_acc_acc' = 0;
+  t = t + 2;
+  concat_acc_n' = concat_tail_ys s;
+  t = t + 2;
+  concat_acc_ret' = 0;
+  t = t + 2;
+  concat_acc_state = \<lparr>concat_acc_acc = concat_acc_acc',
+                      concat_acc_n = concat_acc_n',
+                      concat_acc_ret = concat_acc_ret'\<rparr>;
+  concat_acc_ret_state = concat_acc_imp concat_acc_state;
+  t = t + concat_acc_imp_time 0 concat_acc_state;
+
+  reverse_nat_n' = concat_acc_ret concat_acc_ret_state;
+  t = t + 2;
+  reverse_nat_ret' = 0;
+  t = t + 2;
+  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                       reverse_nat_ret = reverse_nat_ret'\<rparr>;
+  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+  t = t + reverse_nat_imp_time 0 reverse_nat_state;
+  concat_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+  t = t + 2;
+  ret = \<lparr>concat_tail_ys = concat_tail_ys s,
+         concat_tail_ret = concat_tail_ret'\<rparr>
+ in
+   t)"
+
+function concat_tail_imp_time::
+  "nat \<Rightarrow> concat_tail_state \<Rightarrow> nat" where
+  "concat_tail_imp_time t s = 
+    (let 
+      ret = t + concat_tail_state_upd_time 0 s
+    in
+      ret)"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). concat_tail_ys s)") simp
+
+declare concat_tail_imp_time.simps [simp del]            
+
+lemma concat_tail_imp_time_acc:
+  "(concat_tail_imp_time (Suc t) s) = Suc (concat_tail_imp_time t s)"
+  by (induction t s rule: concat_tail_imp_time.induct)
+    ((subst (1 2) concat_tail_imp_time.simps);
+      (simp add: concat_tail_state_upd_def))            
+
+lemma concat_tail_imp_time_acc_2_aux:
+  "(concat_tail_imp_time t s) = t + (concat_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: concat_tail_imp_time_acc)+            
+
+lemma concat_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (concat_tail_imp_time t s) = t + (concat_tail_imp_time 0 s)"
+  by (rule concat_tail_imp_time_acc_2_aux)            
+
+lemma concat_tail_imp_time_acc_3:
+  "(concat_tail_imp_time (a + b) s) = a + (concat_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: concat_tail_imp_time_acc)+ 
+
+definition "concat_tail_IMP_Minus \<equiv>
+\<comment>\<open>concat_acc_acc' = 0;
+  concat_acc_n' = concat_tail_ys s;
+  concat_acc_ret' = 0;
+  concat_acc_state = \<lparr>concat_acc_acc = concat_acc_acc',
+                      concat_acc_n = concat_acc_n',
+                      concat_acc_ret = concat_acc_ret'\<rparr>;
+  concat_acc_ret_state = concat_acc_imp concat_acc_state;
+  reverse_nat_n' = concat_acc_ret concat_acc_ret_state;
+  reverse_nat_ret' = 0;
+  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                       reverse_nat_ret = reverse_nat_ret'\<rparr>;
+  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+  concat_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+  ret = \<lparr>concat_tail_ys = concat_tail_ys s,
+         concat_tail_ret = concat_tail_ret'\<rparr>\<close>
+ (concat_acc_prefix @ concat_acc_acc_str) ::= A (N 0);;
+ (concat_acc_prefix @ concat_acc_n_str) ::= A (V concat_tail_ys_str);;
+ (concat_acc_prefix @ concat_acc_ret_str) ::= A (N 0);;
+ invoke_subprogram concat_acc_prefix concat_acc_IMP_Minus;;
+ (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V (concat_acc_prefix @ concat_acc_ret_str));;
+ (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
+ invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+ concat_tail_ret_str ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str))
+"
+
+abbreviation "concat_tail_IMP_vars \<equiv> {concat_tail_ys_str, concat_tail_ret_str}"
+
+definition "concat_tail_imp_to_HOL_state p s \<equiv> 
+  \<lparr>concat_tail_ys = s (add_prefix p concat_tail_ys_str),
+   concat_tail_ret = s (add_prefix p concat_tail_ret_str)\<rparr>"
+
+lemmas concat_tail_state_translators =
+  concat_tail_imp_to_HOL_state_def
+  concat_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+
+lemma concat_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p concat_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p concat_tail_ret_str)
+      = concat_tail_ret
+          (concat_tail_imp (concat_tail_imp_to_HOL_state p s))"
+  apply (subst concat_tail_imp.simps)
+  apply (simp only: concat_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule concat_acc_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
+  subgoal premises p using p(8) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
+  subgoal premises p using p(10) by fastforce
+  apply (force simp: concat_tail_state_upd_def 
+  concat_tail_state_translators Let_def)
+  done
+
+lemma concat_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ concat_tail_pref) concat_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix concat_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma concat_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p concat_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = concat_tail_imp_time 0 (concat_tail_imp_to_HOL_state p s)"
+  apply (subst concat_tail_imp_time.simps)
+  apply (simp only: concat_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule concat_acc_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
+  subgoal premises p using p(15) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
+  subgoal premises p using p(17) by fastforce
+  apply (force simp: concat_tail_state_upd_time_def
+  concat_tail_state_translators Let_def)
+  done
+
+lemma concat_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) concat_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (concat_tail_imp_time 0 (concat_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) concat_tail_ret_str) =
+          concat_tail_ret (concat_tail_imp
+                                        (concat_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using concat_tail_IMP_Minus_correct_function concat_tail_IMP_Minus_correct_time
+  by (meson concat_tail_IMP_Minus_correct_effects set_mono_prefix)
+  
+
 subsubsection \<open>nth\<close>
 paragraph nth_nat
 
@@ -8621,6 +8817,218 @@ lemma restrict_acc_IMP_Minus_correct:
   by (auto simp: restrict_acc_IMP_Minus_correct_time)
     (meson restrict_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
+
+paragraph restrict_tail
+
+record restrict_tail_state = 
+restrict_tail_l :: nat
+restrict_tail_s :: nat
+restrict_tail_ret :: nat
+
+abbreviation "restrict_tail_prefix \<equiv> ''restrict_tail.''"
+abbreviation "restrict_tail_l_str \<equiv> ''restrict_tail_l''"
+abbreviation "restrict_tail_s_str \<equiv> ''restrict_tail_s''"
+abbreviation "restrict_tail_ret_str \<equiv> ''restrict_tail_ret''"
+
+definition "restrict_tail_state_upd s \<equiv> 
+  (let
+   restrict_acc_acc' = 0;
+   restrict_acc_l' = restrict_tail_l s;
+   restrict_acc_s' = restrict_tail_s s;
+   restrict_acc_ret' = 0;
+   restrict_acc_state = \<lparr>restrict_acc_acc = restrict_acc_acc',
+                         restrict_acc_l = restrict_acc_l',
+                         restrict_acc_s = restrict_acc_s',
+                         restrict_acc_ret = restrict_acc_ret'\<rparr>;
+   restrict_acc_ret_state = restrict_acc_imp restrict_acc_state;
+   reverse_nat_n' = restrict_acc_ret restrict_acc_ret_state;
+   reverse_nat_ret' = 0;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+   restrict_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+   ret = \<lparr>restrict_tail_l = restrict_tail_l s,
+         restrict_tail_s = restrict_tail_s s,
+         restrict_tail_ret = restrict_tail_ret'\<rparr>
+  in
+   ret)"
+
+function restrict_tail_imp::
+  "restrict_tail_state \<Rightarrow> restrict_tail_state" where
+  "restrict_tail_imp s =
+    (let 
+      ret = restrict_tail_state_upd s
+    in 
+     ret)"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. restrict_tail_l s)") simp
+
+declare restrict_tail_imp.simps [simp del]
+
+lemma restrict_tail_imp_correct[let_function_correctness]:
+  "restrict_tail_ret (restrict_tail_imp s) = restrict_tail (restrict_tail_l s) (restrict_tail_s s)"
+  apply (subst restrict_tail_imp.simps)
+  apply (simp only: restrict_tail_state_upd_def restrict_tail_def
+    restrict_acc_imp_correct reverse_nat_imp_correct Let_def)
+  apply simp 
+  done
+
+definition "restrict_tail_state_upd_time t s \<equiv> 
+  (let
+   restrict_acc_acc' = 0;
+   t = t + 2;
+   restrict_acc_l' = restrict_tail_l s;
+   t = t + 2;
+   restrict_acc_s' = restrict_tail_s s;
+   t = t + 2;
+   restrict_acc_ret' = 0;
+   t = t + 2;
+   restrict_acc_state = \<lparr>restrict_acc_acc = restrict_acc_acc',
+                         restrict_acc_l = restrict_acc_l',
+                         restrict_acc_s = restrict_acc_s',
+                         restrict_acc_ret = restrict_acc_ret'\<rparr>;
+   restrict_acc_ret_state = restrict_acc_imp restrict_acc_state;
+   t = t + restrict_acc_imp_time 0 restrict_acc_state;
+
+   reverse_nat_n' = restrict_acc_ret restrict_acc_ret_state;
+   t = t + 2;
+   reverse_nat_ret' = 0;
+   t = t + 2;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+   t = t + reverse_nat_imp_time 0 reverse_nat_state;
+   restrict_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+   t = t + 2;
+   ret = \<lparr>restrict_tail_l = restrict_tail_l s,
+         restrict_tail_s = restrict_tail_s s,
+         restrict_tail_ret = restrict_tail_ret'\<rparr>
+  in
+   t)"
+
+function restrict_tail_imp_time::
+  "nat \<Rightarrow> restrict_tail_state \<Rightarrow> nat" where
+  "restrict_tail_imp_time t s = 
+    (let 
+      ret = t + restrict_tail_state_upd_time 0 s
+    in
+      ret)"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). restrict_tail_l s)") simp
+
+declare restrict_tail_imp_time.simps [simp del]            
+
+lemma restrict_tail_imp_time_acc:
+  "(restrict_tail_imp_time (Suc t) s) = Suc (restrict_tail_imp_time t s)"
+  by (induction t s rule: restrict_tail_imp_time.induct)
+    ((subst (1 2) restrict_tail_imp_time.simps);
+      (simp add: restrict_tail_state_upd_def))            
+
+lemma restrict_tail_imp_time_acc_2_aux:
+  "(restrict_tail_imp_time t s) = t + (restrict_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: restrict_tail_imp_time_acc)+            
+
+lemma restrict_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (restrict_tail_imp_time t s) = t + (restrict_tail_imp_time 0 s)"
+  by (rule restrict_tail_imp_time_acc_2_aux)            
+
+lemma restrict_tail_imp_time_acc_3:
+  "(restrict_tail_imp_time (a + b) s) = a + (restrict_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: restrict_tail_imp_time_acc)+
+
+definition "restrict_tail_IMP_Minus \<equiv> 
+  \<comment>\<open>restrict_acc_acc' = 0;
+   restrict_acc_l' = restrict_tail_l s;
+   restrict_acc_s' = restrict_tail_s s;
+   restrict_acc_ret' = 0;
+   restrict_acc_state = \<lparr>restrict_acc_acc = restrict_acc_acc',
+                         restrict_acc_l = restrict_acc_l',
+                         restrict_acc_s = restrict_acc_s',
+                         restrict_acc_ret = restrict_acc_ret'\<rparr>;
+   restrict_acc_ret_state = restrict_acc_imp restrict_acc_state;
+   reverse_nat_n' = restrict_acc_ret restrict_acc_ret_state;
+   reverse_nat_ret' = 0;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+   restrict_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+   ret = \<lparr>restrict_tail_l = restrict_tail_l s,
+         restrict_tail_s = restrict_tail_s s,
+         restrict_tail_ret = restrict_tail_ret'\<rparr>\<close>
+  (restrict_acc_prefix @ restrict_acc_acc_str) ::= A (N 0);;
+  (restrict_acc_prefix @ restrict_acc_l_str) ::= A (V restrict_tail_l_str);;
+  (restrict_acc_prefix @ restrict_acc_s_str) ::= A (V restrict_tail_s_str);;
+  (restrict_acc_prefix @ restrict_acc_ret_str) ::= A (N 0);;
+  invoke_subprogram restrict_acc_prefix restrict_acc_IMP_Minus;;
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V (restrict_acc_prefix @ restrict_acc_ret_str));;
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+  restrict_tail_ret_str ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str))"
+
+abbreviation "restrict_tail_IMP_vars \<equiv> {restrict_tail_l_str, restrict_tail_s_str, 
+restrict_tail_ret_str}"
+
+definition "restrict_tail_imp_to_HOL_state p s \<equiv> 
+\<lparr>restrict_tail_l = s (add_prefix p restrict_tail_l_str),
+ restrict_tail_s = s (add_prefix p restrict_tail_s_str),
+ restrict_tail_ret = s (add_prefix p restrict_tail_ret_str)\<rparr>"
+
+lemmas restrict_tail_state_translators = 
+ restrict_tail_imp_to_HOL_state_def
+ restrict_acc_imp_to_HOL_state_def
+ reverse_nat_imp_to_HOL_state_def
+
+lemma restrict_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p restrict_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p restrict_tail_ret_str)
+      = restrict_tail_ret
+          (restrict_tail_imp (restrict_tail_imp_to_HOL_state p s))"
+  apply (subst restrict_tail_imp.simps)
+  apply (simp only: restrict_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule restrict_acc_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
+  subgoal premises p using p(9) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
+  subgoal premises p using p(11) by fastforce
+  apply (force simp: restrict_tail_state_upd_def 
+  restrict_tail_state_translators Let_def)
+  done
+
+lemma restrict_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ restrict_tail_pref) restrict_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix restrict_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma restrict_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p restrict_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = restrict_tail_imp_time 0 (restrict_tail_imp_to_HOL_state p s)"
+  apply (subst restrict_tail_imp_time.simps)
+  apply (simp only: restrict_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule restrict_acc_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
+  subgoal premises p using p(17) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
+  subgoal premises p using p(19) by fastforce
+  apply (force simp: restrict_tail_state_upd_time_def
+  restrict_tail_state_translators Let_def)
+  done
+
+lemma restrict_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (restrict_tail_imp_time 0 (restrict_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) restrict_tail_ret_str) =
+          restrict_tail_ret (restrict_tail_imp
+                                        (restrict_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using restrict_tail_IMP_Minus_correct_function restrict_tail_IMP_Minus_correct_time
+  by (meson restrict_tail_IMP_Minus_correct_effects set_mono_prefix)
+  
 section \<open>Logic, continued\<close>
 text \<open>This is a structural issue to be handled, for elemof uses logical operations
 BigAnd uses the cons of lists
@@ -9354,5 +9762,285 @@ lemma BigAnd_acc_IMP_Minus_correct:
   using BigAnd_acc_IMP_Minus_correct_function
   by (auto simp: BigAnd_acc_IMP_Minus_correct_time)
     (meson BigAnd_acc_IMP_Minus_correct_effects set_mono_prefix)                        
+
+ 
+
+paragraph  BigAnd_tail
+record BigAnd_tail_state =
+BigAnd_tail_xs :: nat
+BigAnd_tail_ret :: nat
+
+abbreviation "BigAnd_tail_prefix \<equiv> ''BigAnd_tail.''"
+abbreviation "BigAnd_tail_xs_str \<equiv> ''BigAnd_tail_xs''"
+abbreviation "BigAnd_tail_ret_str \<equiv> ''BigAnd_tail_ret''"
+
+definition "BigAnd_tail_state_upd s \<equiv>
+  (let
+    cons_h' = 0;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 2;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+   reverse_nat_n' = BigAnd_tail_xs s;
+   reverse_nat_ret' = 0;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+
+   BigAnd_acc_acc' = cons_ret cons_ret_state;
+   BigAnd_acc_xs' = reverse_nat_ret reverse_nat_ret_state;
+   BigAnd_acc_ret' = 0;
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
+                    BigAnd_acc_xs = BigAnd_acc_xs', 
+                    BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
+   BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
+   BigAnd_tail_ret' = BigAnd_acc_ret BigAnd_acc_ret_state;
+   ret = \<lparr>BigAnd_tail_xs = BigAnd_tail_xs s,
+          BigAnd_tail_ret = BigAnd_tail_ret'\<rparr>
+  in
+   ret)"
+
+function BigAnd_tail_imp::
+  "BigAnd_tail_state \<Rightarrow> BigAnd_tail_state" where
+  "BigAnd_tail_imp s =
+    (let 
+      ret = BigAnd_tail_state_upd s
+    in 
+     ret)"
+  by simp+
+termination
+  by (relation "measure (\<lambda>s. BigAnd_tail_xs s)") simp
+
+declare BigAnd_tail_imp.simps [simp del]
+
+lemma BigAnd_tail_imp_correct[let_function_correctness]:
+  "BigAnd_tail_ret (BigAnd_tail_imp s) = BigAnd_tail (BigAnd_tail_xs s)"
+  apply (subst BigAnd_tail_imp.simps)
+  apply (simp only: BigAnd_tail_state_upd_def BigAnd_tail_def
+    BigAnd_acc_imp_correct reverse_nat_imp_correct cons_imp_correct Let_def)
+  apply simp
+  done
+
+definition "BigAnd_tail_state_upd_time t s \<equiv>
+  (let
+    cons_h' = 0;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 2;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+   reverse_nat_n' = BigAnd_tail_xs s;
+    t = t + 2;
+   reverse_nat_ret' = 0;
+    t = t + 2;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+    t = t + reverse_nat_imp_time 0 reverse_nat_state;
+
+   BigAnd_acc_acc' = cons_ret cons_ret_state;
+    t = t + 2;
+   BigAnd_acc_xs' = reverse_nat_ret reverse_nat_ret_state;
+    t = t + 2;
+   BigAnd_acc_ret' = 0;
+    t = t + 2;
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
+                    BigAnd_acc_xs = BigAnd_acc_xs', 
+                    BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
+   BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
+    t = t + BigAnd_acc_imp_time 0 BigAnd_acc_state;
+   BigAnd_tail_ret' = BigAnd_acc_ret BigAnd_acc_ret_state;
+    t = t + 2;
+   ret = \<lparr>BigAnd_tail_xs = BigAnd_tail_xs s,
+          BigAnd_tail_ret = BigAnd_tail_ret'\<rparr>
+  in
+   t)"
+
+function BigAnd_tail_imp_time::
+  "nat \<Rightarrow> BigAnd_tail_state \<Rightarrow> nat" where
+  "BigAnd_tail_imp_time t s = 
+    (let 
+      ret = t + BigAnd_tail_state_upd_time 0 s
+    in
+      ret)"
+  by auto
+termination
+  by (relation "measure (\<lambda>(t, s). BigAnd_tail_xs s)") simp
+
+declare BigAnd_tail_imp_time.simps [simp del]            
+
+definition "BigAnd_tail_IMP_Minus \<equiv> 
+\<comment>\<open>cons_h' = 0;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 2;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+   reverse_nat_n' = BigAnd_tail_xs s;
+   reverse_nat_ret' = 0;
+   reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
+   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+
+   BigAnd_acc_acc' = cons_ret cons_ret_state;
+   BigAnd_acc_xs' = reverse_nat_ret reverse_nat_ret_state;
+   BigAnd_acc_ret' = 0;
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
+                    BigAnd_acc_xs = BigAnd_acc_xs', 
+                    BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
+   BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
+   BigAnd_tail_ret' = BigAnd_acc_ret BigAnd_acc_ret_state;
+   ret = \<lparr>BigAnd_tail_xs = BigAnd_tail_xs s,
+          BigAnd_tail_ret = BigAnd_tail_ret'\<rparr>\<close>
+          
+  (cons_prefix @ cons_h_str) ::= A (N 0);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 2);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V BigAnd_tail_xs_str);;
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+  
+  (BigAnd_acc_prefix @ BigAnd_acc_acc_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (BigAnd_acc_prefix @ BigAnd_acc_xs_str) ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str));;
+  (BigAnd_acc_prefix @ BigAnd_acc_ret_str) ::= A (N 0);;
+  invoke_subprogram BigAnd_acc_prefix BigAnd_acc_IMP_Minus;;
+  
+  BigAnd_tail_ret_str ::= A (V (BigAnd_acc_prefix @ BigAnd_acc_ret_str))"
+
+abbreviation "BigAnd_tail_IMP_vars \<equiv> {BigAnd_tail_xs_str, BigAnd_tail_ret_str}"
+
+definition "BigAnd_tail_imp_to_HOL_state p s \<equiv>
+ \<lparr>BigAnd_tail_xs = s (add_prefix p BigAnd_tail_xs_str),
+ BigAnd_tail_ret = s (add_prefix p BigAnd_tail_ret_str)\<rparr>"
+
+lemmas BigAnd_tail_state_translators =
+ BigAnd_tail_imp_to_HOL_state_def
+ cons_imp_to_HOL_state_def
+ reverse_nat_imp_to_HOL_state_def
+ BigAnd_acc_imp_to_HOL_state_def
+
+lemma BigAnd_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p BigAnd_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p BigAnd_tail_ret_str)
+      = BigAnd_tail_ret
+          (BigAnd_tail_imp (BigAnd_tail_imp_to_HOL_state p s))"
+  apply (subst BigAnd_tail_imp.simps)
+  apply (simp only: BigAnd_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(20) by fastforce 
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(22) by fastforce 
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(24) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars 
+  \<union> {cons_prefix @ cons_ret_str}"])
+  subgoal premises p using p(26) by fastforce
+  apply (erule BigAnd_acc_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(28) by fastforce
+  apply (force simp: BigAnd_tail_state_upd_def 
+  BigAnd_tail_state_translators Let_def)
+  done
+
+lemma BigAnd_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ BigAnd_tail_prefix) BigAnd_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix BigAnd_tail_prefix v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma BigAnd_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p BigAnd_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = BigAnd_tail_imp_time 0 (BigAnd_tail_imp_to_HOL_state p s)"
+  apply (subst BigAnd_tail_imp_time.simps)
+  apply (simp only: BigAnd_tail_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(39) by fastforce 
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(41) by fastforce 
+  apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(43) by fastforce 
+  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars 
+  \<union> {cons_prefix @ cons_ret_str}"])
+  subgoal premises p using p(45) by fastforce
+  apply (erule BigAnd_acc_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
+  subgoal premises p using p(47) by fastforce
+  apply (force simp: BigAnd_tail_state_upd_time_def 
+  BigAnd_tail_state_translators Let_def)
+  done
+
+lemma BigAnd_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) BigAnd_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (BigAnd_tail_imp_time 0 (BigAnd_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) BigAnd_tail_ret_str) =
+          BigAnd_tail_ret (BigAnd_tail_imp
+                                        (BigAnd_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using BigAnd_tail_IMP_Minus_correct_function BigAnd_tail_IMP_Minus_correct_time
+  by (meson BigAnd_tail_IMP_Minus_correct_effects set_mono_prefix)
 
 end
