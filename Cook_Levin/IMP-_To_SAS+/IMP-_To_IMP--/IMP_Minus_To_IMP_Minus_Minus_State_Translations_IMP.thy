@@ -13,12 +13,12 @@ unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 subsection \<open>Useful Definitions and Lemmas\<close>
 
-abbreviation "hash_as_nat \<equiv> 35"
-lemma hash_encode_val: "encode_char (CHR ''#'') = hash_as_nat"
+abbreviation "hash_encode_char_as_nat \<equiv> 35"
+lemma hash_encode_char_val: "encode_char (CHR ''#'') = hash_encode_char_as_nat"
   by (simp add: encode_char_def)
 
-abbreviation "dollar_as_nat \<equiv> 703"
-lemma dollar_encode_val: "vname_encode ''$'' = dollar_as_nat"
+abbreviation "dollar_vname_encode_as_nat \<equiv> 703"
+lemma dollar_vname_encode_val: "vname_encode ''$'' = dollar_vname_encode_as_nat"
   by (simp add: vname_encode_def encode_char_def prod_encode_def triangle_def)
 
 lemma hd_nat_noteq_zero: "hd_nat n \<noteq> 0 \<Longrightarrow> n > 0"
@@ -46,7 +46,7 @@ function dropWhile_char_loop:: "nat \<Rightarrow> nat" where
   by simp+
 termination
   by (relation "measure id", simp)
-    (simp add: hash_encode_val pos_tl_less hd_nat_noteq_zero)
+    (simp add: hash_encode_char_val pos_tl_less hd_nat_noteq_zero)
 
 definition "dropWhile_char_loop_state_upd s \<equiv>
       let
@@ -67,7 +67,7 @@ definition "dropWhile_char_loop_imp_compute_loop_condition s \<equiv>
        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
        hd_ret_state = hd_imp hd_state;
        EQUAL_neq_zero_a' = hd_ret hd_ret_state;
-       EQUAL_neq_zero_b' = hash_as_nat;
+       EQUAL_neq_zero_b' = hash_encode_char_as_nat;
        EQUAL_neq_zero_ret' = 0;
        EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
                                EQUAL_neq_zero_b = EQUAL_neq_zero_b',
@@ -110,7 +110,7 @@ lemma dropWhile_char_loop_imp_correct[let_function_correctness]:
     dropWhile_char_loop (dropWhile_char_loop_n s)"
   by (induction "dropWhile_char_loop_n s" arbitrary: s rule: dropWhile_char_loop.induct)
     (subst dropWhile_char_loop_imp.simps, simp add: dropWhile_char_loop_imp_subprogram_simps
-      tl_imp_correct hd_imp_correct EQUAL_neq_zero_imp_correct hash_encode_val)
+      tl_imp_correct hd_imp_correct EQUAL_neq_zero_imp_correct hash_encode_char_val)
 
 definition "dropWhile_char_loop_state_upd_time t s \<equiv>
       let
@@ -139,7 +139,7 @@ definition "dropWhile_char_loop_imp_compute_loop_condition_time t s \<equiv>
        t = t + hd_imp_time 0 hd_state;
        EQUAL_neq_zero_a' = hd_ret hd_ret_state;
        t = t + 2;
-       EQUAL_neq_zero_b' = hash_as_nat;
+       EQUAL_neq_zero_b' = hash_encode_char_as_nat;
        t = t + 2;
        EQUAL_neq_zero_ret' = 0;
        t = t + 2;
@@ -236,8 +236,8 @@ definition "dropWhile_char_loop_IMP_init_while_cond \<equiv>
   invoke_subprogram hd_prefix hd_IMP_Minus;;
   \<comment> \<open>(EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
-  \<comment> \<open>(EQUAL_neq_zero_b' = hash_as_nat;\<close>
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_as_nat));;
+  \<comment> \<open>(EQUAL_neq_zero_b' = hash_encode_char_as_nat;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_encode_char_as_nat));;
   \<comment> \<open>(EQUAL_neq_zero_ret' = 0;\<close>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
   \<comment> \<open>(EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
@@ -478,7 +478,7 @@ fun dropWhile_char':: "nat \<Rightarrow> nat" where
 
 lemma dropWhile_char'_correct: "dropWhile_char n = dropWhile_char' n"
   by (induction n rule: dropWhile_char.induct)
-    (simp add: fst_nat_0 hash_encode_val hd_nat_def split: if_splits)
+    (simp add: fst_nat_0 hash_encode_char_val hd_nat_def split: if_splits)
 
 definition "dropWhile_char_state_upd s \<equiv>
       let
@@ -694,7 +694,7 @@ definition "takeWhile_char_acc_imp_compute_loop_condition s \<equiv>
                   hd_ret = hd_ret'\<rparr>;
       hd_ret_state = hd_imp hd_state;
       EQUAL_neq_zero_a' = hd_ret hd_ret_state;
-      EQUAL_neq_zero_b' = hash_as_nat;
+      EQUAL_neq_zero_b' = hash_encode_char_as_nat;
       EQUAL_neq_zero_ret' = 0;
       EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
                               EQUAL_neq_zero_b = EQUAL_neq_zero_b',
@@ -752,7 +752,7 @@ lemma takeWhile_char_acc_imp_correct[let_function_correctness]:
   apply (subst takeWhile_char_acc.simps)
   apply (simp del: takeWhile_char_acc.simps add: takeWhile_char_acc_imp_subprogram_simps Let_def
   AND_neq_zero_imp_correct EQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct
-  cons_imp_correct hash_encode_val)
+  cons_imp_correct hash_encode_char_val)
   by fastforce
 
 definition "takeWhile_char_acc_state_upd_time t s \<equiv>
@@ -807,7 +807,7 @@ definition "takeWhile_char_acc_imp_compute_loop_condition_time t s \<equiv>
       t = t + hd_imp_time 0 hd_state;
       EQUAL_neq_zero_a' = hd_ret hd_ret_state;
       t = t + 2;
-      EQUAL_neq_zero_b' = hash_as_nat;
+      EQUAL_neq_zero_b' = hash_encode_char_as_nat;
       t = t + 2;
       EQUAL_neq_zero_ret' = 0;
       t = t + 2;
@@ -872,7 +872,7 @@ termination
   apply (relation "measure (takeWhile_char_acc_n \<circ> snd)")
   by (simp add: takeWhile_char_acc_imp_subprogram_time_simps Let_def AND_neq_zero_imp_correct
   EQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct
-  cons_imp_correct hash_encode_val split: if_splits)+
+  cons_imp_correct hash_encode_char_val split: if_splits)+
 
 declare takeWhile_char_acc_imp_time.simps [simp del]  
 
@@ -907,8 +907,8 @@ definition "takeWhile_char_acc_IMP_init_while_cond \<equiv>
   (invoke_subprogram hd_prefix hd_IMP_Minus);;
   \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
-  \<comment> \<open>  EQUAL_neq_zero_b' = hash_as_nat;\<close>
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_as_nat));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = hash_encode_char_as_nat;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N hash_encode_char_as_nat));;
   \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
   \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
@@ -1416,7 +1416,7 @@ abbreviation "n_hashes_acc_ret_str \<equiv> ''ret''"
 
 definition "n_hashes_acc_state_upd s \<equiv>
       let
-        cons_h' = hash_as_nat;
+        cons_h' = hash_encode_char_as_nat;
         cons_t' = n_hashes_acc_acc s;
         cons_ret' = 0;
         cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
@@ -1469,11 +1469,11 @@ lemma n_hashes_acc_imp_correct[let_function_correctness]:
   apply(induction s rule: n_hashes_acc_imp.induct)
   apply(subst n_hashes_acc_imp.simps)
   apply(simp add: n_hashes_acc_imp_subprogram_simps cons_imp_correct)
-  by (metis Suc_pred hash_encode_val n_hashes_acc.simps(2))
+  by (metis Suc_pred hash_encode_char_val n_hashes_acc.simps(2))
 
 definition "n_hashes_acc_state_upd_time t s \<equiv>
       let
-        cons_h' = hash_as_nat;
+        cons_h' = hash_encode_char_as_nat;
         t = t + 2;
         cons_t' = n_hashes_acc_acc s;
         t = t + 2;
@@ -1559,8 +1559,8 @@ definition "n_hashes_acc_IMP_init_while_cond \<equiv>
   n_hashes_acc_while_cond ::= (A (V n_hashes_acc_n_str))"
 
 definition "n_hashes_acc_IMP_loop_body \<equiv>
-  \<comment> \<open>cons_h' = hash_as_nat;\<close>
-  ((cons_prefix @ cons_h_str) ::= (A (N hash_as_nat)));;
+  \<comment> \<open>cons_h' = hash_encode_char_as_nat;\<close>
+  ((cons_prefix @ cons_h_str) ::= (A (N hash_encode_char_as_nat)));;
   \<comment> \<open>cons_t' = n_hashes_acc_acc s;\<close>
   ((cons_prefix @ cons_t_str) ::= (A (V n_hashes_acc_acc_str)));;
   \<comment> \<open>cons_ret' = 0;\<close>
@@ -1895,7 +1895,7 @@ definition "var_bit_to_var_nat_state_upd s =
                              n_hashes_tail_ret = n_hashes_tail_ret'\<rparr>;
       n_hashes_tail_ret_state = n_hashes_tail_imp n_hashes_tail_state;
       append_nat_xs' = n_hashes_tail_ret n_hashes_tail_ret_state;
-      append_nat_ys' = dollar_as_nat;
+      append_nat_ys' = dollar_vname_encode_as_nat;
       append_nat_ret' = 0;
       append_nat_state = \<lparr>append_nat_xs = append_nat_xs',
                           append_nat_ys = append_nat_ys',
@@ -1936,7 +1936,7 @@ lemma var_bit_to_var_nat_imp_correct[let_function_correctness]:
   "var_bit_to_var_nat_ret (var_bit_to_var_nat_imp s) = var_bit_to_var_nat (var_bit_to_var_nat_n s)"
   by (simp add: n_hashes_tail_imp_correct var_bit_to_var_nat_def var_bit_to_var_nat_imp.simps
       fst_nat_fst'_nat snd_nat_snd'_nat var_bit_to_var_nat_state_upd_def subtail_n_hashes
-      snd'_imp_correct fst'_imp_correct append_nat_imp_correct dollar_encode_val)
+      snd'_imp_correct fst'_imp_correct append_nat_imp_correct dollar_vname_encode_val)
 
 function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_state \<Rightarrow> nat" where
   "var_bit_to_var_nat_imp_time t s =
@@ -1956,7 +1956,7 @@ function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_sta
       t = t + n_hashes_tail_imp_time 0 n_hashes_tail_state;
       append_nat_xs' = n_hashes_tail_ret n_hashes_tail_ret_state;
       t = t + 2;
-      append_nat_ys' = dollar_as_nat;
+      append_nat_ys' = dollar_vname_encode_as_nat;
       t = t + 2;
       append_nat_ret' = 0;
       t = t + 2;
@@ -2021,8 +2021,8 @@ definition var_bit_to_var_nat_IMP_Minus where
   \<comment> \<open>append_nat_xs' = n_hashes_tail_ret n_hashes_tail_ret_state;\<close>
   (append_nat_prefix @ append_nat_xs_str)
     ::= (A (V (n_hashes_tail_prefix @ n_hashes_tail_ret_str)));;
-  \<comment> \<open>append_nat_ys' = dollar_as_nat;\<close>
-  (append_nat_prefix @ append_nat_ys_str) ::= (A (N dollar_as_nat));;
+  \<comment> \<open>append_nat_ys' = dollar_vname_encode_as_nat;\<close>
+  (append_nat_prefix @ append_nat_ys_str) ::= (A (N dollar_vname_encode_as_nat));;
   \<comment> \<open>append_nat_ret' = 0;\<close>
   (append_nat_prefix @ append_nat_ret_str) ::= (A (N 0));;
   \<comment> \<open>append_nat_state = \<lparr>append_nat_xs = append_nat_xs',\<close>
