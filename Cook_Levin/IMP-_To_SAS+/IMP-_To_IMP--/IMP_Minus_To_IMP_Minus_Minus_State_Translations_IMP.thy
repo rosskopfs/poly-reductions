@@ -17,6 +17,10 @@ abbreviation "hash_encode_char_as_nat \<equiv> 35"
 lemma hash_encode_char_val: "encode_char (CHR ''#'') = hash_encode_char_as_nat"
   by (simp add: encode_char_def)
 
+abbreviation "dollar_encode_char_as_nat \<equiv> 36"
+lemma dollar_encode_char_val: "encode_char (CHR ''$'') = dollar_encode_char_as_nat"
+  by (simp add: encode_char_def)
+
 abbreviation "dollar_vname_encode_as_nat \<equiv> 703"
 lemma dollar_vname_encode_val: "vname_encode ''$'' = dollar_vname_encode_as_nat"
   by (simp add: vname_encode_def encode_char_def prod_encode_def triangle_def)
