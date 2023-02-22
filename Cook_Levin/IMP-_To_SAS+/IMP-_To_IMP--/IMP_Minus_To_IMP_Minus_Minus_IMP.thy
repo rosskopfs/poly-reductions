@@ -312,7 +312,8 @@ fun map_var_bit_to_var_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Righta
    then (map_var_bit_to_var_acc' ((var_bit_to_var_nat (prod_encode (v,hd_nat n)))## acc) v (tl_nat n))
    else acc)"
 
-lemma "map_var_bit_to_var_acc' acc v n = map_var_bit_to_var_acc acc v n"
+lemma map_var_bit_to_var_acc'_imp_correct:
+"map_var_bit_to_var_acc' acc v n = map_var_bit_to_var_acc acc v n"
 proof (induction n arbitrary: acc v rule: less_induct)
   case (less x)
   then show ?case
@@ -704,6 +705,176 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct[functional_correctness]:
     (meson map_var_bit_to_var_acc_IMP_Minus_correct_effects set_mono_prefix) 
 
 subsubsection \<open>map_var_bit_to_var_tail\<close>
+record map_var_bit_to_var_tail_state =
+map_var_bit_to_var_tail_v::nat
+map_var_bit_to_var_tail_n::nat
+map_var_bit_to_var_tail_ret::nat 
+
+abbreviation "map_var_bit_to_var_tail_prefix \<equiv> ''map_var_bit_to_var_tail.''"
+abbreviation "map_var_bit_to_var_tail_v_str \<equiv> ''v''"
+abbreviation "map_var_bit_to_var_tail_n_str \<equiv> ''n''"
+abbreviation "map_var_bit_to_var_tail_ret_str \<equiv> ''ret''"
+
+function map_var_bit_to_var_tail_imp :: 
+"map_var_bit_to_var_tail_state \<Rightarrow> map_var_bit_to_var_tail_state"where 
+"map_var_bit_to_var_tail_imp s =
+ (let 
+   map_var_bit_to_var_acc_acc' = 0;
+   map_var_bit_to_var_acc_v' = map_var_bit_to_var_tail_v s;
+   map_var_bit_to_var_acc_n' = map_var_bit_to_var_tail_n s;
+   map_var_bit_to_var_acc_ret' = 0;
+   map_var_bit_to_var_acc_state = 
+     \<lparr>map_var_bit_to_var_acc_acc = map_var_bit_to_var_acc_acc',
+     map_var_bit_to_var_acc_v = map_var_bit_to_var_acc_v',
+     map_var_bit_to_var_acc_n = map_var_bit_to_var_acc_n',
+     map_var_bit_to_var_acc_ret = map_var_bit_to_var_acc_ret'\<rparr>;
+  map_var_bit_to_var_acc_ret_state = map_var_bit_to_var_acc_imp map_var_bit_to_var_acc_state;
+
+  reverse_nat_n' = map_var_bit_to_var_acc_ret map_var_bit_to_var_acc_ret_state;
+  reverse_nat_ret' = 0;
+  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                       reverse_nat_ret = reverse_nat_ret'\<rparr>;
+  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+  map_var_bit_to_var_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+  ret = \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v s,
+        map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n s,
+        map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>
+ in 
+  ret)" by simp+
+ termination 
+ apply (relation "measure map_var_bit_to_var_tail_n")
+ apply auto 
+ done 
+
+declare map_var_bit_to_var_tail_imp.simps[simp del]
+
+lemma map_var_bit_to_var_tail_imp_correct[let_function_correctness]:
+  "map_var_bit_to_var_tail_ret (map_var_bit_to_var_tail_imp s)
+    = map_var_bit_to_var_tail (map_var_bit_to_var_tail_v s) (map_var_bit_to_var_tail_n s)"
+apply (subst map_var_bit_to_var_tail_imp.simps)
+apply auto
+using  map_var_bit_to_var_tail_def reverse_nat_imp_correct 
+map_var_bit_to_var_acc_imp_correct map_var_bit_to_var_acc'_imp_correct
+by auto
+
+function map_var_bit_to_var_tail_imp_time :: 
+"nat \<Rightarrow> map_var_bit_to_var_tail_state \<Rightarrow> nat"where 
+"map_var_bit_to_var_tail_imp_time t s =
+ (let 
+   map_var_bit_to_var_acc_acc' = 0;
+   t = t + 2;
+   map_var_bit_to_var_acc_v' = map_var_bit_to_var_tail_v s;
+   t = t + 2;
+   map_var_bit_to_var_acc_n' = map_var_bit_to_var_tail_n s;
+   t = t + 2;
+   map_var_bit_to_var_acc_ret' = 0;
+   t = t + 2;
+   map_var_bit_to_var_acc_state = 
+     \<lparr>map_var_bit_to_var_acc_acc = map_var_bit_to_var_acc_acc',
+     map_var_bit_to_var_acc_v = map_var_bit_to_var_acc_v',
+     map_var_bit_to_var_acc_n = map_var_bit_to_var_acc_n',
+     map_var_bit_to_var_acc_ret = map_var_bit_to_var_acc_ret'\<rparr>;
+  map_var_bit_to_var_acc_ret_state = map_var_bit_to_var_acc_imp map_var_bit_to_var_acc_state;
+  t = t + map_var_bit_to_var_acc_imp_time 0 map_var_bit_to_var_acc_state;
+
+  reverse_nat_n' = map_var_bit_to_var_acc_ret map_var_bit_to_var_acc_ret_state;
+  t = t + 2;
+  reverse_nat_ret' = 0;
+  t = t + 2;
+  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                       reverse_nat_ret = reverse_nat_ret'\<rparr>;
+  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+  t = t + reverse_nat_imp_time 0 reverse_nat_state;
+  
+  map_var_bit_to_var_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+  t = t + 2;
+  ret = \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v s,
+        map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n s,
+        map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>
+ in 
+  t)" by auto
+ termination 
+ apply (relation "measure (map_var_bit_to_var_tail_n \<circ> snd)")
+ apply auto 
+ done 
+
+declare map_var_bit_to_var_tail_imp_time.simps[simp del]
+
+definition "map_var_bit_to_var_tail_IMP_Minus \<equiv> 
+ (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_acc_str) ::= A (N 0);;
+ (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_v_str) ::= A (V map_var_bit_to_var_tail_v_str);;
+ (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_n_str) ::= A (V map_var_bit_to_var_tail_n_str);;
+ (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_ret_str) ::= A (N 0);;
+ invoke_subprogram map_var_bit_to_var_acc_prefix map_var_bit_to_var_acc_IMP_Minus;;
+
+ (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_ret_str));;
+ (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
+ invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
+
+ map_var_bit_to_var_tail_ret_str ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str))
+"
+
+abbreviation "map_var_bit_to_var_tail_IMP_vars \<equiv> 
+  {map_var_bit_to_var_tail_ret_str, map_var_bit_to_var_tail_n_str, map_var_bit_to_var_tail_v_str}"
+
+definition "map_var_bit_to_var_tail_imp_to_HOL_state p s = 
+\<lparr>  map_var_bit_to_var_tail_v = (s (add_prefix p map_var_bit_to_var_tail_v_str)),
+  map_var_bit_to_var_tail_n = (s (add_prefix p map_var_bit_to_var_tail_n_str)),
+  map_var_bit_to_var_tail_ret = (s (add_prefix p map_var_bit_to_var_tail_ret_str))\<rparr>"
+
+lemmas map_var_bit_to_var_tail_state_translators = 
+  map_var_bit_to_var_tail_imp_to_HOL_state_def
+  map_var_bit_to_var_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+
+lemma map_var_bit_to_var_tail_IMP_Minus_correct_function:
+"(invoke_subprogram p map_var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_var_bit_to_var_tail_ret_str)
+      = map_var_bit_to_var_tail_ret
+          (map_var_bit_to_var_tail_imp (map_var_bit_to_var_tail_imp_to_HOL_state p s))"
+apply (simp only: map_var_bit_to_var_tail_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule map_var_bit_to_var_acc_IMP_Minus_correct[where vars=map_var_bit_to_var_tail_IMP_vars])
+subgoal premises p using p(9) by fastforce
+apply (erule reverse_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_tail_IMP_vars])
+subgoal premises p using p(11) by fastforce
+apply (clarsimp simp add: map_var_bit_to_var_tail_state_translators Let_def
+ map_var_bit_to_var_tail_imp.simps)
+done 
+
+lemma map_var_bit_to_var_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ map_var_bit_to_var_tail_pref) map_var_bit_to_var_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix map_var_bit_to_var_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+
+lemma map_var_bit_to_var_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p map_var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = map_var_bit_to_var_tail_imp_time 0 (map_var_bit_to_var_tail_imp_to_HOL_state p s)"
+apply (simp only: map_var_bit_to_var_tail_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule map_var_bit_to_var_acc_IMP_Minus_correct[where vars=map_var_bit_to_var_tail_IMP_vars])
+subgoal premises p using p(17) by fastforce
+apply (erule reverse_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
+subgoal premises p using p(19) by fastforce
+apply (force simp: map_var_bit_to_var_tail_imp_time.simps 
+  Let_def map_var_bit_to_var_tail_state_translators)
+done 
+
+lemma map_var_bit_to_var_tail_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) map_var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (map_var_bit_to_var_tail_imp_time 0 (map_var_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) map_var_bit_to_var_tail_ret_str) =
+          map_var_bit_to_var_tail_ret (map_var_bit_to_var_tail_imp
+                                        (map_var_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using map_var_bit_to_var_tail_IMP_Minus_correct_function 
+   map_var_bit_to_var_tail_IMP_Minus_correct_time
+  by (meson com_add_prefix_valid_subset com_only_vars)
 
 subsection \<open>push_on_stack\<close>
 subsubsection \<open>push_on_stack_nat\<close>
