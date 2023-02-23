@@ -21,8 +21,20 @@ abbreviation "dollar_encode_char_as_nat \<equiv> 36"
 lemma dollar_encode_char_val: "encode_char (CHR ''$'') = dollar_encode_char_as_nat"
   by (simp add: encode_char_def)
 
+abbreviation "a_encode_char_as_nat \<equiv> 97"
+lemma a_encode_char_val: "encode_char (CHR ''a'') = a_encode_char_as_nat"
+  by (simp add: encode_char_def)
+
+abbreviation "b_encode_char_as_nat \<equiv> 98"
+lemma b_encode_char_val: "encode_char (CHR ''b'') = b_encode_char_as_nat"
+  by (simp add: encode_char_def)
+
 abbreviation "dollar_vname_encode_as_nat \<equiv> 703"
 lemma dollar_vname_encode_val: "vname_encode ''$'' = dollar_vname_encode_as_nat"
+  by (simp add: vname_encode_def encode_char_def prod_encode_def triangle_def)
+
+abbreviation "carry_vname_encode_as_nat \<equiv> 3922626330072926337309217346282812152163929887820751364503"
+lemma carry_vname_encode_val: "vname_encode ''carry'' = carry_vname_encode_as_nat"
   by (simp add: vname_encode_def encode_char_def prod_encode_def triangle_def)
 
 lemma hd_nat_noteq_zero: "hd_nat n \<noteq> 0 \<Longrightarrow> n > 0"
