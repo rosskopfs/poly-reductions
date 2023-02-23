@@ -5634,11 +5634,11 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_IMP_Minus_correct:
 subsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial\<close>
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r v' k =
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r vp k =
     (if k \<ge> n
      then 0
      else if k < r
-          then map_list_find_tail (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) v'
+          then map_list_find_tail (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) vp
           else Suc 0)"
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -5662,10 +5662,10 @@ fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 :: "nat \<Rightarrow> n
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' s n r v =
     (let p = var_to_var_bit_tail v;
-         v' = fst_nat (p - 1);
+         vp = fst_nat (p - 1);
          k = snd_nat (p - 1)
      in if p \<noteq> 0
-        then IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r v' k
+        then IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r vp k
         else (let po = var_to_operand_bit_tail v;
                   vo = fst_nat (po-1);
                   ko = snd_nat (po-1)
