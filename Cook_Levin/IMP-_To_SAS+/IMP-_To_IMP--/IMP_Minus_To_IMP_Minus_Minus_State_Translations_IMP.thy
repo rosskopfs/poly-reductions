@@ -5633,6 +5633,53 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_IMP_Minus_correct:
 
 subsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial\<close>
 
+fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r v' k =
+    (if k \<ge> n
+     then 0
+     else if k < r
+          then map_list_find_tail (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) v'
+          else Suc 0)"
+
+fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 n v po vo ko =
+    (if po \<noteq> 0 \<and> vo = encode_char CHR ''b''
+     then if ko < n
+          then Suc 0
+          else 0
+     else if v = vname_encode ''carry''
+          then Suc 0
+          else 0)"
+
+fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 n v po vo ko =
+    (if po \<noteq> 0 \<and> vo = encode_char CHR ''a''
+     then if ko < n
+          then Suc 0
+          else 0
+     else IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 n v po vo ko)"
+
+fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' s n r v =
+    (let p = var_to_var_bit_tail v;
+         v' = fst_nat (p - 1);
+         k = snd_nat (p - 1)
+     in if p \<noteq> 0
+        then IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r v' k
+        else (let po = var_to_operand_bit_tail v;
+                  vo = fst_nat (po-1);
+                  ko = snd_nat (po-1)
+              in IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 n v po vo ko))"
+
+lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail'_correct:
+  "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail s n r v = 
+  IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' s n r v"
+  unfolding IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_def   
+  by (simp only: IMP_Minus_State_To_IMP_Minus_Minus_partial_tail'.simps
+  IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1.simps
+  IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3.simps
+  IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2.simps Let_def)
+
 subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail\<close>
 
 (* TODO *)
