@@ -2186,6 +2186,251 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
   by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
     (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
 
+subsubsection \<open>Less-Than\<close>
+
+record LESS_neq_zero_state =
+  LESS_neq_zero_a::nat
+  LESS_neq_zero_b::nat
+  LESS_neq_zero_ret::nat
+
+abbreviation "LESS_neq_zero_prefix \<equiv> ''LESS_neq_zero.''"
+abbreviation "LESS_neq_zero_a_str \<equiv> ''LESS_a''"
+abbreviation "LESS_neq_zero_b_str \<equiv> ''LESS_b''"
+abbreviation "LESS_neq_zero_ret_str \<equiv> ''LESS_ret''"
+
+definition "LESS_neq_zero_state_upd s \<equiv>
+  (let
+      cond = LESS_neq_zero_b s - LESS_neq_zero_a s;
+      LESS_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
+      ret = \<lparr>LESS_neq_zero_a = LESS_neq_zero_a s,
+             LESS_neq_zero_b = LESS_neq_zero_b s,
+             LESS_neq_zero_ret = LESS_neq_zero_ret'\<rparr>
+  in
+      ret
+)"
+
+fun LESS_neq_zero_imp :: "LESS_neq_zero_state \<Rightarrow> LESS_neq_zero_state" where
+  "LESS_neq_zero_imp s =
+  (let 
+      ret = LESS_neq_zero_state_upd s
+    in 
+      ret
+  )"
+
+declare LESS_neq_zero_imp.simps [simp del]
+
+lemma LESS_neq_zero_imp_correct[let_function_correctness]:
+  "LESS_neq_zero_ret (LESS_neq_zero_imp s) =
+    (if (LESS_neq_zero_a s) < (LESS_neq_zero_b s) then 1 else 0)"
+  by (simp add: LESS_neq_zero_imp.simps LESS_neq_zero_state_upd_def)
+
+fun LESS_neq_zero_imp_time :: "nat \<Rightarrow> LESS_neq_zero_state \<Rightarrow> nat" where
+  "LESS_neq_zero_imp_time t s =
+  (let
+      cond = LESS_neq_zero_b s - LESS_neq_zero_a s;
+      t = t + 2;
+      LESS_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
+      t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
+      ret = \<lparr>LESS_neq_zero_a = LESS_neq_zero_a s,
+             LESS_neq_zero_b = LESS_neq_zero_b s,
+             LESS_neq_zero_ret = LESS_neq_zero_ret'\<rparr>
+  in
+      t
+  )"
+
+declare LESS_neq_zero_imp_time.simps [simp del]
+
+lemma LESS_neq_zero_imp_time_acc:
+  "(LESS_neq_zero_imp_time (Suc t) s) = Suc (LESS_neq_zero_imp_time t s)"
+  by (simp add: LESS_neq_zero_imp_time.simps)
+
+lemma LESS_neq_zero_imp_time_acc_2:
+  "(LESS_neq_zero_imp_time x s) = x + (LESS_neq_zero_imp_time 0 s)"
+  by (simp add: LESS_neq_zero_imp_time.simps)
+
+abbreviation "LESS_neq_zero_cond \<equiv> ''condition''"
+
+definition LESS_neq_zero_IMP_Minus where
+  "LESS_neq_zero_IMP_Minus \<equiv>
+  \<comment> \<open>  cond = LESS_neq_zero_b s - LESS_neq_zero_a s;\<close>
+  (LESS_neq_zero_cond) ::= (Sub (V LESS_neq_zero_b_str) (V LESS_neq_zero_a_str));;
+  \<comment> \<open>  LESS_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);\<close>
+  (IF LESS_neq_zero_cond \<noteq>0
+  THEN (LESS_neq_zero_ret_str) ::= (A (N 1))
+  ELSE (LESS_neq_zero_ret_str) ::= (A (N 0)))
+  \<comment> \<open>  ret = \<lparr>LESS_neq_zero_a = LESS_neq_zero_a s,\<close>
+  \<comment> \<open>         LESS_neq_zero_b = LESS_neq_zero_b s,\<close>
+  \<comment> \<open>         LESS_neq_zero_ret = LESS_neq_zero_ret'\<rparr>\<close>
+"
+
+abbreviation "LESS_neq_zero_IMP_vars \<equiv>
+  {LESS_neq_zero_a_str, LESS_neq_zero_b_str, LESS_neq_zero_ret_str}"
+
+definition "LESS_neq_zero_imp_to_HOL_state p s =
+  \<lparr>LESS_neq_zero_a = (s (add_prefix p LESS_neq_zero_a_str)),
+   LESS_neq_zero_b = (s (add_prefix p LESS_neq_zero_b_str)),
+   LESS_neq_zero_ret = (s (add_prefix p LESS_neq_zero_ret_str))\<rparr>"
+
+lemma LESS_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p LESS_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p LESS_neq_zero_ret_str)
+      = LESS_neq_zero_ret
+          (LESS_neq_zero_imp (LESS_neq_zero_imp_to_HOL_state p s))"
+  by (force simp: LESS_neq_zero_imp.simps LESS_neq_zero_IMP_Minus_def
+      LESS_neq_zero_imp_to_HOL_state_def LESS_neq_zero_state_upd_def)
+
+lemma LESS_neq_zero_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ LESS_neq_zero_pref) LESS_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix LESS_neq_zero_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma LESS_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p LESS_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = LESS_neq_zero_imp_time 0 (LESS_neq_zero_imp_to_HOL_state p s)"
+  by(force simp: LESS_neq_zero_imp_time.simps LESS_neq_zero_IMP_Minus_def)
+
+lemma LESS_neq_zero_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) LESS_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (LESS_neq_zero_imp_time 0 (LESS_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) LESS_neq_zero_ret_str) =
+          LESS_neq_zero_ret (LESS_neq_zero_imp
+                                        (LESS_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using LESS_neq_zero_IMP_Minus_correct_function
+    LESS_neq_zero_IMP_Minus_correct_time
+    LESS_neq_zero_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>Less-Than-Or-Equal\<close>
+
+record LESS_EQUAL_neq_zero_state =
+  LESS_EQUAL_neq_zero_a::nat
+  LESS_EQUAL_neq_zero_b::nat
+  LESS_EQUAL_neq_zero_ret::nat
+
+abbreviation "LESS_EQUAL_neq_zero_prefix \<equiv> ''LESS_EQUAL_neq_zero.''"
+abbreviation "LESS_EQUAL_neq_zero_a_str \<equiv> ''LESS_EQUAL_a''"
+abbreviation "LESS_EQUAL_neq_zero_b_str \<equiv> ''LESS_EQUAL_b''"
+abbreviation "LESS_EQUAL_neq_zero_ret_str \<equiv> ''LESS_EQUAL_ret''"
+
+definition "LESS_EQUAL_neq_zero_state_upd s \<equiv>
+  (let
+      cond1 = LESS_EQUAL_neq_zero_b s + 1;
+      cond = cond1 - LESS_EQUAL_neq_zero_a s;
+      LESS_EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
+      ret = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a s,
+             LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b s,
+             LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>
+  in
+      ret
+)"
+
+fun LESS_EQUAL_neq_zero_imp ::
+  "LESS_EQUAL_neq_zero_state \<Rightarrow> LESS_EQUAL_neq_zero_state" where
+  "LESS_EQUAL_neq_zero_imp s =
+  (let 
+      ret = LESS_EQUAL_neq_zero_state_upd s
+    in 
+      ret
+  )"
+
+declare LESS_EQUAL_neq_zero_imp.simps [simp del]
+
+lemma LESS_EQUAL_neq_zero_imp_correct[let_function_correctness]:
+  "LESS_EQUAL_neq_zero_ret (LESS_EQUAL_neq_zero_imp s) =
+    (if (LESS_EQUAL_neq_zero_a s) \<le> (LESS_EQUAL_neq_zero_b s) then 1 else 0)"
+  by (simp add: LESS_EQUAL_neq_zero_imp.simps Let_def LESS_EQUAL_neq_zero_state_upd_def)
+
+fun LESS_EQUAL_neq_zero_imp_time :: "nat \<Rightarrow> LESS_EQUAL_neq_zero_state \<Rightarrow> nat" where
+  "LESS_EQUAL_neq_zero_imp_time t s =
+  (let
+      cond1 = LESS_EQUAL_neq_zero_b s + 1;
+      t = t + 2;
+      cond = cond1 - LESS_EQUAL_neq_zero_a s;
+      t = t + 2;
+      LESS_EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);
+      t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
+      ret = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a s,
+             LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b s,
+             LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>
+  in
+      t
+  )"
+
+declare LESS_EQUAL_neq_zero_imp_time.simps [simp del]
+
+lemma LESS_EQUAL_neq_zero_imp_time_acc:
+  "(LESS_EQUAL_neq_zero_imp_time (Suc t) s) = Suc (LESS_EQUAL_neq_zero_imp_time t s)"
+  by (simp add: LESS_EQUAL_neq_zero_imp_time.simps)
+
+lemma LESS_EQUAL_neq_zero_imp_time_acc_2:
+  "(LESS_EQUAL_neq_zero_imp_time x s) = x + (LESS_EQUAL_neq_zero_imp_time 0 s)"
+  by (simp add: LESS_EQUAL_neq_zero_imp_time.simps)
+
+abbreviation "LESS_EQUAL_neq_zero_cond1 \<equiv> ''cond1''"
+abbreviation "LESS_EQUAL_neq_zero_cond \<equiv> ''condition''"
+
+definition LESS_EQUAL_neq_zero_IMP_Minus where
+  "LESS_EQUAL_neq_zero_IMP_Minus \<equiv>
+  \<comment> \<open>  cond1 = LESS_EQUAL_neq_zero_b s + 1;\<close>
+  (LESS_EQUAL_neq_zero_cond1) ::= (Plus (V LESS_EQUAL_neq_zero_b_str) (N 1));;
+  \<comment> \<open>  cond = cond1 - LESS_EQUAL_neq_zero_a s;\<close>
+  (LESS_EQUAL_neq_zero_cond) ::= (Sub (V LESS_EQUAL_neq_zero_cond1) (V LESS_EQUAL_neq_zero_a_str));;
+  \<comment> \<open>  LESS_EQUAL_neq_zero_ret' = (if cond \<noteq> 0 then (1::nat) else 0);\<close>
+  (IF LESS_EQUAL_neq_zero_cond \<noteq>0
+  THEN (LESS_EQUAL_neq_zero_ret_str) ::= (A (N 1))
+  ELSE (LESS_EQUAL_neq_zero_ret_str) ::= (A (N 0)))
+  \<comment> \<open>  ret = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a s,\<close>
+  \<comment> \<open>         LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b s,\<close>
+  \<comment> \<open>         LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>\<close>
+"
+
+abbreviation "LESS_EQUAL_neq_zero_IMP_vars\<equiv>
+  {LESS_EQUAL_neq_zero_a_str, LESS_EQUAL_neq_zero_b_str, LESS_EQUAL_neq_zero_ret_str}"
+
+definition "LESS_EQUAL_neq_zero_imp_to_HOL_state p s =
+  \<lparr>LESS_EQUAL_neq_zero_a = (s (add_prefix p LESS_EQUAL_neq_zero_a_str)),
+   LESS_EQUAL_neq_zero_b = (s (add_prefix p LESS_EQUAL_neq_zero_b_str)),
+   LESS_EQUAL_neq_zero_ret = (s (add_prefix p LESS_EQUAL_neq_zero_ret_str))\<rparr>"
+
+lemma LESS_EQUAL_neq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p LESS_EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p LESS_EQUAL_neq_zero_ret_str)
+      = LESS_EQUAL_neq_zero_ret
+          (LESS_EQUAL_neq_zero_imp (LESS_EQUAL_neq_zero_imp_to_HOL_state p s))"
+  by (force simp: LESS_EQUAL_neq_zero_imp.simps LESS_EQUAL_neq_zero_IMP_Minus_def
+    LESS_EQUAL_neq_zero_imp_to_HOL_state_def LESS_EQUAL_neq_zero_state_upd_def)
+
+lemma LESS_EQUAL_neq_zero_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ LESS_EQUAL_neq_zero_pref) LESS_EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix LESS_EQUAL_neq_zero_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma LESS_EQUAL_neq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p LESS_EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = LESS_EQUAL_neq_zero_imp_time 0 (LESS_EQUAL_neq_zero_imp_to_HOL_state p s)"
+  by(force simp: LESS_EQUAL_neq_zero_imp_time.simps LESS_EQUAL_neq_zero_IMP_Minus_def)
+
+lemma LESS_EQUAL_neq_zero_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) LESS_EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (LESS_EQUAL_neq_zero_imp_time 0 (LESS_EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) LESS_EQUAL_neq_zero_ret_str) =
+          LESS_EQUAL_neq_zero_ret (LESS_EQUAL_neq_zero_imp
+                                        (LESS_EQUAL_neq_zero_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using LESS_EQUAL_neq_zero_IMP_Minus_correct_function
+    LESS_EQUAL_neq_zero_IMP_Minus_correct_time
+    LESS_EQUAL_neq_zero_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
 subsection \<open>Options\<close>
 
 subsubsection \<open>some_nat\<close>
