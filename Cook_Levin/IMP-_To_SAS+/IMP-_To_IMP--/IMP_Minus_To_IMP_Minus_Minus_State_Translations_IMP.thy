@@ -5719,9 +5719,7 @@ definition "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_state_upd s \<e
              IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret'\<rparr>
   in
       ret
-  )
-  )
-  )
+  )))
   else
   (let 
       EQUAL_neq_zero_a' = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_v s;
@@ -5756,11 +5754,7 @@ definition "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_state_upd s \<e
              IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret'\<rparr>
   in
       ret
-  )
-  )
-  )
-  )
-  )"
+  )))))"
 
 function IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_imp ::
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_state \<Rightarrow> IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_state" where
@@ -5861,9 +5855,7 @@ function IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_imp_time ::
              IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret'\<rparr>
   in
       t
-  )
-  )
-  )
+  )))
   else
   (let 
       t = t + 1;
@@ -5908,11 +5900,7 @@ function IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_imp_time ::
              IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret'\<rparr>
   in
       t
-  )
-  )
-  )
-  )
-  )"
+  )))))"
   by auto
 termination
   by (relation "measure (IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_n \<circ> snd)") simp
@@ -5951,7 +5939,7 @@ abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_else1 \<e
   (IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret_str) ::= (A (N 0))
 "
 
-abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_if3 \<equiv>
+abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_if2 \<equiv>
   \<comment> \<open>  LESS_neq_zero_a' = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ko s;\<close>
   (LESS_neq_zero_prefix @ LESS_neq_zero_a_str) ::= (A (V IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ko_str));;
   \<comment> \<open>  LESS_neq_zero_b' = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_n s;\<close>
@@ -5974,7 +5962,7 @@ abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_if3 \<equ
   )
 "
 
-abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_else3 \<equiv>
+abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_else2 \<equiv>
   \<comment> \<open>  EQUAL_neq_zero_a' = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_v s;\<close>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_v_str));;
   \<comment> \<open>  EQUAL_neq_zero_b' = carry_vname_encode_as_nat;\<close>
@@ -6025,10 +6013,10 @@ definition IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_Minus where
   (IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_AND_neq_zero_result) ::= (A (V (AND_neq_zero_prefix @ AND_neq_zero_ret_str)));;
   \<comment> \<open>(if AND_neq_zero_result \<noteq> 0 then\<close>
   (IF IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_AND_neq_zero_result \<noteq>0 THEN
-    IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_if3
+    IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_if2
   \<comment> \<open>else\<close>
   ELSE
-    IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_else3
+    IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_else2
   )
 "
 
