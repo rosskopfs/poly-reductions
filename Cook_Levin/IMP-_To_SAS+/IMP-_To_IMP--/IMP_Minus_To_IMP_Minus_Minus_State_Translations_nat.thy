@@ -577,7 +577,7 @@ definition IMP_Minus_State_To_IMP_Minus_Minus_partial_tail::
         then if k \<ge> n
              then 0
              else if k < r
-                  then map_list_find_tail (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) v'
+                  then map_list_find_nat (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) v'
                   else Suc 0
         else (let po = var_to_operand_bit_tail v;
                   vo = fst_nat (po-1);

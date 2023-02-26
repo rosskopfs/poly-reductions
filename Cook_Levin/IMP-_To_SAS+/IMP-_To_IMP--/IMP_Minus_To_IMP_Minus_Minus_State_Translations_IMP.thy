@@ -5638,7 +5638,7 @@ fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 :: "nat \<Rightarrow> n
     (if k \<ge> n
      then 0
      else if k < r
-          then map_list_find_tail (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) vp
+          then map_list_find_nat (map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail k s) vp
           else Suc 0)"
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
