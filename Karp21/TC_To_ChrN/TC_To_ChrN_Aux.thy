@@ -502,7 +502,7 @@ proof -
   from this have "card {{(v1, 0::nat), (v2, 0)} |v1 v2. {v1, v2} \<in> E} = card E"
     by (simp add: chromatik_card1)
   from this asms show ?thesis unfolding ugraph_def
-    using card_infinite by fastforce
+    using card.infinite by fastforce
 qed
 
 
@@ -514,7 +514,7 @@ proof -
     using chromatik_card3
     by blast
   from this asms show ?thesis
-    using card_infinite not_finite_existsD by fastforce 
+    using card.infinite not_finite_existsD by fastforce 
 qed
 
 

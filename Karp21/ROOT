@@ -11,6 +11,8 @@ session Karp21 = Poly_Reductions_Lib +
     "VC_Set_To_VC_List"
     "VC_To_FNS"
     "VC_To_HC"
+    "CNF_SAT_To_TC"
+    "TC_To_ChrN"
   theories
     All_Reductions_Poly
     
