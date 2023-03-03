@@ -5633,6 +5633,8 @@ lemma map_IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_IMP_Minus_correct:
 
 subsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial\<close>
 
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1\<close>
+
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1 s n r vp k =
     (if k \<ge> n
@@ -6080,6 +6082,7 @@ lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1_IMP_Minus_correct:
     IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux1_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2\<close>
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2 n v po vo ko =
@@ -6553,7 +6556,7 @@ lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_Minus_correct:
     IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
-
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3\<close>
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3 n v po vo ko =
@@ -7026,6 +7029,8 @@ lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_IMP_Minus_correct:
     IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4\<close>
+
 record IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4_state =
   IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4_v::nat
   IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4_po::nat
@@ -7316,7 +7321,7 @@ lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4_IMP_Minus_correct:
     IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux4_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
-(* ---------------------------------------------------------------------------------------------- *)
+subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail\<close>
 
 fun IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail' s n r v =
@@ -7842,9 +7847,9 @@ lemma IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_IMP_Minus_correct:
   by (meson set_mono_prefix)
 
 
-subsubsection \<open>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail\<close>
 
-(* TODO *)
+
+
 
 
 end
