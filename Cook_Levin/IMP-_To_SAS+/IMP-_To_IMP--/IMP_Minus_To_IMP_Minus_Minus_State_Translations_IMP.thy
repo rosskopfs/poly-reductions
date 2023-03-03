@@ -6893,12 +6893,6 @@ abbreviation "IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_IMP_else2 \<e
   \<comment> \<open>    IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret_state;\<close>
   (IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_ret_str) ::=
     (A (V (IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_prefix @ IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux2_ret_str)))
-  \<comment> \<open>  ret = \<lparr>IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_n = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_n s,\<close>
-  \<comment> \<open>         IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_v = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_v s,\<close>
-  \<comment> \<open>         IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_po = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_po s,\<close>
-  \<comment> \<open>         IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_vo = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_vo s,\<close>
-  \<comment> \<open>         IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_ko = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_ko s,\<close>
-  \<comment> \<open>         IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_ret = IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_ret'\<rparr>\<close>
 "
 
 definition IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_aux3_IMP_Minus where
