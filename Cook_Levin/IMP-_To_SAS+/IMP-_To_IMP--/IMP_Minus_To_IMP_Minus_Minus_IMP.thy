@@ -15,6 +15,2919 @@ unbundle IMP_Minus_Minus_Com.no_com_syntax
 
 subsection \<open>Useful Definitions and Lemmas\<close>
 
+subsection "add_result_to_stack"
+
+subsubsection "add_result_to_stack_aux"
+
+record add_result_to_stack_aux_state =
+  add_result_to_stack_aux_c::nat 
+  add_result_to_stack_aux_h::nat
+  add_result_to_stack_aux_con::nat
+  add_result_to_stack_aux_t::nat
+  add_result_to_stack_aux_s::nat
+  add_result_to_stack_aux_ret::nat
+
+abbreviation "add_result_to_stack_aux_prefix \<equiv> ''add_result_to_stack_aux.''"
+abbreviation "add_result_to_stack_aux_c_str \<equiv> ''c''"
+abbreviation "add_result_to_stack_aux_h_str \<equiv> ''h''"
+abbreviation "add_result_to_stack_aux_con_str \<equiv> ''con''"
+abbreviation "add_result_to_stack_aux_t_str \<equiv> ''t''"
+abbreviation "add_result_to_stack_aux_s_str \<equiv> ''s''"
+abbreviation "add_result_to_stack_aux_ret_str \<equiv> ''ret''"
+
+definition "add_result_to_stack_aux_imp_to_HOL_state p s \<equiv> 
+  \<lparr>add_result_to_stack_aux_c = s (add_prefix p add_result_to_stack_aux_c_str),
+  add_result_to_stack_aux_h = s (add_prefix p add_result_to_stack_aux_h_str),
+  add_result_to_stack_aux_con = s (add_prefix p add_result_to_stack_aux_con_str),
+  add_result_to_stack_aux_t = s (add_prefix p add_result_to_stack_aux_t_str),
+  add_result_to_stack_aux_s = s (add_prefix p add_result_to_stack_aux_s_str),
+  add_result_to_stack_aux_ret = s (add_prefix p add_result_to_stack_aux_ret_str)\<rparr>"
+
+abbreviation "add_result_to_stack_aux_IMP_vars \<equiv> 
+  {add_result_to_stack_aux_c_str, add_result_to_stack_aux_h_str, 
+  add_result_to_stack_aux_con_str, add_result_to_stack_aux_t_str, 
+  add_result_to_stack_aux_s_str, add_result_to_stack_aux_ret_str}"
+
+lemmas add_result_to_stack_aux_state_translators = 
+  add_result_to_stack_aux_imp_to_HOL_state_def
+  nth_nat_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+paragraph "con_eq_three"
+
+definition "add_result_to_stack_aux_con_eq_three_imp s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 3;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 1;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 4;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = add_result_to_stack_aux_t s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   ret)"
+
+lemma add_result_to_stack_aux_con_eq_three_imp_correct[let_function_correctness]:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_three_imp s) = 
+    ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
+  apply (subst add_result_to_stack_aux_con_eq_three_imp_def)
+  apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
+  done 
+
+definition "add_result_to_stack_aux_con_eq_three_imp_time t s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 3;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 2;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 1;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 4;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = add_result_to_stack_aux_t s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   t)"
+
+definition "add_result_to_stack_aux_con_eq_three_IMP_Minus \<equiv> 
+  (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+    
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 4);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  add_result_to_stack_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+lemma add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_con_eq_three_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_aux_con_eq_three_imp_def)
+apply (simp only: add_result_to_stack_aux_con_eq_three_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(37) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(39) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(41) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(43) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(45) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(47) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(49) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(51) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(53) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+lemma add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_aux_con_eq_three_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s)"
+apply (subst add_result_to_stack_aux_con_eq_three_imp_time_def)
+apply (simp only: add_result_to_stack_aux_con_eq_three_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(73) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(75) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(77) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(79) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(81) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(83) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(85) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(87) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(89) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+paragraph "con_eq_four"
+
+definition "add_result_to_stack_aux_con_eq_four_imp s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 4;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 3;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 1;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 5;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = add_result_to_stack_aux_t s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   ret)"
+
+lemma add_result_to_stack_aux_con_eq_four_imp_correct[let_function_correctness]:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_four_imp s) = 
+    ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
+  apply (subst add_result_to_stack_aux_con_eq_four_imp_def)
+  apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
+  done 
+
+definition "add_result_to_stack_aux_con_eq_four_imp_time t s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 4;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 3;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 2;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 1;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 5;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = add_result_to_stack_aux_t s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   t)"
+
+definition "add_result_to_stack_aux_con_eq_four_IMP_Minus \<equiv> 
+  (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 4);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+    
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 5);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  add_result_to_stack_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+lemma add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_four_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_con_eq_four_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_aux_con_eq_four_imp_def)
+apply (simp only: add_result_to_stack_aux_con_eq_four_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(45) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(47) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(49) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(51) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(53) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(55) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(57) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(59) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(61) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(63) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(65) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+lemma add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_four_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_aux_con_eq_four_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s)"
+apply (subst add_result_to_stack_aux_con_eq_four_imp_time_def)
+apply (simp only: add_result_to_stack_aux_con_eq_four_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(89) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(91) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(93) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(95) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(97) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(99) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(101) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(103) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(105) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(107) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(109) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+paragraph "con_eq_six"
+
+definition "add_result_to_stack_aux_con_eq_six_imp s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 4;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 3;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 1;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 7;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = add_result_to_stack_aux_t s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   ret)"
+
+lemma add_result_to_stack_aux_con_eq_six_imp_correct[let_function_correctness]:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_six_imp s) = 
+    ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
+  apply (subst add_result_to_stack_aux_con_eq_six_imp_def)
+  apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
+  done 
+
+definition "add_result_to_stack_aux_con_eq_six_imp_time t s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 4;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 3;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 2;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 1;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 7;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = add_result_to_stack_aux_t s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   t)"
+
+definition "add_result_to_stack_aux_con_eq_six_IMP_Minus \<equiv> 
+  (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 4);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+    
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 7);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  add_result_to_stack_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+lemma add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_six_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_con_eq_six_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_aux_con_eq_six_imp_def)
+apply (simp only: add_result_to_stack_aux_con_eq_six_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(45) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(47) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(49) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(51) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(53) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(55) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(57) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(59) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(61) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(63) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(65) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+lemma add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_six_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_aux_con_eq_six_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s)"
+apply (subst add_result_to_stack_aux_con_eq_six_imp_time_def)
+apply (simp only: add_result_to_stack_aux_con_eq_six_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(89) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(91) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(93) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(95) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(97) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(99) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(101) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(103) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(105) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(107) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(109) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done
+
+paragraph "con_eq_nine"
+
+definition "add_result_to_stack_aux_con_eq_nine_imp s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 3;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 1;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 10;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = add_result_to_stack_aux_t s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   ret)"
+
+lemma add_result_to_stack_aux_con_eq_nine_imp_correct[let_function_correctness]:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_nine_imp s) = 
+    ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
+  apply (subst add_result_to_stack_aux_con_eq_nine_imp_def)
+  apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
+  done 
+
+definition "add_result_to_stack_aux_con_eq_nine_imp_time t s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 3;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 2;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 1;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 10;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = add_result_to_stack_aux_t s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   t)"
+
+definition "add_result_to_stack_aux_con_eq_nine_IMP_Minus \<equiv> 
+  (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+    
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 10);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  add_result_to_stack_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+lemma add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_nine_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_con_eq_nine_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_aux_con_eq_nine_imp_def)
+apply (simp only: add_result_to_stack_aux_con_eq_nine_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(37) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(39) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(41) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(43) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(45) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(47) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(49) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(51) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(53) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+lemma add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_nine_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_aux_con_eq_nine_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s)"
+apply (subst add_result_to_stack_aux_con_eq_nine_imp_time_def)
+apply (simp only: add_result_to_stack_aux_con_eq_nine_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(73) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(75) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(77) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(79) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(81) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(83) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(85) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(87) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(89) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+paragraph "con_eq_seven"
+
+definition "add_result_to_stack_aux_con_eq_seven_imp s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 5;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 4;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 3;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    nth_nat_n' = 1;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    nth_nat_ret' = 0;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 8;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = add_result_to_stack_aux_t s;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   ret)"
+
+lemma add_result_to_stack_aux_con_eq_seven_imp_correct[let_function_correctness]:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_seven_imp s) = 
+    ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc (Suc (Suc 0))))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
+  apply (subst add_result_to_stack_aux_con_eq_seven_imp_def)
+  apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
+  done 
+
+definition "add_result_to_stack_aux_con_eq_seven_imp_time t s = 
+  (let 
+    cons_h' = add_result_to_stack_aux_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 5;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 4;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 3;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 2;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    nth_nat_n' = 1;
+    t = t + 2;
+    nth_nat_x' = add_result_to_stack_aux_h s;
+    t = t + 2;
+    nth_nat_ret' = 0;
+    t = t + 2;
+    nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+    nth_nat_ret_state = nth_nat_imp nth_nat_state;
+    t = t + nth_nat_imp_time 0 nth_nat_state;
+
+    cons_h' = nth_nat_ret nth_nat_ret_state;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 8;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = add_result_to_stack_aux_t s;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_aux_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+          add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+          add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+          add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+          add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+          add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+  in 
+   t)"
+
+definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv> 
+  (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
+  (cons_prefix @ cons_t_str) ::= A (N 0);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 5);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 4);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+    
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
+  (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
+  (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
+  invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (N 8);;
+  (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+  
+  (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+  (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
+  (cons_prefix @ cons_ret_str) ::= A (N 0);;
+  invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+  add_result_to_stack_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+lemma add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_seven_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_con_eq_seven_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_aux_con_eq_seven_imp_def)
+apply (simp only: add_result_to_stack_aux_con_eq_seven_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(53) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(55) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(57) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(59) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(61) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(63) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(65) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(67) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(69) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(71) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(73) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(75) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(77) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done 
+
+lemma add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_aux_con_eq_seven_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_aux_con_eq_seven_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s)"
+apply (subst add_result_to_stack_aux_con_eq_seven_imp_time_def)
+apply (simp only: add_result_to_stack_aux_con_eq_seven_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(105) by fastforce
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(107) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(109) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(111) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(113) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(115) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(117) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(119) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(121) by fastforce 
+apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
+subgoal premises p using p(123) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(125) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(127) by fastforce 
+apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
+subgoal premises p using p(129) by fastforce 
+apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+done
+
+paragraph separations_of_nested_ifs
+
+abbreviation "add_result_to_stack_aux_cond_str \<equiv> ''cond''"
+
+definition "add_result_to_stack_aux_sub_branch_aux1 s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  NOTEQUAL_neq_zero_b' = 9;
+  NOTEQUAL_neq_zero_ret' = 0;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         add_result_to_stack_aux_ret' =  add_result_to_stack_aux_s s;
+         ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+               add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+               add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+               add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+               add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+               add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+        in 
+         ret)
+     else add_result_to_stack_aux_con_eq_nine_imp s
+       ))"
+
+lemma add_result_to_stack_aux_sub_branch_aux1_imp_correct:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux1 s) = 
+    (if (add_result_to_stack_aux_con s)=9 
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (add_result_to_stack_aux_s s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux1_def)
+  apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_nine_imp_correct)
+  done 
+
+definition "add_result_to_stack_aux_sub_branch_aux1_time t s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  t = t + 2;
+  NOTEQUAL_neq_zero_b' = 9;
+  t = t + 2;
+  NOTEQUAL_neq_zero_ret' = 0;
+  t = t + 2;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
+  t = t + 2
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         t = t + 1;
+         add_result_to_stack_aux_ret' =  add_result_to_stack_aux_s s;
+         t = t + 2;
+         ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
+               add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
+               add_result_to_stack_aux_con = add_result_to_stack_aux_con s,
+               add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
+               add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
+               add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
+        in 
+         t)
+     else (let 
+            t = t + 1;
+            t = t + add_result_to_stack_aux_con_eq_nine_imp_time 0 s
+           in 
+            t)
+       ))"
+
+definition "add_result_to_stack_aux_sub_branch_aux1_IMP_Minus \<equiv> 
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 9);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  add_result_to_stack_aux_cond_str ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  (IF add_result_to_stack_aux_cond_str\<noteq>0
+   THEN add_result_to_stack_aux_ret_str ::= A (V add_result_to_stack_aux_s_str)
+   ELSE add_result_to_stack_aux_con_eq_nine_IMP_Minus)
+  "
+
+lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_sub_branch_aux1 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux1_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(6) by fastforce
+  apply (erule If_E)
+    subgoal
+      apply (force simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function 
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_aux_sub_branch_aux1_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux1_time_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply (erule If_tE)
+    subgoal
+      apply (force simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+definition "add_result_to_stack_aux_sub_branch_aux2 s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  NOTEQUAL_neq_zero_b' = 7;
+  NOTEQUAL_neq_zero_ret' = 0;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then add_result_to_stack_aux_sub_branch_aux1 s
+     else add_result_to_stack_aux_con_eq_seven_imp s
+       ))"
+
+lemma add_result_to_stack_aux_sub_branch_aux2_imp_correct:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux2 s) = 
+    (if (add_result_to_stack_aux_con s)=7 
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     ## (add_result_to_stack_aux_t s)))
+     else (if (add_result_to_stack_aux_con s)=9 
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (add_result_to_stack_aux_s s)))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux2_def)
+  apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_seven_imp_correct
+  add_result_to_stack_aux_sub_branch_aux1_imp_correct)
+  done 
+
+definition "add_result_to_stack_aux_sub_branch_aux2_time t s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  t = t + 2;
+  NOTEQUAL_neq_zero_b' = 7;
+  t = t + 2;
+  NOTEQUAL_neq_zero_ret' = 0;
+  t = t + 2;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
+  t = t + 2
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         t = t + 1;
+         t = t + add_result_to_stack_aux_sub_branch_aux1_time 0 s
+        in 
+         t)
+     else (let 
+            t = t + 1;
+            t = t + add_result_to_stack_aux_con_eq_seven_imp_time 0 s
+           in 
+            t)
+       ))"
+
+definition "add_result_to_stack_aux_sub_branch_aux2_IMP_Minus \<equiv> 
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 7);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  add_result_to_stack_aux_cond_str ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  (IF add_result_to_stack_aux_cond_str\<noteq>0
+   THEN add_result_to_stack_aux_sub_branch_aux1_IMP_Minus
+   ELSE add_result_to_stack_aux_con_eq_seven_IMP_Minus)
+  "
+
+lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_sub_branch_aux2 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux2_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(6) by fastforce
+  apply (erule If_E)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function
+         simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function 
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_aux_sub_branch_aux2_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux2_time_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply (erule If_tE)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time
+       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_time
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+definition "add_result_to_stack_aux_sub_branch_aux3 s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  NOTEQUAL_neq_zero_b' = 6;
+  NOTEQUAL_neq_zero_ret' = 0;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then add_result_to_stack_aux_sub_branch_aux2 s
+     else add_result_to_stack_aux_con_eq_six_imp s
+       ))"
+
+lemma add_result_to_stack_aux_sub_branch_aux3_imp_correct:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux3 s) = 
+    (if (add_result_to_stack_aux_con s)=6 
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (if (add_result_to_stack_aux_con s)=7 
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     ## (add_result_to_stack_aux_t s)))
+     else (if (add_result_to_stack_aux_con s)=9 
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (add_result_to_stack_aux_s s))))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux3_def)
+  apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_six_imp_correct
+  add_result_to_stack_aux_sub_branch_aux2_imp_correct)
+  done 
+
+definition "add_result_to_stack_aux_sub_branch_aux3_time t s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  t = t + 2;
+  NOTEQUAL_neq_zero_b' = 6;
+  t = t + 2;
+  NOTEQUAL_neq_zero_ret' = 0;
+  t = t + 2;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
+  t = t + 2
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         t = t + 1;
+         t = t + add_result_to_stack_aux_sub_branch_aux2_time 0 s
+        in 
+         t)
+     else (let 
+            t = t + 1;
+            t = t + add_result_to_stack_aux_con_eq_six_imp_time 0 s
+           in 
+            t)
+       ))"
+
+definition "add_result_to_stack_aux_sub_branch_aux3_IMP_Minus \<equiv> 
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 6);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  add_result_to_stack_aux_cond_str ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  (IF add_result_to_stack_aux_cond_str\<noteq>0
+   THEN add_result_to_stack_aux_sub_branch_aux2_IMP_Minus
+   ELSE add_result_to_stack_aux_con_eq_six_IMP_Minus)
+  "
+
+lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_sub_branch_aux3 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux3_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(6) by fastforce
+  apply (erule If_E)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function
+         simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function 
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_aux_sub_branch_aux3_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux3_time_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply (erule If_tE)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time
+       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_time
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+definition "add_result_to_stack_aux_sub_branch_aux4 s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  NOTEQUAL_neq_zero_b' = 4;
+  NOTEQUAL_neq_zero_ret' = 0;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then add_result_to_stack_aux_sub_branch_aux3 s
+     else add_result_to_stack_aux_con_eq_four_imp s
+       ))"
+
+lemma add_result_to_stack_aux_sub_branch_aux4_imp_correct:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux4 s) = 
+    (if (add_result_to_stack_aux_con s)=4 
+     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (if (add_result_to_stack_aux_con s)=6 
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (if (add_result_to_stack_aux_con s)=7 
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     ## (add_result_to_stack_aux_t s)))
+     else (if (add_result_to_stack_aux_con s)=9 
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (add_result_to_stack_aux_s s)))))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux4_def)
+  apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_four_imp_correct
+  add_result_to_stack_aux_sub_branch_aux3_imp_correct)
+  done 
+
+definition "add_result_to_stack_aux_sub_branch_aux4_time t s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  t = t + 2;
+  NOTEQUAL_neq_zero_b' = 4;
+  t = t + 2;
+  NOTEQUAL_neq_zero_ret' = 0;
+  t = t + 2;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
+  t = t + 2
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         t = t + 1;
+         t = t + add_result_to_stack_aux_sub_branch_aux3_time 0 s
+        in 
+         t)
+     else (let 
+            t = t + 1;
+            t = t + add_result_to_stack_aux_con_eq_four_imp_time 0 s
+           in 
+            t)
+       ))"
+
+definition "add_result_to_stack_aux_sub_branch_aux4_IMP_Minus \<equiv> 
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 4);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  add_result_to_stack_aux_cond_str ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  (IF add_result_to_stack_aux_cond_str\<noteq>0
+   THEN add_result_to_stack_aux_sub_branch_aux3_IMP_Minus
+   ELSE add_result_to_stack_aux_con_eq_four_IMP_Minus)
+  "
+
+lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux4_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_sub_branch_aux4 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux4_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(6) by fastforce
+  apply (erule If_E)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function
+         simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function 
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_aux_sub_branch_aux4_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_aux_sub_branch_aux4_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_sub_branch_aux4_time_def)
+  apply (simp only: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply (erule If_tE)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time
+       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+definition "add_result_to_stack_aux_imp s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  NOTEQUAL_neq_zero_b' = 3;
+  NOTEQUAL_neq_zero_ret' = 0;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then add_result_to_stack_aux_sub_branch_aux4 s
+     else add_result_to_stack_aux_con_eq_three_imp s
+       ))"
+
+lemma add_result_to_stack_aux_imp_correct:
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_imp s) = 
+    (if (add_result_to_stack_aux_con s)=3 
+     then ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else ((if (add_result_to_stack_aux_con s)=4 
+     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (if (add_result_to_stack_aux_con s)=6 
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+       ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (if (add_result_to_stack_aux_con s)=7 
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     ## (add_result_to_stack_aux_t s)))
+     else (if (add_result_to_stack_aux_con s)=9 
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+      ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
+     else (add_result_to_stack_aux_s s)))))))"
+  apply (subst add_result_to_stack_aux_imp_def)
+  apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_three_imp_correct
+  add_result_to_stack_aux_sub_branch_aux4_imp_correct)
+  done 
+
+definition "add_result_to_stack_aux_imp_time t s \<equiv>
+  (let 
+  NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
+  t = t + 2;
+  NOTEQUAL_neq_zero_b' = 3;
+  t = t + 2;
+  NOTEQUAL_neq_zero_ret' = 0;
+  t = t + 2;
+  NOTEQUAL_neq_zero_state = \<lparr>NOTEQUAL_neq_zero_a = NOTEQUAL_neq_zero_a',
+                            NOTEQUAL_neq_zero_b = NOTEQUAL_neq_zero_b',
+                            NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
+  NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
+  t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
+  add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
+  t = t + 2
+  in 
+   (if add_result_to_stack_aux_cond \<noteq> 0
+     then (let 
+         t = t + 1;
+         t = t + add_result_to_stack_aux_sub_branch_aux4_time 0 s
+        in 
+         t)
+     else (let 
+            t = t + 1;
+            t = t + add_result_to_stack_aux_con_eq_three_imp_time 0 s
+           in 
+            t)
+       ))"
+
+definition "add_result_to_stack_aux_IMP_Minus \<equiv> 
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 3);;
+  (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
+  invoke_subprogram NOTEQUAL_neq_zero_prefix NOTEQUAL_neq_zero_IMP_Minus;;
+  add_result_to_stack_aux_cond_str ::= A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str));;
+  (IF add_result_to_stack_aux_cond_str\<noteq>0
+   THEN add_result_to_stack_aux_sub_branch_aux4_IMP_Minus
+   ELSE add_result_to_stack_aux_con_eq_three_IMP_Minus)
+  "
+
+lemma add_result_to_stack_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_aux_ret_str)
+      = add_result_to_stack_aux_ret
+          (add_result_to_stack_aux_imp (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_imp_def)
+  apply (simp only: add_result_to_stack_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(6) by fastforce
+  apply (erule If_E)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function
+         simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function 
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_aux_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_aux_imp_time_def)
+  apply (simp only: add_result_to_stack_aux_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+  apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply (erule If_tE)
+    subgoal
+      apply (force dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time
+       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time
+      simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) add_result_to_stack_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (add_result_to_stack_aux_imp_time 0 (add_result_to_stack_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) add_result_to_stack_aux_ret_str) =
+          add_result_to_stack_aux_ret (add_result_to_stack_aux_imp
+                                        (add_result_to_stack_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using add_result_to_stack_aux_IMP_Minus_correct_function 
+       add_result_to_stack_aux_IMP_Minus_correct_time
+       set_mono_prefix
+  by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
+
+subsubsection "add_result_to_stack_nat"
+
+record add_result_to_stack_nat_state =
+  add_result_to_stack_nat_c::nat 
+  add_result_to_stack_nat_s::nat
+  add_result_to_stack_nat_ret::nat
+
+abbreviation "add_result_to_stack_nat_prefix \<equiv> ''add_result_to_stack_nat.''"
+abbreviation "add_result_to_stack_nat_c_str \<equiv> ''c''"
+abbreviation "add_result_to_stack_nat_s_str \<equiv> ''s''"
+abbreviation "add_result_to_stack_nat_ret_str \<equiv> ''ret''"
+
+definition "add_result_to_stack_nat_imp_to_HOL_state p s \<equiv> 
+  \<lparr>add_result_to_stack_nat_c = s (add_prefix p add_result_to_stack_nat_c_str),
+  add_result_to_stack_nat_s = s (add_prefix p add_result_to_stack_nat_s_str),
+  add_result_to_stack_nat_ret = s (add_prefix p add_result_to_stack_nat_ret_str)\<rparr>"
+
+paragraph add_result_to_stack_nat_s_eq_zero
+
+definition "add_result_to_stack_nat_s_eq_zero_imp s \<equiv> 
+  (let 
+    cons_h' = add_result_to_stack_nat_c s;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = 0;
+    cons_t' = cons_ret cons_ret_state;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    cons_t' = 0;
+    cons_ret' = 0;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+
+    add_result_to_stack_nat_ret' = cons_ret cons_ret_state;
+    ret = \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
+           add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
+           add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
+    in 
+     ret)"
+
+lemma add_result_to_stack_nat_s_eq_zero_imp_correct[let_function_correctness]:
+   "add_result_to_stack_nat_ret (add_result_to_stack_nat_s_eq_zero_imp s) = (0##(add_result_to_stack_nat_c s)##0)##0"
+   unfolding add_result_to_stack_nat_s_eq_zero_imp_def
+   by (auto simp add: cons_imp_correct)
+
+definition 
+"add_result_to_stack_nat_s_eq_zero_imp_time t s \<equiv> 
+  (let 
+    cons_h' = add_result_to_stack_nat_c s;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = 0;
+    t = t + 2;
+    cons_t' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    cons_h' = cons_ret cons_ret_state;
+    t = t + 2;
+    cons_t' = 0;
+    t = t + 2;
+    cons_ret' = 0;
+    t = t + 2;
+    cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+    cons_ret_state = cons_imp cons_state;
+    t = t + cons_imp_time 0 cons_state;
+
+    add_result_to_stack_nat_ret' = cons_ret cons_ret_state;
+    t = t + 2;
+    ret = \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
+           add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
+           add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
+    in 
+     t)"
+
+definition 
+  "add_result_to_stack_nat_s_eq_zero_IMP_Minus \<equiv> 
+    (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_nat_c_str);;
+    (cons_prefix @ cons_t_str) ::= A (N 0);;
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+    invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+    (cons_prefix @ cons_h_str) ::= A (N 0);;
+    (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+    invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+    (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
+    (cons_prefix @ cons_t_str) ::= A (N 0);;
+    (cons_prefix @ cons_ret_str) ::= A (N 0);;
+    invoke_subprogram cons_prefix cons_IMP_Minus;;
+
+    add_result_to_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
+
+abbreviation "add_result_to_stack_nat_IMP_vars \<equiv> 
+  {add_result_to_stack_nat_c_str, add_result_to_stack_nat_s_str, add_result_to_stack_nat_ret_str}"
+
+lemmas add_result_to_stack_nat_s_eq_zero_state_translators = 
+  add_result_to_stack_nat_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_nat_s_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_ret_str)
+      = add_result_to_stack_nat_ret
+          (add_result_to_stack_nat_s_eq_zero_imp (add_result_to_stack_nat_imp_to_HOL_state p s))"
+   apply (subst add_result_to_stack_nat_s_eq_zero_imp_def)
+   apply (simp only: add_result_to_stack_nat_s_eq_zero_IMP_Minus_def prefix_simps)
+   apply (erule Seq_E)+
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(13) by fastforce
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(15) by fastforce
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(17) by fastforce
+   apply (force simp: add_result_to_stack_nat_s_eq_zero_state_translators)
+   done 
+
+lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time :
+  "(invoke_subprogram p add_result_to_stack_nat_s_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = add_result_to_stack_nat_s_eq_zero_imp_time 0 (add_result_to_stack_nat_imp_to_HOL_state p s)"
+   apply (subst add_result_to_stack_nat_s_eq_zero_imp_time_def)
+   apply (simp only: add_result_to_stack_nat_s_eq_zero_IMP_Minus_def prefix_simps)
+   apply (erule Seq_tE)+
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(25) by fastforce
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(27) by fastforce
+   apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+   subgoal premises p using p(29) by fastforce
+   apply (force simp: add_result_to_stack_nat_s_eq_zero_state_translators Let_def)
+   done 
+
+paragraph "add_result_to_stack_nat_else_aux"
+
+record add_result_to_stack_nat_else_aux_state =
+  add_result_to_stack_nat_else_aux_c::nat 
+  add_result_to_stack_nat_else_aux_s::nat
+  add_result_to_stack_nat_else_aux_h::nat
+  add_result_to_stack_nat_else_aux_con::nat
+  add_result_to_stack_nat_else_aux_t::nat
+
+abbreviation "add_result_to_stack_nat_else_aux_prefix \<equiv> ''add_result_to_stack_nat_else_aux.''"
+abbreviation "add_result_to_stack_nat_else_aux_c_str \<equiv> ''c''"
+abbreviation "add_result_to_stack_nat_else_aux_s_str \<equiv> ''s''"
+abbreviation "add_result_to_stack_nat_else_aux_h_str \<equiv> ''h''"
+abbreviation "add_result_to_stack_nat_else_aux_con_str \<equiv> ''con''"
+abbreviation "add_result_to_stack_nat_else_aux_t_str \<equiv> ''t''"
+
+definition "add_result_to_stack_nat_else_aux_imp_to_HOL_state p s \<equiv> 
+  \<lparr>add_result_to_stack_nat_else_aux_c = s (add_prefix p add_result_to_stack_nat_else_aux_c_str),
+  add_result_to_stack_nat_else_aux_s = s (add_prefix p add_result_to_stack_nat_else_aux_s_str),
+  add_result_to_stack_nat_else_aux_h = s (add_prefix p add_result_to_stack_nat_else_aux_h_str),
+  add_result_to_stack_nat_else_aux_con = s (add_prefix p add_result_to_stack_nat_else_aux_con_str),
+  add_result_to_stack_nat_else_aux_t = s (add_prefix p add_result_to_stack_nat_else_aux_t_str)\<rparr>"
+
+
+abbreviation "add_result_to_stack_nat_else_aux_IMP_vars \<equiv> 
+  {add_result_to_stack_nat_else_aux_c_str, add_result_to_stack_nat_else_aux_s_str, add_result_to_stack_nat_else_aux_h_str,
+  add_result_to_stack_nat_else_aux_con_str, add_result_to_stack_nat_else_aux_t_str}"
+
+definition "add_result_to_stack_nat_else_aux_imp s \<equiv> 
+(let 
+      hd_xs' = add_result_to_stack_nat_else_aux_s s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      add_result_to_stack_nat_else_aux_h' = hd_ret hd_ret_state;
+
+      hd_xs' = add_result_to_stack_nat_else_aux_h';
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      add_result_to_stack_nat_else_aux_con' = hd_ret hd_ret_state;
+
+      tl_xs' = add_result_to_stack_nat_else_aux_s s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      add_result_to_stack_nat_else_aux_t' = tl_ret tl_ret_state;
+
+      ret = \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c s,
+            add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s s,
+            add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
+            add_result_to_stack_nat_else_aux_con = add_result_to_stack_nat_else_aux_con',
+            add_result_to_stack_nat_else_aux_t = add_result_to_stack_nat_else_aux_t'\<rparr>
+      in 
+      ret)"
+
+
+lemma add_result_to_stack_nat_else_aux_imp_correct[let_function_correctness]:
+  "add_result_to_stack_nat_else_aux_h (add_result_to_stack_nat_else_aux_imp s) = hd_nat (add_result_to_stack_nat_else_aux_s s)
+  \<and> add_result_to_stack_nat_else_aux_con (add_result_to_stack_nat_else_aux_imp s) = hd_nat (hd_nat (add_result_to_stack_nat_else_aux_s s))
+  \<and> add_result_to_stack_nat_else_aux_t (add_result_to_stack_nat_else_aux_imp s) = tl_nat (add_result_to_stack_nat_else_aux_s s)"
+  apply (subst add_result_to_stack_nat_else_aux_imp_def)+
+  apply (auto simp add: Let_def
+        tl_imp_correct hd_imp_correct add_result_to_stack_nat_def)
+  
+  done 
+
+definition "add_result_to_stack_nat_else_aux_imp_time t s \<equiv>
+(let
+    hd_xs' = add_result_to_stack_nat_else_aux_s s;
+    t = t + 2;
+    hd_ret' = 0;
+    t = t + 2;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+    t = t + hd_imp_time 0 hd_state;
+    add_result_to_stack_nat_else_aux_h' = hd_ret hd_ret_state;
+    t = t + 2;
+
+    hd_xs' = add_result_to_stack_nat_else_aux_h';
+    t = t + 2;
+    hd_ret' = 0;
+    t = t + 2;
+    hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+    hd_ret_state = hd_imp hd_state;
+    t = t + hd_imp_time 0 hd_state;
+    add_result_to_stack_nat_else_aux_con' = hd_ret hd_ret_state;
+    t = t + 2;
+
+    tl_xs' = add_result_to_stack_nat_else_aux_s s;
+    t = t + 2;
+    tl_ret' = 0;
+    t = t + 2;
+    tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
+    tl_ret_state = tl_imp tl_state;
+    t = t + tl_imp_time 0 tl_state;
+    add_result_to_stack_nat_else_aux_t' = tl_ret tl_ret_state;
+    t = t + 2;
+
+    ret = \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c s,
+          add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s s,
+          add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
+          add_result_to_stack_nat_else_aux_con = add_result_to_stack_nat_else_aux_con',
+          add_result_to_stack_nat_else_aux_t = add_result_to_stack_nat_else_aux_t'\<rparr>
+in
+ t)
+"
+
+definition "add_result_to_stack_nat_else_aux_IMP_Minus \<equiv> 
+    (hd_prefix @ hd_xs_str) ::= A (V add_result_to_stack_nat_s_str);;
+    (hd_prefix @ hd_ret_str) ::= A (N 0);;
+    invoke_subprogram hd_prefix hd_IMP_Minus;;
+    add_result_to_stack_nat_else_aux_h_str ::= A (V (hd_prefix @ hd_ret_str));;
+
+    (hd_prefix @ hd_xs_str) ::= A (V add_result_to_stack_nat_else_aux_h_str);;
+    (hd_prefix @ hd_ret_str) ::= A (N 0);;
+    invoke_subprogram hd_prefix hd_IMP_Minus;;
+    add_result_to_stack_nat_else_aux_con_str ::= A (V (hd_prefix @ hd_ret_str));;
+
+    (tl_prefix @ tl_xs_str) ::= A (V add_result_to_stack_nat_s_str);;
+    (tl_prefix @ tl_ret_str) ::= A (N 0);;
+    invoke_subprogram tl_prefix tl_IMP_Minus;;
+    add_result_to_stack_nat_else_aux_t_str ::= A (V (tl_prefix @ tl_ret_str))"
+
+lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_h:
+  "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_else_aux_h_str)
+      = add_result_to_stack_nat_else_aux_h
+          (add_result_to_stack_nat_else_aux_imp (add_result_to_stack_nat_else_aux_imp_to_HOL_state p s))"
+    apply (subst add_result_to_stack_nat_else_aux_imp_def)
+    apply (simp only: add_result_to_stack_nat_else_aux_IMP_Minus_def prefix_simps)
+    apply (erule Seq_E)+
+    apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
+    subgoal premises p using p(12) by fastforce
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str}"])
+    subgoal premises p using p(14) by fastforce
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
+    subgoal premises p using p(16) by fastforce
+    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+       add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
+    done 
+
+lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_con:
+  "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_else_aux_con_str)
+      = add_result_to_stack_nat_else_aux_con
+          (add_result_to_stack_nat_else_aux_imp (add_result_to_stack_nat_else_aux_imp_to_HOL_state p s))"
+    apply (subst add_result_to_stack_nat_else_aux_imp_def)
+    apply (simp only: add_result_to_stack_nat_else_aux_IMP_Minus_def prefix_simps)
+    apply (erule Seq_E)+
+    apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
+    subgoal premises p using p(12) by fastforce
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str}"])
+    subgoal premises p using p(14) by fastforce
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
+    subgoal premises p using p(16) by fastforce
+    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+       add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
+    done 
+
+lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_t:
+  "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_else_aux_t_str)
+      = add_result_to_stack_nat_else_aux_t
+          (add_result_to_stack_nat_else_aux_imp (add_result_to_stack_nat_else_aux_imp_to_HOL_state p s))"
+    apply (subst add_result_to_stack_nat_else_aux_imp_def)
+    apply (simp only: add_result_to_stack_nat_else_aux_IMP_Minus_def prefix_simps)
+    apply (erule Seq_E)+
+    apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
+    subgoal premises p using p(12) by fastforce
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str}"])
+    subgoal premises p using p(14) by fastforce
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
+    subgoal premises p using p(16) by fastforce
+    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+       add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
+    done 
+
+  lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_nat_else_aux_imp_time 0 (add_result_to_stack_nat_else_aux_imp_to_HOL_state p s))"
+    apply (subst add_result_to_stack_nat_else_aux_imp_time_def)
+    apply (simp only: add_result_to_stack_nat_else_aux_IMP_Minus_def prefix_simps)
+    apply (erule Seq_tE)+
+    apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
+    subgoal premises p using p(23) by fastforce
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str}"])
+    subgoal premises p using p(25) by fastforce
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+        \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
+    subgoal premises p using p(27) by fastforce
+    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+       add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
+    done 
+   
+lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (add_result_to_stack_nat_else_aux_imp_time 0 (add_result_to_stack_nat_else_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) add_result_to_stack_nat_else_aux_h_str) =
+          add_result_to_stack_nat_else_aux_h (add_result_to_stack_nat_else_aux_imp
+                                        (add_result_to_stack_nat_else_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) add_result_to_stack_nat_else_aux_con_str) =
+          add_result_to_stack_nat_else_aux_con (add_result_to_stack_nat_else_aux_imp
+                                        (add_result_to_stack_nat_else_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) add_result_to_stack_nat_else_aux_t_str) =
+          add_result_to_stack_nat_else_aux_t (add_result_to_stack_nat_else_aux_imp
+                                        (add_result_to_stack_nat_else_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using add_result_to_stack_nat_else_aux_IMP_Minus_correct_h 
+        add_result_to_stack_nat_else_aux_IMP_Minus_correct_con 
+        add_result_to_stack_nat_else_aux_IMP_Minus_correct_t  
+       add_result_to_stack_nat_else_aux_IMP_Minus_correct_time
+       set_mono_prefix
+  by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
+
+paragraph "add_result_to_stack_nat_else"
+
+definition "add_result_to_stack_nat_else_imp s \<equiv> 
+(let
+  add_result_to_stack_nat_else_aux_s' = add_result_to_stack_nat_s s;
+  add_result_to_stack_nat_else_aux_c' = add_result_to_stack_nat_c s;
+  add_result_to_stack_nat_else_aux_h' = 0;
+  add_result_to_stack_nat_else_aux_con' = 0;
+  add_result_to_stack_nat_else_aux_t' = 0;
+  add_result_to_stack_nat_else_aux_state = 
+    \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c',
+    add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s',
+    add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
+    add_result_to_stack_nat_else_aux_con = add_result_to_stack_nat_else_aux_con',
+    add_result_to_stack_nat_else_aux_t = add_result_to_stack_nat_else_aux_t'\<rparr>;
+
+  add_result_to_stack_nat_else_aux_ret_state = add_result_to_stack_nat_else_aux_imp add_result_to_stack_nat_else_aux_state;
+  add_result_to_stack_aux_c' = add_result_to_stack_nat_c s;
+  add_result_to_stack_aux_s' = add_result_to_stack_nat_s s;
+  add_result_to_stack_aux_h' = add_result_to_stack_nat_else_aux_h add_result_to_stack_nat_else_aux_ret_state;
+  add_result_to_stack_aux_con' = add_result_to_stack_nat_else_aux_con add_result_to_stack_nat_else_aux_ret_state;
+  add_result_to_stack_aux_t' = add_result_to_stack_nat_else_aux_t add_result_to_stack_nat_else_aux_ret_state;
+  add_result_to_stack_aux_ret' = 0;
+  add_result_to_stack_aux_state = 
+    \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c',
+    add_result_to_stack_aux_h = add_result_to_stack_aux_h',
+    add_result_to_stack_aux_con = add_result_to_stack_aux_con',
+    add_result_to_stack_aux_t = add_result_to_stack_aux_t',
+    add_result_to_stack_aux_s = add_result_to_stack_aux_s',
+    add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>;
+  add_result_to_stack_aux_ret_state = add_result_to_stack_aux_imp add_result_to_stack_aux_state;
+
+  add_result_to_stack_nat_ret' = add_result_to_stack_aux_ret add_result_to_stack_aux_ret_state;
+
+  ret = 
+   \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
+   add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
+   add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
+in
+ ret)"
+
+lemma add_result_to_stack_nat_else_imp_correct:
+  "add_result_to_stack_nat_ret (add_result_to_stack_nat_else_imp s) = 
+    (let h = hd_nat (add_result_to_stack_nat_s s); con = hd_nat h; t = tl_nat (add_result_to_stack_nat_s s)  in 
+  if con = 3 then ((4## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) ## (nth_nat (Suc (Suc (Suc 0))) h) 
+    ## (add_result_to_stack_nat_c s) ## 0) ## t) 
+  else if con = 4 then ((5## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h) 
+    ## (add_result_to_stack_nat_c s) ## 0) ## t)
+  else if con = 6 then ((7## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h) 
+    ## (add_result_to_stack_nat_c s) ## 0) ## t)    
+  else if con = 7 then ((8## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h)  
+    ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) h) ## (add_result_to_stack_nat_c s) ## 0) ## t)
+  else if con = 9 then ((10 ## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
+    ## (nth_nat (Suc (Suc (Suc 0))) h) ## (add_result_to_stack_nat_c s) ## 0) ## t) 
+  else (add_result_to_stack_nat_s s)
+)"
+apply (subst add_result_to_stack_nat_else_imp_def)
+apply (auto simp add: add_result_to_stack_nat_else_aux_imp_correct
+ add_result_to_stack_aux_imp_correct Let_def)
+done 
+
+definition "add_result_to_stack_nat_else_imp_time t s \<equiv> 
+(let
+  add_result_to_stack_nat_else_aux_s' = add_result_to_stack_nat_s s;
+  t = t + 2;
+  add_result_to_stack_nat_else_aux_c' = add_result_to_stack_nat_c s;
+  t = t + 2;
+  add_result_to_stack_nat_else_aux_h' = 0;
+  t = t + 2;
+  add_result_to_stack_nat_else_aux_con' = 0;
+  t = t + 2;
+  add_result_to_stack_nat_else_aux_t' = 0;
+  t = t + 2;
+  add_result_to_stack_nat_else_aux_state = 
+    \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c',
+    add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s',
+    add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
+    add_result_to_stack_nat_else_aux_con = add_result_to_stack_nat_else_aux_con',
+    add_result_to_stack_nat_else_aux_t = add_result_to_stack_nat_else_aux_t'\<rparr>;
+  add_result_to_stack_nat_else_aux_ret_state = add_result_to_stack_nat_else_aux_imp add_result_to_stack_nat_else_aux_state;
+  t = t + add_result_to_stack_nat_else_aux_imp_time 0 add_result_to_stack_nat_else_aux_state;
+
+  add_result_to_stack_aux_c' = add_result_to_stack_nat_c s;
+    t = t + 2;
+  add_result_to_stack_aux_s' = add_result_to_stack_nat_s s;
+    t = t + 2;
+  add_result_to_stack_aux_h' = add_result_to_stack_nat_else_aux_h add_result_to_stack_nat_else_aux_ret_state;
+    t = t + 2;
+  add_result_to_stack_aux_con' = add_result_to_stack_nat_else_aux_con add_result_to_stack_nat_else_aux_ret_state;
+    t = t + 2;
+  add_result_to_stack_aux_t' = add_result_to_stack_nat_else_aux_t add_result_to_stack_nat_else_aux_ret_state;
+    t = t + 2;
+  add_result_to_stack_aux_ret' = 0;
+    t = t + 2;
+  add_result_to_stack_aux_state = 
+    \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c',
+    add_result_to_stack_aux_h = add_result_to_stack_aux_h',
+    add_result_to_stack_aux_con = add_result_to_stack_aux_con',
+    add_result_to_stack_aux_t = add_result_to_stack_aux_t',
+    add_result_to_stack_aux_s = add_result_to_stack_aux_s',
+    add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>;
+  add_result_to_stack_aux_ret_state = add_result_to_stack_aux_imp add_result_to_stack_aux_state;
+    t = t + add_result_to_stack_aux_imp_time 0 add_result_to_stack_aux_state;
+
+  add_result_to_stack_nat_ret' = add_result_to_stack_aux_ret add_result_to_stack_aux_ret_state;
+  t = t + 2;
+
+  ret = 
+   \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
+   add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
+   add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
+in
+ t)"
+
+definition "add_result_to_stack_nat_else_IMP_Minus \<equiv> 
+  (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_s_str)
+    ::= A (V add_result_to_stack_nat_s_str);;
+  (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_c_str)
+    ::= A (V add_result_to_stack_nat_c_str);;
+  (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_h_str)
+    ::= A (N 0);;
+  (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_con_str)
+    ::= A (N 0);;
+  (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_t_str)
+    ::= A (N 0);;
+  invoke_subprogram add_result_to_stack_nat_else_aux_prefix add_result_to_stack_nat_else_aux_IMP_Minus;;
+
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_s_str)
+    ::= A (V add_result_to_stack_nat_s_str);;
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_c_str)
+    ::= A (V add_result_to_stack_nat_c_str);;
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_h_str)
+    ::= A (V (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_h_str));;
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_con_str)
+    ::= A (V (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_con_str));;
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_t_str)
+    ::= A (V (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_t_str));;
+  (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_ret_str)
+    ::= A (N 0);;
+  invoke_subprogram add_result_to_stack_aux_prefix add_result_to_stack_aux_IMP_Minus;;
+  (add_result_to_stack_nat_ret_str) ::= A (V (add_result_to_stack_aux_prefix @ add_result_to_stack_aux_ret_str))
+  "
+
+lemma add_result_to_stack_nat_else_IMP_Minus_correct_function:
+"(invoke_subprogram p add_result_to_stack_nat_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_ret_str)
+      = add_result_to_stack_nat_ret
+          (add_result_to_stack_nat_else_imp (add_result_to_stack_nat_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_nat_else_imp_def)
+apply (simp only: add_result_to_stack_nat_else_IMP_Minus_def prefix_simps)
+apply (erule Seq_E)+
+apply (erule add_result_to_stack_nat_else_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+subgoal premises p using p(14) by fastforce 
+apply (erule add_result_to_stack_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+subgoal premises p using p(18) by fastforce 
+apply (force simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def 
+      add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+done 
+
+lemma add_result_to_stack_nat_else_IMP_Minus_correct_time:
+"(invoke_subprogram p add_result_to_stack_nat_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_nat_else_imp_time 0 (add_result_to_stack_nat_imp_to_HOL_state p s))"
+apply (subst add_result_to_stack_nat_else_imp_time_def)
+apply (simp only: add_result_to_stack_nat_else_IMP_Minus_def prefix_simps)
+apply (erule Seq_tE)+
+apply (erule add_result_to_stack_nat_else_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+subgoal premises p using p(27) by fastforce 
+apply (erule add_result_to_stack_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
+subgoal premises p using p(31) by fastforce 
+apply (force simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def 
+      add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+done 
+
+paragraph "add_result_to_stack_nat"
+
+abbreviation "add_result_to_stack_nat_cond_str \<equiv> ''cond''"
+
+definition "add_result_to_stack_nat_imp s \<equiv> 
+  (let
+    add_result_to_stack_nat_cond = add_result_to_stack_nat_s s
+  in 
+   (if add_result_to_stack_nat_cond\<noteq> 0 then 
+    add_result_to_stack_nat_else_imp s
+    else (add_result_to_stack_nat_s_eq_zero_imp s))
+  )"
+
+lemma add_result_to_stack_nat_imp_correct[let_function_correctness]:
+  "add_result_to_stack_nat_ret (add_result_to_stack_nat_imp s) = 
+    add_result_to_stack_nat (add_result_to_stack_nat_c s) (add_result_to_stack_nat_s s)"
+  apply (subst add_result_to_stack_nat_imp_def)
+  apply (auto simp add: Let_def add_result_to_stack_nat_else_imp_correct add_result_to_stack_nat_s_eq_zero_imp_correct
+    add_result_to_stack_nat_def)
+  done 
+
+definition "add_result_to_stack_nat_imp_time t s \<equiv> 
+  (let
+    add_result_to_stack_nat_cond = add_result_to_stack_nat_s s;
+    t = t + 2
+  in
+   (if add_result_to_stack_nat_cond\<noteq> 0 then 
+     (let 
+        t = t + 1;
+        t = t + add_result_to_stack_nat_else_imp_time 0 s
+        in 
+        t)
+    else (
+        let
+          t = t + 1;
+          t = t + add_result_to_stack_nat_s_eq_zero_imp_time 0 s
+        in
+         t))
+  )"
+
+definition "add_result_to_stack_nat_IMP_Minus \<equiv> 
+  add_result_to_stack_nat_cond_str ::= A (V add_result_to_stack_nat_s_str);;
+  (IF add_result_to_stack_nat_cond_str \<noteq>0
+  THEN add_result_to_stack_nat_else_IMP_Minus
+  ELSE add_result_to_stack_nat_s_eq_zero_IMP_Minus)"
+
+
+lemma add_result_to_stack_nat_IMP_Minus_correct_function:
+  "(invoke_subprogram p add_result_to_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p add_result_to_stack_nat_ret_str)
+      = add_result_to_stack_nat_ret
+          (add_result_to_stack_nat_imp (add_result_to_stack_nat_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_nat_imp_def)
+  apply (simp only: add_result_to_stack_nat_IMP_Minus_def prefix_simps)
+  apply (erule Seq_E)+
+    apply (erule If_E)
+    subgoal
+      apply (force dest!: add_result_to_stack_nat_else_IMP_Minus_correct_function 
+      simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function 
+      simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_nat_IMP_Minus_correct_time:
+  "(invoke_subprogram p add_result_to_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = (add_result_to_stack_nat_imp_time 0 (add_result_to_stack_nat_imp_to_HOL_state p s))"
+  apply (subst add_result_to_stack_nat_imp_time_def)
+  apply (simp only: add_result_to_stack_nat_IMP_Minus_def prefix_simps)
+  apply (erule Seq_tE)+
+    apply (erule If_tE)
+    subgoal
+      apply (force dest!: add_result_to_stack_nat_else_IMP_Minus_correct_time 
+      simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+    done 
+    subgoal
+     apply (force dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time  
+      simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma add_result_to_stack_nat_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) add_result_to_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (add_result_to_stack_nat_imp_time 0 (add_result_to_stack_nat_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) add_result_to_stack_nat_ret_str) =
+          add_result_to_stack_nat_ret (add_result_to_stack_nat_imp
+                                        (add_result_to_stack_nat_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using add_result_to_stack_nat_IMP_Minus_correct_function 
+       add_result_to_stack_nat_IMP_Minus_correct_time
+       set_mono_prefix
+  by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
 subsection \<open>map_var_bit_to_var\<close>
 
@@ -2655,5 +5568,6 @@ lemma push_on_stack_nat_IMP_Minus_correct:
        push_on_stack_nat_IMP_Minus_correct_time
        push_on_stack_nat_IMP_Minus_correct_effects set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
+
 
 end
