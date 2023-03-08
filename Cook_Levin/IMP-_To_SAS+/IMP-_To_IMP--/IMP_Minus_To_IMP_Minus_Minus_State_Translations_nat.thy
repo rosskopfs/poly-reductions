@@ -600,7 +600,7 @@ lemma subtail_IMP_Minus_State_To_IMP_Minus_Minus_partial:
     = IMP_Minus_State_To_IMP_Minus_Minus_partial_nat s n r v"
   by (simp only: IMP_Minus_State_To_IMP_Minus_Minus_partial_tail_def
       IMP_Minus_State_To_IMP_Minus_Minus_partial_nat_def
-      subtail_map_list_find subtail_var_to_operand_bit subtail_var_to_var_bit
+      subtail_var_to_operand_bit subtail_var_to_var_bit
       subtail_map_IMP_Minus_State_To_IMP_Minus_Minus_partial)
 
 lemma snd_nat_0: "snd_nat 0 = 0"

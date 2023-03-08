@@ -1287,16 +1287,6 @@ fun map_list_find_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 "map_list_find_nat xs a = (if xs = 0 then 0 else if fst_nat (hd_nat xs) = a then some_nat (snd_nat (hd_nat xs))  
   else map_list_find_nat (tl_nat xs) a) "
 
-fun map_list_find_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"map_list_find_tail xs a = (if xs = 0 then 0 else if fst_nat (hd_nat xs) = a then some_nat (snd_nat (hd_nat xs))  
-  else map_list_find_nat (tl_nat xs) a) "
-
-lemma subtail_map_list_find:
-"map_list_find_tail xs a = map_list_find_nat xs a"
-  apply(induct xs a rule: map_list_find_nat.induct)
-  apply auto
-  done
-
 lemma sub_map_list_find_nat:
       "map_list_find_nat (list_encode (map prod_encode xs)) a =
         option_encode (map_list_find xs a)"
