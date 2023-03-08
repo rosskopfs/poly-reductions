@@ -2966,13 +2966,13 @@ function map_var_bit_to_var_aux_imp :: "map_var_bit_to_var_aux_state \<Rightarro
                          prod_encode_ret = prod_encode_ret'\<rparr>;
     prod_encode_ret_state = prod_encode_imp prod_encode_state;
 
-    var_bit_to_var_nat_n' = prod_encode_ret prod_encode_ret_state;
-    var_bit_to_var_nat_ret' = 0;
-    var_bit_to_var_nat_state = \<lparr>var_bit_to_var_nat_n = var_bit_to_var_nat_n',
-                                var_bit_to_var_nat_ret = var_bit_to_var_nat_ret'\<rparr>;
-    var_bit_to_var_nat_ret_state = var_bit_to_var_nat_imp var_bit_to_var_nat_state;
+    var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+    var_bit_to_var_tail_ret' = 0;
+    var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+    var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
 
-    cons_h' = var_bit_to_var_nat_ret var_bit_to_var_nat_ret_state;
+    cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
     cons_t' = map_var_bit_to_var_aux_acc s;
     cons_ret' = 0;
     cons_state = \<lparr>cons_h = cons_h',
@@ -3007,9 +3007,11 @@ lemma map_var_bit_to_var_aux_imp_correct[let_function_correctness]:
   map_var_bit_to_var_aux (map_var_bit_to_var_aux_acc s) (map_var_bit_to_var_aux_v s) (map_var_bit_to_var_aux_n s)
   \<and> map_var_bit_to_var_aux_n (map_var_bit_to_var_aux_imp s) = tl_nat (map_var_bit_to_var_aux_n s)"
 apply (subst map_var_bit_to_var_aux_imp.simps)+
-apply (auto simp add: hd_imp_correct prod_encode_imp_correct var_bit_to_var_nat_imp_correct cons_imp_correct
+apply (auto simp add: hd_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct cons_imp_correct
   tl_imp_correct)
-done 
+  using subtail_var_to_var_bit
+  by (simp add: subtail_var_bit_to_var)
+ 
 
 function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_var_aux_state \<Rightarrow> nat" where 
 "map_var_bit_to_var_aux_imp_time t s = 
@@ -3035,16 +3037,16 @@ function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_va
     prod_encode_ret_state = prod_encode_imp prod_encode_state;
     t = t + prod_encode_imp_time 0 prod_encode_state;
 
-    var_bit_to_var_nat_n' = prod_encode_ret prod_encode_ret_state;
+    var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
     t = t + 2;
-    var_bit_to_var_nat_ret' = 0;
+    var_bit_to_var_tail_ret' = 0;
     t = t + 2;
-    var_bit_to_var_nat_state = \<lparr>var_bit_to_var_nat_n = var_bit_to_var_nat_n',
-                                var_bit_to_var_nat_ret = var_bit_to_var_nat_ret'\<rparr>;
-    var_bit_to_var_nat_ret_state = var_bit_to_var_nat_imp var_bit_to_var_nat_state;
-    t = t + var_bit_to_var_nat_imp_time 0 var_bit_to_var_nat_state;
+    var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+    var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+    t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
 
-    cons_h' = var_bit_to_var_nat_ret var_bit_to_var_nat_ret_state;
+    cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
     t = t + 2;
     cons_t' = map_var_bit_to_var_aux_acc s;
     t = t + 2;
@@ -3093,11 +3095,11 @@ definition  "map_var_bit_to_var_aux_IMP_Minus \<equiv>
   (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
   invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
 
-  (var_bit_to_var_nat_prefix @ var_bit_to_var_nat_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
-  (var_bit_to_var_nat_prefix @ var_bit_to_var_nat_ret_str) ::= (A (N 0));;
-  invoke_subprogram var_bit_to_var_nat_prefix var_bit_to_var_nat_IMP_Minus;;
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_nat_prefix @ var_bit_to_var_nat_ret_str)));;
+  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
   (cons_prefix @ cons_t_str) ::= (A (V map_var_bit_to_var_aux_acc_str));;
   (cons_prefix @ cons_ret_str) ::= (A (N 0));;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
@@ -3120,7 +3122,7 @@ lemmas map_var_bit_to_var_aux_state_translators =
   map_var_bit_to_var_aux_imp_to_HOL_state_def
   hd_imp_to_HOL_state_def
   prod_encode_imp_to_HOL_state_def
-  var_bit_to_var_nat_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
   tl_imp_to_HOL_state_def
 
@@ -3139,7 +3141,7 @@ apply (erule  hd_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(19) by fastforce
 apply (erule  prod_encode_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(21) by fastforce
-apply (erule  var_bit_to_var_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
+apply (erule  var_bit_to_var_tail_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(23) by fastforce
 apply (erule  cons_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(25) by fastforce
@@ -3162,7 +3164,7 @@ apply (erule  hd_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(19) by fastforce
 apply (erule  prod_encode_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(21) by fastforce
-apply (erule  var_bit_to_var_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
+apply (erule  var_bit_to_var_tail_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(23) by fastforce
 apply (erule  cons_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(25) by fastforce
@@ -3191,7 +3193,7 @@ apply (erule hd_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(37) by fastforce
 apply (erule prod_encode_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(39) by fastforce
-apply (erule var_bit_to_var_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
+apply (erule var_bit_to_var_tail_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(41) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(43) by fastforce

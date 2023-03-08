@@ -3016,19 +3016,19 @@ lemma n_hashes_tail_IMP_Minus_correct:
   by (meson set_mono_prefix)
 
 
-subsection \<open>var_bit_to_var_nat\<close>
+subsection \<open>var_bit_to_var_tail\<close>
 
-record var_bit_to_var_nat_state =
-  var_bit_to_var_nat_n::nat
-  var_bit_to_var_nat_ret::nat
+record var_bit_to_var_tail_state =
+  var_bit_to_var_tail_n::nat
+  var_bit_to_var_tail_ret::nat
 
-abbreviation "var_bit_to_var_nat_prefix \<equiv> ''var_bit_to_var_nat.''"
-abbreviation "var_bit_to_var_nat_n_str \<equiv> ''n''"
-abbreviation "var_bit_to_var_nat_ret_str \<equiv> ''ret''"
+abbreviation "var_bit_to_var_tail_prefix \<equiv> ''var_bit_to_var_tail.''"
+abbreviation "var_bit_to_var_tail_n_str \<equiv> ''n''"
+abbreviation "var_bit_to_var_tail_ret_str \<equiv> ''ret''"
 
-definition "var_bit_to_var_nat_state_upd s =
+definition "var_bit_to_var_tail_state_upd s =
   (let
-      snd'_state_p' = var_bit_to_var_nat_n s;
+      snd'_state_p' = var_bit_to_var_tail_n s;
       snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
       snd'_ret_state = snd'_imp snd'_state;
       n_hashes_tail_n' = snd'_state_p snd'_ret_state + 1;
@@ -3043,7 +3043,7 @@ definition "var_bit_to_var_nat_state_upd s =
                           append_nat_ys = append_nat_ys',
                           append_nat_ret = append_nat_ret'\<rparr>;
       append_nat_ret_state = append_nat_imp append_nat_state;
-      fst'_state_p' = var_bit_to_var_nat_n s;
+      fst'_state_p' = var_bit_to_var_tail_n s;
       fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
       fst'_ret_state = fst'_imp fst'_state;
       append_nat_xs' = append_nat_ret append_nat_ret_state;
@@ -3053,37 +3053,37 @@ definition "var_bit_to_var_nat_state_upd s =
                           append_nat_ys = append_nat_ys',
                           append_nat_ret = append_nat_ret'\<rparr>;
       append_nat_ret_state = append_nat_imp append_nat_state;
-      var_bit_to_var_nat_n' = var_bit_to_var_nat_n s;
-      var_bit_to_var_nat_ret' = append_nat_ret append_nat_ret_state;
-      ret = \<lparr>var_bit_to_var_nat_n = var_bit_to_var_nat_n',
-             var_bit_to_var_nat_ret = var_bit_to_var_nat_ret'\<rparr>
+      var_bit_to_var_tail_n' = var_bit_to_var_tail_n s;
+      var_bit_to_var_tail_ret' = append_nat_ret append_nat_ret_state;
+      ret = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+             var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>
     in
       ret
   )"
 
-function var_bit_to_var_nat_imp:: "var_bit_to_var_nat_state \<Rightarrow> var_bit_to_var_nat_state" where
-  "var_bit_to_var_nat_imp s =
+function var_bit_to_var_tail_imp:: "var_bit_to_var_tail_state \<Rightarrow> var_bit_to_var_tail_state" where
+  "var_bit_to_var_tail_imp s =
   (let
-      ret = var_bit_to_var_nat_state_upd s
+      ret = var_bit_to_var_tail_state_upd s
     in
       ret
   )"
   by simp+
 termination
-  by (relation "measure var_bit_to_var_nat_n") simp
+  by (relation "measure var_bit_to_var_tail_n") simp
 
-declare var_bit_to_var_nat_imp.simps [simp del]
+declare var_bit_to_var_tail_imp.simps [simp del]
 
-lemma var_bit_to_var_nat_imp_correct[let_function_correctness]:
-  "var_bit_to_var_nat_ret (var_bit_to_var_nat_imp s) = var_bit_to_var_nat (var_bit_to_var_nat_n s)"
-  by (simp add: n_hashes_tail_imp_correct var_bit_to_var_nat_def var_bit_to_var_nat_imp.simps
-      fst_nat_fst'_nat snd_nat_snd'_nat var_bit_to_var_nat_state_upd_def subtail_n_hashes
-      snd'_imp_correct fst'_imp_correct append_nat_imp_correct dollar_vname_encode_val)
+lemma var_bit_to_var_tail_imp_correct[let_function_correctness]:
+  "var_bit_to_var_tail_ret (var_bit_to_var_tail_imp s) = var_bit_to_var_tail (var_bit_to_var_tail_n s)"
+  by (simp add: n_hashes_tail_imp_correct var_bit_to_var_tail_def var_bit_to_var_tail_imp.simps
+      fst_nat_fst'_nat snd_nat_snd'_nat var_bit_to_var_tail_state_upd_def subtail_n_hashes
+      snd'_imp_correct fst'_imp_correct append_nat_imp_correct subtail_append dollar_vname_encode_val)
 
-function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_state \<Rightarrow> nat" where
-  "var_bit_to_var_nat_imp_time t s =
+function var_bit_to_var_tail_imp_time:: "nat \<Rightarrow> var_bit_to_var_tail_state \<Rightarrow> nat" where
+  "var_bit_to_var_tail_imp_time t s =
   (let
-      snd'_state_p' = var_bit_to_var_nat_n s;
+      snd'_state_p' = var_bit_to_var_tail_n s;
       t = t + 2;
       snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
       snd'_ret_state = snd'_imp snd'_state;
@@ -3107,7 +3107,7 @@ function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_sta
                           append_nat_ret = append_nat_ret'\<rparr>;
       append_nat_ret_state = append_nat_imp append_nat_state;
       t = t + append_nat_imp_time 0 append_nat_state;
-      fst'_state_p' = var_bit_to_var_nat_n s;
+      fst'_state_p' = var_bit_to_var_tail_n s;
       t = t + 2;
       fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
       fst'_ret_state = fst'_imp fst'_state;
@@ -3123,9 +3123,9 @@ function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_sta
                           append_nat_ret = append_nat_ret'\<rparr>;
       append_nat_ret_state = append_nat_imp append_nat_state;
       t = t + append_nat_imp_time 0 append_nat_state;
-      var_bit_to_var_nat_n' = var_bit_to_var_nat_n s;
+      var_bit_to_var_tail_n' = var_bit_to_var_tail_n s;
       t = t + 2;
-      var_bit_to_var_nat_ret' = append_nat_ret append_nat_ret_state;
+      var_bit_to_var_tail_ret' = append_nat_ret append_nat_ret_state;
       t = t + 2;
       ret = t
     in
@@ -3133,22 +3133,22 @@ function var_bit_to_var_nat_imp_time:: "nat \<Rightarrow> var_bit_to_var_nat_sta
   )"
   by auto
 termination
-  by (relation "measure (var_bit_to_var_nat_n \<circ> snd)") simp
+  by (relation "measure (var_bit_to_var_tail_n \<circ> snd)") simp
 
-lemmas [simp del] = var_bit_to_var_nat_imp_time.simps
+lemmas [simp del] = var_bit_to_var_tail_imp_time.simps
 
-lemma var_bit_to_var_nat_imp_time_acc:
-  "(var_bit_to_var_nat_imp_time (Suc t) s) = Suc (var_bit_to_var_nat_imp_time t s)"
-  by (simp add: var_bit_to_var_nat_imp_time.simps Let_def)
+lemma var_bit_to_var_tail_imp_time_acc:
+  "(var_bit_to_var_tail_imp_time (Suc t) s) = Suc (var_bit_to_var_tail_imp_time t s)"
+  by (simp add: var_bit_to_var_tail_imp_time.simps Let_def)
 
-lemma var_bit_to_var_nat_imp_time_acc_2:
-  "(var_bit_to_var_nat_imp_time x s) = x + (var_bit_to_var_nat_imp_time 0 s)"
-  by (simp add: var_bit_to_var_nat_imp_time.simps Let_def)
+lemma var_bit_to_var_tail_imp_time_acc_2:
+  "(var_bit_to_var_tail_imp_time x s) = x + (var_bit_to_var_tail_imp_time 0 s)"
+  by (simp add: var_bit_to_var_tail_imp_time.simps Let_def)
 
-definition var_bit_to_var_nat_IMP_Minus where
-  "var_bit_to_var_nat_IMP_Minus \<equiv>
-  \<comment> \<open>snd'_state_p' = var_bit_to_var_nat_n s;\<close>
-  (snd'_prefix @ snd'_p_str) ::= (A (V var_bit_to_var_nat_n_str));;
+definition var_bit_to_var_tail_IMP_Minus where
+  "var_bit_to_var_tail_IMP_Minus \<equiv>
+  \<comment> \<open>snd'_state_p' = var_bit_to_var_tail_n s;\<close>
+  (snd'_prefix @ snd'_p_str) ::= (A (V var_bit_to_var_tail_n_str));;
   \<comment> \<open>snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;\<close>
   \<comment> \<open>snd'_ret_state = snd'_imp snd'_state;\<close>
   invoke_subprogram snd'_prefix snd'_IMP_Minus;;
@@ -3172,8 +3172,8 @@ definition var_bit_to_var_nat_IMP_Minus where
   \<comment> \<open>                    append_nat_ret = append_nat_ret'\<rparr>;\<close>
   \<comment> \<open>append_nat_ret_state = append_nat_imp append_nat_state;\<close>
   invoke_subprogram append_nat_prefix append_nat_IMP_Minus;;
-  \<comment> \<open>fst'_state_p' = var_bit_to_var_nat_n s;\<close>
-  (fst'_prefix @ fst'_p_str) ::= (A (V var_bit_to_var_nat_n_str));;
+  \<comment> \<open>fst'_state_p' = var_bit_to_var_tail_n s;\<close>
+  (fst'_prefix @ fst'_p_str) ::= (A (V var_bit_to_var_tail_n_str));;
   \<comment> \<open>fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;\<close>
   \<comment> \<open>fst'_ret_state = fst'_imp fst'_state;\<close>
   invoke_subprogram fst'_prefix fst'_IMP_Minus;;
@@ -3188,92 +3188,92 @@ definition var_bit_to_var_nat_IMP_Minus where
   \<comment> \<open>                    append_nat_ret = append_nat_ret'\<rparr>;\<close>
   \<comment> \<open>append_nat_ret_state = append_nat_imp append_nat_state;\<close>
   invoke_subprogram append_nat_prefix append_nat_IMP_Minus;;
-  \<comment> \<open>var_bit_to_var_nat_n' = var_bit_to_var_nat_n s;\<close>
-  var_bit_to_var_nat_n_str ::= (A (V var_bit_to_var_nat_n_str));;
-  \<comment> \<open>var_bit_to_var_nat_ret' = append_nat_ret append_nat_ret_state;\<close>
-  var_bit_to_var_nat_ret_str ::= (A (V (append_nat_prefix @ append_nat_ret_str)))
+  \<comment> \<open>var_bit_to_var_tail_n' = var_bit_to_var_tail_n s;\<close>
+  var_bit_to_var_tail_n_str ::= (A (V var_bit_to_var_tail_n_str));;
+  \<comment> \<open>var_bit_to_var_tail_ret' = append_nat_ret append_nat_ret_state;\<close>
+  var_bit_to_var_tail_ret_str ::= (A (V (append_nat_prefix @ append_nat_ret_str)))
 "
 
 abbreviation
-  "var_bit_to_var_nat_IMP_vars \<equiv>
-  {var_bit_to_var_nat_n_str, var_bit_to_var_nat_ret_str}"
+  "var_bit_to_var_tail_IMP_vars \<equiv>
+  {var_bit_to_var_tail_n_str, var_bit_to_var_tail_ret_str}"
 
-definition "var_bit_to_var_nat_imp_to_HOL_state p s =
-  \<lparr>var_bit_to_var_nat_n = (s (add_prefix p var_bit_to_var_nat_n_str)),
-   var_bit_to_var_nat_ret = (s (add_prefix p var_bit_to_var_nat_ret_str))\<rparr>"
+definition "var_bit_to_var_tail_imp_to_HOL_state p s =
+  \<lparr>var_bit_to_var_tail_n = (s (add_prefix p var_bit_to_var_tail_n_str)),
+   var_bit_to_var_tail_ret = (s (add_prefix p var_bit_to_var_tail_ret_str))\<rparr>"
 
-lemmas var_bit_to_var_nat_state_translators =
+lemmas var_bit_to_var_tail_state_translators =
   fst'_imp_to_HOL_state_def
   snd'_imp_to_HOL_state_def
   n_hashes_tail_imp_to_HOL_state_def
   append_nat_imp_to_HOL_state_def
-  var_bit_to_var_nat_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
 
-lemma var_bit_to_var_nat_IMP_Minus_correct_function:
-  "(invoke_subprogram p var_bit_to_var_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p var_bit_to_var_nat_ret_str)
-      = var_bit_to_var_nat_ret (var_bit_to_var_nat_imp (var_bit_to_var_nat_imp_to_HOL_state p s))"
-  apply (subst var_bit_to_var_nat_imp.simps)
-  apply (simp only: var_bit_to_var_nat_IMP_Minus_def prefix_simps)
+lemma var_bit_to_var_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p var_bit_to_var_tail_ret_str)
+      = var_bit_to_var_tail_ret (var_bit_to_var_tail_imp (var_bit_to_var_tail_imp_to_HOL_state p s))"
+  apply (subst var_bit_to_var_tail_imp.simps)
+  apply (simp only: var_bit_to_var_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
 
   apply (erule snd'_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(17) by fastforce
   apply (erule n_hashes_tail_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(19) by fastforce
-  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_nat_IMP_vars"])
+  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(21) by fastforce
   apply (erule fst'_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(23) by fastforce
-  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_nat_IMP_vars"])
+  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(25) by fastforce
 
-  by (fastforce simp: var_bit_to_var_nat_state_translators var_bit_to_var_nat_state_upd_def)
+  by (fastforce simp: var_bit_to_var_tail_state_translators var_bit_to_var_tail_state_upd_def)
 
-lemma var_bit_to_var_nat_IMP_Minus_correct_effects:
-  "\<lbrakk>(invoke_subprogram (p @ var_bit_to_var_nat_pref) var_bit_to_var_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
-    v \<in> vars; \<not> (prefix var_bit_to_var_nat_pref v)\<rbrakk>
+lemma var_bit_to_var_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ var_bit_to_var_tail_pref) var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix var_bit_to_var_tail_pref v)\<rbrakk>
   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
-lemma var_bit_to_var_nat_IMP_Minus_correct_time:
-  "(invoke_subprogram p var_bit_to_var_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = var_bit_to_var_nat_imp_time 0 (var_bit_to_var_nat_imp_to_HOL_state p s)"
-  apply (subst var_bit_to_var_nat_imp_time.simps)
-  apply (simp only: var_bit_to_var_nat_IMP_Minus_def prefix_simps)
+lemma var_bit_to_var_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = var_bit_to_var_tail_imp_time 0 (var_bit_to_var_tail_imp_to_HOL_state p s)"
+  apply (subst var_bit_to_var_tail_imp_time.simps)
+  apply (simp only: var_bit_to_var_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
 
   apply (erule snd'_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(33) by fastforce
   apply (erule n_hashes_tail_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(35) by fastforce
-  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_nat_IMP_vars"])
+  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(37) by fastforce
   apply (erule fst'_IMP_Minus_correct[where
-        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_nat_IMP_vars"])
+        vars = "insert (append_nat_prefix @ append_nat_ret_str) var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(39) by fastforce
-  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_nat_IMP_vars"])
+  apply (erule append_nat_IMP_Minus_correct[where vars = "var_bit_to_var_tail_IMP_vars"])
   subgoal premises p using p(41) by fastforce
 
-  by (fastforce simp add: Let_def var_bit_to_var_nat_state_translators)
+  by (fastforce simp add: Let_def var_bit_to_var_tail_state_translators)
 
-lemma var_bit_to_var_nat_IMP_Minus_correct:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) var_bit_to_var_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+lemma var_bit_to_var_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-     \<lbrakk>t = (var_bit_to_var_nat_imp_time 0 (var_bit_to_var_nat_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) var_bit_to_var_nat_ret_str) =
-        var_bit_to_var_nat_ret
-          (var_bit_to_var_nat_imp (var_bit_to_var_nat_imp_to_HOL_state (p1 @ p2) s));
+     \<lbrakk>t = (var_bit_to_var_tail_imp_time 0 (var_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
+      s' (add_prefix (p1 @ p2) var_bit_to_var_tail_ret_str) =
+        var_bit_to_var_tail_ret
+          (var_bit_to_var_tail_imp (var_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using var_bit_to_var_nat_IMP_Minus_correct_time var_bit_to_var_nat_IMP_Minus_correct_function
-    var_bit_to_var_nat_IMP_Minus_correct_effects
+  using var_bit_to_var_tail_IMP_Minus_correct_time var_bit_to_var_tail_IMP_Minus_correct_function
+    var_bit_to_var_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
 
