@@ -4618,39 +4618,39 @@ lemma copy_const_to_operand_tail_IMP_Minus_correct:
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
-subsection copy_atom_to_operand_nat
+subsection copy_atom_to_operand_tail
 
-record copy_atom_to_operand_nat_state = 
-  copy_atom_to_operand_nat_n::nat
-  copy_atom_to_operand_nat_op::nat
-  copy_atom_to_operand_nat_a::nat
-  copy_atom_to_operand_nat_ret::nat
+record copy_atom_to_operand_tail_state = 
+  copy_atom_to_operand_tail_n::nat
+  copy_atom_to_operand_tail_op::nat
+  copy_atom_to_operand_tail_a::nat
+  copy_atom_to_operand_tail_ret::nat
 
-abbreviation "copy_atom_to_operand_nat_prefix \<equiv> ''copy_atom_to_operand_nat.''"
-abbreviation "copy_atom_to_operand_nat_n_str \<equiv> ''n''"
-abbreviation "copy_atom_to_operand_nat_op_str \<equiv> ''op''"
-abbreviation "copy_atom_to_operand_nat_a_str \<equiv> ''a''"
-abbreviation "copy_atom_to_operand_nat_ret_str \<equiv> ''ret''"
-abbreviation "copy_atom_to_operand_nat_cond \<equiv> ''cond''"
+abbreviation "copy_atom_to_operand_tail_prefix \<equiv> ''copy_atom_to_operand_tail.''"
+abbreviation "copy_atom_to_operand_tail_n_str \<equiv> ''n''"
+abbreviation "copy_atom_to_operand_tail_op_str \<equiv> ''op''"
+abbreviation "copy_atom_to_operand_tail_a_str \<equiv> ''a''"
+abbreviation "copy_atom_to_operand_tail_ret_str \<equiv> ''ret''"
+abbreviation "copy_atom_to_operand_tail_cond \<equiv> ''cond''"
 
-function copy_atom_to_operand_nat_imp 
-  :: "copy_atom_to_operand_nat_state \<Rightarrow> copy_atom_to_operand_nat_state"
+function copy_atom_to_operand_tail_imp 
+  :: "copy_atom_to_operand_tail_state \<Rightarrow> copy_atom_to_operand_tail_state"
 where 
-"copy_atom_to_operand_nat_imp s = 
+"copy_atom_to_operand_tail_imp s = 
 (let
-  fst'_state_p' = copy_atom_to_operand_nat_a s;
+  fst'_state_p' = copy_atom_to_operand_tail_a s;
   fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
   fst'_ret_state = fst'_imp fst'_state;
   cond = fst'_state_p fst'_ret_state
 in
   (if cond \<noteq> 0 
   then (let
-         snd'_state_p' = copy_atom_to_operand_nat_a s;
+         snd'_state_p' = copy_atom_to_operand_tail_a s;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          
-         copy_const_to_operand_tail_i' = copy_atom_to_operand_nat_n s;
-         copy_const_to_operand_tail_op' = copy_atom_to_operand_nat_op s;
+         copy_const_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
+         copy_const_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          copy_const_to_operand_tail_x' = snd'_state_p snd'_ret_state;
          copy_const_to_operand_tail_ret' = 0;
          copy_const_to_operand_tail_state 
@@ -4660,22 +4660,22 @@ in
              copy_const_to_operand_tail_ret = copy_const_to_operand_tail_ret'\<rparr>;
          copy_const_to_operand_tail_ret_state = 
             copy_const_to_operand_tail_imp copy_const_to_operand_tail_state;
-         copy_atom_to_operand_nat_ret' 
+         copy_atom_to_operand_tail_ret' 
             = copy_const_to_operand_tail_ret copy_const_to_operand_tail_ret_state;
          ret =
-           \<lparr>copy_atom_to_operand_nat_n = copy_atom_to_operand_nat_n s,
-            copy_atom_to_operand_nat_op = copy_atom_to_operand_nat_op s,
-            copy_atom_to_operand_nat_a = copy_atom_to_operand_nat_a s,
-            copy_atom_to_operand_nat_ret = copy_atom_to_operand_nat_ret'\<rparr>
+           \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
+            copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op s,
+            copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a s,
+            copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>
         in
          ret)
   else (let
-         snd'_state_p' = copy_atom_to_operand_nat_a s;
+         snd'_state_p' = copy_atom_to_operand_tail_a s;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          
-         copy_var_to_operand_tail_i' = copy_atom_to_operand_nat_n s;
-         copy_var_to_operand_tail_op' = copy_atom_to_operand_nat_op s;
+         copy_var_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
+         copy_var_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          copy_var_to_operand_tail_v' = snd'_state_p snd'_ret_state;
          copy_var_to_operand_tail_ret' = 0;
          copy_var_to_operand_tail_state 
@@ -4685,36 +4685,36 @@ in
              copy_var_to_operand_tail_ret = copy_var_to_operand_tail_ret'\<rparr>;
          copy_var_to_operand_tail_ret_state = 
             copy_var_to_operand_tail_imp copy_var_to_operand_tail_state;
-         copy_atom_to_operand_nat_ret' 
+         copy_atom_to_operand_tail_ret' 
             = copy_var_to_operand_tail_ret copy_var_to_operand_tail_ret_state;
          ret =
-           \<lparr>copy_atom_to_operand_nat_n = copy_atom_to_operand_nat_n s,
-            copy_atom_to_operand_nat_op = copy_atom_to_operand_nat_op s,
-            copy_atom_to_operand_nat_a = copy_atom_to_operand_nat_a s,
-            copy_atom_to_operand_nat_ret = copy_atom_to_operand_nat_ret'\<rparr>
+           \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
+            copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op s,
+            copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a s,
+            copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>
         in
          ret)
   ))" by simp+
-termination by (relation "measure copy_atom_to_operand_nat_n", simp)
+termination by (relation "measure copy_atom_to_operand_tail_n", simp)
 
-declare copy_atom_to_operand_nat_imp.simps[simp del]
+declare copy_atom_to_operand_tail_imp.simps[simp del]
 
-lemma copy_atom_to_operand_nat_imp_correct[let_function_correctness]:
-  "copy_atom_to_operand_nat_ret (copy_atom_to_operand_nat_imp s) = 
-    copy_atom_to_operand_nat (copy_atom_to_operand_nat_n s)
-      (copy_atom_to_operand_nat_op s) (copy_atom_to_operand_nat_a s)"
-apply (simp only: copy_atom_to_operand_nat_imp.simps)
+lemma copy_atom_to_operand_tail_imp_correct[let_function_correctness]:
+  "copy_atom_to_operand_tail_ret (copy_atom_to_operand_tail_imp s) = 
+    copy_atom_to_operand_tail (copy_atom_to_operand_tail_n s)
+      (copy_atom_to_operand_tail_op s) (copy_atom_to_operand_tail_a s)"
+apply (simp only: copy_atom_to_operand_tail_imp.simps)
 apply (simp add: copy_var_to_operand_tail_imp_correct
-copy_const_to_operand_tail_imp_correct fst'_imp_correct snd'_imp_correct Let_def)
-by (simp add: fst_nat_fst'_nat snd_nat_snd'_nat copy_atom_to_operand_nat_def
-subtail_copy_const_to_operand subtail_copy_var_to_operand)
+copy_const_to_operand_tail_imp_correct fst'_imp_correct snd'_imp_correct Let_def
+copy_atom_to_operand_tail_def fst_nat_fst'_nat snd_nat_snd'_nat)
+done 
 
-function copy_atom_to_operand_nat_imp_time 
-  :: "nat \<Rightarrow> copy_atom_to_operand_nat_state \<Rightarrow> nat"
+function copy_atom_to_operand_tail_imp_time 
+  :: "nat \<Rightarrow> copy_atom_to_operand_tail_state \<Rightarrow> nat"
 where 
-"copy_atom_to_operand_nat_imp_time t s = 
+"copy_atom_to_operand_tail_imp_time t s = 
 (let
-  fst'_state_p' = copy_atom_to_operand_nat_a s;
+  fst'_state_p' = copy_atom_to_operand_tail_a s;
   t = t + 2;
   fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
   fst'_ret_state = fst'_imp fst'_state;
@@ -4725,15 +4725,15 @@ in
   (if cond \<noteq> 0 
   then (let
          t = t + 1;
-         snd'_state_p' = copy_atom_to_operand_nat_a s;
+         snd'_state_p' = copy_atom_to_operand_tail_a s;
          t = t + 2;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          t = t + snd'_imp_time 0 snd'_state;
          
-         copy_const_to_operand_tail_i' = copy_atom_to_operand_nat_n s;
+         copy_const_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          t = t + 2;
-         copy_const_to_operand_tail_op' = copy_atom_to_operand_nat_op s;
+         copy_const_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          t = t + 2;
          copy_const_to_operand_tail_x' = snd'_state_p snd'_ret_state;
          t = t + 2;
@@ -4747,27 +4747,27 @@ in
          copy_const_to_operand_tail_ret_state = 
             copy_const_to_operand_tail_imp copy_const_to_operand_tail_state;
          t = t + copy_const_to_operand_tail_imp_time 0 copy_const_to_operand_tail_state;
-         copy_atom_to_operand_nat_ret' 
+         copy_atom_to_operand_tail_ret' 
             = copy_const_to_operand_tail_ret copy_const_to_operand_tail_ret_state;
          t = t + 2;
          ret =
-           \<lparr>copy_atom_to_operand_nat_n = copy_atom_to_operand_nat_n s,
-            copy_atom_to_operand_nat_op = copy_atom_to_operand_nat_op s,
-            copy_atom_to_operand_nat_a = copy_atom_to_operand_nat_a s,
-            copy_atom_to_operand_nat_ret = copy_atom_to_operand_nat_ret'\<rparr>
+           \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
+            copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op s,
+            copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a s,
+            copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>
         in
          t)
   else (let
          t = t + 1;
-         snd'_state_p' = copy_atom_to_operand_nat_a s;
+         snd'_state_p' = copy_atom_to_operand_tail_a s;
          t = t + 2;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          t = t + snd'_imp_time 0 snd'_state;
          
-         copy_var_to_operand_tail_i' = copy_atom_to_operand_nat_n s;
+         copy_var_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          t = t + 2;
-         copy_var_to_operand_tail_op' = copy_atom_to_operand_nat_op s;
+         copy_var_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          t = t + 2;
          copy_var_to_operand_tail_v' = snd'_state_p snd'_ret_state;
          t = t + 2;
@@ -4781,150 +4781,150 @@ in
          copy_var_to_operand_tail_ret_state = 
             copy_var_to_operand_tail_imp copy_var_to_operand_tail_state;
          t = t + copy_var_to_operand_tail_imp_time 0 copy_var_to_operand_tail_state;
-         copy_atom_to_operand_nat_ret' 
+         copy_atom_to_operand_tail_ret' 
             = copy_var_to_operand_tail_ret copy_var_to_operand_tail_ret_state;
          t = t + 2;
          ret =
-           \<lparr>copy_atom_to_operand_nat_n = copy_atom_to_operand_nat_n s,
-            copy_atom_to_operand_nat_op = copy_atom_to_operand_nat_op s,
-            copy_atom_to_operand_nat_a = copy_atom_to_operand_nat_a s,
-            copy_atom_to_operand_nat_ret = copy_atom_to_operand_nat_ret'\<rparr>
+           \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
+            copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op s,
+            copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a s,
+            copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>
         in
          t)
   ))" by auto
-termination by (relation "measure (copy_atom_to_operand_nat_n \<circ> snd)", simp)
+termination by (relation "measure (copy_atom_to_operand_tail_n \<circ> snd)", simp)
 
-declare copy_atom_to_operand_nat_imp_time.simps[simp del]
+declare copy_atom_to_operand_tail_imp_time.simps[simp del]
 
-abbreviation "copy_atom_to_operand_nat_IMP_vars \<equiv> 
- {copy_atom_to_operand_nat_ret_str, copy_atom_to_operand_nat_n_str,
- copy_atom_to_operand_nat_op_str, copy_atom_to_operand_nat_a_str,
- copy_atom_to_operand_nat_cond}"
+abbreviation "copy_atom_to_operand_tail_IMP_vars \<equiv> 
+ {copy_atom_to_operand_tail_ret_str, copy_atom_to_operand_tail_n_str,
+ copy_atom_to_operand_tail_op_str, copy_atom_to_operand_tail_a_str,
+ copy_atom_to_operand_tail_cond}"
 
-definition "copy_atom_to_operand_nat_imp_to_HOL_state p s\<equiv> 
-\<lparr>copy_atom_to_operand_nat_n = s (add_prefix p copy_atom_to_operand_nat_n_str),
-copy_atom_to_operand_nat_op = s (add_prefix p copy_atom_to_operand_nat_op_str),
-copy_atom_to_operand_nat_a = s (add_prefix p copy_atom_to_operand_nat_a_str),
-copy_atom_to_operand_nat_ret = s (add_prefix p copy_atom_to_operand_nat_ret_str)\<rparr>"
+definition "copy_atom_to_operand_tail_imp_to_HOL_state p s\<equiv> 
+\<lparr>copy_atom_to_operand_tail_n = s (add_prefix p copy_atom_to_operand_tail_n_str),
+copy_atom_to_operand_tail_op = s (add_prefix p copy_atom_to_operand_tail_op_str),
+copy_atom_to_operand_tail_a = s (add_prefix p copy_atom_to_operand_tail_a_str),
+copy_atom_to_operand_tail_ret = s (add_prefix p copy_atom_to_operand_tail_ret_str)\<rparr>"
 
-lemmas copy_atom_to_operand_nat_state_translators=
-  copy_atom_to_operand_nat_imp_to_HOL_state_def
+lemmas copy_atom_to_operand_tail_state_translators=
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
   copy_var_to_operand_tail_imp_to_HOL_state_def
   copy_const_to_operand_tail_imp_to_HOL_state_def
   fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def
 
-definition "copy_atom_to_operand_nat_IMP_Minus \<equiv> 
-  (fst'_prefix @ fst'_p_str) ::= A (V copy_atom_to_operand_nat_a_str);;
+definition "copy_atom_to_operand_tail_IMP_Minus \<equiv> 
+  (fst'_prefix @ fst'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
   invoke_subprogram fst'_prefix fst'_IMP_Minus;;
-  copy_atom_to_operand_nat_cond ::= A (V (fst'_prefix @ fst'_p_str));;
-  IF copy_atom_to_operand_nat_cond\<noteq>0 
+  copy_atom_to_operand_tail_cond ::= A (V (fst'_prefix @ fst'_p_str));;
+  IF copy_atom_to_operand_tail_cond\<noteq>0 
   THEN 
     (
-    (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_nat_a_str);;
+    (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
     invoke_subprogram snd'_prefix snd'_IMP_Minus;;
 
     (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_i_str)
-      ::= A (V copy_atom_to_operand_nat_n_str);;
+      ::= A (V copy_atom_to_operand_tail_n_str);;
     (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_op_str)
-      ::= A (V copy_atom_to_operand_nat_op_str);;
+      ::= A (V copy_atom_to_operand_tail_op_str);;
     (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_x_str)
       ::= A (V (snd'_prefix @ snd'_p_str));;
     (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_ret_str)
       ::= A (N 0);;
     invoke_subprogram copy_const_to_operand_tail_prefix copy_const_to_operand_tail_IMP_Minus;;
 
-    (copy_atom_to_operand_nat_ret_str) ::=
+    (copy_atom_to_operand_tail_ret_str) ::=
       A (V (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_ret_str))
     )
   ELSE 
     (
-    (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_nat_a_str);;
+    (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
     invoke_subprogram snd'_prefix snd'_IMP_Minus;;
 
     (copy_var_to_operand_tail_prefix @ copy_var_to_operand_tail_i_str)
-      ::= A (V copy_atom_to_operand_nat_n_str);;
+      ::= A (V copy_atom_to_operand_tail_n_str);;
     (copy_var_to_operand_tail_prefix @ copy_var_to_operand_tail_op_str)
-      ::= A (V copy_atom_to_operand_nat_op_str);;
+      ::= A (V copy_atom_to_operand_tail_op_str);;
     (copy_var_to_operand_tail_prefix @ copy_var_to_operand_tail_v_str)
       ::= A (V (snd'_prefix @ snd'_p_str));;
     (copy_var_to_operand_tail_prefix @ copy_var_to_operand_tail_ret_str)
       ::= A (N 0);;
     invoke_subprogram copy_var_to_operand_tail_prefix copy_var_to_operand_tail_IMP_Minus;;
 
-    (copy_atom_to_operand_nat_ret_str) ::=
+    (copy_atom_to_operand_tail_ret_str) ::=
       A (V (copy_var_to_operand_tail_prefix @ copy_var_to_operand_tail_ret_str))
     )
   "
 
-lemma copy_atom_to_operand_nat_IMP_Minus_correct_function:
-  "(invoke_subprogram p copy_atom_to_operand_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p copy_atom_to_operand_nat_ret_str)
-      = copy_atom_to_operand_nat_ret
-          (copy_atom_to_operand_nat_imp (copy_atom_to_operand_nat_imp_to_HOL_state p s))"
-  apply (simp only: copy_atom_to_operand_nat_imp.simps)
-  apply (simp only: copy_atom_to_operand_nat_IMP_Minus_def prefix_simps)
+lemma copy_atom_to_operand_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p copy_atom_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p copy_atom_to_operand_tail_ret_str)
+      = copy_atom_to_operand_tail_ret
+          (copy_atom_to_operand_tail_imp (copy_atom_to_operand_tail_imp_to_HOL_state p s))"
+  apply (simp only: copy_atom_to_operand_tail_imp.simps)
+  apply (simp only: copy_atom_to_operand_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
-  apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+  apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
   subgoal premises p using p(4) by fastforce
   apply (erule If_E)
     subgoal 
       apply (erule Seq_E)+
-      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (14) by fastforce
-      apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (16) by fastforce
-      apply (force simp: copy_atom_to_operand_nat_state_translators Let_def)
+      apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
     done 
 
     subgoal 
       apply (erule Seq_E)+
-      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (14) by fastforce
-      apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (16) by fastforce
-      apply (force simp: copy_atom_to_operand_nat_state_translators Let_def)
+      apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
     done 
   done 
 
-lemma copy_atom_to_operand_nat_IMP_Minus_correct_time:
-  "(invoke_subprogram p copy_atom_to_operand_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-    t = (copy_atom_to_operand_nat_imp_time 0 (copy_atom_to_operand_nat_imp_to_HOL_state p s))"
-  apply (simp only: copy_atom_to_operand_nat_imp_time.simps)
-  apply (simp only: copy_atom_to_operand_nat_IMP_Minus_def prefix_simps)
+lemma copy_atom_to_operand_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p copy_atom_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+    t = (copy_atom_to_operand_tail_imp_time 0 (copy_atom_to_operand_tail_imp_to_HOL_state p s))"
+  apply (simp only: copy_atom_to_operand_tail_imp_time.simps)
+  apply (simp only: copy_atom_to_operand_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
-  apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+  apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
   subgoal premises p using p(7) by fastforce
   apply (erule If_tE)
     subgoal 
       apply (erule Seq_tE)+
-      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (25) by fastforce
-      apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (27) by fastforce
-      apply (force simp: copy_atom_to_operand_nat_state_translators Let_def)
+      apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
     done 
 
     subgoal 
       apply (erule Seq_tE)+
-      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (25) by fastforce
-      apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_nat_IMP_vars])
+      apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (27) by fastforce
-      apply (force simp: copy_atom_to_operand_nat_state_translators Let_def)
+      apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
     done 
   done 
 
-lemma copy_atom_to_operand_nat_IMP_Minus_correct:
-  "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_atom_to_operand_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+lemma copy_atom_to_operand_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_atom_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
-    \<lbrakk>t = (copy_atom_to_operand_nat_imp_time 0 (copy_atom_to_operand_nat_imp_to_HOL_state (p1 @ p2) s));
-     s' (add_prefix (p1 @ p2) copy_atom_to_operand_nat_ret_str) =
-          copy_atom_to_operand_nat_ret (copy_atom_to_operand_nat_imp
-                                        (copy_atom_to_operand_nat_imp_to_HOL_state (p1 @ p2) s));
+    \<lbrakk>t = (copy_atom_to_operand_tail_imp_time 0 (copy_atom_to_operand_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) copy_atom_to_operand_tail_ret_str) =
+          copy_atom_to_operand_tail_ret (copy_atom_to_operand_tail_imp
+                                        (copy_atom_to_operand_tail_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_atom_to_operand_nat_IMP_Minus_correct_function 
-      copy_atom_to_operand_nat_IMP_Minus_correct_time
+  using copy_atom_to_operand_tail_IMP_Minus_correct_function 
+      copy_atom_to_operand_tail_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 

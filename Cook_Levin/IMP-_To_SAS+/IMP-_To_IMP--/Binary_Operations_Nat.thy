@@ -207,11 +207,11 @@ definition copy_atom_to_operand_nat:: "nat \<Rightarrow> nat \<Rightarrow> nat \
 
 definition copy_atom_to_operand_tail:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "copy_atom_to_operand_tail n op a = ( if fst_nat a = 0 then  copy_var_to_operand_tail n op (snd_nat a)
- else copy_const_to_operand_nat n op (snd_nat a))"
+ else copy_const_to_operand_tail n op (snd_nat a))"
 
 lemma subtail_copy_atom_to_operand: "copy_atom_to_operand_tail n op a = copy_atom_to_operand_nat n op a"
   apply (simp only: copy_atom_to_operand_tail_def copy_atom_to_operand_nat_def
-subtail_copy_var_to_operand  ) done
+subtail_copy_var_to_operand subtail_copy_const_to_operand) done
 
 lemma sub_copy_atom_to_operand: 
 "copy_atom_to_operand_nat n (encode_char op) (atomExp_encode a) = comm_encode (copy_atom_to_operand n op a)"
