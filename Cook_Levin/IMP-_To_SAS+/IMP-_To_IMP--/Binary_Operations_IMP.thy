@@ -10,6 +10,1792 @@ begin
 
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
+subsection \<open>com_list_to_seq\<close>
+
+subsubsection \<open>com_list_to_seq_acc\<close>
+
+record com_list_to_seq_acc_state =
+  com_list_to_seq_acc_acc::nat
+  com_list_to_seq_acc_n::nat
+  com_list_to_seq_acc_ret::nat
+
+abbreviation "com_list_to_seq_acc_prefix \<equiv> ''com_list_to_seq_acc.''"
+abbreviation "com_list_to_seq_acc_acc_str \<equiv> ''acc''"
+abbreviation "com_list_to_seq_acc_n_str \<equiv> ''n''"
+abbreviation "com_list_to_seq_acc_ret_str \<equiv> ''ret''"
+
+definition "com_list_to_seq_acc_state_upd s \<equiv>
+  (let
+      cons_h' = com_list_to_seq_acc_acc s;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      hd_xs' = com_list_to_seq_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      cons_h' = hd_ret hd_ret_state;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      com_list_to_seq_acc_acc' = cons_ret cons_ret_state;
+      tl_xs' = com_list_to_seq_acc_n s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      com_list_to_seq_acc_n' = tl_ret tl_ret_state;
+      ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',
+             com_list_to_seq_acc_n = com_list_to_seq_acc_n',
+             com_list_to_seq_acc_ret = com_list_to_seq_acc_ret s\<rparr>
+  in
+      ret
+)"
+
+definition "com_list_to_seq_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      condition = com_list_to_seq_acc_n s
+  in
+      condition
+)"
+
+definition "com_list_to_seq_acc_imp_after_loop s \<equiv>
+  (let
+      com_list_to_seq_acc_ret' = com_list_to_seq_acc_acc s;
+      ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc s,
+             com_list_to_seq_acc_n = com_list_to_seq_acc_n s,
+             com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas com_list_to_seq_acc_imp_subprogram_simps = 
+  com_list_to_seq_acc_state_upd_def
+  com_list_to_seq_acc_imp_compute_loop_condition_def
+  com_list_to_seq_acc_imp_after_loop_def
+
+function com_list_to_seq_acc_imp::
+  "com_list_to_seq_acc_state \<Rightarrow> com_list_to_seq_acc_state" where
+  "com_list_to_seq_acc_imp s =
+  (if com_list_to_seq_acc_imp_compute_loop_condition s \<noteq> 0
+   then let next_iteration = com_list_to_seq_acc_imp (com_list_to_seq_acc_state_upd s)
+        in next_iteration
+   else let ret = com_list_to_seq_acc_imp_after_loop s
+        in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure com_list_to_seq_acc_n")
+  apply (simp add: com_list_to_seq_acc_imp_subprogram_simps tl_imp_correct)+
+  done
+
+declare com_list_to_seq_acc_imp.simps [simp del]
+
+lemma com_list_to_seq_acc_imp_correct[let_function_correctness]:
+  "com_list_to_seq_acc_ret (com_list_to_seq_acc_imp s) =
+    com_list_to_seq_acc (com_list_to_seq_acc_acc s) (com_list_to_seq_acc_n s)"
+  apply (induction s rule: com_list_to_seq_acc_imp.induct)
+  apply (subst com_list_to_seq_acc_imp.simps)
+  apply (subst com_list_to_seq_acc.simps)
+  apply (simp del: com_list_to_seq_acc.simps add: com_list_to_seq_acc_imp_subprogram_simps Let_def
+  cons_imp_correct hd_imp_correct tl_imp_correct)
+  done 
+
+definition "com_list_to_seq_acc_state_upd_time t s \<equiv>
+  (let
+      cons_h' = com_list_to_seq_acc_acc s;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      hd_xs' = com_list_to_seq_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      cons_h' = hd_ret hd_ret_state;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      com_list_to_seq_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      tl_xs' = com_list_to_seq_acc_n s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      com_list_to_seq_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',
+             com_list_to_seq_acc_n = com_list_to_seq_acc_n',
+             com_list_to_seq_acc_ret = com_list_to_seq_acc_ret s\<rparr>
+  in
+      t
+)"
+
+definition "com_list_to_seq_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = com_list_to_seq_acc_n s;
+      t = t + 2
+  in
+      t
+)"
+
+definition "com_list_to_seq_acc_imp_after_loop_time t s \<equiv>
+  (let
+      com_list_to_seq_acc_ret' = com_list_to_seq_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc s,
+             com_list_to_seq_acc_n = com_list_to_seq_acc_n s,
+             com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas com_list_to_seq_acc_imp_subprogram_time_simps = 
+  com_list_to_seq_acc_state_upd_time_def
+  com_list_to_seq_acc_imp_compute_loop_condition_time_def
+  com_list_to_seq_acc_imp_after_loop_time_def
+  com_list_to_seq_acc_imp_subprogram_simps
+
+function com_list_to_seq_acc_imp_time::
+  "nat \<Rightarrow> com_list_to_seq_acc_state \<Rightarrow> nat" where
+  "com_list_to_seq_acc_imp_time t s =
+  com_list_to_seq_acc_imp_compute_loop_condition_time 0 s +
+  (if com_list_to_seq_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          com_list_to_seq_acc_imp_time (t + com_list_to_seq_acc_state_upd_time 0 s)
+                         (com_list_to_seq_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + com_list_to_seq_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (com_list_to_seq_acc_n \<circ> snd)")
+  by (simp add: com_list_to_seq_acc_imp_subprogram_time_simps tl_imp_correct)+
+
+declare com_list_to_seq_acc_imp_time.simps [simp del]
+
+lemma com_list_to_seq_acc_imp_time_acc:
+  "(com_list_to_seq_acc_imp_time (Suc t) s) = Suc (com_list_to_seq_acc_imp_time t s)"
+  by (induction t s rule: com_list_to_seq_acc_imp_time.induct)
+    ((subst (1 2) com_list_to_seq_acc_imp_time.simps);
+      (simp add: com_list_to_seq_acc_state_upd_def))            
+
+lemma com_list_to_seq_acc_imp_time_acc_2_aux:
+  "(com_list_to_seq_acc_imp_time t s) = t + (com_list_to_seq_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: com_list_to_seq_acc_imp_time_acc)+            
+
+lemma com_list_to_seq_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (com_list_to_seq_acc_imp_time t s) = t + (com_list_to_seq_acc_imp_time 0 s)"
+  by (rule com_list_to_seq_acc_imp_time_acc_2_aux)            
+
+lemma com_list_to_seq_acc_imp_time_acc_3:
+  "(com_list_to_seq_acc_imp_time (a + b) s) = a + (com_list_to_seq_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: com_list_to_seq_acc_imp_time_acc)+  
+
+abbreviation "com_list_to_seq_acc_while_cond \<equiv> ''condition''"
+
+definition "com_list_to_seq_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  condition = com_list_to_seq_acc_n s\<close>
+  (com_list_to_seq_acc_while_cond) ::= (A (V com_list_to_seq_acc_n_str))
+"
+
+definition "com_list_to_seq_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  cons_h' = com_list_to_seq_acc_acc s;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V com_list_to_seq_acc_acc_str));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  hd_xs' = com_list_to_seq_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V com_list_to_seq_acc_n_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  cons_h' = hd_ret hd_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  com_list_to_seq_acc_acc' = cons_ret cons_ret_state;\<close>
+  (com_list_to_seq_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  tl_xs' = com_list_to_seq_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V com_list_to_seq_acc_n_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs',\<close>
+  \<comment> \<open>              tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  (invoke_subprogram tl_prefix tl_IMP_Minus);;
+  \<comment> \<open>  com_list_to_seq_acc_n' = tl_ret tl_ret_state;\<close>
+  (com_list_to_seq_acc_n_str) ::= (A (V (tl_prefix @ tl_ret_str)))
+  \<comment> \<open>  ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',\<close>
+  \<comment> \<open>         com_list_to_seq_acc_n = com_list_to_seq_acc_n',\<close>
+  \<comment> \<open>         com_list_to_seq_acc_ret = com_list_to_seq_acc_ret s\<rparr>\<close>
+"
+
+definition "com_list_to_seq_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  com_list_to_seq_acc_ret' = com_list_to_seq_acc_acc s;\<close>
+  (com_list_to_seq_acc_ret_str) ::= (A (V com_list_to_seq_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc s,\<close>
+  \<comment> \<open>         com_list_to_seq_acc_n = com_list_to_seq_acc_n s,\<close>
+  \<comment> \<open>         com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>\<close>
+"
+
+definition com_list_to_seq_acc_IMP_Minus where
+  "com_list_to_seq_acc_IMP_Minus \<equiv>
+  com_list_to_seq_acc_IMP_init_while_cond;;
+  WHILE com_list_to_seq_acc_while_cond \<noteq>0 DO (
+    com_list_to_seq_acc_IMP_loop_body;;
+    com_list_to_seq_acc_IMP_init_while_cond
+  );;
+  com_list_to_seq_acc_IMP_after_loop"
+
+abbreviation "com_list_to_seq_acc_IMP_vars \<equiv>
+  {com_list_to_seq_acc_acc_str, com_list_to_seq_acc_n_str, com_list_to_seq_acc_ret_str}"
+
+lemmas com_list_to_seq_acc_IMP_subprogram_simps =
+  com_list_to_seq_acc_IMP_init_while_cond_def
+  com_list_to_seq_acc_IMP_loop_body_def
+  com_list_to_seq_acc_IMP_after_loop_def
+
+definition "com_list_to_seq_acc_imp_to_HOL_state p s =
+  \<lparr>com_list_to_seq_acc_acc = (s (add_prefix p com_list_to_seq_acc_acc_str)),
+   com_list_to_seq_acc_n = (s (add_prefix p com_list_to_seq_acc_n_str)),
+   com_list_to_seq_acc_ret = (s (add_prefix p com_list_to_seq_acc_ret_str))\<rparr>"
+
+lemmas com_list_to_seq_acc_state_translators =
+  com_list_to_seq_acc_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+
+lemmas com_list_to_seq_acc_complete_simps =
+  com_list_to_seq_acc_IMP_subprogram_simps
+  com_list_to_seq_acc_imp_subprogram_simps
+  com_list_to_seq_acc_state_translators
+
+lemma com_list_to_seq_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p com_list_to_seq_acc_ret_str)
+      = com_list_to_seq_acc_ret
+          (com_list_to_seq_acc_imp (com_list_to_seq_acc_imp_to_HOL_state p s))"
+  apply(induction "com_list_to_seq_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: com_list_to_seq_acc_imp.induct)
+  apply(subst com_list_to_seq_acc_imp.simps)
+  apply(simp only: com_list_to_seq_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: com_list_to_seq_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: com_list_to_seq_acc_IMP_subprogram_simps
+        com_list_to_seq_acc_imp_subprogram_simps
+        com_list_to_seq_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: com_list_to_seq_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: com_list_to_seq_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) com_list_to_seq_acc_IMP_init_while_cond_def)
+      apply(simp only: com_list_to_seq_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule hd_IMP_Minus_correct[where 
+            vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(31) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(33) by fastforce
+      by (simp only: com_list_to_seq_acc_imp_subprogram_simps
+          com_list_to_seq_acc_state_translators Let_def, force)
+
+  subgoal
+      apply(simp only: com_list_to_seq_acc_IMP_init_while_cond_def prefix_simps
+          com_list_to_seq_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule hd_IMP_Minus_correct[where 
+            vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(31) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+      subgoal premises p using p(33) by fastforce
+      by (fastforce_sorted_premises2 simp: com_list_to_seq_acc_imp_subprogram_simps
+          com_list_to_seq_acc_state_translators Let_def)
+  done  
+
+lemma com_list_to_seq_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ com_list_to_seq_acc_pref) com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix com_list_to_seq_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast     
+
+lemmas com_list_to_seq_acc_complete_time_simps =
+  com_list_to_seq_acc_imp_subprogram_time_simps
+  com_list_to_seq_acc_imp_time_acc
+  com_list_to_seq_acc_imp_time_acc_2
+  com_list_to_seq_acc_imp_time_acc_3
+  com_list_to_seq_acc_state_translators
+
+lemma com_list_to_seq_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = com_list_to_seq_acc_imp_time 0 (com_list_to_seq_acc_imp_to_HOL_state p s)"
+  apply(induction "com_list_to_seq_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: com_list_to_seq_acc_imp.induct)
+  apply(subst com_list_to_seq_acc_imp_time.simps)
+  apply(simp only: com_list_to_seq_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: com_list_to_seq_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: com_list_to_seq_acc_IMP_subprogram_simps
+        com_list_to_seq_acc_imp_subprogram_time_simps com_list_to_seq_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: com_list_to_seq_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: com_list_to_seq_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) com_list_to_seq_acc_IMP_init_while_cond_def)
+    apply(simp only: com_list_to_seq_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule hd_IMP_Minus_correct[where 
+          vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(51) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    by (simp only: com_list_to_seq_acc_imp_subprogram_time_simps
+        com_list_to_seq_acc_state_translators Let_def, force)
+
+  subgoal
+    apply(simp only: prefix_simps com_list_to_seq_acc_IMP_init_while_cond_def
+        com_list_to_seq_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(47) by fastforce
+    apply(erule hd_IMP_Minus_correct[where 
+          vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(49) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(51) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(53) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(simp only: com_list_to_seq_acc_complete_time_simps Let_def)
+    by (fastforce_sorted_premises simp: Let_def com_list_to_seq_acc_complete_time_simps)
+  done 
+
+lemma com_list_to_seq_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (com_list_to_seq_acc_imp_time 0 (com_list_to_seq_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) com_list_to_seq_acc_ret_str) =
+          com_list_to_seq_acc_ret (com_list_to_seq_acc_imp
+                                        (com_list_to_seq_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using com_list_to_seq_acc_IMP_Minus_correct_function
+    com_list_to_seq_acc_IMP_Minus_correct_time
+    com_list_to_seq_acc_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>com_list_to_seq_tail\<close>
+
+record com_list_to_seq_tail_state =
+  com_list_to_seq_tail_ys::nat
+  com_list_to_seq_tail_ret::nat
+
+abbreviation "com_list_to_seq_tail_prefix \<equiv> ''com_list_to_seq_tail.''"
+abbreviation "com_list_to_seq_tail_ys_str \<equiv> ''ys''"
+abbreviation "com_list_to_seq_tail_ret_str \<equiv> ''ret''"
+
+definition "com_list_to_seq_tail_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      reverse_nat_n' = com_list_to_seq_tail_ys s;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      com_list_to_seq_acc_acc' = cons_result;
+      com_list_to_seq_acc_n' = reverse_nat_ret reverse_nat_ret_state;
+      com_list_to_seq_acc_ret' = 0;
+      com_list_to_seq_acc_state = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',
+                                   com_list_to_seq_acc_n = com_list_to_seq_acc_n',
+                                   com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>;
+      com_list_to_seq_acc_ret_state = com_list_to_seq_acc_imp com_list_to_seq_acc_state;
+      com_list_to_seq_tail_ret' = com_list_to_seq_acc_ret com_list_to_seq_acc_ret_state;
+      ret = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys s,
+             com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function com_list_to_seq_tail_imp ::
+  "com_list_to_seq_tail_state \<Rightarrow> com_list_to_seq_tail_state" where
+  "com_list_to_seq_tail_imp s =
+  (let 
+      ret = com_list_to_seq_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure com_list_to_seq_tail_ys") simp
+
+declare com_list_to_seq_tail_imp.simps [simp del]
+
+lemma com_list_to_seq_tail_imp_correct[let_function_correctness]:
+  "com_list_to_seq_tail_ret (com_list_to_seq_tail_imp s) =
+    com_list_to_seq_tail (com_list_to_seq_tail_ys s)"
+  apply (simp only: com_list_to_seq_tail_imp.simps Let_def com_list_to_seq_tail_state_upd_def
+  cons_imp_correct reverse_nat_imp_correct com_list_to_seq_acc_imp_correct com_list_to_seq_tail_def)
+  by simp    
+
+function com_list_to_seq_tail_imp_time ::
+  "nat \<Rightarrow> com_list_to_seq_tail_state \<Rightarrow> nat" where
+  "com_list_to_seq_tail_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      reverse_nat_n' = com_list_to_seq_tail_ys s;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      com_list_to_seq_acc_acc' = cons_result;
+      t = t + 2;
+      com_list_to_seq_acc_n' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      com_list_to_seq_acc_ret' = 0;
+      t = t + 2;
+      com_list_to_seq_acc_state = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',
+                                   com_list_to_seq_acc_n = com_list_to_seq_acc_n',
+                                   com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>;
+      com_list_to_seq_acc_ret_state = com_list_to_seq_acc_imp com_list_to_seq_acc_state;
+      t = t + com_list_to_seq_acc_imp_time 0 com_list_to_seq_acc_state;
+      com_list_to_seq_tail_ret' = com_list_to_seq_acc_ret com_list_to_seq_acc_ret_state;
+      t = t + 2;
+      ret = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys s,
+             com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (com_list_to_seq_tail_ys \<circ> snd)") simp
+
+declare com_list_to_seq_tail_imp_time.simps [simp del]
+
+lemma com_list_to_seq_tail_imp_time_acc:
+  "(com_list_to_seq_tail_imp_time (Suc t) s) = Suc (com_list_to_seq_tail_imp_time t s)"
+  by (induction t s rule: com_list_to_seq_tail_imp_time.induct)
+    ((subst (1 2) com_list_to_seq_tail_imp_time.simps);
+      (simp add: com_list_to_seq_tail_state_upd_def Let_def))            
+
+lemma com_list_to_seq_tail_imp_time_acc_2_aux:
+  "(com_list_to_seq_tail_imp_time t s) = t + (com_list_to_seq_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: com_list_to_seq_tail_imp_time_acc)+            
+
+lemma com_list_to_seq_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (com_list_to_seq_tail_imp_time t s) = t + (com_list_to_seq_tail_imp_time 0 s)"
+  by (rule com_list_to_seq_tail_imp_time_acc_2_aux)            
+
+lemma com_list_to_seq_tail_imp_time_acc_3:
+  "(com_list_to_seq_tail_imp_time (a + b) s) = a + (com_list_to_seq_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: com_list_to_seq_tail_imp_time_acc)+ 
+
+abbreviation "com_list_to_seq_tail_cons_result \<equiv> ''cons_result''"
+
+definition com_list_to_seq_tail_IMP_Minus where
+  "com_list_to_seq_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (com_list_to_seq_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  reverse_nat_n' = com_list_to_seq_tail_ys s;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V com_list_to_seq_tail_ys_str));;
+  \<comment> \<open>  reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n', reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  (invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus);;
+  \<comment> \<open>  com_list_to_seq_acc_acc' = cons_result;\<close>
+  (com_list_to_seq_acc_prefix @ com_list_to_seq_acc_acc_str) ::= (A (V com_list_to_seq_tail_cons_result));;
+  \<comment> \<open>  com_list_to_seq_acc_n' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (com_list_to_seq_acc_prefix @ com_list_to_seq_acc_n_str) ::= (A (V (reverse_nat_prefix @ reverse_nat_ret_str)));;
+  \<comment> \<open>  com_list_to_seq_acc_ret' = 0;\<close>
+  (com_list_to_seq_acc_prefix @ com_list_to_seq_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  com_list_to_seq_acc_state = \<lparr>com_list_to_seq_acc_acc = com_list_to_seq_acc_acc',\<close>
+  \<comment> \<open>                               com_list_to_seq_acc_n = com_list_to_seq_acc_n',\<close>
+  \<comment> \<open>                               com_list_to_seq_acc_ret = com_list_to_seq_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  com_list_to_seq_acc_ret_state = com_list_to_seq_acc_imp com_list_to_seq_acc_state;\<close>
+  (invoke_subprogram com_list_to_seq_acc_prefix com_list_to_seq_acc_IMP_Minus);;
+  \<comment> \<open>  com_list_to_seq_tail_ret' = com_list_to_seq_acc_ret com_list_to_seq_acc_ret_state;\<close>
+  (com_list_to_seq_tail_ret_str) ::= (A (V (com_list_to_seq_acc_prefix @ com_list_to_seq_acc_ret_str)))
+  \<comment> \<open>  ret = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys s,\<close>
+  \<comment> \<open>         com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "com_list_to_seq_tail_IMP_vars \<equiv>
+  {com_list_to_seq_tail_ys_str, com_list_to_seq_tail_ret_str, com_list_to_seq_tail_cons_result}"
+
+definition "com_list_to_seq_tail_imp_to_HOL_state p s =
+  \<lparr>com_list_to_seq_tail_ys = (s (add_prefix p com_list_to_seq_tail_ys_str)),
+   com_list_to_seq_tail_ret = (s (add_prefix p com_list_to_seq_tail_ret_str))\<rparr>"
+
+lemmas com_list_to_seq_tail_state_translators =
+  com_list_to_seq_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+  com_list_to_seq_acc_imp_to_HOL_state_def
+
+lemma com_list_to_seq_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p com_list_to_seq_tail_ret_str)
+      = com_list_to_seq_tail_ret
+          (com_list_to_seq_tail_imp (com_list_to_seq_tail_imp_to_HOL_state p s))"
+  apply(subst com_list_to_seq_tail_imp.simps)
+  apply(simp only: com_list_to_seq_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(13) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(15) by fastforce
+  apply(erule com_list_to_seq_acc_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  by(fastforce simp: com_list_to_seq_tail_state_translators
+    com_list_to_seq_tail_state_upd_def)     
+
+lemma com_list_to_seq_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ com_list_to_seq_tail_pref) com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix com_list_to_seq_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma com_list_to_seq_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = com_list_to_seq_tail_imp_time 0 (com_list_to_seq_tail_imp_to_HOL_state p s)"
+  apply(subst com_list_to_seq_tail_imp_time.simps)
+  apply(simp only: com_list_to_seq_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(27) by fastforce
+  apply(erule com_list_to_seq_acc_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  by(fastforce simp add: Let_def com_list_to_seq_tail_state_translators)   
+
+lemma com_list_to_seq_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (com_list_to_seq_tail_imp_time 0 (com_list_to_seq_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) com_list_to_seq_tail_ret_str) =
+          com_list_to_seq_tail_ret (com_list_to_seq_tail_imp
+                                        (com_list_to_seq_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using com_list_to_seq_tail_IMP_Minus_correct_function
+    com_list_to_seq_tail_IMP_Minus_correct_time
+    com_list_to_seq_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
+subsection \<open>binary_assign_constant\<close>
+
+subsubsection \<open>binary_assign_constant_acc_aux\<close>
+
+fun binary_assign_constant_acc_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_assign_constant_acc_aux diff n v x = 
+    (cons (var_bit_to_var_tail(prod_encode (v,n-diff))) (cons (nth_bit_tail x (n-diff)) 0))"
+
+record binary_assign_constant_acc_aux_state =
+  binary_assign_constant_acc_aux_diff::nat
+  binary_assign_constant_acc_aux_n::nat
+  binary_assign_constant_acc_aux_v::nat
+  binary_assign_constant_acc_aux_x::nat
+  binary_assign_constant_acc_aux_ret::nat
+
+abbreviation "binary_assign_constant_acc_aux_prefix \<equiv> ''binary_assign_constant_acc_aux.''"
+abbreviation "binary_assign_constant_acc_aux_diff_str \<equiv> ''diff''"
+abbreviation "binary_assign_constant_acc_aux_n_str \<equiv> ''n''"
+abbreviation "binary_assign_constant_acc_aux_v_str \<equiv> ''v''"
+abbreviation "binary_assign_constant_acc_aux_x_str \<equiv> ''x''"
+abbreviation "binary_assign_constant_acc_aux_ret_str \<equiv> ''ret''"
+
+definition "binary_assign_constant_acc_aux_state_upd s \<equiv>
+  (let
+      prod_encode_a' = binary_assign_constant_acc_aux_v s;
+      prod_encode_b' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      var_bit_to_var_tail_ret' = 0;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      var_bit_to_var_tail_result = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      nth_bit_tail_acc' = binary_assign_constant_acc_aux_x s;
+      nth_bit_tail_n' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;
+      nth_bit_tail_ret' = 0;
+      nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+                            nth_bit_tail_n = nth_bit_tail_n',
+                            nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;
+      nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;
+      cons_h' = nth_bit_tail_ret nth_bit_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = var_bit_to_var_tail_result;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_assign_constant_acc_aux_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff s,
+             binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n s,
+             binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v s,
+             binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x s,
+             binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_assign_constant_acc_aux_imp ::
+  "binary_assign_constant_acc_aux_state \<Rightarrow> binary_assign_constant_acc_aux_state" where
+  "binary_assign_constant_acc_aux_imp s =
+  (let 
+      ret = binary_assign_constant_acc_aux_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_assign_constant_acc_aux_diff") simp
+
+declare binary_assign_constant_acc_aux_imp.simps [simp del]
+
+lemma binary_assign_constant_acc_aux_imp_correct[let_function_correctness]:
+  "binary_assign_constant_acc_aux_ret (binary_assign_constant_acc_aux_imp s) =
+    binary_assign_constant_acc_aux (binary_assign_constant_acc_aux_diff s) (binary_assign_constant_acc_aux_n s)
+      (binary_assign_constant_acc_aux_v s) (binary_assign_constant_acc_aux_x s)"
+  apply (simp only: binary_assign_constant_acc_aux_imp.simps Let_def binary_assign_constant_acc_aux_state_upd_def
+  prod_encode_imp_correct var_bit_to_var_tail_imp_correct nth_bit_tail_imp_correct cons_imp_correct)
+  by (simp add: nth_bit_tail'_correct)    
+
+function binary_assign_constant_acc_aux_imp_time ::
+  "nat \<Rightarrow> binary_assign_constant_acc_aux_state \<Rightarrow> nat" where
+  "binary_assign_constant_acc_aux_imp_time t s =
+  (let
+      prod_encode_a' = binary_assign_constant_acc_aux_v s;
+      t = t + 2;
+      prod_encode_b' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      var_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
+      var_bit_to_var_tail_result = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      t = t + 2;
+      nth_bit_tail_acc' = binary_assign_constant_acc_aux_x s;
+      t = t + 2;
+      nth_bit_tail_n' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;
+      t = t + 2;
+      nth_bit_tail_ret' = 0;
+      t = t + 2;
+      nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',
+                            nth_bit_tail_n = nth_bit_tail_n',
+                            nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;
+      nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;
+      t = t + nth_bit_tail_imp_time 0 nth_bit_tail_state;
+      cons_h' = nth_bit_tail_ret nth_bit_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = var_bit_to_var_tail_result;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_assign_constant_acc_aux_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff s,
+             binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n s,
+             binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v s,
+             binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x s,
+             binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_assign_constant_acc_aux_diff \<circ> snd)") simp
+
+declare binary_assign_constant_acc_aux_imp_time.simps [simp del]
+
+lemma binary_assign_constant_acc_aux_imp_time_acc:
+  "(binary_assign_constant_acc_aux_imp_time (Suc t) s) = Suc (binary_assign_constant_acc_aux_imp_time t s)"
+  by (induction t s rule: binary_assign_constant_acc_aux_imp_time.induct)
+    ((subst (1 2) binary_assign_constant_acc_aux_imp_time.simps);
+      (simp add: binary_assign_constant_acc_aux_state_upd_def Let_def))            
+
+lemma binary_assign_constant_acc_aux_imp_time_acc_2_aux:
+  "(binary_assign_constant_acc_aux_imp_time t s) = t + (binary_assign_constant_acc_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+            
+
+lemma binary_assign_constant_acc_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_acc_aux_imp_time t s) = t + (binary_assign_constant_acc_aux_imp_time 0 s)"
+  by (rule binary_assign_constant_acc_aux_imp_time_acc_2_aux)            
+
+lemma binary_assign_constant_acc_aux_imp_time_acc_3:
+  "(binary_assign_constant_acc_aux_imp_time (a + b) s) = a + (binary_assign_constant_acc_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+ 
+
+abbreviation "binary_assign_constant_acc_aux_var_bit_to_var_tail_result \<equiv> ''var_bit_to_var_tail_result''"
+
+definition binary_assign_constant_acc_aux_IMP_Minus where
+  "binary_assign_constant_acc_aux_IMP_Minus \<equiv>
+  \<comment> \<open>  prod_encode_a' = binary_assign_constant_acc_aux_v s;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V binary_assign_constant_acc_aux_v_str));;
+  \<comment> \<open>  prod_encode_b' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V binary_assign_constant_acc_aux_n_str) (V binary_assign_constant_acc_aux_diff_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  var_bit_to_var_tail_ret' = 0;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;\<close>
+  (invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_result = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;\<close>
+  (binary_assign_constant_acc_aux_var_bit_to_var_tail_result) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  nth_bit_tail_acc' = binary_assign_constant_acc_aux_x s;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_acc_str) ::= (A (V binary_assign_constant_acc_aux_x_str));;
+  \<comment> \<open>  nth_bit_tail_n' = binary_assign_constant_acc_aux_n s - binary_assign_constant_acc_aux_diff s;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_n_str) ::= (Sub (V binary_assign_constant_acc_aux_n_str) (V binary_assign_constant_acc_aux_diff_str));;
+  \<comment> \<open>  nth_bit_tail_ret' = 0;\<close>
+  (nth_bit_tail_prefix @ nth_bit_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_bit_tail_state = \<lparr>nth_bit_tail_acc = nth_bit_tail_acc',\<close>
+  \<comment> \<open>                        nth_bit_tail_n = nth_bit_tail_n',\<close>
+  \<comment> \<open>                        nth_bit_tail_ret = nth_bit_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_bit_tail_ret_state = nth_bit_tail_imp nth_bit_tail_state;\<close>
+  (invoke_subprogram nth_bit_tail_prefix nth_bit_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = nth_bit_tail_ret nth_bit_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (nth_bit_tail_prefix @ nth_bit_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = var_bit_to_var_tail_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V binary_assign_constant_acc_aux_var_bit_to_var_tail_result));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_assign_constant_acc_aux_ret' = cons_ret cons_ret_state;\<close>
+  (binary_assign_constant_acc_aux_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_assign_constant_acc_aux_IMP_vars \<equiv>
+  {binary_assign_constant_acc_aux_diff_str, binary_assign_constant_acc_aux_n_str, binary_assign_constant_acc_aux_v_str,
+  binary_assign_constant_acc_aux_x_str, binary_assign_constant_acc_aux_ret_str,
+  binary_assign_constant_acc_aux_var_bit_to_var_tail_result}"
+
+definition "binary_assign_constant_acc_aux_imp_to_HOL_state p s =
+  \<lparr>binary_assign_constant_acc_aux_diff = (s (add_prefix p binary_assign_constant_acc_aux_diff_str)),
+   binary_assign_constant_acc_aux_n = (s (add_prefix p binary_assign_constant_acc_aux_n_str)),
+   binary_assign_constant_acc_aux_v = (s (add_prefix p binary_assign_constant_acc_aux_v_str)),
+   binary_assign_constant_acc_aux_x = (s (add_prefix p binary_assign_constant_acc_aux_x_str)),
+   binary_assign_constant_acc_aux_ret = (s (add_prefix p binary_assign_constant_acc_aux_ret_str))\<rparr>"
+
+lemmas binary_assign_constant_acc_aux_state_translators =
+  binary_assign_constant_acc_aux_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
+  nth_bit_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma binary_assign_constant_acc_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_assign_constant_acc_aux_ret_str)
+      = binary_assign_constant_acc_aux_ret
+          (binary_assign_constant_acc_aux_imp (binary_assign_constant_acc_aux_imp_to_HOL_state p s))"
+  apply(subst binary_assign_constant_acc_aux_imp.simps)
+  apply(simp only: binary_assign_constant_acc_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(21) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(27) by fastforce      
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  by(fastforce_sorted_premises2 simp: binary_assign_constant_acc_aux_state_translators Let_def
+    binary_assign_constant_acc_aux_state_upd_def)        
+
+lemma binary_assign_constant_acc_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_acc_aux_pref) binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_assign_constant_acc_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma binary_assign_constant_acc_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_assign_constant_acc_aux_imp_time 0 (binary_assign_constant_acc_aux_imp_to_HOL_state p s)"
+  apply(subst binary_assign_constant_acc_aux_imp_time.simps)
+  apply(simp only: binary_assign_constant_acc_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(47) by fastforce      
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  by(force simp: Let_def binary_assign_constant_acc_aux_state_translators)
+
+lemma binary_assign_constant_acc_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_assign_constant_acc_aux_imp_time 0 (binary_assign_constant_acc_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_assign_constant_acc_aux_ret_str) =
+          binary_assign_constant_acc_aux_ret (binary_assign_constant_acc_aux_imp
+                                        (binary_assign_constant_acc_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_assign_constant_acc_aux_IMP_Minus_correct_function
+    binary_assign_constant_acc_aux_IMP_Minus_correct_time
+    binary_assign_constant_acc_aux_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>binary_assign_constant_acc\<close>
+
+fun binary_assign_constant_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_assign_constant_acc' acc diff n v x = (if diff = 0 then acc else
+    binary_assign_constant_acc' (cons 2 (cons (cons 1 
+      (binary_assign_constant_acc_aux diff n v x))
+      (cons acc 0) )) (diff-1) n v x )"
+
+lemma binary_assign_constant_acc'_correct:
+  "binary_assign_constant_acc acc diff n v x = binary_assign_constant_acc' acc diff n v x"
+  by (induction acc diff n v x rule: binary_assign_constant_acc.induct) simp
+
+record binary_assign_constant_acc_state =
+  binary_assign_constant_acc_acc::nat
+  binary_assign_constant_acc_diff::nat
+  binary_assign_constant_acc_n::nat
+  binary_assign_constant_acc_v::nat
+  binary_assign_constant_acc_x::nat
+  binary_assign_constant_acc_ret::nat
+
+abbreviation "binary_assign_constant_acc_prefix \<equiv> ''binary_assign_constant_acc.''"
+abbreviation "binary_assign_constant_acc_acc_str \<equiv> ''acc''"
+abbreviation "binary_assign_constant_acc_diff_str \<equiv> ''diff''"
+abbreviation "binary_assign_constant_acc_n_str \<equiv> ''n''"
+abbreviation "binary_assign_constant_acc_v_str \<equiv> ''v''"
+abbreviation "binary_assign_constant_acc_x_str \<equiv> ''x''"
+abbreviation "binary_assign_constant_acc_ret_str \<equiv> ''ret''"
+
+definition "binary_assign_constant_acc_state_upd s \<equiv>
+  (let
+      binary_assign_constant_acc_aux_diff' = binary_assign_constant_acc_diff s;
+      binary_assign_constant_acc_aux_n' = binary_assign_constant_acc_n s;
+      binary_assign_constant_acc_aux_v' = binary_assign_constant_acc_v s;
+      binary_assign_constant_acc_aux_x' = binary_assign_constant_acc_x s;
+      binary_assign_constant_acc_aux_ret' = 0;
+      binary_assign_constant_acc_aux_state = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff',
+                                              binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n',
+                                              binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v',
+                                              binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x',
+                                              binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>;
+      binary_assign_constant_acc_aux_ret_state = binary_assign_constant_acc_aux_imp binary_assign_constant_acc_aux_state;
+      cons_h' = 1;
+      cons_t' = binary_assign_constant_acc_aux_ret binary_assign_constant_acc_aux_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      cons_h' = binary_assign_constant_acc_acc s;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_result;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_assign_constant_acc_acc' = cons_ret cons_ret_state;
+      binary_assign_constant_acc_diff' = binary_assign_constant_acc_diff s - 1;
+      ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',
+             binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',
+             binary_assign_constant_acc_n = binary_assign_constant_acc_n s,
+             binary_assign_constant_acc_v = binary_assign_constant_acc_v s,
+             binary_assign_constant_acc_x = binary_assign_constant_acc_x s,
+             binary_assign_constant_acc_ret = binary_assign_constant_acc_ret s\<rparr>
+  in
+      ret
+)"
+
+definition "binary_assign_constant_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      condition = binary_assign_constant_acc_diff s
+  in
+      condition
+)"
+
+definition "binary_assign_constant_acc_imp_after_loop s \<equiv>
+  (let
+      binary_assign_constant_acc_ret' = binary_assign_constant_acc_acc s;
+      ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc s,
+             binary_assign_constant_acc_diff = binary_assign_constant_acc_diff s,
+             binary_assign_constant_acc_n = binary_assign_constant_acc_n s,
+             binary_assign_constant_acc_v = binary_assign_constant_acc_v s,
+             binary_assign_constant_acc_x = binary_assign_constant_acc_x s,
+             binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas binary_assign_constant_acc_imp_subprogram_simps = 
+  binary_assign_constant_acc_state_upd_def
+  binary_assign_constant_acc_imp_compute_loop_condition_def
+  binary_assign_constant_acc_imp_after_loop_def
+
+function binary_assign_constant_acc_imp::
+  "binary_assign_constant_acc_state \<Rightarrow> binary_assign_constant_acc_state" where
+  "binary_assign_constant_acc_imp s =
+  (if binary_assign_constant_acc_imp_compute_loop_condition s \<noteq> 0
+   then let next_iteration = binary_assign_constant_acc_imp (binary_assign_constant_acc_state_upd s)
+        in next_iteration
+   else let ret = binary_assign_constant_acc_imp_after_loop s
+        in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure binary_assign_constant_acc_diff")
+  apply (simp add: binary_assign_constant_acc_imp_subprogram_simps)+
+  done
+
+declare binary_assign_constant_acc_imp.simps [simp del]
+
+lemma binary_assign_constant_acc_imp_correct[let_function_correctness]:
+  "binary_assign_constant_acc_ret (binary_assign_constant_acc_imp s) =
+    binary_assign_constant_acc (binary_assign_constant_acc_acc s) (binary_assign_constant_acc_diff s)
+      (binary_assign_constant_acc_n s) (binary_assign_constant_acc_v s) (binary_assign_constant_acc_x s)"
+  apply (induction s rule: binary_assign_constant_acc_imp.induct)
+  apply (subst binary_assign_constant_acc_imp.simps)
+  apply (subst binary_assign_constant_acc.simps)
+  apply (simp del: binary_assign_constant_acc.simps add: binary_assign_constant_acc_imp_subprogram_simps Let_def
+    binary_assign_constant_acc_aux_imp_correct cons_imp_correct)
+  done 
+
+definition "binary_assign_constant_acc_state_upd_time t s \<equiv>
+  (let
+      binary_assign_constant_acc_aux_diff' = binary_assign_constant_acc_diff s;
+      t = t + 2;
+      binary_assign_constant_acc_aux_n' = binary_assign_constant_acc_n s;
+      t = t + 2;
+      binary_assign_constant_acc_aux_v' = binary_assign_constant_acc_v s;
+      t = t + 2;
+      binary_assign_constant_acc_aux_x' = binary_assign_constant_acc_x s;
+      t = t + 2;
+      binary_assign_constant_acc_aux_ret' = 0;
+      t = t + 2;
+      binary_assign_constant_acc_aux_state = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff',
+                                              binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n',
+                                              binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v',
+                                              binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x',
+                                              binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>;
+      binary_assign_constant_acc_aux_ret_state = binary_assign_constant_acc_aux_imp binary_assign_constant_acc_aux_state;
+      t = t + binary_assign_constant_acc_aux_imp_time 0 binary_assign_constant_acc_aux_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = binary_assign_constant_acc_aux_ret binary_assign_constant_acc_aux_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_h' = binary_assign_constant_acc_acc s;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_result;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_assign_constant_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      binary_assign_constant_acc_diff' = binary_assign_constant_acc_diff s - 1;
+      t = t + 2;
+      ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',
+             binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',
+             binary_assign_constant_acc_n = binary_assign_constant_acc_n s,
+             binary_assign_constant_acc_v = binary_assign_constant_acc_v s,
+             binary_assign_constant_acc_x = binary_assign_constant_acc_x s,
+             binary_assign_constant_acc_ret = binary_assign_constant_acc_ret s\<rparr>
+  in
+      t
+)"
+
+definition "binary_assign_constant_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = binary_assign_constant_acc_diff s;
+      t = t + 2
+  in
+      t
+)"
+
+definition "binary_assign_constant_acc_imp_after_loop_time t s \<equiv>
+  (let
+      binary_assign_constant_acc_ret' = binary_assign_constant_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc s,
+             binary_assign_constant_acc_diff = binary_assign_constant_acc_diff s,
+             binary_assign_constant_acc_n = binary_assign_constant_acc_n s,
+             binary_assign_constant_acc_v = binary_assign_constant_acc_v s,
+             binary_assign_constant_acc_x = binary_assign_constant_acc_x s,
+             binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas binary_assign_constant_acc_imp_subprogram_time_simps = 
+  binary_assign_constant_acc_state_upd_time_def
+  binary_assign_constant_acc_imp_compute_loop_condition_time_def
+  binary_assign_constant_acc_imp_after_loop_time_def
+  binary_assign_constant_acc_imp_subprogram_simps
+
+function binary_assign_constant_acc_imp_time::
+  "nat \<Rightarrow> binary_assign_constant_acc_state \<Rightarrow> nat" where
+  "binary_assign_constant_acc_imp_time t s =
+  binary_assign_constant_acc_imp_compute_loop_condition_time 0 s +
+  (if binary_assign_constant_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          binary_assign_constant_acc_imp_time (t + binary_assign_constant_acc_state_upd_time 0 s)
+                         (binary_assign_constant_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + binary_assign_constant_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (binary_assign_constant_acc_diff \<circ> snd)")
+  by (simp add: binary_assign_constant_acc_imp_subprogram_time_simps)+
+
+declare binary_assign_constant_acc_imp_time.simps [simp del]   
+
+lemma binary_assign_constant_acc_imp_time_acc:
+  "(binary_assign_constant_acc_imp_time (Suc t) s) = Suc (binary_assign_constant_acc_imp_time t s)"
+  by (induction t s rule: binary_assign_constant_acc_imp_time.induct)
+    ((subst (1 2) binary_assign_constant_acc_imp_time.simps);
+      (simp add: binary_assign_constant_acc_state_upd_def))            
+
+lemma binary_assign_constant_acc_imp_time_acc_2_aux:
+  "(binary_assign_constant_acc_imp_time t s) = t + (binary_assign_constant_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_imp_time_acc)+            
+
+lemma binary_assign_constant_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_acc_imp_time t s) = t + (binary_assign_constant_acc_imp_time 0 s)"
+  by (rule binary_assign_constant_acc_imp_time_acc_2_aux)            
+
+lemma binary_assign_constant_acc_imp_time_acc_3:
+  "(binary_assign_constant_acc_imp_time (a + b) s) = a + (binary_assign_constant_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_imp_time_acc)+            
+
+abbreviation "binary_assign_constant_acc_while_cond \<equiv> ''condition''"
+abbreviation "binary_assign_constant_acc_cons_result \<equiv> ''cons_result''"
+
+definition "binary_assign_constant_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  condition = binary_assign_constant_acc_diff s\<close>
+  (binary_assign_constant_acc_while_cond) ::= (A (V binary_assign_constant_acc_diff_str))
+"
+
+definition "binary_assign_constant_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  binary_assign_constant_acc_aux_diff' = binary_assign_constant_acc_diff s;\<close>
+  (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_diff_str) ::= (A (V binary_assign_constant_acc_diff_str));;
+  \<comment> \<open>  binary_assign_constant_acc_aux_n' = binary_assign_constant_acc_n s;\<close>
+  (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_n_str) ::= (A (V binary_assign_constant_acc_n_str));;
+  \<comment> \<open>  binary_assign_constant_acc_aux_v' = binary_assign_constant_acc_v s;\<close>
+  (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_v_str) ::= (A (V binary_assign_constant_acc_v_str));;
+  \<comment> \<open>  binary_assign_constant_acc_aux_x' = binary_assign_constant_acc_x s;\<close>
+  (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_x_str) ::= (A (V binary_assign_constant_acc_x_str));;
+  \<comment> \<open>  binary_assign_constant_acc_aux_ret' = 0;\<close>
+  (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_assign_constant_acc_aux_state = \<lparr>binary_assign_constant_acc_aux_diff = binary_assign_constant_acc_aux_diff',\<close>
+  \<comment> \<open>                                          binary_assign_constant_acc_aux_n = binary_assign_constant_acc_aux_n',\<close>
+  \<comment> \<open>                                          binary_assign_constant_acc_aux_v = binary_assign_constant_acc_aux_v',\<close>
+  \<comment> \<open>                                          binary_assign_constant_acc_aux_x = binary_assign_constant_acc_aux_x',\<close>
+  \<comment> \<open>                                          binary_assign_constant_acc_aux_ret = binary_assign_constant_acc_aux_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_assign_constant_acc_aux_ret_state = binary_assign_constant_acc_aux_imp binary_assign_constant_acc_aux_state;\<close>
+  (invoke_subprogram binary_assign_constant_acc_aux_prefix binary_assign_constant_acc_aux_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = binary_assign_constant_acc_aux_ret binary_assign_constant_acc_aux_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (binary_assign_constant_acc_aux_prefix @ binary_assign_constant_acc_aux_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_assign_constant_acc_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_h' = binary_assign_constant_acc_acc s;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V binary_assign_constant_acc_acc_str));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V binary_assign_constant_acc_cons_result));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_assign_constant_acc_acc' = cons_ret cons_ret_state;\<close>
+  (binary_assign_constant_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  binary_assign_constant_acc_diff' = binary_assign_constant_acc_diff s - 1;\<close>
+  (binary_assign_constant_acc_diff_str) ::= (Sub (V binary_assign_constant_acc_diff_str) (N 1))
+  \<comment> \<open>  ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',\<close>
+  \<comment> \<open>         binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',\<close>
+  \<comment> \<open>         binary_assign_constant_acc_n = binary_assign_constant_acc_n s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_v = binary_assign_constant_acc_v s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_x = binary_assign_constant_acc_x s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_ret = binary_assign_constant_acc_ret s\<rparr>\<close>
+"
+
+definition "binary_assign_constant_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  binary_assign_constant_acc_ret' = binary_assign_constant_acc_acc s;\<close>
+  (binary_assign_constant_acc_ret_str) ::= (A (V binary_assign_constant_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_diff = binary_assign_constant_acc_diff s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_n = binary_assign_constant_acc_n s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_v = binary_assign_constant_acc_v s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_x = binary_assign_constant_acc_x s,\<close>
+  \<comment> \<open>         binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>\<close>
+"
+
+definition binary_assign_constant_acc_IMP_Minus where
+  "binary_assign_constant_acc_IMP_Minus \<equiv>
+  binary_assign_constant_acc_IMP_init_while_cond;;
+  WHILE binary_assign_constant_acc_while_cond \<noteq>0 DO (
+    binary_assign_constant_acc_IMP_loop_body;;
+    binary_assign_constant_acc_IMP_init_while_cond
+  );;
+  binary_assign_constant_acc_IMP_after_loop"
+
+abbreviation "binary_assign_constant_acc_IMP_vars\<equiv>
+  {binary_assign_constant_acc_acc_str, binary_assign_constant_acc_diff_str, binary_assign_constant_acc_n_str,
+  binary_assign_constant_acc_v_str, binary_assign_constant_acc_x_str, binary_assign_constant_acc_ret_str,
+  binary_assign_constant_acc_cons_result}"
+
+lemmas binary_assign_constant_acc_IMP_subprogram_simps =
+  binary_assign_constant_acc_IMP_init_while_cond_def
+  binary_assign_constant_acc_IMP_loop_body_def
+  binary_assign_constant_acc_IMP_after_loop_def
+
+definition "binary_assign_constant_acc_imp_to_HOL_state p s =
+  \<lparr>binary_assign_constant_acc_acc = (s (add_prefix p binary_assign_constant_acc_acc_str)),
+   binary_assign_constant_acc_diff = (s (add_prefix p binary_assign_constant_acc_diff_str)),
+   binary_assign_constant_acc_n = (s (add_prefix p binary_assign_constant_acc_n_str)),
+   binary_assign_constant_acc_v = (s (add_prefix p binary_assign_constant_acc_v_str)),
+   binary_assign_constant_acc_x = (s (add_prefix p binary_assign_constant_acc_x_str)),
+   binary_assign_constant_acc_ret = (s (add_prefix p binary_assign_constant_acc_ret_str))\<rparr>"
+
+lemmas binary_assign_constant_acc_state_translators =
+  binary_assign_constant_acc_imp_to_HOL_state_def
+  binary_assign_constant_acc_aux_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemmas binary_assign_constant_acc_complete_simps =
+  binary_assign_constant_acc_IMP_subprogram_simps
+  binary_assign_constant_acc_imp_subprogram_simps
+  binary_assign_constant_acc_state_translators
+
+lemma binary_assign_constant_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_assign_constant_acc_ret_str)
+      = binary_assign_constant_acc_ret
+          (binary_assign_constant_acc_imp (binary_assign_constant_acc_imp_to_HOL_state p s))"
+  apply(induction "binary_assign_constant_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: binary_assign_constant_acc_imp.induct)
+  apply(subst binary_assign_constant_acc_imp.simps)
+  apply(simp only: binary_assign_constant_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: binary_assign_constant_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: binary_assign_constant_acc_IMP_subprogram_simps
+        binary_assign_constant_acc_imp_subprogram_simps
+        binary_assign_constant_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: binary_assign_constant_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: binary_assign_constant_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) binary_assign_constant_acc_IMP_init_while_cond_def)
+      apply(simp only: binary_assign_constant_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule binary_assign_constant_acc_aux_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(30) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(32) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(34) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(36) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      by (fastforce_sorted_premises simp: binary_assign_constant_acc_imp_subprogram_simps
+          binary_assign_constant_acc_state_translators Let_def)
+
+  subgoal
+      apply(simp only: binary_assign_constant_acc_IMP_init_while_cond_def prefix_simps
+          binary_assign_constant_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule binary_assign_constant_acc_aux_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(30) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(32) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(34) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(36) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+      subgoal premises p using p(38) by fastforce
+      by (fastforce_sorted_premises simp: binary_assign_constant_acc_imp_subprogram_simps
+          binary_assign_constant_acc_state_translators Let_def)
+    done  
+
+lemma binary_assign_constant_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_acc_pref) binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_assign_constant_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast   
+
+lemmas binary_assign_constant_acc_complete_time_simps =
+  binary_assign_constant_acc_imp_subprogram_time_simps
+  binary_assign_constant_acc_imp_time_acc
+  binary_assign_constant_acc_imp_time_acc_2
+  binary_assign_constant_acc_imp_time_acc_3
+  binary_assign_constant_acc_state_translators
+
+lemma binary_assign_constant_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_assign_constant_acc_imp_time 0 (binary_assign_constant_acc_imp_to_HOL_state p s)"
+  apply(induction "binary_assign_constant_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: binary_assign_constant_acc_imp.induct)
+  apply(subst binary_assign_constant_acc_imp_time.simps)
+  apply(simp only: binary_assign_constant_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: binary_assign_constant_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: binary_assign_constant_acc_IMP_subprogram_simps
+        binary_assign_constant_acc_imp_subprogram_time_simps binary_assign_constant_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: binary_assign_constant_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: binary_assign_constant_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) binary_assign_constant_acc_IMP_init_while_cond_def)
+    apply(simp only: binary_assign_constant_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule binary_assign_constant_acc_aux_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(65) by fastforce
+    by (fastforce_sorted_premises simp: binary_assign_constant_acc_imp_subprogram_time_simps
+        binary_assign_constant_acc_state_translators Let_def)
+
+  subgoal
+    apply(simp only: prefix_simps binary_assign_constant_acc_IMP_init_while_cond_def
+        binary_assign_constant_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule binary_assign_constant_acc_aux_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_IMP_vars"])
+    subgoal premises p using p(65) by fastforce
+    apply(simp only: binary_assign_constant_acc_complete_time_simps Let_def)
+    by(force simp: Let_def binary_assign_constant_acc_state_translators)
+
+  done   
+
+lemma binary_assign_constant_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_assign_constant_acc_imp_time 0 (binary_assign_constant_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_assign_constant_acc_ret_str) =
+          binary_assign_constant_acc_ret (binary_assign_constant_acc_imp
+                                        (binary_assign_constant_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_assign_constant_acc_IMP_Minus_correct_function
+  by (auto simp: binary_assign_constant_acc_IMP_Minus_correct_time)
+    (meson binary_assign_constant_acc_IMP_Minus_correct_effects set_mono_prefix)
+
+subsubsection \<open>binary_assign_constant_tail\<close>
+
+record binary_assign_constant_tail_state =
+  binary_assign_constant_tail_n::nat
+  binary_assign_constant_tail_v::nat
+  binary_assign_constant_tail_x::nat
+  binary_assign_constant_tail_ret::nat
+
+abbreviation "binary_assign_constant_tail_prefix \<equiv> ''binary_assign_constant_tail.''"
+abbreviation "binary_assign_constant_tail_n_str \<equiv> ''n''"
+abbreviation "binary_assign_constant_tail_v_str \<equiv> ''v''"
+abbreviation "binary_assign_constant_tail_x_str \<equiv> ''x''"
+abbreviation "binary_assign_constant_tail_ret_str \<equiv> ''ret''"
+
+definition "binary_assign_constant_tail_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_assign_constant_acc_acc' = cons_ret cons_ret_state;
+      binary_assign_constant_acc_diff' = binary_assign_constant_tail_n s;
+      binary_assign_constant_acc_n' = binary_assign_constant_tail_n s;
+      binary_assign_constant_acc_v' = binary_assign_constant_tail_v s;
+      binary_assign_constant_acc_x' = binary_assign_constant_tail_x s;
+      binary_assign_constant_acc_ret' = 0;
+      binary_assign_constant_acc_state = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',
+                                          binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',
+                                          binary_assign_constant_acc_n = binary_assign_constant_acc_n',
+                                          binary_assign_constant_acc_v = binary_assign_constant_acc_v',
+                                          binary_assign_constant_acc_x = binary_assign_constant_acc_x',
+                                          binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>;
+      binary_assign_constant_acc_ret_state = binary_assign_constant_acc_imp binary_assign_constant_acc_state;
+      binary_assign_constant_tail_ret' = binary_assign_constant_acc_ret binary_assign_constant_acc_ret_state;
+      ret = \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n s,
+             binary_assign_constant_tail_v = binary_assign_constant_tail_v s,
+             binary_assign_constant_tail_x = binary_assign_constant_tail_x s,
+             binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_assign_constant_tail_imp ::
+  "binary_assign_constant_tail_state \<Rightarrow> binary_assign_constant_tail_state" where
+  "binary_assign_constant_tail_imp s =
+  (let 
+      ret = binary_assign_constant_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_assign_constant_tail_n") simp
+
+declare binary_assign_constant_tail_imp.simps [simp del]
+
+lemma binary_assign_constant_tail_imp_correct[let_function_correctness]:
+  "binary_assign_constant_tail_ret (binary_assign_constant_tail_imp s) =
+    binary_assign_constant_tail (binary_assign_constant_tail_n s) (binary_assign_constant_tail_v s)
+      (binary_assign_constant_tail_x s)"
+  by (simp add: binary_assign_constant_tail_imp.simps Let_def binary_assign_constant_tail_state_upd_def
+    cons_imp_correct binary_assign_constant_acc_imp_correct binary_assign_constant_tail_def)
+
+function binary_assign_constant_tail_imp_time ::
+  "nat \<Rightarrow> binary_assign_constant_tail_state \<Rightarrow> nat" where
+  "binary_assign_constant_tail_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_assign_constant_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      binary_assign_constant_acc_diff' = binary_assign_constant_tail_n s;
+      t = t + 2;
+      binary_assign_constant_acc_n' = binary_assign_constant_tail_n s;
+      t = t + 2;
+      binary_assign_constant_acc_v' = binary_assign_constant_tail_v s;
+      t = t + 2;
+      binary_assign_constant_acc_x' = binary_assign_constant_tail_x s;
+      t = t + 2;
+      binary_assign_constant_acc_ret' = 0;
+      t = t + 2;
+      binary_assign_constant_acc_state = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',
+                                          binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',
+                                          binary_assign_constant_acc_n = binary_assign_constant_acc_n',
+                                          binary_assign_constant_acc_v = binary_assign_constant_acc_v',
+                                          binary_assign_constant_acc_x = binary_assign_constant_acc_x',
+                                          binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>;
+      binary_assign_constant_acc_ret_state = binary_assign_constant_acc_imp binary_assign_constant_acc_state;
+      t = t + binary_assign_constant_acc_imp_time 0 binary_assign_constant_acc_state;
+      binary_assign_constant_tail_ret' = binary_assign_constant_acc_ret binary_assign_constant_acc_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n s,
+             binary_assign_constant_tail_v = binary_assign_constant_tail_v s,
+             binary_assign_constant_tail_x = binary_assign_constant_tail_x s,
+             binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_assign_constant_tail_n \<circ> snd)") simp
+
+declare binary_assign_constant_tail_imp_time.simps [simp del]
+
+lemma binary_assign_constant_tail_imp_time_acc:
+  "(binary_assign_constant_tail_imp_time (Suc t) s) = Suc (binary_assign_constant_tail_imp_time t s)"
+  by (induction t s rule: binary_assign_constant_tail_imp_time.induct)
+    ((subst (1 2) binary_assign_constant_tail_imp_time.simps);
+      (simp add: binary_assign_constant_tail_state_upd_def Let_def))            
+
+lemma binary_assign_constant_tail_imp_time_acc_2_aux:
+  "(binary_assign_constant_tail_imp_time t s) = t + (binary_assign_constant_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_tail_imp_time_acc)+            
+
+lemma binary_assign_constant_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_tail_imp_time t s) = t + (binary_assign_constant_tail_imp_time 0 s)"
+  by (rule binary_assign_constant_tail_imp_time_acc_2_aux)            
+
+lemma binary_assign_constant_tail_imp_time_acc_3:
+  "(binary_assign_constant_tail_imp_time (a + b) s) = a + (binary_assign_constant_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_tail_imp_time_acc)+    
+
+definition binary_assign_constant_tail_IMP_Minus where
+  "binary_assign_constant_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_assign_constant_acc_acc' = cons_ret cons_ret_state;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  binary_assign_constant_acc_diff' = binary_assign_constant_tail_n s;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_diff_str) ::= (A (V binary_assign_constant_tail_n_str));;
+  \<comment> \<open>  binary_assign_constant_acc_n' = binary_assign_constant_tail_n s;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_n_str) ::= (A (V binary_assign_constant_tail_n_str));;
+  \<comment> \<open>  binary_assign_constant_acc_v' = binary_assign_constant_tail_v s;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_v_str) ::= (A (V binary_assign_constant_tail_v_str));;
+  \<comment> \<open>  binary_assign_constant_acc_x' = binary_assign_constant_tail_x s;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_x_str) ::= (A (V binary_assign_constant_tail_x_str));;
+  \<comment> \<open>  binary_assign_constant_acc_ret' = 0;\<close>
+  (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_assign_constant_acc_state = \<lparr>binary_assign_constant_acc_acc = binary_assign_constant_acc_acc',\<close>
+  \<comment> \<open>                                      binary_assign_constant_acc_diff = binary_assign_constant_acc_diff',\<close>
+  \<comment> \<open>                                      binary_assign_constant_acc_n = binary_assign_constant_acc_n',\<close>
+  \<comment> \<open>                                      binary_assign_constant_acc_v = binary_assign_constant_acc_v',\<close>
+  \<comment> \<open>                                      binary_assign_constant_acc_x = binary_assign_constant_acc_x',\<close>
+  \<comment> \<open>                                      binary_assign_constant_acc_ret = binary_assign_constant_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_assign_constant_acc_ret_state = binary_assign_constant_acc_imp binary_assign_constant_acc_state;\<close>
+  (invoke_subprogram binary_assign_constant_acc_prefix binary_assign_constant_acc_IMP_Minus);;
+  \<comment> \<open>  binary_assign_constant_tail_ret' = binary_assign_constant_acc_ret binary_assign_constant_acc_ret_state;\<close>
+  (binary_assign_constant_tail_ret_str) ::= (A (V (binary_assign_constant_acc_prefix @ binary_assign_constant_acc_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n s,\<close>
+  \<comment> \<open>         binary_assign_constant_tail_v = binary_assign_constant_tail_v s,\<close>
+  \<comment> \<open>         binary_assign_constant_tail_x = binary_assign_constant_tail_x s,\<close>
+  \<comment> \<open>         binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_assign_constant_tail_IMP_vars \<equiv>
+  {binary_assign_constant_tail_n_str, binary_assign_constant_tail_v_str, binary_assign_constant_tail_x_str,
+  binary_assign_constant_tail_ret_str}"
+
+definition "binary_assign_constant_tail_imp_to_HOL_state p s =
+  \<lparr>binary_assign_constant_tail_n = (s (add_prefix p binary_assign_constant_tail_n_str)),
+   binary_assign_constant_tail_v = (s (add_prefix p binary_assign_constant_tail_v_str)),
+   binary_assign_constant_tail_x = (s (add_prefix p binary_assign_constant_tail_x_str)),
+   binary_assign_constant_tail_ret = (s (add_prefix p binary_assign_constant_tail_ret_str))\<rparr>"
+
+lemmas binary_assign_constant_tail_state_translators =
+  binary_assign_constant_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  binary_assign_constant_acc_imp_to_HOL_state_def
+
+lemma binary_assign_constant_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_assign_constant_tail_ret_str)
+      = binary_assign_constant_tail_ret
+          (binary_assign_constant_tail_imp (binary_assign_constant_tail_imp_to_HOL_state p s))"
+  apply(subst binary_assign_constant_tail_imp.simps)
+  apply(simp only: binary_assign_constant_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
+  subgoal premises p using p(12) by fastforce
+  apply(erule binary_assign_constant_acc_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
+  subgoal premises p using p(14) by fastforce
+  by(fastforce simp: binary_assign_constant_tail_state_translators
+    binary_assign_constant_tail_state_upd_def) 
+
+lemma binary_assign_constant_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_tail_pref) binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_assign_constant_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma binary_assign_constant_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_assign_constant_tail_imp_time 0 (binary_assign_constant_tail_imp_to_HOL_state p s)"
+  apply(subst binary_assign_constant_tail_imp_time.simps)
+  apply(simp only: binary_assign_constant_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  apply(erule binary_assign_constant_acc_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  by(fastforce simp add: Let_def binary_assign_constant_tail_state_translators) 
+
+lemma binary_assign_constant_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_assign_constant_tail_imp_time 0 (binary_assign_constant_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_assign_constant_tail_ret_str) =
+          binary_assign_constant_tail_ret (binary_assign_constant_tail_imp
+                                        (binary_assign_constant_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_assign_constant_tail_IMP_Minus_correct_function
+    binary_assign_constant_tail_IMP_Minus_correct_time
+    binary_assign_constant_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
 
 subsection copy_var_to_operand
 
