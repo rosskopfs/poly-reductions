@@ -4928,4 +4928,2659 @@ lemma copy_atom_to_operand_tail_IMP_Minus_correct:
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
+subsection \<open>assign_var_carry\<close>
+
+subsubsection \<open>assign_var_carry_tail_aux1\<close>
+
+fun assign_var_carry_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_var_carry_tail_aux1 i v a b c =
+    (var_bit_to_var_tail(prod_encode (v, i))) ##
+    (if a + b + c = 1 \<or> a + b + c = 3 then 1 else 0) ## 0"
+
+record assign_var_carry_tail_aux1_state =
+  assign_var_carry_tail_aux1_i::nat
+  assign_var_carry_tail_aux1_v::nat
+  assign_var_carry_tail_aux1_a::nat
+  assign_var_carry_tail_aux1_b::nat
+  assign_var_carry_tail_aux1_c::nat
+  assign_var_carry_tail_aux1_ret::nat
+
+abbreviation "assign_var_carry_tail_aux1_prefix \<equiv> ''assign_var_carry_tail_aux1.''"
+abbreviation "assign_var_carry_tail_aux1_i_str \<equiv> ''i''"
+abbreviation "assign_var_carry_tail_aux1_v_str \<equiv> ''v''"
+abbreviation "assign_var_carry_tail_aux1_a_str \<equiv> ''a''"
+abbreviation "assign_var_carry_tail_aux1_b_str \<equiv> ''b''"
+abbreviation "assign_var_carry_tail_aux1_c_str \<equiv> ''c''"
+abbreviation "assign_var_carry_tail_aux1_ret_str \<equiv> ''ret''"
+
+definition "assign_var_carry_tail_aux1_state_upd s =
+  (let
+      EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;
+      EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;
+      EQUAL_neq_zero_b' = 1;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;
+      EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;
+      EQUAL_neq_zero_b' = 3;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      OR_neq_zero_a' = EQUAL_neq_zero_result;
+      OR_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      OR_neq_zero_ret' = 0;
+      OR_neq_zero_state = \<lparr>OR_neq_zero_a = OR_neq_zero_a',
+                           OR_neq_zero_b = OR_neq_zero_b',
+                           OR_neq_zero_ret = OR_neq_zero_ret'\<rparr>;
+      OR_neq_zero_ret_state = OR_neq_zero_imp OR_neq_zero_state;
+      cons_h' = OR_neq_zero_ret OR_neq_zero_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      prod_encode_a' = assign_var_carry_tail_aux1_v s;
+      prod_encode_b' = assign_var_carry_tail_aux1_i s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      var_bit_to_var_tail_ret' = 0;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_var_carry_tail_aux1_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i s,
+             assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v s,
+             assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a s,
+             assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b s,
+             assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c s,
+             assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_var_carry_tail_aux1_imp ::
+  "assign_var_carry_tail_aux1_state \<Rightarrow> assign_var_carry_tail_aux1_state" where
+  "assign_var_carry_tail_aux1_imp s =
+  (let 
+      ret = assign_var_carry_tail_aux1_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_var_carry_tail_aux1_i") simp
+
+declare assign_var_carry_tail_aux1_imp.simps [simp del]
+
+lemma assign_var_carry_tail_aux1_imp_correct[let_function_correctness]:
+  "assign_var_carry_tail_aux1_ret (assign_var_carry_tail_aux1_imp s) =
+    assign_var_carry_tail_aux1 (assign_var_carry_tail_aux1_i s) (assign_var_carry_tail_aux1_v s)
+      (assign_var_carry_tail_aux1_a s) (assign_var_carry_tail_aux1_b s) (assign_var_carry_tail_aux1_c s)"
+  apply (simp only: assign_var_carry_tail_aux1_imp.simps Let_def assign_var_carry_tail_aux1_state_upd_def
+    EQUAL_neq_zero_imp_correct OR_neq_zero_imp_correct cons_imp_correct prod_encode_imp_correct
+    var_bit_to_var_tail_imp_correct)
+  by simp   
+
+function assign_var_carry_tail_aux1_imp_time ::
+  "nat \<Rightarrow> assign_var_carry_tail_aux1_state \<Rightarrow> nat" where
+  "assign_var_carry_tail_aux1_imp_time t s =
+  (let
+      EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;
+      t = t + 2;
+      EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 1;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;
+      t = t + 2;
+      EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 3;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      OR_neq_zero_a' = EQUAL_neq_zero_result;
+      t = t + 2;
+      OR_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2;
+      OR_neq_zero_ret' = 0;
+      t = t + 2;
+      OR_neq_zero_state = \<lparr>OR_neq_zero_a = OR_neq_zero_a',
+                           OR_neq_zero_b = OR_neq_zero_b',
+                           OR_neq_zero_ret = OR_neq_zero_ret'\<rparr>;
+      OR_neq_zero_ret_state = OR_neq_zero_imp OR_neq_zero_state;
+      t = t + OR_neq_zero_imp_time 0 OR_neq_zero_state;
+      cons_h' = OR_neq_zero_ret OR_neq_zero_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      prod_encode_a' = assign_var_carry_tail_aux1_v s;
+      t = t + 2;
+      prod_encode_b' = assign_var_carry_tail_aux1_i s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      var_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_var_carry_tail_aux1_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i s,
+             assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v s,
+             assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a s,
+             assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b s,
+             assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c s,
+             assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_var_carry_tail_aux1_i \<circ> snd)") simp
+
+declare assign_var_carry_tail_aux1_imp_time.simps [simp del]
+
+lemma assign_var_carry_tail_aux1_imp_time_acc:
+  "(assign_var_carry_tail_aux1_imp_time (Suc t) s) = Suc (assign_var_carry_tail_aux1_imp_time t s)"
+  by (induction t s rule: assign_var_carry_tail_aux1_imp_time.induct)
+    ((subst (1 2) assign_var_carry_tail_aux1_imp_time.simps);
+      (simp add: assign_var_carry_tail_aux1_state_upd_def Let_def))            
+
+lemma assign_var_carry_tail_aux1_imp_time_acc_2_aux:
+  "(assign_var_carry_tail_aux1_imp_time t s) = t + (assign_var_carry_tail_aux1_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+            
+
+lemma assign_var_carry_tail_aux1_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_aux1_imp_time t s) = t + (assign_var_carry_tail_aux1_imp_time 0 s)"
+  by (rule assign_var_carry_tail_aux1_imp_time_acc_2_aux)            
+
+lemma assign_var_carry_tail_aux1_imp_time_acc_3:
+  "(assign_var_carry_tail_aux1_imp_time (a + b) s) = a + (assign_var_carry_tail_aux1_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+            
+
+abbreviation "assign_var_carry_tail_aux1_EQUAL_neq_zero_result \<equiv> ''EQUAL_neq_zero_result''"
+abbreviation "assign_var_carry_tail_aux1_cons_result \<equiv> ''cons_result''"
+
+definition assign_var_carry_tail_aux1_IMP_Minus where
+  "assign_var_carry_tail_aux1_IMP_Minus \<equiv>
+  \<comment> \<open>  EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (Plus (V assign_var_carry_tail_aux1_a_str) (V assign_var_carry_tail_aux1_b_str));;
+  \<comment> \<open>  EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::=
+    (Plus (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)) (V assign_var_carry_tail_aux1_c_str));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 1;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 1));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;\<close>
+  (assign_var_carry_tail_aux1_EQUAL_neq_zero_result) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_a' = assign_var_carry_tail_aux1_a s + assign_var_carry_tail_aux1_b s;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (Plus (V assign_var_carry_tail_aux1_a_str) (V assign_var_carry_tail_aux1_b_str));;
+  \<comment> \<open>  EQUAL_neq_zero_a' = EQUAL_neq_zero_a' + assign_var_carry_tail_aux1_c s;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::=
+    (Plus (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)) (V assign_var_carry_tail_aux1_c_str));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 3;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 3));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  OR_neq_zero_a' = EQUAL_neq_zero_result;\<close>
+  (OR_neq_zero_prefix @ OR_neq_zero_a_str) ::= (A (V assign_var_carry_tail_aux1_EQUAL_neq_zero_result));;
+  \<comment> \<open>  OR_neq_zero_b' = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;\<close>
+  (OR_neq_zero_prefix @ OR_neq_zero_b_str) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>  OR_neq_zero_ret' = 0;\<close>
+  (OR_neq_zero_prefix @ OR_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  OR_neq_zero_state = \<lparr>OR_neq_zero_a = OR_neq_zero_a',\<close>
+  \<comment> \<open>                       OR_neq_zero_b = OR_neq_zero_b',\<close>
+  \<comment> \<open>                       OR_neq_zero_ret = OR_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  OR_neq_zero_ret_state = OR_neq_zero_imp OR_neq_zero_state;\<close>
+  (invoke_subprogram OR_neq_zero_prefix OR_neq_zero_IMP_Minus);;
+  \<comment> \<open>  cons_h' = OR_neq_zero_ret OR_neq_zero_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (OR_neq_zero_prefix @ OR_neq_zero_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_var_carry_tail_aux1_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = assign_var_carry_tail_aux1_v s;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V assign_var_carry_tail_aux1_v_str));;
+  \<comment> \<open>  prod_encode_b' = assign_var_carry_tail_aux1_i s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (V assign_var_carry_tail_aux1_i_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  var_bit_to_var_tail_ret' = 0;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;\<close>
+  (invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_var_carry_tail_aux1_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_var_carry_tail_aux1_ret' = cons_ret cons_ret_state;\<close>
+  (assign_var_carry_tail_aux1_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_var_carry_tail_aux1_IMP_vars\<equiv>
+  {assign_var_carry_tail_aux1_i_str, assign_var_carry_tail_aux1_v_str, assign_var_carry_tail_aux1_a_str,
+  assign_var_carry_tail_aux1_b_str, assign_var_carry_tail_aux1_c_str, assign_var_carry_tail_aux1_ret_str,
+  assign_var_carry_tail_aux1_EQUAL_neq_zero_result, assign_var_carry_tail_aux1_cons_result}"
+
+definition "assign_var_carry_tail_aux1_imp_to_HOL_state p s =
+  \<lparr>assign_var_carry_tail_aux1_i = (s (add_prefix p assign_var_carry_tail_aux1_i_str)),
+   assign_var_carry_tail_aux1_v = (s (add_prefix p assign_var_carry_tail_aux1_v_str)),
+   assign_var_carry_tail_aux1_a = (s (add_prefix p assign_var_carry_tail_aux1_a_str)),
+   assign_var_carry_tail_aux1_b = (s (add_prefix p assign_var_carry_tail_aux1_b_str)),
+   assign_var_carry_tail_aux1_c = (s (add_prefix p assign_var_carry_tail_aux1_c_str)),
+   assign_var_carry_tail_aux1_ret = (s (add_prefix p assign_var_carry_tail_aux1_ret_str))\<rparr>"
+
+lemmas assign_var_carry_tail_aux1_state_translators =
+  assign_var_carry_tail_aux1_imp_to_HOL_state_def
+  EQUAL_neq_zero_imp_to_HOL_state_def
+  OR_neq_zero_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
+
+lemma assign_var_carry_tail_aux1_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_var_carry_tail_aux1_ret_str)
+      = assign_var_carry_tail_aux1_ret
+          (assign_var_carry_tail_aux1_imp (assign_var_carry_tail_aux1_imp_to_HOL_state p s))"
+  apply(subst assign_var_carry_tail_aux1_imp.simps)
+  apply(simp only: assign_var_carry_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  apply(erule OR_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(40) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(42) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(44) by fastforce
+  by(force simp: assign_var_carry_tail_aux1_state_translators
+    assign_var_carry_tail_aux1_state_upd_def)
+
+lemma assign_var_carry_tail_aux1_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_tail_aux1_pref) assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_var_carry_tail_aux1_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma assign_var_carry_tail_aux1_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_var_carry_tail_aux1_imp_time 0 (assign_var_carry_tail_aux1_imp_to_HOL_state p s)"
+  apply(subst assign_var_carry_tail_aux1_imp_time.simps)
+  apply(simp only: assign_var_carry_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  apply(erule OR_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(67) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(69) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  by(force simp add: Let_def assign_var_carry_tail_aux1_state_translators)   
+
+lemma assign_var_carry_tail_aux1_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_var_carry_tail_aux1_imp_time 0 (assign_var_carry_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_var_carry_tail_aux1_ret_str) =
+          assign_var_carry_tail_aux1_ret (assign_var_carry_tail_aux1_imp
+                                        (assign_var_carry_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_var_carry_tail_aux1_IMP_Minus_correct_function
+    assign_var_carry_tail_aux1_IMP_Minus_correct_time
+    assign_var_carry_tail_aux1_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>assign_var_carry_tail_aux2\<close>
+
+fun assign_var_carry_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_var_carry_tail_aux2 a b c = 
+    (1 ## (vname_encode ''carry'') ## (if a + b + c \<ge> 2 then 1 else 0) ## 0) ## 0"
+
+record assign_var_carry_tail_aux2_state =
+  assign_var_carry_tail_aux2_a::nat
+  assign_var_carry_tail_aux2_b::nat
+  assign_var_carry_tail_aux2_c::nat
+  assign_var_carry_tail_aux2_ret::nat
+
+abbreviation "assign_var_carry_tail_aux2_prefix \<equiv> ''assign_var_carry_tail_aux2.''"
+abbreviation "assign_var_carry_tail_aux2_a_str \<equiv> ''a''"
+abbreviation "assign_var_carry_tail_aux2_b_str \<equiv> ''b''"
+abbreviation "assign_var_carry_tail_aux2_c_str \<equiv> ''c''"
+abbreviation "assign_var_carry_tail_aux2_ret_str \<equiv> ''ret''"
+
+definition "assign_var_carry_tail_aux2_state_upd s =
+  (let
+      LESS_EQUAL_neq_zero_a' = 2;
+      LESS_EQUAL_neq_zero_b' = assign_var_carry_tail_aux2_a s + assign_var_carry_tail_aux2_b s;
+      LESS_EQUAL_neq_zero_b' = LESS_EQUAL_neq_zero_b' + assign_var_carry_tail_aux2_c s;
+      LESS_EQUAL_neq_zero_ret' = 0;
+      LESS_EQUAL_neq_zero_state = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a',
+                                   LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b',
+                                   LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>;
+      LESS_EQUAL_neq_zero_ret_state = LESS_EQUAL_neq_zero_imp LESS_EQUAL_neq_zero_state;
+      cons_h' = LESS_EQUAL_neq_zero_ret LESS_EQUAL_neq_zero_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = carry_vname_encode_as_nat;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 1;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_var_carry_tail_aux2_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a s,
+             assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b s,
+             assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c s,
+             assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_var_carry_tail_aux2_imp ::
+  "assign_var_carry_tail_aux2_state \<Rightarrow> assign_var_carry_tail_aux2_state" where
+  "assign_var_carry_tail_aux2_imp s =
+  (let 
+      ret = assign_var_carry_tail_aux2_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_var_carry_tail_aux2_a") simp
+
+declare assign_var_carry_tail_aux2_imp.simps [simp del]
+
+lemma assign_var_carry_tail_aux2_imp_correct[let_function_correctness]:
+  "assign_var_carry_tail_aux2_ret (assign_var_carry_tail_aux2_imp s) =
+    assign_var_carry_tail_aux2 (assign_var_carry_tail_aux2_a s) (assign_var_carry_tail_aux2_b s)
+      (assign_var_carry_tail_aux2_c s)"
+  by (simp add: assign_var_carry_tail_aux2_imp.simps Let_def assign_var_carry_tail_aux2_state_upd_def
+    LESS_EQUAL_neq_zero_imp_correct cons_imp_correct carry_vname_encode_val)
+
+function assign_var_carry_tail_aux2_imp_time ::
+  "nat \<Rightarrow> assign_var_carry_tail_aux2_state \<Rightarrow> nat" where
+  "assign_var_carry_tail_aux2_imp_time t s =
+  (let
+      LESS_EQUAL_neq_zero_a' = 2;
+      t = t + 2;
+      LESS_EQUAL_neq_zero_b' = assign_var_carry_tail_aux2_a s + assign_var_carry_tail_aux2_b s;
+      t = t + 2;
+      LESS_EQUAL_neq_zero_b' = LESS_EQUAL_neq_zero_b' + assign_var_carry_tail_aux2_c s;
+      t = t + 2;
+      LESS_EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      LESS_EQUAL_neq_zero_state = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a',
+                                   LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b',
+                                   LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>;
+      LESS_EQUAL_neq_zero_ret_state = LESS_EQUAL_neq_zero_imp LESS_EQUAL_neq_zero_state;
+      t = t + LESS_EQUAL_neq_zero_imp_time 0 LESS_EQUAL_neq_zero_state;
+      cons_h' = LESS_EQUAL_neq_zero_ret LESS_EQUAL_neq_zero_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = carry_vname_encode_as_nat;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_var_carry_tail_aux2_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a s,
+             assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b s,
+             assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c s,
+             assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_var_carry_tail_aux2_a \<circ> snd)") simp
+
+declare assign_var_carry_tail_aux2_imp_time.simps [simp del]
+
+lemma assign_var_carry_tail_aux2_imp_time_acc:
+  "(assign_var_carry_tail_aux2_imp_time (Suc t) s) = Suc (assign_var_carry_tail_aux2_imp_time t s)"
+  by (induction t s rule: assign_var_carry_tail_aux2_imp_time.induct)
+    ((subst (1 2) assign_var_carry_tail_aux2_imp_time.simps);
+      (simp add: assign_var_carry_tail_aux2_state_upd_def Let_def))            
+
+lemma assign_var_carry_tail_aux2_imp_time_acc_2_aux:
+  "(assign_var_carry_tail_aux2_imp_time t s) = t + (assign_var_carry_tail_aux2_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+            
+
+lemma assign_var_carry_tail_aux2_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_aux2_imp_time t s) = t + (assign_var_carry_tail_aux2_imp_time 0 s)"
+  by (rule assign_var_carry_tail_aux2_imp_time_acc_2_aux)            
+
+lemma assign_var_carry_tail_aux2_imp_time_acc_3:
+  "(assign_var_carry_tail_aux2_imp_time (a + b) s) = a + (assign_var_carry_tail_aux2_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+   
+
+definition assign_var_carry_tail_aux2_IMP_Minus where
+  "assign_var_carry_tail_aux2_IMP_Minus \<equiv>
+  \<comment> \<open>  LESS_EQUAL_neq_zero_a' = 2;\<close>
+  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_a_str) ::= (A (N 2));;
+  \<comment> \<open>  LESS_EQUAL_neq_zero_b' = assign_var_carry_tail_aux2_a s + assign_var_carry_tail_aux2_b s;\<close>
+  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str) ::= (Plus (V assign_var_carry_tail_aux2_a_str) (V assign_var_carry_tail_aux2_b_str));;
+  \<comment> \<open>  LESS_EQUAL_neq_zero_b' = LESS_EQUAL_neq_zero_b' + assign_var_carry_tail_aux2_c s;\<close>
+  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str) ::= 
+    (Plus (V (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str)) (V assign_var_carry_tail_aux2_c_str));;
+  \<comment> \<open>  LESS_EQUAL_neq_zero_ret' = 0;\<close>
+  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  LESS_EQUAL_neq_zero_state = \<lparr>LESS_EQUAL_neq_zero_a = LESS_EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                               LESS_EQUAL_neq_zero_b = LESS_EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                               LESS_EQUAL_neq_zero_ret = LESS_EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  LESS_EQUAL_neq_zero_ret_state = LESS_EQUAL_neq_zero_imp LESS_EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram LESS_EQUAL_neq_zero_prefix LESS_EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  cons_h' = LESS_EQUAL_neq_zero_ret LESS_EQUAL_neq_zero_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = carry_vname_encode_as_nat;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N carry_vname_encode_as_nat));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_var_carry_tail_aux2_ret' = cons_ret cons_ret_state;\<close>
+  (assign_var_carry_tail_aux2_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_var_carry_tail_aux2_IMP_vars\<equiv>
+  {assign_var_carry_tail_aux2_a_str, assign_var_carry_tail_aux2_b_str, assign_var_carry_tail_aux2_c_str,
+  assign_var_carry_tail_aux2_ret_str}"
+
+definition "assign_var_carry_tail_aux2_imp_to_HOL_state p s =
+  \<lparr>assign_var_carry_tail_aux2_a = (s (add_prefix p assign_var_carry_tail_aux2_a_str)),
+   assign_var_carry_tail_aux2_b = (s (add_prefix p assign_var_carry_tail_aux2_b_str)),
+   assign_var_carry_tail_aux2_c = (s (add_prefix p assign_var_carry_tail_aux2_c_str)),
+   assign_var_carry_tail_aux2_ret = (s (add_prefix p assign_var_carry_tail_aux2_ret_str))\<rparr>"
+
+lemmas assign_var_carry_tail_aux2_state_translators =
+  assign_var_carry_tail_aux2_imp_to_HOL_state_def
+  LESS_EQUAL_neq_zero_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma assign_var_carry_tail_aux2_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_var_carry_tail_aux2_ret_str)
+      = assign_var_carry_tail_aux2_ret
+          (assign_var_carry_tail_aux2_imp (assign_var_carry_tail_aux2_imp_to_HOL_state p s))"
+  apply(subst assign_var_carry_tail_aux2_imp.simps)
+  apply(simp only: assign_var_carry_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule LESS_EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(22) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(24) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(26) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  by(force simp: assign_var_carry_tail_aux2_state_translators
+    assign_var_carry_tail_aux2_state_upd_def)   
+
+lemma assign_var_carry_tail_aux2_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_tail_aux2_pref) assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_var_carry_tail_aux2_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast   
+
+lemma assign_var_carry_tail_aux2_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_var_carry_tail_aux2_imp_time 0 (assign_var_carry_tail_aux2_imp_to_HOL_state p s)"
+  apply(subst assign_var_carry_tail_aux2_imp_time.simps)
+  apply(simp only: assign_var_carry_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule LESS_EQUAL_neq_zero_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  by(force simp add: Let_def assign_var_carry_tail_aux2_state_translators) 
+
+lemma assign_var_carry_tail_aux2_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_var_carry_tail_aux2_imp_time 0 (assign_var_carry_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_var_carry_tail_aux2_ret_str) =
+          assign_var_carry_tail_aux2_ret (assign_var_carry_tail_aux2_imp
+                                        (assign_var_carry_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_var_carry_tail_aux2_IMP_Minus_correct_function
+    assign_var_carry_tail_aux2_IMP_Minus_correct_time
+    assign_var_carry_tail_aux2_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>assign_var_carry_tail\<close>
+
+fun assign_var_carry_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_var_carry_tail' i v a b c = 
+    2 ## (1 ## (assign_var_carry_tail_aux1 i v a b c)) ## (assign_var_carry_tail_aux2 a b c)"
+
+lemma assign_var_carry_tail'_correct:
+  "assign_var_carry_tail i v a b c = assign_var_carry_tail' i v a b c"
+  unfolding assign_var_carry_tail_def
+  by (simp only: assign_var_carry_tail'.simps
+    assign_var_carry_tail_aux1.simps
+    assign_var_carry_tail_aux2.simps)
+
+record assign_var_carry_tail_state =
+  assign_var_carry_tail_i::nat
+  assign_var_carry_tail_v::nat
+  assign_var_carry_tail_a::nat
+  assign_var_carry_tail_b::nat
+  assign_var_carry_tail_c::nat
+  assign_var_carry_tail_ret::nat
+
+abbreviation "assign_var_carry_tail_prefix \<equiv> ''assign_var_carry_tail.''"
+abbreviation "assign_var_carry_tail_i_str \<equiv> ''i''"
+abbreviation "assign_var_carry_tail_v_str \<equiv> ''v''"
+abbreviation "assign_var_carry_tail_a_str \<equiv> ''a''"
+abbreviation "assign_var_carry_tail_b_str \<equiv> ''b''"
+abbreviation "assign_var_carry_tail_c_str \<equiv> ''c''"
+abbreviation "assign_var_carry_tail_ret_str \<equiv> ''ret''"
+
+definition "assign_var_carry_tail_state_upd s =
+  (let
+      assign_var_carry_tail_aux1_i' = assign_var_carry_tail_i s;
+      assign_var_carry_tail_aux1_v' = assign_var_carry_tail_v s;
+      assign_var_carry_tail_aux1_a' = assign_var_carry_tail_a s;
+      assign_var_carry_tail_aux1_b' = assign_var_carry_tail_b s;
+      assign_var_carry_tail_aux1_c' = assign_var_carry_tail_c s;
+      assign_var_carry_tail_aux1_ret' = 0;
+      assign_var_carry_tail_aux1_state = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i',
+                                          assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v',
+                                          assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a',
+                                          assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b',
+                                          assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c',
+                                          assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>;
+      assign_var_carry_tail_aux1_ret_state = assign_var_carry_tail_aux1_imp assign_var_carry_tail_aux1_state;
+      cons_h' = 1;
+      cons_t' = assign_var_carry_tail_aux1_ret assign_var_carry_tail_aux1_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_var_carry_tail_aux2_a' = assign_var_carry_tail_a s;
+      assign_var_carry_tail_aux2_b' = assign_var_carry_tail_b s;
+      assign_var_carry_tail_aux2_c' = assign_var_carry_tail_c s;
+      assign_var_carry_tail_aux2_ret' = 0;
+      assign_var_carry_tail_aux2_state = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a',
+                                          assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b',
+                                          assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c',
+                                          assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>;
+      assign_var_carry_tail_aux2_ret_state = assign_var_carry_tail_aux2_imp assign_var_carry_tail_aux2_state;
+      cons_h' = cons_result;
+      cons_t' = assign_var_carry_tail_aux2_ret assign_var_carry_tail_aux2_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_var_carry_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i s,
+             assign_var_carry_tail_v = assign_var_carry_tail_v s,
+             assign_var_carry_tail_a = assign_var_carry_tail_a s,
+             assign_var_carry_tail_b = assign_var_carry_tail_b s,
+             assign_var_carry_tail_c = assign_var_carry_tail_c s,
+             assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_var_carry_tail_imp ::
+  "assign_var_carry_tail_state \<Rightarrow> assign_var_carry_tail_state" where
+  "assign_var_carry_tail_imp s =
+  (let 
+      ret = assign_var_carry_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_var_carry_tail_i") simp
+
+declare assign_var_carry_tail_imp.simps [simp del]
+
+lemma assign_var_carry_tail_imp_correct[let_function_correctness]:
+  "assign_var_carry_tail_ret (assign_var_carry_tail_imp s) =
+    assign_var_carry_tail (assign_var_carry_tail_i s) (assign_var_carry_tail_v s) (assign_var_carry_tail_a s)
+      (assign_var_carry_tail_b s) (assign_var_carry_tail_c s)"
+  apply (simp only: assign_var_carry_tail_imp.simps Let_def assign_var_carry_tail_state_upd_def
+    assign_var_carry_tail'_correct assign_var_carry_tail_aux1_imp_correct cons_imp_correct
+    assign_var_carry_tail_aux2_imp_correct)
+  by simp    
+
+function assign_var_carry_tail_imp_time ::
+  "nat \<Rightarrow> assign_var_carry_tail_state \<Rightarrow> nat" where
+  "assign_var_carry_tail_imp_time t s =
+  (let
+      assign_var_carry_tail_aux1_i' = assign_var_carry_tail_i s;
+      t = t + 2;
+      assign_var_carry_tail_aux1_v' = assign_var_carry_tail_v s;
+      t = t + 2;
+      assign_var_carry_tail_aux1_a' = assign_var_carry_tail_a s;
+      t = t + 2;
+      assign_var_carry_tail_aux1_b' = assign_var_carry_tail_b s;
+      t = t + 2;
+      assign_var_carry_tail_aux1_c' = assign_var_carry_tail_c s;
+      t = t + 2;
+      assign_var_carry_tail_aux1_ret' = 0;
+      t = t + 2;
+      assign_var_carry_tail_aux1_state = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i',
+                                          assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v',
+                                          assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a',
+                                          assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b',
+                                          assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c',
+                                          assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>;
+      assign_var_carry_tail_aux1_ret_state = assign_var_carry_tail_aux1_imp assign_var_carry_tail_aux1_state;
+      t = t + assign_var_carry_tail_aux1_imp_time 0 assign_var_carry_tail_aux1_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = assign_var_carry_tail_aux1_ret assign_var_carry_tail_aux1_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_var_carry_tail_aux2_a' = assign_var_carry_tail_a s;
+      t = t + 2;
+      assign_var_carry_tail_aux2_b' = assign_var_carry_tail_b s;
+      t = t + 2;
+      assign_var_carry_tail_aux2_c' = assign_var_carry_tail_c s;
+      t = t + 2;
+      assign_var_carry_tail_aux2_ret' = 0;
+      t = t + 2;
+      assign_var_carry_tail_aux2_state = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a',
+                                          assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b',
+                                          assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c',
+                                          assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>;
+      assign_var_carry_tail_aux2_ret_state = assign_var_carry_tail_aux2_imp assign_var_carry_tail_aux2_state;
+      t = t + assign_var_carry_tail_aux2_imp_time 0 assign_var_carry_tail_aux2_state;
+      cons_h' = cons_result;
+      t = t + 2;
+      cons_t' = assign_var_carry_tail_aux2_ret assign_var_carry_tail_aux2_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_var_carry_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i s,
+             assign_var_carry_tail_v = assign_var_carry_tail_v s,
+             assign_var_carry_tail_a = assign_var_carry_tail_a s,
+             assign_var_carry_tail_b = assign_var_carry_tail_b s,
+             assign_var_carry_tail_c = assign_var_carry_tail_c s,
+             assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_var_carry_tail_i \<circ> snd)") simp
+
+declare assign_var_carry_tail_imp_time.simps [simp del]
+
+lemma assign_var_carry_tail_imp_time_acc:
+  "(assign_var_carry_tail_imp_time (Suc t) s) = Suc (assign_var_carry_tail_imp_time t s)"
+  by (induction t s rule: assign_var_carry_tail_imp_time.induct)
+    ((subst (1 2) assign_var_carry_tail_imp_time.simps);
+      (simp add: assign_var_carry_tail_state_upd_def Let_def))            
+
+lemma assign_var_carry_tail_imp_time_acc_2_aux:
+  "(assign_var_carry_tail_imp_time t s) = t + (assign_var_carry_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_imp_time_acc)+            
+
+lemma assign_var_carry_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_imp_time t s) = t + (assign_var_carry_tail_imp_time 0 s)"
+  by (rule assign_var_carry_tail_imp_time_acc_2_aux)            
+
+lemma assign_var_carry_tail_imp_time_acc_3:
+  "(assign_var_carry_tail_imp_time (a + b) s) = a + (assign_var_carry_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_imp_time_acc)+  
+
+abbreviation "assign_var_carry_tail_cons_result \<equiv> ''cons_result''"
+
+definition assign_var_carry_tail_IMP_Minus where
+  "assign_var_carry_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  assign_var_carry_tail_aux1_i' = assign_var_carry_tail_i s;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_i_str) ::= (A (V assign_var_carry_tail_i_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_v' = assign_var_carry_tail_v s;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_v_str) ::= (A (V assign_var_carry_tail_v_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_a' = assign_var_carry_tail_a s;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_a_str) ::= (A (V assign_var_carry_tail_a_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_b' = assign_var_carry_tail_b s;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_b_str) ::= (A (V assign_var_carry_tail_b_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_c' = assign_var_carry_tail_c s;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_c_str) ::= (A (V assign_var_carry_tail_c_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_ret' = 0;\<close>
+  (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_var_carry_tail_aux1_state = \<lparr>assign_var_carry_tail_aux1_i = assign_var_carry_tail_aux1_i',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux1_v = assign_var_carry_tail_aux1_v',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux1_a = assign_var_carry_tail_aux1_a',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux1_b = assign_var_carry_tail_aux1_b',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux1_c = assign_var_carry_tail_aux1_c',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux1_ret = assign_var_carry_tail_aux1_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_var_carry_tail_aux1_ret_state = assign_var_carry_tail_aux1_imp assign_var_carry_tail_aux1_state;\<close>
+  (invoke_subprogram assign_var_carry_tail_aux1_prefix assign_var_carry_tail_aux1_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = assign_var_carry_tail_aux1_ret assign_var_carry_tail_aux1_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (assign_var_carry_tail_aux1_prefix @ assign_var_carry_tail_aux1_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_var_carry_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_var_carry_tail_aux2_a' = assign_var_carry_tail_a s;\<close>
+  (assign_var_carry_tail_aux2_prefix @ assign_var_carry_tail_aux2_a_str) ::= (A (V assign_var_carry_tail_a_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux2_b' = assign_var_carry_tail_b s;\<close>
+  (assign_var_carry_tail_aux2_prefix @ assign_var_carry_tail_aux2_b_str) ::= (A (V assign_var_carry_tail_b_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux2_c' = assign_var_carry_tail_c s;\<close>
+  (assign_var_carry_tail_aux2_prefix @ assign_var_carry_tail_aux2_c_str) ::= (A (V assign_var_carry_tail_c_str));;
+  \<comment> \<open>  assign_var_carry_tail_aux2_ret' = 0;\<close>
+  (assign_var_carry_tail_aux2_prefix @ assign_var_carry_tail_aux2_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_var_carry_tail_aux2_state = \<lparr>assign_var_carry_tail_aux2_a = assign_var_carry_tail_aux2_a',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux2_b = assign_var_carry_tail_aux2_b',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux2_c = assign_var_carry_tail_aux2_c',\<close>
+  \<comment> \<open>                                      assign_var_carry_tail_aux2_ret = assign_var_carry_tail_aux2_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_var_carry_tail_aux2_ret_state = assign_var_carry_tail_aux2_imp assign_var_carry_tail_aux2_state;\<close>
+  (invoke_subprogram assign_var_carry_tail_aux2_prefix assign_var_carry_tail_aux2_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V assign_var_carry_tail_cons_result));;
+  \<comment> \<open>  cons_t' = assign_var_carry_tail_aux2_ret assign_var_carry_tail_aux2_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (assign_var_carry_tail_aux2_prefix @ assign_var_carry_tail_aux2_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_var_carry_tail_ret' = cons_ret cons_ret_state;\<close>
+  (assign_var_carry_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_v = assign_var_carry_tail_v s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_a = assign_var_carry_tail_a s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_b = assign_var_carry_tail_b s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_c = assign_var_carry_tail_c s,\<close>
+  \<comment> \<open>         assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_var_carry_tail_IMP_vars\<equiv>
+  {assign_var_carry_tail_i_str, assign_var_carry_tail_v_str, assign_var_carry_tail_a_str,
+  assign_var_carry_tail_b_str, assign_var_carry_tail_c_str, assign_var_carry_tail_ret_str,
+  assign_var_carry_tail_cons_result}"
+
+definition "assign_var_carry_tail_imp_to_HOL_state p s =
+  \<lparr>assign_var_carry_tail_i = (s (add_prefix p assign_var_carry_tail_i_str)),
+   assign_var_carry_tail_v = (s (add_prefix p assign_var_carry_tail_v_str)),
+   assign_var_carry_tail_a = (s (add_prefix p assign_var_carry_tail_a_str)),
+   assign_var_carry_tail_b = (s (add_prefix p assign_var_carry_tail_b_str)),
+   assign_var_carry_tail_c = (s (add_prefix p assign_var_carry_tail_c_str)),
+   assign_var_carry_tail_ret = (s (add_prefix p assign_var_carry_tail_ret_str))\<rparr>"
+
+lemmas assign_var_carry_tail_state_translators =
+  assign_var_carry_tail_imp_to_HOL_state_def
+  assign_var_carry_tail_aux1_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  assign_var_carry_tail_aux2_imp_to_HOL_state_def
+
+lemma assign_var_carry_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_var_carry_tail_ret_str)
+      = assign_var_carry_tail_ret
+          (assign_var_carry_tail_imp (assign_var_carry_tail_imp_to_HOL_state p s))"
+  apply(subst assign_var_carry_tail_imp.simps)
+  apply(simp only: assign_var_carry_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule assign_var_carry_tail_aux1_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(26) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule assign_var_carry_tail_aux2_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  by(force simp: assign_var_carry_tail_state_translators
+    assign_var_carry_tail_state_upd_def)  
+
+lemma assign_var_carry_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_tail_pref) assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_var_carry_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma assign_var_carry_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_var_carry_tail_imp_time 0 (assign_var_carry_tail_imp_to_HOL_state p s)"
+  apply(subst assign_var_carry_tail_imp_time.simps)
+  apply(simp only: assign_var_carry_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule assign_var_carry_tail_aux1_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(53) by fastforce
+  apply(erule assign_var_carry_tail_aux2_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(55) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(57) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
+  subgoal premises p using p(59) by fastforce
+  by(force simp add: Let_def assign_var_carry_tail_state_translators)  
+
+lemma assign_var_carry_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_var_carry_tail_imp_time 0 (assign_var_carry_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_var_carry_tail_ret_str) =
+          assign_var_carry_tail_ret (assign_var_carry_tail_imp
+                                        (assign_var_carry_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_var_carry_tail_IMP_Minus_correct_function
+    assign_var_carry_tail_IMP_Minus_correct_time
+    assign_var_carry_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsection \<open>full_adder\<close>
+
+subsubsection \<open>full_adder_tail_aux1\<close>
+
+fun full_adder_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "full_adder_tail_aux1 op_b i v a b = 
+    (3 ## (op_b ## 0) ## (assign_var_carry_tail i v a b 1) ## (assign_var_carry_tail i v a b 0) ## 0)"
+
+record full_adder_tail_aux1_state =
+  full_adder_tail_aux1_op_b::nat
+  full_adder_tail_aux1_i::nat
+  full_adder_tail_aux1_v::nat
+  full_adder_tail_aux1_a::nat
+  full_adder_tail_aux1_b::nat
+  full_adder_tail_aux1_ret::nat
+
+abbreviation "full_adder_tail_aux1_prefix \<equiv> ''full_adder_tail_aux1.''"
+abbreviation "full_adder_tail_aux1_op_b_str \<equiv> ''op_b''"
+abbreviation "full_adder_tail_aux1_i_str \<equiv> ''i''"
+abbreviation "full_adder_tail_aux1_v_str \<equiv> ''v''"
+abbreviation "full_adder_tail_aux1_a_str \<equiv> ''a''"
+abbreviation "full_adder_tail_aux1_b_str \<equiv> ''b''"
+abbreviation "full_adder_tail_aux1_ret_str \<equiv> ''ret''"
+
+definition "full_adder_tail_aux1_state_upd s =
+  (let
+      assign_var_carry_tail_i' = full_adder_tail_aux1_i s;
+      assign_var_carry_tail_v' = full_adder_tail_aux1_v s;
+      assign_var_carry_tail_a' = full_adder_tail_aux1_a s;
+      assign_var_carry_tail_b' = full_adder_tail_aux1_b s;
+      assign_var_carry_tail_c' = 0;
+      assign_var_carry_tail_ret' = 0;
+      assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',
+                                     assign_var_carry_tail_v = assign_var_carry_tail_v',
+                                     assign_var_carry_tail_a = assign_var_carry_tail_a',
+                                     assign_var_carry_tail_b = assign_var_carry_tail_b',
+                                     assign_var_carry_tail_c = assign_var_carry_tail_c',
+                                     assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;
+      assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;
+      cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_var_carry_tail_i' = full_adder_tail_aux1_i s;
+      assign_var_carry_tail_v' = full_adder_tail_aux1_v s;
+      assign_var_carry_tail_a' = full_adder_tail_aux1_a s;
+      assign_var_carry_tail_b' = full_adder_tail_aux1_b s;
+      assign_var_carry_tail_c' = 1;
+      assign_var_carry_tail_ret' = 0;
+      assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',
+                                     assign_var_carry_tail_v = assign_var_carry_tail_v',
+                                     assign_var_carry_tail_a = assign_var_carry_tail_a',
+                                     assign_var_carry_tail_b = assign_var_carry_tail_b',
+                                     assign_var_carry_tail_c = assign_var_carry_tail_c',
+                                     assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;
+      assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;
+      cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;      
+      cons_result = cons_ret cons_ret_state;
+      cons_h' = full_adder_tail_aux1_op_b s;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 3;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      full_adder_tail_aux1_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b s,
+             full_adder_tail_aux1_i = full_adder_tail_aux1_i s,
+             full_adder_tail_aux1_v = full_adder_tail_aux1_v s,
+             full_adder_tail_aux1_a = full_adder_tail_aux1_a s,
+             full_adder_tail_aux1_b = full_adder_tail_aux1_b s,
+             full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>
+  in
+      ret
+)"
+
+function full_adder_tail_aux1_imp ::
+  "full_adder_tail_aux1_state \<Rightarrow> full_adder_tail_aux1_state" where
+  "full_adder_tail_aux1_imp s =
+  (let 
+      ret = full_adder_tail_aux1_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure full_adder_tail_aux1_op_b") simp
+
+declare full_adder_tail_aux1_imp.simps [simp del]
+
+lemma full_adder_tail_aux1_imp_correct[let_function_correctness]:
+  "full_adder_tail_aux1_ret (full_adder_tail_aux1_imp s) =
+    full_adder_tail_aux1 (full_adder_tail_aux1_op_b s) (full_adder_tail_aux1_i s) (full_adder_tail_aux1_v s)
+      (full_adder_tail_aux1_a s) (full_adder_tail_aux1_b s)"
+  apply (simp only: full_adder_tail_aux1_imp.simps Let_def full_adder_tail_aux1_state_upd_def
+    assign_var_carry_tail_imp_correct cons_imp_correct)
+  by simp  
+
+function full_adder_tail_aux1_imp_time ::
+  "nat \<Rightarrow> full_adder_tail_aux1_state \<Rightarrow> nat" where
+  "full_adder_tail_aux1_imp_time t s =
+  (let
+      assign_var_carry_tail_i' = full_adder_tail_aux1_i s;
+      t = t + 2;
+      assign_var_carry_tail_v' = full_adder_tail_aux1_v s;
+      t = t + 2;
+      assign_var_carry_tail_a' = full_adder_tail_aux1_a s;
+      t = t + 2;
+      assign_var_carry_tail_b' = full_adder_tail_aux1_b s;
+      t = t + 2;
+      assign_var_carry_tail_c' = 0;
+      t = t + 2;
+      assign_var_carry_tail_ret' = 0;
+      t = t + 2;
+      assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',
+                                     assign_var_carry_tail_v = assign_var_carry_tail_v',
+                                     assign_var_carry_tail_a = assign_var_carry_tail_a',
+                                     assign_var_carry_tail_b = assign_var_carry_tail_b',
+                                     assign_var_carry_tail_c = assign_var_carry_tail_c',
+                                     assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;
+      assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;
+      t = t + assign_var_carry_tail_imp_time 0 assign_var_carry_tail_state;
+      cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_var_carry_tail_i' = full_adder_tail_aux1_i s;
+      t = t + 2;
+      assign_var_carry_tail_v' = full_adder_tail_aux1_v s;
+      t = t + 2;
+      assign_var_carry_tail_a' = full_adder_tail_aux1_a s;
+      t = t + 2;
+      assign_var_carry_tail_b' = full_adder_tail_aux1_b s;
+      t = t + 2;
+      assign_var_carry_tail_c' = 1;
+      t = t + 2;
+      assign_var_carry_tail_ret' = 0;
+      t = t + 2;
+      assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',
+                                     assign_var_carry_tail_v = assign_var_carry_tail_v',
+                                     assign_var_carry_tail_a = assign_var_carry_tail_a',
+                                     assign_var_carry_tail_b = assign_var_carry_tail_b',
+                                     assign_var_carry_tail_c = assign_var_carry_tail_c',
+                                     assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;
+      assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;
+      t = t + assign_var_carry_tail_imp_time 0 assign_var_carry_tail_state;
+      cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_h' = full_adder_tail_aux1_op_b s;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 3;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      full_adder_tail_aux1_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b s,
+             full_adder_tail_aux1_i = full_adder_tail_aux1_i s,
+             full_adder_tail_aux1_v = full_adder_tail_aux1_v s,
+             full_adder_tail_aux1_a = full_adder_tail_aux1_a s,
+             full_adder_tail_aux1_b = full_adder_tail_aux1_b s,
+             full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (full_adder_tail_aux1_op_b \<circ> snd)") simp
+
+declare full_adder_tail_aux1_imp_time.simps [simp del]
+
+lemma full_adder_tail_aux1_imp_time_acc:
+  "(full_adder_tail_aux1_imp_time (Suc t) s) = Suc (full_adder_tail_aux1_imp_time t s)"
+  by (induction t s rule: full_adder_tail_aux1_imp_time.induct)
+    ((subst (1 2) full_adder_tail_aux1_imp_time.simps);
+      (simp add: full_adder_tail_aux1_state_upd_def Let_def))            
+
+lemma full_adder_tail_aux1_imp_time_acc_2_aux:
+  "(full_adder_tail_aux1_imp_time t s) = t + (full_adder_tail_aux1_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux1_imp_time_acc)+            
+
+lemma full_adder_tail_aux1_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux1_imp_time t s) = t + (full_adder_tail_aux1_imp_time 0 s)"
+  by (rule full_adder_tail_aux1_imp_time_acc_2_aux)            
+
+lemma full_adder_tail_aux1_imp_time_acc_3:
+  "(full_adder_tail_aux1_imp_time (a + b) s) = a + (full_adder_tail_aux1_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_aux1_imp_time_acc)+   
+
+abbreviation "full_adder_tail_aux1_cons_result \<equiv> ''cons_result''"
+
+definition full_adder_tail_aux1_IMP_Minus where
+  "full_adder_tail_aux1_IMP_Minus \<equiv>
+  \<comment> \<open>  assign_var_carry_tail_i' = full_adder_tail_aux1_i s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_i_str) ::= (A (V full_adder_tail_aux1_i_str));;
+  \<comment> \<open>  assign_var_carry_tail_v' = full_adder_tail_aux1_v s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_v_str) ::= (A (V full_adder_tail_aux1_v_str));;
+  \<comment> \<open>  assign_var_carry_tail_a' = full_adder_tail_aux1_a s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_a_str) ::= (A (V full_adder_tail_aux1_a_str));;
+  \<comment> \<open>  assign_var_carry_tail_b' = full_adder_tail_aux1_b s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_b_str) ::= (A (V full_adder_tail_aux1_b_str));;
+  \<comment> \<open>  assign_var_carry_tail_c' = 0;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_c_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_var_carry_tail_ret' = 0;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_v = assign_var_carry_tail_v',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_a = assign_var_carry_tail_a',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_b = assign_var_carry_tail_b',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_c = assign_var_carry_tail_c',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;\<close>
+  (invoke_subprogram assign_var_carry_tail_prefix assign_var_carry_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (assign_var_carry_tail_prefix @ assign_var_carry_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux1_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_var_carry_tail_i' = full_adder_tail_aux1_i s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_i_str) ::= (A (V full_adder_tail_aux1_i_str));;
+  \<comment> \<open>  assign_var_carry_tail_v' = full_adder_tail_aux1_v s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_v_str) ::= (A (V full_adder_tail_aux1_v_str));;
+  \<comment> \<open>  assign_var_carry_tail_a' = full_adder_tail_aux1_a s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_a_str) ::= (A (V full_adder_tail_aux1_a_str));;
+  \<comment> \<open>  assign_var_carry_tail_b' = full_adder_tail_aux1_b s;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_b_str) ::= (A (V full_adder_tail_aux1_b_str));;
+  \<comment> \<open>  assign_var_carry_tail_c' = 1;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_c_str) ::= (A (N 1));;
+  \<comment> \<open>  assign_var_carry_tail_ret' = 0;\<close>
+  (assign_var_carry_tail_prefix @ assign_var_carry_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_var_carry_tail_state = \<lparr>assign_var_carry_tail_i = assign_var_carry_tail_i',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_v = assign_var_carry_tail_v',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_a = assign_var_carry_tail_a',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_b = assign_var_carry_tail_b',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_c = assign_var_carry_tail_c',\<close>
+  \<comment> \<open>                                 assign_var_carry_tail_ret = assign_var_carry_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_var_carry_tail_ret_state = assign_var_carry_tail_imp assign_var_carry_tail_state;\<close>
+  (invoke_subprogram assign_var_carry_tail_prefix assign_var_carry_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = assign_var_carry_tail_ret assign_var_carry_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (assign_var_carry_tail_prefix @ assign_var_carry_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux1_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux1_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux1_op_b s;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V full_adder_tail_aux1_op_b_str));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux1_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 3;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 3));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_aux1_ret' = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux1_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b s,\<close>
+  \<comment> \<open>         full_adder_tail_aux1_i = full_adder_tail_aux1_i s,\<close>
+  \<comment> \<open>         full_adder_tail_aux1_v = full_adder_tail_aux1_v s,\<close>
+  \<comment> \<open>         full_adder_tail_aux1_a = full_adder_tail_aux1_a s,\<close>
+  \<comment> \<open>         full_adder_tail_aux1_b = full_adder_tail_aux1_b s,\<close>
+  \<comment> \<open>         full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>\<close>
+"
+
+abbreviation "full_adder_tail_aux1_IMP_vars \<equiv>
+  {full_adder_tail_aux1_op_b_str, full_adder_tail_aux1_i_str, full_adder_tail_aux1_v_str,
+  full_adder_tail_aux1_a_str, full_adder_tail_aux1_b_str, full_adder_tail_aux1_ret_str,
+  full_adder_tail_aux1_cons_result}"
+
+definition "full_adder_tail_aux1_imp_to_HOL_state p s =
+  \<lparr>full_adder_tail_aux1_op_b = (s (add_prefix p full_adder_tail_aux1_op_b_str)),
+   full_adder_tail_aux1_i = (s (add_prefix p full_adder_tail_aux1_i_str)),
+   full_adder_tail_aux1_v = (s (add_prefix p full_adder_tail_aux1_v_str)),
+   full_adder_tail_aux1_a = (s (add_prefix p full_adder_tail_aux1_a_str)),
+   full_adder_tail_aux1_b = (s (add_prefix p full_adder_tail_aux1_b_str)),
+   full_adder_tail_aux1_ret = (s (add_prefix p full_adder_tail_aux1_ret_str))\<rparr>"
+
+lemmas full_adder_tail_aux1_state_translators =
+  full_adder_tail_aux1_imp_to_HOL_state_def
+  assign_var_carry_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma full_adder_tail_aux1_IMP_Minus_correct_function:
+  "(invoke_subprogram p full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p full_adder_tail_aux1_ret_str)
+      = full_adder_tail_aux1_ret
+          (full_adder_tail_aux1_imp (full_adder_tail_aux1_imp_to_HOL_state p s))"
+  apply(subst full_adder_tail_aux1_imp.simps)
+  apply(simp only: full_adder_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule assign_var_carry_tail_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule assign_var_carry_tail_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  by(force simp: full_adder_tail_aux1_state_translators
+    full_adder_tail_aux1_state_upd_def)   
+
+lemma full_adder_tail_aux1_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux1_pref) full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix full_adder_tail_aux1_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma full_adder_tail_aux1_IMP_Minus_correct_time:
+  "(invoke_subprogram p full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = full_adder_tail_aux1_imp_time 0 (full_adder_tail_aux1_imp_to_HOL_state p s)"
+  apply(subst full_adder_tail_aux1_imp_time.simps)
+  apply(simp only: full_adder_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule assign_var_carry_tail_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  apply(erule assign_var_carry_tail_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(77) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(79) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(81) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(83) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(85) by fastforce
+  by(force simp add: Let_def full_adder_tail_aux1_state_translators) 
+
+lemma full_adder_tail_aux1_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (full_adder_tail_aux1_imp_time 0 (full_adder_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) full_adder_tail_aux1_ret_str) =
+          full_adder_tail_aux1_ret (full_adder_tail_aux1_imp
+                                        (full_adder_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using full_adder_tail_aux1_IMP_Minus_correct_function
+    full_adder_tail_aux1_IMP_Minus_correct_time
+    full_adder_tail_aux1_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>full_adder_tail_aux2\<close>
+
+fun full_adder_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "full_adder_tail_aux2 op_b i v a = 
+    (3 ## ((vname_encode ''carry'') ## 0) ## 
+    (full_adder_tail_aux1 op_b i v a 1) ##
+    (full_adder_tail_aux1 op_b i v a 0) ## 0)"
+
+record full_adder_tail_aux2_state =
+  full_adder_tail_aux2_op_b::nat
+  full_adder_tail_aux2_i::nat
+  full_adder_tail_aux2_v::nat
+  full_adder_tail_aux2_a::nat
+  full_adder_tail_aux2_ret::nat
+
+abbreviation "full_adder_tail_aux2_prefix \<equiv> ''full_adder_tail_aux2.''"
+abbreviation "full_adder_tail_aux2_op_b_str \<equiv> ''op_b''"
+abbreviation "full_adder_tail_aux2_i_str \<equiv> ''i''"
+abbreviation "full_adder_tail_aux2_v_str \<equiv> ''v''"
+abbreviation "full_adder_tail_aux2_a_str \<equiv> ''a''"
+abbreviation "full_adder_tail_aux2_ret_str \<equiv> ''ret''"
+
+definition "full_adder_tail_aux2_state_upd s =
+  (let
+      full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;
+      full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;
+      full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;
+      full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;
+      full_adder_tail_aux1_b' = 0;
+      full_adder_tail_aux1_ret' = 0;
+      full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',
+                                    full_adder_tail_aux1_i = full_adder_tail_aux1_i',
+                                    full_adder_tail_aux1_v = full_adder_tail_aux1_v',
+                                    full_adder_tail_aux1_a = full_adder_tail_aux1_a',
+                                    full_adder_tail_aux1_b = full_adder_tail_aux1_b',
+                                    full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;
+      full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;
+      cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;
+      full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;
+      full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;
+      full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;
+      full_adder_tail_aux1_b' = 1;
+      full_adder_tail_aux1_ret' = 0;
+      full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',
+                                    full_adder_tail_aux1_i = full_adder_tail_aux1_i',
+                                    full_adder_tail_aux1_v = full_adder_tail_aux1_v',
+                                    full_adder_tail_aux1_a = full_adder_tail_aux1_a',
+                                    full_adder_tail_aux1_b = full_adder_tail_aux1_b',
+                                    full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;
+      full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;
+      cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;      
+      cons_result = cons_ret cons_ret_state;
+      cons_h' = carry_vname_encode_as_nat;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 3;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      full_adder_tail_aux2_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b s,
+             full_adder_tail_aux2_i = full_adder_tail_aux2_i s,
+             full_adder_tail_aux2_v = full_adder_tail_aux2_v s,
+             full_adder_tail_aux2_a = full_adder_tail_aux2_a s,
+             full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>
+  in
+      ret
+)"
+
+function full_adder_tail_aux2_imp ::
+  "full_adder_tail_aux2_state \<Rightarrow> full_adder_tail_aux2_state" where
+  "full_adder_tail_aux2_imp s =
+  (let 
+      ret = full_adder_tail_aux2_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure full_adder_tail_aux2_op_b") simp
+
+declare full_adder_tail_aux2_imp.simps [simp del]
+
+lemma full_adder_tail_aux2_imp_correct[let_function_correctness]:
+  "full_adder_tail_aux2_ret (full_adder_tail_aux2_imp s) =
+    full_adder_tail_aux2 (full_adder_tail_aux2_op_b s) (full_adder_tail_aux2_i s) (full_adder_tail_aux2_v s)
+      (full_adder_tail_aux2_a s)"
+  apply (simp only: full_adder_tail_aux2_imp.simps Let_def full_adder_tail_aux2_state_upd_def
+  full_adder_tail_aux1_imp_correct cons_imp_correct carry_vname_encode_val full_adder_tail_aux2.simps)
+  by simp
+
+function full_adder_tail_aux2_imp_time ::
+  "nat \<Rightarrow> full_adder_tail_aux2_state \<Rightarrow> nat" where
+  "full_adder_tail_aux2_imp_time t s =
+  (let
+      full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;
+      t = t + 2;
+      full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;
+      t = t + 2;
+      full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;
+      t = t + 2;
+      full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;
+      t = t + 2;
+      full_adder_tail_aux1_b' = 0;
+      t = t + 2;
+      full_adder_tail_aux1_ret' = 0;
+      t = t + 2;
+      full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',
+                                    full_adder_tail_aux1_i = full_adder_tail_aux1_i',
+                                    full_adder_tail_aux1_v = full_adder_tail_aux1_v',
+                                    full_adder_tail_aux1_a = full_adder_tail_aux1_a',
+                                    full_adder_tail_aux1_b = full_adder_tail_aux1_b',
+                                    full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;
+      full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;
+      t = t + full_adder_tail_aux1_imp_time 0 full_adder_tail_aux1_state;
+      cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;
+      t = t + 2;
+      full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;
+      t = t + 2;
+      full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;
+      t = t + 2;
+      full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;
+      t = t + 2;
+      full_adder_tail_aux1_b' = 1;
+      t = t + 2;
+      full_adder_tail_aux1_ret' = 0;
+      t = t + 2;
+      full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',
+                                    full_adder_tail_aux1_i = full_adder_tail_aux1_i',
+                                    full_adder_tail_aux1_v = full_adder_tail_aux1_v',
+                                    full_adder_tail_aux1_a = full_adder_tail_aux1_a',
+                                    full_adder_tail_aux1_b = full_adder_tail_aux1_b',
+                                    full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;
+      full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;
+      t = t + full_adder_tail_aux1_imp_time 0 full_adder_tail_aux1_state;
+      cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_h' = carry_vname_encode_as_nat;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 3;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      full_adder_tail_aux2_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b s,
+             full_adder_tail_aux2_i = full_adder_tail_aux2_i s,
+             full_adder_tail_aux2_v = full_adder_tail_aux2_v s,
+             full_adder_tail_aux2_a = full_adder_tail_aux2_a s,
+             full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (full_adder_tail_aux2_op_b \<circ> snd)") simp
+
+declare full_adder_tail_aux2_imp_time.simps [simp del]
+
+lemma full_adder_tail_aux2_imp_time_acc:
+  "(full_adder_tail_aux2_imp_time (Suc t) s) = Suc (full_adder_tail_aux2_imp_time t s)"
+  by (induction t s rule: full_adder_tail_aux2_imp_time.induct)
+    ((subst (1 2) full_adder_tail_aux2_imp_time.simps);
+      (simp add: full_adder_tail_aux2_state_upd_def Let_def))            
+
+lemma full_adder_tail_aux2_imp_time_acc_2_aux:
+  "(full_adder_tail_aux2_imp_time t s) = t + (full_adder_tail_aux2_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux2_imp_time_acc)+            
+
+lemma full_adder_tail_aux2_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux2_imp_time t s) = t + (full_adder_tail_aux2_imp_time 0 s)"
+  by (rule full_adder_tail_aux2_imp_time_acc_2_aux)            
+
+lemma full_adder_tail_aux2_imp_time_acc_3:
+  "(full_adder_tail_aux2_imp_time (a + b) s) = a + (full_adder_tail_aux2_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_aux2_imp_time_acc)+
+
+abbreviation "full_adder_tail_aux2_cons_result \<equiv> ''cons_result''"
+
+definition full_adder_tail_aux2_IMP_Minus where
+  "full_adder_tail_aux2_IMP_Minus \<equiv>
+  \<comment> \<open>  full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_op_b_str) ::= (A (V full_adder_tail_aux2_op_b_str));;
+  \<comment> \<open>  full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_i_str) ::= (A (V full_adder_tail_aux2_i_str));;
+  \<comment> \<open>  full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_v_str) ::= (A (V full_adder_tail_aux2_v_str));;
+  \<comment> \<open>  full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_a_str) ::= (A (V full_adder_tail_aux2_a_str));;
+  \<comment> \<open>  full_adder_tail_aux1_b' = 0;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_b_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux1_ret' = 0;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_i = full_adder_tail_aux1_i',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_v = full_adder_tail_aux1_v',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_a = full_adder_tail_aux1_a',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_b = full_adder_tail_aux1_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;\<close>
+  (invoke_subprogram full_adder_tail_aux1_prefix full_adder_tail_aux1_IMP_Minus);;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  full_adder_tail_aux1_op_b' = full_adder_tail_aux2_op_b s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_op_b_str) ::= (A (V full_adder_tail_aux2_op_b_str));;
+  \<comment> \<open>  full_adder_tail_aux1_i' = full_adder_tail_aux2_i s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_i_str) ::= (A (V full_adder_tail_aux2_i_str));;
+  \<comment> \<open>  full_adder_tail_aux1_v' = full_adder_tail_aux2_v s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_v_str) ::= (A (V full_adder_tail_aux2_v_str));;
+  \<comment> \<open>  full_adder_tail_aux1_a' = full_adder_tail_aux2_a s;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_a_str) ::= (A (V full_adder_tail_aux2_a_str));;
+  \<comment> \<open>  full_adder_tail_aux1_b' = 1;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_b_str) ::= (A (N 1));;
+  \<comment> \<open>  full_adder_tail_aux1_ret' = 0;\<close>
+  (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux1_state = \<lparr>full_adder_tail_aux1_op_b = full_adder_tail_aux1_op_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_i = full_adder_tail_aux1_i',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_v = full_adder_tail_aux1_v',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_a = full_adder_tail_aux1_a',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_b = full_adder_tail_aux1_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux1_ret = full_adder_tail_aux1_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_aux1_ret_state = full_adder_tail_aux1_imp full_adder_tail_aux1_state;\<close>
+  (invoke_subprogram full_adder_tail_aux1_prefix full_adder_tail_aux1_IMP_Minus);;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux1_ret full_adder_tail_aux1_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (full_adder_tail_aux1_prefix @ full_adder_tail_aux1_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux2_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_h' = carry_vname_encode_as_nat;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N carry_vname_encode_as_nat));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux2_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 3;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 3));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_aux2_ret' = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux2_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b s,\<close>
+  \<comment> \<open>         full_adder_tail_aux2_i = full_adder_tail_aux2_i s,\<close>
+  \<comment> \<open>         full_adder_tail_aux2_v = full_adder_tail_aux2_v s,\<close>
+  \<comment> \<open>         full_adder_tail_aux2_a = full_adder_tail_aux2_a s,\<close>
+  \<comment> \<open>         full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>\<close>
+"
+
+abbreviation "full_adder_tail_aux2_IMP_vars \<equiv>
+  {full_adder_tail_aux2_op_b_str, full_adder_tail_aux2_i_str, full_adder_tail_aux2_v_str,
+  full_adder_tail_aux2_a_str, full_adder_tail_aux2_ret_str, full_adder_tail_aux2_cons_result}"
+
+definition "full_adder_tail_aux2_imp_to_HOL_state p s =
+  \<lparr>full_adder_tail_aux2_op_b = (s (add_prefix p full_adder_tail_aux2_op_b_str)),
+   full_adder_tail_aux2_i = (s (add_prefix p full_adder_tail_aux2_i_str)),
+   full_adder_tail_aux2_v = (s (add_prefix p full_adder_tail_aux2_v_str)),
+   full_adder_tail_aux2_a = (s (add_prefix p full_adder_tail_aux2_a_str)),
+   full_adder_tail_aux2_ret = (s (add_prefix p full_adder_tail_aux2_ret_str))\<rparr>"
+
+lemmas full_adder_tail_aux2_state_translators =
+  full_adder_tail_aux2_imp_to_HOL_state_def
+  full_adder_tail_aux1_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma full_adder_tail_aux2_IMP_Minus_correct_function:
+  "(invoke_subprogram p full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p full_adder_tail_aux2_ret_str)
+      = full_adder_tail_aux2_ret
+          (full_adder_tail_aux2_imp (full_adder_tail_aux2_imp_to_HOL_state p s))"
+  apply(subst full_adder_tail_aux2_imp.simps)
+  apply(simp only: full_adder_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule full_adder_tail_aux1_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule full_adder_tail_aux1_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  by(force simp: full_adder_tail_aux2_state_translators
+    full_adder_tail_aux2_state_upd_def)     
+
+lemma full_adder_tail_aux2_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux2_pref) full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix full_adder_tail_aux2_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma full_adder_tail_aux2_IMP_Minus_correct_time:
+  "(invoke_subprogram p full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = full_adder_tail_aux2_imp_time 0 (full_adder_tail_aux2_imp_to_HOL_state p s)"
+  apply(subst full_adder_tail_aux2_imp_time.simps)
+  apply(simp only: full_adder_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule full_adder_tail_aux1_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  apply(erule full_adder_tail_aux1_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(77) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(79) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(81) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(83) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(85) by fastforce
+  by(force simp add: Let_def full_adder_tail_aux2_state_translators)  
+
+lemma full_adder_tail_aux2_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (full_adder_tail_aux2_imp_time 0 (full_adder_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) full_adder_tail_aux2_ret_str) =
+          full_adder_tail_aux2_ret (full_adder_tail_aux2_imp
+                                        (full_adder_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using full_adder_tail_aux2_IMP_Minus_correct_function
+    full_adder_tail_aux2_IMP_Minus_correct_time
+    full_adder_tail_aux2_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>full_adder_tail_aux3\<close>
+
+fun full_adder_tail_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "full_adder_tail_aux3 op_a op_b i v = 
+    (op_a ## 0) ## (full_adder_tail_aux2 op_b i v 1) ## (full_adder_tail_aux2 op_b i v 0) ## 0"
+
+record full_adder_tail_aux3_state =
+  full_adder_tail_aux3_op_a::nat
+  full_adder_tail_aux3_op_b::nat
+  full_adder_tail_aux3_i::nat
+  full_adder_tail_aux3_v::nat
+  full_adder_tail_aux3_ret::nat
+
+abbreviation "full_adder_tail_aux3_prefix \<equiv> ''full_adder_tail_aux3.''"
+abbreviation "full_adder_tail_aux3_op_a_str \<equiv> ''op_a''"
+abbreviation "full_adder_tail_aux3_op_b_str \<equiv> ''op_b''"
+abbreviation "full_adder_tail_aux3_i_str \<equiv> ''i''"
+abbreviation "full_adder_tail_aux3_v_str \<equiv> ''v''"
+abbreviation "full_adder_tail_aux3_ret_str \<equiv> ''ret''"
+
+definition "full_adder_tail_aux3_state_upd s =
+  (let
+      full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;
+      full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;
+      full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;
+      full_adder_tail_aux2_a' = 0;
+      full_adder_tail_aux2_ret' = 0;
+      full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',
+                                    full_adder_tail_aux2_i = full_adder_tail_aux2_i',
+                                    full_adder_tail_aux2_v = full_adder_tail_aux2_v',
+                                    full_adder_tail_aux2_a = full_adder_tail_aux2_a',
+                                    full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;
+      full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;
+      cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;
+      full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;
+      full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;
+      full_adder_tail_aux2_a' = 1;
+      full_adder_tail_aux2_ret' = 0;
+      full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',
+                                    full_adder_tail_aux2_i = full_adder_tail_aux2_i',
+                                    full_adder_tail_aux2_v = full_adder_tail_aux2_v',
+                                    full_adder_tail_aux2_a = full_adder_tail_aux2_a',
+                                    full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;
+      full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;
+      cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;      
+      cons_result = cons_ret cons_ret_state;
+      cons_h' = full_adder_tail_aux3_op_a s;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      full_adder_tail_aux3_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a s,
+             full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b s,
+             full_adder_tail_aux3_i = full_adder_tail_aux3_i s,
+             full_adder_tail_aux3_v = full_adder_tail_aux3_v s,
+             full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>
+   in
+      ret
+)"
+
+function full_adder_tail_aux3_imp ::
+  "full_adder_tail_aux3_state \<Rightarrow> full_adder_tail_aux3_state" where
+  "full_adder_tail_aux3_imp s =
+  (let 
+      ret = full_adder_tail_aux3_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure full_adder_tail_aux3_op_a") simp
+
+declare full_adder_tail_aux3_imp.simps [simp del]
+
+lemma full_adder_tail_aux3_imp_correct[let_function_correctness]:
+  "full_adder_tail_aux3_ret (full_adder_tail_aux3_imp s) =
+    full_adder_tail_aux3 (full_adder_tail_aux3_op_a s) (full_adder_tail_aux3_op_b s)
+      (full_adder_tail_aux3_i s) (full_adder_tail_aux3_v s)"
+  apply (simp only: full_adder_tail_aux3_imp.simps Let_def full_adder_tail_aux3_state_upd_def
+    full_adder_tail_aux2_imp_correct cons_imp_correct)
+  by simp  
+
+function full_adder_tail_aux3_imp_time ::
+  "nat \<Rightarrow> full_adder_tail_aux3_state \<Rightarrow> nat" where
+  "full_adder_tail_aux3_imp_time t s =
+  (let
+      full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;
+      t = t + 2;
+      full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;
+      t = t + 2;
+      full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;
+      t = t + 2;
+      full_adder_tail_aux2_a' = 0;
+      t = t + 2;
+      full_adder_tail_aux2_ret' = 0;
+      t = t + 2;
+      full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',
+                                    full_adder_tail_aux2_i = full_adder_tail_aux2_i',
+                                    full_adder_tail_aux2_v = full_adder_tail_aux2_v',
+                                    full_adder_tail_aux2_a = full_adder_tail_aux2_a',
+                                    full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;
+      full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;
+      t = t + full_adder_tail_aux2_imp_time 0 full_adder_tail_aux2_state;
+      cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;
+      t = t + 2;
+      full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;
+      t = t + 2;
+      full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;
+      t = t + 2;
+      full_adder_tail_aux2_a' = 1;
+      t = t + 2;
+      full_adder_tail_aux2_ret' = 0;
+      t = t + 2;
+      full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',
+                                    full_adder_tail_aux2_i = full_adder_tail_aux2_i',
+                                    full_adder_tail_aux2_v = full_adder_tail_aux2_v',
+                                    full_adder_tail_aux2_a = full_adder_tail_aux2_a',
+                                    full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;
+      full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;
+      t = t + full_adder_tail_aux2_imp_time 0 full_adder_tail_aux2_state;
+      cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_h' = full_adder_tail_aux3_op_a s;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      full_adder_tail_aux3_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a s,
+             full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b s,
+             full_adder_tail_aux3_i = full_adder_tail_aux3_i s,
+             full_adder_tail_aux3_v = full_adder_tail_aux3_v s,
+             full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (full_adder_tail_aux3_op_a \<circ> snd)") simp
+
+declare full_adder_tail_aux3_imp_time.simps [simp del]
+
+lemma full_adder_tail_aux3_imp_time_acc:
+  "(full_adder_tail_aux3_imp_time (Suc t) s) = Suc (full_adder_tail_aux3_imp_time t s)"
+  by (induction t s rule: full_adder_tail_aux3_imp_time.induct)
+    ((subst (1 2) full_adder_tail_aux3_imp_time.simps);
+      (simp add: full_adder_tail_aux3_state_upd_def Let_def))            
+
+lemma full_adder_tail_aux3_imp_time_acc_2_aux:
+  "(full_adder_tail_aux3_imp_time t s) = t + (full_adder_tail_aux3_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux3_imp_time_acc)+            
+
+lemma full_adder_tail_aux3_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux3_imp_time t s) = t + (full_adder_tail_aux3_imp_time 0 s)"
+  by (rule full_adder_tail_aux3_imp_time_acc_2_aux)            
+
+lemma full_adder_tail_aux3_imp_time_acc_3:
+  "(full_adder_tail_aux3_imp_time (a + b) s) = a + (full_adder_tail_aux3_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_aux3_imp_time_acc)+
+
+abbreviation "full_adder_tail_aux3_cons_result \<equiv> ''cons_result''"
+
+definition full_adder_tail_aux3_IMP_Minus where
+  "full_adder_tail_aux3_IMP_Minus \<equiv>
+  \<comment> \<open>  full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_op_b_str) ::= (A (V full_adder_tail_aux3_op_b_str));;
+  \<comment> \<open>  full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_i_str) ::= (A (V full_adder_tail_aux3_i_str));;
+  \<comment> \<open>  full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_v_str) ::= (A (V full_adder_tail_aux3_v_str));;
+  \<comment> \<open>  full_adder_tail_aux2_a' = 0;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_a_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux2_ret' = 0;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_i = full_adder_tail_aux2_i',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_v = full_adder_tail_aux2_v',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_a = full_adder_tail_aux2_a',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;\<close>
+  (invoke_subprogram full_adder_tail_aux2_prefix full_adder_tail_aux2_IMP_Minus);;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux3_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  full_adder_tail_aux2_op_b' = full_adder_tail_aux3_op_b s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_op_b_str) ::= (A (V full_adder_tail_aux3_op_b_str));;
+  \<comment> \<open>  full_adder_tail_aux2_i' = full_adder_tail_aux3_i s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_i_str) ::= (A (V full_adder_tail_aux3_i_str));;
+  \<comment> \<open>  full_adder_tail_aux2_v' = full_adder_tail_aux3_v s;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_v_str) ::= (A (V full_adder_tail_aux3_v_str));;
+  \<comment> \<open>  full_adder_tail_aux2_a' = 1;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_a_str) ::= (A (N 1));;
+  \<comment> \<open>  full_adder_tail_aux2_ret' = 0;\<close>
+  (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux2_state = \<lparr>full_adder_tail_aux2_op_b = full_adder_tail_aux2_op_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_i = full_adder_tail_aux2_i',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_v = full_adder_tail_aux2_v',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_a = full_adder_tail_aux2_a',\<close>
+  \<comment> \<open>                                full_adder_tail_aux2_ret = full_adder_tail_aux2_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_aux2_ret_state = full_adder_tail_aux2_imp full_adder_tail_aux2_state;\<close>
+  (invoke_subprogram full_adder_tail_aux2_prefix full_adder_tail_aux2_IMP_Minus);;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux2_ret full_adder_tail_aux2_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (full_adder_tail_aux2_prefix @ full_adder_tail_aux2_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux3_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux3_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_h' = full_adder_tail_aux3_op_a s;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V full_adder_tail_aux3_op_a_str));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V full_adder_tail_aux3_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_aux3_ret' = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_aux3_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a s,\<close>
+  \<comment> \<open>         full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b s,\<close>
+  \<comment> \<open>         full_adder_tail_aux3_i = full_adder_tail_aux3_i s,\<close>
+  \<comment> \<open>         full_adder_tail_aux3_v = full_adder_tail_aux3_v s,\<close>
+  \<comment> \<open>         full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>\<close>
+"
+
+abbreviation "full_adder_tail_aux3_IMP_vars \<equiv>
+  {full_adder_tail_aux3_op_a_str, full_adder_tail_aux3_op_b_str, full_adder_tail_aux3_i_str,
+  full_adder_tail_aux3_v_str, full_adder_tail_aux3_ret_str, full_adder_tail_aux3_cons_result}"
+
+definition "full_adder_tail_aux3_imp_to_HOL_state p s =
+  \<lparr>full_adder_tail_aux3_op_a = (s (add_prefix p full_adder_tail_aux3_op_a_str)),
+   full_adder_tail_aux3_op_b = (s (add_prefix p full_adder_tail_aux3_op_b_str)),
+   full_adder_tail_aux3_i = (s (add_prefix p full_adder_tail_aux3_i_str)),
+   full_adder_tail_aux3_v = (s (add_prefix p full_adder_tail_aux3_v_str)),
+   full_adder_tail_aux3_ret = (s (add_prefix p full_adder_tail_aux3_ret_str))\<rparr>"
+
+lemmas full_adder_tail_aux3_state_translators =
+  full_adder_tail_aux3_imp_to_HOL_state_def
+  full_adder_tail_aux2_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma full_adder_tail_aux3_IMP_Minus_correct_function:
+  "(invoke_subprogram p full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p full_adder_tail_aux3_ret_str)
+      = full_adder_tail_aux3_ret
+          (full_adder_tail_aux3_imp (full_adder_tail_aux3_imp_to_HOL_state p s))"
+  apply(subst full_adder_tail_aux3_imp.simps)
+  apply(simp only: full_adder_tail_aux3_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule full_adder_tail_aux2_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule full_adder_tail_aux2_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  by(force simp: full_adder_tail_aux3_state_translators
+    full_adder_tail_aux3_state_upd_def)    
+
+lemma full_adder_tail_aux3_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux3_pref) full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix full_adder_tail_aux3_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast    
+
+lemma full_adder_tail_aux3_IMP_Minus_correct_time:
+  "(invoke_subprogram p full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = full_adder_tail_aux3_imp_time 0 (full_adder_tail_aux3_imp_to_HOL_state p s)"
+  apply(subst full_adder_tail_aux3_imp_time.simps)
+  apply(simp only: full_adder_tail_aux3_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule full_adder_tail_aux2_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(61) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule full_adder_tail_aux2_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(67) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(69) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  by(force simp add: Let_def full_adder_tail_aux3_state_translators)        
+
+lemma full_adder_tail_aux3_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (full_adder_tail_aux3_imp_time 0 (full_adder_tail_aux3_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) full_adder_tail_aux3_ret_str) =
+          full_adder_tail_aux3_ret (full_adder_tail_aux3_imp
+                                        (full_adder_tail_aux3_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using full_adder_tail_aux3_IMP_Minus_correct_function
+    full_adder_tail_aux3_IMP_Minus_correct_time
+    full_adder_tail_aux3_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>full_adder_tail\<close>
+
+fun full_adder_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "full_adder_tail' i v =
+    (let op_a = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''a''), i));
+         op_b = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''b''), i)) in 
+    3 ## (full_adder_tail_aux3 op_a op_b i v)
+  )"
+
+lemma full_adder_tail'_correct:
+  "full_adder_tail i v = full_adder_tail' i v"
+  unfolding full_adder_tail_def
+  by (simp only: full_adder_tail'.simps full_adder_tail_aux1.simps full_adder_tail_aux2.simps 
+    full_adder_tail_aux3.simps Let_def)
+
+record full_adder_tail_state =
+  full_adder_tail_i::nat
+  full_adder_tail_v::nat
+  full_adder_tail_ret::nat
+
+abbreviation "full_adder_tail_prefix \<equiv> ''full_adder_tail.''"
+abbreviation "full_adder_tail_i_str \<equiv> ''i''"
+abbreviation "full_adder_tail_v_str \<equiv> ''v''"
+abbreviation "full_adder_tail_ret_str \<equiv> ''ret''"
+
+definition "full_adder_tail_state_upd s =
+  (let
+      prod_encode_a' = a_encode_char_as_nat;
+      prod_encode_b' = full_adder_tail_i s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      operand_bit_to_var_tail_ret' = 0;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      operand_bit_to_var_tail_result = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      prod_encode_a' = b_encode_char_as_nat;
+      prod_encode_b' = full_adder_tail_i s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      operand_bit_to_var_tail_ret' = 0;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      full_adder_tail_aux3_op_a' = operand_bit_to_var_tail_result;
+      full_adder_tail_aux3_op_b' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      full_adder_tail_aux3_i' = full_adder_tail_i s;
+      full_adder_tail_aux3_v' = full_adder_tail_v s;
+      full_adder_tail_aux3_ret' = 0;
+      full_adder_tail_aux3_state = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a',
+                                    full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b',
+                                    full_adder_tail_aux3_i = full_adder_tail_aux3_i',
+                                    full_adder_tail_aux3_v = full_adder_tail_aux3_v',
+                                    full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>;
+      full_adder_tail_aux3_ret_state = full_adder_tail_aux3_imp full_adder_tail_aux3_state;
+      cons_h' = 3;
+      cons_t' = full_adder_tail_aux3_ret full_adder_tail_aux3_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      full_adder_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>full_adder_tail_i = full_adder_tail_i s,
+             full_adder_tail_v = full_adder_tail_v s,
+             full_adder_tail_ret = full_adder_tail_ret'\<rparr>
+  in ret
+)"
+
+function full_adder_tail_imp ::
+  "full_adder_tail_state \<Rightarrow> full_adder_tail_state" where
+  "full_adder_tail_imp s =
+  (let 
+      ret = full_adder_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure full_adder_tail_i") simp
+
+declare full_adder_tail_imp.simps [simp del]
+
+lemma full_adder_tail_imp_correct[let_function_correctness]:
+  "full_adder_tail_ret (full_adder_tail_imp s) =
+    full_adder_tail (full_adder_tail_i s) (full_adder_tail_v s)"
+  apply (simp only: full_adder_tail_imp.simps Let_def full_adder_tail_state_upd_def
+    prod_encode_imp_correct operand_bit_to_var_tail_imp_correct full_adder_tail_aux3_imp_correct
+    cons_imp_correct a_encode_char_val b_encode_char_val full_adder_tail'_correct full_adder_tail'.simps)
+  by simp
+
+function full_adder_tail_imp_time ::
+  "nat \<Rightarrow> full_adder_tail_state \<Rightarrow> nat" where
+  "full_adder_tail_imp_time t s =
+  (let
+      prod_encode_a' = a_encode_char_as_nat;
+      t = t + 2;
+      prod_encode_b' = full_adder_tail_i s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      operand_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      t = t + operand_bit_to_var_tail_imp_time 0 operand_bit_to_var_tail_state;
+      operand_bit_to_var_tail_result = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      t = t + 2;
+      prod_encode_a' = b_encode_char_as_nat;
+      t = t + 2;
+      prod_encode_b' = full_adder_tail_i s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      operand_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      t = t + operand_bit_to_var_tail_imp_time 0 operand_bit_to_var_tail_state;
+      full_adder_tail_aux3_op_a' = operand_bit_to_var_tail_result;
+      t = t + 2;
+      full_adder_tail_aux3_op_b' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      t = t + 2;
+      full_adder_tail_aux3_i' = full_adder_tail_i s;
+      t = t + 2;
+      full_adder_tail_aux3_v' = full_adder_tail_v s;
+      t = t + 2;
+      full_adder_tail_aux3_ret' = 0;
+      t = t + 2;
+      full_adder_tail_aux3_state = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a',
+                                    full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b',
+                                    full_adder_tail_aux3_i = full_adder_tail_aux3_i',
+                                    full_adder_tail_aux3_v = full_adder_tail_aux3_v',
+                                    full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>;
+      full_adder_tail_aux3_ret_state = full_adder_tail_aux3_imp full_adder_tail_aux3_state;
+      t = t + full_adder_tail_aux3_imp_time 0 full_adder_tail_aux3_state;
+      cons_h' = 3;
+      t = t + 2;
+      cons_t' = full_adder_tail_aux3_ret full_adder_tail_aux3_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      full_adder_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>full_adder_tail_i = full_adder_tail_i s,
+             full_adder_tail_v = full_adder_tail_v s,
+             full_adder_tail_ret = full_adder_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (full_adder_tail_i \<circ> snd)") simp
+
+declare full_adder_tail_imp_time.simps [simp del]
+
+lemma full_adder_tail_imp_time_acc:
+  "(full_adder_tail_imp_time (Suc t) s) = Suc (full_adder_tail_imp_time t s)"
+  by (induction t s rule: full_adder_tail_imp_time.induct)
+    ((subst (1 2) full_adder_tail_imp_time.simps);
+      (simp add: full_adder_tail_state_upd_def Let_def))            
+
+lemma full_adder_tail_imp_time_acc_2_aux:
+  "(full_adder_tail_imp_time t s) = t + (full_adder_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: full_adder_tail_imp_time_acc)+            
+
+lemma full_adder_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_imp_time t s) = t + (full_adder_tail_imp_time 0 s)"
+  by (rule full_adder_tail_imp_time_acc_2_aux)            
+
+lemma full_adder_tail_imp_time_acc_3:
+  "(full_adder_tail_imp_time (a + b) s) = a + (full_adder_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_imp_time_acc)+ 
+
+abbreviation "full_adder_tail_operand_bit_to_var_tail_result \<equiv> ''operand_bit_to_var_tail_result''"
+
+definition full_adder_tail_IMP_Minus where
+  "full_adder_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  prod_encode_a' = a_encode_char_as_nat;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  prod_encode_b' = full_adder_tail_i s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (V full_adder_tail_i_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  operand_bit_to_var_tail_ret' = 0;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                                   operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;\<close>
+  (invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  operand_bit_to_var_tail_result = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;\<close>
+  (full_adder_tail_operand_bit_to_var_tail_result) ::= (A (V (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = b_encode_char_as_nat;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N b_encode_char_as_nat));;
+  \<comment> \<open>  prod_encode_b' = full_adder_tail_i s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (V full_adder_tail_i_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  operand_bit_to_var_tail_ret' = 0;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                                   operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;\<close>
+  (invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_aux3_op_a' = operand_bit_to_var_tail_result;\<close>
+  (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_op_a_str) ::= (A (V full_adder_tail_operand_bit_to_var_tail_result));;
+  \<comment> \<open>  full_adder_tail_aux3_op_b' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;\<close>
+  (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_op_b_str) ::= (A (V (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  full_adder_tail_aux3_i' = full_adder_tail_i s;\<close>
+  (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_i_str) ::= (A (V full_adder_tail_i_str));;
+  \<comment> \<open>  full_adder_tail_aux3_v' = full_adder_tail_v s;\<close>
+  (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_v_str) ::= (A (V full_adder_tail_v_str));;
+  \<comment> \<open>  full_adder_tail_aux3_ret' = 0;\<close>
+  (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_aux3_state = \<lparr>full_adder_tail_aux3_op_a = full_adder_tail_aux3_op_a',\<close>
+  \<comment> \<open>                                full_adder_tail_aux3_op_b = full_adder_tail_aux3_op_b',\<close>
+  \<comment> \<open>                                full_adder_tail_aux3_i = full_adder_tail_aux3_i',\<close>
+  \<comment> \<open>                                full_adder_tail_aux3_v = full_adder_tail_aux3_v',\<close>
+  \<comment> \<open>                                full_adder_tail_aux3_ret = full_adder_tail_aux3_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_aux3_ret_state = full_adder_tail_aux3_imp full_adder_tail_aux3_state;\<close>
+  (invoke_subprogram full_adder_tail_aux3_prefix full_adder_tail_aux3_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 3;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 3));;
+  \<comment> \<open>  cons_t' = full_adder_tail_aux3_ret full_adder_tail_aux3_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (full_adder_tail_aux3_prefix @ full_adder_tail_aux3_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_ret' = cons_ret cons_ret_state;\<close>
+  (full_adder_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>full_adder_tail_i = full_adder_tail_i s,\<close>
+  \<comment> \<open>         full_adder_tail_v = full_adder_tail_v s,\<close>
+  \<comment> \<open>         full_adder_tail_ret = full_adder_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "full_adder_tail_IMP_vars \<equiv>
+  {full_adder_tail_i_str, full_adder_tail_v_str, full_adder_tail_ret_str, 
+  full_adder_tail_operand_bit_to_var_tail_result}"
+
+definition "full_adder_tail_imp_to_HOL_state p s =
+  \<lparr>full_adder_tail_i = (s (add_prefix p full_adder_tail_i_str)),
+   full_adder_tail_v = (s (add_prefix p full_adder_tail_v_str)),
+   full_adder_tail_ret = (s (add_prefix p full_adder_tail_ret_str))\<rparr>"
+
+lemmas full_adder_tail_state_translators =
+  full_adder_tail_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  operand_bit_to_var_tail_imp_to_HOL_state_def
+  full_adder_tail_aux3_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma full_adder_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p full_adder_tail_ret_str)
+      = full_adder_tail_ret
+          (full_adder_tail_imp (full_adder_tail_imp_to_HOL_state p s))"
+  apply(subst full_adder_tail_imp.simps)
+  apply(simp only: full_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(26) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule full_adder_tail_aux3_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  by(force simp: full_adder_tail_state_translators
+    full_adder_tail_state_upd_def)        
+
+lemma full_adder_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_pref) full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix full_adder_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma full_adder_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = full_adder_tail_imp_time 0 (full_adder_tail_imp_to_HOL_state p s)"
+  apply(subst full_adder_tail_imp_time.simps)
+  apply(simp only: full_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(53) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(55) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(57) by fastforce
+  apply(erule full_adder_tail_aux3_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(59) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
+  subgoal premises p using p(61) by fastforce
+  by(force simp add: Let_def full_adder_tail_state_translators)  
+
+lemma full_adder_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (full_adder_tail_imp_time 0 (full_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) full_adder_tail_ret_str) =
+          full_adder_tail_ret (full_adder_tail_imp
+                                        (full_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using full_adder_tail_IMP_Minus_correct_function
+    full_adder_tail_IMP_Minus_correct_time
+    full_adder_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+
+
 end 
