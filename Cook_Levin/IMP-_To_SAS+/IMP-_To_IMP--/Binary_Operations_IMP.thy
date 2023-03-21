@@ -7581,6 +7581,2209 @@ lemma full_adder_tail_IMP_Minus_correct:
     full_adder_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsection \<open>map_adder\<close>
 
+subsubsection \<open>map_adder_acc\<close>
+
+record map_adder_acc_state =
+  map_adder_acc_acc::nat
+  map_adder_acc_v::nat
+  map_adder_acc_n::nat
+  map_adder_acc_ret::nat
+
+abbreviation "map_adder_acc_prefix \<equiv> ''map_adder_acc.''"
+abbreviation "map_adder_acc_acc_str \<equiv> ''acc''"
+abbreviation "map_adder_acc_v_str \<equiv> ''v''"
+abbreviation "map_adder_acc_n_str \<equiv> ''n''"
+abbreviation "map_adder_acc_ret_str \<equiv> ''ret''"
+
+definition "map_adder_acc_state_upd s \<equiv>
+  (let
+      hd_xs' = map_adder_acc_n s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      full_adder_tail_i' = hd_ret hd_ret_state;
+      full_adder_tail_v' = map_adder_acc_v s;
+      full_adder_tail_ret' = 0;
+      full_adder_tail_state = \<lparr>full_adder_tail_i = full_adder_tail_i',
+                               full_adder_tail_v = full_adder_tail_v',
+                               full_adder_tail_ret = full_adder_tail_ret'\<rparr>;
+      full_adder_tail_ret_state = full_adder_tail_imp full_adder_tail_state;
+      cons_h' = full_adder_tail_ret full_adder_tail_ret_state;
+      cons_t' = map_adder_acc_acc s;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      map_adder_acc_acc' = cons_ret cons_ret_state;
+      tl_xs' = map_adder_acc_n s;
+      tl_ret' = 0;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      map_adder_acc_n' = tl_ret tl_ret_state;
+      ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc',
+             map_adder_acc_v = map_adder_acc_v s,
+             map_adder_acc_n = map_adder_acc_n',
+             map_adder_acc_ret = map_adder_acc_ret s\<rparr>
+  in
+      ret
+)"
+
+definition "map_adder_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      condition = map_adder_acc_n s
+  in
+      condition
+)"
+
+definition "map_adder_acc_imp_after_loop s \<equiv>
+  (let
+      map_adder_acc_ret' = map_adder_acc_acc s;
+      ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc s,
+             map_adder_acc_v = map_adder_acc_v s,
+             map_adder_acc_n = map_adder_acc_n s,
+             map_adder_acc_ret = map_adder_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas map_adder_acc_imp_subprogram_simps = 
+  map_adder_acc_state_upd_def
+  map_adder_acc_imp_compute_loop_condition_def
+  map_adder_acc_imp_after_loop_def
+
+function map_adder_acc_imp::
+  "map_adder_acc_state \<Rightarrow> map_adder_acc_state" where
+  "map_adder_acc_imp s =
+  (if map_adder_acc_imp_compute_loop_condition s \<noteq> 0
+   then let next_iteration = map_adder_acc_imp (map_adder_acc_state_upd s)
+        in next_iteration
+   else let ret = map_adder_acc_imp_after_loop s
+        in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure map_adder_acc_n")
+  apply (simp add: map_adder_acc_imp_subprogram_simps tl_imp_correct)+
+  done
+
+declare map_adder_acc_imp.simps [simp del]
+
+lemma map_adder_acc_imp_correct:
+  "map_adder_acc_ret (map_adder_acc_imp s) =
+    map_adder_acc (map_adder_acc_acc s) (map_adder_acc_v s) (map_adder_acc_n s)"
+  apply (induction s rule: map_adder_acc_imp.induct)
+  apply (subst map_adder_acc_imp.simps)
+  apply (subst map_adder_acc.simps)
+  apply (simp del: map_adder_acc.simps add: map_adder_acc_imp_subprogram_simps Let_def
+    hd_imp_correct full_adder_tail_imp_correct cons_imp_correct tl_imp_correct)
+  done    
+
+definition "map_adder_acc_state_upd_time t s \<equiv>
+  (let
+      hd_xs' = map_adder_acc_n s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      full_adder_tail_i' = hd_ret hd_ret_state;
+      t = t + 2;
+      full_adder_tail_v' = map_adder_acc_v s;
+      t = t + 2;
+      full_adder_tail_ret' = 0;
+      t = t + 2;
+      full_adder_tail_state = \<lparr>full_adder_tail_i = full_adder_tail_i',
+                               full_adder_tail_v = full_adder_tail_v',
+                               full_adder_tail_ret = full_adder_tail_ret'\<rparr>;
+      full_adder_tail_ret_state = full_adder_tail_imp full_adder_tail_state;
+      t = t + full_adder_tail_imp_time 0 full_adder_tail_state;
+      cons_h' = full_adder_tail_ret full_adder_tail_ret_state;
+      t = t + 2;
+      cons_t' = map_adder_acc_acc s;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      map_adder_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      tl_xs' = map_adder_acc_n s;
+      t = t + 2;
+      tl_ret' = 0;
+      t = t + 2;
+      tl_state = \<lparr>tl_xs = tl_xs',
+                  tl_ret = tl_ret'\<rparr>;
+      tl_ret_state = tl_imp tl_state;
+      t = t + tl_imp_time 0 tl_state;
+      map_adder_acc_n' = tl_ret tl_ret_state;
+      t = t + 2;
+      ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc',
+             map_adder_acc_v = map_adder_acc_v s,
+             map_adder_acc_n = map_adder_acc_n',
+             map_adder_acc_ret = map_adder_acc_ret s\<rparr>
+  in
+      t
+)"
+
+definition "map_adder_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = map_adder_acc_n s;
+      t = t + 2
+  in
+      t
+)"
+
+definition "map_adder_acc_imp_after_loop_time t s \<equiv>
+  (let
+      map_adder_acc_ret' = map_adder_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc s,
+             map_adder_acc_v = map_adder_acc_v s,
+             map_adder_acc_n = map_adder_acc_n s,
+             map_adder_acc_ret = map_adder_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas map_adder_acc_imp_subprogram_time_simps = 
+  map_adder_acc_state_upd_time_def
+  map_adder_acc_imp_compute_loop_condition_time_def
+  map_adder_acc_imp_after_loop_time_def
+  map_adder_acc_imp_subprogram_simps
+
+function map_adder_acc_imp_time::
+  "nat \<Rightarrow> map_adder_acc_state \<Rightarrow> nat" where
+  "map_adder_acc_imp_time t s =
+  map_adder_acc_imp_compute_loop_condition_time 0 s +
+  (if map_adder_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          map_adder_acc_imp_time (t + map_adder_acc_state_upd_time 0 s)
+                         (map_adder_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + map_adder_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (map_adder_acc_n \<circ> snd)")
+  by (simp add: map_adder_acc_imp_subprogram_time_simps tl_imp_correct)+
+
+declare map_adder_acc_imp_time.simps [simp del]   
+
+lemma map_adder_acc_imp_time_acc:
+  "(map_adder_acc_imp_time (Suc t) s) = Suc (map_adder_acc_imp_time t s)"
+  by (induction t s rule: map_adder_acc_imp_time.induct)
+    ((subst (1 2) map_adder_acc_imp_time.simps);
+      (simp add: map_adder_acc_state_upd_def))            
+
+lemma map_adder_acc_imp_time_acc_2_aux:
+  "(map_adder_acc_imp_time t s) = t + (map_adder_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: map_adder_acc_imp_time_acc)+            
+
+lemma map_adder_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (map_adder_acc_imp_time t s) = t + (map_adder_acc_imp_time 0 s)"
+  by (rule map_adder_acc_imp_time_acc_2_aux)            
+
+lemma map_adder_acc_imp_time_acc_3:
+  "(map_adder_acc_imp_time (a + b) s) = a + (map_adder_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: map_adder_acc_imp_time_acc)+  
+
+abbreviation "map_adder_acc_while_cond \<equiv> ''condition''"
+
+definition "map_adder_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  condition = map_adder_acc_n s\<close>
+  (map_adder_acc_while_cond) ::= (A (V map_adder_acc_n_str))
+"
+
+definition "map_adder_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  hd_xs' = map_adder_acc_n s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V map_adder_acc_n_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  full_adder_tail_i' = hd_ret hd_ret_state;\<close>
+  (full_adder_tail_prefix @ full_adder_tail_i_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  full_adder_tail_v' = map_adder_acc_v s;\<close>
+  (full_adder_tail_prefix @ full_adder_tail_v_str) ::= (A (V map_adder_acc_v_str));;
+  \<comment> \<open>  full_adder_tail_ret' = 0;\<close>
+  (full_adder_tail_prefix @ full_adder_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  full_adder_tail_state = \<lparr>full_adder_tail_i = full_adder_tail_i',\<close>
+  \<comment> \<open>                           full_adder_tail_v = full_adder_tail_v',\<close>
+  \<comment> \<open>                           full_adder_tail_ret = full_adder_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  full_adder_tail_ret_state = full_adder_tail_imp full_adder_tail_state;\<close>
+  (invoke_subprogram full_adder_tail_prefix full_adder_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = full_adder_tail_ret full_adder_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (full_adder_tail_prefix @ full_adder_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = map_adder_acc_acc s;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V map_adder_acc_acc_str));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  map_adder_acc_acc' = cons_ret cons_ret_state;\<close>
+  (map_adder_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  tl_xs' = map_adder_acc_n s;\<close>
+  (tl_prefix @ tl_xs_str) ::= (A (V map_adder_acc_n_str));;
+  \<comment> \<open>  tl_ret' = 0;\<close>
+  (tl_prefix @ tl_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  tl_state = \<lparr>tl_xs = tl_xs',\<close>
+  \<comment> \<open>              tl_ret = tl_ret'\<rparr>;\<close>
+  \<comment> \<open>  tl_ret_state = tl_imp tl_state;\<close>
+  (invoke_subprogram tl_prefix tl_IMP_Minus);;
+  \<comment> \<open>  map_adder_acc_n' = tl_ret tl_ret_state;\<close>
+  (map_adder_acc_n_str) ::= (A (V (tl_prefix @ tl_ret_str)))
+  \<comment> \<open>  ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc',\<close>
+  \<comment> \<open>         map_adder_acc_v = map_adder_acc_v s,\<close>
+  \<comment> \<open>         map_adder_acc_n = map_adder_acc_n',\<close>
+  \<comment> \<open>         map_adder_acc_ret = map_adder_acc_ret s\<rparr>\<close>
+"
+
+definition "map_adder_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  map_adder_acc_ret' = map_adder_acc_acc s;\<close>
+  (map_adder_acc_ret_str) ::= (A (V map_adder_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>map_adder_acc_acc = map_adder_acc_acc s,\<close>
+  \<comment> \<open>         map_adder_acc_v = map_adder_acc_v s,\<close>
+  \<comment> \<open>         map_adder_acc_n = map_adder_acc_n s,\<close>
+  \<comment> \<open>         map_adder_acc_ret = map_adder_acc_ret'\<rparr>\<close>
+"
+
+definition map_adder_acc_IMP_Minus where
+  "map_adder_acc_IMP_Minus \<equiv>
+  map_adder_acc_IMP_init_while_cond;;
+  WHILE map_adder_acc_while_cond \<noteq>0 DO (
+    map_adder_acc_IMP_loop_body;;
+    map_adder_acc_IMP_init_while_cond
+  );;
+  map_adder_acc_IMP_after_loop"
+
+abbreviation "map_adder_acc_IMP_vars \<equiv>
+  {map_adder_acc_acc_str, map_adder_acc_v_str, map_adder_acc_n_str, map_adder_acc_ret_str}"
+
+lemmas map_adder_acc_IMP_subprogram_simps =
+  map_adder_acc_IMP_init_while_cond_def
+  map_adder_acc_IMP_loop_body_def
+  map_adder_acc_IMP_after_loop_def
+
+definition "map_adder_acc_imp_to_HOL_state p s =
+  \<lparr>map_adder_acc_acc = (s (add_prefix p map_adder_acc_acc_str)),
+   map_adder_acc_v = (s (add_prefix p map_adder_acc_v_str)),
+   map_adder_acc_n = (s (add_prefix p map_adder_acc_n_str)),
+   map_adder_acc_ret = (s (add_prefix p map_adder_acc_ret_str))\<rparr>"
+
+lemmas map_adder_acc_state_translators =
+  map_adder_acc_imp_to_HOL_state_def
+  hd_imp_to_HOL_state_def
+  full_adder_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  tl_imp_to_HOL_state_def
+
+lemmas map_adder_acc_complete_simps =
+  map_adder_acc_IMP_subprogram_simps
+  map_adder_acc_imp_subprogram_simps
+  map_adder_acc_state_translators
+
+lemma map_adder_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_adder_acc_ret_str)
+      = map_adder_acc_ret
+          (map_adder_acc_imp (map_adder_acc_imp_to_HOL_state p s))"
+  apply(induction "map_adder_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: map_adder_acc_imp.induct)
+  apply(subst map_adder_acc_imp.simps)
+  apply(simp only: map_adder_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: map_adder_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: map_adder_acc_IMP_subprogram_simps
+        map_adder_acc_imp_subprogram_simps
+        map_adder_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: map_adder_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: map_adder_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) map_adder_acc_IMP_init_while_cond_def)
+      apply(simp only: map_adder_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(21) by fastforce
+      apply(erule full_adder_tail_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      by (fastforce_sorted_premises2 simp: map_adder_acc_imp_subprogram_simps
+          map_adder_acc_state_translators Let_def)
+
+  subgoal
+      apply(simp only: map_adder_acc_IMP_init_while_cond_def prefix_simps
+          map_adder_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule hd_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(21) by fastforce
+      apply(erule full_adder_tail_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(23) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(25) by fastforce
+      apply(erule tl_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+      subgoal premises p using p(27) by fastforce
+      by (fastforce_sorted_premises2 simp: map_adder_acc_imp_subprogram_simps
+          map_adder_acc_state_translators Let_def)
+  done   
+
+lemma map_adder_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ map_adder_acc_pref) map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix map_adder_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemmas map_adder_acc_complete_time_simps =
+  map_adder_acc_imp_subprogram_time_simps
+  map_adder_acc_imp_time_acc
+  map_adder_acc_imp_time_acc_2
+  map_adder_acc_imp_time_acc_3
+  map_adder_acc_state_translators
+
+lemma map_adder_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = map_adder_acc_imp_time 0 (map_adder_acc_imp_to_HOL_state p s)"
+  apply(induction "map_adder_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: map_adder_acc_imp.induct)
+  apply(subst map_adder_acc_imp_time.simps)
+  apply(simp only: map_adder_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: map_adder_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: map_adder_acc_IMP_subprogram_simps
+        map_adder_acc_imp_subprogram_time_simps map_adder_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: map_adder_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: map_adder_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) map_adder_acc_IMP_init_while_cond_def)
+    apply(simp only: map_adder_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    apply(erule full_adder_tail_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    by (fastforce_sorted_premises2 simp: map_adder_acc_imp_subprogram_simps
+        map_adder_acc_state_translators Let_def)
+
+  subgoal
+    apply(simp only: prefix_simps map_adder_acc_IMP_init_while_cond_def
+        map_adder_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    apply(erule full_adder_tail_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(43) by fastforce
+    apply(erule tl_IMP_Minus_correct[where vars = "map_adder_acc_IMP_vars"])
+    subgoal premises p using p(45) by fastforce
+    apply(simp only: map_adder_acc_complete_time_simps Let_def)
+    by (fastforce_sorted_premises simp: map_adder_acc_complete_time_simps Let_def)
+  done   
+
+lemma map_adder_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (map_adder_acc_imp_time 0 (map_adder_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) map_adder_acc_ret_str) =
+          map_adder_acc_ret (map_adder_acc_imp
+                                        (map_adder_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using map_adder_acc_IMP_Minus_correct_function
+  by (auto simp: map_adder_acc_IMP_Minus_correct_time)
+    (meson map_adder_acc_IMP_Minus_correct_effects set_mono_prefix)
+
+subsubsection \<open>map_adder_tail\<close>
+
+record map_adder_tail_state =
+  map_adder_tail_v::nat
+  map_adder_tail_n::nat
+  map_adder_tail_ret::nat
+
+abbreviation "map_adder_tail_prefix \<equiv> ''map_adder_tail.''"
+abbreviation "map_adder_tail_v_str \<equiv> ''v''"
+abbreviation "map_adder_tail_n_str \<equiv> ''n''"
+abbreviation "map_adder_tail_ret_str \<equiv> ''ret''"
+
+definition "map_adder_tail_state_upd s =
+  (let
+      map_adder_acc_acc' = 0;
+      map_adder_acc_v' = map_adder_tail_v s;
+      map_adder_acc_n' = map_adder_tail_n s;
+      map_adder_acc_ret' = 0;
+      map_adder_acc_state = \<lparr>map_adder_acc_acc = map_adder_acc_acc',
+                             map_adder_acc_v = map_adder_acc_v',
+                             map_adder_acc_n = map_adder_acc_n',
+                             map_adder_acc_ret = map_adder_acc_ret'\<rparr>;
+      map_adder_acc_ret_state = map_adder_acc_imp map_adder_acc_state;
+      reverse_nat_n' = map_adder_acc_ret map_adder_acc_ret_state;
+      reverse_nat_ret' = 0;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      map_adder_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      ret = \<lparr>map_adder_tail_v = map_adder_tail_v s,
+             map_adder_tail_n = map_adder_tail_n s,
+             map_adder_tail_ret = map_adder_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function map_adder_tail_imp ::
+  "map_adder_tail_state \<Rightarrow> map_adder_tail_state" where
+  "map_adder_tail_imp s =
+  (let 
+      ret = map_adder_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure map_adder_tail_v") simp
+
+declare map_adder_tail_imp.simps [simp del]
+
+lemma map_adder_tail_imp_correct[let_function_correctness]:
+  "map_adder_tail_ret (map_adder_tail_imp s) =
+    map_adder_tail (map_adder_tail_v s) (map_adder_tail_n s)"
+  apply (simp only: map_adder_tail_imp.simps Let_def map_adder_tail_state_upd_def
+    map_adder_acc_imp_correct reverse_nat_imp_correct map_adder_tail_def)
+  by simp  
+
+function map_adder_tail_imp_time ::
+  "nat \<Rightarrow> map_adder_tail_state \<Rightarrow> nat" where
+  "map_adder_tail_imp_time t s =
+  (let
+      map_adder_acc_acc' = 0;
+      t = t + 2;
+      map_adder_acc_v' = map_adder_tail_v s;
+      t = t + 2;
+      map_adder_acc_n' = map_adder_tail_n s;
+      t = t + 2;
+      map_adder_acc_ret' = 0;
+      t = t + 2;
+      map_adder_acc_state = \<lparr>map_adder_acc_acc = map_adder_acc_acc',
+                             map_adder_acc_v = map_adder_acc_v',
+                             map_adder_acc_n = map_adder_acc_n',
+                             map_adder_acc_ret = map_adder_acc_ret'\<rparr>;
+      map_adder_acc_ret_state = map_adder_acc_imp map_adder_acc_state;
+      t = t + map_adder_acc_imp_time 0 map_adder_acc_state;
+      reverse_nat_n' = map_adder_acc_ret map_adder_acc_ret_state;
+      t = t + 2;
+      reverse_nat_ret' = 0;
+      t = t + 2;
+      reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',
+                           reverse_nat_ret = reverse_nat_ret'\<rparr>;
+      reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
+      t = t + reverse_nat_imp_time 0 reverse_nat_state;
+      map_adder_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
+      t = t + 2;
+      ret = \<lparr>map_adder_tail_v = map_adder_tail_v s,
+             map_adder_tail_n = map_adder_tail_n s,
+             map_adder_tail_ret = map_adder_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (map_adder_tail_v \<circ> snd)") simp
+
+declare map_adder_tail_imp_time.simps [simp del]
+
+lemma map_adder_tail_imp_time_acc:
+  "(map_adder_tail_imp_time (Suc t) s) = Suc (map_adder_tail_imp_time t s)"
+  by (induction t s rule: map_adder_tail_imp_time.induct)
+    ((subst (1 2) map_adder_tail_imp_time.simps);
+      (simp add: map_adder_tail_state_upd_def Let_def))            
+
+lemma map_adder_tail_imp_time_acc_2_aux:
+  "(map_adder_tail_imp_time t s) = t + (map_adder_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: map_adder_tail_imp_time_acc)+            
+
+lemma map_adder_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (map_adder_tail_imp_time t s) = t + (map_adder_tail_imp_time 0 s)"
+  by (rule map_adder_tail_imp_time_acc_2_aux)            
+
+lemma map_adder_tail_imp_time_acc_3:
+  "(map_adder_tail_imp_time (a + b) s) = a + (map_adder_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: map_adder_tail_imp_time_acc)+ 
+
+definition map_adder_tail_IMP_Minus where
+  "map_adder_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  map_adder_acc_acc' = 0;\<close>
+  (map_adder_acc_prefix @ map_adder_acc_acc_str) ::= (A (N 0));;
+  \<comment> \<open>  map_adder_acc_v' = map_adder_tail_v s;\<close>
+  (map_adder_acc_prefix @ map_adder_acc_v_str) ::= (A (V map_adder_tail_v_str));;
+  \<comment> \<open>  map_adder_acc_n' = map_adder_tail_n s;\<close>
+  (map_adder_acc_prefix @ map_adder_acc_n_str) ::= (A (V map_adder_tail_n_str));;
+  \<comment> \<open>  map_adder_acc_ret' = 0;\<close>
+  (map_adder_acc_prefix @ map_adder_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  map_adder_acc_state = \<lparr>map_adder_acc_acc = map_adder_acc_acc',\<close>
+  \<comment> \<open>                         map_adder_acc_v = map_adder_acc_v',\<close>
+  \<comment> \<open>                         map_adder_acc_n = map_adder_acc_n',\<close>
+  \<comment> \<open>                         map_adder_acc_ret = map_adder_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  map_adder_acc_ret_state = map_adder_acc_imp map_adder_acc_state;\<close>
+  (invoke_subprogram map_adder_acc_prefix map_adder_acc_IMP_Minus);;
+  \<comment> \<open>  reverse_nat_n' = map_adder_acc_ret map_adder_acc_ret_state;\<close>
+  (reverse_nat_prefix @ reverse_nat_n_str) ::= (A (V (map_adder_acc_prefix @ map_adder_acc_ret_str)));;
+  \<comment> \<open>  reverse_nat_ret' = 0;\<close>
+  (reverse_nat_prefix @ reverse_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  reverse_nat_state = \<lparr>reverse_nat_n = reverse_nat_n',\<close>
+  \<comment> \<open>                       reverse_nat_ret = reverse_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;\<close>
+  (invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus);;
+  \<comment> \<open>  map_adder_tail_ret' = reverse_nat_ret reverse_nat_ret_state;\<close>
+  (map_adder_tail_ret_str) ::= (A (V  (reverse_nat_prefix @ reverse_nat_ret_str)))
+  \<comment> \<open>  ret = \<lparr>map_adder_tail_v = map_adder_tail_v s,\<close>
+  \<comment> \<open>         map_adder_tail_n = map_adder_tail_n s,\<close>
+  \<comment> \<open>         map_adder_tail_ret = map_adder_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "map_adder_tail_IMP_vars \<equiv>
+  {map_adder_tail_v_str, map_adder_tail_n_str, map_adder_tail_ret_str}"
+
+definition "map_adder_tail_imp_to_HOL_state p s =
+  \<lparr>map_adder_tail_v = (s (add_prefix p map_adder_tail_v_str)),
+   map_adder_tail_n = (s (add_prefix p map_adder_tail_n_str)),
+   map_adder_tail_ret = (s (add_prefix p map_adder_tail_ret_str))\<rparr>"
+
+lemmas map_adder_tail_state_translators =
+  map_adder_tail_imp_to_HOL_state_def
+  map_adder_acc_imp_to_HOL_state_def
+  reverse_nat_imp_to_HOL_state_def
+
+lemma map_adder_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p map_adder_tail_ret_str)
+      = map_adder_tail_ret
+          (map_adder_tail_imp (map_adder_tail_imp_to_HOL_state p s))"
+  apply(subst map_adder_tail_imp.simps)
+  apply(simp only: map_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule map_adder_acc_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
+  subgoal premises p using p(9) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  by(fastforce simp: map_adder_tail_state_translators
+    map_adder_tail_state_upd_def)        
+
+lemma map_adder_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ map_adder_tail_pref) map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix map_adder_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast     
+
+lemma map_adder_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = map_adder_tail_imp_time 0 (map_adder_tail_imp_to_HOL_state p s)"
+  apply(subst map_adder_tail_imp_time.simps)
+  apply(simp only: map_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule map_adder_acc_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
+  subgoal premises p using p(19) by fastforce
+  by(fastforce simp add: Let_def map_adder_tail_state_translators)        
+
+lemma map_adder_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (map_adder_tail_imp_time 0 (map_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) map_adder_tail_ret_str) =
+          map_adder_tail_ret (map_adder_tail_imp
+                                        (map_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using map_adder_tail_IMP_Minus_correct_function
+    map_adder_tail_IMP_Minus_correct_time
+    map_adder_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsection \<open>adder_tail\<close>
+
+record adder_tail_state =
+  adder_tail_n::nat
+  adder_tail_v::nat
+  adder_tail_ret::nat
+
+abbreviation "adder_tail_prefix \<equiv> ''adder_tail.''"
+abbreviation "adder_tail_n_str \<equiv> ''n''"
+abbreviation "adder_tail_v_str \<equiv> ''v''"
+abbreviation "adder_tail_ret_str \<equiv> ''ret''"
+
+definition "adder_tail_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = carry_vname_encode_as_nat;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 1;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      list_less_tail_n' = adder_tail_n s;
+      list_less_tail_ret' = 0;
+      list_less_tail_state = \<lparr>list_less_tail_n = list_less_tail_n',
+                              list_less_tail_ret = list_less_tail_ret'\<rparr>;
+      list_less_tail_ret_state = list_less_tail_imp list_less_tail_state;
+      map_adder_tail_v' = adder_tail_v s;
+      map_adder_tail_n' = list_less_tail_ret list_less_tail_ret_state;
+      map_adder_tail_ret' = 0;
+      map_adder_tail_state = \<lparr>map_adder_tail_v = map_adder_tail_v',
+                              map_adder_tail_n = map_adder_tail_n',
+                              map_adder_tail_ret = map_adder_tail_ret'\<rparr>;
+      map_adder_tail_ret_state = map_adder_tail_imp map_adder_tail_state;
+      com_list_to_seq_tail_ys' = map_adder_tail_ret map_adder_tail_ret_state;
+      com_list_to_seq_tail_ret' = 0;
+      com_list_to_seq_tail_state = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys',
+                                    com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>;
+      com_list_to_seq_tail_ret_state = com_list_to_seq_tail_imp com_list_to_seq_tail_state;
+      cons_h' = com_list_to_seq_tail_ret com_list_to_seq_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      adder_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>adder_tail_n = adder_tail_n s,
+             adder_tail_v = adder_tail_v s,
+             adder_tail_ret = adder_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function adder_tail_imp ::
+  "adder_tail_state \<Rightarrow> adder_tail_state" where
+  "adder_tail_imp s =
+  (let 
+      ret = adder_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure adder_tail_n") simp
+
+declare adder_tail_imp.simps [simp del]
+
+lemma adder_tail_imp_correct[let_function_correctness]:
+  "adder_tail_ret (adder_tail_imp s) =
+    adder_tail (adder_tail_n s) (adder_tail_v s)"
+  by (simp add: adder_tail_imp.simps Let_def adder_tail_state_upd_def cons_imp_correct
+    list_less_tail_imp_correct map_adder_tail_imp_correct com_list_to_seq_tail_imp_correct
+    carry_vname_encode_val adder_tail_def)
+
+function adder_tail_imp_time ::
+  "nat \<Rightarrow> adder_tail_state \<Rightarrow> nat" where
+  "adder_tail_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = carry_vname_encode_as_nat;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      list_less_tail_n' = adder_tail_n s;
+      t = t + 2;
+      list_less_tail_ret' = 0;
+      t = t + 2;
+      list_less_tail_state = \<lparr>list_less_tail_n = list_less_tail_n',
+                              list_less_tail_ret = list_less_tail_ret'\<rparr>;
+      list_less_tail_ret_state = list_less_tail_imp list_less_tail_state;
+      t = t + list_less_tail_imp_time 0 list_less_tail_state;
+      map_adder_tail_v' = adder_tail_v s;
+      t = t + 2;
+      map_adder_tail_n' = list_less_tail_ret list_less_tail_ret_state;
+      t = t + 2;
+      map_adder_tail_ret' = 0;
+      t = t + 2;
+      map_adder_tail_state = \<lparr>map_adder_tail_v = map_adder_tail_v',
+                              map_adder_tail_n = map_adder_tail_n',
+                              map_adder_tail_ret = map_adder_tail_ret'\<rparr>;
+      map_adder_tail_ret_state = map_adder_tail_imp map_adder_tail_state;
+      t = t + map_adder_tail_imp_time 0 map_adder_tail_state;
+      com_list_to_seq_tail_ys' = map_adder_tail_ret map_adder_tail_ret_state;
+      t = t + 2;
+      com_list_to_seq_tail_ret' = 0;
+      t = t + 2;
+      com_list_to_seq_tail_state = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys',
+                                    com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>;
+      com_list_to_seq_tail_ret_state = com_list_to_seq_tail_imp com_list_to_seq_tail_state;
+      t = t + com_list_to_seq_tail_imp_time 0 com_list_to_seq_tail_state;
+      cons_h' = com_list_to_seq_tail_ret com_list_to_seq_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      adder_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>adder_tail_n = adder_tail_n s,
+             adder_tail_v = adder_tail_v s,
+             adder_tail_ret = adder_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (adder_tail_n \<circ> snd)") simp
+
+declare adder_tail_imp_time.simps [simp del]
+
+lemma adder_tail_imp_time_acc:
+  "(adder_tail_imp_time (Suc t) s) = Suc (adder_tail_imp_time t s)"
+  by (induction t s rule: adder_tail_imp_time.induct)
+    ((subst (1 2) adder_tail_imp_time.simps);
+      (simp add: adder_tail_state_upd_def Let_def))            
+
+lemma adder_tail_imp_time_acc_2_aux:
+  "(adder_tail_imp_time t s) = t + (adder_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: adder_tail_imp_time_acc)+            
+
+lemma adder_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (adder_tail_imp_time t s) = t + (adder_tail_imp_time 0 s)"
+  by (rule adder_tail_imp_time_acc_2_aux)            
+
+lemma adder_tail_imp_time_acc_3:
+  "(adder_tail_imp_time (a + b) s) = a + (adder_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: adder_tail_imp_time_acc)+   
+
+abbreviation "adder_tail_cons_result \<equiv> ''cons_result''"
+
+definition adder_tail_IMP_Minus where
+  "adder_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = carry_vname_encode_as_nat;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N carry_vname_encode_as_nat));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (adder_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  list_less_tail_n' = adder_tail_n s;\<close>
+  (list_less_tail_prefix @ list_less_tail_n_str) ::= (A (V adder_tail_n_str));;
+  \<comment> \<open>  list_less_tail_ret' = 0;\<close>
+  (list_less_tail_prefix @ list_less_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  list_less_tail_state = \<lparr>list_less_tail_n = list_less_tail_n',\<close>
+  \<comment> \<open>                          list_less_tail_ret = list_less_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  list_less_tail_ret_state = list_less_tail_imp list_less_tail_state;\<close>
+  (invoke_subprogram list_less_tail_prefix list_less_tail_IMP_Minus);;
+  \<comment> \<open>  map_adder_tail_v' = adder_tail_v s;\<close>
+  (map_adder_tail_prefix @ map_adder_tail_v_str) ::= (A (V adder_tail_v_str));;
+  \<comment> \<open>  map_adder_tail_n' = list_less_tail_ret list_less_tail_ret_state;\<close>
+  (map_adder_tail_prefix @ map_adder_tail_n_str) ::= (A (V (list_less_tail_prefix @ list_less_tail_ret_str)));;
+  \<comment> \<open>  map_adder_tail_ret' = 0;\<close>
+  (map_adder_tail_prefix @ map_adder_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  map_adder_tail_state = \<lparr>map_adder_tail_v = map_adder_tail_v',\<close>
+  \<comment> \<open>                          map_adder_tail_n = map_adder_tail_n',\<close>
+  \<comment> \<open>                          map_adder_tail_ret = map_adder_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  map_adder_tail_ret_state = map_adder_tail_imp map_adder_tail_state;\<close>
+  (invoke_subprogram map_adder_tail_prefix map_adder_tail_IMP_Minus);;
+  \<comment> \<open>  com_list_to_seq_tail_ys' = map_adder_tail_ret map_adder_tail_ret_state;\<close>
+  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ys_str) ::= (A (V (map_adder_tail_prefix @ map_adder_tail_ret_str)));;
+  \<comment> \<open>  com_list_to_seq_tail_ret' = 0;\<close>
+  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  com_list_to_seq_tail_state = \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys',\<close>
+  \<comment> \<open>                                com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  com_list_to_seq_tail_ret_state = com_list_to_seq_tail_imp com_list_to_seq_tail_state;\<close>
+  (invoke_subprogram com_list_to_seq_tail_prefix com_list_to_seq_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = com_list_to_seq_tail_ret com_list_to_seq_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V adder_tail_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  adder_tail_ret' = cons_ret cons_ret_state;\<close>
+  (adder_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>adder_tail_n = adder_tail_n s,\<close>
+  \<comment> \<open>         adder_tail_v = adder_tail_v s,\<close>
+  \<comment> \<open>         adder_tail_ret = adder_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "adder_tail_IMP_vars \<equiv>
+  {adder_tail_n_str, adder_tail_v_str, adder_tail_ret_str, adder_tail_cons_result}"
+
+definition "adder_tail_imp_to_HOL_state p s =
+  \<lparr>adder_tail_n = (s (add_prefix p adder_tail_n_str)),
+   adder_tail_v = (s (add_prefix p adder_tail_v_str)),
+   adder_tail_ret = (s (add_prefix p adder_tail_ret_str))\<rparr>"
+
+lemmas adder_tail_state_translators =
+  adder_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  list_less_tail_imp_to_HOL_state_def
+  map_adder_tail_imp_to_HOL_state_def
+  com_list_to_seq_tail_imp_to_HOL_state_def
+
+lemma adder_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p adder_tail_ret_str)
+      = adder_tail_ret
+          (adder_tail_imp (adder_tail_imp_to_HOL_state p s))"
+  apply(subst adder_tail_imp.simps)
+  apply(simp only: adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(40) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(42) by fastforce
+  apply(erule list_less_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(44) by fastforce
+  apply(erule map_adder_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(46) by fastforce
+  apply(erule com_list_to_seq_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(48) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(50) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(52) by fastforce
+  by(force simp: adder_tail_state_translators adder_tail_state_upd_def)  
+
+lemma adder_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ adder_tail_pref) adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix adder_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma adder_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = adder_tail_imp_time 0 (adder_tail_imp_to_HOL_state p s)"
+  apply(subst adder_tail_imp_time.simps)
+  apply(simp only: adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(77) by fastforce
+  apply(erule list_less_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(79) by fastforce
+  apply(erule map_adder_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(81) by fastforce
+  apply(erule com_list_to_seq_tail_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(83) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(85) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
+  subgoal premises p using p(87) by fastforce
+  by(force simp add: Let_def adder_tail_state_translators)  
+
+lemma adder_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (adder_tail_imp_time 0 (adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) adder_tail_ret_str) =
+          adder_tail_ret (adder_tail_imp
+                                        (adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using adder_tail_IMP_Minus_correct_function
+    adder_tail_IMP_Minus_correct_time
+    adder_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsection \<open>binary_adder\<close>
+
+subsubsection \<open>binary_adder_tail_aux1\<close>
+
+fun binary_adder_tail_aux1 :: "nat \<Rightarrow> nat" where
+  "binary_adder_tail_aux1 n = 
+    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ## 
+    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) (prod_encode(1,0))) ## 0)"
+
+record binary_adder_tail_aux1_state =
+  binary_adder_tail_aux1_n::nat
+  binary_adder_tail_aux1_ret::nat
+
+abbreviation "binary_adder_tail_aux1_prefix \<equiv> ''binary_adder_tail_aux1.''"
+abbreviation "binary_adder_tail_aux1_n_str \<equiv> ''n''"
+abbreviation "binary_adder_tail_aux1_ret_str \<equiv> ''ret''"
+
+definition "binary_adder_tail_aux1_state_upd s =
+  (let
+      prod_encode_a' = 1;
+      prod_encode_b' = 0;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;
+      copy_atom_to_operand_tail_op' = b_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      prod_encode_a' = 1;
+      prod_encode_b' = 0;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_adder_tail_aux1_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n s,
+             binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_adder_tail_aux1_imp ::
+  "binary_adder_tail_aux1_state \<Rightarrow> binary_adder_tail_aux1_state" where
+  "binary_adder_tail_aux1_imp s =
+  (let 
+      ret = binary_adder_tail_aux1_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_adder_tail_aux1_n") simp
+
+declare binary_adder_tail_aux1_imp.simps [simp del]
+
+lemma binary_adder_tail_aux1_imp_correct[let_function_correctness]:
+  "binary_adder_tail_aux1_ret (binary_adder_tail_aux1_imp s) =
+    binary_adder_tail_aux1 (binary_adder_tail_aux1_n s)"
+  apply (simp only: binary_adder_tail_aux1_imp.simps Let_def binary_adder_tail_aux1_state_upd_def
+    prod_encode_imp_correct copy_atom_to_operand_tail_imp_correct cons_imp_correct a_encode_char_val
+    b_encode_char_val binary_adder_tail_aux1.simps)
+  by simp 
+
+function binary_adder_tail_aux1_imp_time ::
+  "nat \<Rightarrow> binary_adder_tail_aux1_state \<Rightarrow> nat" where
+  "binary_adder_tail_aux1_imp_time t s =
+  (let
+      prod_encode_a' = 1;
+      t = t + 2;
+      prod_encode_b' = 0;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = b_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      prod_encode_a' = 1;
+      t = t + 2;
+      prod_encode_b' = 0;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_adder_tail_aux1_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n s,
+             binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_adder_tail_aux1_n \<circ> snd)") simp
+
+declare binary_adder_tail_aux1_imp_time.simps [simp del]
+
+lemma binary_adder_tail_aux1_imp_time_acc:
+  "(binary_adder_tail_aux1_imp_time (Suc t) s) = Suc (binary_adder_tail_aux1_imp_time t s)"
+  by (induction t s rule: binary_adder_tail_aux1_imp_time.induct)
+    ((subst (1 2) binary_adder_tail_aux1_imp_time.simps);
+      (simp add: binary_adder_tail_aux1_state_upd_def Let_def))            
+
+lemma binary_adder_tail_aux1_imp_time_acc_2_aux:
+  "(binary_adder_tail_aux1_imp_time t s) = t + (binary_adder_tail_aux1_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux1_imp_time_acc)+            
+
+lemma binary_adder_tail_aux1_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_aux1_imp_time t s) = t + (binary_adder_tail_aux1_imp_time 0 s)"
+  by (rule binary_adder_tail_aux1_imp_time_acc_2_aux)            
+
+lemma binary_adder_tail_aux1_imp_time_acc_3:
+  "(binary_adder_tail_aux1_imp_time (a + b) s) = a + (binary_adder_tail_aux1_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux1_imp_time_acc)+   
+
+abbreviation "binary_adder_tail_aux1_cons_result \<equiv> ''cons_result''"
+
+definition binary_adder_tail_aux1_IMP_Minus where
+  "binary_adder_tail_aux1_IMP_Minus \<equiv>
+  \<comment> \<open>  prod_encode_a' = 1;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N 1));;
+  \<comment> \<open>  prod_encode_b' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_adder_tail_aux1_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = b_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N b_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux1_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = 1;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N 1));;
+  \<comment> \<open>  prod_encode_b' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_adder_tail_aux1_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_adder_tail_aux1_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = a_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_adder_tail_aux1_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_adder_tail_aux1_ret' = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux1_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n s,\<close>
+  \<comment> \<open>         binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_adder_tail_aux1_IMP_vars \<equiv>
+  {binary_adder_tail_aux1_n_str, binary_adder_tail_aux1_ret_str, binary_adder_tail_aux1_cons_result}"
+
+definition "binary_adder_tail_aux1_imp_to_HOL_state p s =
+  \<lparr>binary_adder_tail_aux1_n = (s (add_prefix p binary_adder_tail_aux1_n_str)),
+   binary_adder_tail_aux1_ret = (s (add_prefix p binary_adder_tail_aux1_ret_str))\<rparr>"
+
+lemmas binary_adder_tail_aux1_state_translators =
+  binary_adder_tail_aux1_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+
+lemma binary_adder_tail_aux1_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_adder_tail_aux1_ret_str)
+      = binary_adder_tail_aux1_ret
+          (binary_adder_tail_aux1_imp (binary_adder_tail_aux1_imp_to_HOL_state p s))"
+  apply(subst binary_adder_tail_aux1_imp.simps)
+  apply(simp only: binary_adder_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(40) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(42) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(44) by fastforce
+  by(force simp: binary_adder_tail_aux1_state_translators
+    binary_adder_tail_aux1_state_upd_def) 
+
+lemma binary_adder_tail_aux1_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_aux1_pref) binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_adder_tail_aux1_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma binary_adder_tail_aux1_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_adder_tail_aux1_imp_time 0 (binary_adder_tail_aux1_imp_to_HOL_state p s)"
+  apply(subst binary_adder_tail_aux1_imp_time.simps)
+  apply(simp only: binary_adder_tail_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(67) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(69) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  by(force simp add: Let_def binary_adder_tail_aux1_state_translators)   
+
+lemma binary_adder_tail_aux1_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_adder_tail_aux1_imp_time 0 (binary_adder_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_adder_tail_aux1_ret_str) =
+          binary_adder_tail_aux1_ret (binary_adder_tail_aux1_imp
+                                        (binary_adder_tail_aux1_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_adder_tail_aux1_IMP_Minus_correct_function
+    binary_adder_tail_aux1_IMP_Minus_correct_time
+    binary_adder_tail_aux1_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>binary_adder_tail_aux2\<close>
+
+fun binary_adder_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_adder_tail_aux2 n v b = 
+    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) b) ## 
+    (2 ## (adder_tail n v) ## (binary_adder_tail_aux1 n) ## 0) ## 0"
+
+record binary_adder_tail_aux2_state =
+  binary_adder_tail_aux2_n::nat
+  binary_adder_tail_aux2_v::nat
+  binary_adder_tail_aux2_b::nat
+  binary_adder_tail_aux2_ret::nat
+
+abbreviation "binary_adder_tail_aux2_prefix \<equiv> ''binary_adder_tail_aux2.''"
+abbreviation "binary_adder_tail_aux2_n_str \<equiv> ''n''"
+abbreviation "binary_adder_tail_aux2_v_str \<equiv> ''v''"
+abbreviation "binary_adder_tail_aux2_b_str \<equiv> ''b''"
+abbreviation "binary_adder_tail_aux2_ret_str \<equiv> ''ret''"
+
+definition "binary_adder_tail_aux2_state_upd s =
+  (let
+      binary_adder_tail_aux1_n' = binary_adder_tail_aux2_n s;
+      binary_adder_tail_aux1_ret' = 0;
+      binary_adder_tail_aux1_state = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n',
+                                      binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>;
+      binary_adder_tail_aux1_ret_state = binary_adder_tail_aux1_imp binary_adder_tail_aux1_state;
+      cons_h' = binary_adder_tail_aux1_ret binary_adder_tail_aux1_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      adder_tail_n' = binary_adder_tail_aux2_n s;
+      adder_tail_v' = binary_adder_tail_aux2_v s;
+      adder_tail_ret' = 0;
+      adder_tail_state = \<lparr>adder_tail_n = adder_tail_n',
+                          adder_tail_v = adder_tail_v',
+                          adder_tail_ret = adder_tail_ret'\<rparr>;
+      adder_tail_ret_state = adder_tail_imp adder_tail_state;
+      cons_h' = adder_tail_ret adder_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      cons_h' = cons_result;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux2_n s;
+      copy_atom_to_operand_tail_op' = b_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = binary_adder_tail_aux2_b s;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_adder_tail_aux2_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n s,
+             binary_adder_tail_aux2_v = binary_adder_tail_aux2_v s,
+             binary_adder_tail_aux2_b = binary_adder_tail_aux2_b s,
+             binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_adder_tail_aux2_imp ::
+  "binary_adder_tail_aux2_state \<Rightarrow> binary_adder_tail_aux2_state" where
+  "binary_adder_tail_aux2_imp s =
+  (let 
+      ret = binary_adder_tail_aux2_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_adder_tail_aux2_n") simp
+
+lemma binary_adder_tail_aux2_imp_correct[let_function_correctness]:
+  "binary_adder_tail_aux2_ret (binary_adder_tail_aux2_imp s) =
+    binary_adder_tail_aux2 (binary_adder_tail_aux2_n s) (binary_adder_tail_aux2_v s)
+      (binary_adder_tail_aux2_b s)"
+  apply (simp only: binary_adder_tail_aux2_imp.simps Let_def binary_adder_tail_aux2_state_upd_def
+    binary_adder_tail_aux1_imp_correct cons_imp_correct adder_tail_imp_correct copy_atom_to_operand_tail_imp_correct
+    b_encode_char_val binary_adder_tail_aux2.simps)
+  by simp   
+
+declare binary_adder_tail_aux2_imp.simps [simp del]
+
+function binary_adder_tail_aux2_imp_time ::
+  "nat \<Rightarrow> binary_adder_tail_aux2_state \<Rightarrow> nat" where
+  "binary_adder_tail_aux2_imp_time t s =
+  (let
+      binary_adder_tail_aux1_n' = binary_adder_tail_aux2_n s;
+      t = t + 2;
+      binary_adder_tail_aux1_ret' = 0;
+      t = t + 2;
+      binary_adder_tail_aux1_state = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n',
+                                      binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>;
+      binary_adder_tail_aux1_ret_state = binary_adder_tail_aux1_imp binary_adder_tail_aux1_state;
+      t = t + binary_adder_tail_aux1_imp_time 0 binary_adder_tail_aux1_state;
+      cons_h' = binary_adder_tail_aux1_ret binary_adder_tail_aux1_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      adder_tail_n' = binary_adder_tail_aux2_n s;
+      t = t + 2;
+      adder_tail_v' = binary_adder_tail_aux2_v s;
+      t = t + 2;
+      adder_tail_ret' = 0;
+      t = t + 2;
+      adder_tail_state = \<lparr>adder_tail_n = adder_tail_n',
+                          adder_tail_v = adder_tail_v',
+                          adder_tail_ret = adder_tail_ret'\<rparr>;
+      adder_tail_ret_state = adder_tail_imp adder_tail_state;
+      t = t + adder_tail_imp_time 0 adder_tail_state;
+      cons_h' = adder_tail_ret adder_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_h' = cons_result;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_aux2_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = b_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = binary_adder_tail_aux2_b s;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_adder_tail_aux2_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n s,
+             binary_adder_tail_aux2_v = binary_adder_tail_aux2_v s,
+             binary_adder_tail_aux2_b = binary_adder_tail_aux2_b s,
+             binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_adder_tail_aux2_n \<circ> snd)") simp
+
+declare binary_adder_tail_aux2_imp_time.simps [simp del]
+
+lemma binary_adder_tail_aux2_imp_time_acc:
+  "(binary_adder_tail_aux2_imp_time (Suc t) s) = Suc (binary_adder_tail_aux2_imp_time t s)"
+  by (induction t s rule: binary_adder_tail_aux2_imp_time.induct)
+    ((subst (1 2) binary_adder_tail_aux2_imp_time.simps);
+      (simp add: binary_adder_tail_aux2_state_upd_def Let_def))            
+
+lemma binary_adder_tail_aux2_imp_time_acc_2_aux:
+  "(binary_adder_tail_aux2_imp_time t s) = t + (binary_adder_tail_aux2_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux2_imp_time_acc)+            
+
+lemma binary_adder_tail_aux2_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_aux2_imp_time t s) = t + (binary_adder_tail_aux2_imp_time 0 s)"
+  by (rule binary_adder_tail_aux2_imp_time_acc_2_aux)            
+
+lemma binary_adder_tail_aux2_imp_time_acc_3:
+  "(binary_adder_tail_aux2_imp_time (a + b) s) = a + (binary_adder_tail_aux2_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux2_imp_time_acc)+     
+
+abbreviation "binary_adder_tail_aux2_cons_result \<equiv> ''cons_result''"
+
+definition binary_adder_tail_aux2_IMP_Minus where
+  "binary_adder_tail_aux2_IMP_Minus \<equiv>
+  \<comment> \<open>  binary_adder_tail_aux1_n' = binary_adder_tail_aux2_n s;\<close>
+  (binary_adder_tail_aux1_prefix @ binary_adder_tail_aux1_n_str) ::= (A (V binary_adder_tail_aux2_n_str));;
+  \<comment> \<open>  binary_adder_tail_aux1_ret' = 0;\<close>
+  (binary_adder_tail_aux1_prefix @ binary_adder_tail_aux1_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_adder_tail_aux1_state = \<lparr>binary_adder_tail_aux1_n = binary_adder_tail_aux1_n',\<close>
+  \<comment> \<open>                                  binary_adder_tail_aux1_ret = binary_adder_tail_aux1_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_adder_tail_aux1_ret_state = binary_adder_tail_aux1_imp binary_adder_tail_aux1_state;\<close>
+  (invoke_subprogram binary_adder_tail_aux1_prefix binary_adder_tail_aux1_IMP_Minus);;
+  \<comment> \<open>  cons_h' = binary_adder_tail_aux1_ret binary_adder_tail_aux1_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (binary_adder_tail_aux1_prefix @ binary_adder_tail_aux1_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  adder_tail_n' = binary_adder_tail_aux2_n s;\<close>
+  (adder_tail_prefix @ adder_tail_n_str) ::= (A (V binary_adder_tail_aux2_n_str));;
+  \<comment> \<open>  adder_tail_v' = binary_adder_tail_aux2_v s;\<close>
+  (adder_tail_prefix @ adder_tail_v_str) ::= (A (V binary_adder_tail_aux2_v_str));;
+  \<comment> \<open>  adder_tail_ret' = 0;\<close>
+  (adder_tail_prefix @ adder_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  adder_tail_state = \<lparr>adder_tail_n = adder_tail_n',\<close>
+  \<comment> \<open>                      adder_tail_v = adder_tail_v',\<close>
+  \<comment> \<open>                      adder_tail_ret = adder_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  adder_tail_ret_state = adder_tail_imp adder_tail_state;\<close>
+  (invoke_subprogram adder_tail_prefix adder_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = adder_tail_ret adder_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (adder_tail_prefix @ adder_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_adder_tail_aux2_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_h' = cons_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V binary_adder_tail_aux2_cons_result));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_adder_tail_aux2_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_adder_tail_aux2_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = b_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N b_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = binary_adder_tail_aux2_b s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V binary_adder_tail_aux2_b_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_adder_tail_aux2_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_adder_tail_aux2_ret' = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_aux2_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n s,\<close>
+  \<comment> \<open>         binary_adder_tail_aux2_v = binary_adder_tail_aux2_v s,\<close>
+  \<comment> \<open>         binary_adder_tail_aux2_b = binary_adder_tail_aux2_b s,\<close>
+  \<comment> \<open>         binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_adder_tail_aux2_IMP_vars \<equiv>
+  {binary_adder_tail_aux2_n_str, binary_adder_tail_aux2_v_str, binary_adder_tail_aux2_b_str,
+  binary_adder_tail_aux2_ret_str, binary_adder_tail_aux2_cons_result}"
+
+definition "binary_adder_tail_aux2_imp_to_HOL_state p s =
+  \<lparr>binary_adder_tail_aux2_n = (s (add_prefix p binary_adder_tail_aux2_n_str)),
+   binary_adder_tail_aux2_v = (s (add_prefix p binary_adder_tail_aux2_v_str)),
+   binary_adder_tail_aux2_b = (s (add_prefix p binary_adder_tail_aux2_b_str)),
+   binary_adder_tail_aux2_ret = (s (add_prefix p binary_adder_tail_aux2_ret_str))\<rparr>"
+
+lemmas binary_adder_tail_aux2_state_translators =
+  binary_adder_tail_aux2_imp_to_HOL_state_def
+  binary_adder_tail_aux1_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  adder_tail_imp_to_HOL_state_def
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
+
+lemma binary_adder_tail_aux2_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_adder_tail_aux2_ret_str)
+      = binary_adder_tail_aux2_ret
+          (binary_adder_tail_aux2_imp (binary_adder_tail_aux2_imp_to_HOL_state p s))"
+  apply(subst binary_adder_tail_aux2_imp.simps)
+  apply(simp only: binary_adder_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule binary_adder_tail_aux1_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  apply(erule adder_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(40) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(42) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(44) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(46) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(48) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(50) by fastforce
+  by(force simp: binary_adder_tail_aux2_state_translators
+    binary_adder_tail_aux2_state_upd_def)   
+
+lemma binary_adder_tail_aux2_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_aux2_pref) binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_adder_tail_aux2_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma binary_adder_tail_aux2_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_adder_tail_aux2_imp_time 0 (binary_adder_tail_aux2_imp_to_HOL_state p s)"
+  apply(subst binary_adder_tail_aux2_imp_time.simps)
+  apply(simp only: binary_adder_tail_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule binary_adder_tail_aux1_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  apply(erule adder_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(75) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(77) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(79) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(81) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(83) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
+  subgoal premises p using p(85) by fastforce
+  by(force simp add: Let_def binary_adder_tail_aux2_state_translators)   
+
+lemma binary_adder_tail_aux2_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_adder_tail_aux2_imp_time 0 (binary_adder_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_adder_tail_aux2_ret_str) =
+          binary_adder_tail_aux2_ret (binary_adder_tail_aux2_imp
+                                        (binary_adder_tail_aux2_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_adder_tail_aux2_IMP_Minus_correct_function
+    binary_adder_tail_aux2_IMP_Minus_correct_time
+    binary_adder_tail_aux2_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>binary_adder_tail\<close>
+
+fun binary_adder_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_adder_tail' n v a b = 
+    2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) a) ##
+    (2 ## (binary_adder_tail_aux2 n v b)) ## 0"
+
+lemma binary_adder_tail'_correct:
+  "binary_adder_tail n v a b = binary_adder_tail' n v a b"
+  unfolding binary_adder_tail_def
+  by (simp only: binary_adder_tail'.simps binary_adder_tail_aux1.simps binary_adder_tail_aux2.simps Let_def)
+
+record binary_adder_tail_state =
+  binary_adder_tail_n::nat
+  binary_adder_tail_v::nat
+  binary_adder_tail_a::nat
+  binary_adder_tail_b::nat
+  binary_adder_tail_ret::nat
+
+abbreviation "binary_adder_tail_prefix \<equiv> ''binary_adder_tail.''"
+abbreviation "binary_adder_tail_n_str \<equiv> ''n''"
+abbreviation "binary_adder_tail_v_str \<equiv> ''v''"
+abbreviation "binary_adder_tail_a_str \<equiv> ''a''"
+abbreviation "binary_adder_tail_b_str \<equiv> ''b''"
+abbreviation "binary_adder_tail_ret_str \<equiv> ''ret''"
+
+definition "binary_adder_tail_state_upd s =
+  (let
+      binary_adder_tail_aux2_n' = binary_adder_tail_n s;
+      binary_adder_tail_aux2_v' = binary_adder_tail_v s;
+      binary_adder_tail_aux2_b' = binary_adder_tail_b s;
+      binary_adder_tail_aux2_ret' = 0;
+      binary_adder_tail_aux2_state = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n',
+                                      binary_adder_tail_aux2_v = binary_adder_tail_aux2_v',
+                                      binary_adder_tail_aux2_b = binary_adder_tail_aux2_b',
+                                      binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>;
+      binary_adder_tail_aux2_ret_state = binary_adder_tail_aux2_imp binary_adder_tail_aux2_state;
+      cons_h' = 2;
+      cons_t' = binary_adder_tail_aux2_ret binary_adder_tail_aux2_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_n s;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = binary_adder_tail_a s;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_adder_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_adder_tail_n = binary_adder_tail_n s,
+             binary_adder_tail_v = binary_adder_tail_v s,
+             binary_adder_tail_a = binary_adder_tail_a s,
+             binary_adder_tail_b = binary_adder_tail_b s,
+             binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_adder_tail_imp ::
+  "binary_adder_tail_state \<Rightarrow> binary_adder_tail_state" where
+  "binary_adder_tail_imp s =
+  (let 
+      ret = binary_adder_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_adder_tail_n") simp
+
+declare binary_adder_tail_imp.simps [simp del]
+
+lemma binary_adder_tail_imp_correct[let_function_correctness]:
+  "binary_adder_tail_ret (binary_adder_tail_imp s) =
+    binary_adder_tail (binary_adder_tail_n s) (binary_adder_tail_v s) (binary_adder_tail_a s)
+      (binary_adder_tail_b s)"
+  apply (simp only: binary_adder_tail_imp.simps Let_def binary_adder_tail_state_upd_def
+    binary_adder_tail_aux2_imp_correct cons_imp_correct copy_atom_to_operand_tail_imp_correct
+    a_encode_char_val binary_adder_tail'_correct binary_adder_tail'.simps)
+  by simp 
+
+function binary_adder_tail_imp_time ::
+  "nat \<Rightarrow> binary_adder_tail_state \<Rightarrow> nat" where
+  "binary_adder_tail_imp_time t s =
+  (let
+      binary_adder_tail_aux2_n' = binary_adder_tail_n s;
+      t = t + 2;
+      binary_adder_tail_aux2_v' = binary_adder_tail_v s;
+      t = t + 2;
+      binary_adder_tail_aux2_b' = binary_adder_tail_b s;
+      t = t + 2;
+      binary_adder_tail_aux2_ret' = 0;
+      t = t + 2;
+      binary_adder_tail_aux2_state = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n',
+                                      binary_adder_tail_aux2_v = binary_adder_tail_aux2_v',
+                                      binary_adder_tail_aux2_b = binary_adder_tail_aux2_b',
+                                      binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>;
+      binary_adder_tail_aux2_ret_state = binary_adder_tail_aux2_imp binary_adder_tail_aux2_state;
+      t = t + binary_adder_tail_aux2_imp_time 0 binary_adder_tail_aux2_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = binary_adder_tail_aux2_ret binary_adder_tail_aux2_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_n' = binary_adder_tail_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = binary_adder_tail_a s;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_adder_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_adder_tail_n = binary_adder_tail_n s,
+             binary_adder_tail_v = binary_adder_tail_v s,
+             binary_adder_tail_a = binary_adder_tail_a s,
+             binary_adder_tail_b = binary_adder_tail_b s,
+             binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_adder_tail_n \<circ> snd)") simp
+
+declare binary_adder_tail_imp_time.simps [simp del]
+
+lemma binary_adder_tail_imp_time_acc:
+  "(binary_adder_tail_imp_time (Suc t) s) = Suc (binary_adder_tail_imp_time t s)"
+  by (induction t s rule: binary_adder_tail_imp_time.induct)
+    ((subst (1 2) binary_adder_tail_imp_time.simps);
+      (simp add: binary_adder_tail_state_upd_def Let_def))            
+
+lemma binary_adder_tail_imp_time_acc_2_aux:
+  "(binary_adder_tail_imp_time t s) = t + (binary_adder_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_imp_time_acc)+            
+
+lemma binary_adder_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_imp_time t s) = t + (binary_adder_tail_imp_time 0 s)"
+  by (rule binary_adder_tail_imp_time_acc_2_aux)            
+
+lemma binary_adder_tail_imp_time_acc_3:
+  "(binary_adder_tail_imp_time (a + b) s) = a + (binary_adder_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_imp_time_acc)+   
+
+abbreviation "binary_adder_tail_cons_result \<equiv> ''cons_result''"
+
+definition binary_adder_tail_IMP_Minus where
+  "binary_adder_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  binary_adder_tail_aux2_n' = binary_adder_tail_n s;\<close>
+  (binary_adder_tail_aux2_prefix @ binary_adder_tail_aux2_n_str) ::= (A (V binary_adder_tail_n_str));;
+  \<comment> \<open>  binary_adder_tail_aux2_v' = binary_adder_tail_v s;\<close>
+  (binary_adder_tail_aux2_prefix @ binary_adder_tail_aux2_v_str) ::= (A (V binary_adder_tail_v_str));;
+  \<comment> \<open>  binary_adder_tail_aux2_b' = binary_adder_tail_b s;\<close>
+  (binary_adder_tail_aux2_prefix @ binary_adder_tail_aux2_b_str) ::= (A (V binary_adder_tail_b_str));;
+  \<comment> \<open>  binary_adder_tail_aux2_ret' = 0;\<close>
+  (binary_adder_tail_aux2_prefix @ binary_adder_tail_aux2_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_adder_tail_aux2_state = \<lparr>binary_adder_tail_aux2_n = binary_adder_tail_aux2_n',\<close>
+  \<comment> \<open>                                  binary_adder_tail_aux2_v = binary_adder_tail_aux2_v',\<close>
+  \<comment> \<open>                                  binary_adder_tail_aux2_b = binary_adder_tail_aux2_b',\<close>
+  \<comment> \<open>                                  binary_adder_tail_aux2_ret = binary_adder_tail_aux2_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_adder_tail_aux2_ret_state = binary_adder_tail_aux2_imp binary_adder_tail_aux2_state;\<close>
+  (invoke_subprogram binary_adder_tail_aux2_prefix binary_adder_tail_aux2_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = binary_adder_tail_aux2_ret binary_adder_tail_aux2_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (binary_adder_tail_aux2_prefix @ binary_adder_tail_aux2_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_adder_tail_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_adder_tail_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = a_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = binary_adder_tail_a s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V binary_adder_tail_a_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_adder_tail_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_adder_tail_ret' = cons_ret cons_ret_state;\<close>
+  (binary_adder_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_adder_tail_n = binary_adder_tail_n s,\<close>
+  \<comment> \<open>         binary_adder_tail_v = binary_adder_tail_v s,\<close>
+  \<comment> \<open>         binary_adder_tail_a = binary_adder_tail_a s,\<close>
+  \<comment> \<open>         binary_adder_tail_b = binary_adder_tail_b s,\<close>
+  \<comment> \<open>         binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_adder_tail_IMP_vars \<equiv>
+  {binary_adder_tail_n_str, binary_adder_tail_v_str, binary_adder_tail_a_str, binary_adder_tail_b_str,
+  binary_adder_tail_ret_str, binary_adder_tail_cons_result}"
+
+definition "binary_adder_tail_imp_to_HOL_state p s =
+  \<lparr>binary_adder_tail_n = (s (add_prefix p binary_adder_tail_n_str)),
+   binary_adder_tail_v = (s (add_prefix p binary_adder_tail_v_str)),
+   binary_adder_tail_a = (s (add_prefix p binary_adder_tail_a_str)),
+   binary_adder_tail_b = (s (add_prefix p binary_adder_tail_b_str)),
+   binary_adder_tail_ret = (s (add_prefix p binary_adder_tail_ret_str))\<rparr>"
+
+lemmas binary_adder_tail_state_translators =
+  binary_adder_tail_imp_to_HOL_state_def
+  binary_adder_tail_aux2_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
+
+lemma binary_adder_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_adder_tail_ret_str)
+      = binary_adder_tail_ret
+          (binary_adder_tail_imp (binary_adder_tail_imp_to_HOL_state p s))"
+  apply(subst binary_adder_tail_imp.simps)
+  apply(simp only: binary_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule binary_adder_tail_aux2_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  by(force simp: binary_adder_tail_state_translators
+    binary_adder_tail_state_upd_def)   
+
+lemma binary_adder_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_pref) binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_adder_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma binary_adder_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_adder_tail_imp_time 0 (binary_adder_tail_imp_to_HOL_state p s)"
+  apply(subst binary_adder_tail_imp_time.simps)
+  apply(simp only: binary_adder_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule binary_adder_tail_aux2_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(55) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(57) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(59) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(61) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  by(force simp add: Let_def binary_adder_tail_state_translators) 
+
+lemma binary_adder_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_adder_tail_imp_time 0 (binary_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_adder_tail_ret_str) =
+          binary_adder_tail_ret (binary_adder_tail_imp
+                                        (binary_adder_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_adder_tail_IMP_Minus_correct_function
+    binary_adder_tail_IMP_Minus_correct_time
+    binary_adder_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
 
 end 
