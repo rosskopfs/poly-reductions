@@ -7,6 +7,7 @@ session Cook_Levin = "HOL-Analysis" +
     "HOL-Real_Asymp"
     "Landau_Symbols"
     "Verified_SAT_Based_AI_Planning"
+    "Akra_Bazzi"
   directories
     "Complexity_classes"
     "IMP-_To_SAS+"
@@ -16,3 +17,6 @@ session Cook_Levin = "HOL-Analysis" +
   theories
     "Complexity_classes/Cook_Levin"
     "IMP-_To_SAS+/IMP_Minus_To_SAS_Plus"
+    "IMP-_To_SAS+/IMP-_To_IMP--/Primitives_IMP_Minus"
+    "IMP-_To_SAS+/IMP-_To_IMP--/IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP"
+    "IMP-_To_SAS+/IMP-_To_IMP--/Binary_Arithmetic_IMP"
