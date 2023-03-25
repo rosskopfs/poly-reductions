@@ -9786,4 +9786,3082 @@ lemma binary_adder_tail_IMP_Minus_correct:
     binary_adder_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix) 
 
+subsection \<open>assign_shifted_bits\<close>
+
+subsubsection \<open>assign_shifted_bits_acc_aux1\<close>
+
+fun assign_shifted_bits_acc_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux1 diff i v = 
+    (1 ## (var_bit_to_var_tail (prod_encode(v, i-diff))) ## 0 ## 0) ## 0"
+
+record assign_shifted_bits_acc_aux1_state =
+  assign_shifted_bits_acc_aux1_diff::nat
+  assign_shifted_bits_acc_aux1_i::nat
+  assign_shifted_bits_acc_aux1_v::nat
+  assign_shifted_bits_acc_aux1_ret::nat
+
+abbreviation "assign_shifted_bits_acc_aux1_prefix \<equiv> ''assign_shifted_bits_acc_aux1.''"
+abbreviation "assign_shifted_bits_acc_aux1_diff_str \<equiv> ''diff''"
+abbreviation "assign_shifted_bits_acc_aux1_i_str \<equiv> ''i''"
+abbreviation "assign_shifted_bits_acc_aux1_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_acc_aux1_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_acc_aux1_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      prod_encode_a' = assign_shifted_bits_acc_aux1_v s;
+      prod_encode_b' = assign_shifted_bits_acc_aux1_i s - assign_shifted_bits_acc_aux1_diff s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      var_bit_to_var_tail_ret' = 0;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 1;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_acc_aux1_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff s,
+             assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i s,
+             assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v s,
+             assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_acc_aux1_imp ::
+  "assign_shifted_bits_acc_aux1_state \<Rightarrow> assign_shifted_bits_acc_aux1_state" where
+  "assign_shifted_bits_acc_aux1_imp s =
+  (let 
+      ret = assign_shifted_bits_acc_aux1_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_acc_aux1_diff") simp
+
+declare assign_shifted_bits_acc_aux1_imp.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux1_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_acc_aux1_ret (assign_shifted_bits_acc_aux1_imp s) =
+    assign_shifted_bits_acc_aux1 (assign_shifted_bits_acc_aux1_diff s) (assign_shifted_bits_acc_aux1_i s)
+      (assign_shifted_bits_acc_aux1_v s)"
+  apply (simp only: assign_shifted_bits_acc_aux1_imp.simps Let_def assign_shifted_bits_acc_aux1_state_upd_def
+    cons_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct)
+  by simp   
+
+function assign_shifted_bits_acc_aux1_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_acc_aux1_state \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux1_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      prod_encode_a' = assign_shifted_bits_acc_aux1_v s;
+      t = t + 2;
+      prod_encode_b' = assign_shifted_bits_acc_aux1_i s - assign_shifted_bits_acc_aux1_diff s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      var_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_acc_aux1_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff s,
+             assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i s,
+             assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v s,
+             assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_acc_aux1_diff \<circ> snd)") simp
+
+declare assign_shifted_bits_acc_aux1_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux1_imp_time_acc:
+  "(assign_shifted_bits_acc_aux1_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux1_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_acc_aux1_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_acc_aux1_imp_time.simps);
+      (simp add: assign_shifted_bits_acc_aux1_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_acc_aux1_imp_time_acc_2_aux:
+  "(assign_shifted_bits_acc_aux1_imp_time t s) = t + (assign_shifted_bits_acc_aux1_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+            
+
+lemma assign_shifted_bits_acc_aux1_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux1_imp_time t s) = t + (assign_shifted_bits_acc_aux1_imp_time 0 s)"
+  by (rule assign_shifted_bits_acc_aux1_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_acc_aux1_imp_time_acc_3:
+  "(assign_shifted_bits_acc_aux1_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux1_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+   
+
+abbreviation "assign_shifted_bits_acc_aux1_cons_result \<equiv> ''cons_result''"
+
+definition assign_shifted_bits_acc_aux1_IMP_Minus where
+  "assign_shifted_bits_acc_aux1_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux1_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = assign_shifted_bits_acc_aux1_v s;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V assign_shifted_bits_acc_aux1_v_str));;
+  \<comment> \<open>  prod_encode_b' = assign_shifted_bits_acc_aux1_i s - assign_shifted_bits_acc_aux1_diff s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V assign_shifted_bits_acc_aux1_i_str) (V assign_shifted_bits_acc_aux1_diff_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  var_bit_to_var_tail_ret' = 0;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;\<close>
+  (invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_shifted_bits_acc_aux1_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_ret' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux1_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_acc_aux1_IMP_vars \<equiv>
+  {assign_shifted_bits_acc_aux1_diff_str, assign_shifted_bits_acc_aux1_i_str, assign_shifted_bits_acc_aux1_v_str,
+  assign_shifted_bits_acc_aux1_ret_str, assign_shifted_bits_acc_aux1_cons_result}"
+
+definition "assign_shifted_bits_acc_aux1_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_acc_aux1_diff = (s (add_prefix p assign_shifted_bits_acc_aux1_diff_str)),
+   assign_shifted_bits_acc_aux1_i = (s (add_prefix p assign_shifted_bits_acc_aux1_i_str)),
+   assign_shifted_bits_acc_aux1_v = (s (add_prefix p assign_shifted_bits_acc_aux1_v_str)),
+   assign_shifted_bits_acc_aux1_ret = (s (add_prefix p assign_shifted_bits_acc_aux1_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_acc_aux1_state_translators =
+  assign_shifted_bits_acc_aux1_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_acc_aux1_ret_str)
+      = assign_shifted_bits_acc_aux1_ret
+          (assign_shifted_bits_acc_aux1_imp (assign_shifted_bits_acc_aux1_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_acc_aux1_imp.simps)
+  apply(simp only: assign_shifted_bits_acc_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(27) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  by(force simp: assign_shifted_bits_acc_aux1_state_translators
+    assign_shifted_bits_acc_aux1_state_upd_def) 
+
+lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux1_pref) assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux1_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast            
+
+lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_acc_aux1_imp_time 0 (assign_shifted_bits_acc_aux1_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_acc_aux1_imp_time.simps)
+  apply(simp only: assign_shifted_bits_acc_aux1_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(53) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(55) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(57) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
+  subgoal premises p using p(59) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_acc_aux1_state_translators) 
+
+lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_acc_aux1_imp_time 0 (assign_shifted_bits_acc_aux1_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_acc_aux1_ret_str) =
+          assign_shifted_bits_acc_aux1_ret (assign_shifted_bits_acc_aux1_imp
+                                        (assign_shifted_bits_acc_aux1_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_acc_aux1_IMP_Minus_correct_function
+    assign_shifted_bits_acc_aux1_IMP_Minus_correct_time
+    assign_shifted_bits_acc_aux1_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>assign_shifted_bits_acc_aux2\<close>
+
+fun assign_shifted_bits_acc_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux2 diff i v = 
+    (1 ## (var_bit_to_var_tail (prod_encode(v, i-diff))) ## 1 ## 0) ## 
+      assign_shifted_bits_acc_aux1 diff i v"
+
+record assign_shifted_bits_acc_aux2_state =
+  assign_shifted_bits_acc_aux2_diff::nat
+  assign_shifted_bits_acc_aux2_i::nat
+  assign_shifted_bits_acc_aux2_v::nat
+  assign_shifted_bits_acc_aux2_ret::nat
+
+abbreviation "assign_shifted_bits_acc_aux2_prefix \<equiv> ''assign_shifted_bits_acc_aux2.''"
+abbreviation "assign_shifted_bits_acc_aux2_diff_str \<equiv> ''diff''"
+abbreviation "assign_shifted_bits_acc_aux2_i_str \<equiv> ''i''"
+abbreviation "assign_shifted_bits_acc_aux2_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_acc_aux2_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_acc_aux2_state_upd s =
+  (let
+      cons_h' = 1;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      prod_encode_a' = assign_shifted_bits_acc_aux2_v s;
+      prod_encode_b' = assign_shifted_bits_acc_aux2_i s - assign_shifted_bits_acc_aux2_diff s;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      var_bit_to_var_tail_ret' = 0;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 1;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_shifted_bits_acc_aux1_diff' = assign_shifted_bits_acc_aux2_diff s;
+      assign_shifted_bits_acc_aux1_i' = assign_shifted_bits_acc_aux2_i s;
+      assign_shifted_bits_acc_aux1_v' = assign_shifted_bits_acc_aux2_v s;
+      assign_shifted_bits_acc_aux1_ret' = 0;
+      assign_shifted_bits_acc_aux1_state = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff',
+                                            assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i',
+                                            assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v',
+                                            assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>;
+      assign_shifted_bits_acc_aux1_ret_state = assign_shifted_bits_acc_aux1_imp assign_shifted_bits_acc_aux1_state;
+      cons_h' = cons_result;
+      cons_t' = assign_shifted_bits_acc_aux1_ret assign_shifted_bits_acc_aux1_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_acc_aux2_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff s,
+             assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i s,
+             assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v s,
+             assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_acc_aux2_imp ::
+  "assign_shifted_bits_acc_aux2_state \<Rightarrow> assign_shifted_bits_acc_aux2_state" where
+  "assign_shifted_bits_acc_aux2_imp s =
+  (let 
+      ret = assign_shifted_bits_acc_aux2_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_acc_aux2_diff") simp
+
+declare assign_shifted_bits_acc_aux2_imp.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux2_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_acc_aux2_ret (assign_shifted_bits_acc_aux2_imp s) =
+    assign_shifted_bits_acc_aux2 (assign_shifted_bits_acc_aux2_diff s) (assign_shifted_bits_acc_aux2_i s)
+      (assign_shifted_bits_acc_aux2_v s)"
+  apply (simp only: assign_shifted_bits_acc_aux2_imp.simps Let_def assign_shifted_bits_acc_aux2_state_upd_def
+    cons_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct assign_shifted_bits_acc_aux1_imp_correct)
+  by simp      
+
+function assign_shifted_bits_acc_aux2_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_acc_aux2_state \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux2_imp_time t s =
+  (let
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      prod_encode_a' = assign_shifted_bits_acc_aux2_v s;
+      t = t + 2;
+      prod_encode_b' = assign_shifted_bits_acc_aux2_i s - assign_shifted_bits_acc_aux2_diff s;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      var_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_acc_aux1_diff' = assign_shifted_bits_acc_aux2_diff s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux1_i' = assign_shifted_bits_acc_aux2_i s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux1_v' = assign_shifted_bits_acc_aux2_v s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux1_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_acc_aux1_state = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff',
+                                            assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i',
+                                            assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v',
+                                            assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>;
+      assign_shifted_bits_acc_aux1_ret_state = assign_shifted_bits_acc_aux1_imp assign_shifted_bits_acc_aux1_state;
+      t = t + assign_shifted_bits_acc_aux1_imp_time 0 assign_shifted_bits_acc_aux1_state;
+      cons_h' = cons_result;
+      t = t + 2;
+      cons_t' = assign_shifted_bits_acc_aux1_ret assign_shifted_bits_acc_aux1_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_acc_aux2_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff s,
+             assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i s,
+             assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v s,
+             assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_acc_aux2_diff \<circ> snd)") simp
+
+declare assign_shifted_bits_acc_aux2_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux2_imp_time_acc:
+  "(assign_shifted_bits_acc_aux2_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux2_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_acc_aux2_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_acc_aux2_imp_time.simps);
+      (simp add: assign_shifted_bits_acc_aux2_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_acc_aux2_imp_time_acc_2_aux:
+  "(assign_shifted_bits_acc_aux2_imp_time t s) = t + (assign_shifted_bits_acc_aux2_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+            
+
+lemma assign_shifted_bits_acc_aux2_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux2_imp_time t s) = t + (assign_shifted_bits_acc_aux2_imp_time 0 s)"
+  by (rule assign_shifted_bits_acc_aux2_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_acc_aux2_imp_time_acc_3:
+  "(assign_shifted_bits_acc_aux2_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux2_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+ 
+
+abbreviation "assign_shifted_bits_acc_aux2_cons_result \<equiv> ''cons_result''"
+
+definition assign_shifted_bits_acc_aux2_IMP_Minus where
+  "assign_shifted_bits_acc_aux2_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = assign_shifted_bits_acc_aux2_v s;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V assign_shifted_bits_acc_aux2_v_str));;
+  \<comment> \<open>  prod_encode_b' = assign_shifted_bits_acc_aux2_i s - assign_shifted_bits_acc_aux2_diff s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V assign_shifted_bits_acc_aux2_i_str) (V assign_shifted_bits_acc_aux2_diff_str));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  var_bit_to_var_tail_ret' = 0;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;\<close>
+  (invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_shifted_bits_acc_aux2_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux2_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_diff' = assign_shifted_bits_acc_aux2_diff s;\<close>
+  (assign_shifted_bits_acc_aux1_prefix @ assign_shifted_bits_acc_aux1_diff_str) ::= (A (V assign_shifted_bits_acc_aux2_diff_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_i' = assign_shifted_bits_acc_aux2_i s;\<close>
+  (assign_shifted_bits_acc_aux1_prefix @ assign_shifted_bits_acc_aux1_i_str) ::= (A (V assign_shifted_bits_acc_aux2_i_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_v' = assign_shifted_bits_acc_aux2_v s;\<close>
+  (assign_shifted_bits_acc_aux1_prefix @ assign_shifted_bits_acc_aux1_v_str) ::= (A (V assign_shifted_bits_acc_aux2_v_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_ret' = 0;\<close>
+  (assign_shifted_bits_acc_aux1_prefix @ assign_shifted_bits_acc_aux1_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_state = \<lparr>assign_shifted_bits_acc_aux1_diff = assign_shifted_bits_acc_aux1_diff',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux1_i = assign_shifted_bits_acc_aux1_i',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux1_v = assign_shifted_bits_acc_aux1_v',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux1_ret = assign_shifted_bits_acc_aux1_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_acc_aux1_ret_state = assign_shifted_bits_acc_aux1_imp assign_shifted_bits_acc_aux1_state;\<close>
+  (invoke_subprogram assign_shifted_bits_acc_aux1_prefix assign_shifted_bits_acc_aux1_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V assign_shifted_bits_acc_aux2_cons_result));;
+  \<comment> \<open>  cons_t' = assign_shifted_bits_acc_aux1_ret assign_shifted_bits_acc_aux1_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (assign_shifted_bits_acc_aux1_prefix @ assign_shifted_bits_acc_aux1_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_ret' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux2_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_acc_aux2_IMP_vars \<equiv>
+  {assign_shifted_bits_acc_aux2_diff_str, assign_shifted_bits_acc_aux2_i_str, assign_shifted_bits_acc_aux2_v_str,
+  assign_shifted_bits_acc_aux2_ret_str, assign_shifted_bits_acc_aux2_cons_result}"
+
+definition "assign_shifted_bits_acc_aux2_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_acc_aux2_diff = (s (add_prefix p assign_shifted_bits_acc_aux2_diff_str)),
+   assign_shifted_bits_acc_aux2_i = (s (add_prefix p assign_shifted_bits_acc_aux2_i_str)),
+   assign_shifted_bits_acc_aux2_v = (s (add_prefix p assign_shifted_bits_acc_aux2_v_str)),
+   assign_shifted_bits_acc_aux2_ret = (s (add_prefix p assign_shifted_bits_acc_aux2_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_acc_aux2_state_translators =
+  assign_shifted_bits_acc_aux2_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
+  assign_shifted_bits_acc_aux1_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_acc_aux2_ret_str)
+      = assign_shifted_bits_acc_aux2_ret
+          (assign_shifted_bits_acc_aux2_imp (assign_shifted_bits_acc_aux2_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_acc_aux2_imp.simps)
+  apply(simp only: assign_shifted_bits_acc_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(37) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(39) by fastforce
+  apply(erule assign_shifted_bits_acc_aux1_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  by(force simp: assign_shifted_bits_acc_aux2_state_translators
+    assign_shifted_bits_acc_aux2_state_upd_def)        
+
+lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux2_pref) assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux2_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_acc_aux2_imp_time 0 (assign_shifted_bits_acc_aux2_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_acc_aux2_imp_time.simps)
+  apply(simp only: assign_shifted_bits_acc_aux2_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(61) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(67) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(69) by fastforce
+  apply(erule assign_shifted_bits_acc_aux1_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(71) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
+  subgoal premises p using p(73) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_acc_aux2_state_translators)        
+
+lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_acc_aux2_imp_time 0 (assign_shifted_bits_acc_aux2_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_acc_aux2_ret_str) =
+          assign_shifted_bits_acc_aux2_ret (assign_shifted_bits_acc_aux2_imp
+                                        (assign_shifted_bits_acc_aux2_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_acc_aux2_IMP_Minus_correct_function
+    assign_shifted_bits_acc_aux2_IMP_Minus_correct_time
+    assign_shifted_bits_acc_aux2_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>assign_shifted_bits_acc_aux3\<close>
+
+fun assign_shifted_bits_acc_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux3 diff i v = 
+    ((operand_bit_to_var_tail (prod_encode (encode_char(CHR ''a''), i-diff +1 ))) ## 0) ##
+      assign_shifted_bits_acc_aux2 diff i v"
+
+record assign_shifted_bits_acc_aux3_state =
+  assign_shifted_bits_acc_aux3_diff::nat
+  assign_shifted_bits_acc_aux3_i::nat
+  assign_shifted_bits_acc_aux3_v::nat
+  assign_shifted_bits_acc_aux3_ret::nat
+
+abbreviation "assign_shifted_bits_acc_aux3_prefix \<equiv> ''assign_shifted_bits_acc_aux3.''"
+abbreviation "assign_shifted_bits_acc_aux3_diff_str \<equiv> ''diff''"
+abbreviation "assign_shifted_bits_acc_aux3_i_str \<equiv> ''i''"
+abbreviation "assign_shifted_bits_acc_aux3_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_acc_aux3_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_acc_aux3_state_upd s =
+  (let
+      prod_encode_a' = a_encode_char_as_nat;
+      prod_encode_b' = assign_shifted_bits_acc_aux3_i s - assign_shifted_bits_acc_aux3_diff s;
+      prod_encode_b' = prod_encode_b' + 1;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      operand_bit_to_var_tail_ret' = 0;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      cons_h' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_shifted_bits_acc_aux2_diff' = assign_shifted_bits_acc_aux3_diff s;
+      assign_shifted_bits_acc_aux2_i' = assign_shifted_bits_acc_aux3_i s;
+      assign_shifted_bits_acc_aux2_v' = assign_shifted_bits_acc_aux3_v s;
+      assign_shifted_bits_acc_aux2_ret' = 0;
+      assign_shifted_bits_acc_aux2_state = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff',
+                                            assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i',
+                                            assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v',
+                                            assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>;
+      assign_shifted_bits_acc_aux2_ret_state = assign_shifted_bits_acc_aux2_imp assign_shifted_bits_acc_aux2_state;
+      cons_h' = cons_result;
+      cons_t' = assign_shifted_bits_acc_aux2_ret assign_shifted_bits_acc_aux2_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_acc_aux3_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff s,
+             assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i s,
+             assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v s,
+             assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_acc_aux3_imp ::
+  "assign_shifted_bits_acc_aux3_state \<Rightarrow> assign_shifted_bits_acc_aux3_state" where
+  "assign_shifted_bits_acc_aux3_imp s =
+  (let 
+      ret = assign_shifted_bits_acc_aux3_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_acc_aux3_diff") simp
+
+declare assign_shifted_bits_acc_aux3_imp.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux3_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_acc_aux3_ret (assign_shifted_bits_acc_aux3_imp s) =
+    assign_shifted_bits_acc_aux3 (assign_shifted_bits_acc_aux3_diff s) (assign_shifted_bits_acc_aux3_i s)
+      (assign_shifted_bits_acc_aux3_v s)"
+  apply (simp only: assign_shifted_bits_acc_aux3_imp.simps Let_def assign_shifted_bits_acc_aux3_state_upd_def
+    prod_encode_imp_correct operand_bit_to_var_tail_imp_correct cons_imp_correct assign_shifted_bits_acc_aux2_imp_correct
+    a_encode_char_val assign_shifted_bits_acc_aux3.simps)
+  by simp 
+
+function assign_shifted_bits_acc_aux3_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_acc_aux3_state \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_aux3_imp_time t s =
+  (let
+      prod_encode_a' = a_encode_char_as_nat;
+      t = t + 2;
+      prod_encode_b' = assign_shifted_bits_acc_aux3_i s - assign_shifted_bits_acc_aux3_diff s;
+      t = t + 2;
+      prod_encode_b' = prod_encode_b' + 1;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      operand_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
+                                       operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
+      operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
+      t = t + operand_bit_to_var_tail_imp_time 0 operand_bit_to_var_tail_state;
+      cons_h' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_acc_aux2_diff' = assign_shifted_bits_acc_aux3_diff s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux2_i' = assign_shifted_bits_acc_aux3_i s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux2_v' = assign_shifted_bits_acc_aux3_v s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux2_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_acc_aux2_state = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff',
+                                            assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i',
+                                            assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v',
+                                            assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>;
+      assign_shifted_bits_acc_aux2_ret_state = assign_shifted_bits_acc_aux2_imp assign_shifted_bits_acc_aux2_state;
+      t = t + assign_shifted_bits_acc_aux2_imp_time 0 assign_shifted_bits_acc_aux2_state;
+      cons_h' = cons_result;
+      t = t + 2;
+      cons_t' = assign_shifted_bits_acc_aux2_ret assign_shifted_bits_acc_aux2_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_acc_aux3_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff s,
+             assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i s,
+             assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v s,
+             assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_acc_aux3_diff \<circ> snd)") simp
+
+declare assign_shifted_bits_acc_aux3_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_acc_aux3_imp_time_acc:
+  "(assign_shifted_bits_acc_aux3_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux3_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_acc_aux3_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_acc_aux3_imp_time.simps);
+      (simp add: assign_shifted_bits_acc_aux3_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_acc_aux3_imp_time_acc_2_aux:
+  "(assign_shifted_bits_acc_aux3_imp_time t s) = t + (assign_shifted_bits_acc_aux3_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+            
+
+lemma assign_shifted_bits_acc_aux3_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux3_imp_time t s) = t + (assign_shifted_bits_acc_aux3_imp_time 0 s)"
+  by (rule assign_shifted_bits_acc_aux3_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_acc_aux3_imp_time_acc_3:
+  "(assign_shifted_bits_acc_aux3_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux3_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+  
+
+abbreviation "assign_shifted_bits_acc_aux3_cons_result \<equiv> ''cons_result''"
+
+definition assign_shifted_bits_acc_aux3_IMP_Minus where
+  "assign_shifted_bits_acc_aux3_IMP_Minus \<equiv>
+  \<comment> \<open>  prod_encode_a' = a_encode_char_as_nat;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  prod_encode_b' = assign_shifted_bits_acc_aux3_i s - assign_shifted_bits_acc_aux3_diff s;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V assign_shifted_bits_acc_aux3_i_str) (V assign_shifted_bits_acc_aux3_diff_str));;
+  \<comment> \<open>  prod_encode_b' = prod_encode_b' + 1;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Plus (V (prod_encode_prefix @ prod_encode_b_str)) (N 1));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  operand_bit_to_var_tail_ret' = 0;\<close>
+  (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  operand_bit_to_var_tail_state = \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                                   operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  operand_bit_to_var_tail_ret_state = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;\<close>
+  (invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux3_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_diff' = assign_shifted_bits_acc_aux3_diff s;\<close>
+  (assign_shifted_bits_acc_aux2_prefix @ assign_shifted_bits_acc_aux2_diff_str) ::= (A (V assign_shifted_bits_acc_aux3_diff_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_i' = assign_shifted_bits_acc_aux3_i s;\<close>
+  (assign_shifted_bits_acc_aux2_prefix @ assign_shifted_bits_acc_aux2_i_str) ::= (A (V assign_shifted_bits_acc_aux3_i_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_v' = assign_shifted_bits_acc_aux3_v s;\<close>
+  (assign_shifted_bits_acc_aux2_prefix @ assign_shifted_bits_acc_aux2_v_str) ::= (A (V assign_shifted_bits_acc_aux3_v_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_ret' = 0;\<close>
+  (assign_shifted_bits_acc_aux2_prefix @ assign_shifted_bits_acc_aux2_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_state = \<lparr>assign_shifted_bits_acc_aux2_diff = assign_shifted_bits_acc_aux2_diff',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux2_i = assign_shifted_bits_acc_aux2_i',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux2_v = assign_shifted_bits_acc_aux2_v',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux2_ret = assign_shifted_bits_acc_aux2_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_acc_aux2_ret_state = assign_shifted_bits_acc_aux2_imp assign_shifted_bits_acc_aux2_state;\<close>
+  (invoke_subprogram assign_shifted_bits_acc_aux2_prefix assign_shifted_bits_acc_aux2_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_result;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V assign_shifted_bits_acc_aux3_cons_result));;
+  \<comment> \<open>  cons_t' = assign_shifted_bits_acc_aux2_ret assign_shifted_bits_acc_aux2_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (assign_shifted_bits_acc_aux2_prefix @ assign_shifted_bits_acc_aux2_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_ret' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_aux3_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_acc_aux3_IMP_vars \<equiv>
+  {assign_shifted_bits_acc_aux3_diff_str, assign_shifted_bits_acc_aux3_i_str, assign_shifted_bits_acc_aux3_v_str,
+  assign_shifted_bits_acc_aux3_ret_str, assign_shifted_bits_acc_aux3_cons_result}"
+
+definition "assign_shifted_bits_acc_aux3_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_acc_aux3_diff = (s (add_prefix p assign_shifted_bits_acc_aux3_diff_str)),
+   assign_shifted_bits_acc_aux3_i = (s (add_prefix p assign_shifted_bits_acc_aux3_i_str)),
+   assign_shifted_bits_acc_aux3_v = (s (add_prefix p assign_shifted_bits_acc_aux3_v_str)),
+   assign_shifted_bits_acc_aux3_ret = (s (add_prefix p assign_shifted_bits_acc_aux3_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_acc_aux3_state_translators =
+  assign_shifted_bits_acc_aux3_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  operand_bit_to_var_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  assign_shifted_bits_acc_aux2_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_acc_aux3_ret_str)
+      = assign_shifted_bits_acc_aux3_ret
+          (assign_shifted_bits_acc_aux3_imp (assign_shifted_bits_acc_aux3_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_acc_aux3_imp.simps)
+  apply(simp only: assign_shifted_bits_acc_aux3_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(27) by fastforce
+  apply(erule assign_shifted_bits_acc_aux2_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  by(force simp: assign_shifted_bits_acc_aux3_state_translators
+    assign_shifted_bits_acc_aux3_state_upd_def)        
+
+lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux3_pref) assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux3_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_acc_aux3_imp_time 0 (assign_shifted_bits_acc_aux3_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_acc_aux3_imp_time.simps)
+  apply(simp only: assign_shifted_bits_acc_aux3_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule operand_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  apply(erule assign_shifted_bits_acc_aux2_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
+  subgoal premises p using p(53) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_acc_aux3_state_translators)        
+
+lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_acc_aux3_imp_time 0 (assign_shifted_bits_acc_aux3_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_acc_aux3_ret_str) =
+          assign_shifted_bits_acc_aux3_ret (assign_shifted_bits_acc_aux3_imp
+                                        (assign_shifted_bits_acc_aux3_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_acc_aux3_IMP_Minus_correct_function
+    assign_shifted_bits_acc_aux3_IMP_Minus_correct_time
+    assign_shifted_bits_acc_aux3_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>assign_shifted_bits_acc\<close>
+
+fun assign_shifted_bits_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_shifted_bits_acc' acc diff i v = 
+    (if diff = 0 then acc else assign_shifted_bits_acc'
+      (2 ## (3 ## assign_shifted_bits_acc_aux3 diff i v) ## 
+      (acc) ## 0) 
+    (diff-1) i v
+)"
+
+lemma assign_shifted_bits_acc'_correct:
+  "assign_shifted_bits_acc acc diff i v = assign_shifted_bits_acc' acc diff i v"
+  by (induction acc diff i v rule: assign_shifted_bits_acc.induct) simp
+
+record assign_shifted_bits_acc_state =
+  assign_shifted_bits_acc_acc::nat
+  assign_shifted_bits_acc_diff::nat
+  assign_shifted_bits_acc_i::nat
+  assign_shifted_bits_acc_v::nat
+  assign_shifted_bits_acc_ret::nat
+
+abbreviation "assign_shifted_bits_acc_prefix \<equiv> ''assign_shifted_bits_acc.''"
+abbreviation "assign_shifted_bits_acc_acc_str \<equiv> ''acc''"
+abbreviation "assign_shifted_bits_acc_diff_str \<equiv> ''diff''"
+abbreviation "assign_shifted_bits_acc_i_str \<equiv> ''i''"
+abbreviation "assign_shifted_bits_acc_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_acc_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_acc_state_upd s \<equiv>
+  (let
+      cons_h' = assign_shifted_bits_acc_acc s;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_shifted_bits_acc_aux3_diff' = assign_shifted_bits_acc_diff s;
+      assign_shifted_bits_acc_aux3_i' = assign_shifted_bits_acc_i s;
+      assign_shifted_bits_acc_aux3_v' = assign_shifted_bits_acc_v s;
+      assign_shifted_bits_acc_aux3_ret' = 0;
+      assign_shifted_bits_acc_aux3_state = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff',
+                                            assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i',
+                                            assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v',
+                                            assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>;
+      assign_shifted_bits_acc_aux3_ret_state = assign_shifted_bits_acc_aux3_imp assign_shifted_bits_acc_aux3_state;
+      cons_h' = 3;
+      cons_t' = assign_shifted_bits_acc_aux3_ret assign_shifted_bits_acc_aux3_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;
+      assign_shifted_bits_acc_diff' = assign_shifted_bits_acc_diff s - 1;
+      ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',
+             assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',
+             assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,
+             assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,
+             assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret s\<rparr>
+  in
+      ret
+)"
+
+definition "assign_shifted_bits_acc_imp_compute_loop_condition s \<equiv>
+  (let
+      condition = assign_shifted_bits_acc_diff s
+  in
+      condition
+)"
+
+definition "assign_shifted_bits_acc_imp_after_loop s \<equiv>
+  (let
+      assign_shifted_bits_acc_ret' = assign_shifted_bits_acc_acc s;
+      ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc s,
+             assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff s,
+             assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,
+             assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,
+             assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>
+  in
+      ret
+)"
+
+lemmas assign_shifted_bits_acc_imp_subprogram_simps = 
+  assign_shifted_bits_acc_state_upd_def
+  assign_shifted_bits_acc_imp_compute_loop_condition_def
+  assign_shifted_bits_acc_imp_after_loop_def
+
+function assign_shifted_bits_acc_imp::
+  "assign_shifted_bits_acc_state \<Rightarrow> assign_shifted_bits_acc_state" where
+  "assign_shifted_bits_acc_imp s =
+  (if assign_shifted_bits_acc_imp_compute_loop_condition s \<noteq> 0
+   then let next_iteration = assign_shifted_bits_acc_imp (assign_shifted_bits_acc_state_upd s)
+        in next_iteration
+   else let ret = assign_shifted_bits_acc_imp_after_loop s
+        in ret
+  )"
+  by simp+
+termination
+  apply (relation "measure assign_shifted_bits_acc_diff")
+  apply (simp add: assign_shifted_bits_acc_imp_subprogram_simps)+
+  done
+
+declare assign_shifted_bits_acc_imp.simps [simp del]
+
+lemma assign_shifted_bits_acc_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_acc_ret (assign_shifted_bits_acc_imp s) =
+    assign_shifted_bits_acc (assign_shifted_bits_acc_acc s) (assign_shifted_bits_acc_diff s)
+      (assign_shifted_bits_acc_i s) (assign_shifted_bits_acc_v s)"
+  apply (induction s rule: assign_shifted_bits_acc_imp.induct)
+  apply (subst assign_shifted_bits_acc_imp.simps)
+  apply (subst assign_shifted_bits_acc.simps)
+  apply (simp del: assign_shifted_bits_acc.simps add: assign_shifted_bits_acc_imp_subprogram_simps Let_def
+    assign_shifted_bits_acc'_correct cons_imp_correct assign_shifted_bits_acc_aux3_imp_correct)
+  done  
+
+definition "assign_shifted_bits_acc_state_upd_time t s \<equiv>
+  (let
+      cons_h' = assign_shifted_bits_acc_acc s;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_acc_aux3_diff' = assign_shifted_bits_acc_diff s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux3_i' = assign_shifted_bits_acc_i s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux3_v' = assign_shifted_bits_acc_v s;
+      t = t + 2;
+      assign_shifted_bits_acc_aux3_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_acc_aux3_state = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff',
+                                            assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i',
+                                            assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v',
+                                            assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>;
+      assign_shifted_bits_acc_aux3_ret_state = assign_shifted_bits_acc_aux3_imp assign_shifted_bits_acc_aux3_state;
+      t = t + assign_shifted_bits_acc_aux3_imp_time 0 assign_shifted_bits_acc_aux3_state;
+      cons_h' = 3;
+      t = t + 2;
+      cons_t' = assign_shifted_bits_acc_aux3_ret assign_shifted_bits_acc_aux3_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_acc_diff' = assign_shifted_bits_acc_diff s - 1;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',
+             assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',
+             assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,
+             assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,
+             assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret s\<rparr>
+  in
+      t
+)"
+
+definition "assign_shifted_bits_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
+      condition = assign_shifted_bits_acc_diff s;
+      t = t + 2
+  in
+      t
+)"
+
+definition "assign_shifted_bits_acc_imp_after_loop_time t s \<equiv>
+  (let
+      assign_shifted_bits_acc_ret' = assign_shifted_bits_acc_acc s;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc s,
+             assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff s,
+             assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,
+             assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,
+             assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>
+  in
+      t
+)"
+
+lemmas assign_shifted_bits_acc_imp_subprogram_time_simps = 
+  assign_shifted_bits_acc_state_upd_time_def
+  assign_shifted_bits_acc_imp_compute_loop_condition_time_def
+  assign_shifted_bits_acc_imp_after_loop_time_def
+  assign_shifted_bits_acc_imp_subprogram_simps
+
+function assign_shifted_bits_acc_imp_time::
+  "nat \<Rightarrow> assign_shifted_bits_acc_state \<Rightarrow> nat" where
+  "assign_shifted_bits_acc_imp_time t s =
+  assign_shifted_bits_acc_imp_compute_loop_condition_time 0 s +
+  (if assign_shifted_bits_acc_imp_compute_loop_condition s \<noteq> 0
+    then
+      (let
+        t = t + 1;
+        next_iteration =
+          assign_shifted_bits_acc_imp_time (t + assign_shifted_bits_acc_state_upd_time 0 s)
+                         (assign_shifted_bits_acc_state_upd s)
+       in next_iteration)
+    else
+      (let
+        t = t + 2;
+        ret = t + assign_shifted_bits_acc_imp_after_loop_time 0 s
+       in ret)
+  )"
+  by auto
+termination
+  apply (relation "measure (assign_shifted_bits_acc_diff \<circ> snd)")
+  by (simp add: assign_shifted_bits_acc_imp_subprogram_time_simps)+
+
+declare assign_shifted_bits_acc_imp_time.simps [simp del] 
+
+lemma assign_shifted_bits_acc_imp_time_acc:
+  "(assign_shifted_bits_acc_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_acc_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_acc_imp_time.simps);
+      (simp add: assign_shifted_bits_acc_state_upd_def))            
+
+lemma assign_shifted_bits_acc_imp_time_acc_2_aux:
+  "(assign_shifted_bits_acc_imp_time t s) = t + (assign_shifted_bits_acc_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_imp_time_acc)+            
+
+lemma assign_shifted_bits_acc_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_imp_time t s) = t + (assign_shifted_bits_acc_imp_time 0 s)"
+  by (rule assign_shifted_bits_acc_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_acc_imp_time_acc_3:
+  "(assign_shifted_bits_acc_imp_time (a + b) s) = a + (assign_shifted_bits_acc_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_imp_time_acc)+ 
+
+abbreviation "assign_shifted_bits_acc_while_cond \<equiv> ''condition''"
+abbreviation "assign_shifted_bits_acc_cons_result \<equiv> ''cons_result''"
+
+definition "assign_shifted_bits_acc_IMP_init_while_cond \<equiv>
+  \<comment> \<open>  condition = assign_shifted_bits_acc_diff s\<close>
+  (assign_shifted_bits_acc_while_cond) ::= (A (V assign_shifted_bits_acc_diff_str))
+"
+
+definition "assign_shifted_bits_acc_IMP_loop_body \<equiv>
+  \<comment> \<open>  cons_h' = assign_shifted_bits_acc_acc s;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V assign_shifted_bits_acc_acc_str));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_diff' = assign_shifted_bits_acc_diff s;\<close>
+  (assign_shifted_bits_acc_aux3_prefix @ assign_shifted_bits_acc_aux3_diff_str) ::= (A (V assign_shifted_bits_acc_diff_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_i' = assign_shifted_bits_acc_i s;\<close>
+  (assign_shifted_bits_acc_aux3_prefix @ assign_shifted_bits_acc_aux3_i_str) ::= (A (V assign_shifted_bits_acc_i_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_v' = assign_shifted_bits_acc_v s;\<close>
+  (assign_shifted_bits_acc_aux3_prefix @ assign_shifted_bits_acc_aux3_v_str) ::= (A (V assign_shifted_bits_acc_v_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_ret' = 0;\<close>
+  (assign_shifted_bits_acc_aux3_prefix @ assign_shifted_bits_acc_aux3_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_state = \<lparr>assign_shifted_bits_acc_aux3_diff = assign_shifted_bits_acc_aux3_diff',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux3_i = assign_shifted_bits_acc_aux3_i',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux3_v = assign_shifted_bits_acc_aux3_v',\<close>
+  \<comment> \<open>                                        assign_shifted_bits_acc_aux3_ret = assign_shifted_bits_acc_aux3_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_acc_aux3_ret_state = assign_shifted_bits_acc_aux3_imp assign_shifted_bits_acc_aux3_state;\<close>
+  (invoke_subprogram assign_shifted_bits_acc_aux3_prefix assign_shifted_bits_acc_aux3_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 3;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 3));;
+  \<comment> \<open>  cons_t' = assign_shifted_bits_acc_aux3_ret assign_shifted_bits_acc_aux3_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (assign_shifted_bits_acc_aux3_prefix @ assign_shifted_bits_acc_aux3_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_shifted_bits_acc_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_acc_diff' = assign_shifted_bits_acc_diff s - 1;\<close>
+  (assign_shifted_bits_acc_diff_str) ::= (Sub (V assign_shifted_bits_acc_diff_str) (N 1))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret s\<rparr>\<close>
+"
+
+definition "assign_shifted_bits_acc_IMP_after_loop \<equiv>
+  \<comment> \<open>  assign_shifted_bits_acc_ret' = assign_shifted_bits_acc_acc s;\<close>
+  (assign_shifted_bits_acc_ret_str) ::= (A (V assign_shifted_bits_acc_acc_str))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_i = assign_shifted_bits_acc_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_v = assign_shifted_bits_acc_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>\<close>
+"
+
+definition assign_shifted_bits_acc_IMP_Minus where
+  "assign_shifted_bits_acc_IMP_Minus \<equiv>
+  assign_shifted_bits_acc_IMP_init_while_cond;;
+  WHILE assign_shifted_bits_acc_while_cond \<noteq>0 DO (
+    assign_shifted_bits_acc_IMP_loop_body;;
+    assign_shifted_bits_acc_IMP_init_while_cond
+  );;
+  assign_shifted_bits_acc_IMP_after_loop"
+
+abbreviation "assign_shifted_bits_acc_IMP_vars\<equiv>
+  {assign_shifted_bits_acc_acc_str, assign_shifted_bits_acc_diff_str, assign_shifted_bits_acc_i_str,
+  assign_shifted_bits_acc_v_str, assign_shifted_bits_acc_ret_str, assign_shifted_bits_acc_cons_result}"
+
+lemmas assign_shifted_bits_acc_IMP_subprogram_simps =
+  assign_shifted_bits_acc_IMP_init_while_cond_def
+  assign_shifted_bits_acc_IMP_loop_body_def
+  assign_shifted_bits_acc_IMP_after_loop_def
+
+definition "assign_shifted_bits_acc_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_acc_acc = (s (add_prefix p assign_shifted_bits_acc_acc_str)),
+   assign_shifted_bits_acc_diff = (s (add_prefix p assign_shifted_bits_acc_diff_str)),
+   assign_shifted_bits_acc_i = (s (add_prefix p assign_shifted_bits_acc_i_str)),
+   assign_shifted_bits_acc_v = (s (add_prefix p assign_shifted_bits_acc_v_str)),
+   assign_shifted_bits_acc_ret = (s (add_prefix p assign_shifted_bits_acc_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_acc_state_translators =
+  assign_shifted_bits_acc_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  assign_shifted_bits_acc_aux3_imp_to_HOL_state_def
+
+lemmas assign_shifted_bits_acc_complete_simps =
+  assign_shifted_bits_acc_IMP_subprogram_simps
+  assign_shifted_bits_acc_imp_subprogram_simps
+  assign_shifted_bits_acc_state_translators
+
+lemma assign_shifted_bits_acc_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_acc_ret_str)
+      = assign_shifted_bits_acc_ret
+          (assign_shifted_bits_acc_imp (assign_shifted_bits_acc_imp_to_HOL_state p s))"
+  apply(induction "assign_shifted_bits_acc_imp_to_HOL_state p s" arbitrary: s s' t
+    rule: assign_shifted_bits_acc_imp.induct)
+  apply(subst assign_shifted_bits_acc_imp.simps)
+  apply(simp only: assign_shifted_bits_acc_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule While_tE)
+
+  subgoal
+    apply(simp only: assign_shifted_bits_acc_IMP_subprogram_simps prefix_simps)
+    by(fastforce simp: assign_shifted_bits_acc_IMP_subprogram_simps
+        assign_shifted_bits_acc_imp_subprogram_simps
+        assign_shifted_bits_acc_state_translators)
+
+  apply(erule Seq_E)+
+  apply(dest_com_gen)
+
+  subgoal
+      apply(simp only: assign_shifted_bits_acc_IMP_init_while_cond_def prefix_simps)
+      by(fastforce simp add: assign_shifted_bits_acc_complete_simps)
+
+  subgoal
+      apply(subst (asm) assign_shifted_bits_acc_IMP_init_while_cond_def)
+      apply(simp only: assign_shifted_bits_acc_IMP_loop_body_def prefix_simps)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply(erule assign_shifted_bits_acc_aux3_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(31) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(33) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(35) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(37) by fastforce
+      by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_simps Let_def)
+
+  subgoal
+      apply(simp only: assign_shifted_bits_acc_IMP_init_while_cond_def prefix_simps
+          assign_shifted_bits_acc_IMP_loop_body_def)
+      apply(erule Seq_E)+
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(29) by fastforce
+      apply(erule assign_shifted_bits_acc_aux3_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(31) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(33) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(35) by fastforce
+      apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+      subgoal premises p using p(37) by fastforce
+      by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_simps Let_def)
+  done  
+
+lemma assign_shifted_bits_acc_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_pref) assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_acc_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemmas assign_shifted_bits_acc_complete_time_simps =
+  assign_shifted_bits_acc_imp_subprogram_time_simps
+  assign_shifted_bits_acc_imp_time_acc
+  assign_shifted_bits_acc_imp_time_acc_2
+  assign_shifted_bits_acc_imp_time_acc_3
+  assign_shifted_bits_acc_state_translators
+
+lemma assign_shifted_bits_acc_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_acc_imp_time 0 (assign_shifted_bits_acc_imp_to_HOL_state p s)"
+  apply(induction "assign_shifted_bits_acc_imp_to_HOL_state p s" arbitrary: s s' t
+      rule: assign_shifted_bits_acc_imp.induct)
+  apply(subst assign_shifted_bits_acc_imp_time.simps)
+  apply(simp only: assign_shifted_bits_acc_IMP_Minus_def prefix_simps)
+
+  apply(erule Seq_tE)+
+  apply(erule While_tE_time)
+
+  subgoal
+    apply(simp only: assign_shifted_bits_acc_IMP_subprogram_simps prefix_simps)
+    by (force simp: assign_shifted_bits_acc_IMP_subprogram_simps
+        assign_shifted_bits_acc_imp_subprogram_time_simps assign_shifted_bits_acc_state_translators)
+
+  apply(erule Seq_tE)+
+  apply(simp add: add.assoc)
+  apply(dest_com_gen_time)
+
+  subgoal
+    apply(simp only: assign_shifted_bits_acc_IMP_init_while_cond_def prefix_simps)
+    by(fastforce simp add: assign_shifted_bits_acc_complete_simps)
+
+  subgoal
+    apply(subst (asm) assign_shifted_bits_acc_IMP_init_while_cond_def)
+    apply(simp only: assign_shifted_bits_acc_IMP_loop_body_def prefix_simps)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule assign_shifted_bits_acc_aux3_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_time_simps Let_def)
+
+  subgoal
+    apply(simp only: prefix_simps assign_shifted_bits_acc_IMP_init_while_cond_def
+        assign_shifted_bits_acc_IMP_loop_body_def)
+    apply(erule Seq_tE)+
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(55) by fastforce
+    apply(erule assign_shifted_bits_acc_aux3_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(57) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(59) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(61) by fastforce
+    apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
+    subgoal premises p using p(63) by fastforce
+    apply(simp only: assign_shifted_bits_acc_complete_time_simps Let_def)
+    by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_time_simps Let_def)
+
+  done  
+
+lemma assign_shifted_bits_acc_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_acc_imp_time 0 (assign_shifted_bits_acc_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_acc_ret_str) =
+          assign_shifted_bits_acc_ret (assign_shifted_bits_acc_imp
+                                        (assign_shifted_bits_acc_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_acc_IMP_Minus_correct_function
+    assign_shifted_bits_acc_IMP_Minus_correct_time
+    assign_shifted_bits_acc_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)     
+
+subsubsection \<open>assign_shifted_bits_tail\<close>
+
+record assign_shifted_bits_tail_state =
+  assign_shifted_bits_tail_i::nat
+  assign_shifted_bits_tail_v::nat
+  assign_shifted_bits_tail_ret::nat
+
+abbreviation "assign_shifted_bits_tail_prefix \<equiv> ''assign_shifted_bits_tail.''"
+abbreviation "assign_shifted_bits_tail_i_str \<equiv> ''i''"
+abbreviation "assign_shifted_bits_tail_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_tail_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_tail_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;
+      assign_shifted_bits_acc_diff' = assign_shifted_bits_tail_i s;
+      assign_shifted_bits_acc_i' = assign_shifted_bits_tail_i s;
+      assign_shifted_bits_acc_v' = assign_shifted_bits_tail_v s;
+      assign_shifted_bits_acc_ret' = 0;
+      assign_shifted_bits_acc_state = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',
+                                       assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',
+                                       assign_shifted_bits_acc_i = assign_shifted_bits_acc_i',
+                                       assign_shifted_bits_acc_v = assign_shifted_bits_acc_v',
+                                       assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>;
+      assign_shifted_bits_acc_ret_state = assign_shifted_bits_acc_imp assign_shifted_bits_acc_state;
+      assign_shifted_bits_tail_ret' = assign_shifted_bits_acc_ret assign_shifted_bits_acc_ret_state;
+      ret = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i s,
+             assign_shifted_bits_tail_v = assign_shifted_bits_tail_v s,
+             assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_tail_imp ::
+  "assign_shifted_bits_tail_state \<Rightarrow> assign_shifted_bits_tail_state" where
+  "assign_shifted_bits_tail_imp s =
+  (let 
+      ret = assign_shifted_bits_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_tail_i") simp
+
+declare assign_shifted_bits_tail_imp.simps [simp del]
+
+lemma assign_shifted_bits_tail_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_tail_ret (assign_shifted_bits_tail_imp s) =
+    assign_shifted_bits_tail (assign_shifted_bits_tail_i s) (assign_shifted_bits_tail_v s)"
+  apply (simp only: assign_shifted_bits_tail_imp.simps Let_def assign_shifted_bits_tail_state_upd_def
+    cons_imp_correct assign_shifted_bits_acc_imp_correct assign_shifted_bits_tail_def)
+  by simp      
+
+function assign_shifted_bits_tail_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_tail_state \<Rightarrow> nat" where
+  "assign_shifted_bits_tail_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_acc_diff' = assign_shifted_bits_tail_i s;
+      t = t + 2;
+      assign_shifted_bits_acc_i' = assign_shifted_bits_tail_i s;
+      t = t + 2;
+      assign_shifted_bits_acc_v' = assign_shifted_bits_tail_v s;
+      t = t + 2;
+      assign_shifted_bits_acc_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_acc_state = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',
+                                       assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',
+                                       assign_shifted_bits_acc_i = assign_shifted_bits_acc_i',
+                                       assign_shifted_bits_acc_v = assign_shifted_bits_acc_v',
+                                       assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>;
+      assign_shifted_bits_acc_ret_state = assign_shifted_bits_acc_imp assign_shifted_bits_acc_state;
+      t = t + assign_shifted_bits_acc_imp_time 0 assign_shifted_bits_acc_state;
+      assign_shifted_bits_tail_ret' = assign_shifted_bits_acc_ret assign_shifted_bits_acc_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i s,
+             assign_shifted_bits_tail_v = assign_shifted_bits_tail_v s,
+             assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_tail_i \<circ> snd)") simp
+
+declare assign_shifted_bits_tail_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_tail_imp_time_acc:
+  "(assign_shifted_bits_tail_imp_time (Suc t) s) = Suc (assign_shifted_bits_tail_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_tail_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_tail_imp_time.simps);
+      (simp add: assign_shifted_bits_tail_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_tail_imp_time_acc_2_aux:
+  "(assign_shifted_bits_tail_imp_time t s) = t + (assign_shifted_bits_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_tail_imp_time_acc)+            
+
+lemma assign_shifted_bits_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_tail_imp_time t s) = t + (assign_shifted_bits_tail_imp_time 0 s)"
+  by (rule assign_shifted_bits_tail_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_tail_imp_time_acc_3:
+  "(assign_shifted_bits_tail_imp_time (a + b) s) = a + (assign_shifted_bits_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_tail_imp_time_acc)+ 
+
+definition assign_shifted_bits_tail_IMP_Minus where
+  "assign_shifted_bits_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_acc_acc' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_acc_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_acc_diff' = assign_shifted_bits_tail_i s;\<close>
+  (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_diff_str) ::= (A (V assign_shifted_bits_tail_i_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_i' = assign_shifted_bits_tail_i s;\<close>
+  (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_i_str) ::= (A (V assign_shifted_bits_tail_i_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_v' = assign_shifted_bits_tail_v s;\<close>
+  (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_v_str) ::= (A (V assign_shifted_bits_tail_v_str));;
+  \<comment> \<open>  assign_shifted_bits_acc_ret' = 0;\<close>
+  (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_acc_state = \<lparr>assign_shifted_bits_acc_acc = assign_shifted_bits_acc_acc',\<close>
+  \<comment> \<open>                                   assign_shifted_bits_acc_diff = assign_shifted_bits_acc_diff',\<close>
+  \<comment> \<open>                                   assign_shifted_bits_acc_i = assign_shifted_bits_acc_i',\<close>
+  \<comment> \<open>                                   assign_shifted_bits_acc_v = assign_shifted_bits_acc_v',\<close>
+  \<comment> \<open>                                   assign_shifted_bits_acc_ret = assign_shifted_bits_acc_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_acc_ret_state = assign_shifted_bits_acc_imp assign_shifted_bits_acc_state;\<close>
+  (invoke_subprogram assign_shifted_bits_acc_prefix assign_shifted_bits_acc_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_tail_ret' = assign_shifted_bits_acc_ret assign_shifted_bits_acc_ret_state;\<close>
+  (assign_shifted_bits_tail_ret_str) ::= (A (V (assign_shifted_bits_acc_prefix @ assign_shifted_bits_acc_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i s,\<close>
+  \<comment> \<open>         assign_shifted_bits_tail_v = assign_shifted_bits_tail_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_tail_IMP_vars \<equiv>
+  {assign_shifted_bits_tail_i_str, assign_shifted_bits_tail_v_str, assign_shifted_bits_tail_ret_str}"
+
+definition "assign_shifted_bits_tail_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_tail_i = (s (add_prefix p assign_shifted_bits_tail_i_str)),
+   assign_shifted_bits_tail_v = (s (add_prefix p assign_shifted_bits_tail_v_str)),
+   assign_shifted_bits_tail_ret = (s (add_prefix p assign_shifted_bits_tail_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_tail_state_translators =
+  assign_shifted_bits_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  assign_shifted_bits_acc_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_tail_ret_str)
+      = assign_shifted_bits_tail_ret
+          (assign_shifted_bits_tail_imp (assign_shifted_bits_tail_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_tail_imp.simps)
+  apply(simp only: assign_shifted_bits_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply(erule assign_shifted_bits_acc_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
+  subgoal premises p using p(13) by fastforce
+  by(force simp: assign_shifted_bits_tail_state_translators
+    assign_shifted_bits_tail_state_upd_def)  
+
+lemma assign_shifted_bits_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_tail_pref) assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast     
+
+lemma assign_shifted_bits_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_tail_imp_time 0 (assign_shifted_bits_tail_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_tail_imp_time.simps)
+  apply(simp only: assign_shifted_bits_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
+  subgoal premises p using p(21) by fastforce
+  apply(erule assign_shifted_bits_acc_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_tail_state_translators)        
+
+lemma assign_shifted_bits_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_tail_imp_time 0 (assign_shifted_bits_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_tail_ret_str) =
+          assign_shifted_bits_tail_ret (assign_shifted_bits_tail_imp
+                                        (assign_shifted_bits_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_tail_IMP_Minus_correct_function
+    assign_shifted_bits_tail_IMP_Minus_correct_time
+    assign_shifted_bits_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsection \<open>assign_shifted_bits_and_zero_most_significant\<close>
+
+subsubsection \<open>assign_shifted_bits_and_zero_most_significant_tail_aux\<close>
+
+fun assign_shifted_bits_and_zero_most_significant_tail_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "assign_shifted_bits_and_zero_most_significant_tail_aux n v = 
+    (1 ## (var_bit_to_var_tail (prod_encode(v, n - 1))) ## 0 ## 0)"
+
+record assign_shifted_bits_and_zero_most_significant_tail_aux_state =
+  assign_shifted_bits_and_zero_most_significant_tail_aux_n::nat
+  assign_shifted_bits_and_zero_most_significant_tail_aux_v::nat
+  assign_shifted_bits_and_zero_most_significant_tail_aux_ret::nat
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_prefix \<equiv> 
+  ''assign_shifted_bits_and_zero_most_significant_tail_aux.''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_n_str \<equiv> ''n''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd s =
+  (let
+      cons_h' = 0;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      prod_encode_a' = assign_shifted_bits_and_zero_most_significant_tail_aux_v s;
+      prod_encode_b' = assign_shifted_bits_and_zero_most_significant_tail_aux_n s - 1;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      var_bit_to_var_tail_ret' = 0;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 1;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n s,
+             assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v s,
+             assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_and_zero_most_significant_tail_aux_imp ::
+  "assign_shifted_bits_and_zero_most_significant_tail_aux_state \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_aux_state" where
+  "assign_shifted_bits_and_zero_most_significant_tail_aux_imp s =
+  (let 
+      ret = assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_and_zero_most_significant_tail_aux_n") simp
+
+declare assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps [simp del]
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_and_zero_most_significant_tail_aux_ret (assign_shifted_bits_and_zero_most_significant_tail_aux_imp s) =
+    assign_shifted_bits_and_zero_most_significant_tail_aux 
+      (assign_shifted_bits_and_zero_most_significant_tail_aux_n s) (assign_shifted_bits_and_zero_most_significant_tail_aux_v s)"
+  apply (simp only: assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps Let_def 
+    assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def cons_imp_correct prod_encode_imp_correct
+    var_bit_to_var_tail_imp_correct assign_shifted_bits_and_zero_most_significant_tail_aux.simps)
+  by simp   
+
+function assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_aux_state \<Rightarrow> nat" where
+  "assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s =
+  (let
+      cons_h' = 0;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      prod_encode_a' = assign_shifted_bits_and_zero_most_significant_tail_aux_v s;
+      t = t + 2;
+      prod_encode_b' = assign_shifted_bits_and_zero_most_significant_tail_aux_n s - 1;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      var_bit_to_var_tail_ret' = 0;
+      t = t + 2;
+      var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
+                                   var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
+      var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
+      t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
+      cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 1;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n s,
+             assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v s,
+             assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_and_zero_most_significant_tail_aux_n \<circ> snd)") simp
+
+declare assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc:
+  "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time (Suc t) s) = Suc (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.simps);
+      (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2_aux:
+  "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 s)"
+  by (rule assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_3:
+  "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time (a + b) s) = a + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+  
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_cons_result \<equiv> ''cons_result''"
+
+definition assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus where
+  "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus \<equiv>
+  \<comment> \<open>  cons_h' = 0;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = assign_shifted_bits_and_zero_most_significant_tail_aux_v s;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (V assign_shifted_bits_and_zero_most_significant_tail_aux_v_str));;
+  \<comment> \<open>  prod_encode_b' = assign_shifted_bits_and_zero_most_significant_tail_aux_n s - 1;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (Sub (V assign_shifted_bits_and_zero_most_significant_tail_aux_n_str) (N 1));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  var_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  var_bit_to_var_tail_ret' = 0;\<close>
+  (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',\<close>
+  \<comment> \<open>                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;\<close>
+  (invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_shifted_bits_and_zero_most_significant_tail_aux_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 1;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 1));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n s,\<close>
+  \<comment> \<open>         assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars \<equiv>
+  {assign_shifted_bits_and_zero_most_significant_tail_aux_n_str, assign_shifted_bits_and_zero_most_significant_tail_aux_v_str,
+  assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str, assign_shifted_bits_and_zero_most_significant_tail_aux_cons_result}"
+
+definition "assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_aux_n_str)),
+   assign_shifted_bits_and_zero_most_significant_tail_aux_v = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_aux_v_str)),
+   assign_shifted_bits_and_zero_most_significant_tail_aux_ret = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators =
+  assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  var_bit_to_var_tail_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str)
+      = assign_shifted_bits_and_zero_most_significant_tail_aux_ret
+          (assign_shifted_bits_and_zero_most_significant_tail_aux_imp (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps)
+  apply(simp only: assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(21) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(27) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  by(force simp: assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators
+    assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def) 
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_and_zero_most_significant_tail_aux_pref) assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_and_zero_most_significant_tail_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.simps)
+  apply(simp only: assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(41) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators)   
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str) =
+          assign_shifted_bits_and_zero_most_significant_tail_aux_ret (assign_shifted_bits_and_zero_most_significant_tail_aux_imp
+                                        (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_function
+    assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_time
+    assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
+subsubsection \<open>assign_shifted_bits_and_zero_most_significant_tail\<close>
+
+fun assign_shifted_bits_and_zero_most_significant_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat " where
+  "assign_shifted_bits_and_zero_most_significant_tail' n v = 
+    2 ## (assign_shifted_bits_tail (n - 1) v) ##
+    (assign_shifted_bits_and_zero_most_significant_tail_aux n v) ## 0"
+
+lemma assign_shifted_bits_and_zero_most_significant_tail'_correct:
+  "assign_shifted_bits_and_zero_most_significant_tail n v = assign_shifted_bits_and_zero_most_significant_tail' n v"
+  unfolding assign_shifted_bits_and_zero_most_significant_tail_def
+  by (simp only: assign_shifted_bits_and_zero_most_significant_tail_aux.simps
+    assign_shifted_bits_and_zero_most_significant_tail'.simps)
+
+record assign_shifted_bits_and_zero_most_significant_tail_state =
+  assign_shifted_bits_and_zero_most_significant_tail_n::nat
+  assign_shifted_bits_and_zero_most_significant_tail_v::nat
+  assign_shifted_bits_and_zero_most_significant_tail_ret::nat
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_prefix \<equiv> 
+  ''assign_shifted_bits_and_zero_most_significant_tail.''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_n_str \<equiv> ''n''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_v_str \<equiv> ''v''"
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_ret_str \<equiv> ''ret''"
+
+definition "assign_shifted_bits_and_zero_most_significant_tail_state_upd s =
+  (let
+      assign_shifted_bits_and_zero_most_significant_tail_aux_n' = assign_shifted_bits_and_zero_most_significant_tail_n s;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_state = 
+        \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n',
+         assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v',
+         assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state =
+        assign_shifted_bits_and_zero_most_significant_tail_aux_imp assign_shifted_bits_and_zero_most_significant_tail_aux_state;
+      cons_h' = assign_shifted_bits_and_zero_most_significant_tail_aux_ret assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      assign_shifted_bits_tail_i' = assign_shifted_bits_and_zero_most_significant_tail_n s - 1;
+      assign_shifted_bits_tail_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;
+      assign_shifted_bits_tail_ret' = 0;
+      assign_shifted_bits_tail_state = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i',
+                                        assign_shifted_bits_tail_v = assign_shifted_bits_tail_v',
+                                        assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>;
+      assign_shifted_bits_tail_ret_state = assign_shifted_bits_tail_imp assign_shifted_bits_tail_state;
+      cons_h' = assign_shifted_bits_tail_ret assign_shifted_bits_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      assign_shifted_bits_and_zero_most_significant_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n s,
+             assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v s,
+             assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function assign_shifted_bits_and_zero_most_significant_tail_imp ::
+  "assign_shifted_bits_and_zero_most_significant_tail_state \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_state" where
+  "assign_shifted_bits_and_zero_most_significant_tail_imp s =
+  (let 
+      ret = assign_shifted_bits_and_zero_most_significant_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assign_shifted_bits_and_zero_most_significant_tail_n") simp
+
+declare assign_shifted_bits_and_zero_most_significant_tail_imp.simps [simp del]
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_imp_correct[let_function_correctness]:
+  "assign_shifted_bits_and_zero_most_significant_tail_ret (assign_shifted_bits_and_zero_most_significant_tail_imp s) =
+    assign_shifted_bits_and_zero_most_significant_tail (assign_shifted_bits_and_zero_most_significant_tail_n s)
+      (assign_shifted_bits_and_zero_most_significant_tail_v s)"
+  apply (simp only: assign_shifted_bits_and_zero_most_significant_tail_imp.simps Let_def
+    assign_shifted_bits_and_zero_most_significant_tail_state_upd_def cons_imp_correct
+    assign_shifted_bits_and_zero_most_significant_tail_aux_imp_correct assign_shifted_bits_tail_imp_correct
+    assign_shifted_bits_and_zero_most_significant_tail'_correct)
+  by simp
+
+function assign_shifted_bits_and_zero_most_significant_tail_imp_time ::
+  "nat \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_state \<Rightarrow> nat" where
+  "assign_shifted_bits_and_zero_most_significant_tail_imp_time t s =
+  (let
+      assign_shifted_bits_and_zero_most_significant_tail_aux_n' = assign_shifted_bits_and_zero_most_significant_tail_n s;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_state = 
+        \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n',
+         assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v',
+         assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>;
+      assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state =
+        assign_shifted_bits_and_zero_most_significant_tail_aux_imp assign_shifted_bits_and_zero_most_significant_tail_aux_state;
+      t = t + assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 assign_shifted_bits_and_zero_most_significant_tail_aux_state;
+      cons_h' = assign_shifted_bits_and_zero_most_significant_tail_aux_ret assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      assign_shifted_bits_tail_i' = assign_shifted_bits_and_zero_most_significant_tail_n s - 1;
+      t = t + 2;
+      assign_shifted_bits_tail_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;
+      t = t + 2;
+      assign_shifted_bits_tail_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_tail_state = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i',
+                                        assign_shifted_bits_tail_v = assign_shifted_bits_tail_v',
+                                        assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>;
+      assign_shifted_bits_tail_ret_state = assign_shifted_bits_tail_imp assign_shifted_bits_tail_state;
+      t = t + assign_shifted_bits_tail_imp_time 0 assign_shifted_bits_tail_state;
+      cons_h' = assign_shifted_bits_tail_ret assign_shifted_bits_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      assign_shifted_bits_and_zero_most_significant_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n s,
+             assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v s,
+             assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (assign_shifted_bits_and_zero_most_significant_tail_n \<circ> snd)") simp
+
+declare assign_shifted_bits_and_zero_most_significant_tail_imp_time.simps [simp del]
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc:
+  "(assign_shifted_bits_and_zero_most_significant_tail_imp_time (Suc t) s) = Suc (assign_shifted_bits_and_zero_most_significant_tail_imp_time t s)"
+  by (induction t s rule: assign_shifted_bits_and_zero_most_significant_tail_imp_time.induct)
+    ((subst (1 2) assign_shifted_bits_and_zero_most_significant_tail_imp_time.simps);
+      (simp add: assign_shifted_bits_and_zero_most_significant_tail_state_upd_def Let_def))            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2_aux:
+  "(assign_shifted_bits_and_zero_most_significant_tail_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_and_zero_most_significant_tail_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 s)"
+  by (rule assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2_aux)            
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_3:
+  "(assign_shifted_bits_and_zero_most_significant_tail_imp_time (a + b) s) = a + (assign_shifted_bits_and_zero_most_significant_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+  
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_cons_result \<equiv> ''cons_result''"
+
+definition assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus where
+  "assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_n' = assign_shifted_bits_and_zero_most_significant_tail_n s;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_n_str) ::= 
+    (A (V assign_shifted_bits_and_zero_most_significant_tail_n_str));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_v_str) ::= 
+    (A (V assign_shifted_bits_and_zero_most_significant_tail_v_str));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_state = \<close>
+  \<comment> \<open>    \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n',\<close>
+  \<comment> \<open>     assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v',\<close>
+  \<comment> \<open>     assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state =\<close>
+  \<comment> \<open>    assign_shifted_bits_and_zero_most_significant_tail_aux_imp assign_shifted_bits_and_zero_most_significant_tail_aux_state;\<close>
+  (invoke_subprogram assign_shifted_bits_and_zero_most_significant_tail_aux_prefix assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus);;
+  \<comment> \<open>  cons_h' = assign_shifted_bits_and_zero_most_significant_tail_aux_ret assign_shifted_bits_and_zero_most_significant_tail_aux_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::=
+    (A (V (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  assign_shifted_bits_tail_i' = assign_shifted_bits_and_zero_most_significant_tail_n s - 1;\<close>
+  (assign_shifted_bits_tail_prefix @ assign_shifted_bits_tail_i_str) ::= (Sub (V assign_shifted_bits_and_zero_most_significant_tail_n_str) (N 1));;
+  \<comment> \<open>  assign_shifted_bits_tail_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;\<close>
+  (assign_shifted_bits_tail_prefix @ assign_shifted_bits_tail_v_str) ::= (A (V assign_shifted_bits_and_zero_most_significant_tail_v_str));;
+  \<comment> \<open>  assign_shifted_bits_tail_ret' = 0;\<close>
+  (assign_shifted_bits_tail_prefix @ assign_shifted_bits_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_tail_state = \<lparr>assign_shifted_bits_tail_i = assign_shifted_bits_tail_i',\<close>
+  \<comment> \<open>                                    assign_shifted_bits_tail_v = assign_shifted_bits_tail_v',\<close>
+  \<comment> \<open>                                    assign_shifted_bits_tail_ret = assign_shifted_bits_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_tail_ret_state = assign_shifted_bits_tail_imp assign_shifted_bits_tail_state;\<close>
+  (invoke_subprogram assign_shifted_bits_tail_prefix assign_shifted_bits_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = assign_shifted_bits_tail_ret assign_shifted_bits_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (assign_shifted_bits_tail_prefix @ assign_shifted_bits_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V assign_shifted_bits_and_zero_most_significant_tail_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_ret' = cons_ret cons_ret_state;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n s,\<close>
+  \<comment> \<open>         assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v s,\<close>
+  \<comment> \<open>         assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>\<close>
+"
+
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars \<equiv>
+  {assign_shifted_bits_and_zero_most_significant_tail_n_str, assign_shifted_bits_and_zero_most_significant_tail_v_str,
+  assign_shifted_bits_and_zero_most_significant_tail_ret_str, assign_shifted_bits_and_zero_most_significant_tail_cons_result}"
+
+definition "assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state p s =
+  \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_n_str)),
+   assign_shifted_bits_and_zero_most_significant_tail_v = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_v_str)),
+   assign_shifted_bits_and_zero_most_significant_tail_ret = (s (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_ret_str))\<rparr>"
+
+lemmas assign_shifted_bits_and_zero_most_significant_tail_state_translators =
+  assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state_def
+  assign_shifted_bits_and_zero_most_significant_tail_aux_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  assign_shifted_bits_tail_imp_to_HOL_state_def
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assign_shifted_bits_and_zero_most_significant_tail_ret_str)
+      = assign_shifted_bits_and_zero_most_significant_tail_ret
+          (assign_shifted_bits_and_zero_most_significant_tail_imp (assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state p s))"
+  apply(subst assign_shifted_bits_and_zero_most_significant_tail_imp.simps)
+  apply(simp only: assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(22) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(24) by fastforce
+  apply(erule assign_shifted_bits_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(26) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  by(force simp: assign_shifted_bits_and_zero_most_significant_tail_state_translators
+    assign_shifted_bits_and_zero_most_significant_tail_state_upd_def)   
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_and_zero_most_significant_tail_pref) assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assign_shifted_bits_and_zero_most_significant_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast    
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 (assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state p s)"
+  apply(subst assign_shifted_bits_and_zero_most_significant_tail_imp_time.simps)
+  apply(simp only: assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(43) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule assign_shifted_bits_tail_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_state_translators)   
+
+lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 (assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_ret_str) =
+          assign_shifted_bits_and_zero_most_significant_tail_ret (assign_shifted_bits_and_zero_most_significant_tail_imp
+                                        (assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_function
+    assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_time
+    assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsection \<open>binary_right_shift\<close>
+
+subsubsection \<open>binary_right_shift_tail_aux\<close>
+
+fun binary_right_shift_tail_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_right_shift_tail_aux n v a =
+    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) a) ##
+    (assign_shifted_bits_and_zero_most_significant_tail n v) ## 0)"
+
+record binary_right_shift_tail_aux_state =
+  binary_right_shift_tail_aux_n::nat
+  binary_right_shift_tail_aux_v::nat
+  binary_right_shift_tail_aux_a::nat
+  binary_right_shift_tail_aux_ret::nat
+
+abbreviation "binary_right_shift_tail_aux_prefix \<equiv> ''binary_right_shift_tail_aux.''"
+abbreviation "binary_right_shift_tail_aux_n_str \<equiv> ''n''"
+abbreviation "binary_right_shift_tail_aux_v_str \<equiv> ''v''"
+abbreviation "binary_right_shift_tail_aux_a_str \<equiv> ''a''"
+abbreviation "binary_right_shift_tail_aux_ret_str \<equiv> ''ret''"
+
+definition "binary_right_shift_tail_aux_state_upd s =
+  (let
+      assign_shifted_bits_and_zero_most_significant_tail_n' = binary_right_shift_tail_aux_n s;
+      assign_shifted_bits_and_zero_most_significant_tail_v' = binary_right_shift_tail_aux_v s;
+      assign_shifted_bits_and_zero_most_significant_tail_ret' = 0;
+      assign_shifted_bits_and_zero_most_significant_tail_state = 
+        \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n',
+         assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v',
+         assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>;
+      assign_shifted_bits_and_zero_most_significant_tail_ret_state =
+        assign_shifted_bits_and_zero_most_significant_tail_imp assign_shifted_bits_and_zero_most_significant_tail_state;
+      cons_h' = assign_shifted_bits_and_zero_most_significant_tail_ret assign_shifted_bits_and_zero_most_significant_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      copy_atom_to_operand_tail_n' = binary_right_shift_tail_aux_n s;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = binary_right_shift_tail_aux_a s;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_right_shift_tail_aux_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n s,
+             binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v s,
+             binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a s,
+             binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_right_shift_tail_aux_imp ::
+  "binary_right_shift_tail_aux_state \<Rightarrow> binary_right_shift_tail_aux_state" where
+  "binary_right_shift_tail_aux_imp s =
+  (let 
+      ret = binary_right_shift_tail_aux_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_right_shift_tail_aux_n") simp
+
+declare binary_right_shift_tail_aux_imp.simps [simp del]
+
+lemma binary_right_shift_tail_aux_imp_correct[let_function_correctness]:
+  "binary_right_shift_tail_aux_ret (binary_right_shift_tail_aux_imp s) =
+    binary_right_shift_tail_aux (binary_right_shift_tail_aux_n s) (binary_right_shift_tail_aux_v s)
+      (binary_right_shift_tail_aux_a s)"
+  apply (simp only: binary_right_shift_tail_aux_imp.simps Let_def binary_right_shift_tail_aux_state_upd_def
+    assign_shifted_bits_and_zero_most_significant_tail_imp_correct cons_imp_correct
+    copy_atom_to_operand_tail_imp_correct a_encode_char_val binary_right_shift_tail_aux.simps)
+  by simp   
+
+function binary_right_shift_tail_aux_imp_time ::
+  "nat \<Rightarrow> binary_right_shift_tail_aux_state \<Rightarrow> nat" where
+  "binary_right_shift_tail_aux_imp_time t s =
+  (let
+      assign_shifted_bits_and_zero_most_significant_tail_n' = binary_right_shift_tail_aux_n s;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_v' = binary_right_shift_tail_aux_v s;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_ret' = 0;
+      t = t + 2;
+      assign_shifted_bits_and_zero_most_significant_tail_state = 
+        \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n',
+         assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v',
+         assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>;
+      assign_shifted_bits_and_zero_most_significant_tail_ret_state =
+        assign_shifted_bits_and_zero_most_significant_tail_imp assign_shifted_bits_and_zero_most_significant_tail_state;
+      t = t + assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 assign_shifted_bits_and_zero_most_significant_tail_state;
+      cons_h' = assign_shifted_bits_and_zero_most_significant_tail_ret assign_shifted_bits_and_zero_most_significant_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_n' = binary_right_shift_tail_aux_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = binary_right_shift_tail_aux_a s;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_right_shift_tail_aux_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n s,
+             binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v s,
+             binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a s,
+             binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_right_shift_tail_aux_n \<circ> snd)") simp
+
+declare binary_right_shift_tail_aux_imp_time.simps [simp del]
+
+lemma binary_right_shift_tail_aux_imp_time_acc:
+  "(binary_right_shift_tail_aux_imp_time (Suc t) s) = Suc (binary_right_shift_tail_aux_imp_time t s)"
+  by (induction t s rule: binary_right_shift_tail_aux_imp_time.induct)
+    ((subst (1 2) binary_right_shift_tail_aux_imp_time.simps);
+      (simp add: binary_right_shift_tail_aux_state_upd_def Let_def))            
+
+lemma binary_right_shift_tail_aux_imp_time_acc_2_aux:
+  "(binary_right_shift_tail_aux_imp_time t s) = t + (binary_right_shift_tail_aux_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+            
+
+lemma binary_right_shift_tail_aux_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_right_shift_tail_aux_imp_time t s) = t + (binary_right_shift_tail_aux_imp_time 0 s)"
+  by (rule binary_right_shift_tail_aux_imp_time_acc_2_aux)            
+
+lemma binary_right_shift_tail_aux_imp_time_acc_3:
+  "(binary_right_shift_tail_aux_imp_time (a + b) s) = a + (binary_right_shift_tail_aux_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+   
+
+abbreviation "binary_right_shift_tail_aux_cons_result \<equiv> ''cons_result''"
+
+definition binary_right_shift_tail_aux_IMP_Minus where
+  "binary_right_shift_tail_aux_IMP_Minus \<equiv>
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_n' = binary_right_shift_tail_aux_n s;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_prefix @ assign_shifted_bits_and_zero_most_significant_tail_n_str) ::=
+    (A (V binary_right_shift_tail_aux_n_str));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_v' = binary_right_shift_tail_aux_v s;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_prefix @ assign_shifted_bits_and_zero_most_significant_tail_v_str) ::=
+    (A (V binary_right_shift_tail_aux_v_str));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_ret' = 0;\<close>
+  (assign_shifted_bits_and_zero_most_significant_tail_prefix @ assign_shifted_bits_and_zero_most_significant_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_state = \<close>
+  \<comment> \<open>    \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n',\<close>
+  \<comment> \<open>     assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v',\<close>
+  \<comment> \<open>     assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_ret_state =\<close>
+  \<comment> \<open>    assign_shifted_bits_and_zero_most_significant_tail_imp assign_shifted_bits_and_zero_most_significant_tail_state;\<close>
+  (invoke_subprogram assign_shifted_bits_and_zero_most_significant_tail_prefix assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = assign_shifted_bits_and_zero_most_significant_tail_ret assign_shifted_bits_and_zero_most_significant_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::=
+    (A (V (assign_shifted_bits_and_zero_most_significant_tail_prefix @ assign_shifted_bits_and_zero_most_significant_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_right_shift_tail_aux_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_right_shift_tail_aux_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_right_shift_tail_aux_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = a_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = binary_right_shift_tail_aux_a s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V binary_right_shift_tail_aux_a_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_right_shift_tail_aux_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_right_shift_tail_aux_ret' = cons_ret cons_ret_state;\<close>
+  (binary_right_shift_tail_aux_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>\<close>
+"
+
+abbreviation "binary_right_shift_tail_aux_IMP_vars \<equiv>
+  {binary_right_shift_tail_aux_n_str, binary_right_shift_tail_aux_v_str, binary_right_shift_tail_aux_a_str,
+  binary_right_shift_tail_aux_ret_str, binary_right_shift_tail_aux_cons_result}"
+
+definition "binary_right_shift_tail_aux_imp_to_HOL_state p s =
+  \<lparr>binary_right_shift_tail_aux_n = (s (add_prefix p binary_right_shift_tail_aux_n_str)),
+   binary_right_shift_tail_aux_v = (s (add_prefix p binary_right_shift_tail_aux_v_str)),
+   binary_right_shift_tail_aux_a = (s (add_prefix p binary_right_shift_tail_aux_a_str)),
+   binary_right_shift_tail_aux_ret = (s (add_prefix p binary_right_shift_tail_aux_ret_str))\<rparr>"
+
+lemmas binary_right_shift_tail_aux_state_translators =
+  binary_right_shift_tail_aux_imp_to_HOL_state_def
+  assign_shifted_bits_and_zero_most_significant_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
+
+lemma binary_right_shift_tail_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_right_shift_tail_aux_ret_str)
+      = binary_right_shift_tail_aux_ret
+          (binary_right_shift_tail_aux_imp (binary_right_shift_tail_aux_imp_to_HOL_state p s))"
+  apply(subst binary_right_shift_tail_aux_imp.simps)
+  apply(simp only: binary_right_shift_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(23) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(25) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(27) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(29) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  by(force simp: binary_right_shift_tail_aux_state_translators
+    binary_right_shift_tail_aux_state_upd_def) 
+
+lemma binary_right_shift_tail_aux_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_right_shift_tail_aux_pref) binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_right_shift_tail_aux_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast 
+
+lemma binary_right_shift_tail_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_right_shift_tail_aux_imp_time 0 (binary_right_shift_tail_aux_imp_to_HOL_state p s)"
+  apply(subst binary_right_shift_tail_aux_imp_time.simps)
+  apply(simp only: binary_right_shift_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(45) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(47) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(49) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(51) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
+  subgoal premises p using p(53) by fastforce
+  by(force simp add: Let_def binary_right_shift_tail_aux_state_translators)  
+
+lemma binary_right_shift_tail_aux_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_right_shift_tail_aux_imp_time 0 (binary_right_shift_tail_aux_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_right_shift_tail_aux_ret_str) =
+          binary_right_shift_tail_aux_ret (binary_right_shift_tail_aux_imp
+                                        (binary_right_shift_tail_aux_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_right_shift_tail_aux_IMP_Minus_correct_function
+    binary_right_shift_tail_aux_IMP_Minus_correct_time
+    binary_right_shift_tail_aux_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
+subsubsection \<open>binary_right_shift_tail\<close>
+
+fun binary_right_shift_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "binary_right_shift_tail' n v a = 
+    2 ## (binary_right_shift_tail_aux n v a) ##
+    (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ## 0"
+
+lemma binary_right_shift_tail'_correct:
+  "binary_right_shift_tail n v a = binary_right_shift_tail' n v a"
+  unfolding binary_right_shift_tail_def
+  by (simp only: binary_right_shift_tail_aux.simps binary_right_shift_tail'.simps)
+
+record binary_right_shift_tail_state =
+  binary_right_shift_tail_n::nat
+  binary_right_shift_tail_v::nat
+  binary_right_shift_tail_a::nat
+  binary_right_shift_tail_ret::nat
+
+abbreviation "binary_right_shift_tail_prefix \<equiv> ''binary_right_shift_tail.''"
+abbreviation "binary_right_shift_tail_n_str \<equiv> ''n''"
+abbreviation "binary_right_shift_tail_v_str \<equiv> ''v''"
+abbreviation "binary_right_shift_tail_a_str \<equiv> ''a''"
+abbreviation "binary_right_shift_tail_ret_str \<equiv> ''ret''"
+
+definition "binary_right_shift_tail_state_upd s =
+  (let
+      prod_encode_a' = 1;
+      prod_encode_b' = 0;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_right_shift_tail_n s;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      copy_atom_to_operand_tail_ret' = 0;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      cons_t' = 0;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_result = cons_ret cons_ret_state;
+      binary_right_shift_tail_aux_n' = binary_right_shift_tail_n s;
+      binary_right_shift_tail_aux_v' = binary_right_shift_tail_v s;
+      binary_right_shift_tail_aux_a' = binary_right_shift_tail_a s;
+      binary_right_shift_tail_aux_ret' = 0;
+      binary_right_shift_tail_aux_state = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n',
+                                           binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v',
+                                           binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a',
+                                           binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>;
+      binary_right_shift_tail_aux_ret_state = binary_right_shift_tail_aux_imp binary_right_shift_tail_aux_state;
+      cons_h' = binary_right_shift_tail_aux_ret binary_right_shift_tail_aux_ret_state;
+      cons_t' = cons_result;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      cons_h' = 2;
+      cons_t' = cons_ret cons_ret_state;
+      cons_ret' = 0;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      binary_right_shift_tail_ret' = cons_ret cons_ret_state;
+      ret = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n s,
+             binary_right_shift_tail_v = binary_right_shift_tail_v s,
+             binary_right_shift_tail_a = binary_right_shift_tail_a s,
+             binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+function binary_right_shift_tail_imp ::
+  "binary_right_shift_tail_state \<Rightarrow> binary_right_shift_tail_state" where
+  "binary_right_shift_tail_imp s =
+  (let 
+      ret = binary_right_shift_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure binary_right_shift_tail_n") simp
+
+declare binary_right_shift_tail_imp.simps [simp del]
+
+lemma binary_right_shift_tail_imp_correct[let_function_correctness]:
+  "binary_right_shift_tail_ret (binary_right_shift_tail_imp s) =
+    binary_right_shift_tail (binary_right_shift_tail_n s) (binary_right_shift_tail_v s)
+      (binary_right_shift_tail_a s)"
+  apply (simp only: binary_right_shift_tail_imp.simps Let_def binary_right_shift_tail_state_upd_def
+    prod_encode_imp_correct copy_atom_to_operand_tail_imp_correct cons_imp_correct
+    binary_right_shift_tail_aux_imp_correct a_encode_char_val binary_right_shift_tail'_correct
+    binary_right_shift_tail'.simps)
+  by simp     
+
+function binary_right_shift_tail_imp_time ::
+  "nat \<Rightarrow> binary_right_shift_tail_state \<Rightarrow> nat" where
+  "binary_right_shift_tail_imp_time t s =
+  (let
+      prod_encode_a' = 1;
+      t = t + 2;
+      prod_encode_b' = 0;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      copy_atom_to_operand_tail_n' = binary_right_shift_tail_n s;
+      t = t + 2;
+      copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
+      t = t + 2;
+      copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      copy_atom_to_operand_tail_ret' = 0;
+      t = t + 2;
+      copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
+                                         copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
+                                         copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
+                                         copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;
+      copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;
+      t = t + copy_atom_to_operand_tail_imp_time 0 copy_atom_to_operand_tail_state;
+      cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;
+      t = t + 2;
+      cons_t' = 0;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_result = cons_ret cons_ret_state;
+      t = t + 2;
+      binary_right_shift_tail_aux_n' = binary_right_shift_tail_n s;
+      t = t + 2;
+      binary_right_shift_tail_aux_v' = binary_right_shift_tail_v s;
+      t = t + 2;
+      binary_right_shift_tail_aux_a' = binary_right_shift_tail_a s;
+      t = t + 2;
+      binary_right_shift_tail_aux_ret' = 0;
+      t = t + 2;
+      binary_right_shift_tail_aux_state = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n',
+                                           binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v',
+                                           binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a',
+                                           binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>;
+      binary_right_shift_tail_aux_ret_state = binary_right_shift_tail_aux_imp binary_right_shift_tail_aux_state;
+      t = t + binary_right_shift_tail_aux_imp_time 0 binary_right_shift_tail_aux_state;
+      cons_h' = binary_right_shift_tail_aux_ret binary_right_shift_tail_aux_ret_state;
+      t = t + 2;
+      cons_t' = cons_result;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      cons_h' = 2;
+      t = t + 2;
+      cons_t' = cons_ret cons_ret_state;
+      t = t + 2;
+      cons_ret' = 0;
+      t = t + 2;
+      cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
+      cons_ret_state = cons_imp cons_state;
+      t = t + cons_imp_time 0 cons_state;
+      binary_right_shift_tail_ret' = cons_ret cons_ret_state;
+      t = t + 2;
+      ret = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n s,
+             binary_right_shift_tail_v = binary_right_shift_tail_v s,
+             binary_right_shift_tail_a = binary_right_shift_tail_a s,
+             binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>
+  in
+      t
+  )"
+  by auto
+termination
+  by (relation "measure (binary_right_shift_tail_n \<circ> snd)") simp
+
+declare binary_right_shift_tail_imp_time.simps [simp del]
+
+lemma binary_right_shift_tail_imp_time_acc:
+  "(binary_right_shift_tail_imp_time (Suc t) s) = Suc (binary_right_shift_tail_imp_time t s)"
+  by (induction t s rule: binary_right_shift_tail_imp_time.induct)
+    ((subst (1 2) binary_right_shift_tail_imp_time.simps);
+      (simp add: binary_right_shift_tail_state_upd_def Let_def))            
+
+lemma binary_right_shift_tail_imp_time_acc_2_aux:
+  "(binary_right_shift_tail_imp_time t s) = t + (binary_right_shift_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_imp_time_acc)+            
+
+lemma binary_right_shift_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (binary_right_shift_tail_imp_time t s) = t + (binary_right_shift_tail_imp_time 0 s)"
+  by (rule binary_right_shift_tail_imp_time_acc_2_aux)            
+
+lemma binary_right_shift_tail_imp_time_acc_3:
+  "(binary_right_shift_tail_imp_time (a + b) s) = a + (binary_right_shift_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_imp_time_acc)+     
+
+abbreviation "binary_right_shift_tail_cons_result \<equiv> ''cons_result''"
+
+definition binary_right_shift_tail_IMP_Minus where
+  "binary_right_shift_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  prod_encode_a' = 1;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N 1));;
+  \<comment> \<open>  prod_encode_b' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  copy_atom_to_operand_tail_n' = binary_right_shift_tail_n s;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) ::= (A (V binary_right_shift_tail_n_str));;
+  \<comment> \<open>  copy_atom_to_operand_tail_op' = a_encode_char_as_nat;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) ::= (A (N a_encode_char_as_nat));;
+  \<comment> \<open>  copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  copy_atom_to_operand_tail_ret' = 0;\<close>
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  copy_atom_to_operand_tail_state = \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',\<close>
+  \<comment> \<open>                                     copy_atom_to_operand_tail_ret = copy_atom_to_operand_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  copy_atom_to_operand_tail_ret_state = copy_atom_to_operand_tail_imp copy_atom_to_operand_tail_state;\<close>
+  (invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus);;
+  \<comment> \<open>  cons_h' = copy_atom_to_operand_tail_ret copy_atom_to_operand_tail_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)));;
+  \<comment> \<open>  cons_t' = 0;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_result = cons_ret cons_ret_state;\<close>
+  (binary_right_shift_tail_cons_result) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  binary_right_shift_tail_aux_n' = binary_right_shift_tail_n s;\<close>
+  (binary_right_shift_tail_aux_prefix @ binary_right_shift_tail_aux_n_str) ::= (A (V binary_right_shift_tail_n_str));;
+  \<comment> \<open>  binary_right_shift_tail_aux_v' = binary_right_shift_tail_v s;\<close>
+  (binary_right_shift_tail_aux_prefix @ binary_right_shift_tail_aux_v_str) ::= (A (V binary_right_shift_tail_v_str));;
+  \<comment> \<open>  binary_right_shift_tail_aux_a' = binary_right_shift_tail_a s;\<close>
+  (binary_right_shift_tail_aux_prefix @ binary_right_shift_tail_aux_a_str) ::= (A (V binary_right_shift_tail_a_str));;
+  \<comment> \<open>  binary_right_shift_tail_aux_ret' = 0;\<close>
+  (binary_right_shift_tail_aux_prefix @ binary_right_shift_tail_aux_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_right_shift_tail_aux_state = \<lparr>binary_right_shift_tail_aux_n = binary_right_shift_tail_aux_n',\<close>
+  \<comment> \<open>                                       binary_right_shift_tail_aux_v = binary_right_shift_tail_aux_v',\<close>
+  \<comment> \<open>                                       binary_right_shift_tail_aux_a = binary_right_shift_tail_aux_a',\<close>
+  \<comment> \<open>                                       binary_right_shift_tail_aux_ret = binary_right_shift_tail_aux_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_right_shift_tail_aux_ret_state = binary_right_shift_tail_aux_imp binary_right_shift_tail_aux_state;\<close>
+  (invoke_subprogram binary_right_shift_tail_aux_prefix binary_right_shift_tail_aux_IMP_Minus);;
+  \<comment> \<open>  cons_h' = binary_right_shift_tail_aux_ret binary_right_shift_tail_aux_ret_state;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (V (binary_right_shift_tail_aux_prefix @ binary_right_shift_tail_aux_ret_str)));;
+  \<comment> \<open>  cons_t' = cons_result;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V binary_right_shift_tail_cons_result));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  cons_h' = 2;\<close>
+  (cons_prefix @ cons_h_str) ::= (A (N 2));;
+  \<comment> \<open>  cons_t' = cons_ret cons_ret_state;\<close>
+  (cons_prefix @ cons_t_str) ::= (A (V (cons_prefix @ cons_ret_str)));;
+  \<comment> \<open>  cons_ret' = 0;\<close>
+  (cons_prefix @ cons_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;\<close>
+  \<comment> \<open>  cons_ret_state = cons_imp cons_state;\<close>
+  (invoke_subprogram cons_prefix cons_IMP_Minus);;
+  \<comment> \<open>  binary_right_shift_tail_ret' = cons_ret cons_ret_state;\<close>
+  (binary_right_shift_tail_ret_str) ::= (A (V (cons_prefix @ cons_ret_str)))
+  \<comment> \<open>  ret = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_v = binary_right_shift_tail_v s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_a = binary_right_shift_tail_a s,\<close>
+  \<comment> \<open>         binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>\<close>
+"
+abbreviation "binary_right_shift_tail_IMP_vars \<equiv>
+  {binary_right_shift_tail_n_str, binary_right_shift_tail_v_str, binary_right_shift_tail_a_str,
+  binary_right_shift_tail_ret_str, binary_right_shift_tail_cons_result}"
+
+definition "binary_right_shift_tail_imp_to_HOL_state p s =
+  \<lparr>binary_right_shift_tail_n = (s (add_prefix p binary_right_shift_tail_n_str)),
+   binary_right_shift_tail_v = (s (add_prefix p binary_right_shift_tail_v_str)),
+   binary_right_shift_tail_a = (s (add_prefix p binary_right_shift_tail_a_str)),
+   binary_right_shift_tail_ret = (s (add_prefix p binary_right_shift_tail_ret_str))\<rparr>"
+
+lemmas binary_right_shift_tail_state_translators =
+  binary_right_shift_tail_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  copy_atom_to_operand_tail_imp_to_HOL_state_def
+  cons_imp_to_HOL_state_def
+  binary_right_shift_tail_aux_imp_to_HOL_state_def
+
+lemma binary_right_shift_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p binary_right_shift_tail_ret_str)
+      = binary_right_shift_tail_ret
+          (binary_right_shift_tail_imp (binary_right_shift_tail_imp_to_HOL_state p s))"
+  apply(subst binary_right_shift_tail_imp.simps)
+  apply(simp only: binary_right_shift_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(28) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(30) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(32) by fastforce
+  apply(erule binary_right_shift_tail_aux_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(34) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(36) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(38) by fastforce
+  by(force simp: binary_right_shift_tail_state_translators
+    binary_right_shift_tail_state_upd_def) 
+
+lemma binary_right_shift_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ binary_right_shift_tail_pref) binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix binary_right_shift_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast  
+
+lemma binary_right_shift_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = binary_right_shift_tail_imp_time 0 (binary_right_shift_tail_imp_to_HOL_state p s)"
+  apply(subst binary_right_shift_tail_imp_time.simps)
+  apply(simp only: binary_right_shift_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(55) by fastforce
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(57) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(59) by fastforce
+  apply(erule binary_right_shift_tail_aux_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(61) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(63) by fastforce
+  apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
+  subgoal premises p using p(65) by fastforce
+  by(force simp add: Let_def binary_right_shift_tail_state_translators)        
+
+lemma binary_right_shift_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (binary_right_shift_tail_imp_time 0 (binary_right_shift_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) binary_right_shift_tail_ret_str) =
+          binary_right_shift_tail_ret (binary_right_shift_tail_imp
+                                        (binary_right_shift_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using binary_right_shift_tail_IMP_Minus_correct_function
+    binary_right_shift_tail_IMP_Minus_correct_time
+    binary_right_shift_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix)
+
 end 
