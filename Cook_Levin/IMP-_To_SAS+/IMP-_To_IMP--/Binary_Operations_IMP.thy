@@ -20044,4 +20044,1370 @@ lemma binary_right_shift_tail_IMP_Minus_correct:
     binary_right_shift_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
+subsection \<open>assignment_to_binary\<close>
+
+subsubsection \<open>assignment_to_binary_tail\<close>
+
+record assignment_to_binary_tail_state =
+  assignment_to_binary_tail_n::nat
+  assignment_to_binary_tail_v::nat
+  assignment_to_binary_tail_aexp::nat
+  assignment_to_binary_tail_ret::nat
+
+abbreviation "assignment_to_binary_tail_prefix \<equiv> ''assignment_to_binary_tail.''"
+abbreviation "assignment_to_binary_tail_n_str \<equiv> ''n''"
+abbreviation "assignment_to_binary_tail_v_str \<equiv> ''v''"
+abbreviation "assignment_to_binary_tail_aexp_str \<equiv> ''aexp''"
+abbreviation "assignment_to_binary_tail_ret_str \<equiv> ''ret''"
+
+definition "assignment_to_binary_tail_imp_to_HOL_state p s =
+  \<lparr>assignment_to_binary_tail_n = (s (add_prefix p assignment_to_binary_tail_n_str)),
+   assignment_to_binary_tail_v = (s (add_prefix p assignment_to_binary_tail_v_str)),
+   assignment_to_binary_tail_aexp = (s (add_prefix p assignment_to_binary_tail_aexp_str)),
+   assignment_to_binary_tail_ret = (s (add_prefix p assignment_to_binary_tail_ret_str))\<rparr>"
+
+abbreviation "assignment_to_binary_tail_nth_nat_result \<equiv> ''nth_nat_result''"
+abbreviation "assignment_to_binary_tail_EQUAL_neq_zero_result \<equiv> ''EQUAL_neq_zero_result''"
+
+abbreviation "assignment_to_binary_tail_IMP_vars \<equiv>
+  {assignment_to_binary_tail_n_str, assignment_to_binary_tail_v_str, assignment_to_binary_tail_aexp_str,
+  assignment_to_binary_tail_ret_str, assignment_to_binary_tail_nth_nat_result,
+  assignment_to_binary_tail_EQUAL_neq_zero_result}"
+
+lemmas assignment_to_binary_tail_state_translators =
+  assignment_to_binary_tail_imp_to_HOL_state_def
+  nth_nat_imp_to_HOL_state_def
+  prod_encode_imp_to_HOL_state_def
+  binary_adder_tail_imp_to_HOL_state_def
+  binary_subtractor_tail_imp_to_HOL_state_def
+  binary_parity_tail_imp_to_HOL_state_def
+  binary_right_shift_tail_imp_to_HOL_state_def
+
+paragraph \<open>if_eq_zero\<close>
+
+definition "assignment_to_binary_tail_if_eq_zero_imp s = 
+  (let
+      nth_nat_n' = 1;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      prod_encode_a' = 1;
+      prod_encode_b' = 0;
+      prod_encode_ret' = 0;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      binary_adder_tail_n' = assignment_to_binary_tail_n s;
+      binary_adder_tail_v' = assignment_to_binary_tail_v s;
+      binary_adder_tail_a' = nth_nat_result;
+      binary_adder_tail_b' = prod_encode_ret prod_encode_ret_state;
+      binary_adder_tail_ret' = 0;
+      binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',
+                                 binary_adder_tail_v = binary_adder_tail_v',
+                                 binary_adder_tail_a = binary_adder_tail_a',
+                                 binary_adder_tail_b = binary_adder_tail_b',
+                                 binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;
+      binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;
+      assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+lemma assignment_to_binary_tail_if_eq_zero_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_if_eq_zero_imp s) =
+    binary_adder_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+      (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (prod_encode (1,0))"
+  unfolding assignment_to_binary_tail_if_eq_zero_imp_def
+  apply (simp only: Let_def nth_nat_imp_correct prod_encode_imp_correct binary_adder_tail_imp_correct)
+  by simp
+
+definition "assignment_to_binary_tail_if_eq_zero_imp_time t s =
+  (let
+      nth_nat_n' = 1;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      prod_encode_a' = 1;
+      t = t + 2;
+      prod_encode_b' = 0;
+      t = t + 2;
+      prod_encode_ret' = 0;
+      t = t + 2;
+      prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
+                           prod_encode_b = prod_encode_b',
+                           prod_encode_ret = prod_encode_ret'\<rparr>;
+      prod_encode_ret_state = prod_encode_imp prod_encode_state;
+      t = t + prod_encode_imp_time 0 prod_encode_state;
+      binary_adder_tail_n' = assignment_to_binary_tail_n s;
+      t = t + 2;
+      binary_adder_tail_v' = assignment_to_binary_tail_v s;
+      t = t + 2;
+      binary_adder_tail_a' = nth_nat_result;
+      t = t + 2;
+      binary_adder_tail_b' = prod_encode_ret prod_encode_ret_state;
+      t = t + 2;
+      binary_adder_tail_ret' = 0;
+      t = t + 2;
+      binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',
+                                 binary_adder_tail_v = binary_adder_tail_v',
+                                 binary_adder_tail_a = binary_adder_tail_a',
+                                 binary_adder_tail_b = binary_adder_tail_b',
+                                 binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;
+      binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;
+      t = t + binary_adder_tail_imp_time 0 binary_adder_tail_state;
+      assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;
+      t = t + 2;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      t
+)"
+
+definition "assignment_to_binary_tail_if_eq_zero_IMP_Minus \<equiv>
+  \<comment> \<open>  nth_nat_n' = 1;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 1));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  nth_nat_result = nth_nat_ret nth_nat_ret_state;\<close>
+  (assignment_to_binary_tail_nth_nat_result) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  prod_encode_a' = 1;\<close>
+  (prod_encode_prefix @ prod_encode_a_str) ::= (A (N 1));;
+  \<comment> \<open>  prod_encode_b' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_b_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_ret' = 0;\<close>
+  (prod_encode_prefix @ prod_encode_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',\<close>
+  \<comment> \<open>                       prod_encode_b = prod_encode_b',\<close>
+  \<comment> \<open>                       prod_encode_ret = prod_encode_ret'\<rparr>;\<close>
+  \<comment> \<open>  prod_encode_ret_state = prod_encode_imp prod_encode_state;\<close>
+  (invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus);;
+  \<comment> \<open>  binary_adder_tail_n' = assignment_to_binary_tail_n s;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_n_str) ::= (A (V assignment_to_binary_tail_n_str));;
+  \<comment> \<open>  binary_adder_tail_v' = assignment_to_binary_tail_v s;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_v_str) ::= (A (V assignment_to_binary_tail_v_str));;
+  \<comment> \<open>  binary_adder_tail_a' = nth_nat_result;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_a_str) ::= (A (V assignment_to_binary_tail_nth_nat_result));;
+  \<comment> \<open>  binary_adder_tail_b' = prod_encode_ret prod_encode_ret_state;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_b_str) ::= (A (V (prod_encode_prefix @ prod_encode_ret_str)));;
+  \<comment> \<open>  binary_adder_tail_ret' = 0;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',\<close>
+  \<comment> \<open>                             binary_adder_tail_v = binary_adder_tail_v',\<close>
+  \<comment> \<open>                             binary_adder_tail_a = binary_adder_tail_a',\<close>
+  \<comment> \<open>                             binary_adder_tail_b = binary_adder_tail_b',\<close>
+  \<comment> \<open>                             binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;\<close>
+  (invoke_subprogram binary_adder_tail_prefix binary_adder_tail_IMP_Minus);;
+  \<comment> \<open>  assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;\<close>
+  (assignment_to_binary_tail_ret_str) ::= (A (V (binary_adder_tail_prefix @ binary_adder_tail_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_v = assignment_to_binary_tail_v s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>\<close>
+"
+
+lemma assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_if_eq_zero_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_if_eq_zero_imp_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_zero_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(16) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(18) by fastforce
+  apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(20) by fastforce
+  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def)  
+
+lemma assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_if_eq_zero_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_if_eq_zero_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_zero_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def) 
+
+paragraph \<open>if_eq_one\<close>
+
+definition "assignment_to_binary_tail_if_eq_one_imp s = 
+  (let
+      nth_nat_n' = 1;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      nth_nat_n' = 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      binary_adder_tail_n' = assignment_to_binary_tail_n s;
+      binary_adder_tail_v' = assignment_to_binary_tail_v s;
+      binary_adder_tail_a' = nth_nat_result;
+      binary_adder_tail_b' = nth_nat_ret nth_nat_ret_state;
+      binary_adder_tail_ret' = 0;
+      binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',
+                                 binary_adder_tail_v = binary_adder_tail_v',
+                                 binary_adder_tail_a = binary_adder_tail_a',
+                                 binary_adder_tail_b = binary_adder_tail_b',
+                                 binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;
+      binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;
+      assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+lemma assignment_to_binary_tail_if_eq_one_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_if_eq_one_imp s) =
+    binary_adder_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+      (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))"
+  unfolding assignment_to_binary_tail_if_eq_one_imp_def
+  apply (simp only: Let_def nth_nat_imp_correct binary_adder_tail_imp_correct numeral_2_eq_2) 
+  by simp
+
+definition "assignment_to_binary_tail_if_eq_one_imp_time t s =
+  (let
+      nth_nat_n' = 1;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      nth_nat_n' = 2;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      binary_adder_tail_n' = assignment_to_binary_tail_n s;
+      t = t + 2;
+      binary_adder_tail_v' = assignment_to_binary_tail_v s;
+      t = t + 2;
+      binary_adder_tail_a' = nth_nat_result;
+      t = t + 2;
+      binary_adder_tail_b' = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      binary_adder_tail_ret' = 0;
+      t = t + 2;
+      binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',
+                                 binary_adder_tail_v = binary_adder_tail_v',
+                                 binary_adder_tail_a = binary_adder_tail_a',
+                                 binary_adder_tail_b = binary_adder_tail_b',
+                                 binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;
+      binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;
+      t = t + binary_adder_tail_imp_time 0 binary_adder_tail_state;
+      assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;
+      t = t + 2;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      t
+)"
+
+definition "assignment_to_binary_tail_if_eq_one_IMP_Minus \<equiv>
+  \<comment> \<open>  nth_nat_n' = 1;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 1));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  nth_nat_result = nth_nat_ret nth_nat_ret_state;\<close>
+  (assignment_to_binary_tail_nth_nat_result) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  nth_nat_n' = 2;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 2));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  binary_adder_tail_n' = assignment_to_binary_tail_n s;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_n_str) ::= (A (V assignment_to_binary_tail_n_str));;
+  \<comment> \<open>  binary_adder_tail_v' = assignment_to_binary_tail_v s;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_v_str) ::= (A (V assignment_to_binary_tail_v_str));;
+  \<comment> \<open>  binary_adder_tail_a' = nth_nat_result;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_a_str) ::= (A (V assignment_to_binary_tail_nth_nat_result));;
+  \<comment> \<open>  binary_adder_tail_b' = nth_nat_ret nth_nat_ret_state;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_b_str) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  binary_adder_tail_ret' = 0;\<close>
+  (binary_adder_tail_prefix @ binary_adder_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_adder_tail_state = \<lparr>binary_adder_tail_n = binary_adder_tail_n',\<close>
+  \<comment> \<open>                             binary_adder_tail_v = binary_adder_tail_v',\<close>
+  \<comment> \<open>                             binary_adder_tail_a = binary_adder_tail_a',\<close>
+  \<comment> \<open>                             binary_adder_tail_b = binary_adder_tail_b',\<close>
+  \<comment> \<open>                             binary_adder_tail_ret = binary_adder_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_adder_tail_ret_state = binary_adder_tail_imp binary_adder_tail_state;\<close>
+  (invoke_subprogram binary_adder_tail_prefix binary_adder_tail_IMP_Minus);;
+  \<comment> \<open>  assignment_to_binary_tail_ret' = binary_adder_tail_ret binary_adder_tail_ret_state;\<close>
+  (assignment_to_binary_tail_ret_str) ::= (A (V (binary_adder_tail_prefix @ binary_adder_tail_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_v = assignment_to_binary_tail_v s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>\<close>
+"
+
+lemma assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_if_eq_one_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_if_eq_one_imp_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_one_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(16) by fastforce
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(18) by fastforce
+  apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(20) by fastforce
+  by(fastforce simp: assignment_to_binary_tail_state_translators)         
+
+lemma assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_if_eq_one_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_if_eq_one_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_one_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)       
+
+paragraph \<open>if_eq_two\<close>
+
+definition "assignment_to_binary_tail_if_eq_two_imp s = 
+  (let
+      nth_nat_n' = 1;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      nth_nat_n' = 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      binary_subtractor_tail_n' = assignment_to_binary_tail_n s;
+      binary_subtractor_tail_v' = assignment_to_binary_tail_v s;
+      binary_subtractor_tail_a' = nth_nat_result;
+      binary_subtractor_tail_b' = nth_nat_ret nth_nat_ret_state;
+      binary_subtractor_tail_ret' = 0;
+      binary_subtractor_tail_state = \<lparr>binary_subtractor_tail_n = binary_subtractor_tail_n',
+                                      binary_subtractor_tail_v = binary_subtractor_tail_v',
+                                      binary_subtractor_tail_a = binary_subtractor_tail_a',
+                                      binary_subtractor_tail_b = binary_subtractor_tail_b',
+                                      binary_subtractor_tail_ret = binary_subtractor_tail_ret'\<rparr>;
+      binary_subtractor_tail_ret_state = binary_subtractor_tail_imp binary_subtractor_tail_state;
+      assignment_to_binary_tail_ret' = binary_subtractor_tail_ret binary_subtractor_tail_ret_state;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+lemma assignment_to_binary_tail_if_eq_two_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_if_eq_two_imp s) =
+    binary_subtractor_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+      (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))"
+  unfolding assignment_to_binary_tail_if_eq_two_imp_def
+  apply (simp only: Let_def nth_nat_imp_correct binary_subtractor_tail_imp_correct numeral_2_eq_2) 
+  by simp
+
+definition "assignment_to_binary_tail_if_eq_two_imp_time t s =
+  (let
+      nth_nat_n' = 1;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      nth_nat_result = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      nth_nat_n' = 2;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      binary_subtractor_tail_n' = assignment_to_binary_tail_n s;
+      t = t + 2;
+      binary_subtractor_tail_v' = assignment_to_binary_tail_v s;
+      t = t + 2;
+      binary_subtractor_tail_a' = nth_nat_result;
+      t = t + 2;
+      binary_subtractor_tail_b' = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      binary_subtractor_tail_ret' = 0;
+      t = t + 2;
+      binary_subtractor_tail_state = \<lparr>binary_subtractor_tail_n = binary_subtractor_tail_n',
+                                      binary_subtractor_tail_v = binary_subtractor_tail_v',
+                                      binary_subtractor_tail_a = binary_subtractor_tail_a',
+                                      binary_subtractor_tail_b = binary_subtractor_tail_b',
+                                      binary_subtractor_tail_ret = binary_subtractor_tail_ret'\<rparr>;
+      binary_subtractor_tail_ret_state = binary_subtractor_tail_imp binary_subtractor_tail_state;
+      t = t + binary_subtractor_tail_imp_time 0 binary_subtractor_tail_state;
+      assignment_to_binary_tail_ret' = binary_subtractor_tail_ret binary_subtractor_tail_ret_state;
+      t = t + 2;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      t
+)"
+
+definition "assignment_to_binary_tail_if_eq_two_IMP_Minus \<equiv>
+  \<comment> \<open>  nth_nat_n' = 1;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 1));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  nth_nat_result = nth_nat_ret nth_nat_ret_state;\<close>
+  (assignment_to_binary_tail_nth_nat_result) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  nth_nat_n' = 2;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 2));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  binary_subtractor_tail_n' = assignment_to_binary_tail_n s;\<close>
+  (binary_subtractor_tail_prefix @ binary_subtractor_tail_n_str) ::= (A (V assignment_to_binary_tail_n_str));;
+  \<comment> \<open>  binary_subtractor_tail_v' = assignment_to_binary_tail_v s;\<close>
+  (binary_subtractor_tail_prefix @ binary_subtractor_tail_v_str) ::= (A (V assignment_to_binary_tail_v_str));;
+  \<comment> \<open>  binary_subtractor_tail_a' = nth_nat_result;\<close>
+  (binary_subtractor_tail_prefix @ binary_subtractor_tail_a_str) ::= (A (V assignment_to_binary_tail_nth_nat_result));;
+  \<comment> \<open>  binary_subtractor_tail_b' = nth_nat_ret nth_nat_ret_state;\<close>
+  (binary_subtractor_tail_prefix @ binary_subtractor_tail_b_str) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  binary_subtractor_tail_ret' = 0;\<close>
+  (binary_subtractor_tail_prefix @ binary_subtractor_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_subtractor_tail_state = \<lparr>binary_subtractor_tail_n = binary_subtractor_tail_n',\<close>
+  \<comment> \<open>                                  binary_subtractor_tail_v = binary_subtractor_tail_v',\<close>
+  \<comment> \<open>                                  binary_subtractor_tail_a = binary_subtractor_tail_a',\<close>
+  \<comment> \<open>                                  binary_subtractor_tail_b = binary_subtractor_tail_b',\<close>
+  \<comment> \<open>                                  binary_subtractor_tail_ret = binary_subtractor_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_subtractor_tail_ret_state = binary_subtractor_tail_imp binary_subtractor_tail_state;\<close>
+  (invoke_subprogram binary_subtractor_tail_prefix binary_subtractor_tail_IMP_Minus);;
+  \<comment> \<open>  assignment_to_binary_tail_ret' = binary_subtractor_tail_ret binary_subtractor_tail_ret_state;\<close>
+  (assignment_to_binary_tail_ret_str) ::= (A (V (binary_subtractor_tail_prefix @ binary_subtractor_tail_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_v = assignment_to_binary_tail_v s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>\<close>
+"
+
+lemma assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_two_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_if_eq_two_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_if_eq_two_imp_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_two_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(16) by fastforce
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(18) by fastforce
+  apply(erule binary_subtractor_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(20) by fastforce
+  by(fastforce simp: assignment_to_binary_tail_state_translators)
+
+lemma assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_two_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_if_eq_two_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_if_eq_two_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_two_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(31) by fastforce
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(33) by fastforce
+  apply(erule binary_subtractor_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(35) by fastforce
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)  
+
+paragraph \<open>if_eq_three\<close>
+
+definition "assignment_to_binary_tail_if_eq_three_imp s = 
+  (let
+      nth_nat_n' = 1;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      binary_parity_tail_n' = assignment_to_binary_tail_n s;
+      binary_parity_tail_v' = assignment_to_binary_tail_v s;
+      binary_parity_tail_a' = nth_nat_ret nth_nat_ret_state;
+      binary_parity_tail_ret' = 0;
+      binary_parity_tail_state = \<lparr>binary_parity_tail_n = binary_parity_tail_n',
+                                  binary_parity_tail_v = binary_parity_tail_v',
+                                  binary_parity_tail_a = binary_parity_tail_a',
+                                  binary_parity_tail_ret = binary_parity_tail_ret'\<rparr>;
+      binary_parity_tail_ret_state = binary_parity_tail_imp binary_parity_tail_state;
+      assignment_to_binary_tail_ret' = binary_parity_tail_ret binary_parity_tail_ret_state;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+lemma assignment_to_binary_tail_if_eq_three_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_if_eq_three_imp s) =
+    binary_parity_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+      (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s))"
+  unfolding assignment_to_binary_tail_if_eq_three_imp_def
+  apply (simp only: Let_def nth_nat_imp_correct binary_parity_tail_imp_correct)
+  by simp
+
+definition "assignment_to_binary_tail_if_eq_three_imp_time t s =
+  (let
+      nth_nat_n' = 1;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      binary_parity_tail_n' = assignment_to_binary_tail_n s;
+      t = t + 2;
+      binary_parity_tail_v' = assignment_to_binary_tail_v s;
+      t = t + 2;
+      binary_parity_tail_a' = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      binary_parity_tail_ret' = 0;
+      t = t + 2;
+      binary_parity_tail_state = \<lparr>binary_parity_tail_n = binary_parity_tail_n',
+                                  binary_parity_tail_v = binary_parity_tail_v',
+                                  binary_parity_tail_a = binary_parity_tail_a',
+                                  binary_parity_tail_ret = binary_parity_tail_ret'\<rparr>;
+      binary_parity_tail_ret_state = binary_parity_tail_imp binary_parity_tail_state;
+      t = t + binary_parity_tail_imp_time 0 binary_parity_tail_state;
+      assignment_to_binary_tail_ret' = binary_parity_tail_ret binary_parity_tail_ret_state;
+      t = t + 2;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      t
+)"
+
+definition "assignment_to_binary_tail_if_eq_three_IMP_Minus \<equiv>
+  \<comment> \<open>  nth_nat_n' = 1;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 1));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  binary_parity_tail_n' = assignment_to_binary_tail_n s;\<close>
+  (binary_parity_tail_prefix @ binary_parity_tail_n_str) ::= (A (V assignment_to_binary_tail_n_str));;
+  \<comment> \<open>  binary_parity_tail_v' = assignment_to_binary_tail_v s;\<close>
+  (binary_parity_tail_prefix @ binary_parity_tail_v_str) ::= (A (V assignment_to_binary_tail_v_str));;
+  \<comment> \<open>  binary_parity_tail_a' = nth_nat_ret nth_nat_ret_state;\<close>
+  (binary_parity_tail_prefix @ binary_parity_tail_a_str) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  binary_parity_tail_ret' = 0;\<close>
+  (binary_parity_tail_prefix @ binary_parity_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_parity_tail_state = \<lparr>binary_parity_tail_n = binary_parity_tail_n',\<close>
+  \<comment> \<open>                              binary_parity_tail_v = binary_parity_tail_v',\<close>
+  \<comment> \<open>                              binary_parity_tail_a = binary_parity_tail_a',\<close>
+  \<comment> \<open>                              binary_parity_tail_ret = binary_parity_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_parity_tail_ret_state = binary_parity_tail_imp binary_parity_tail_state;\<close>
+  (invoke_subprogram binary_parity_tail_prefix binary_parity_tail_IMP_Minus);;
+  \<comment> \<open>  assignment_to_binary_tail_ret' = binary_parity_tail_ret binary_parity_tail_ret_state;\<close>
+  (assignment_to_binary_tail_ret_str) ::= (A (V (binary_parity_tail_prefix @ binary_parity_tail_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_v = assignment_to_binary_tail_v s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>\<close>
+"
+
+lemma assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_if_eq_three_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_if_eq_three_imp_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_three_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(10) by fastforce
+  apply(erule binary_parity_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(12) by fastforce
+  by(fastforce simp: assignment_to_binary_tail_state_translators)
+
+lemma assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_if_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_if_eq_three_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_if_eq_three_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_if_eq_three_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(19) by fastforce
+  apply(erule binary_parity_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(21) by fastforce
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators) 
+
+paragraph \<open>else\<close>
+
+definition "assignment_to_binary_tail_else_imp s = 
+  (let
+      nth_nat_n' = 1;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      nth_nat_ret' = 0;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      binary_right_shift_tail_n' = assignment_to_binary_tail_n s;
+      binary_right_shift_tail_v' = assignment_to_binary_tail_v s;
+      binary_right_shift_tail_a' = nth_nat_ret nth_nat_ret_state;
+      binary_right_shift_tail_ret' = 0;
+      binary_right_shift_tail_state = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n',
+                                       binary_right_shift_tail_v = binary_right_shift_tail_v',
+                                       binary_right_shift_tail_a = binary_right_shift_tail_a',
+                                       binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>;
+      binary_right_shift_tail_ret_state = binary_right_shift_tail_imp binary_right_shift_tail_state;
+      assignment_to_binary_tail_ret' = binary_right_shift_tail_ret binary_right_shift_tail_ret_state;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      ret
+)"
+
+lemma assignment_to_binary_tail_else_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_else_imp s) =
+    binary_right_shift_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+     (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s))"
+  unfolding assignment_to_binary_tail_else_imp_def
+  apply (simp only: Let_def nth_nat_imp_correct binary_right_shift_tail_imp_correct)
+  by simp    
+
+definition "assignment_to_binary_tail_else_imp_time t s =
+  (let
+      nth_nat_n' = 1;
+      t = t + 2;
+      nth_nat_x' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      nth_nat_ret' = 0;
+      t = t + 2;
+      nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
+      nth_nat_ret_state = nth_nat_imp nth_nat_state;
+      t = t + nth_nat_imp_time 0 nth_nat_state;
+      binary_right_shift_tail_n' = assignment_to_binary_tail_n s;
+      t = t + 2;
+      binary_right_shift_tail_v' = assignment_to_binary_tail_v s;
+      t = t + 2;
+      binary_right_shift_tail_a' = nth_nat_ret nth_nat_ret_state;
+      t = t + 2;
+      binary_right_shift_tail_ret' = 0;
+      t = t + 2;
+      binary_right_shift_tail_state = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n',
+                                       binary_right_shift_tail_v = binary_right_shift_tail_v',
+                                       binary_right_shift_tail_a = binary_right_shift_tail_a',
+                                       binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>;
+      binary_right_shift_tail_ret_state = binary_right_shift_tail_imp binary_right_shift_tail_state;
+      t = t + binary_right_shift_tail_imp_time 0 binary_right_shift_tail_state;
+      assignment_to_binary_tail_ret' = binary_right_shift_tail_ret binary_right_shift_tail_ret_state;
+      t = t + 2;
+      ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,
+             assignment_to_binary_tail_v = assignment_to_binary_tail_v s,
+             assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,
+             assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>
+  in
+      t
+)"
+
+definition "assignment_to_binary_tail_else_IMP_Minus \<equiv>
+  \<comment> \<open>  nth_nat_n' = 1;\<close>
+  (nth_nat_prefix @ nth_nat_n_str) ::= (A (N 1));;
+  \<comment> \<open>  nth_nat_x' = assignment_to_binary_tail_aexp s;\<close>
+  (nth_nat_prefix @ nth_nat_x_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  nth_nat_ret' = 0;\<close>
+  (nth_nat_prefix @ nth_nat_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;\<close>
+  \<comment> \<open>  nth_nat_ret_state = nth_nat_imp nth_nat_state;\<close>
+  (invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus);;
+  \<comment> \<open>  binary_right_shift_tail_n' = assignment_to_binary_tail_n s;\<close>
+  (binary_right_shift_tail_prefix @ binary_right_shift_tail_n_str) ::= (A (V assignment_to_binary_tail_n_str));;
+  \<comment> \<open>  binary_right_shift_tail_v' = assignment_to_binary_tail_v s;\<close>
+  (binary_right_shift_tail_prefix @ binary_right_shift_tail_v_str) ::= (A (V assignment_to_binary_tail_v_str));;
+  \<comment> \<open>  binary_right_shift_tail_a' = nth_nat_ret nth_nat_ret_state;\<close>
+  (binary_right_shift_tail_prefix @ binary_right_shift_tail_a_str) ::= (A (V (nth_nat_prefix @ nth_nat_ret_str)));;
+  \<comment> \<open>  binary_right_shift_tail_ret' = 0;\<close>
+  (binary_right_shift_tail_prefix @ binary_right_shift_tail_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  binary_right_shift_tail_state = \<lparr>binary_right_shift_tail_n = binary_right_shift_tail_n',\<close>
+  \<comment> \<open>                                   binary_right_shift_tail_v = binary_right_shift_tail_v',\<close>
+  \<comment> \<open>                                   binary_right_shift_tail_a = binary_right_shift_tail_a',\<close>
+  \<comment> \<open>                                   binary_right_shift_tail_ret = binary_right_shift_tail_ret'\<rparr>;\<close>
+  \<comment> \<open>  binary_right_shift_tail_ret_state = binary_right_shift_tail_imp binary_right_shift_tail_state;\<close>
+  (invoke_subprogram binary_right_shift_tail_prefix binary_right_shift_tail_IMP_Minus);;
+  \<comment> \<open>  assignment_to_binary_tail_ret' = binary_right_shift_tail_ret binary_right_shift_tail_ret_state;\<close>
+  (assignment_to_binary_tail_ret_str) ::= (A (V (binary_right_shift_tail_prefix @ binary_right_shift_tail_ret_str)))
+  \<comment> \<open>  ret = \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_v = assignment_to_binary_tail_v s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_aexp = assignment_to_binary_tail_aexp s,\<close>
+  \<comment> \<open>         assignment_to_binary_tail_ret = assignment_to_binary_tail_ret'\<rparr>\<close>
+"
+
+lemma assignment_to_binary_tail_else_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_else_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_else_imp_def)
+  apply(simp only: assignment_to_binary_tail_else_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(10) by fastforce
+  apply(erule binary_right_shift_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(12) by fastforce
+  by(fastforce simp: assignment_to_binary_tail_state_translators) 
+
+lemma assignment_to_binary_tail_else_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_else_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_else_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_else_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule nth_nat_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(19) by fastforce
+  apply(erule binary_right_shift_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(21) by fastforce
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)     
+
+paragraph \<open>assignment_to_binary_tail_aux\<close>
+
+definition "assignment_to_binary_tail_aux_imp s = 
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      EQUAL_neq_zero_b' = 2;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+      assignment_to_binary_tail_if_eq_two_imp s
+  else
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      EQUAL_neq_zero_b' = 3;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+      assignment_to_binary_tail_if_eq_three_imp s
+  else
+      assignment_to_binary_tail_else_imp s
+))))"
+
+lemma assignment_to_binary_tail_aux_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_aux_imp s) =
+    (if hd_nat (assignment_to_binary_tail_aexp s) = 2 
+      then binary_subtractor_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s) 
+        (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))
+    else if hd_nat (assignment_to_binary_tail_aexp s) = 3
+      then binary_parity_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+        (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s))
+    else binary_right_shift_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+        (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)))"
+  unfolding assignment_to_binary_tail_aux_imp_def
+  by (simp add: Let_def hd_imp_correct EQUAL_neq_zero_imp_correct assignment_to_binary_tail_if_eq_two_imp_correct
+    assignment_to_binary_tail_if_eq_three_imp_correct assignment_to_binary_tail_else_imp_correct)  
+
+definition "assignment_to_binary_tail_aux_imp_time t s =
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 2;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_if_eq_two_imp_time 0 s
+  in
+      t
+  )
+  else
+  (let
+      t = t + 1;
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 3;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_if_eq_three_imp_time 0 s
+  in
+      t
+  )
+  else
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_else_imp_time 0 s
+  in
+      t
+  )
+))))"
+
+abbreviation "assignment_to_binary_tail_aux_IMP_else \<equiv>
+  \<comment> \<open>  hd_xs' = assignment_to_binary_tail_aexp s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 3;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 3));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state\<close>
+  (assignment_to_binary_tail_EQUAL_neq_zero_result) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(if EQUAL_neq_zero_result \<noteq> 0 then\<close>
+  (IF assignment_to_binary_tail_EQUAL_neq_zero_result \<noteq>0 THEN
+  \<comment> \<open>  assignment_to_binary_tail_if_eq_three_imp s\<close>
+  assignment_to_binary_tail_if_eq_three_IMP_Minus
+  \<comment> \<open>else\<close>
+  ELSE
+  \<comment> \<open>  assignment_to_binary_tail_else_imp s\<close>
+  assignment_to_binary_tail_else_IMP_Minus)
+"
+
+definition "assignment_to_binary_tail_aux_IMP_Minus \<equiv>
+  \<comment> \<open>  hd_xs' = assignment_to_binary_tail_aexp s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 2;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 2));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state\<close>
+  (assignment_to_binary_tail_EQUAL_neq_zero_result) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(if EQUAL_neq_zero_result \<noteq> 0 then\<close>
+  (IF assignment_to_binary_tail_EQUAL_neq_zero_result \<noteq>0 THEN
+  \<comment> \<open>  assignment_to_binary_tail_if_eq_two_imp s\<close>
+  assignment_to_binary_tail_if_eq_two_IMP_Minus
+  \<comment> \<open>else\<close>
+  ELSE
+  assignment_to_binary_tail_aux_IMP_else)
+"
+
+lemma assignment_to_binary_tail_aux_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_aux_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_aux_imp_def)
+  apply(simp only: assignment_to_binary_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(9) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply(erule If_E)
+  subgoal
+    by(fastforce dest!: assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+  subgoal
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(22) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(24) by fastforce
+    apply(erule If_E)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_else_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+lemma assignment_to_binary_tail_aux_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_aux_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_aux_imp_time_def)
+  apply(simp only: assignment_to_binary_tail_aux_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(19) by fastforce
+  apply(erule If_tE)
+  subgoal
+    by(fastforce dest!: assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+  subgoal
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule If_tE)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_else_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
+    done
+  done
+
+paragraph \<open>assignment_to_binary_tail\<close>
+
+definition "assignment_to_binary_tail_state_upd s =
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      EQUAL_neq_zero_b' = 0;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+      assignment_to_binary_tail_if_eq_zero_imp s
+  else
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      hd_ret' = 0;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      EQUAL_neq_zero_b' = 1;
+      EQUAL_neq_zero_ret' = 0;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+      assignment_to_binary_tail_if_eq_one_imp s
+  else
+      assignment_to_binary_tail_aux_imp s
+))))"
+
+function assignment_to_binary_tail_imp ::
+  "assignment_to_binary_tail_state \<Rightarrow> assignment_to_binary_tail_state" where
+  "assignment_to_binary_tail_imp s =
+  (let 
+      ret = assignment_to_binary_tail_state_upd s
+    in 
+      ret
+  )"
+  by simp+
+termination
+  by (relation "measure assignment_to_binary_tail_n") simp
+
+declare assignment_to_binary_tail_imp.simps [simp del]
+
+lemma assignment_to_binary_tail_imp_correct[let_function_correctness]:
+  "assignment_to_binary_tail_ret (assignment_to_binary_tail_imp s) =
+    assignment_to_binary_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
+      (assignment_to_binary_tail_aexp s)"
+  unfolding assignment_to_binary_tail_def
+  by (simp add: assignment_to_binary_tail_imp.simps Let_def assignment_to_binary_tail_state_upd_def
+    hd_imp_correct EQUAL_neq_zero_imp_correct assignment_to_binary_tail_if_eq_zero_imp_correct
+    assignment_to_binary_tail_if_eq_one_imp_correct assignment_to_binary_tail_aux_imp_correct) 
+
+function assignment_to_binary_tail_imp_time ::
+  "nat \<Rightarrow> assignment_to_binary_tail_state \<Rightarrow> nat" where
+  "assignment_to_binary_tail_imp_time t s =
+  (let
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_if_eq_zero_imp_time 0 s
+  in
+      t
+  )
+  else
+  (let
+      t = t + 1;
+      hd_xs' = assignment_to_binary_tail_aexp s;
+      t = t + 2;
+      hd_ret' = 0;
+      t = t + 2;
+      hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
+      hd_ret_state = hd_imp hd_state;
+      t = t + hd_imp_time 0 hd_state;
+      EQUAL_neq_zero_a' = hd_ret hd_ret_state;
+      t = t + 2;
+      EQUAL_neq_zero_b' = 1;
+      t = t + 2;
+      EQUAL_neq_zero_ret' = 0;
+      t = t + 2;
+      EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
+                              EQUAL_neq_zero_b = EQUAL_neq_zero_b',
+                              EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
+      EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
+      t = t + EQUAL_neq_zero_imp_time 0 EQUAL_neq_zero_state;
+      EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
+      t = t + 2
+  in
+  (if EQUAL_neq_zero_result \<noteq> 0 then
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_if_eq_one_imp_time 0 s
+  in
+      t
+  )
+  else
+  (let
+      t = t + 1;
+      t = t + assignment_to_binary_tail_aux_imp_time 0 s
+  in
+      t
+  )
+))))"
+  by auto
+termination
+  by (relation "measure (assignment_to_binary_tail_n \<circ> snd)") simp
+
+declare assignment_to_binary_tail_imp_time.simps [simp del]
+
+lemma assignment_to_binary_tail_imp_time_acc:
+  "(assignment_to_binary_tail_imp_time (Suc t) s) = Suc (assignment_to_binary_tail_imp_time t s)"
+  by (induction t s rule: assignment_to_binary_tail_imp_time.induct)
+    ((subst (1 2) assignment_to_binary_tail_imp_time.simps);
+      (simp add: assignment_to_binary_tail_state_upd_def Let_def))            
+
+lemma assignment_to_binary_tail_imp_time_acc_2_aux:
+  "(assignment_to_binary_tail_imp_time t s) = t + (assignment_to_binary_tail_imp_time 0 s)"
+  by (induction t arbitrary: s) (simp add: assignment_to_binary_tail_imp_time_acc)+            
+
+lemma assignment_to_binary_tail_imp_time_acc_2:
+  "t \<noteq> 0 \<Longrightarrow> (assignment_to_binary_tail_imp_time t s) = t + (assignment_to_binary_tail_imp_time 0 s)"
+  by (rule assignment_to_binary_tail_imp_time_acc_2_aux)            
+
+lemma assignment_to_binary_tail_imp_time_acc_3:
+  "(assignment_to_binary_tail_imp_time (a + b) s) = a + (assignment_to_binary_tail_imp_time b s)"
+  by (induction a arbitrary: b s) (simp add: assignment_to_binary_tail_imp_time_acc)+  
+
+abbreviation "assignment_to_binary_tail_IMP_else \<equiv>
+  \<comment> \<open>  hd_xs' = assignment_to_binary_tail_aexp s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 1;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 1));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state\<close>
+  (assignment_to_binary_tail_EQUAL_neq_zero_result) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(if EQUAL_neq_zero_result \<noteq> 0 then\<close>
+  (IF assignment_to_binary_tail_EQUAL_neq_zero_result \<noteq>0 THEN
+  \<comment> \<open>  assignment_to_binary_tail_if_eq_one_imp s\<close>
+  assignment_to_binary_tail_if_eq_one_IMP_Minus
+  \<comment> \<open>else\<close>
+  ELSE
+  \<comment> \<open>  assignment_to_binary_tail_aux_imp s\<close>
+  assignment_to_binary_tail_aux_IMP_Minus)
+"
+
+definition "assignment_to_binary_tail_IMP_Minus \<equiv>
+  \<comment> \<open>  hd_xs' = assignment_to_binary_tail_aexp s;\<close>
+  (hd_prefix @ hd_xs_str) ::= (A (V assignment_to_binary_tail_aexp_str));;
+  \<comment> \<open>  hd_ret' = 0;\<close>
+  (hd_prefix @ hd_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;\<close>
+  \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
+  (invoke_subprogram hd_prefix hd_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_a' = hd_ret hd_ret_state;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= (A (V (hd_prefix @ hd_ret_str)));;
+  \<comment> \<open>  EQUAL_neq_zero_b' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_ret' = 0;\<close>
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) ::= (A (N 0));;
+  \<comment> \<open>  EQUAL_neq_zero_state = \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_b = EQUAL_neq_zero_b',\<close>
+  \<comment> \<open>                          EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;\<close>
+  \<comment> \<open>  EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;\<close>
+  (invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus);;
+  \<comment> \<open>  EQUAL_neq_zero_result = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state\<close>
+  (assignment_to_binary_tail_EQUAL_neq_zero_result) ::= (A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)));;
+  \<comment> \<open>(if EQUAL_neq_zero_result \<noteq> 0 then\<close>
+  (IF assignment_to_binary_tail_EQUAL_neq_zero_result \<noteq>0 THEN
+  \<comment> \<open>  assignment_to_binary_tail_if_eq_zero_imp s\<close>
+  assignment_to_binary_tail_if_eq_zero_IMP_Minus
+  \<comment> \<open>else\<close>
+  ELSE
+  assignment_to_binary_tail_IMP_else)
+"
+
+lemma assignment_to_binary_tail_IMP_Minus_correct_function:
+  "(invoke_subprogram p assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p assignment_to_binary_tail_ret_str)
+      = assignment_to_binary_tail_ret
+          (assignment_to_binary_tail_imp (assignment_to_binary_tail_imp_to_HOL_state p s))"
+  apply(subst assignment_to_binary_tail_imp.simps)
+  apply(simp only: assignment_to_binary_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_E)+
+  apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(9) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(11) by fastforce
+  apply(erule If_E)
+  subgoal
+    by(fastforce dest!: assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+  subgoal
+    apply(erule Seq_E)+
+    apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(22) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(24) by fastforce
+    apply(erule If_E)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_aux_IMP_Minus_correct_function
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+    done
+  done  
+
+lemma assignment_to_binary_tail_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ assignment_to_binary_tail_pref) assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix assignment_to_binary_tail_pref v)\<rbrakk>
+   \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast   
+
+lemma assignment_to_binary_tail_IMP_Minus_correct_time:
+  "(invoke_subprogram p assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = assignment_to_binary_tail_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state p s)"
+  apply(subst assignment_to_binary_tail_imp_time.simps)
+  apply(simp only: assignment_to_binary_tail_IMP_Minus_def prefix_simps)
+  apply(erule Seq_tE)+
+  apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(17) by fastforce
+  apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+  subgoal premises p using p(19) by fastforce
+  apply(erule If_tE)
+  subgoal
+    by(fastforce dest!: assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+  subgoal
+    apply(erule Seq_tE)+
+    apply(erule hd_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(39) by fastforce
+    apply(erule EQUAL_neq_zero_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
+    subgoal premises p using p(41) by fastforce
+    apply(erule If_tE)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+    subgoal
+      by(fastforce dest!: assignment_to_binary_tail_aux_IMP_Minus_correct_time
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+        EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
+    done
+  done 
+
+lemma assignment_to_binary_tail_IMP_Minus_correct:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
+    \<lbrakk>t = (assignment_to_binary_tail_imp_time 0 (assignment_to_binary_tail_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) assignment_to_binary_tail_ret_str) =
+          assignment_to_binary_tail_ret (assignment_to_binary_tail_imp
+                                        (assignment_to_binary_tail_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
+   \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
+  using assignment_to_binary_tail_IMP_Minus_correct_function
+    assignment_to_binary_tail_IMP_Minus_correct_time
+    assignment_to_binary_tail_IMP_Minus_correct_effects
+  by (meson set_mono_prefix) 
+
 end 
