@@ -2186,6 +2186,122 @@ lemma NOTEQUAL_neq_zero_IMP_Minus_correct[functional_correctness]:
   by (auto simp: NOTEQUAL_neq_zero_IMP_Minus_correct_time)
     (meson NOTEQUAL_neq_zero_IMP_Minus_correct_effects set_mono_prefix)
 
+record NOTEQUAL_neq_one_state =
+  NOTEQUAL_neq_one_a::nat
+  NOTEQUAL_neq_one_b::nat
+  NOTEQUAL_neq_one_ret::nat
+
+abbreviation "NOTEQUAL_neq_one_prefix \<equiv> ''NOTEQUAL_neq_one.''"
+abbreviation "NOTEQUAL_neq_one_a_str \<equiv> ''NOTEQUAL_a''"
+abbreviation "NOTEQUAL_neq_one_b_str \<equiv> ''NOTEQUAL_b''"
+abbreviation "NOTEQUAL_neq_one_ret_str \<equiv> ''NOTEQUAL_ret''"
+
+definition "NOTEQUAL_neq_one_state_upd s \<equiv>
+  let cond1 = NOTEQUAL_neq_one_a s - NOTEQUAL_neq_one_b s;
+      cond2 = NOTEQUAL_neq_one_b s - NOTEQUAL_neq_one_a s;
+      cond = cond1 + cond2;
+      NOTEQUAL_neq_one_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
+      ret = \<lparr>NOTEQUAL_neq_one_a = NOTEQUAL_neq_one_a s,
+             NOTEQUAL_neq_one_b = NOTEQUAL_neq_one_b s,
+             NOTEQUAL_neq_one_ret = NOTEQUAL_neq_one_ret'\<rparr>
+  in ret"
+
+fun NOTEQUAL_neq_one_imp:: "NOTEQUAL_neq_one_state \<Rightarrow> NOTEQUAL_neq_one_state" where
+  "NOTEQUAL_neq_one_imp s =
+    (let ret = NOTEQUAL_neq_one_state_upd s
+     in ret
+    )"
+
+declare NOTEQUAL_neq_one_imp.simps [simp del]
+
+lemma NOTEQUAL_neq_one_imp_correct[let_function_correctness]:
+  "NOTEQUAL_neq_one_ret (NOTEQUAL_neq_one_imp s) =
+    (if (NOTEQUAL_neq_one_a s) \<noteq> (NOTEQUAL_neq_one_b s) then 0 else 1)"
+  by (simp add: NOTEQUAL_neq_one_imp.simps NOTEQUAL_neq_one_state_upd_def)
+
+fun NOTEQUAL_neq_one_imp_time:: "nat \<Rightarrow> NOTEQUAL_neq_one_state \<Rightarrow> nat" where
+  "NOTEQUAL_neq_one_imp_time t s =
+    (let cond1 = NOTEQUAL_neq_one_a s - NOTEQUAL_neq_one_b s;
+         t = t + 2;
+         cond2 = NOTEQUAL_neq_one_b s - NOTEQUAL_neq_one_a s;
+         t = t + 2;
+         cond = cond1 + cond2;
+         t = t + 2;
+         NOTEQUAL_neq_one_ret' = (if cond \<noteq> 0 then (0::nat) else 1);
+         t = t + 1 + (if cond \<noteq> 0 then 2 else 2);
+         ret = t
+     in ret
+    )"
+
+lemmas [simp del] = NOTEQUAL_neq_one_imp_time.simps
+
+lemma NOTEQUAL_neq_one_imp_time_acc:
+  "(NOTEQUAL_neq_one_imp_time (Suc t) s) = Suc (NOTEQUAL_neq_one_imp_time t s)"
+  by (simp add: NOTEQUAL_neq_one_imp_time.simps)
+
+lemma NOTEQUAL_neq_one_imp_time_acc_2:
+  "(NOTEQUAL_neq_one_imp_time x s) = x + (NOTEQUAL_neq_one_imp_time 0 s)"
+  by (simp add: NOTEQUAL_neq_one_imp_time.simps)
+
+abbreviation "NOTEQUAL_neq_one_cond1 \<equiv> ''cond1''"
+abbreviation "NOTEQUAL_neq_one_cond2 \<equiv> ''cond2''"
+abbreviation "NOTEQUAL_neq_one_cond \<equiv> ''condition''"
+
+definition "NOTEQUAL_neq_one_IMP_Minus \<equiv>
+  \<comment> \<open>(let cond1 = NOTEQUAL_neq_one_a s - NOTEQUAL_neq_one_b s;\<close>
+  NOTEQUAL_neq_one_cond1 ::= (Sub (V NOTEQUAL_neq_one_a_str) (V NOTEQUAL_neq_one_b_str));;
+  \<comment> \<open>(    cond2 = NOTEQUAL_neq_one_b s - NOTEQUAL_neq_one_a s;\<close>
+  NOTEQUAL_neq_one_cond2 ::= (Sub (V NOTEQUAL_neq_one_b_str) (V NOTEQUAL_neq_one_a_str));;
+  \<comment> \<open>(    cond = cond1 + cond2;\<close>
+  NOTEQUAL_neq_one_cond ::= (Plus (V NOTEQUAL_neq_one_cond1) (V NOTEQUAL_neq_one_cond2));;
+  \<comment> \<open>(    NOTEQUAL_neq_one_ret' = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  \<comment> \<open>(    ret = (if cond \<noteq> 0 then (0::nat) else 1);\<close>
+  IF NOTEQUAL_neq_one_cond \<noteq>0
+  THEN NOTEQUAL_neq_one_ret_str ::= (A (N 0))
+  ELSE NOTEQUAL_neq_one_ret_str ::= (A (N 1))"
+
+abbreviation
+  "NOTEQUAL_neq_one_IMP_vars \<equiv>
+    {NOTEQUAL_neq_one_a_str, NOTEQUAL_neq_one_b_str, NOTEQUAL_neq_one_ret_str}"
+
+definition "NOTEQUAL_neq_one_imp_to_HOL_state p s =
+  \<lparr>NOTEQUAL_neq_one_a = (s (add_prefix p NOTEQUAL_neq_one_a_str)),
+   NOTEQUAL_neq_one_b = (s (add_prefix p NOTEQUAL_neq_one_b_str)),
+   NOTEQUAL_neq_one_ret = (s (add_prefix p NOTEQUAL_neq_one_ret_str))\<rparr>"
+
+lemma NOTEQUAL_neq_one_IMP_Minus_correct_function:
+  "(invoke_subprogram p NOTEQUAL_neq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     s' (add_prefix p NOTEQUAL_neq_one_ret_str)
+      = NOTEQUAL_neq_one_ret (NOTEQUAL_neq_one_imp (NOTEQUAL_neq_one_imp_to_HOL_state p s))"
+  by (force simp: NOTEQUAL_neq_one_imp.simps NOTEQUAL_neq_one_IMP_Minus_def
+      NOTEQUAL_neq_one_imp_to_HOL_state_def NOTEQUAL_neq_one_state_upd_def)
+
+lemma NOTEQUAL_neq_one_IMP_Minus_correct_effects:
+  "\<lbrakk>(invoke_subprogram (p @ NOTEQUAL_neq_one_pref) NOTEQUAL_neq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    v \<in> vars; \<not> (prefix NOTEQUAL_neq_one_pref v)\<rbrakk>
+  \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
+  using com_add_prefix_valid'' com_only_vars prefix_def
+  by blast
+
+lemma NOTEQUAL_neq_one_IMP_Minus_correct_time:
+  "(invoke_subprogram p NOTEQUAL_neq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
+     t = NOTEQUAL_neq_one_imp_time 0 (NOTEQUAL_neq_one_imp_to_HOL_state p s)"
+  by(force simp: NOTEQUAL_neq_one_imp_time.simps NOTEQUAL_neq_one_IMP_Minus_def
+      NOTEQUAL_neq_one_imp_to_HOL_state_def NOTEQUAL_neq_one_state_upd_def)
+
+lemma NOTEQUAL_neq_one_IMP_Minus_correct[functional_correctness]:
+  "\<lbrakk>(invoke_subprogram (p1 @ p2) NOTEQUAL_neq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
+    \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
+    \<lbrakk>t = (NOTEQUAL_neq_one_imp_time 0 (NOTEQUAL_neq_one_imp_to_HOL_state (p1 @ p2) s));
+     s' (add_prefix (p1 @ p2) NOTEQUAL_neq_one_ret_str) =
+        NOTEQUAL_neq_one_ret (NOTEQUAL_neq_one_imp
+                                  (NOTEQUAL_neq_one_imp_to_HOL_state (p1 @ p2) s));
+     \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk> \<Longrightarrow> P\<rbrakk>
+  \<Longrightarrow> P"
+  using NOTEQUAL_neq_one_IMP_Minus_correct_function
+  by (auto simp: NOTEQUAL_neq_one_IMP_Minus_correct_time)
+    (meson NOTEQUAL_neq_one_IMP_Minus_correct_effects set_mono_prefix)
+
 subsubsection \<open>Less-Than\<close>
 
 record LESS_neq_zero_state =
