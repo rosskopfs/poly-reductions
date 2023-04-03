@@ -1,6 +1,6 @@
 chapter Poly_Reductions
 
-session Cook_Levin = "HOL-Analysis" + 
+session Cook_Levin_IMP = "HOL-Analysis" + 
   sessions
     "Poly_Reductions_Lib"
     "IMP_Minus"
