@@ -12,7 +12,6 @@ begin
 
 unbundle IMP_Minus_Minus_Com.no_com_syntax
 
-
 subsection \<open>Useful Definitions and Lemmas\<close>
 
 subsection "add_result_to_stack"
@@ -307,7 +306,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(51) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(53) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 lemma add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time :
@@ -334,8 +333,9 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(87) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(89) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
+
 
 paragraph "con_eq_four"
 
@@ -638,7 +638,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(63) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(65) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 lemma add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time :
@@ -669,7 +669,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(107) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(109) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 paragraph "con_eq_six"
@@ -973,7 +973,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(63) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(65) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 lemma add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_time :
@@ -1004,7 +1004,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(107) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(109) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done
 
 paragraph "con_eq_nine"
@@ -1261,7 +1261,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(51) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(53) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 lemma add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time :
@@ -1288,7 +1288,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(87) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(89) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 paragraph "con_eq_seven"
@@ -1639,7 +1639,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(75) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(77) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done 
 
 lemma add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_time :
@@ -1674,7 +1674,7 @@ apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars]
 subgoal premises p using p(127) by fastforce 
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(129) by fastforce 
-apply (force simp : add_result_to_stack_aux_state_translators Let_def)
+apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done
 
 paragraph separations_of_nested_ifs
@@ -1776,10 +1776,10 @@ lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function:
   subgoal premises p using p(6) by fastforce
   apply (erule If_E)
     subgoal
-      apply (force simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+      apply (fastforce simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function 
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -1794,10 +1794,10 @@ lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(11) by fastforce
   apply (erule If_tE)
     subgoal
-      apply (force simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
+      apply (fastforce simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -1886,11 +1886,11 @@ lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function:
   subgoal premises p using p(6) by fastforce
   apply (erule If_E)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function 
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2001,11 +2001,11 @@ lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function:
   subgoal premises p using p(6) by fastforce
   apply (erule If_E)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function 
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2020,7 +2020,7 @@ lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(11) by fastforce
   apply (erule If_tE)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
@@ -2119,11 +2119,11 @@ lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function:
   subgoal premises p using p(6) by fastforce
   apply (erule If_E)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function 
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2138,11 +2138,11 @@ lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time:
   subgoal premises p using p(11) by fastforce
   apply (erule If_tE)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2240,11 +2240,11 @@ lemma add_result_to_stack_aux_IMP_Minus_correct_function:
   subgoal premises p using p(6) by fastforce
   apply (erule If_E)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function 
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2259,11 +2259,11 @@ lemma add_result_to_stack_aux_IMP_Minus_correct_time:
   subgoal premises p using p(11) by fastforce
   apply (erule If_tE)
     subgoal
-      apply (force dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time
+      apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
     done 
     subgoal
-     apply (force dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2414,7 +2414,7 @@ lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function:
    subgoal premises p using p(15) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
    subgoal premises p using p(17) by fastforce
-   apply (force simp: add_result_to_stack_nat_s_eq_zero_state_translators)
+   apply (fastforce simp: add_result_to_stack_nat_s_eq_zero_state_translators)
    done 
 
 lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time :
@@ -2429,7 +2429,7 @@ lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time :
    subgoal premises p using p(27) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
    subgoal premises p using p(29) by fastforce
-   apply (force simp: add_result_to_stack_nat_s_eq_zero_state_translators Let_def)
+   apply (fastforce simp: add_result_to_stack_nat_s_eq_zero_state_translators Let_def)
    done 
 
 paragraph "add_result_to_stack_nat_else_aux"
@@ -2572,7 +2572,7 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_h:
     apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (fastforce simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
     done 
 
@@ -2592,7 +2592,7 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_con:
     apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (fastforce simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
     done 
 
@@ -2612,7 +2612,7 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_t:
     apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (fastforce simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
     done 
 
@@ -5763,6 +5763,12 @@ lemma var_bit_list_tail_IMP_Minus_correct:
   using var_bit_list_tail_IMP_Minus_correct_function
     var_bit_list_tail_IMP_Minus_correct_time
     var_bit_list_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)   
+  by (meson set_mono_prefix) 
+
+
+subsection IMP_Minus_to_IMP_Minus_Minus_stack
+
+ 
+
 
 end
