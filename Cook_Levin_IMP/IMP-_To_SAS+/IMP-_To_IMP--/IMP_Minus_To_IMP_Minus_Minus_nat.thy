@@ -1,5 +1,5 @@
 theory IMP_Minus_To_IMP_Minus_Minus_nat 
-  imports  IMP_Minus_To_IMP_Minus_Minus  IMP_Minus_Max_Constant_Nat Binary_Operations_Nat
+  imports  IMP_Minus_To_IMP_Minus_Minus  IMP_Minus_Max_Constant_Nat Binary_Operations_Nat 
 begin
 
 
@@ -501,6 +501,9 @@ next
 simp add:IMPm_IMPmm_list_encode_def)
 qed
 
+lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_simp =
+IMP_Minus_to_IMP_Minus_Minus_stack_nat.psimps[OF IMP_Minus_To_IMP_Minus_Minus_term]
+
 lemma IMPm_IMPmm_list_encode_0: "(IMPm_IMPmm_list_encode xs = 0) = (xs = [])"
   by (auto simp add: IMPm_IMPmm_list_encode_def list_encode_0)
 lemma subtailnat_IMP_Minus_to_IMP_Minus_Minus_stack:
@@ -658,9 +661,83 @@ lemma subtail_IMP_Minus_To_IMP_Minus_Minus:
 "IMP_Minus_To_IMP_Minus_Minus_tail c n = IMP_Minus_To_IMP_Minus_Minus_nat c n "
   by (simp add: IMP_Minus_To_IMP_Minus_Minus_tail_def)
 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur s = (
+    if s = 0 then 0##0
+    else nth_nat 1 (hd_nat s)
+)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux0 c h t = (
+if c = 10 then (add_result_to_stack_nat (4 ## (var_bit_list_nat (nth_nat 3 h)
+  (nth_nat 1 h))
+ ## (nth_nat 4 h) ## 0) t)
+else 0
+)"
 
 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux1 c h t = (
+if c = 8 then (add_result_to_stack_nat (3 ## (var_bit_list_nat (nth_nat 4 h)
+  (nth_nat (Suc 0) h))
+ ## (nth_nat 5 h) ## (nth_nat 6 h) ## 0  ) t)
+else 
+ IMP_Minus_to_IMP_Minus_Minus_stack_aux0 c h t
+ )"
 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux2 c h t = (
+if c = 5 then (add_result_to_stack_nat (2 ## (nth_nat 4 h) ## (nth_nat 5 h) 
+## 0  ) t)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux1 c h t)"
 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux3 c h t = (
+if c = 2 then (add_result_to_stack_nat (assignment_to_binary_nat 
+   (nth_nat 3 h) (nth_nat 1 h) (nth_nat 2 h)) t)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux2 c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux4 c h t = (
+if c = 1 then (add_result_to_stack_nat (0##0) t)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux3 c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux5 s c h t = (
+if c = 9 then (push_on_stack_nat (nth_nat 2 h) (nth_nat 3 h) s)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux4 c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux6 s c h t = (
+if c = 7 then (push_on_stack_nat (nth_nat 3 h) (nth_nat 4 h) s)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux5 s c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux7 s c h t = (
+if c = 6 then (push_on_stack_nat (nth_nat 2 h) (nth_nat 4 h) s)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux6 s c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux8 s c h t = (
+if c = 4 then (push_on_stack_nat (nth_nat 2 h) (nth_nat 3 h) s)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux7 s c h t)"
+
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux9 s c h t = (
+if c = 3 then (push_on_stack_nat (nth_nat 1 h) (nth_nat 3 h) s)
+else IMP_Minus_to_IMP_Minus_Minus_stack_aux8 s c h t)"
+
+lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux_correct:
+assumes "s = IMPm_IMPmm_list_encode c"
+shows  "IMP_Minus_to_IMP_Minus_Minus_stack_nat s = (
+    if s = 0 \<or> 10 < (hd_nat (hd_nat s)) \<or> (hd_nat (hd_nat s)) = 0 
+    then (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur s)
+    else let h = hd_nat s ; c = hd_nat h ; t = tl_nat s in
+    IMP_Minus_to_IMP_Minus_Minus_stack_nat (IMP_Minus_to_IMP_Minus_Minus_stack_aux9 s c h t)
+  )"
+  apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux9_def 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux8_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux7_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux6_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux5_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux4_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux3_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux2_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux1_def
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux0_def Let_def)+
+  apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_nat_simp[of c] assms)+
+  apply (simp only: Let_def)
+  apply (auto simp add: numeral_eq_Suc)
+  by presburger
 
 end
