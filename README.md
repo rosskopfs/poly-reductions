@@ -18,7 +18,7 @@ For browsing the theories we recommend `isabelle jedit -l HOL-Analysis Poly_Redu
 The first startup will pre-build `HOL-Analysis`---which will take a while. All following invokations of Isabelle/JEdit will be quick.
 
 If you want to look only at Karp's Reductions: `isabelle jedit -l HOL-Analysis Karp21/All_Reductions_Poly.thy &`. 
-If you want to look only at Cook Levin's Theorem: `isabelle jedit -l HOL-Analysis Cook_Levin/Complexity_classes/Cook_Levin.thy &`. 
+If you want to look only at Cook Levin's Theorem: `isabelle jedit -l HOL-Analysis Cook_Levin_IMP/Complexity_classes/Cook_Levin.thy &`. 
 
 ## Overview
 The following reductions are currently formalized:
