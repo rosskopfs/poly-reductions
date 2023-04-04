@@ -1,6 +1,6 @@
 theory IMP_Minus_To_SAT
   imports "IMP_Minus_To_SAS_Plus" "Verified_SAT_Based_AI_Planning.SAT_Solve_SAS_Plus"
-    "../Complexity_classes/Cook_Levin" "IMP_Minus.Max_Constant"
+    "Cook_Levin" "IMP_Minus.Max_Constant"
 begin
 
 section \<open>Translation from IMP- to SAT\<close>

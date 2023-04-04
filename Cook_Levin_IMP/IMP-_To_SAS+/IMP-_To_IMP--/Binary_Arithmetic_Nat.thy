@@ -203,7 +203,20 @@ lemma subtail_bit_list_to_nat:
   by (auto simp add: bit_list_to_nat_tail_def)
 
 
+fun bit_length_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "bit_length_acc acc n = (if n < 2 then acc else bit_length_acc (acc + 1) (n div 2))"
 
+lemma bit_length_induct: "bit_length_acc acc n = Discrete.log n + acc"
+  apply(induct n arbitrary: acc rule: less_induct)
+  apply(subst Discrete.log.simps)
+  apply(simp only: HOL.if_distrib)
+  by simp
 
+definition bit_length_tail :: "nat \<Rightarrow> nat" where
+  "bit_length_tail n = bit_length_acc 1 n"
+
+lemma subtail_bit_length: "bit_length_tail n = bit_length n"
+  unfolding bit_length_def bit_length_tail_def
+  using bit_length_induct[of 1 n] by simp
   
 end
