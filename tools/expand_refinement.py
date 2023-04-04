@@ -52,7 +52,7 @@ class LetFun:
 
     def __build_let_fun_correct_lemma(self):
         return dedent('''\
-            lemma {lemma_name}:
+            lemma {lemma_name}[let_function_correctness]:
               "{state_ret_fun} ({let_fun_name} s) =
                 {ref_name} <?arguments>"
               apply (induction s rule: {let_fun_name}.induct)
