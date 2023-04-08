@@ -1,10 +1,10 @@
 theory Compile_Nat
-  imports Primitives_IMP_Minus
+  imports Main
 begin
 
 ML \<open>
-  datatype tc_ast = If of (int * tc_ast * tc_ast * tc_ast) |
-                    App of (int * term * tc_ast list)
+  datatype tc_ast = If of (int * (tc_ast * tc_ast * tc_ast)) |
+                    App of (int * (term * tc_ast list))
 
   datatype imp =
     Skip
@@ -18,17 +18,17 @@ ML \<open>
       fun fold_step a (index, args_ast) =
             let val (index', a_ast) = index_tc_ast index a
             in (index', a_ast :: args_ast) end
-      and index_tc_ast index (App (_, f, args)) =
+      and index_tc_ast index (App (_, (f, args))) =
         let
           val (index', rev_args') = fold fold_step args (index, [])
         in
-          (index' + 1, App (index', f, rev rev_args'))
+          (index' + 1, App (index', (f, rev rev_args')))
         end
-        | index_tc_ast index (If (_, c, e1, e2)) =
+        | index_tc_ast index (If (_, (c, e1, e2))) =
         let
           val (index', [e2', e1', c']) = fold fold_step [c, e1, e2] (index, [])
         in
-          (index' + 1, If (index', c', e1', e2'))
+          (index' + 1, If (index', (c', e1', e2')))
         end
         
 
@@ -36,33 +36,32 @@ ML \<open>
         case Term.strip_comb t of
           (\<^Const>\<open>HOL.If \<^typ>\<open>nat\<close>\<close>
           , [\<^Const>\<open>HOL.Not for \<open>\<^Const>\<open>HOL.eq \<^typ>\<open>nat\<close> for c \<open>\<^Const>\<open>Groups.zero \<^typ>\<open>nat\<close>\<close>\<close>\<close>\<close>\<close>, e1, e2]) =>
-            let
-              val [c_ast, e1_ast, e2_ast] = map build_tc_ast [c, e1, e2]
-            in
-              If (~1, c_ast, e1_ast, e2_ast)
-            end
-        | (f, args) => App (~1, f, map build_tc_ast args)
+            If (~1, @{apply 3} build_tc_ast (c, e1, e2))
+        (* Only allow condition of the form _ != 0 *)
+        | (\<^Const>\<open>HOL.If \<^typ>\<open>nat\<close>\<close>, _) => @{undefined}
+        | (f, args) => App (~1, (f, map build_tc_ast args))
     in
       t |> build_tc_ast |> index_tc_ast 0 |> snd
     end
 
   fun reg_of_term idx (Const (s, _)) = (s, idx)
     | reg_of_term idx (Free (s, _)) = (s, idx)
+    | reg_of_term idx (Var ((s, _), _)) = (s, idx)
 
-  fun imp_of_tc_ast (App (index, t, args)) =
+  fun imp_of_tc_ast (App (index, (t, args))) =
     let
       val args_instrs = map imp_of_tc_ast args
       val arg_regs = map fst args_instrs;
-      val ret_reg = reg_of_term index t
+      val ret_reg = (Term.term_name t, index)
       val assign_ret = Assign (ret_reg, (t, arg_regs))
       val seq_args_instrs = List.foldr (op Seq) Skip (map snd args_instrs)
     in
       (ret_reg, Seq (seq_args_instrs, assign_ret))
     end
-   | imp_of_tc_ast (If (idx, astc, ast1, ast2)) =
+   | imp_of_tc_ast (If (idx, (astc, ast1, ast2))) =
     let
       val ret_reg = ("IfNeqZero", idx)
-      val [impc, imp1, imp2] = map imp_of_tc_ast [astc, ast1, ast2]
+      val (impc, imp1, imp2) = @{apply 3} imp_of_tc_ast (astc, ast1, ast2)
     in
       (ret_reg, Seq (snd impc,
         IfNeqZero (ret_reg,
@@ -75,11 +74,10 @@ ML \<open>
 
   fun let_of_imp (ret_reg, imp) =
     let
-      fun reg_of_indexname (n, i) =
-        String.map (fn c => if c = #"." then #"_" else c) n
-        ^ "_" ^ Int.toString i
       val natT = \<^typ>\<open>nat\<close>
-      fun reg_var_of_indexname n = Free (reg_of_indexname n, natT)
+
+      (* FIXME: this variable name might not be fresh *)
+      fun reg_var_of_indexname (n, i) = Free (n ^ "_" ^ Int.toString i, natT)
       
       fun go target Skip = target
         | go target (Seq (imp1, imp2)) = go (go target imp2) imp1
@@ -96,7 +94,7 @@ ML \<open>
         in
           \<^Const>\<open>Let natT natT for \<open>list_comb (f, args_var)\<close> \<open>lambda reg_var target\<close>\<close>
         end
-        (* Ignoring target should work since we can't sequence if in HOL *)
+        (* Ignoring target should work since we can't sequence If in HOL *)
         | go target (IfNeqZero (ret_reg, (cond_reg, e1, e2))) =
         let
           val (ret_reg_var, cond_reg_var) =
@@ -117,25 +115,27 @@ ML \<open>
       val (args, def_body) =
         Local_Defs.abs_def_rule lthy def
         |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
+      val args_vars = map (Var o @{apply 2 (1)} (fn s => (s, 0))) args
       val let_def =
            def_body
-        |> curry Term.subst_bounds (map Free args |> rev)
+        |> curry Term.subst_bounds (args_vars |> rev)
         |> tc_ast_of_term
         |> imp_of_tc_ast
         |> let_of_imp
-        |> fold_rev Term.absfree args (* Could go wrong if there are fixed variables in the context *)
+        |> fold_rev lambda args_vars
     in
       Local_Theory.define ((binding, NoSyn), ((Thm.def_binding binding, []), let_def)) lthy
       |> snd
     end
 \<close>
-definition "test (x :: nat) (y :: nat) \<equiv> if x + y \<noteq> 0 then if y \<noteq> 0 then y else x else 0"
+
+definition "test (x :: nat) \<equiv> \<lambda>y. if x + y \<noteq> 0 then if y \<noteq> 0 then y else x else 0"
 
 local_setup \<open>
   define_let_of_def @{thm test_def} \<^binding>\<open>test_let\<close>
 \<close>
 print_theorems
-
+       
 lemma "test x y = test_let x y"
   unfolding test_def test_let_def by (simp add: Let_def)
 
