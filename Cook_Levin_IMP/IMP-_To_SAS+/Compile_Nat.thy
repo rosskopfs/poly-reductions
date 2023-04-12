@@ -110,19 +110,43 @@ ML \<open>
       go (reg_var_of_indexname ret_reg) imp
     end
 
+  fun match_first a [] = raise Match
+    | match_first a (f :: fs) = case try f a of SOME b => b | NONE => match_first a fs
+
   fun while_of_imp (f_name, f_typ) (ret_reg, imp) =
     let
       fun string_of_indexname (n, i) = HOLogic.mk_string (n ^ "_" ^ Int.toString i)
-      fun mk_var_atom n = \<^Const>\<open>A for \<^Const>\<open>V for \<open>string_of_indexname n\<close>\<close>\<close>
+      fun mk_num n = \<^Const>\<open>N for n\<close>
+      fun mk_var n = \<^Const>\<open>V for n\<close>
+      val mk_local_var = mk_var o string_of_indexname
+      fun mk_atom a = \<^Const>\<open>A for a\<close>
+
       fun while_of_call f args = @{undefined}
       fun while_of_tailcall args = @{undefined}
       fun go Skip = \<^Const>\<open>SKIP\<close>
         | go (Seq (imp1, imp2)) = \<^Const>\<open>Seq for \<open>go imp1\<close> \<open>go imp2\<close>\<close>
         | go (Copy (reg1, reg2)) =
-            \<^Const>\<open>Assign for \<open>string_of_indexname reg1\<close> \<open>mk_var_atom reg2\<close>\<close>
+            \<^Const>\<open>Assign for \<open>string_of_indexname reg1\<close> \<open>mk_atom (mk_local_var reg2)\<close>\<close>
         | go (IfNeqZero (_, (reg, imp1, imp2))) =
             \<^Const>\<open>If for \<open>string_of_indexname reg\<close> \<open>go imp1\<close> \<open>go imp2\<close>\<close>
-        | go (Assign (reg, (g, args))) = @{undefined}
+        | go (Assign (reg, (g, args))) =
+            let
+              val nocall_cases =
+                [ mk_atom o mk_num o HOLogic.mk_number \<^typ>\<open>nat\<close> o snd o HOLogic.dest_number
+                , (fn \<^Const>\<open>Groups.plus \<^typ>\<open>nat\<close>\<close> =>
+                    case args of [arg1, arg2] => \<^Const>\<open>Plus for \<open>mk_local_var arg1\<close> \<open>mk_local_var arg2\<close>\<close>)
+                , (fn \<^Const>\<open>Groups.minus \<^typ>\<open>nat\<close>\<close> =>
+                    case args of [arg1, arg2] => \<^Const>\<open>Sub for \<open>mk_local_var arg1\<close> \<open>mk_local_var arg2\<close>\<close>)
+                , (fn (Var ((n, _), _)) => Long_Name.base_name f_name ^ "_" ^ n
+                                           |> HOLogic.mk_string |> mk_var |> mk_atom)
+                ]
+              fun mk_assign lhs = \<^Const>\<open>Assign for \<open>string_of_indexname reg\<close> lhs\<close>
+
+              val call_cases = []
+            in
+              match_first g
+                (map (curry (op o) mk_assign) nocall_cases @ call_cases)
+            end
     in
       go imp
     end
@@ -137,6 +161,7 @@ ML \<open>
            def_body
         |> curry Term.subst_bounds (args_vars |> rev)
         |> tc_ast_of_term
+        |> @{print}
         |> imp_of_tc_ast
         |> let_of_imp
         |> fold_rev lambda args_vars
@@ -147,6 +172,27 @@ ML \<open>
 \<close>
 
 definition "test (x :: nat) \<equiv> \<lambda>y. if x + y \<noteq> 0 then if y \<noteq> 0 then y else x else 0"
+
+ML \<open>
+    let
+      val (args, def_body) =
+        Local_Defs.abs_def_rule @{context} @{thm test_def}
+        |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
+      val args_vars = map (Var o @{apply 2 (1)} (fn s => (s, 0))) args
+    in
+           def_body
+        |> curry Term.subst_bounds (args_vars |> rev)
+        |> tc_ast_of_term
+        |> @{print}
+        |> imp_of_tc_ast
+        |> @{print}
+        |> while_of_imp (\<^Const>\<open>test\<close> |> Term.dest_Const)
+        |> @{print}
+        |> Thm.cterm_of @{context}
+    end
+\<close>
+
+ML \<open>\<^Const>\<open>Groups.one \<^typ>\<open>nat\<close>\<close> |> HOLogic.dest_number\<close>
 
 local_setup \<open>
   define_let_of_def @{thm test_def} \<^binding>\<open>test_let\<close>
