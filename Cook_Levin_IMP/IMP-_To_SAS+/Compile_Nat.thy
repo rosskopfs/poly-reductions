@@ -1,5 +1,5 @@
 theory Compile_Nat
-  imports Main
+  imports IMP_Minus.Call_By_Prefixes
 begin
 
 ML \<open>
@@ -108,6 +108,23 @@ ML \<open>
         
     in
       go (reg_var_of_indexname ret_reg) imp
+    end
+
+  fun while_of_imp (f_name, f_typ) (ret_reg, imp) =
+    let
+      fun string_of_indexname (n, i) = HOLogic.mk_string (n ^ "_" ^ Int.toString i)
+      fun mk_var_atom n = \<^Const>\<open>A for \<^Const>\<open>V for \<open>string_of_indexname n\<close>\<close>\<close>
+      fun while_of_call f args = @{undefined}
+      fun while_of_tailcall args = @{undefined}
+      fun go Skip = \<^Const>\<open>SKIP\<close>
+        | go (Seq (imp1, imp2)) = \<^Const>\<open>Seq for \<open>go imp1\<close> \<open>go imp2\<close>\<close>
+        | go (Copy (reg1, reg2)) =
+            \<^Const>\<open>Assign for \<open>string_of_indexname reg1\<close> \<open>mk_var_atom reg2\<close>\<close>
+        | go (IfNeqZero (_, (reg, imp1, imp2))) =
+            \<^Const>\<open>If for \<open>string_of_indexname reg\<close> \<open>go imp1\<close> \<open>go imp2\<close>\<close>
+        | go (Assign (reg, (g, args))) = @{undefined}
+    in
+      go imp
     end
 
   fun define_let_of_def def binding lthy =
