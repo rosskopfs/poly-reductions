@@ -113,16 +113,20 @@ ML \<open>
   fun match_first a [] = raise Match
     | match_first a (f :: fs) = case try f a of SOME b => b | NONE => match_first a fs
 
-  fun while_of_imp (f_name, f_typ) (ret_reg, imp) =
+  fun while_of_imp (f_name, f_typ) f_args (ret_reg, imp) =
     let
       fun string_of_indexname (n, i) = HOLogic.mk_string (n ^ "_" ^ Int.toString i)
-      fun mk_num n = \<^Const>\<open>N for n\<close>
+      fun mk_num n = \<^Const>\<open>N for \<open>HOLogic.mk_number \<^typ>\<open>nat\<close> n\<close>\<close>
       fun mk_var n = \<^Const>\<open>V for n\<close>
       val mk_local_var = mk_var o string_of_indexname
       fun mk_atom a = \<^Const>\<open>A for a\<close>
+      
+      val cont_reg = HOLogic.mk_string "continue"
+      fun mk_continue n = \<^Const>\<open>Assign for cont_reg \<open>mk_atom (mk_num n)\<close>\<close>
 
       fun while_of_call f args = @{undefined}
       fun while_of_tailcall args = @{undefined}
+
       fun go Skip = \<^Const>\<open>SKIP\<close>
         | go (Seq (imp1, imp2)) = \<^Const>\<open>Seq for \<open>go imp1\<close> \<open>go imp2\<close>\<close>
         | go (Copy (reg1, reg2)) =
@@ -132,7 +136,7 @@ ML \<open>
         | go (Assign (reg, (g, args))) =
             let
               val nocall_cases =
-                [ mk_atom o mk_num o HOLogic.mk_number \<^typ>\<open>nat\<close> o snd o HOLogic.dest_number
+                [ mk_atom o mk_num o snd o HOLogic.dest_number
                 , (fn \<^Const>\<open>Groups.plus \<^typ>\<open>nat\<close>\<close> =>
                     case args of [arg1, arg2] => \<^Const>\<open>Plus for \<open>mk_local_var arg1\<close> \<open>mk_local_var arg2\<close>\<close>)
                 , (fn \<^Const>\<open>Groups.minus \<^typ>\<open>nat\<close>\<close> =>
@@ -140,15 +144,27 @@ ML \<open>
                 , (fn (Var ((n, _), _)) => Long_Name.base_name f_name ^ "_" ^ n
                                            |> HOLogic.mk_string |> mk_var |> mk_atom)
                 ]
-              fun mk_assign lhs = \<^Const>\<open>Assign for \<open>string_of_indexname reg\<close> lhs\<close>
+              fun mk_assign rhs = \<^Const>\<open>Assign for \<open>string_of_indexname reg\<close> rhs\<close>
 
-              val call_cases = []
+              fun mk_tailcall () =
+                let
+                  fun mk_assign_arg (f_arg, arg) =
+                    \<^Const>\<open>Assign for \<open>HOLogic.mk_string f_arg\<close> \<open>string_of_indexname arg\<close>\<close>
+                  val mk_assign_args = 
+                    map mk_assign_arg (f_args ~~ args)
+                    |> (fn ass => fold (fn e1 => fn e2 => \<^Const>\<open>Seq for e1 e2\<close>) ass \<^Const>\<open>SKIP\<close>)
+                in
+                  \<^Const>\<open>Seq for mk_assign_args \<open>mk_continue 1\<close>\<close>
+                end
+              val call_cases =  
+                [ (fn Const (f_name, f_typ) => mk_tailcall ())
+                ]
             in
               match_first g
                 (map (curry (op o) mk_assign) nocall_cases @ call_cases)
             end
     in
-      go imp
+      \<^Const>\<open>Seq for \<open>mk_continue 1\<close> \<^Const>\<open>While for cont_reg \<^Const>\<open>Seq for \<open>mk_continue 0\<close> \<open>go imp\<close>\<close>\<close>\<close>
     end
 
   fun define_let_of_def def binding lthy =
@@ -186,13 +202,10 @@ ML \<open>
         |> @{print}
         |> imp_of_tc_ast
         |> @{print}
-        |> while_of_imp (\<^Const>\<open>test\<close> |> Term.dest_Const)
-        |> @{print}
+        |> while_of_imp (\<^Const>\<open>test\<close> |> Term.dest_Const) (map fst args)
         |> Thm.cterm_of @{context}
     end
 \<close>
-
-ML \<open>\<^Const>\<open>Groups.one \<^typ>\<open>nat\<close>\<close> |> HOLogic.dest_number\<close>
 
 local_setup \<open>
   define_let_of_def @{thm test_def} \<^binding>\<open>test_let\<close>
