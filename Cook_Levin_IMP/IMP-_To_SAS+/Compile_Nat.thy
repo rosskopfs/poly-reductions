@@ -22,194 +22,121 @@ lemma big_step_t_Seq_assoc: "((c1 ;; c2) ;; c3, s) \<Rightarrow>\<^bsup>t\<^esup
   using compose_programs_1 by auto
 
 ML \<open>
-  datatype tc_ast = If of (int * (tc_ast * tc_ast * tc_ast)) |
-                    App of (int * (term * tc_ast list))
+  datatype tc_ast = If of int * (tc_ast * tc_ast * tc_ast) |
+                    Number of int |
+                    Arg of int |
+                    Call of int * ((string * typ) * tc_ast list) |
+                    TailCall of tc_ast list
 
-  datatype imp =
-    Skip
-  | Seq of (imp * imp)
-  | Assign of (indexname * (term * indexname list))
-  | Copy of (indexname * indexname)
-  | IfNeqZero of (indexname * (indexname * imp * imp))
-
-  fun tc_ast_of_term t =
+  fun tc_ast_of_term (f_name, f_typ) f_args t =
     let
       fun fold_step a (index, args_ast) =
-            let val (index', a_ast) = index_tc_ast index a
-            in (index', a_ast :: args_ast) end
-      and index_tc_ast index (App (_, (f, args))) =
-        let
-          val (index', rev_args') = fold fold_step args (index, [])
-        in
-          (index' + 1, App (index', (f, rev rev_args')))
-        end
-        | index_tc_ast index (If (_, (c, e1, e2))) =
-        let
-          val (index', [e2', e1', c']) = fold fold_step [c, e1, e2] (index, [])
-        in
-          (index' + 1, If (index', (c', e1', e2')))
-        end
-        
+          let val (index', a_ast) = index_tc_ast index a
+          in (index', a_ast :: args_ast) end
 
+      and index_tc_ast index (Call (_, (g, args))) =
+          let val (index', rev_args') = fold fold_step args (index, [])
+          in (index' + 1, Call (index', (g, rev rev_args'))) end
+        | index_tc_ast index (If (_, (c, e1, e2))) =
+          let val (index', [e2', e1', c']) = fold fold_step [c, e1, e2] (index, [])
+          in (index' + 1, If (index', (c', e1', e2'))) end
+        | index_tc_ast index (TailCall args) =
+          let val (index', rev_args') = fold fold_step args (index, [])
+          in (index', TailCall (rev rev_args')) end
+        | index_tc_ast index t = (index, t)
+        
       fun build_tc_ast t =
-        case Term.strip_comb t of
-          (\<^Const>\<open>HOL.If \<^typ>\<open>nat\<close>\<close>
-          , [\<^Const>\<open>HOL.Not for \<open>\<^Const>\<open>HOL.eq \<^typ>\<open>nat\<close> for c \<open>\<^Const>\<open>Groups.zero \<^typ>\<open>nat\<close>\<close>\<close>\<close>\<close>\<close>, e1, e2]) =>
-            If (~1, @{apply 3} build_tc_ast (c, e1, e2))
-        (* Only allow condition of the form _ != 0 *)
-        | (\<^Const_>\<open>If\<close>, _) => @{undefined}
-        | (f, args) => App (~1, (f, map build_tc_ast args))
+        if can HOLogic.dest_number t then Number (HOLogic.dest_number t |> snd)
+        else
+          case Term.head_of t of
+            \<^Const_>\<open>HOL.If _\<close> =>
+              (case Term.args_of t of
+                [\<^Const>\<open>HOL.Not for \<^Const>\<open>HOL.eq \<^typ>\<open>nat\<close> for c \<^Const>\<open>Groups.zero \<^typ>\<open>nat\<close>\<close>\<close>\<close>, e1, e2] =>
+                  If (~1, @{apply 3} build_tc_ast (c, e1, e2))
+              | c :: _ => raise TERM ("Only conditions of the form x != 0 are allowed, got:", [c]))
+          | Var ((n, _), t) => Arg (Library.find_index (fn v' => (n, t) = v') f_args)
+          | Const (g_name, g_typ) =>
+            if (g_name, g_typ) = (f_name, f_typ)
+              then TailCall (map build_tc_ast (Term.args_of t))
+              else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
+          | h => raise TERM ("Unexpected head of term:", [h]) 
     in
       t |> build_tc_ast |> index_tc_ast 0 |> snd
     end
 
-  fun imp_of_tc_ast (App (index, (t, args))) =
+  fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
     let
-      val args_instrs = map imp_of_tc_ast args
-      val arg_regs = map fst args_instrs;
-      val ret_reg = (Term.term_name t, index)
-      val assign_ret = Assign (ret_reg, (t, arg_regs))
-      val seq_args_instrs = List.foldr (op Seq) Skip (map snd args_instrs)
-    in
-      (ret_reg, Seq (seq_args_instrs, assign_ret))
-    end
-   | imp_of_tc_ast (If (idx, (astc, ast1, ast2))) =
-    let
-      val ret_reg = ("IfNeqZero", idx)
-      val (impc, imp1, imp2) = @{apply 3} imp_of_tc_ast (astc, ast1, ast2)
-    in
-      (ret_reg, Seq (snd impc,
-        IfNeqZero (ret_reg,
-          ( fst impc
-          , Seq (snd imp1, Copy (ret_reg, fst imp1))
-          , Seq (snd imp2, Copy (ret_reg, fst imp2))
-          ))
-      ))
-    end
+      fun f_arg_reg i = nth f_arg_names i |> HOLogic.mk_string
 
-  fun let_of_imp (ret_reg, imp) =
-    let
-      val natT = \<^typ>\<open>nat\<close>
+      fun mk_Seq es = fold_rev (fn e1 => fn e2 => \<^Const>\<open>Seq for e1 e2\<close>) es \<^Const>\<open>SKIP\<close>
 
-      (* FIXME: this variable name might not be fresh *)
-      fun reg_var_of_indexname (n, i) = Free (n ^ "_" ^ Int.toString i, natT)
-      
-      fun go target Skip = target
-        | go target (Seq (imp1, imp2)) = go (go target imp2) imp1
-        | go target (Copy (reg1, reg2)) =
-        let
-          val (reg1_var, reg2_var) = apply2 reg_var_of_indexname (reg1, reg2)
-        in
-          \<^Const>\<open>Let natT natT for reg2_var \<open>lambda reg1_var target\<close>\<close>
-        end
-        | go target (Assign (reg, (f, args))) =
-        let
-          val reg_var = reg_var_of_indexname reg
-          val args_var = map reg_var_of_indexname args
-        in
-          \<^Const>\<open>Let natT natT for \<open>list_comb (f, args_var)\<close> \<open>lambda reg_var target\<close>\<close>
-        end
-        (* Ignoring target should work since we can't sequence If in HOL *)
-        | go target (IfNeqZero (ret_reg, (cond_reg, e1, e2))) =
-        let
-          val (ret_reg_var, cond_reg_var) =
-            apply2 reg_var_of_indexname (ret_reg, cond_reg)
-          val (e1_let, e2_let) = apply2 (go ret_reg_var) (e1, e2)
-          val condt = \<^Const>\<open>HOL.Not for
-            \<^Const>\<open>HOL.eq natT for cond_reg_var \<^Const>\<open>Groups.zero natT\<close>\<close>\<close>
-        in
-          \<^Const>\<open>HOL.If natT for condt e1_let e2_let\<close>
-        end
-        
-    in
-      go (reg_var_of_indexname ret_reg) imp
-    end
-
-
-  fun define_let_of_def def binding lthy =
-    let
-      val (args, def_body) =
-        Local_Defs.abs_def_rule lthy def
-        |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
-      val args_vars = map (Var o @{apply 2 (1)} (fn s => (s, 0))) args
-      val let_def =
-           def_body
-        |> curry Term.subst_bounds (args_vars |> rev)
-        |> tc_ast_of_term
-        |> imp_of_tc_ast
-        |> let_of_imp
-        |> fold_rev lambda args_vars
-    in
-      Local_Theory.define ((binding, NoSyn), ((Thm.def_binding binding, []), let_def)) lthy
-      |> snd
-    end
-
-  fun match_first a [] = raise TERM ("No match", [a])
-    | match_first a (f :: fs) = case try f a of SOME b => b | NONE => match_first a fs
-
-  fun IMP_Minus_of_imp f (f_ret_name, f_arg_names) lookup_fn (ret_reg, imp) =
-    let
-      fun string_of_indexname (n, i) = HOLogic.mk_string (n ^ "_" ^ Int.toString i)
-      fun mk_local_V n = \<^Const>\<open>V for \<open>string_of_indexname n\<close>\<close>
-  
       fun mk_N n = \<^Const>\<open>N for \<open>HOLogic.mk_number \<^typ>\<open>nat\<close> n\<close>\<close>
   
       val cont_reg = HOLogic.mk_string "continue"
       fun mk_continue n = \<^Const>\<open>Assign for cont_reg \<^Const>\<open>A for \<open>mk_N n\<close>\<close>\<close>
       fun mk_While p =
-        \<^Const>\<open>Seq for \<open>mk_continue 1\<close>
-                      \<^Const>\<open>While for cont_reg \<^Const>\<open>Seq for \<open>mk_continue 0\<close> p\<close>\<close>\<close>
-  
-      fun mk_bop bop [arg1, arg2] = bop $ mk_local_V arg1 $ mk_local_V arg2
+        mk_Seq [ mk_continue 1
+               , \<^Const>\<open>While for cont_reg \<open>mk_Seq [mk_continue 0, p]\<close>\<close>
+               ]
 
-      fun mk_Seq es = fold_rev (fn e1 => fn e2 => \<^Const>\<open>Seq for e1 e2\<close>) es \<^Const>\<open>SKIP\<close>
-
-      fun mk_assign_arg (arg_name, arg) =
-        \<^Const>\<open>Assign for arg_name \<^Const>\<open>A for \<open>mk_local_V arg\<close>\<close>\<close>
-
-      fun mk_tailcall args =
-        map mk_assign_arg (map HOLogic.mk_string f_arg_names ~~ args) @ [mk_continue 1]
-        |> mk_Seq
-
-      fun mk_fun_arg prefix arg_name =
-        \<^Const>\<open>List.append \<^typ>\<open>char list\<close> for \<open>HOLogic.mk_string prefix\<close> \<open>HOLogic.mk_string arg_name\<close>\<close>
-
-      fun mk_call reg g args (prefix, (ret_name, args_names)) =
-        map mk_assign_arg (map (mk_fun_arg prefix) args_names ~~ args) @
-        [ \<^Const>\<open>com_add_prefix for \<open>HOLogic.mk_string prefix\<close> \<open>Const g\<close>\<close>
-        , \<^Const>\<open>Assign for reg \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string ret_name\<close>\<close>\<close>\<close>
-        ]
-        |> mk_Seq
-        
-
-      fun go Skip = \<^Const>\<open>SKIP\<close>
-        | go (Seq (imp1, imp2)) = \<^Const>\<open>Seq for \<open>go imp1\<close> \<open>go imp2\<close>\<close>
-        | go (Copy (reg1, reg2)) =
-            \<^Const>\<open>Assign for \<open>string_of_indexname reg1\<close> \<^Const>\<open>A for \<open>mk_local_V reg2\<close>\<close>\<close>
-        | go (IfNeqZero (_, (reg, imp1, imp2))) =
-            \<^Const>\<open>If for \<open>string_of_indexname reg\<close> \<open>go imp1\<close> \<open>go imp2\<close>\<close>
-        | go (Assign (reg, (g, args))) =
+      fun go cont (Number i) = cont \<^Const>\<open>A for \<open>mk_N i\<close>\<close>
+        | go cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_arg_reg i\<close>\<close>\<close>
+        | go cont (If (idx, (cond, e1, e2))) =
+          let
+            val cond_reg = "IfNeqZeroCond_" ^ Int.toString idx |> HOLogic.mk_string
+            val cond_IMP = go (fn rhs => \<^Const>\<open>Assign for cond_reg rhs\<close>) cond
+            val ret_reg = "IfNeqZero_" ^ Int.toString idx |> HOLogic.mk_string
+            val (e1_IMP, e2_IMP) = @{apply 2} (go (fn rhs => \<^Const>\<open>Assign for ret_reg rhs\<close>)) (e1, e2)
+            val if_IMP = \<^Const>\<open>If for cond_reg e1_IMP e2_IMP\<close>
+          in
+            mk_Seq [cond_IMP, if_IMP, cont \<^Const>\<open>A for \<^Const>\<open>V for ret_reg\<close>\<close>]
+          end
+        | go _ (TailCall es) =
+          let
+            val es_IMP =
+              map_index (fn (i, e) => go (fn rhs => \<^Const>\<open>Assign for \<open>f_arg_reg i\<close> rhs\<close>) e) es
+          in
+            mk_Seq (es_IMP @ [mk_continue 1])
+          end
+        | go cont (Call (idx, ((g_name, g_typ), es))) =
+          let
+            fun mk_bop_hs bop (hs_name, e) =
+              let
+                val reg =
+                  Term.term_name bop ^ hs_name ^ "_" ^ Int.toString idx
+                  |> HOLogic.mk_string
+              in
+                (reg, go (fn rhs => \<^Const>\<open>Assign for reg rhs\<close>) e)
+              end
+            fun mk_bop bop (e1, e2) =
+              let
+                val ((lhs_reg, lhs_IMP), (rhs_reg, rhs_IMP)) =
+                  @{apply 2} (mk_bop_hs bop) (("Lhs", e1), ("Rhs", e2))
+              in
+                mk_Seq [ lhs_IMP, rhs_IMP
+                       , cont (bop $ \<^Const>\<open>V for lhs_reg\<close> $ \<^Const>\<open>V for rhs_reg\<close>)
+                       ]
+              end
+        in
+          case (Const (g_name, g_typ), es) of
+            (\<^Const>\<open>Groups.plus \<^typ>\<open>nat\<close>\<close>, [e1, e2]) => mk_bop \<^Const>\<open>Plus\<close> (e1, e2)
+          | (\<^Const>\<open>Groups.minus \<^typ>\<open>nat\<close>\<close>, [e1, e2]) => mk_bop \<^Const>\<open>Sub\<close> (e1, e2)
+          | _ =>
             let
-              val base_cases_rhs =
-                [ (fn n => \<^Const>\<open>A for \<open>n |> HOLogic.dest_number |> snd |> mk_N\<close>\<close>)
-                , (fn \<^Const>\<open>Groups.plus \<^typ>\<open>nat\<close>\<close> => mk_bop \<^Const>\<open>Plus\<close> args)
-                , (fn \<^Const>\<open>Groups.minus \<^typ>\<open>nat\<close>\<close> => mk_bop \<^Const>\<open>Sub\<close> args)
-                , (fn (Var ((n, _), _)) =>
-                    \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string n\<close>\<close>\<close>)
-                ]
-              fun mk_assign rhs = \<^Const>\<open>Assign for \<open>string_of_indexname reg\<close> rhs\<close>
-              val base_cases = map (curry (op o) mk_assign) base_cases_rhs
-
-              val call_cases =  
-                [ (fn Const f' => if f' = f then mk_tailcall args else raise Match)
-                , (fn Const f' => mk_call (string_of_indexname reg) f' args (lookup_fn f'))
-                ]
+              val (g_prefix, (g_ret_name, g_arg_names)) = lookup_fn (g_name, g_typ)
+              fun g_arg_reg i = nth g_arg_names i |> HOLogic.mk_string
+              val g_args_IMP =
+                map_index (fn (i, e) => go (fn rhs => \<^Const>\<open>Assign for \<open>g_arg_reg i\<close> rhs\<close>) e) es
             in
-              match_first g (base_cases @ call_cases)
+              g_args_IMP @
+              [ \<^Const>\<open>com_add_prefix for \<open>HOLogic.mk_string g_prefix\<close> \<open>Const (g_name, g_typ)\<close>\<close>
+              , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret_name\<close>\<close>\<close>
+              ] |> mk_Seq
             end
+        end
     in
-      \<^Const>\<open>Seq for \<open>go imp |> mk_While\<close>
-                    \<^Const>\<open>Assign for \<open>HOLogic.mk_string f_ret_name\<close> \<^Const>\<open>A for \<open>mk_local_V ret_reg\<close>\<close>\<close>\<close>
+      go (fn rhs => \<^Const>\<open>Assign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
+      |> mk_While
     end
 
   fun rm_SKIP \<^Const>\<open>Seq for \<^Const>\<open>SKIP\<close> e2\<close> = rm_SKIP e2
@@ -229,8 +156,6 @@ ML \<open>
   
 \<close>
 
-ML \<open>Library.foldr\<close>
-
 definition "test (x :: nat) \<equiv> \<lambda>y. if x + y \<noteq> 0 then if y \<noteq> 0 then y else x else 0"
 
 fun test1 :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -239,7 +164,7 @@ fun test1 :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 declare [[ML_print_depth=500]]
 ML \<open>
     let
-      val f_def = @{thm eq_reflection[OF test1.simps(1)]}
+      val f_def = @{thm test_def}
       val (args, def_body) =
         Local_Defs.abs_def_rule @{context} f_def
         |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
@@ -252,22 +177,13 @@ ML \<open>
     in
            def_body
         |> curry Term.subst_bounds (f_arg_vars |> rev)
-        |> tc_ast_of_term
-        |> imp_of_tc_ast
+        |> tc_ast_of_term (f_name, f_typ) f_args
         |> @{print}
-        |> IMP_Minus_of_imp (f_name, f_typ) (f_ret_name, map fst f_args) (fn _ => @{undefined})
+        |> IMP_Minus_of_tc_ast (f_ret_name, map fst f_args) (fn (f, ty) => @{undefined})
         |> rm_SKIP
         |> assoc_right_Seq
         |> Thm.cterm_of @{context}
     end
 \<close>
-
-local_setup \<open>
-  define_let_of_def @{thm test_def} \<^binding>\<open>test_let\<close>
-\<close>
-print_theorems
-       
-lemma "test x y = test_let x y"
-  unfolding test_def test_let_def by (simp add: Let_def)
 
 end
