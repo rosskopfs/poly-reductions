@@ -196,7 +196,13 @@ fun  map_find_eq:: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 
 fun  map_find_eq_acc:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
 "map_find_eq_acc s acc n = 
-(if n = 0 then acc else map_find_eq_acc s ((prod_encode(hd_nat n, if the_nat (map_list_find_nat s (fst_nat (hd_nat n))) = snd_nat (hd_nat n) then 1 else 0)) ## acc ) (tl_nat n))"
+  (if n = 0 then acc
+   else map_find_eq_acc s ((prod_encode
+    ( hd_nat n
+    , if the_nat (map_list_find_nat s (fst_nat (hd_nat n))) = snd_nat (hd_nat n)
+      then 1 else 0)
+    ) ## acc ) (tl_nat n)
+  )"
 
 lemma map_find_eq_induct:
 "map_find_eq_acc s acc n = map_acc  (\<lambda>va. prod_encode(va, if the_nat (map_list_find_nat s (fst_nat va)) = snd_nat va then 1 else 0)) acc n"
