@@ -106,8 +106,7 @@ proof -
       unfolding ugraph_def
       by blast
     from this asms(2) have "card (\<Union> E) \<noteq> 0"
-      by (metis E_ugraph Sup_upper card_infinite card_mono finite_Union 
-          not_numeral_le_zero ugraph_def zero_neq_numeral) 
+      by (metis E_ugraph Sup_upper card_mono not_numeral_le_zero ugraph_vertex_set_finite)
     from this asms show "(v, 0) \<in> \<Union> {u. \<exists>v1 k. u = {(v1, 0)} \<and> v1 \<in> \<Union> E \<and> k \<in> {1..card (\<Union> E)}}"
       using Icc_eq_insert_lb_nat by auto
   qed
@@ -164,9 +163,8 @@ proof -
   qed
   have node_split_eq1:"node_split2 = 
                   \<Union> {{(0,k)}|k. k \<in> {1..(card (\<Union>E))}}"
-    apply (simp add: node_split2_def)
-    by (metis (mono_tags, hide_lams) Sup_bot_conv(2) 
-        all_not_in_conv card_empty not_less_eq_eq)
+    by (simp add: node_split2_def)
+      (metis (mono_tags, opaque_lifting) Sup_bot_conv(2) all_not_in_conv card.empty not_less_eq_eq)
   from node_split_eq2' have node_split_eq2: "node_split3 = \<Union>{{(v,0)}|v. v\<in> (\<Union> E)}"
     by (simp add: node_split3_def) 
   from node_split_eq3' have node_split_eq3: "node_split1 = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}" 
@@ -514,7 +512,7 @@ proof -
     by blast
 
   from this have c_Sets'fin:"finite c_Sets'"
-    using card_infinite by fastforce
+    using card.infinite by fastforce
 
   from c_Sets'_def have c_Sets'_complete:"\<Union>c_Sets' = \<Union>E'"
     unfolding is_k_colorable_def is_colorable_def

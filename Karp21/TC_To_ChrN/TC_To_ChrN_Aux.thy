@@ -90,8 +90,7 @@ next
     by blast
   from this have split_dis:"split1 \<inter> split2 = {}"
     unfolding split1_def split2_def
-    apply auto
-    by (metis doubleton_eq_iff prod.inject)
+    by(fastforce simp add: doubleton_eq_iff)
 
   from Suc(1) finE' E'_card have card1:"card split1 = card (\<Union> E')"
     unfolding split1_def
@@ -502,7 +501,7 @@ proof -
   from this have "card {{(v1, 0::nat), (v2, 0)} |v1 v2. {v1, v2} \<in> E} = card E"
     by (simp add: chromatik_card1)
   from this asms show ?thesis unfolding ugraph_def
-    using card_infinite by fastforce
+    using card.infinite by fastforce
 qed
 
 
@@ -514,7 +513,7 @@ proof -
     using chromatik_card3
     by blast
   from this asms show ?thesis
-    using card_infinite not_finite_existsD by fastforce 
+    using card.infinite not_finite_existsD by fastforce
 qed
 
 
