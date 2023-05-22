@@ -2,7 +2,6 @@ chapter Poly_Reductions
 
 session Poly_Reductions_Base = HOL +
   sessions
-    NREST
     "HOL-Real_Asymp"
     Landau_Symbols
 
@@ -20,22 +19,6 @@ session Poly_Reductions_Lib in Lib = "HOL-Analysis" +
     Polynomial_Growth_Functions
     SAT_Definition
 
-session Karp21 in Karp21 = Poly_Reductions_Lib +
-  sessions
-    "HOL-Real_Asymp"
-    Landau_Symbols
-    NREST
-  directories
-    CNF_SAT_To_Clique
-    CNF_SAT_To_TC
-    HC_To_UHC
-    TC_To_ChrN
-    VC_Set_To_VC_List
-    VC_To_FNS
-    VC_To_HC
-  theories
-    All_Reductions_Poly
-
 session IMP_Minus in "IMP-" = "HOL-Eisbach" +
   theories
     Com
@@ -43,10 +26,25 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Small_StepT
     Big_Step_Small_Step_Equivalence
 
+session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
+  sessions
+    "HOL-Library"
+  directories
+    "ML_Typeclasses"
+    "ML_Typeclasses/State"
+  theories
+    "Views_Cook_Levin"
+
+session IMP_Minus_Views_Examples in "Cook_Levin_IMP/Views/Examples" = Cook_Levin_IMP +
+  theories
+    "Elemof"
+    "Filter_Defined_Acc"
+
 session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
   sessions
     Poly_Reductions_Lib
     IMP_Minus
+    IMP_Minus_Views
     "HOL-Real_Asymp"
     Landau_Symbols
     Verified_SAT_Based_AI_Planning

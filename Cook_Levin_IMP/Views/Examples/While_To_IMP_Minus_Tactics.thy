@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory While_To_IMP_Minus_Tactics
   imports
-    Views_Cook_Levin
+    IMP_Minus_Views.Views_Cook_Levin
     While_To_IMP_Minus_Locale
 begin
           

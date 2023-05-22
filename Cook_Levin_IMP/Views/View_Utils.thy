@@ -5,7 +5,7 @@ theory View_Utils
 begin
 
 paragraph \<open>Summary\<close>
-text \<open>Shared Utilities for @{session Views}.\<close>
+text \<open>Shared Utilities for @{session IMP_Minus_Views}.\<close>
 
 ML_file\<open>util.ML\<close>
 
