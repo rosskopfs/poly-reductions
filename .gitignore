@@ -1,4 +1,5 @@
 *.thy~
+*.ML~
 *.aux
 *.log
 *.out

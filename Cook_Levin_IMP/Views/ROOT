@@ -1,0 +1,10 @@
+session Views = Cook_Levin_IMP +
+  sessions
+    "HOL-Library"
+  directories
+    "Examples"
+    "ML_Typeclasses"
+    "ML_Typeclasses/State"
+  theories
+    "Views_Cook_Levin"
+
