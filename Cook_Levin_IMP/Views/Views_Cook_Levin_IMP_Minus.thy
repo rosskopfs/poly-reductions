@@ -1,5 +1,5 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory Views_Cook_Levin
+theory Views_Cook_Levin_IMP_Minus
   imports
     IMP_Minus.Call_By_Prefixes
     IMP_Minus.AExp
@@ -7,7 +7,7 @@ theory Views_Cook_Levin
     Simps_To
     Views_Base
     ML_State_Seq
-begin
+begin                              
 
 paragraph \<open>Summary\<close>
 text \<open>Views adapted to track @{session IMP_Minus} state changes in the
@@ -176,7 +176,7 @@ proof -
       also from assms(1) k_mem k_props have
         " ... = restrict (interp_state (view_state v')) ?pvars k" by simp
       finally show ?thesis .
-    qed simp
+    qed simp                                                              
   }
   then show ?thesis by (auto simp: interp_view_eq interp_state_State_eq interp_keys_Keys_eq)
 qed
@@ -191,13 +191,17 @@ lemma update_VIEW_invoke_subprogram_vars:
     = VIEW (interp_view (update_keys_view v' (Keys (add_prefix p ` vars))))"
   using assms unfolding VIEW_eq SIMPS_TO_iff by (fact update_view_invoke_subprogram_vars)
 
-ML_file\<open>view_cook_levin.ML\<close>
+ML_file\<open>view_cook_levin_imp_minus.ML\<close>
 
-(*TODO: the framework currently only collects a big view equality without
+(*TODO:
+1. the framework currently only collects a big view equality without
 simplifying it. As a result, every retrieval from these views needs to simplify
 a (complex) series of insertions, restrictions, key update operations, etc.
 We could instead simplify the views themselves to speed up the proofs and
 make them more reliable. Currently, we rely on @{method fastforce} to simplify
-the chain of operations.*)
+the chain of operations.
+
+2. integrate the logger from https://github.com/kappelmann/logger-isabelle
+*)
 
 end

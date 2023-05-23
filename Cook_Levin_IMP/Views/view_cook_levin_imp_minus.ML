@@ -3,7 +3,7 @@
 
 Tracking of IMP Minus states changes with View equalities.
 *)
-signature VIEW_COOK_LEVIN =
+signature VIEW_COOK_LEVIN_IMP_MINUS =
 sig
 
 (* view equality utils *)
@@ -55,7 +55,7 @@ val update_view_invoke_subprogram_tac : thm -> Proof.context -> int -> tactic
 
 end
 
-structure View_Cook_Levin : VIEW_COOK_LEVIN =
+structure View_Cook_Levin_IMP_Minus : VIEW_COOK_LEVIN_IMP_MINUS =
 struct
 
 structure U = View_Util

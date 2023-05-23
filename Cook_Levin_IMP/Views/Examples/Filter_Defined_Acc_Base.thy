@@ -160,7 +160,7 @@ definition "filter_defined_acc_state_upd_time t s \<equiv>
     t = t + 2;
     hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
     hd_ret_state = hd_imp hd_state;
-    t = t + hd_imp_time 0 hd_ret_state;
+    t = t + hd_imp_time 0 hd_state;
     map_list_find_aux_xs' = filter_defined_acc_s s;
     t = t + 2;
     map_list_find_aux_a' = hd_ret hd_ret_state;
@@ -191,7 +191,7 @@ definition "filter_defined_acc_state_upd_time t s \<equiv>
         t = t + 2;
         hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
         hd_ret_state = hd_imp hd_state;
-        t = t + hd_imp_time 0 hd_ret_state;
+        t = t + hd_imp_time 0 hd_state;
         cons_h' = hd_ret hd_ret_state;
         t = t + 2;
         cons_t' = filter_defined_acc_acc s;
@@ -200,7 +200,7 @@ definition "filter_defined_acc_state_upd_time t s \<equiv>
         t = t + 2;
         cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
         cons_ret_state = cons_imp cons_state;
-        t = t + cons_imp_time 0 cons_ret_state;
+        t = t + cons_imp_time 0 cons_state;
         filter_defined_acc_acc' = cons_ret cons_ret_state;
         t = t + 2;
         tl_xs' = filter_defined_acc_n s;
@@ -209,7 +209,7 @@ definition "filter_defined_acc_state_upd_time t s \<equiv>
         t = t + 2;
         tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
         tl_ret_state = tl_imp tl_state;
-        t = t + tl_imp_time 0 tl_ret_state;
+        t = t + tl_imp_time 0 tl_state;
         filter_defined_acc_n' = tl_ret tl_ret_state;
         t = t + 2;
         filter_defined_acc_ret' = 0;
@@ -233,7 +233,7 @@ definition "filter_defined_acc_state_upd_time t s \<equiv>
         t = t + 2;
         tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
         tl_ret_state = tl_imp tl_state;
-        t = t + tl_imp_time 0 tl_ret_state;
+        t = t + tl_imp_time 0 tl_state;
         filter_defined_acc_n' = tl_ret tl_ret_state;
         t = t + 2;
         filter_defined_acc_ret' = 0;

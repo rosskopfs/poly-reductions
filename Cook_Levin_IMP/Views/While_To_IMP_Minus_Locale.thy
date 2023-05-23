@@ -4,11 +4,6 @@ theory While_To_IMP_Minus_Locale
   imports IMP_Minus.Call_By_Prefixes
 begin
 
-lemma Seq_E:
-  assumes "(c1;; c2, s1) \<Rightarrow>\<^bsup>t\<^esup> s3"
-  obtains s2 t' t'' where "(c1, s1) \<Rightarrow>\<^bsup>t'\<^esup> s2" "(c2, s2) \<Rightarrow>\<^bsup>t''\<^esup> s3"
-  using assms by blast
-
 locale While_To_IMP_Minus =
   fixes
     cond_var :: string and
@@ -22,7 +17,7 @@ locale While_To_IMP_Minus =
     loop_let :: \<open>'s \<Rightarrow> 's\<close> and
     vars :: \<open>string set\<close>
   assumes
-    eq_on_vars[intro]: \<open>\<And>s s' p. (\<And>i. i \<in> vars \<Longrightarrow> s (p @ i) = s' (p @ i)) \<Longrightarrow>
+    eq_on_vars[intro]: \<open>\<And>s s' p. (\<And>i. i \<in> vars \<Longrightarrow> s (add_prefix p i) = s' (add_prefix p i)) \<Longrightarrow>
       imp_to_let_state p s = imp_to_let_state p s'\<close> and
     condition_no_var: \<open>cond_var \<notin> vars\<close> and
   
@@ -33,7 +28,7 @@ locale While_To_IMP_Minus =
       imp_to_let_state p s' = body_let (imp_to_let_state p s)\<close> and
   
     cond_eq: \<open>\<And>s t s' p. (invoke_subprogram p cond_imp, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-      s' (p @ cond_var) = cond_let (imp_to_let_state p s)
+      s' (add_prefix p cond_var) = cond_let (imp_to_let_state p s)
       \<and> imp_to_let_state p s' = imp_to_let_state p s\<close> and
   
     loop_let: \<open>\<And>s. loop_let s = (if cond_let s \<noteq> 0 then loop_let (body_let s) else base_let s)\<close> and
@@ -58,34 +53,25 @@ proof (induction \<open>imp_to_let_state p s\<close> arbitrary: s s' t rule: loo
   then show ?case
     apply(subst loop_let)
     apply(simp only: loop_imp_def prefix_simps)
-    apply (erule Seq_E)+
+    apply (erule Seq_tE)+
     apply (erule While_tE)
     subgoal
       apply (cases \<open>cond_let (imp_to_let_state p s) = 0\<close>)
-      subgoal
-        apply auto
-        apply (drule base_eq)
-          using cond_eq by auto
-        subgoal premises p
-          using p(6,7) cond_eq[OF p(3)] by auto
-        done
+      subgoal using base_eq cond_eq by auto
+      subgoal using cond_eq by auto
+    done
+    subgoal
       apply (cases \<open>cond_let (imp_to_let_state p s) = 0\<close>)
       subgoal by (simp add: cond_eq)
-
-      apply(erule Seq_E)+
-      subgoal premises p
-        apply (simp add: p(7))
-        using p
-        apply (simp only: prefix_simps)
-        apply -
-      apply dest_com_gen
-          apply force
-        using condition_no_var
-        using cond_eq body_eq eq_on_vars same_append_eq
-         apply (smt (verit, best) cond_eq body_eq condition_no_var eq_on_vars same_append_eq)
-        by (smt (verit, best) cond_eq body_eq condition_no_var eq_on_vars same_append_eq)
+        apply(erule Seq_tE)+
+        subgoal
+          apply (simp only: prefix_simps)
+          apply (metis Seq body_eq cond_eq)
+        done
       done
+    done
   qed
+  
 end
 
 end

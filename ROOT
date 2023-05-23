@@ -33,7 +33,9 @@ session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
     "ML_Typeclasses"
     "ML_Typeclasses/State"
   theories
-    "Views_Cook_Levin"
+    "Views_Cook_Levin_IMP_Minus"
+    "While_To_IMP_Minus_Locale"
+    "While_To_IMP_Minus_Tactics"
 
 session IMP_Minus_Views_Examples in "Cook_Levin_IMP/Views/Examples" = Cook_Levin_IMP +
   theories
