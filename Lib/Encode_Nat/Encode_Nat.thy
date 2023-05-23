@@ -1,3 +1,9 @@
+(*  Title:      Encode_Nat.thy
+    Author:     , TU Muenchen
+    Author:     Andreas Vollert, TU Muenchen
+    Copyright   2022, 2023
+*)
+
 theory Encode_Nat
   imports
     Main
@@ -18,13 +24,20 @@ begin
 
 type_synonym pair_repr = nat
 
-fun atomic :: "nat \<Rightarrow> pair_repr" where "atomic a = a"
-fun pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr" where "pair l r = prod_encode (l, r)"
-
-fun fstP :: "pair_repr \<Rightarrow> pair_repr" where "fstP v = fst (prod_decode v)"
-fun sndP :: "pair_repr \<Rightarrow> pair_repr" where "sndP v = snd (prod_decode v)"
-
 definition "wellbehaved enc dec \<equiv> (\<forall> a. dec (enc a) = a)"
+
+fun atomic :: "nat \<Rightarrow> pair_repr" where
+  "atomic a = a"
+
+fun pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
+  where "pair l r = prod_encode (l, r)"
+
+fun fstP :: "pair_repr \<Rightarrow> pair_repr" where
+  "fstP v = fst (prod_decode v)"
+
+fun sndP :: "pair_repr \<Rightarrow> pair_repr" where
+  "sndP v = snd (prod_decode v)"
+
 
 ML_file \<open>./Encode_Nat.ML\<close>
 
@@ -39,20 +52,20 @@ lemma prod_decode_less:
   using assms
     le_prod_encode_1[of "fstP v" "sndP v"]
     le_prod_encode_2[of "sndP v" "fstP v"]
-  by auto
+  by simp+
 
 lemma prod_decode_lte:
   assumes "v \<le> v'"
   shows fst_prod_decode_lte: "fst (prod_decode v) \<le> v'"
     and snd_prod_decode_lte: "snd (prod_decode v) \<le> v'"
-  using prod_decode_less[of v "Suc v'"] assms by auto
+  using prod_decode_less[of v "Suc v'"] assms by simp+
 
 lemma snd_prod_encode_lt: "a > 0 \<Longrightarrow> b < prod_encode (a, b)"
   by (induction b; simp add: prod_encode_def)
 
 corollary snd_prod_decode_lt_intro:
   assumes "fstP v \<noteq> 0"
-  shows   "snd (prod_decode v) < v"
+  shows "snd (prod_decode v) < v"
 proof -
   obtain x y where xyv: "prod_decode v = (x, y)" by fastforce
   with assms have "y < prod_encode (x, y)" using snd_prod_encode_lt by simp
@@ -83,18 +96,15 @@ datatype_nat_encode keyed_list_tree
 declare enc_Encode_Nat_keyed_list_tree.simps [simp del]
 thm enc_Encode_Nat_keyed_list_tree.simps
 
-
 datatype 'a forest =
   FLeaf |
   FNode "(('a forest) list)"
 
-
 lemma enc_List_list_cong[fundef_cong]:
   assumes "xs = ys"
-          "\<And>x. x \<in> set ys \<Longrightarrow> enc\<^sub>a x = enc\<^sub>b x"
+    and "\<And>x. x \<in> set ys \<Longrightarrow> enc\<^sub>a x = enc\<^sub>b x"
   shows "enc_List_list enc\<^sub>a xs = enc_List_list enc\<^sub>b ys"
-  using assms
-  by (induction xs arbitrary: ys; auto simp add: enc_List_list.simps)
+  using assms by (induction xs arbitrary: ys; auto simp add: enc_List_list.simps)
 
 datatype_nat_encode forest
 declare enc_Encode_Nat_forest.simps [simp del]
@@ -110,13 +120,11 @@ datatype_nat_decode nat
 termination by (decode_termination "measure id")
 thm dec_Nat_nat.simps
 
-
 datatype_nat_decode list
 termination by (decode_termination "measure snd")
 declare dec_List_list.simps[simp del]
 lemmas [simp] = dec_List_list.simps[of _ "prod_encode _"]
 thm dec_List_list.simps
-
 
 datatype_nat_decode prod
 termination by (decode_termination "measure (snd o snd)")
@@ -137,24 +145,27 @@ lemmas [simp] = dec_Encode_Nat_keyed_list_tree.simps[of _ _ "prod_encode _"]
 thm dec_Encode_Nat_keyed_list_tree.simps
 
 
-inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
-  "x \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> fstP t \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
+inductive_set
+  subpairings :: "pair_repr \<Rightarrow> pair_repr set"
+  for x
+  where
+    "x \<in> subpairings x"
+  | "t \<in> subpairings x \<Longrightarrow> fstP t \<in> subpairings x"
+  | "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
 
-lemma subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x"
-  and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x"
+lemma
+  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x"
+    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x"
    apply(simp, all \<open>induction rule: subpairings.induct\<close>)
   using subpairings.intros by simp+
-
 
 lemma subpairings_le: "a \<in> subpairings x \<Longrightarrow> a \<le> x"
   apply(induction rule: subpairings.induct)
   using prod_decode_lte[of _ x] by simp+
-  
+
 lemma dec_List_list_cong[fundef_cong]:
   assumes "x = y"
-          "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
+    and "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
   shows "dec_List_list dec\<^sub>a x = dec_List_list dec\<^sub>b y"
   unfolding assms(1)
   using assms(2)
@@ -162,8 +173,8 @@ lemma dec_List_list_cong[fundef_cong]:
   subgoal for _ v
     apply (unfold dec_List_list.simps[of _ v])
     using subpairings.intros
-             \<comment> \<open>specialized for the recursive constructor field:\<close>
-             subpairings_sndP_imp[OF subpairings_sndP_imp[of _ "sndP v"]]
+      \<comment> \<open>specialized for the recursive constructor field:\<close>
+      subpairings_sndP_imp[OF subpairings_sndP_imp[of _ "sndP v"]]
     by presburger
   done
 
@@ -172,11 +183,10 @@ termination proof (decode_termination "measure snd")
   fix v t assume
     "fst (prod_decode v) = Suc 0"
     "t \<in> subpairings (snd (prod_decode v))"
-  then show "t < v" 
-    using subpairings_le fstP.elims snd_prod_decode_lt_intro
-    by (metis One_nat_def less_Suc_eq_0_disj less_numeral_extra(4) order_le_less_trans)
-    (* by (metis order.strict_trans1 zero_neq_numeral) *)
+  then show "t < v"
+    using subpairings_le snd_prod_decode_lt_intro by (fastforce simp: order_le_less_trans)
 qed
+
 declare dec_Encode_Nat_forest.simps[simp del]
 lemmas [simp] = dec_Encode_Nat_forest.simps[of _ "prod_encode _"]
 thm dec_Encode_Nat_forest.simps
@@ -208,15 +218,10 @@ method wellbehavedness
     \<comment> \<open>If that approach didn't work, return the original induction case\<close>
     )?
 
-ML \<open>
-inferT @{term "wellbehaved"}
-\<close>
 
 datatype_nat_wellbehaved nat
-  unfolding wellbehaved_def using dec_Nat_nat.simps enc_Nat_nat.simps 
-  by auto
+  unfolding wellbehaved_def using dec_Nat_nat.simps enc_Nat_nat.simps by simp
 thm Nat_nat_wellbehaved
-
 
 datatype_nat_wellbehaved list
   by (wellbehavedness
@@ -254,17 +259,14 @@ datatype_nat_wellbehaved forest
       enc_simps: enc_Encode_Nat_forest.simps
       assms: assms
       uses_wellbehaved: List_list_wellbehaved[OF assms(1)])
-  subgoal for _ x
+  subgoal
     apply (subst enc_Encode_Nat_forest.simps dec_Encode_Nat_forest.simps)
-    \<comment> \<open>(\<open>\<star>\<close>)\<close>
     apply (induction rule: list.induct)
-    subgoal by (simp add: enc_List_list.simps enc_Encode_Nat_forest.simps)
-    subgoal by (subst enc_List_list.simps) simp
-    done
+    by (simp add: enc_List_list.simps enc_Encode_Nat_forest.simps)+
   done
 thm Encode_Nat_forest_wellbehaved
 
-method natfn_correctness 
+method natfn_correctness
   methods induct_rule
   uses assms simps_nat dels enc_simps args_wellbehaved =
   \<comment> \<open>Add wellbehavedness assumptions to get induction hypotheses\<close>
@@ -285,6 +287,7 @@ fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 
 lemma reverset_rev: "reverset l r = rev l @ r"
   by (induction l r rule: reverset.induct; simp)
+
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
@@ -306,8 +309,10 @@ fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
 fun prefixest :: "'a list \<Rightarrow> ('a list) list \<Rightarrow> ('a list) list" where
   "prefixest (v # vs) ps = prefixest vs ((v # vs) # ps)"
 | "prefixest [] ps = [] # ps"
+
 lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
   by (induction a l rule: prefixest.induct; simp)
+
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
@@ -323,8 +328,8 @@ function_nat_rewrite_correctness prefixest
 thm prefixest_nat_equiv
 
 fun prefixes2 where
-  "prefixes2 [] ps = reverset ([] # ps) []" |
-  "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
+  "prefixes2 [] ps = reverset ([] # ps) []"
+| "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
 function_nat_rewrite prefixes2
 thm prefixes2_nat.simps
@@ -356,15 +361,17 @@ function subtreest :: "'a tree \<Rightarrow> 'a tree list \<Rightarrow> 'a tree 
   "subtreest \<langle>\<rangle> [] ts = ts"
 | "subtreest \<langle>\<rangle> (s # stk) ts = subtreest s stk ts"
 | "subtreest \<langle>l, v, r\<rangle> stk ts = subtreest l (r # stk) (l # r # ts)"
+  using neq_Leaf_iff surj_pair
   by simp_all (metis neq_Leaf_iff splice.cases surj_pair)
 termination
-  by (relation "(\<lambda>(t, stk, _). size t + size1 t
-                             + sum_list (map (\<lambda>t. size t + size1 t) stk))
+  by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
                 <*mlex*> {}")
-     (simp_all add: wf_mlex mlex_less)
+      (simp_all add: wf_mlex mlex_less)
 
-lemma subtrees_subtreest: "mset (subtrees t @ concat (map subtrees ts) @ stk) = mset (subtreest t ts stk)"
+lemma subtrees_subtreest:
+  "mset (subtrees t @ concat (map subtrees ts) @ stk) = mset (subtreest t ts stk)"
   by (induction t ts stk rule: subtreest.induct; simp)
+
 lemma subtreest_correct: "mset (subtrees t) = mset (subtreest t [] [])"
   using subtrees_subtreest[of t "[]" "[]"] by simp
 
@@ -377,7 +384,7 @@ function_nat_rewrite_correctness subtreest
       simps_nat: subtreest_nat.simps
       enc_simps: enc_List_list.simps enc_Tree_tree.simps
       args_wellbehaved: Tree_tree_wellbehaved[OF assms(1)]
-      List_list_wellbehaved[OF Tree_tree_wellbehaved[OF assms(1)]])(*<*)
+      List_list_wellbehaved[OF Tree_tree_wellbehaved[OF assms(1)]])
 thm subtreest_nat_equiv
 
 end

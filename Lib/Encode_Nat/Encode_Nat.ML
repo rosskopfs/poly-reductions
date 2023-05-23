@@ -1,4 +1,18 @@
+(*  Title:      Encode_Nat.ML
+    Author:     , TU Muenchen
+    Author:     Andreas Vollert, TU Muenchen
+    Copyright   2022, 2023
+*)
+
 infix 7 ***
+
+signature ENCODE_NAT =
+sig
+end
+
+structure Encode_Nat : ENCODE_NAT =
+struct
+
 fun f *** g = fn (a, b) => (f a, g b)
 fun both f = f *** f
 
@@ -7,11 +21,6 @@ fun bothM (SOME a, SOME b) = SOME (a, b)
 
 fun allM (x :: xs) = bothM (x, allM xs) |> Option.map (op ::)
   | allM [] = SOME []
-
-fun headM (x :: _) = SOME x
-  | headM [] = NONE
-
-fun withDefault a b = Option.getOpt (b, a)
 
 fun all_values_same []        = NONE
   | all_values_same [x]       = SOME x
@@ -204,12 +213,8 @@ fun build_decoder_invocation ctx (freetyp : typ option) : typ -> term =
   invocation_factory "dec_" (@{typ "pair_repr"} --> dummyT) ctx
     (fn (name, typ) =>
         let val sugar = Ctr_Sugar.ctr_sugar_of ctx name |> the
-        in
-        if freetyp = SOME typ then
-            \<comment> \<open>as with encode: \<open>dec_skiptyp\<close> is not yet a constant!\<close>
-            Free ("dec_" ^ sanitize_sugar_name sugar, dummyT)
-        else
-            inferT (read_const' ctx ("dec_" ^ sanitize_sugar_name sugar))
+        in if freetyp = SOME typ then Free ("dec_" ^ sanitize_sugar_name sugar, dummyT)
+           else inferT (read_const' ctx ("dec_" ^ sanitize_sugar_name sugar))
         end)
 
 fun build_decoder ctx sugar =
@@ -220,83 +225,83 @@ fun build_decoder ctx sugar =
           Free ("v", @{typ "nat"})
        )
   else
-    let val typeargs =
-          #ctrs sugar
-       |> map (dest_Const #> snd #> collect_tvars)
-       |> List.concat
-       |> distinct (uncurry equal)
-       |> map (fn ((name, _), sort) =>
+    let
+      val typeargs =
+        #ctrs sugar
+        |> map (dest_Const #> snd #> collect_tvars)
+        |> List.concat
+        |> distinct (uncurry equal)
+        |> map (fn ((name, _), sort) =>
                 Free ("dec_" ^ name, @{typ "pair_repr"} --> TFree (name, sort))
-              )
-        \<comment> \<open>A list of conditions and associated constructor calls.\<close>
-        val cases =
-          #ctrs sugar
-       |> List.map (fn ctr =>
-            let val arg_types = (Term.binder_types o Term.type_of) ctr
-                val args_decoded =
-                        arg_types
-                     |> zip (map_range I (length arg_types))
-                     |> map (fn (i, e) =>
-                           build_decoder_invocation ctx (SOME (#T sugar)) e
-                         $ build_unpairing_from_idx (Free ("v", dummyT))
-                                                    i (length arg_types))
-                val condition =
-                        build_constructor_tag (dest_Const ctr) ctx |> the
-                     |> (fn tag => mk_eq_dummyT (inferT @{term "fstP"}
-                                                 $ Free ("v", dummyT), tag))
-            in
-               (condition, Term.list_comb (inferT ctr, args_decoded))
-            end
+                )
+      val cases =
+        #ctrs sugar
+        |> List.map (fn ctr =>
+          let
+            val arg_types = (Term.binder_types o Term.type_of) ctr
+            val args_decoded =
+              arg_types
+              |> zip (map_range I (length arg_types))
+              |> map (fn (i, e) =>
+                      build_decoder_invocation ctx (SOME (#T sugar)) e
+                      $ build_unpairing_from_idx (Free ("v", dummyT)) i (length arg_types))
+            val condition =
+              build_constructor_tag (dest_Const ctr) ctx |> the
+              |> (fn tag => mk_eq_dummyT (inferT @{term "fstP"} $ Free ("v", dummyT), tag))
+          in
+            (condition, Term.list_comb (inferT ctr, args_decoded))
+          end
           )
-    in HOLogic.mk_Trueprop (mk_eq_dummyT (
-           Term.list_comb (Free ("dec_" ^ sanitize_sugar_name sugar, dummyT),
-                           typeargs @ [Free ("v", dummyT)]),
-           build_ite cases
-       ))
+    in
+      HOLogic.mk_Trueprop (mk_eq_dummyT (Term.list_comb
+        (Free ("dec_" ^ sanitize_sugar_name sugar, dummyT), typeargs @ [Free ("v", dummyT)]),
+         build_ite cases))
     end
 
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>datatype_nat_decode\<close>
-    "creates encoder for a datatype"
+    "creates decoder for a datatype"
     (Parse.typ >> (fn typ => fn lthy =>
-        let val typename = (fst o dest_Type) (read_type_name' lthy typ)
-            val sugar = Ctr_Sugar.ctr_sugar_of lthy typename |> the
-            val eqns = build_decoder lthy sugar
-            val fixes = @{print} [(Binding.name ("dec_" ^ sanitize_sugar_name sugar),
-                          NONE, NoSyn)]
-            val specs = [((Binding.empty_atts, eqns), [], [])]
-            fun pat_completeness_auto ctxt =
-                    Pat_Completeness.pat_completeness_tac ctxt 1
-                    THEN auto_tac ctxt
-        in lthy |> Function.add_function fixes specs Function_Fun.fun_config
-                                         pat_completeness_auto
-                |> snd
-        end))
+      let val typename = (fst o dest_Type) (read_type_name' lthy typ)
+          val sugar = Ctr_Sugar.ctr_sugar_of lthy typename |> the
+          val eqns = build_decoder lthy sugar
+          val fixes = @{print} [(Binding.name ("dec_" ^ sanitize_sugar_name sugar), NONE, NoSyn)]
+          val specs = [((Binding.empty_atts, eqns), [], [])]
+          fun pat_completeness_auto ctxt =
+            Pat_Completeness.pat_completeness_tac ctxt 1 THEN auto_tac ctxt
+      in
+        lthy
+        |> Function.add_function fixes specs Function_Fun.fun_config pat_completeness_auto
+        |> snd
+      end)
+    )
 
 fun mk_wellbehaved enc dec =
         HOLogic.Trueprop $ (inferT @{term "wellbehaved"} $ enc $ dec)
 
 fun wellbehavedness_thm (sugar: Ctr_Sugar.ctr_sugar) int lthy =
-  let val typeargs = dest_Type (#T sugar) |> snd
-      fun typearg_terms_prefixed pfx =
-              typeargs
-           |> map (fn x => Free (pfx ^ (fst o fst) (dest_TVar x), dummyT))
-      val encoder = read_const' lthy ("enc_" ^ sanitize_sugar_name sugar)
-      val encoder_args = typearg_terms_prefixed "enc_"
-      val decoder = read_const' lthy ("dec_" ^ sanitize_sugar_name sugar)
-      val decoder_args = typearg_terms_prefixed "dec_"
-      val _ = (@{print} encoder, @{print} decoder)
-      val (encoder_instantiated, decoder_instantiated) =
-              both (  Term.map_types tvar_to_tfree
-                    o Term.list_comb
-                    o (inferT *** I))
-                   ((inferT encoder, encoder_args),
-                    (inferT decoder, decoder_args))
-      val _ = (@{print} encoder_instantiated, @{print} decoder_instantiated)
-
+  let
+  val typeargs =
+    dest_Type (#T sugar)
+    |> snd
+  fun typearg_terms_prefixed pfx =
+    typeargs
+    |> map (fn x => Free (pfx ^ (fst o fst) (dest_TVar x), dummyT))
+  val encoder = read_const' lthy ("enc_" ^ sanitize_sugar_name sugar)
+  val encoder_args = typearg_terms_prefixed "enc_"
+  val decoder = read_const' lthy ("dec_" ^ sanitize_sugar_name sugar)
+  val decoder_args = typearg_terms_prefixed "dec_"
+  val _ = (@{print} encoder, @{print} decoder)
+  val (encoder_instantiated, decoder_instantiated) =
+          both (  Term.map_types tvar_to_tfree
+                o Term.list_comb
+                o (inferT *** I))
+               ((inferT encoder, encoder_args),
+                (inferT decoder, decoder_args))
+  val _ = (@{print} encoder_instantiated, @{print} decoder_instantiated)
   in
-  Specification.theorem
+    Specification.theorem
     true
     Thm.theoremK
     NONE
@@ -337,162 +342,168 @@ datatype patmatch_term =
 
 fun build_patmatch_term (Var v) = SOME (VARIABLE v)
   | build_patmatch_term t =
-        Term.strip_comb t
-     |> Term.dest_Const *** I
-     |> (fn (t', args) => allM (map build_patmatch_term args)
-                       |> Option.map (fn args' => CONSTRUCTOR (t', args')))
-val free_to_var_example__ = Term.map_aterms
-        (fn t => case t of Free (str, typ) => Var ((str, 0), typ) | t => t)
+      Term.strip_comb t
+      |> Term.dest_Const *** I
+      |> (fn (t', args) =>
+            allM (map build_patmatch_term args)
+            |> Option.map (fn args' => CONSTRUCTOR (t', args')))
+
+val free_to_var_example__ =
+  Term.map_aterms (fn t => case t of Free (str, typ) => Var ((str, 0), typ) | t => t)
 
 fun retag_list [] = []
   | retag_list [x] = x
-  | retag_list (x :: xs) = (x  |>      map (I *** FST))
-                         @ (xs |> map (map (I *** SND)) |> retag_list)
+  | retag_list (x :: xs) =
+    (x |> map (I *** FST)) @ (xs |> map (map (I *** SND)) |> retag_list)
+
 fun extract_condition_paths (CONSTRUCTOR (c, args)) =
       retag_list ([(c, DONE)] ::
         (case args of [] => [[]] \<comment> \<open>dummy arg for 0-arity constructor\<close>
                     | args => map extract_condition_paths args))
   | extract_condition_paths (VARIABLE _) = []
+
 fun extract_variable_paths (CONSTRUCTOR (_, args)) =
       retag_list ([] :: map extract_variable_paths args)
   | extract_variable_paths (VARIABLE n) = [(n, DONE)]
 
-val subscript = String.explode
-             #> map (str #> prefix ("\\" ^ "<^sub>"))
-             #> String.concat
+val subscript =
+  String.explode
+  #> map (str #> prefix ("\\" ^ "<^sub>"))
+  #> String.concat
+
 val argnames = map_range (fn i => "arg" ^ subscript (string_of_int (i+1)))
 
 fun replace_constructors ctx t =
-        Term.strip_comb t
-     |> (fn (hd, args) =>
-            map (replace_constructors ctx) args
-         |> allM
-         |> Option.map (fn args' => (hd, args'))
-        )
-     |> Option.map (fn (h, args') =>
-          case h of
-            Const nt => (
-              case (build_constructor_tag nt ctx)
-                of (SOME cons_nat) =>
-                  (if (Term.binder_types #> length) (snd nt) = length args'
-                     then build_constructor_pairing cons_nat args'
-                     else error "Constructor not fully applied!")
-                 | NONE => \<comment> \<open>non-constructor function, just keep it for now\<close>
+  Term.strip_comb t
+  |> (fn (hd, args) =>
+    map (replace_constructors ctx) args
+    |> allM
+    |> Option.map (fn args' => (hd, args')))
+  |> Option.map (fn (h, args') =>
+    case h of
+      Const nt => (
+        case (build_constructor_tag nt ctx) of
+          (SOME cons_nat) => (if (Term.binder_types #> length) (snd nt) = length args'
+                              then build_constructor_pairing cons_nat args'
+                              else error "Constructor not fully applied!")
+        | NONE => \<comment> \<open>non-constructor function, just keep it for now\<close>
                      Term.list_comb (Const nt, args'))
-          | _ => Term.list_comb (h, args')
-        )
+    | _ => Term.list_comb (h, args'))
 
 fun build_nat_condition ctx t =
-  t |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
-    |> Term.args_of
-    |> (map build_patmatch_term #> allM)
-    |> Option.map (map extract_condition_paths)
-    |> Option.map (fn x => zip (argnames (length x)) x)
-    |> Option.map
-        (map (fn (arg', condition_paths) =>
-         map (fn (match, path) =>
-             build_constructor_tag match ctx
+  t
+  |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
+  |> Term.args_of
+  |> (map build_patmatch_term #> allM)
+  |> Option.map (map extract_condition_paths)
+  |> Option.map (fn x => zip (argnames (length x)) x)
+  |> Option.map
+      (map (fn (arg', condition_paths) =>
+        map (fn (match, path) =>
+          build_constructor_tag match ctx
           |> Option.map (fn tag =>
-               mk_eq_dummyT
-                 (build_unpairing (Free (arg', @{typ "pair_repr"})) path,
-                  tag)
-             )
-        ) condition_paths
-        ))
-    |> Option.mapPartial (map allM #> allM)
-    |> Option.map (List.concat #> mk_conj')
+            mk_eq_dummyT (build_unpairing (Free (arg', @{typ "pair_repr"})) path, tag)))
+          condition_paths))
+  |> Option.mapPartial (map allM #> allM)
+  |> Option.map (List.concat #> mk_conj')
 
 fun nat_encode_term ctx t =
-  let fun absvar ((v, idx), typ) body =
-            (v, typ, abstract_over (Var ((v, idx), typ), body))
-      val arguments_and_paths
-          : (string * ((indexname * typ) * pairing_path)) list =
-              t
-           |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
-           |> Term.args_of
-           |> map build_patmatch_term |> allM |> the
-           |> map extract_variable_paths
-           |> (fn x =>
-                  zip (argnames (length x)) x
-               |> map (fn (arg, paths_from_this_arg) =>
-                       map (pair arg) paths_from_this_arg)
-              )
-           |> List.concat
-      val wrappers =
-              \<comment> \<open>A list of functions that’ll each wrap our result with a \<^term>\<open>Let\<close>,\<close>
-              \<comment> \<open>reusing the name of a source-argument to hold the “unwrapped” value\<close>
-              \<comment> \<open>from the \<^typ>\<open>nat\<close> argument it is encoded in.\<close>
-              arguments_and_paths
-           |> map (fn (argname_new,
-                        ((var_indexname, vartyp_old), varpath)) =>
-                   fn term =>
-                       let val (var_name, _, abs_body) =
-                                   absvar (var_indexname, vartyp_old) term
-                       in inferT @{term "HOL.Let"}
-                          \<comment> \<open>RHS within the \<^term>\<open>Let\<close>:\<close>
-                          $ build_unpairing
-                              (Free (argname_new, @{typ "pair_repr"}))
-                              varpath
-                          $ Abs (var_name, dummyT, abs_body)
-                      end)
-  in t
-  |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd)
-  |> replace_constructors ctx
-  |> Option.map (fn t => fold (fn wf => fn t' => wf t') wrappers t)
+  let
+    fun absvar ((v, idx), typ) body = (v, typ, abstract_over (Var ((v, idx), typ), body))
+    val arguments_and_paths : (string * ((indexname * typ) * pairing_path)) list =
+      t
+      |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
+      |> Term.args_of
+      |> map build_patmatch_term
+      |> allM
+      |> the
+      |> map extract_variable_paths
+      |> (fn x =>
+        zip (argnames (length x)) x
+        |> map (fn (arg, paths_from_this_arg) => map (pair arg) paths_from_this_arg))
+      |> List.concat
+    val wrappers =
+      \<comment> \<open>A list of functions that’ll each wrap our result with a \<^term>\<open>Let\<close>,\<close>
+      \<comment> \<open>reusing the name of a source-argument to hold the “unwrapped” value\<close>
+      \<comment> \<open>from the \<^typ>\<open>nat\<close> argument it is encoded in.\<close>
+      arguments_and_paths
+      |> map (fn (argname_new,
+        ((var_indexname, vartyp_old), varpath)) => fn term =>
+          let
+            val (var_name, _, abs_body) = absvar (var_indexname, vartyp_old) term
+          in  \<comment> \<open>RHS within the \<^term>\<open>Let\<close>:\<close>
+            inferT @{term "HOL.Let"}
+                   $ build_unpairing (Free (argname_new, @{typ "pair_repr"})) varpath
+                   $ Abs (var_name, dummyT, abs_body)
+          end)
+  in
+    t
+    |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd)
+    |> replace_constructors ctx
+    |> Option.map (fn t => fold (fn wf => fn t' => wf t') wrappers t)
   end
 
 fun const_nat_unchanged s =
-        if exists (fn x => String.isPrefix x s)
-             ["HOL.", \<comment> \<open>\<open>If\<close>, \<open>Let\<close>, and more\<close>
-              "Nat.", "Num.", "Groups." \<comment> \<open>Relating to (natural) numbers\<close>
-             ] then true
-        else exists (fn x => x = s)
-            ([@{term fstP}, @{term sndP}, @{term atomic}, @{term pair}]
-          |> List.map (fst o dest_Const))
+  if exists (fn x => String.isPrefix x s)
+       ["HOL.", \<comment> \<open>\<open>If\<close>, \<open>Let\<close>, and more\<close>
+        "Nat.", "Num.", "Groups." \<comment> \<open>Relating to (natural) numbers\<close>
+       ]
+  then true
+  else exists (fn x => x = s)
+        (List.map (fst o dest_Const) [@{term fstP}, @{term sndP}, @{term atomic}, @{term pair}])
 
-fun change_const_to_nat parent parent_nat t = case t of
-        Const (cident, ctyp) =>
-            if cident = parent then parent_nat
-            else if const_nat_unchanged cident then Const (cident, ctyp)
-            else Const (cident ^ "_nat", dummyT)
-      | x => x \<comment> \<open>return \<open>Free\<close>, \<open>Var\<close>, \<open>Bound\<close> unchanged\<close>
+fun change_const_to_nat parent parent_nat (Const (cident, ctyp)) =
+  if cident = parent then parent_nat
+  else if const_nat_unchanged cident then Const (cident, ctyp)
+       else Const (cident ^ "_nat", dummyT)
+ | change_const_to_nat _ _ x = x \<comment> \<open>return \<open>Free\<close>, \<open>Var\<close>, \<open>Bound\<close> unchanged\<close>
 
 fun nat_encode_simp_rules ctx thms =
-  let val argcount =
-              map (Thm.prop_of #> HOLogic.dest_Trueprop)
-           #> map (HOLogic.dest_eq #> fst #> Term.args_of #> List.length)
-           \<comment> \<open>sanity check: all equations have the same argument count\<close>
-           #> all_values_same #> the
-      val args' = argcount thms
-               |> argnames
-               |> (map (fn n => Free (n, @{typ "pair_repr"})))
-      val funcname =
-              map (Thm.prop_of #> HOLogic.dest_Trueprop)
-           #> map (HOLogic.dest_eq #> fst)
-           #> map (Term.head_of #> Term.dest_Const #> fst)
-           \<comment> \<open>sanity check: all equations have the same head\<close>
-           #> all_values_same #> the
-      val funcname' =
-              Free (Long_Name.base_name (funcname thms) ^ "_nat", dummyT)
-      val lhs' = Term.list_comb (funcname', args')
-      val ite = thms
-             |> map (fn x => bothM (build_nat_condition ctx x,
-                                    nat_encode_term ctx x))
-             |> allM |> the
-             |> build_ite
-             |> Term.map_aterms (change_const_to_nat (funcname thms) funcname')
-  in (lhs', ite)
-  |> HOLogic.mk_Trueprop o mk_eq_dummyT
-  |> Term.map_types tvar_to_tfree
-  |> singleton (Type_Infer_Context.infer_types ctx)
+  let
+    val argcount =
+      map (Thm.prop_of #> HOLogic.dest_Trueprop)
+      #> map (HOLogic.dest_eq #> fst #> Term.args_of #> List.length)
+      \<comment> \<open>sanity check: all equations have the same argument count\<close>
+      #> all_values_same
+      #> the
+    val args' =
+      argcount thms
+      |> argnames
+      |> (map (fn n => Free (n, @{typ "pair_repr"})))
+    val funcname =
+      map (Thm.prop_of #> HOLogic.dest_Trueprop)
+      #> map (HOLogic.dest_eq #> fst)
+      #> map (Term.head_of #> Term.dest_Const #> fst)
+      \<comment> \<open>sanity check: all equations have the same head\<close>
+      #> all_values_same
+      #> the
+    val funcname' = Free (Long_Name.base_name (funcname thms) ^ "_nat", dummyT)
+    val lhs' = Term.list_comb (funcname', args')
+    val ite =
+      thms
+      |> map (fn x => bothM (build_nat_condition ctx x, nat_encode_term ctx x))
+      |> allM
+      |> the
+      |> build_ite
+      |> Term.map_aterms (change_const_to_nat (funcname thms) funcname')
+  in
+    (lhs', ite)
+    |> HOLogic.mk_Trueprop o mk_eq_dummyT
+    |> Term.map_types tvar_to_tfree
+    |> singleton (Type_Infer_Context.infer_types ctx)
   end
 
-fun function_nat_cmd f = (Parse.binding >> (fn bound => fn lthy =>
-    let val name = Binding.name_of bound
-        val simps = Proof_Context.get_thms lthy (name ^ ".simps")
-        val eqns = nat_encode_simp_rules lthy simps
-        val fixes = [(Binding.name (name ^ "_nat"), NONE, NoSyn)]
-    in f eqns fixes lthy end))
+fun function_nat_cmd f =
+  (Parse.binding >> (fn bound => fn lthy =>
+    let
+      val name = Binding.name_of bound
+      val simps = Proof_Context.get_thms lthy (name ^ ".simps")
+      val eqns = nat_encode_simp_rules lthy simps
+      val fixes = [(Binding.name (name ^ "_nat"), NONE, NoSyn)]
+    in
+      f eqns fixes lthy
+    end))
+
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>function_nat_rewrite\<close>
@@ -506,41 +517,44 @@ val _ =
     \<^command_keyword>\<open>function_nat_rewrite_manual\<close>
     "converts existing functions into nat encoded functions"
     (function_nat_cmd (fn eqns => fn fixes =>
-        let fun pat_completeness_auto ctxt =
-                    Pat_Completeness.pat_completeness_tac ctxt 1
-                    THEN auto_tac ctxt
-        in snd o Function.add_function
-                   fixes [((Binding.empty_atts, eqns), [], [])]
-                   Function_Fun.fun_config
-                   pat_completeness_auto
+        let
+          fun pat_completeness_auto ctxt =
+            Pat_Completeness.pat_completeness_tac ctxt 1 THEN auto_tac ctxt
+        in
+          snd o Function.add_function
+                  fixes [((Binding.empty_atts, eqns), [], [])]
+                  Function_Fun.fun_config
+                  pat_completeness_auto
         end))
 
 fun correctness_thm name (int : bool) lthy : Proof.state =
-  let val fn_eqns : thm list = Proof_Context.get_thms lthy (name ^ ".simps")
-      val (fn_head, fn_args_orig) =
-              hd fn_eqns
-           |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
-           |> Term.strip_comb
-           |> dest_Const *** I
-      val fn_arg_names : string list = argnames (length fn_args_orig)
-      val fn_arg_types : typ list = Term.binder_types (snd fn_head)
-      val fn_args : term list = zip fn_arg_names fn_arg_types |> map Free
-      val fn_args_encoded : term list =
-              zip (map (build_encoder_invocation lthy NONE) fn_arg_types)
-                  fn_args
-           |> map (op $)
-      val run_nat = read_const' lthy (name ^ "_nat")
-      val run_nat_with_encoded_args = Term.list_comb (run_nat, fn_args_encoded)
-      val decode_run_nat_with_encoded_args =
-              build_decoder_invocation lthy NONE (Term.body_type (snd fn_head))
-            $ run_nat_with_encoded_args
-      val used_type_var_names : string list =
-              fn_eqns
-           |> map (Thm.prop_of #> HOLogic.dest_Trueprop #> collect_all_tvars)
-           |> List.concat |> distinct (uncurry equal)
-           |> List.map (fst o fst) \<comment> \<open>Get the name of a \<open>TVar\<close> description\<close>
+  let
+    val fn_eqns : thm list = Proof_Context.get_thms lthy (name ^ ".simps")
+    val (fn_head, fn_args_orig) =
+      hd fn_eqns
+      |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
+      |> Term.strip_comb
+      |> dest_Const *** I
+    val fn_arg_names : string list = argnames (length fn_args_orig)
+    val fn_arg_types : typ list = Term.binder_types (snd fn_head)
+    val fn_args : term list =
+      zip fn_arg_names fn_arg_types
+      |> map Free
+    val fn_args_encoded : term list =
+      zip (map (build_encoder_invocation lthy NONE) fn_arg_types) fn_args
+      |> map (op $)
+    val run_nat = read_const' lthy (name ^ "_nat")
+    val run_nat_with_encoded_args = Term.list_comb (run_nat, fn_args_encoded)
+    val decode_run_nat_with_encoded_args =
+      build_decoder_invocation lthy NONE (Term.body_type (snd fn_head)) $ run_nat_with_encoded_args
+    val used_type_var_names : string list =
+      fn_eqns
+      |> map (Thm.prop_of #> HOLogic.dest_Trueprop #> collect_all_tvars)
+      |> List.concat
+      |> distinct (uncurry equal)
+      |> List.map (fst o fst) \<comment> \<open>Get the name of a \<open>TVar\<close> description\<close>
   in
-  Specification.theorem
+    Specification.theorem
     true
     Thm.theoremK
     NONE
@@ -574,3 +588,4 @@ val _ =
     "converts existing functions into nat encoded functions"
     (Parse.binding >> (fn bound => fn int => fn lthy =>
         correctness_thm (Binding.name_of bound) int lthy))
+end
