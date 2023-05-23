@@ -14,11 +14,13 @@ session Poly_Reductions_Lib in Lib = "HOL-Analysis" +
   directories
     Auxiliaries
     Graph_Extensions
+    Encode_Nat
   theories
     "Auxiliaries/Graph_Auxiliaries"
     "Graph_Extensions/Vwalk_Cycle"
     Polynomial_Growth_Functions
     SAT_Definition
+    "Encode_Nat/Encode_Nat"
 
 session Karp21 in Karp21 = Poly_Reductions_Lib +
   sessions
