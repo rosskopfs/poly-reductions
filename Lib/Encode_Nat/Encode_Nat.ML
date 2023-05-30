@@ -374,22 +374,24 @@ val subscript =
 
 val argnames = map_range (fn i => "arg" ^ subscript (string_of_int (i+1)))
 
-fun replace_constructors ctx t =
-  Term.strip_comb t
-  |> (fn (hd, args) =>
-    map (replace_constructors ctx) args
-    |> allM
-    |> Option.map (fn args' => (hd, args')))
-  |> Option.map (fn (h, args') =>
-    case h of
-      Const nt => (
-        case (build_constructor_tag nt ctx) of
-          (SOME cons_nat) => (if (Term.binder_types #> length) (snd nt) = length args'
-                              then build_constructor_pairing cons_nat args'
-                              else error "Constructor not fully applied!")
-        | NONE => \<comment> \<open>non-constructor function, just keep it for now\<close>
-                     Term.list_comb (Const nt, args'))
-    | _ => Term.list_comb (h, args'))
+fun replace_constructors _ (Const (\<^const_name>\<open>undefined\<close>, _)) =
+      SOME (Const (\<^const_name>\<open>undefined\<close>, @{typ "pair_repr"}))
+  | replace_constructors ctx t =
+    Term.strip_comb t
+    |> (fn (hd, args) =>
+      map (replace_constructors ctx) args
+      |> allM
+      |> Option.map (fn args' => (hd, args')))
+    |> Option.map (fn (h, args') =>
+      case h of
+        Const nt => (
+          case (build_constructor_tag nt ctx) of
+            (SOME cons_nat) => (if (Term.binder_types #> length) (snd nt) = length args'
+                                then build_constructor_pairing cons_nat args'
+                                else error "Constructor not fully applied!")
+          | NONE => \<comment> \<open>non-constructor function, just keep it for now\<close>
+                       Term.list_comb (Const nt, args'))
+      | _ => Term.list_comb (h, args'))
 
 fun build_nat_condition ctx t =
   t
