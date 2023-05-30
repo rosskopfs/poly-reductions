@@ -58,8 +58,8 @@ datatype pairing_path =
   SND of pairing_path
 
 fun build_unpairing i DONE = i
-  | build_unpairing i (FST x) = inferT @{term fstP} $ build_unpairing i x
-  | build_unpairing i (SND x) = inferT @{term sndP} $ build_unpairing i x
+  | build_unpairing i (FST x) = @{term fstP} $ build_unpairing i x
+  | build_unpairing i (SND x) = @{term sndP} $ build_unpairing i x
 
 fun build_unpairing_from_idx t idx length =
   let fun repeat_snd 0 t = t
@@ -371,8 +371,8 @@ fun replace_constructors _ (Const (\<^const_name>\<open>undefined\<close>, _)) =
                        Term.list_comb (Const nt, args'))
       | _ => Term.list_comb (h, args'))
 
-fun build_nat_condition ctx t =
-  t
+fun build_nat_condition ctx thm =
+  thm
   |> (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst)
   |> Term.args_of
   |> (map build_patmatch_term #> allM)
@@ -383,7 +383,7 @@ fun build_nat_condition ctx t =
         map (fn (match, path) =>
           build_constructor_tag match ctx
           |> Option.map (fn tag =>
-            mk_eq_dummyT (build_unpairing (Free (arg', @{typ "pair_repr"})) path, tag)))
+            HOLogic.mk_eq (build_unpairing (Free (arg', @{typ "pair_repr"})) path, tag)))
           condition_paths))
   |> Option.mapPartial (map allM #> allM)
   |> Option.map (List.concat #> mk_conj')
@@ -459,14 +459,11 @@ fun function_nat_rewrite s lthy =
       |> the
       |> build_ite
       |> Term.map_aterms (change_const_to_nat fun_name newfun_t);
-    val res = (lhs, ite)
-    |> BNF_Util.mk_Trueprop_eq
-    |> singleton (Type_Infer_Context.infer_types lthy) |> @{print};   (* last line not necessary if properly handle types? *)
     val (_, newfun_lthy) =
       Partial_Function.add_partial_function
         "tailrec"
         [(Binding.name newfun_name, NONE, NoSyn)]
-        ((Binding.empty, []), res)
+        ((Binding.empty, []), BNF_Util.mk_Trueprop_eq (lhs, ite))
         lthy;
   in
     newfun_lthy
