@@ -89,9 +89,6 @@ fun constructor_to_int (ctr, typ) ctx =
   let
     fun matches_ctr (Const (y, _)) = if y = ctr then SOME () else NONE
       | matches_ctr _ = NONE;
-    val _ = @{print} typ
-    val _ = @{print} Term.body_type typ;
-    val _ = @{print} typ |> Term.body_type |> Term.dest_Type;
   in
     typ
     |> Term.body_type
@@ -278,7 +275,11 @@ val _ =
     )
 
 fun mk_wellbehaved enc dec =
-        HOLogic.Trueprop $ (inferT @{term "wellbehaved"} $ enc $ dec)
+  HOLogic.mk_Trueprop (
+    inferT @{term "HOL.eq"}
+    $ (inferT @{term "Fun.comp"} $ dec $ enc)
+    $ inferT @{term "Fun.id"})
+
 
 fun wellbehavedness_thm (sugar: Ctr_Sugar.ctr_sugar) int lthy =
   let

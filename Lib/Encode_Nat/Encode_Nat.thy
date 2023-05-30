@@ -24,8 +24,6 @@ begin
 
 type_synonym pair_repr = nat
 
-definition "wellbehaved enc dec \<equiv> (\<forall> a. dec (enc a) = a)"
-
 fun atomic :: "nat \<Rightarrow> pair_repr" where
   "atomic a = a"
 
@@ -191,7 +189,6 @@ declare dec_Encode_Nat_forest.simps[simp del]
 lemmas [simp] = dec_Encode_Nat_forest.simps[of _ "prod_encode _"]
 thm dec_Encode_Nat_forest.simps
 
-declare wellbehaved_def[simp]
 
 method wellbehavedness_case
   uses assms enc_simps uses_wellbehaved =
@@ -205,9 +202,7 @@ method wellbehavedness_case
 
 method wellbehavedness
   uses induct_rule assms enc_simps uses_wellbehaved =
-  (unfold wellbehaved_def,
-    \<comment> \<open>Turn that pesky \<open>\<forall>\<close> into a \<open>\<And>\<dots>\<close>\<close>
-    intro allI,
+  (intro ext,
     \<comment> \<open>\<open>\<dots>\<close>but \<open>induction\<close> still refuses to run structural induction correctly when\<close>
     \<comment> \<open>the goal is universally quantified and there are no assumptions.\<close>
     \<comment> \<open>Outside of Eisbach, \<^bold>\<open>subgoal apply\<close> \<open>(induction rule: induct_rule)\<close>\<close>
@@ -218,52 +213,57 @@ method wellbehavedness
     \<comment> \<open>If that approach didn't work, return the original induction case\<close>
     )?
 
-
 datatype_nat_wellbehaved nat
-  unfolding wellbehaved_def using dec_Nat_nat.simps enc_Nat_nat.simps by simp
+  using dec_Nat_nat.simps enc_Nat_nat.simps by fastforce
 thm Nat_nat_wellbehaved
 
 datatype_nat_wellbehaved list
-  by (wellbehavedness
-      induct_rule: list.induct
-      enc_simps: enc_List_list.simps
-      assms: assms)
-thm List_list_wellbehaved
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: list.induct; simp add: enc_List_list.simps)
+  done
 
 datatype_nat_wellbehaved prod
-  by (wellbehavedness
-      induct_rule: prod.induct
-      enc_simps: enc_Product_Type_prod.simps
-      assms: assms)
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: prod.induct; simp add: enc_Product_Type_prod.simps)
+  done
+
 thm Product_Type_prod_wellbehaved
 
 datatype_nat_wellbehaved tree
-  by (wellbehavedness
-      induct_rule: tree.induct
-      enc_simps: enc_Tree_tree.simps
-      assms: assms)
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: tree.induct; simp add: enc_Tree_tree.simps)
+  done
+
 thm Tree_tree_wellbehaved
 
 datatype_nat_wellbehaved keyed_list_tree
-  by (wellbehavedness
-      induct_rule: keyed_list_tree.induct
-      enc_simps: enc_Encode_Nat_keyed_list_tree.simps
-      assms: assms
-      \<comment> \<open>Include wellbehavedness facts about referenced types\<close>
-      uses_wellbehaved: List_list_wellbehaved[OF assms(2)])
+  apply(intro ext)
+  subgoal for x
+    apply(induction x rule: keyed_list_tree.induct)
+    using List_list_wellbehaved[OF assms(2)] assms(1)
+    by (simp add: enc_Encode_Nat_keyed_list_tree.simps pointfree_idE)+
+  done
+
 thm Encode_Nat_keyed_list_tree_wellbehaved
 
 datatype_nat_wellbehaved forest
-  apply (wellbehavedness
-      induct_rule: forest.induct
-      enc_simps: enc_Encode_Nat_forest.simps
-      assms: assms
-      uses_wellbehaved: List_list_wellbehaved[OF assms(1)])
-  subgoal
-    apply (subst enc_Encode_Nat_forest.simps dec_Encode_Nat_forest.simps)
-    apply (induction rule: list.induct)
-    by (simp add: enc_List_list.simps enc_Encode_Nat_forest.simps)+
+  apply(intro ext)
+  subgoal for x
+    apply(induction x rule: forest.induct)
+    using List_list_wellbehaved[OF assms(1)]
+     apply (simp add: enc_Encode_Nat_forest.simps pointfree_idE)
+    subgoal for x
+      apply (induction x rule: list.induct)
+      by(simp add: enc_List_list.simps enc_Encode_Nat_forest.simps)+
+    done
   done
+
 thm Encode_Nat_forest_wellbehaved
 
 method natfn_correctness
@@ -295,11 +295,16 @@ function_nat_rewrite reverset
 thm reverset_nat.simps
 
 function_nat_rewrite_correctness reverset
-  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: reverset.induct\<close>
-      assms: assms
-      simps_nat: reverset_nat.simps
-      enc_simps: enc_List_list.simps
-      args_wellbehaved: List_list_wellbehaved[OF assms(1)])
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct)
+   apply(all \<open>subst reverset_nat.simps\<close>)
+  subgoal
+    apply(subst enc_List_list.simps)
+    using List_list_wellbehaved[OF assms(1)]
+    by(simp add: assms pointfree_idE )
+  subgoal
+    by(simp add: enc_List_list.simps)
+  done
+
 thm reverset_nat_equiv
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
@@ -318,30 +323,50 @@ corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
 
 function_nat_rewrite prefixest
 thm prefixest_nat.simps
+thm prefixest.induct
 
 function_nat_rewrite_correctness prefixest
+  using assms
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct; subst prefixest_nat.simps)
+  using List_list_wellbehaved[OF List_list_wellbehaved, OF assms(1), THEN pointfree_idE]
+  by(simp add: enc_List_list.simps Let_def)+
+
+(* or
   by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct\<close>
       assms: assms
       simps_nat: prefixest_nat.simps
       enc_simps: enc_List_list.simps
-      args_wellbehaved: List_list_wellbehaved[OF List_list_wellbehaved[OF assms(1)]])
+      args_wellbehaved:
+      List_list_wellbehaved[OF List_list_wellbehaved, OF assms(1), THEN pointfree_idE])
+*)
+
 thm prefixest_nat_equiv
+
 
 fun prefixes2 where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
 function_nat_rewrite prefixes2
-thm prefixes2_nat.simps
+thm prefixes2_nat.simps back_subst[of _ "x # xs"]
+
 
 function_nat_rewrite_correctness prefixes2
+  using assms
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct; subst prefixes2_nat.simps)
+  subgoal for ps
+    using
+      reverset_nat_equiv[OF List_list_wellbehaved, OF assms, of "[] # ps" "[]"]
+    by(simp add: enc_List_list.simps)
+  by(simp add: enc_List_list.simps Let_def)
+(*
   apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct\<close>
       assms: assms
       simps_nat: prefixes2_nat.simps
       enc_simps: enc_List_list.simps
       dels: reverset.simps
-      args_wellbehaved: List_list_wellbehaved[OF List_list_wellbehaved[OF assms(1)]]
-      List_list_wellbehaved[OF assms(1)])
+      args_wellbehaved: List_list_wellbehaved[OF List_list_wellbehaved, OF assms(1), THEN pointfree_idE]
+      List_list_wellbehaved[OF assms(1), THEN pointfree_idE])
   subgoal for ps
     \<comment> \<open>We need to explicitly instantiate the equivalence rule for the called function.\<close>
     \<comment> \<open>Figuring out exactly what fact to supply is very mechanic:\<close>
@@ -350,6 +375,7 @@ function_nat_rewrite_correctness prefixes2
     using reverset_nat_equiv[OF List_list_wellbehaved[OF assms(1)], of "[] # ps" "[]"]
     by (simp add: enc_List_list.simps)
   done
+*)
 thm prefixes2_nat_equiv
 
 fun subtrees :: "'a tree \<Rightarrow> 'a tree list" where
@@ -383,8 +409,9 @@ function_nat_rewrite_correctness subtreest
       assms: assms
       simps_nat: subtreest_nat.simps
       enc_simps: enc_List_list.simps enc_Tree_tree.simps
-      args_wellbehaved: Tree_tree_wellbehaved[OF assms(1)]
-      List_list_wellbehaved[OF Tree_tree_wellbehaved[OF assms(1)]])
+      args_wellbehaved: Tree_tree_wellbehaved[OF assms(1), THEN pointfree_idE]
+      List_list_wellbehaved[OF Tree_tree_wellbehaved, OF assms(1), THEN pointfree_idE])
 thm subtreest_nat_equiv
+
 
 end
