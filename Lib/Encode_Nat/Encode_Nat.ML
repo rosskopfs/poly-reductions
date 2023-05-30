@@ -461,74 +461,46 @@ fun change_const_to_nat parent parent_nat (Const (cident, ctyp)) =
        else Const (cident ^ "_nat", dummyT)
  | change_const_to_nat _ _ x = x \<comment> \<open>return \<open>Free\<close>, \<open>Var\<close>, \<open>Bound\<close> unchanged\<close>
 
-fun nat_encode_simp_rules ctx thms =
+fun function_nat_rewrite s lthy =
   let
-    val argcount =
-      map (Thm.prop_of #> HOLogic.dest_Trueprop)
-      #> map (HOLogic.dest_eq #> fst #> Term.args_of #> List.length)
-      \<comment> \<open>sanity check: all equations have the same argument count\<close>
-      #> all_values_same
-      #> the
-    val args' =
-      argcount thms
+    val t = Syntax.read_term lthy s;
+    val (fun_name, _) = dest_Const t;
+    val newfun_name = (Long_Name.base_name fun_name) ^ "_nat";
+    val arg_Ts = (binder_types (fastype_of t));
+    val arg_ts =
+      List.length arg_Ts
       |> argnames
-      |> (map (fn n => Free (n, @{typ "pair_repr"})))
-    val funcname =
-      map (Thm.prop_of #> HOLogic.dest_Trueprop)
-      #> map (HOLogic.dest_eq #> fst)
-      #> map (Term.head_of #> Term.dest_Const #> fst)
-      \<comment> \<open>sanity check: all equations have the same head\<close>
-      #> all_values_same
-      #> the
-    val funcname' = Free (Long_Name.base_name (funcname thms) ^ "_nat", dummyT)
-    val lhs' = Term.list_comb (funcname', args')
+      |> (map (fn n => Free (n, @{typ "pair_repr"})));
+    val newfun_T = ((map (K @{typ "pair_repr"}) arg_Ts) ---> @{typ "pair_repr"});
+    val newfun_t = Free (newfun_name, newfun_T);
+    val lhs = Term.list_comb (newfun_t, arg_ts);
     val ite =
-      thms
-      |> map (fn x => bothM (build_nat_condition ctx x, nat_encode_term ctx x))
+      Proof_Context.get_thms lthy (fun_name ^ ".simps")
+      |> map (fn x => bothM (build_nat_condition lthy x, nat_encode_term lthy x))
       |> allM
       |> the
       |> build_ite
-      |> Term.map_aterms (change_const_to_nat (funcname thms) funcname')
+      |> Term.map_aterms (change_const_to_nat fun_name newfun_t);
+    val res = (lhs, ite)
+    |> BNF_Util.mk_Trueprop_eq
+    |> singleton (Type_Infer_Context.infer_types lthy) |> @{print};   (* last line not necessary if properly handle types? *)
+    val (_, newfun_lthy) =
+      Partial_Function.add_partial_function
+        "tailrec"
+        [(Binding.name newfun_name, NONE, NoSyn)]
+        ((Binding.empty, []), res)
+        lthy;
   in
-    (lhs', ite)
-    |> HOLogic.mk_Trueprop o mk_eq_dummyT
-    |> Term.map_types tvar_to_tfree
-    |> singleton (Type_Infer_Context.infer_types ctx)
+    newfun_lthy
   end
 
-fun function_nat_cmd f =
-  (Parse.binding >> (fn bound => fn lthy =>
-    let
-      val name = Binding.name_of bound
-      val simps = Proof_Context.get_thms lthy (name ^ ".simps")
-      val eqns = nat_encode_simp_rules lthy simps
-      val fixes = [(Binding.name (name ^ "_nat"), NONE, NoSyn)]
-    in
-      f eqns fixes lthy
-    end))
 
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>function_nat_rewrite\<close>
     "converts existing tail-recursive functions into nat encoded functions"
-    (function_nat_cmd (fn eqns => fn fixes =>
-        snd o Partial_Function.add_partial_function
-                "tailrec" (@{print} fixes) ((Binding.empty, []), eqns)))
+    ((Parse.term ) >> function_nat_rewrite)
 
-val _ =
-  Outer_Syntax.local_theory
-    \<^command_keyword>\<open>function_nat_rewrite_manual\<close>
-    "converts existing functions into nat encoded functions"
-    (function_nat_cmd (fn eqns => fn fixes =>
-        let
-          fun pat_completeness_auto ctxt =
-            Pat_Completeness.pat_completeness_tac ctxt 1 THEN auto_tac ctxt
-        in
-          snd o Function.add_function
-                  fixes [((Binding.empty_atts, eqns), [], [])]
-                  Function_Fun.fun_config
-                  pat_completeness_auto
-        end))
 
 fun correctness_thm name (int : bool) lthy : Proof.state =
   let
