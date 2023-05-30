@@ -19,13 +19,8 @@ fun both f = f *** f
 fun bothM (SOME a, SOME b) = SOME (a, b)
   | bothM _ = NONE
 
-fun allM (x :: xs) = bothM (x, allM xs) |> Option.map (op ::)
+fun allM (x :: xs) = Option.map (op ::) (bothM (x, allM xs))
   | allM [] = SOME []
-
-fun all_values_same []        = NONE
-  | all_values_same [x]       = SOME x
-  | all_values_same (x :: xs) = if SOME x = all_values_same xs
-                                then SOME x else NONE
 
 fun zip (x :: xs) (y :: ys) = (x, y) :: zip xs ys
   | zip _         _         = []
@@ -75,8 +70,6 @@ fun build_unpairing_from_idx t idx length =
     else @{term fstP} $ repeat_snd (idx + 1) t
   end
 
-val CONSTRUCTOR_OFFSET = 1
-
 fun collect_tvars typ : (indexname * sort) list =
   case typ of Type (_, typlist) => map collect_tvars typlist |> List.concat
             | TVar (indexname, sort) => [(indexname, sort)]
@@ -96,7 +89,6 @@ fun constructor_to_int (ctr, typ) ctx =
     |> fst
     |> Ctr_Sugar.ctr_sugar_of ctx
     |> Option.mapPartial (#ctrs #> get_index matches_ctr)
-    (*|> Option.map (fn c => fst c + CONSTRUCTOR_OFFSET) *)
     |> Option.map (fn c => fst c)
   end
 
@@ -138,16 +130,6 @@ fun build_encoder_invocation ctx (freetyp : typ option) : typ -> term =
           else
             inferT (read_const' ctx ("enc_" ^ sanitize_sugar_name sugar))
         end)
-
-fun build_encoder_invocation_example__ ctx : typ -> term =
-  invocation_factory "enc_" (dummyT --> @{typ "pair_repr"}) ctx
-    (fn (name, _) =>
-      let val sugar = Ctr_Sugar.ctr_sugar_of ctx name |> the
-      in Const ("enc_" ^ sanitize_sugar_name sugar, dummyT)
-      end)
-
-val tfree_to_tvar_example__ =
-  Term.map_atyps (fn t => case t of TFree (str, srt) => TVar ((str, 0), srt) | t => t)
 
 fun build_encoder ctx sugar =
   if #T sugar = @{typ "nat"}
@@ -280,7 +262,6 @@ fun mk_wellbehaved enc dec =
     $ (inferT @{term "Fun.comp"} $ dec $ enc)
     $ inferT @{term "Fun.id"})
 
-
 fun wellbehavedness_thm (sugar: Ctr_Sugar.ctr_sugar) int lthy =
   let
   val typeargs =
@@ -348,9 +329,6 @@ fun build_patmatch_term (Var v) = SOME (VARIABLE v)
       |> (fn (t', args) =>
             allM (map build_patmatch_term args)
             |> Option.map (fn args' => CONSTRUCTOR (t', args')))
-
-val free_to_var_example__ =
-  Term.map_aterms (fn t => case t of Free (str, typ) => Var ((str, 0), typ) | t => t)
 
 fun retag_list [] = []
   | retag_list [x] = x
