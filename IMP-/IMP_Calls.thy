@@ -9,6 +9,7 @@ datatype
       | Seq'    com'  com'
       | If'     vname com' com'
       | While'  vname com'
+\<comment> \<open>The only change: A call to an IMP- @{typ com}, storing its result in the return @{typ vname}.\<close>
       | Call'   com vname
 
 bundle com'_syntax begin
@@ -424,29 +425,33 @@ definition inline :: "com' \<Rightarrow> com" where
   [simp]: "inline c = inline_S (vars c) c"
 
 corollary inline_sound:
-  assumes c_sem: "(c,s) \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+  assumes c_sem: "(c,s') \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+      and s: "s' = s on set (vars c)"
       and inline_sem: "(inline c,s)\<Rightarrow>\<^bsup>z\<^esup> t"
     shows "t = t' on set (vars c) \<and> z \<le> z' + (z' + 1) * size\<^sub>c c"
 proof -
-  have hyps:"s = s on set (vars c)" "set (vars c) \<subseteq> set (vars c)" by auto
-  show ?thesis unfolding inline_def using inline_S_sound[OF c_sem hyps hyps(2) hyps(2) inline_sem[unfolded inline_def]] by blast
+  have S: "set (vars c) \<subseteq> set (vars c)" by auto
+  show ?thesis unfolding inline_def 
+    by (rule inline_S_sound[OF c_sem s S S S inline_sem[unfolded inline_def]])
 qed
 
-lemma inline_complete:
-  assumes c_sem: "(c,s) \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+corollary inline_complete:
+  assumes c_sem: "(c,s') \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+      and s: "s' = s on set (vars c)"
     shows "\<down> (inline c,s)"
 proof -
-  have hyps:"s = s on set (vars c)" "set (vars c) \<subseteq> set (vars c)" by auto
-  show ?thesis unfolding inline_def using inline_S_complete[OF c_sem hyps] by auto
+  have S: "set (vars c) \<subseteq> set (vars c)" by auto
+  show ?thesis unfolding inline_def by (rule inline_S_complete[OF c_sem s S S S])
 qed
 
 text \<open>Final correctness theorem\<close>
 theorem inline_correct:
-  assumes "(c,s) \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+  assumes "(c,s') \<Rightarrow>'\<^bsup>z'\<^esup> t'"
+      and "s' = s on set (vars c)"
   obtains z t 
-  where "(inline c,s)\<Rightarrow>\<^bsup>z\<^esup> t" 
-    and "t = t' on set (vars c)" 
-    and "z \<le> (z' + 1) * (1 + size\<^sub>c c)"
+    where "(inline c,s)\<Rightarrow>\<^bsup>z\<^esup> t" 
+      and "t = t' on set (vars c)" 
+      and "z \<le> (z' + 1) * (1 + size\<^sub>c c)"
   using assms inline_complete[OF assms] inline_sound[OF assms] by (fastforce simp: algebra_simps)
 
 end
