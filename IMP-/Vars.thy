@@ -1,5 +1,5 @@
 \<^marker>\<open>creator Fabian Huch\<close>
-
+(* todo merge with existing vars *)
 theory Vars imports Big_StepT
 begin
 
@@ -139,62 +139,85 @@ lemma var_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v
 lemma rvars_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> rvars c \<Longrightarrow> s v = t v"
   by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
 
-lemma big_step_subst:
-  "\<lbrakk>(c,s) \<Rightarrow>\<^bsup>z\<^esup> t; set (vars c) \<subseteq> S; s = s' o m on S ; inj_on m S; (subst m c,s') \<Rightarrow>\<^bsup>z'\<^esup> t'\<rbrakk>
-     \<Longrightarrow> t = t' o m on S \<and> z = z'"
-proof (induction c s z t arbitrary: s' z' t' rule: big_step_t_induct)
-  case (Assign x a s)
-  then show ?case 
-    by (auto intro: rev_image_eqI simp: subset_inj_on subsetD dest: subsetD )
-       (simp add: inj_on_contraD)
-next
-  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z s\<^sub>1' s\<^sub>3')
-  then show ?case by auto blast+
-next
-  case (IfTrue s b c1 x t y c2)
-  then show ?case by auto
-next
-  case (IfFalse s b c2 x t y c1)
-  then show ?case by auto
-next
-  case (WhileTrue s1 b c x s2 y s3 z)
-  then show ?case by clarsimp (smt (verit) WhileTrue.hyps(1) While_tE)
-qed auto
-
-lemma subst_complete:
-  "\<lbrakk>(c,s) \<Rightarrow>\<^bsup>z\<^esup> t; set (vars c) \<subseteq> S; s = s' o m on S ; inj_on m S\<rbrakk>
-     \<Longrightarrow> \<down>(subst m c,s')"
+lemma subst_sound:
+  "\<lbrakk> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
+    \<Longrightarrow> \<exists>t'. (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m on S"
 proof (induction c s z t arbitrary: s' rule: big_step_t_induct)
-  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z s\<^sub>1')
-  hence "\<down> (subst m c\<^sub>1, s\<^sub>1')" by auto
-  then obtain s\<^sub>2' x' where 1: "(subst m c\<^sub>1, s\<^sub>1') \<Rightarrow>\<^bsup>x'\<^esup> s\<^sub>2'" by blast
-
-  with Seq big_step_subst have "s\<^sub>2 = s\<^sub>2' o m on S" "x' = x" by auto blast+
-  with Seq have  "\<down>(subst m c\<^sub>2, s\<^sub>2')" by auto
-  then obtain s\<^sub>3' y' where 2: "(subst m c\<^sub>2, s\<^sub>2') \<Rightarrow>\<^bsup>y'\<^esup> s\<^sub>3'" by blast
-
-  show ?case
-    using "1" "2" by auto
+  case Assign then show ?case
+    by (auto simp: subset_inj_on subsetD inj_on_contraD)
 next
-  case (IfTrue s b c1 x t y c2)
-  then show ?case apply auto using big_step_subst
-    by (metis IfTrue.hyps(1) big_step_t.IfTrue)
+  case Seq then show ?case by fastforce
 next
-  case (IfFalse s b c2 x t y c1)
-  then show ?case apply auto using big_step_subst 
-    by (metis big_step_t.IfFalse)
+  case IfTrue then show ?case by fastforce
 next
+  case IfFalse then show ?case by fastforce
+next
+thm WhileTrue
   case (WhileTrue s\<^sub>1 b c x s\<^sub>2 y s\<^sub>3 z s\<^sub>1')
-  hence "\<down> (subst m c, s\<^sub>1')" by auto
-  then obtain s\<^sub>2' x' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup>x'\<^esup> s\<^sub>2'" by blast
-  with WhileTrue big_step_subst have "s\<^sub>2 = s\<^sub>2' o m on S" "x' = x"
-    apply auto
-    apply blast
-    apply metis
-    done
-  with WhileTrue have "\<down> (subst m (While b c), s\<^sub>2')" "s\<^sub>1' (m b) \<noteq> 0" by auto
-  then obtain s\<^sub>3' y' where 2: "(subst m (While b c), s\<^sub>2')\<Rightarrow>\<^bsup>y'\<^esup> s\<^sub>3'" by blast
-  from 1 2 \<open>s\<^sub>1' (m b) \<noteq> 0\<close> show ?case by auto
+  then obtain s\<^sub>2' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' \<circ> m on S" by force
+  with WhileTrue obtain s\<^sub>3' where 2: "(subst m (WHILE b\<noteq>0 DO c), s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' \<circ> m on S" by force
+  have "(WHILE m b\<noteq>0 DO (subst m c), s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'"
+    apply (rule big_step_t.WhileTrue)
+    using 1 2 WhileTrue by auto
+  with 2 show ?case by auto 
 qed auto
+ 
+lemma subst_complete:
+  "\<lbrakk> (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t'; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
+    \<Longrightarrow> \<exists>t. (c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<and> t = t' o m on S"
+proof (induction "subst m c" s' z t' arbitrary: c s rule: big_step_t_induct)
+  case (Skip s c s')
+  then show ?case by (cases c) auto
+next
+  case (Assign x a  s' c s)
+  then obtain x' a' where defs: "c = x' ::= a'" "x = m x'" "a = subst m a'" by (cases c) auto
+  moreover have "(x' ::= a',s) \<Rightarrow>\<^bsup>Suc (Suc 0)\<^esup> s(x' := aval a' s)" by auto
+  moreover have "s(x' := aval a' s) = s'(x := aval a s') \<circ> m on S"
+    by (smt (verit, best) Assign.prems(1) Assign.prems(2) Assign.prems(3) aval_eq_if_eq_on_vars 
+        aval_subst calculation(1) calculation(2) calculation(3) comp_apply fun_upd_other 
+        fun_upd_same in_mono inj_onD inj_onI list.set_intros(1) list.set_intros(2) vars_com.simps(2))
+  ultimately show ?case by auto
+next
+  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
+  then obtain c\<^sub>1' c\<^sub>2' where [simp]: "c = c\<^sub>1';; c\<^sub>2'" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
+  with Seq.prems have S: "set (vars c\<^sub>1') \<subseteq> S" "set (vars c\<^sub>2') \<subseteq> S" by auto
+  with Seq.hyps(2)[OF _ Seq.prems(1) S(1) Seq.prems(3)] obtain s\<^sub>2' where 
+    1: "(c\<^sub>1',s\<^sub>1')\<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto 
+  with Seq.hyps(4)[OF _ this(2), OF _ S(2) Seq.prems(3)] obtain s\<^sub>3' where 
+    2: "(c\<^sub>2', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
+  from 1 2 Seq.hyps(5) show ?case by auto
+next
+  case (IfTrue s b c\<^sub>1 x t z c\<^sub>2 c s')
+  then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
+  with IfTrue have "set (vars c\<^sub>1') \<subseteq> S" by auto
+  with IfTrue.hyps(3)[OF _ IfTrue.prems(1) this IfTrue.prems(3)] obtain t' where 
+    "(c\<^sub>1', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
+  with IfTrue have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
+  with IfTrue.hyps(4) show ?case by fastforce 
+next
+  case (IfFalse s b c\<^sub>2 x t z c\<^sub>1 c s')
+  then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
+  with IfFalse have "set (vars c\<^sub>2') \<subseteq> S" by auto
+  with IfFalse.hyps(3)[OF _ IfFalse.prems(1) this IfFalse.prems(3)] obtain t' where 
+    "(c\<^sub>2', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
+  with IfFalse have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
+  with IfFalse.hyps(4) show ?case by fastforce 
+next
+  case (WhileFalse s b c\<^sub>1 c s')
+  then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
+  with WhileFalse show ?case apply auto
+    by (metis \<open>m b' = b\<close> big_step_t.WhileFalse)
+next
+  case (WhileTrue s\<^sub>1 b c\<^sub>1 x s\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
+  then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
+  with WhileTrue have "set (vars c\<^sub>1') \<subseteq> S" by auto
+  with WhileTrue.hyps(3)[OF _ WhileTrue.prems(1) this WhileTrue.prems(3)] obtain s\<^sub>2' where
+    1: "(c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto
+  with WhileTrue.hyps(5)[OF _ this(2) WhileTrue.prems(2) WhileTrue.prems(3)] obtain s\<^sub>3' where
+    2: "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
+  from 1 2 WhileTrue.hyps(1,6) WhileTrue.prems(1,2) have 
+    "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
+  thus ?case by auto
+qed
 
 end
