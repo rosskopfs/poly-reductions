@@ -12,12 +12,14 @@ theory Encode_Nat
     "HOL-Library.Multiset"
     "HOL-Eisbach.Eisbach"
     "HOL-Eisbach.Eisbach_Tools"
+    Test
   keywords
+    "test" :: thy_decl and
+    "test2" :: thy_decl and
     "datatype_nat_encode" :: thy_decl and
     "datatype_nat_decode" :: thy_goal and
     "datatype_nat_wellbehaved" :: thy_goal and
     "function_nat_rewrite" :: thy_decl and
-    "function_nat_rewrite_manual" :: thy_decl and
     "function_nat_rewrite_correctness" :: thy_goal
 begin
 
@@ -70,29 +72,36 @@ proof -
   then show ?thesis using prod_decode_inverse[of v] unfolding xyv by simp
 qed
 
+declare [[ML_print_depth = 50]]
+
+
 datatype_nat_encode nat
-declare enc_Nat_nat.simps [simp del]
-thm enc_Nat_nat.simps
+declare enc_nat.simps [simp del]
 
 datatype_nat_encode list
-declare enc_List_list.simps [simp del]
-thm enc_List_list.simps
+declare enc_list.simps [simp del]
+
+datatype_nat_encode bool
+declare enc_bool.simps [simp del]
+
+datatype_nat_encode char
+declare enc_char.simps [simp del]
 
 datatype_nat_encode prod
-declare enc_Product_Type_prod.simps [simp del]
-thm enc_Product_Type_prod.simps
+declare enc_prod.simps [simp del]
 
 datatype_nat_encode tree
-declare enc_Tree_tree.simps [simp del]
-thm enc_Tree_tree.simps
+declare enc_tree.simps [simp del]
+
 
 datatype ('a, 'b) keyed_list_tree =
   KLeaf |
   KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
 
+
 datatype_nat_encode keyed_list_tree
-declare enc_Encode_Nat_keyed_list_tree.simps [simp del]
-thm enc_Encode_Nat_keyed_list_tree.simps
+declare enc_keyed_list_tree.simps [simp del]
+thm enc_keyed_list_tree.simps
 
 datatype 'a forest =
   FLeaf |
@@ -101,46 +110,47 @@ datatype 'a forest =
 lemma enc_List_list_cong[fundef_cong]:
   assumes "xs = ys"
     and "\<And>x. x \<in> set ys \<Longrightarrow> enc\<^sub>a x = enc\<^sub>b x"
-  shows "enc_List_list enc\<^sub>a xs = enc_List_list enc\<^sub>b ys"
-  using assms by (induction xs arbitrary: ys; auto simp add: enc_List_list.simps)
+  shows "enc_list enc\<^sub>a xs = enc_list enc\<^sub>b ys"
+  using assms by (induction xs arbitrary: ys; auto simp add: enc_list.simps)
 
 datatype_nat_encode forest
-declare enc_Encode_Nat_forest.simps [simp del]
-thm enc_Encode_Nat_forest.simps
+declare enc_forest.simps [simp del]
+thm enc_forest.simps
 
 method decode_termination for t =
   relation t, auto;
-  \<comment> \<open>If some cases don't work, don't fail completely! Return them unchanged.\<close>
   (auto intro!: prod_decode_less snd_prod_decode_lt_intro)?
+
+
 
 
 datatype_nat_decode nat
 termination by (decode_termination "measure id")
-thm dec_Nat_nat.simps
+thm dec_nat.simps
 
 datatype_nat_decode list
 termination by (decode_termination "measure snd")
-declare dec_List_list.simps[simp del]
-lemmas [simp] = dec_List_list.simps[of _ "prod_encode _"]
-thm dec_List_list.simps
+declare dec_list.simps[simp del]
+lemmas [simp] = dec_list.simps[of _ "prod_encode _"]
+thm dec_list.simps
 
 datatype_nat_decode prod
 termination by (decode_termination "measure (snd o snd)")
-declare dec_Product_Type_prod.simps[simp del]
-lemmas [simp] = dec_Product_Type_prod.simps[of _ _ "prod_encode _"]
-thm dec_Product_Type_prod.simps
+declare dec_prod.simps[simp del]
+lemmas [simp] = dec_prod.simps[of _ _ "prod_encode _"]
+thm dec_prod.simps
 
 datatype_nat_decode tree
 termination by (decode_termination "measure snd")
-declare dec_Tree_tree.simps[simp del]
-lemmas [simp] = dec_Tree_tree.simps[of _ "prod_encode _"]
-thm dec_Tree_tree.simps
+declare dec_tree.simps[simp del]
+lemmas [simp] = dec_tree.simps[of _ "prod_encode _"]
+thm dec_tree.simps
 
 datatype_nat_decode keyed_list_tree
-termination by (decode_termination "measure (snd o snd)")(*<*)
-declare dec_Encode_Nat_keyed_list_tree.simps[simp del]
-lemmas [simp] = dec_Encode_Nat_keyed_list_tree.simps[of _ _ "prod_encode _"]
-thm dec_Encode_Nat_keyed_list_tree.simps
+termination by (decode_termination "measure (snd o snd)")
+declare dec_keyed_list_tree.simps[simp del]
+lemmas [simp] = dec_keyed_list_tree.simps[of _ _ "prod_encode _"]
+thm dec_keyed_list_tree.simps
 
 
 inductive_set
@@ -164,12 +174,12 @@ lemma subpairings_le: "a \<in> subpairings x \<Longrightarrow> a \<le> x"
 lemma dec_List_list_cong[fundef_cong]:
   assumes "x = y"
     and "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
-  shows "dec_List_list dec\<^sub>a x = dec_List_list dec\<^sub>b y"
+  shows "dec_list dec\<^sub>a x = dec_list dec\<^sub>b y"
   unfolding assms(1)
   using assms(2)
-  apply (induction dec\<^sub>a y rule: dec_List_list.induct)
+  apply (induction dec\<^sub>a y rule: dec_list.induct)
   subgoal for _ v
-    apply (unfold dec_List_list.simps[of _ v])
+    apply (unfold dec_list.simps[of _ v])
     using subpairings.intros
       \<comment> \<open>specialized for the recursive constructor field:\<close>
       subpairings_sndP_imp[OF subpairings_sndP_imp[of _ "sndP v"]]
@@ -185,9 +195,9 @@ termination proof (decode_termination "measure snd")
     using subpairings_le snd_prod_decode_lt_intro by (fastforce simp: order_le_less_trans)
 qed
 
-declare dec_Encode_Nat_forest.simps[simp del]
-lemmas [simp] = dec_Encode_Nat_forest.simps[of _ "prod_encode _"]
-thm dec_Encode_Nat_forest.simps
+declare dec_forest.simps[simp del]
+lemmas [simp] = dec_forest.simps[of _ "prod_encode _"]
+thm dec_forest.simps
 
 
 method wellbehavedness_case
@@ -213,58 +223,78 @@ method wellbehavedness
     \<comment> \<open>If that approach didn't work, return the original induction case\<close>
     )?
 
+ML \<open>
+val T = @{typ "'a list"};
+is_Type T;
+is_TFree T;
+is_TVar T;
+val [T'] = dest_Type T |> snd;
+is_Type T;
+is_TFree T;
+is_TVar T;
+\<close>
+
+
+datatype_nat_decode bool
+termination by (decode_termination "measure id")
+declare dec_bool.simps[simp del]
+
+datatype_nat_wellbehaved bool
+  by(intro ext, simp add: dec_bool.simps enc_bool.simps split:bool.split)
+thm encoding_bool_wellbehaved
+
 datatype_nat_wellbehaved nat
-  using dec_Nat_nat.simps enc_Nat_nat.simps by fastforce
-thm Nat_nat_wellbehaved
+  using dec_nat.simps enc_nat.simps by fastforce
+thm encoding_nat_wellbehaved
 
 datatype_nat_wellbehaved list
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: list.induct; simp add: enc_List_list.simps)
+    by(induction x rule: list.induct; simp add: enc_list.simps)
   done
 
 datatype_nat_wellbehaved prod
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: prod.induct; simp add: enc_Product_Type_prod.simps)
+    by(induction x rule: prod.induct; simp add: enc_prod.simps)
   done
 
-thm Product_Type_prod_wellbehaved
+thm encoding_prod_wellbehaved
 
 datatype_nat_wellbehaved tree
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: tree.induct; simp add: enc_Tree_tree.simps)
+    by(induction x rule: tree.induct; simp add: enc_tree.simps)
   done
 
-thm Tree_tree_wellbehaved
+thm encoding_tree_wellbehaved
 
 datatype_nat_wellbehaved keyed_list_tree
   apply(intro ext)
   subgoal for x
     apply(induction x rule: keyed_list_tree.induct)
-    using List_list_wellbehaved[OF assms(2)] assms(1)
-    by (simp add: enc_Encode_Nat_keyed_list_tree.simps pointfree_idE)+
+    using encoding_list_wellbehaved[OF assms(2)] assms(1)
+    by (simp add: enc_keyed_list_tree.simps pointfree_idE)+
   done
 
-thm Encode_Nat_keyed_list_tree_wellbehaved
+thm encoding_keyed_list_tree_wellbehaved
 
 datatype_nat_wellbehaved forest
   apply(intro ext)
   subgoal for x
     apply(induction x rule: forest.induct)
-    using List_list_wellbehaved[OF assms(1)]
-     apply (simp add: enc_Encode_Nat_forest.simps pointfree_idE)
+    using encoding_list_wellbehaved[OF assms(1)]
+     apply (simp add: enc_forest.simps pointfree_idE)
     subgoal for x
       apply (induction x rule: list.induct)
-      by(simp add: enc_List_list.simps enc_Encode_Nat_forest.simps)+
+      by(simp add: enc_list.simps enc_forest.simps)+
     done
   done
 
-thm Encode_Nat_forest_wellbehaved
+thm encoding_forest_wellbehaved
 
 method natfn_correctness
   methods induct_rule
@@ -275,11 +305,7 @@ method natfn_correctness
   induct_rule;
   \<comment> \<open>Unfold exactly one level of the natfn we're looking at—corresponding to the inductive step\<close>
   subst simps_nat;
-  ( \<comment> \<open>This solves tail-recursive branches and some basic leaves:\<close>
-    print_fact dels,
-    insert args_wellbehaved,
-    simp del: dels add: enc_simps,
-    meson?)?
+  insert args_wellbehaved; simp del: dels add: enc_simps; meson
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
@@ -359,7 +385,7 @@ function_nat_rewrite_correctness prefixes2
       reverset_nat_equiv[OF List_list_wellbehaved, OF assms, of "[] # ps" "[]"]
     by(simp add: enc_List_list.simps)
   by(simp add: enc_List_list.simps Let_def)
-(*
+    (*
   apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct\<close>
       assms: assms
       simps_nat: prefixes2_nat.simps
@@ -411,6 +437,7 @@ function_nat_rewrite_correctness subtreest
       enc_simps: enc_List_list.simps enc_Tree_tree.simps
       args_wellbehaved: Tree_tree_wellbehaved[OF assms(1), THEN pointfree_idE]
       List_list_wellbehaved[OF Tree_tree_wellbehaved, OF assms(1), THEN pointfree_idE])
+
 thm subtreest_nat_equiv
 
 
