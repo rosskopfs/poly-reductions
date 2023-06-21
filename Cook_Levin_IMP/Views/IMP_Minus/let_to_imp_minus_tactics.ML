@@ -1,10 +1,10 @@
-(*  Title: view_cook_levin.ML
+(*  Title:  Views/IMP_Minus/let_to_imp_minus_tactics.ML
     Author: Kevin Kappelmann
 
-Tactics to run IMP Minus programs, track their states changes, and prove their correspondence with
-HOL-While programs.
+Tactics to run IMP Minus programs, track their states changes, and prove their
+correspondence with HOL-let programs.
 *)
-signature WHILE_TO_IMP_MINUS_TACTICS =
+signature LET_TO_IMP_MINUS_TACTICS =
 sig
 
 val if_split_tac : Proof.context -> int ->tactic
@@ -35,7 +35,7 @@ val IMP_Minus_run_finish_tac': thm -> thm -> thm -> (thm * thm) list ->
 
 end
 
-structure While_To_IMP_Minus_Tactics : WHILE_TO_IMP_MINUS_TACTICS =
+structure Let_To_IMP_Minus_Tactics : LET_TO_IMP_MINUS_TACTICS =
 struct
 
 structure U = View_Util
@@ -99,7 +99,7 @@ fun IMP_Minus_run_tac HOL_program_def IMP_loop_body_def correctness_thm_state_de
 
 fun IMP_Minus_finish_tac ctxt =
   U.TRY' (REPEAT_ALL_NEW (U.subst_first_tac ctxt @{thm Let_def} ORELSE' if_split_tac ctxt))
-  THEN_ALL_NEW 
+  THEN_ALL_NEW
     (VCL.rewrite_all_state_app_tac' U.subst_first_tac ctxt
     THEN' VCL.remove_view_eq_tac ctxt
     THEN' asm_full_simp_tac ctxt)

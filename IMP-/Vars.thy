@@ -38,7 +38,7 @@ proof (standard, goal_cases)
   case (1 m c)
   then show ?case by (induction c) auto
 qed
-    
+
 end
 
 instantiation aexp :: vars
@@ -74,18 +74,18 @@ qed
 end
 
 
-lemma atomVal_eq_if_eq_on_vars[simp]:
+lemma atomVal_eq_if_eq_on_vars [simp]:
   "s\<^sub>1 = s\<^sub>2 on set (vars a) \<Longrightarrow> atomVal a s\<^sub>1 = atomVal a s\<^sub>2"
-apply(induction a)
-apply simp_all
-done
+  apply(induction a)
+  apply simp_all
+  done
 
-lemma aval_eq_if_eq_on_vars[simp]:
+lemma aval_eq_if_eq_on_vars [simp]:
   "s\<^sub>1 = s\<^sub>2 on set (vars a) \<Longrightarrow> aval a s\<^sub>1 = aval a s\<^sub>2"
-apply(induction a)
-apply auto
-apply (metis UnCI atomVal_eq_if_eq_on_vars)+
-done
+  apply(induction a)
+  apply auto
+  apply (metis UnCI atomVal_eq_if_eq_on_vars)+
+  done
 
 
 fun rvars :: "com \<Rightarrow> vname set" where
@@ -128,7 +128,7 @@ qed
 end
 
 lemma atomVal_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> atomVal (subst m a) s = (atomVal a (s o m))"
-  by (induction a) auto 
+  by (induction a) auto
 
 lemma aval_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> aval (subst m a) s = aval a (s o m)"
   by (induction a) (auto simp add: inj_on_Un)
@@ -159,9 +159,9 @@ thm WhileTrue
   have "(WHILE m b\<noteq>0 DO (subst m c), s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'"
     apply (rule big_step_t.WhileTrue)
     using 1 2 WhileTrue by auto
-  with 2 show ?case by auto 
+  with 2 show ?case by auto
 qed auto
- 
+
 lemma subst_complete:
   "\<lbrakk> (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t'; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
     \<Longrightarrow> \<exists>t. (c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<and> t = t' o m on S"
@@ -173,35 +173,35 @@ next
   then obtain x' a' where defs: "c = x' ::= a'" "x = m x'" "a = subst m a'" by (cases c) auto
   moreover have "(x' ::= a',s) \<Rightarrow>\<^bsup>Suc (Suc 0)\<^esup> s(x' := aval a' s)" by auto
   moreover have "s(x' := aval a' s) = s'(x := aval a s') \<circ> m on S"
-    by (smt (verit, best) Assign.prems(1) Assign.prems(2) Assign.prems(3) aval_eq_if_eq_on_vars 
-        aval_subst calculation(1) calculation(2) calculation(3) comp_apply fun_upd_other 
+    by (smt (verit, best) Assign.prems(1) Assign.prems(2) Assign.prems(3) aval_eq_if_eq_on_vars
+        aval_subst calculation(1) calculation(2) calculation(3) comp_apply fun_upd_other
         fun_upd_same in_mono inj_onD inj_onI list.set_intros(1) list.set_intros(2) vars_com.simps(2))
   ultimately show ?case by auto
 next
   case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
   then obtain c\<^sub>1' c\<^sub>2' where [simp]: "c = c\<^sub>1';; c\<^sub>2'" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
   with Seq.prems have S: "set (vars c\<^sub>1') \<subseteq> S" "set (vars c\<^sub>2') \<subseteq> S" by auto
-  with Seq.hyps(2)[OF _ Seq.prems(1) S(1) Seq.prems(3)] obtain s\<^sub>2' where 
-    1: "(c\<^sub>1',s\<^sub>1')\<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto 
-  with Seq.hyps(4)[OF _ this(2), OF _ S(2) Seq.prems(3)] obtain s\<^sub>3' where 
+  with Seq.hyps(2)[OF _ Seq.prems(1) S(1) Seq.prems(3)] obtain s\<^sub>2' where
+    1: "(c\<^sub>1',s\<^sub>1')\<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto
+  with Seq.hyps(4)[OF _ this(2), OF _ S(2) Seq.prems(3)] obtain s\<^sub>3' where
     2: "(c\<^sub>2', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
   from 1 2 Seq.hyps(5) show ?case by auto
 next
   case (IfTrue s b c\<^sub>1 x t z c\<^sub>2 c s')
   then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
   with IfTrue have "set (vars c\<^sub>1') \<subseteq> S" by auto
-  with IfTrue.hyps(3)[OF _ IfTrue.prems(1) this IfTrue.prems(3)] obtain t' where 
+  with IfTrue.hyps(3)[OF _ IfTrue.prems(1) this IfTrue.prems(3)] obtain t' where
     "(c\<^sub>1', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
   with IfTrue have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
-  with IfTrue.hyps(4) show ?case by fastforce 
+  with IfTrue.hyps(4) show ?case by fastforce
 next
   case (IfFalse s b c\<^sub>2 x t z c\<^sub>1 c s')
   then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
   with IfFalse have "set (vars c\<^sub>2') \<subseteq> S" by auto
-  with IfFalse.hyps(3)[OF _ IfFalse.prems(1) this IfFalse.prems(3)] obtain t' where 
+  with IfFalse.hyps(3)[OF _ IfFalse.prems(1) this IfFalse.prems(3)] obtain t' where
     "(c\<^sub>2', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
   with IfFalse have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
-  with IfFalse.hyps(4) show ?case by fastforce 
+  with IfFalse.hyps(4) show ?case by fastforce
 next
   case (WhileFalse s b c\<^sub>1 c s')
   then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
@@ -215,7 +215,7 @@ next
     1: "(c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto
   with WhileTrue.hyps(5)[OF _ this(2) WhileTrue.prems(2) WhileTrue.prems(3)] obtain s\<^sub>3' where
     2: "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
-  from 1 2 WhileTrue.hyps(1,6) WhileTrue.prems(1,2) have 
+  from 1 2 WhileTrue.hyps(1,6) WhileTrue.prems(1,2) have
     "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
   thus ?case by auto
 qed

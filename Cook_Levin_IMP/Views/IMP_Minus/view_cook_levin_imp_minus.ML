@@ -1,4 +1,4 @@
-(*  Title: view_cook_levin.ML
+(*  Title:  Views/IMP_Minus/view_cook_levin_imp_minus.ML
     Author: Kevin Kappelmann
 
 Tracking of IMP Minus states changes with View equalities.

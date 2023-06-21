@@ -60,8 +60,7 @@ definition "view_state \<equiv> case_view (\<lambda>st _. st)"
 definition "view_keys \<equiv> case_view (\<lambda>_ ks. ks)"
 
 lemma interp_view_eq:
-  "interp_view v =
-    restrict (interp_state (view_state v)) (interp_keys (view_keys v))"
+  "interp_view v = restrict (interp_state (view_state v)) (interp_keys (view_keys v))"
   unfolding view_state_def view_keys_def interp_view_def interp_state_def
   by (cases v) simp
 

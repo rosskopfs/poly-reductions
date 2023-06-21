@@ -2,15 +2,15 @@
 theory Map_list
   imports
     Cook_Levin_IMP.Primitives_IMP_Minus
-    IMP_Minus_Views.While_To_IMP_Minus_Locale
-    IMP_Minus_Views.While_To_IMP_Minus_Tactics
+    IMP_Minus_Views.Let_To_IMP_Minus_Locale
+    IMP_Minus_Views.Let_To_IMP_Minus_Tactics
 begin
 
 lemma map_list_find_aux_IMP_loop_body_correct_time:
   assumes "(invoke_subprogram p map_list_find_aux_IMP_loop_body, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
   shows "t = map_list_find_aux_state_upd_time 0 (map_list_find_aux_imp_to_HOL_state p s)"
   apply (insert assms)
-  apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+  apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
     @{thm map_list_find_aux_state_upd_time_def} @{thm map_list_find_aux_IMP_loop_body_def}
     @{thm map_list_find_aux_imp_to_HOL_state_def}
     [(@{thm tl_IMP_Minus_correct}, @{thm tl_imp_to_HOL_state_def})]
@@ -22,7 +22,7 @@ lemma map_list_find_aux_IMP_after_loop_correct_time:
   assumes "(invoke_subprogram p map_list_find_aux_IMP_after_loop, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
   shows "t = map_list_find_aux_imp_after_loop_time 0 (map_list_find_aux_imp_to_HOL_state p s)"
   apply (insert assms)
-  apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+  apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
     @{thm map_list_find_aux_imp_after_loop_time_def} @{thm map_list_find_aux_IMP_after_loop_def}
     @{thm map_list_find_aux_imp_to_HOL_state_def}
     [
@@ -33,9 +33,9 @@ lemma map_list_find_aux_IMP_after_loop_correct_time:
     ]
     @{cterm "map_list_find_aux_IMP_vars"} @{cterm p}
     @{context})\<close>)
-  done  
+  done
 
-interpretation I: While_To_IMP_Minus where
+interpretation I: Let_To_IMP_Minus where
   cond_var = map_list_find_aux_while_cond and
   cond_let = map_list_find_aux_imp_compute_loop_condition and
   body_let = map_list_find_aux_state_upd and
@@ -50,7 +50,7 @@ interpretation I: While_To_IMP_Minus where
   subgoal by (simp add: map_list_find_aux_imp_to_HOL_state_def)
   subgoal by auto
   subgoal for s t s' p
-    apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+    apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
       @{thm map_list_find_aux_imp_after_loop_def} @{thm map_list_find_aux_IMP_after_loop_def}
       @{thm map_list_find_aux_imp_to_HOL_state_def}
       [
@@ -63,7 +63,7 @@ interpretation I: While_To_IMP_Minus where
       @{context})\<close>)
     done
   subgoal for s t s' p
-    apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+    apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
     @{thm map_list_find_aux_state_upd_def} @{thm map_list_find_aux_IMP_loop_body_def}
     @{thm map_list_find_aux_imp_to_HOL_state_def}
     [(@{thm tl_IMP_Minus_correct}, @{thm tl_imp_to_HOL_state_def})]
@@ -71,7 +71,7 @@ interpretation I: While_To_IMP_Minus where
     @{context})\<close>)
     done
   subgoal for s t s' p
-    apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac (resolve0_tac @{thms conjI})
+    apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac (resolve0_tac @{thms conjI})
       @{thm map_list_find_aux_imp_compute_loop_condition_def} @{thm map_list_find_aux_IMP_init_while_cond_def}
       @{thm map_list_find_aux_imp_to_HOL_state_def}
       [

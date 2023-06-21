@@ -30,17 +30,23 @@ session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
   sessions
     "HOL-Library"
   directories
+    "IMP_Minus"
+    "IMP_Minus_Calls"
     "ML_Typeclasses"
     "ML_Typeclasses/State"
   theories
     "Views_Cook_Levin_IMP_Minus"
-    "While_To_IMP_Minus_Locale"
-    "While_To_IMP_Minus_Tactics"
+    "Let_To_IMP_Minus_Locale"
+    "Let_To_IMP_Minus_Tactics"
+    "States_Cook_Levin_IMP_Minus_Calls"
+    "Let_To_IMP_Minus_Calls_Locale"
+    "Let_To_IMP_Minus_Calls_Tactics"
 
 session IMP_Minus_Views_Examples in "Cook_Levin_IMP/Views/Examples" = Cook_Levin_IMP +
   theories
     "Elemof"
     "Filter_Defined_Acc"
+    "Filter_Defined_Acc_Call"
 
 session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
   sessions

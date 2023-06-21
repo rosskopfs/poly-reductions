@@ -2,8 +2,8 @@
 theory Filter_Defined_Acc
   imports
     Filter_Defined_Acc_Base
-    IMP_Minus_Views.While_To_IMP_Minus_Locale
-    IMP_Minus_Views.While_To_IMP_Minus_Tactics
+    IMP_Minus_Views.Let_To_IMP_Minus_Locale
+    IMP_Minus_Views.Let_To_IMP_Minus_Tactics
 begin
 
 lemma filter_defined_acc_IMP_Minus_loop_body_correct:
@@ -11,7 +11,7 @@ lemma filter_defined_acc_IMP_Minus_loop_body_correct:
   shows "filter_defined_acc_imp_to_HOL_state p s' =
     filter_defined_acc_state_upd (filter_defined_acc_imp_to_HOL_state p s)"
   apply (insert assms)
-  apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+  apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
     @{thm filter_defined_acc_state_upd_def} @{thm filter_defined_acc_IMP_loop_body_def}
     @{thm filter_defined_acc_imp_to_HOL_state_def}
     [
@@ -24,7 +24,7 @@ lemma filter_defined_acc_IMP_Minus_loop_body_correct:
     @{context})\<close>)
   done
 
-interpretation I: While_To_IMP_Minus where
+interpretation I: Let_To_IMP_Minus where
   cond_var = filter_defined_acc_while_cond and
   cond_let = filter_defined_acc_imp_compute_loop_condition and
   body_let = filter_defined_acc_state_upd and
@@ -41,7 +41,7 @@ interpretation I: While_To_IMP_Minus where
   subgoal by (auto simp: filter_defined_acc_complete_simps filter_defined_acc_IMP_after_loop_def)
   subgoal by (fact filter_defined_acc_IMP_Minus_loop_body_correct)
   subgoal for s t s' p
-    apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac (resolve0_tac @{thms conjI})
+    apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac (resolve0_tac @{thms conjI})
       @{thm filter_defined_acc_imp_compute_loop_condition_def} @{thm filter_defined_acc_IMP_init_while_cond_def}
       @{thm filter_defined_acc_imp_to_HOL_state_def}
       []
@@ -54,7 +54,7 @@ lemma filter_defined_acc_IMP_Minus_loop_body_correct_time:
   assumes "(invoke_subprogram p filter_defined_acc_IMP_loop_body, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
   shows "t = filter_defined_acc_state_upd_time 0 (filter_defined_acc_imp_to_HOL_state p s)"
   apply (insert assms)
-  apply (tactic \<open>HEADGOAL (While_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
+  apply (tactic \<open>HEADGOAL (Let_To_IMP_Minus_Tactics.IMP_Minus_run_finish_tac'
     @{thm filter_defined_acc_state_upd_time_def} @{thm filter_defined_acc_IMP_loop_body_def}
     @{thm filter_defined_acc_imp_to_HOL_state_def}
     [
