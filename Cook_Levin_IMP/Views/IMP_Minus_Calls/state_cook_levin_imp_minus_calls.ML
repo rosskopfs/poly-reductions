@@ -109,18 +109,24 @@ fun interp_state_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt =
 
 structure Seq_Monad = Monad(Seq_Monad_Base)
 
-fun rewrite_state_app_tac subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
-  let val mk_rewrite_tac =
-    HEADGOAL (U.resolve_all_tac ctxt [state_eq_thm, state_lhs_state_SIMPS_TO_thm])
-    Seq_THEN Seq.single o (fn state_app_eqI =>
-      subst_tac state_app_eqI
-      THEN' Simps_To.SIMPS_TO_tac (
-        simp_interp_state_tac ctxt
-        THEN' Simplifier.simp_tac ctxt))
-    #> Seq_Monad.flat2
-  in mk_rewrite_tac @{thm STATE_state_app_eqI} end
+fun state_app_eq_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
+   @{thm STATE_state_app_eqI}
+   |> HEADGOAL (U.resolve_all_tac ctxt [state_eq_thm, state_lhs_state_SIMPS_TO_thm])
 
-fun rewrite_all_state_app_tac subst_tac = REPEAT o CHANGED oooo rewrite_state_app_tac subst_tac
+fun rewrite_state_app_eq_thm_tac subst_tac ctxt state_app_eq_thm =
+  subst_tac state_app_eq_thm
+  THEN' Simps_To.SIMPS_TO_tac
+    (simp_interp_state_tac ctxt
+    THEN' Simplifier.simp_tac ctxt)
+
+fun rewrite_state_app_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
+  state_app_eq_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
+  |> Seq.map (rewrite_state_app_eq_thm_tac subst_tac ctxt)
+
+val rewrite_state_app_tac = Seq_Monad.flat2 oooo rewrite_state_app_tacsq
+
+val rewrite_all_state_app_tac =
+  Seq_Monad.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_app_tacsq
 
 val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
   SS.get ()

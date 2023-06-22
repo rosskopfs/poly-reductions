@@ -165,16 +165,15 @@ fun SUBGOAL_PREMS_CONCL f = SUBGOAL_DATA (f o strip_imp)
 (* tactics *)
 fun insert_tac thm = resolve0_tac [thm COMP revcut_rl]
 
-fun thin_tac n = rotate_tac n THEN' eresolve0_tac [thin_rl] THEN' rotate_tac (~n)
-fun thin_tacs delete_is =
-  EVERY_ARG' thin_tac (sort int_ord delete_is |> map_index ((op -) o swap))
+fun thin_tac n = rotate_tac n THEN' (DETERM o eresolve0_tac [thin_rl]) THEN' rotate_tac (~n)
+fun thin_tacs delete_is = EVERY_ARG' thin_tac (sort int_ord delete_is |> map_index ((op -) o swap))
 
 fun nth_assume_tac n ctxt = rotate_tac n THEN' assume_tac ctxt
 
 fun resolve_all_tac ctxt = EVERY_ARG' (resolve_tac ctxt o single)
 
-fun subst_first_tac ctxt = EqSubst.eqsubst_tac ctxt [0] o single
-fun subst_first_asm_tac ctxt = EqSubst.eqsubst_asm_tac ctxt [0] o single
+fun subst_first_tac ctxt = DETERM oo EqSubst.eqsubst_tac ctxt [0] o single
+fun subst_first_asm_tac ctxt = DETERM oo EqSubst.eqsubst_asm_tac ctxt [0] o single
 
 fun apply_tac tac i = Goal.init #> tac i #> Seq.map Goal.conclude
 

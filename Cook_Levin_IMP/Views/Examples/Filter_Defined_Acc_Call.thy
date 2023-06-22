@@ -109,8 +109,8 @@ lemma filter_defined_acc_IMP_Minus_Calls_loop_body_correct:
     filter_defined_acc_state_upd (filter_defined_acc_imp_to_HOL_state [] s)"
   apply (insert assms)
   apply (tactic \<open>HEADGOAL (LT.run_finish_tac'
-    @{thm filter_defined_acc_state_upd_def} @{thm filter_defined_acc_IMP_Minus_Calls_loop_body_def}
-    @{thm filter_defined_acc_imp_to_HOL_state_def}
+    @{thm filter_defined_acc_state_upd_def} @{thm filter_defined_acc_imp_to_HOL_state_def}
+    @{thm filter_defined_acc_IMP_Minus_Calls_loop_body_def}
     [
       (@{thm hd_IMP_Minus_correct}, @{thm hd_imp_to_HOL_state_def}),
       (@{thm tl_IMP_Minus_correct}, @{thm tl_imp_to_HOL_state_def}),
@@ -135,12 +135,12 @@ interpretation I: Let_To_IMP_Minus_Calls where
     filter_defined_acc_IMP_Minus_Calls_loop_body_def
     filter_defined_acc_IMP_Minus_Calls_after_loop_def)
   subgoal by (tactic \<open>HEADGOAL (LT.run_finish_tac (resolve0_tac @{thms conjI})
-    @{thm filter_defined_acc_imp_compute_loop_condition_def} @{thm filter_defined_acc_IMP_Minus_Calls_init_while_cond_def}
-    @{thm filter_defined_acc_imp_to_HOL_state_def} [] @{context})\<close>)
+    @{thm filter_defined_acc_imp_compute_loop_condition_def} @{thm filter_defined_acc_imp_to_HOL_state_def}
+    @{thm filter_defined_acc_IMP_Minus_Calls_init_while_cond_def} [] @{context})\<close>)
   subgoal by (fact filter_defined_acc_IMP_Minus_Calls_loop_body_correct)
   subgoal by (tactic \<open>HEADGOAL (LT.run_finish_tac'
-    @{thm filter_defined_acc_imp_after_loop_def} @{thm filter_defined_acc_IMP_Minus_Calls_after_loop_def}
-    @{thm filter_defined_acc_imp_to_HOL_state_def} [] @{context})\<close>)
+    @{thm filter_defined_acc_imp_after_loop_def} @{thm filter_defined_acc_imp_to_HOL_state_def}
+    @{thm filter_defined_acc_IMP_Minus_Calls_after_loop_def} [] @{context})\<close>)
   using filter_defined_acc_imp.induct filter_defined_acc_imp.simps by auto
 
 (* lemma filter_defined_acc_IMP_Minus_loop_body_correct_time:
