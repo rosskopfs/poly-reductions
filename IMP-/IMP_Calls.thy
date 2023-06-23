@@ -117,12 +117,12 @@ fun ssubst where
 lemma vars_ssubst[simp]: "set (vars (ssubst m vs)) = set vs \<union> m ` set vs"
   by (induction vs) auto
 
-lemma rvars_ssubst[simp]: "rvars (ssubst m vs) = m ` set vs"
+lemma lvars_ssubst[simp]: "lvars (ssubst m vs) = m ` set vs"
   by (induction vs) auto
 
 lemma ssubst_unchanged: "(ssubst m vs,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> (\<forall>v\<in>set vs. m v \<notin> set vs) \<Longrightarrow> s = t on set vs"
   apply auto
-  by (metis (mono_tags, opaque_lifting) image_iff rvars_ssubst rvars_unchanged)
+  by (metis (mono_tags, opaque_lifting) image_iff lvars_ssubst lvars_unchanged)
 
 lemma ssubst_correct:
   "\<lbrakk> inj_on m (set vs); (\<forall>v\<in>set vs. m v \<notin> set vs) \<rbrakk>
@@ -156,7 +156,7 @@ qed auto
 
 subsection "Command transfer"
 
-definition [simp]: "transfer m c = ssubst m (vars c);;subst m c"
+definition "transfer m c = ssubst m (vars c);;subst m c"
 
 lemma set_transfer[simp]: "set (vars (transfer m c)) = set (vars c) \<union> m ` set (vars c)"
   unfolding transfer_def by auto
@@ -177,7 +177,8 @@ proof -
 
   from subst_sound[OF c_sem this _ inj] obtain t' where
     subst_sem: "(subst m c, s\<^sub>2) \<Rightarrow>\<^bsup> z \<^esup> t'" and t': "t = t' \<circ> m on set (vars c)" by auto
-  with ssubst_sem have "(transfer m c,s')\<Rightarrow>\<^bsup>Suc (2 * length (vars c)) + z\<^esup> t'" by auto
+  with ssubst_sem have "(transfer m c,s')\<Rightarrow>\<^bsup>Suc (2 * length (vars c)) + z\<^esup> t'"
+    unfolding transfer_def by auto
 
   with t' that show ?thesis by blast
 qed
@@ -206,19 +207,21 @@ lemma transfer_unchanged:
       and disj: "(\<forall>v\<in>set (vars c). m v \<notin> set (vars c))"
     shows "s = t on UNIV - m ` set (vars c)"
 proof -
-  from transfer_sem obtain s\<^sub>2 x y where ssubst_sem: "(ssubst m (vars c),s)\<Rightarrow>\<^bsup>x\<^esup> s\<^sub>2" and subst_sem: "(subst m c,s\<^sub>2)\<Rightarrow>\<^bsup>y\<^esup> t" by auto
+  from transfer_sem obtain s\<^sub>2 x y where
+    ssubst_sem: "(ssubst m (vars c),s)\<Rightarrow>\<^bsup>x\<^esup> s\<^sub>2" and
+    subst_sem: "(subst m c,s\<^sub>2)\<Rightarrow>\<^bsup>y\<^esup> t" unfolding transfer_def by auto
   from ssubst_correct[OF inj disj] have "s = s\<^sub>2 o m on set (vars c)"
     using \<open>(ssubst m (vars c), s) \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2\<close> bigstep_det by blast
 
   have "s = s\<^sub>2 on UNIV - m ` set (vars c)"
     using disj ssubst_sem ssubst_unchanged
-    by (simp add: rvars_unchanged)
+    by (simp add: lvars_unchanged)
   moreover have "s\<^sub>2 = t  on UNIV - m ` set (vars c)" using var_unchanged apply auto
     using subst_sem(1) by auto
   ultimately show "s = t on UNIV - m ` set (vars c)" by auto
 qed
 
-definition [simp]: "inline1 S c r =  (fresh S r) ::= A (V r);;transfer (fresh S) c;;r ::= A (V ((fresh S) r))"
+definition "inline1 S c r =  (fresh S r) ::= A (V r);;transfer (fresh S) c;;r ::= A (V ((fresh S) r))"
 
 lemma inline1_vars_c[simp]: "set (vars c) \<subseteq> set (vars (inline1 S c r))"
   unfolding inline1_def by auto
@@ -312,7 +315,8 @@ proof -
   have s\<^sub>1': "?s\<^sub>1' = s on set (vars c)" using S s by auto
 
   from inline_sem obtain t' z' where
-    2: "(transfer ?m c,?s\<^sub>1') \<Rightarrow>\<^bsup>z'\<^esup> t'" and z': "z' + 4 = zr" by fastforce
+    2: "(transfer ?m c,?s\<^sub>1') \<Rightarrow>\<^bsup>z'\<^esup> t'" and z': "z' + 4 = zr"
+    unfolding inline1_def by fastforce
   from transfer_complete[OF 2 s\<^sub>1' inj disj] obtain t z where
     c_sem: "(c, s) \<Rightarrow>\<^bsup> z \<^esup> t" and
     z: "z' = Suc (2 * length (vars c)) + z" and
@@ -421,12 +425,13 @@ qed auto
 lemma inline_S_complete:
   assumes "(inline_S S c',s) \<Rightarrow>\<^bsup>z\<^esup> t" "s= s' on set S" "set (vars c') \<subseteq> set S"
   shows "\<exists>z' t'. (c',s') \<Rightarrow>'\<^bsup>z'\<^esup> t' \<and> t = t' on set S \<and> z' \<le> z"
-  using assms proof (induction "inline_S S c'" s z t arbitrary: c' s' rule: big_step_t_induct)
+  using assms
+proof (induction "inline_S S c'" s z t arbitrary: c' s' rule: big_step_t_induct)
   case (Skip s)
-  then show ?case by (cases c') auto
+  then show ?case by (cases c') (auto simp: inline1_def)
 next
   case (Assign x a s)
-  then show ?case apply (cases c') apply auto
+  then show ?case apply (cases c') apply (auto simp: inline1_def)
     by (metis Assign' aval_eq_if_eq_on_vars eq_imp_le fun_upd_apply subset_iff)
 next
   case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c')
@@ -436,7 +441,7 @@ next
   next
     case (Call' c r)
     with Seq.prems Seq.hyps(1,3,5,6) have 1: "(inline1 S c r,s\<^sub>1)\<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3"  "s' = s\<^sub>1 on set (r # vars c)" "set (r # vars c) \<subseteq> set S"
-      by auto
+      by (auto simp: inline1_def)
     from inline1_complete[OF this] obtain z' t where
       c_sem: "(c, s') \<Rightarrow>\<^bsup> z' \<^esup> t" and t: "s\<^sub>3 r = t r" and z': "2 * length (vars c) + z' + 5 = z" by metis
     with big_step_t'.Call' Call' have "(c',s') \<Rightarrow>'\<^bsup> z' \<^esup> s'(r := t r)" by simp
@@ -446,20 +451,20 @@ next
   qed (use Seq.hyps(6) in auto)
 next
   case (IfTrue s b c\<^sub>1 x t y c\<^sub>2)
-  then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') auto
+  then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') (auto simp: inline1_def)
   with IfTrue obtain x' t' where "(c\<^sub>1', s') \<Rightarrow>'\<^bsup>x'\<^esup> t' \<and> (t = t' on set S) \<and> x' \<le> x" by fastforce
   with c' IfTrue show ?case by fastforce
 next
   case (IfFalse s b c\<^sub>2 x t y c\<^sub>1)
-  then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') auto
+  then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') (auto simp: inline1_def)
   with IfFalse obtain x' t' where "(c\<^sub>2', s') \<Rightarrow>'\<^bsup>x'\<^esup> t' \<and> (t = t' on set S) \<and> x' \<le> x" by fastforce
   with c' IfFalse show ?case by fastforce
 next
   case (WhileFalse s b c)
-  then show ?case by (cases c') auto
+  then show ?case by (cases c') (auto simp: inline1_def)
 next
   case (WhileTrue s\<^sub>1 b c\<^sub>1 x s\<^sub>2 y s\<^sub>3 z c' s\<^sub>1')
-  then obtain c\<^sub>1' where c'[simp]: "c' = While' b c\<^sub>1'" by (cases c') auto
+  then obtain c\<^sub>1' where c'[simp]: "c' = While' b c\<^sub>1'" by (cases c') (auto simp: inline1_def)
   with WhileTrue obtain s\<^sub>2' x' where 1: "(c\<^sub>1', s\<^sub>1') \<Rightarrow>'\<^bsup> x' \<^esup> s\<^sub>2' \<and> s\<^sub>2 = s\<^sub>2' on set S \<and> x' \<le> x" by fastforce
   with WhileTrue c' obtain s\<^sub>3' y' where 2: "(While' b c\<^sub>1', s\<^sub>2') \<Rightarrow>'\<^bsup> y' \<^esup> s\<^sub>3' \<and> s\<^sub>3 = s\<^sub>3' on set S \<and> y' \<le> y" by fastforce
   from c' WhileTrue.prems WhileTrue.hyps(1) have b: "s\<^sub>1' b \<noteq> 0" by auto
@@ -468,7 +473,7 @@ next
 qed
 
 definition inline :: "com' \<Rightarrow> com" where
-  [simp]: "inline c = inline_S (vars c) c"
+  "inline c = inline_S (vars c) c"
 
 
 theorem inline_sound:

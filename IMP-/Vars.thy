@@ -88,12 +88,12 @@ lemma aval_eq_if_eq_on_vars [simp]:
   done
 
 
-fun rvars :: "com \<Rightarrow> vname set" where
-"rvars SKIP = {}" |
-"rvars (x::=e) = {x}" |
-"rvars (c1;;c2) = rvars c1 \<union> rvars c2" |
-"rvars (IF b\<noteq>0 THEN c1 ELSE c2) = rvars c1 \<union> rvars c2" |
-"rvars (WHILE b\<noteq>0 DO c) = rvars c"
+fun lvars :: "com \<Rightarrow> vname set" where
+"lvars SKIP = {}" |
+"lvars (x::=e) = {x}" |
+"lvars (c1;;c2) = lvars c1 \<union> lvars c2" |
+"lvars (IF b\<noteq>0 THEN c1 ELSE c2) = lvars c1 \<union> lvars c2" |
+"lvars (WHILE b\<noteq>0 DO c) = lvars c"
 
 instantiation com :: vars
 begin
@@ -136,7 +136,7 @@ lemma aval_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> aval (subst m
 lemma var_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> s v = t v"
   by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
 
-lemma rvars_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> rvars c \<Longrightarrow> s v = t v"
+lemma lvars_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> lvars c \<Longrightarrow> s v = t v"
   by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
 
 lemma subst_sound:
