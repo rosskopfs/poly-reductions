@@ -14,7 +14,7 @@ theory Encode_Nat
     "HOL-Eisbach.Eisbach_Tools"
     Test
   keywords
-    "test" :: thy_decl and
+    "test" :: thy_goal and
     "test2" :: thy_decl and
     "datatype_nat_encode" :: thy_decl and
     "datatype_nat_decode" :: thy_goal and
@@ -88,7 +88,7 @@ datatype_nat_encode char
 declare enc_char.simps [simp del]
 
 datatype_nat_encode prod
-declare enc_prod.simps [simp del]
+declare enc_prod.simps [simp del] thm enc_prod.simps
 
 datatype_nat_encode tree
 declare enc_tree.simps [simp del]
@@ -187,13 +187,10 @@ lemma dec_List_list_cong[fundef_cong]:
   done
 
 datatype_nat_decode forest
-termination proof (decode_termination "measure snd")
-  fix v t assume
-    "fst (prod_decode v) = Suc 0"
-    "t \<in> subpairings (snd (prod_decode v))"
-  then show "t < v"
-    using subpairings_le snd_prod_decode_lt_intro by (fastforce simp: order_le_less_trans)
-qed
+termination
+  using subpairings_le snd_prod_decode_lt_intro
+  by (decode_termination "measure snd", fastforce)
+
 
 declare dec_forest.simps[simp del]
 lemmas [simp] = dec_forest.simps[of _ "prod_encode _"]
@@ -232,6 +229,7 @@ val [T'] = dest_Type T |> snd;
 is_Type T;
 is_TFree T;
 is_TVar T;
+
 \<close>
 
 
@@ -320,15 +318,16 @@ lemma reverset_correct: "reverset l [] = rev l"
 function_nat_rewrite reverset
 thm reverset_nat.simps
 
+
 function_nat_rewrite_correctness reverset
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct)
    apply(all \<open>subst reverset_nat.simps\<close>)
   subgoal
-    apply(subst enc_List_list.simps)
-    using List_list_wellbehaved[OF assms(1)]
+    apply(subst enc_list.simps)
+    using encoding_list_wellbehaved[OF assms(1)]
     by(simp add: assms pointfree_idE )
   subgoal
-    by(simp add: enc_List_list.simps)
+    by(simp add: enc_list.simps)
   done
 
 thm reverset_nat_equiv
@@ -354,8 +353,8 @@ thm prefixest.induct
 function_nat_rewrite_correctness prefixest
   using assms
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct; subst prefixest_nat.simps)
-  using List_list_wellbehaved[OF List_list_wellbehaved, OF assms(1), THEN pointfree_idE]
-  by(simp add: enc_List_list.simps Let_def)+
+  using encoding_list_wellbehaved[OF encoding_list_wellbehaved, OF assms(1), THEN pointfree_idE]
+  by(simp add: enc_list.simps Let_def)+
 
 (* or
   by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct\<close>
@@ -382,9 +381,9 @@ function_nat_rewrite_correctness prefixes2
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct; subst prefixes2_nat.simps)
   subgoal for ps
     using
-      reverset_nat_equiv[OF List_list_wellbehaved, OF assms, of "[] # ps" "[]"]
-    by(simp add: enc_List_list.simps)
-  by(simp add: enc_List_list.simps Let_def)
+      reverset_nat_equiv[OF encoding_list_wellbehaved, OF assms, of "[] # ps" "[]"]
+    by(simp add: enc_list.simps)
+  by(simp add: enc_list.simps Let_def)
     (*
   apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct\<close>
       assms: assms
@@ -434,11 +433,307 @@ function_nat_rewrite_correctness subtreest
   by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: subtreest.induct\<close>
       assms: assms
       simps_nat: subtreest_nat.simps
-      enc_simps: enc_List_list.simps enc_Tree_tree.simps
-      args_wellbehaved: Tree_tree_wellbehaved[OF assms(1), THEN pointfree_idE]
-      List_list_wellbehaved[OF Tree_tree_wellbehaved, OF assms(1), THEN pointfree_idE])
+      enc_simps: enc_list.simps enc_tree.simps
+      args_wellbehaved: encoding_tree_wellbehaved[OF assms(1), THEN pointfree_idE]
+      encoding_list_wellbehaved[OF encoding_tree_wellbehaved, OF assms(1), THEN pointfree_idE])
 
 thm subtreest_nat_equiv
+
+
+
+
+
+
+(* TODOs/Things not wroking/Things to investigate *)
+
+
+fun loop where
+  "loop acc [] = acc"
+| "loop acc (x#xs) = loop (x#acc) xs"
+
+function_nat_rewrite loop
+function_nat_rewrite_correctness loop
+  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: loop.induct\<close>
+      assms: assms
+      simps_nat: loop_nat.simps
+      enc_simps: enc_list.simps
+      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
+
+lemma loop_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "loop_nat (enc_list enc_'a acc) (enc_list enc_'a xs) = enc_list enc_'a (loop acc xs)"
+  apply(induction acc xs rule: loop.induct)
+  apply(all \<open>subst loop.simps\<close>)
+  by(simp add: loop_nat.simps enc_list.simps)+
+
+fun rev where
+  "rev xs = loop [] xs"
+
+function_nat_rewrite rev
+function_nat_rewrite_correctness rev
+  using loop_nat_equiv[OF assms, of "[]"]
+  by (subst rev.simps, simp add: rev_nat.simps enc_list.simps)
+
+fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "append xs ys = loop ys (rev xs)"
+
+
+lemma 2:"loop acc [x] = x # acc" by simp
+
+lemma 3:"loop acc xs = (loop [] xs) @ acc"
+  apply(induction xs arbitrary: acc)
+  apply(simp)
+  by (metis append_Cons append_eq_append_conv2 loop.simps(2) same_append_eq)
+
+lemma 4:"loop [] (loop acc xs) = (loop [] acc) @ xs"
+  apply(induction xs arbitrary: acc)
+  apply(simp)
+  using "3" by fastforce
+
+lemma 5:"loop [] (loop [] xs @ ys) = loop xs ys"
+  apply(induction xs arbitrary: ys)
+  apply(simp)
+  by (metis "4" loop.simps(2))
+
+lemma 6:"(pair (atomic 0) (atomic 0)) = enc_list enc_'a []"
+  by(simp add: enc_list.simps)
+
+lemma 7:"loop [] (loop [] xs) = xs"
+  apply(induction xs)
+  apply(simp)
+  by (simp add: "4")
+
+lemma 8:"append xs ys = xs @ ys"
+  by (metis "3" "7" append.simps rev.simps)
+
+lemma 9:"rev (rev xs) = xs"
+  by (simp add: "7")
+
+lemma 10:"rev (append xs ys) = append (rev ys) (rev xs)"
+  by (metis "4" "8" Encode_Nat.rev.simps append.elims)
+
+lemma rev_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "rev_nat (enc_list enc_'a xs) = enc_list enc_'a (rev xs)"
+  apply(induction xs rule: rev.induct)
+  apply(subst rev.simps)
+  using loop_nat_equiv2[OF assms]
+  by (metis "6" rev_nat.simps)
+
+function_nat_rewrite append
+function_nat_rewrite_correctness append
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: append.induct)
+  apply(all \<open>subst append.simps\<close>)
+  apply(subst append_nat.simps)
+  using rev_nat_equiv2[OF assms] loop_nat_equiv[OF assms]
+  by(simp)
+
+lemma append_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "append_nat (enc_list enc_'a xs) (enc_list enc_'a ys) = enc_list enc_'a (append xs ys)"
+  apply(induction xs ys rule: append.induct)
+  apply(subst append.simps)
+  using loop_nat_equiv2[OF assms] rev_nat_equiv2[OF assms]
+  using append_nat.simps by simp
+
+lemma append_nat_equiv3:
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "f_nat (enc_list enc_'a ys) = enc_list enc_'a (f ys)"
+  shows "append_nat (enc_list enc_'a xs) (f_nat (enc_list enc_'a ys))
+          = enc_list enc_'a (append xs (f ys))"
+  apply(induction xs "f ys" rule: append.induct)
+  apply(subst append.simps)
+  using loop_nat_equiv2[OF assms(1)] rev_nat_equiv2[OF assms(1)] assms(2)
+  by (simp add: append_nat.simps)
+
+lemma append_nat_equiv4:
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "f_nat (enc_list enc_'a xs) = enc_list enc_'a (f xs)"
+  shows "append_nat (f_nat (enc_list enc_'a xs)) (enc_list enc_'a ys)
+          = enc_list enc_'a (append (f xs) ys)"
+  apply(induction "f xs" ys rule: append.induct)
+  apply(subst append.simps)
+  using loop_nat_equiv2[OF assms(1)] rev_nat_equiv2[OF assms(1)] assms(2)
+  by (simp add: append_nat.simps)
+
+lemma append_nat_equiv5:
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "f_nat (enc_list enc_'a xs) = enc_list enc_'a (f xs)"
+    and "g_nat (enc_list enc_'a ys) = enc_list enc_'a (g ys)"
+  shows "append_nat (f_nat (enc_list enc_'a xs)) (g_nat (enc_list enc_'a ys))
+          = enc_list enc_'a (append (f xs) (g ys))"
+  apply(induction "f xs" "g ys" rule: append.induct)
+  apply(subst append.simps)
+  using loop_nat_equiv2[OF assms(1)] rev_nat_equiv2[OF assms(1)] assms
+  by (simp add: append_nat.simps)
+
+
+fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
+  "baz acc [[]] = acc"
+| "baz acc [] = acc"
+| "baz acc (xs#xss) = baz (append acc xs) xss"
+
+fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
+  "baz2 acc [] = acc"
+| "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
+
+
+function_nat_rewrite baz
+thm baz_nat.simps
+
+lemma 11:"prod_encode (0, 0) = enc_list enc_'a []"
+  by(simp add: enc_list.simps)
+
+lemma "baz acc xs = baz2 acc xs"
+  apply(induction xs arbitrary: acc)
+  apply(simp)
+  by (metis (no_types, lifting) "7" append.elims atail.elims baz.simps(1) baz.simps(3) baz.simps(4) baz2.simps(1) baz2.simps(2) rev.elims)
+
+
+
+function_nat_rewrite baz2
+
+lemma baz2_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "baz2_nat (enc_list enc_'a acc) (enc_list (enc_list enc_'a) xss) = enc_list enc_'a (baz2 acc xss)"
+  apply(induction acc xss rule: baz2.induct)
+  apply(all \<open>subst baz2.simps\<close>)
+  apply (metis "11" atomic.simps baz2_nat.simps fstP.simps fst_conv prod_encode_inverse)
+  apply(subst baz2_nat.simps)
+  using append_nat_equiv2[OF assms]
+  by (metis (mono_tags, lifting) atomic.simps enc_list.simps fstP.simps fst_conv list.simps(5) pair.simps prod_encode_inverse sndP.simps snd_conv zero_neq_one)
+
+
+function_nat_rewrite_correctness baz2
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: baz2.induct)
+  apply(all \<open>subst baz2.simps\<close>)
+  using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+  apply(simp add: baz2_nat.simps enc_list.simps)
+  using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+    baz2_nat_equiv2[OF assms]
+  by force
+
+lemma a: "(fstP (sndP (enc_list (enc_list enc_'a) [[]]))) = 0"
+  by(simp add: enc_list.simps prod_encode_def prod_decode_def prod_decode_aux.simps)
+
+lemma b: "loop_nat 0 0 = 0"
+  by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
+
+lemma c: "rev_nat 0 = 0"
+  by(simp add: b rev_nat.simps prod_encode_def)
+
+lemma d: "append_nat 0 0 = 0"
+  by(simp add: c b append_nat.simps)
+
+lemma e: "(sndP (sndP (sndP (sndP (Suc (Suc 0)))))) = 0"
+  by eval
+
+value "(pair 1 (pair (sndP (sndP (fstP (sndP (Suc (Suc 0)))))) 0))"
+
+lemma "baz_nat (append_nat 0 0) (Suc (Suc 0)) = 0"
+  oops
+
+lemma baz_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "\<And>acc. f_nat (enc_list enc_'a acc) = enc_list enc_'a (f acc)"
+    and "\<And>xss. g_nat (enc_list (enc_list enc_'a) xss) = enc_list (enc_list enc_'a) (g xss)"
+  shows "baz_nat (f_nat (enc_list enc_'a acc)) (g_nat (enc_list (enc_list enc_'a) xss))
+          = enc_list enc_'a (baz (f acc) (g xss))"
+  apply(induction "f acc" "g xss" arbitrary: acc xss rule: baz.induct)
+  subgoal premises IH for acc xss
+    apply(subst assms(3))
+    apply(subst assms(2))
+    apply(simp add: IH[symmetric])
+    apply(subst baz_nat.simps)
+    apply(auto simp add: enc_list.simps)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (subst pair.simps)+
+    apply(subst prod_encode_def)+
+    apply(subst atomic.simps)+
+    apply(auto split: list.split)
+    sorry
+  oops
+
+
+lemma baz_nat_equiv2:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "baz_nat (enc_list enc_'a acc) (enc_list (enc_list enc_'a) xss) = enc_list enc_'a (baz acc xss)"
+  apply(induction acc xss rule: baz.induct)
+  apply(all \<open>subst baz.simps\<close>)
+  subgoal for acc
+    using append_nat_equiv2[OF assms] append_nat_equiv[OF assms]
+      append_nat_equiv3[OF assms] append_nat_equiv4[OF assms]
+    apply(simp add: Let_def)
+    sorry
+  subgoal by (metis "11" atomic.simps baz_nat.simps fstP.simps fst_conv prod_encode_inverse)
+  subgoal sorry
+  subgoal
+    apply(subst baz_nat.simps)
+    using append_nat_equiv2[OF assms]
+    sorry
+  oops
+
+
+function_nat_rewrite_correctness baz
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: baz.induct)
+  apply(all \<open>subst baz.simps\<close>)
+  subgoal for acc
+    apply(subst baz_nat.simps)
+
+    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+      append_nat_equiv[OF assms]
+      append_nat_equiv2[OF assms]
+    sorry
+  subgoal for acc
+    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+    by (metis "11" baz_nat.simps dec_list.elims list.discI)
+  subgoal premises IH for acc v va xss
+
+    apply(subst IH[symmetric])
+    apply(subst append_nat_equiv2[OF assms, of acc "(v # va)", symmetric])
+
+    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+      append_nat_equiv[OF assms]
+      append_nat_equiv2[OF assms, of acc "(v # va)", symmetric]
+    sorry
+  subgoal premises IH for acc xs v va
+    apply(simp add: baz_nat.simps)
+
+    apply(auto simp add: enc_list.simps)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply (simp add: prod_decode_aux.simps prod_decode_def)
+    apply(simp add: Let_def)
+    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+      append_nat_equiv[OF assms]
+      append_nat_equiv2[OF assms]
+      IH
+    sorry
+  done
+
+
+
+
+
+
+
+
+
+
+
+
+
+fun bar :: "'a list \<Rightarrow> 'b list \<Rightarrow> ('a * 'b) list" where
+  "bar [] [] = []"
+| "bar [] _ = []"
+| "bar _ [] = []"
+| "bar (a#as) (b#bs) = (a, b) # (bar as bs)"
+
+(* function_nat_rewrite bar *)
 
 
 end

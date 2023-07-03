@@ -13,28 +13,16 @@ end
 structure Encode_Nat : ENCODE_NAT =
 struct
 
-fun f *** g = fn (a, b) => (f a, g b)
-fun both f = f *** f
+fun map_prod f g (x, y) = (f x, g y);
 
-fun bothM (SOME a, SOME b) = SOME (a, b)
-  | bothM _ = NONE
+fun f *** g = map_prod f g
 
-fun allM (x :: xs) = Option.map (op ::) (bothM (x, allM xs))
-  | allM [] = SOME []
-
-fun zip (x :: xs) (y :: ys) = (x, y) :: zip xs ys
-  | zip _         _         = []
+fun join_opt_pair p = try (map_prod the the) p;
 
 fun inferT (Const (x, _)) = Const (x, dummyT)
   | inferT _ = error "Refusing to infer type of a non-const."
 
-\<comment> \<open>We can't always use \<open>HOLogic.mk_eq\<close>: it tries to run some basic type inference.\<close>
-fun mk_eq_dummyT (l, r) = Const ("HOL.eq", dummyT) $ l $ r
-
 val tvar_to_tfree = Term.map_type_tvar (TFree o fst *** I)
-
-fun build_ite [] = inferT @{term "undefined"}
-  | build_ite ((acond, aval) :: bs) = inferT @{term "If"} $ acond $ aval $ build_ite bs
 
 \<comment> \<open>\<open>HOLogic.mk_conj\<close> is binary, so \<open>fold\<close>s would leave a stray \<open>True\<close>.\<close>
 fun mk_conj' [] = @{term "True"}
@@ -65,33 +53,18 @@ fun build_unpairing_from_idx t idx length =
     else @{term fstP} $ repeat_snd (idx + 1) t
   end
 
-fun collect_tvars (Type (_, typlist)) = map collect_tvars typlist |> List.concat
-  | collect_tvars (TVar (indexname, sort)) = [(indexname, sort)]
-  | collect_tvars (TFree _) = error "Found a TFree while collecting TVars."
-
-fun collect_all_tvars t =
-  Term.fold_term_types (K (Term.fold_atyps (fn t => fn a => collect_tvars t @ a))) t []
-
-fun constructor_to_int ctxt (ctr_str, T) =
+fun build_constructor_tag ctxt (t as (_, T)) =
   let
-    fun matches_ctr (Const (y, _)) = if y = ctr_str then SOME () else NONE
-      | matches_ctr _ = NONE;
+    val f = Const t
+    val s = fst (Term.dest_Type (Term.body_type T))
   in
-    (case Term.body_type T of
-      Type (name, _) =>
-      name
-      |> Ctr_Sugar.ctr_sugar_of ctxt
-      |> Option.mapPartial (#ctrs #> get_index matches_ctr)
-      |> Option.map (fn c => fst c)
-    | _ => NONE)
-
-  end
-
-fun constructor_to_number ctxt c =
-  Option.map (HOLogic.mk_number @{typ nat}) (constructor_to_int ctxt c)
-
-fun build_constructor_tag c ctxt =
-  Option.map (curry (op $) @{term atomic}) (constructor_to_number ctxt c)
+    case Ctr_Sugar.ctr_sugar_of ctxt s of
+      SOME {ctrs, ...} =>
+      (case find_index (can (Ctr_Sugar_Util.fo_match ctxt f)) ctrs of
+        ~1 => NONE
+      | i => SOME (@{term atomic} $ HOLogic.mk_number @{typ nat} i))
+    | NONE => NONE
+  end;
 
 fun build_constructor_pairing ts c =
   let
@@ -126,10 +99,11 @@ fun encoder_const_term_of_type ctxt (T as Type _) =
 
 fun build_encoder_invocation ctxt freeT (T as Type (_, args)) =
   let
-    val t = if freeT = SOME T then encoder_free_term_of_type T
+    val t = if freeT = SOME T
+            then encoder_free_term_of_type T
             else encoder_const_term_of_type ctxt T
   in
-    list_comb (t, map (build_encoder_invocation ctxt freeT) args)
+    Term.list_comb (t, map (build_encoder_invocation ctxt freeT) args)
   end
   | build_encoder_invocation _ _ (T as TFree _) = encoder_free_term_of_type T
   | build_encoder_invocation _ _ (TVar _) = error "Can't build an encoder for TVar"
@@ -145,14 +119,19 @@ fun build_encoder ctxt T ctrs casex =
             val encoded_args =
               `(map (build_encoder_invocation ctxt (SOME T))) ctr_args_Ts
               ||> (length #> (map_range Bound) #> rev)
-              |-> zip |> map (op $)
+              |> (op ~~)
+              |> map (op $)
+            val res =
+              (rev (map_index (fn (i, T) => ("v" ^ string_of_int i, T)) ctr_args_Ts),
+              build_constructor_tag ctxt (dest_Const ctr_t))
+              ||> the
+              ||> build_constructor_pairing encoded_args
+              |->  fold (fn (s, T) => fn t => Abs (s, T, t))
+            val _ =
+              binder_types (type_of ctr_t)
+
           in
-            build_constructor_tag (dest_Const ctr_t) ctxt |> the
-            |> build_constructor_pairing encoded_args
-            |> (fn term =>
-              List.foldr (fn ((T, i), t) => Abs ("v" ^ string_of_int i, T, t))
-                         term
-                         (zip ctr_args_Ts (map_range I (length encoded_args))))
+            res
           end
         )
     val rhs = if T = @{typ "nat"} then Free ("v", T)
@@ -191,7 +170,7 @@ fun decoder_args_of_type T =
   |> (fn x => x @ [Free ("v", @{typ "pair_repr"})])
 
 fun decoder_type_of_type (T as Type (_, typargs)) =
-      map (fn T => @{typ "pair_repr"} --> T) typargs
+      map (curry (op -->) @{typ "pair_repr"}) typargs
       |> (fn x => x @ [@{typ "pair_repr"}])
       ---> T
   | decoder_type_of_type (T as TFree _) = @{typ "pair_repr"} --> T
@@ -202,13 +181,7 @@ fun decoder_free_term_of_type T = Free (decoder_name_of_type T, decoder_type_of_
 fun decoder_const_term_of_type ctxt (T as Type _) =
       fst (dest_Const (read_const' ctxt (decoder_name_of_type T)))
       |> (fn name => Const (name, decoder_type_of_type T))
-  | decoder_const_term_of_type _ _ = error "Can't build a decoder for TVar"
-
-fun decoder_term_of_type (T as Type (_, typargs)) =
-      map (curry (op -->) @{typ "pair_repr"}) typargs
-      |> (fn x => x @ [@{typ "pair_repr"}])
-      |> (fn Ts => Free (decoder_name_of_type T, Ts ---> T))
-  | decoder_term_of_type T = Free (decoder_name_of_type T, @{typ "pair_repr"} --> T)
+  | decoder_const_term_of_type _ _ = error "Can't build a Const decoder for a type variable"
 
 fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
   let
@@ -217,31 +190,34 @@ fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
   in
     list_comb (t, map (build_decoder_invocation ctxt freeT) args)
   end
-  | build_decoder_invocation _ _ (T as TFree _) = decoder_term_of_type T
+  | build_decoder_invocation _ _ (T as TFree _) = decoder_free_term_of_type T
   | build_decoder_invocation _ _ (TVar _) = error "Can't build a decoder for TVar"
 
 fun build_decoder ctxt T ctrs =
   let
-    val lhs = Term.list_comb (decoder_term_of_type T, decoder_args_of_type T)
+    val lhs = Term.list_comb (decoder_free_term_of_type T, decoder_args_of_type T)
     val free_var = Free ("v", @{typ "pair_repr"})
-    val cases =
+    val (conditions, cases) =
       ctrs
       |> map (fn ctr_t =>
         let
           val ctr_args_Ts = (Term.binder_types o Term.type_of) ctr_t
           val args_decoded =
             ctr_args_Ts
-            |> zip (map_range I (length ctr_args_Ts))
+            |> curry (op ~~) (map_range I (length ctr_args_Ts))
             |> map (fn (i, e) =>
                     build_decoder_invocation ctxt (SOME T) e
                     $ build_unpairing_from_idx free_var i (length ctr_args_Ts))
           val condition =
-            build_constructor_tag (dest_Const ctr_t) ctxt |> the
+            build_constructor_tag ctxt (dest_Const ctr_t)
+            |> the
             |> curry HOLogic.mk_eq (@{term "fstP"} $ free_var)
         in
           (condition, Term.list_comb (ctr_t, args_decoded))
         end)
-    val rhs = if T = @{typ "nat"} then free_var else build_ite cases
+     |> split_list
+    val rhs = if T = @{typ "nat"} then free_var
+              else Ctr_Sugar_Util.mk_IfN T conditions cases
   in
     BNF_Util.mk_Trueprop_eq (lhs, rhs)
   end
@@ -271,38 +247,33 @@ fun mk_wellbehaved_thm_name (Type (name, _)) =
     "encoding_" ^ Long_Name.base_name name ^ "_wellbehaved"
   | mk_wellbehaved_thm_name _ = error "Can't generate wellbehaved theorem name for type variables"
 
-fun mk_wellbehaved enc dec =
-  BNF_Util.mk_Trueprop_eq(HOLogic.mk_comp (dec, enc), HOLogic.id_const (body_type (fastype_of dec)))
+fun mk_wellbehaved_thm enc dec =
+  let
+    val T = body_type (fastype_of dec)
+  in
+    BNF_Util.mk_Trueprop_eq(HOLogic.mk_comp (dec, enc), HOLogic.id_const T)
+  end;
 
 fun wellbehavedness_thm T int ctxt =
   let
     val (encoder_args, decoder_args) =
-    (encoder_args_of_type T, decoder_args_of_type T)
-    |> apply2 (`(fn x => length x - 1))
-    |> apply2 (uncurry take)
+      apply2 (fst o split_last) (encoder_args_of_type T, decoder_args_of_type T)
     val encoder = Term.list_comb (encoder_const_term_of_type ctxt T, encoder_args)
     val decoder = Term.list_comb (decoder_const_term_of_type ctxt T, decoder_args)
+    val assms = map (uncurry mk_wellbehaved_thm) (encoder_args ~~ decoder_args)
+    val goal = mk_wellbehaved_thm encoder decoder
   in
     Specification.theorem
-    true
-    Thm.theoremK
-    NONE
-    (K I)
-    (Binding.name (mk_wellbehaved_thm_name T), [])
-    []
-    [Element.Assumes [
-        (Binding.empty_atts,
-            zip encoder_args decoder_args
-         |> map (fn (enc, dec) => (mk_wellbehaved enc dec, []))
-        )
-    ]]
-    (Element.Shows [
-        (Binding.empty_atts, [(
-            mk_wellbehaved encoder decoder, []
-        )])
-    ])
-    int
-    ctxt
+      true
+      Thm.theoremK
+      NONE
+      (K I)
+      (Binding.name (mk_wellbehaved_thm_name T), [])
+      []
+      [Element.Assumes [(Binding.empty_atts, map (rpair []) assms)]]
+      (Element.Shows [(Binding.empty_atts, [(goal, [])])])
+      int
+      ctxt
   end
 
 fun datatype_nat_wellbehaved_cmd T int ctxt =
@@ -325,15 +296,16 @@ datatype patmatch_term =
 fun build_patmatch_term (Var v) = SOME (VARIABLE v)
   | build_patmatch_term t =
       Term.strip_comb t
-      |> Term.dest_Const *** I
+      |>> Term.dest_Const
       |> (fn (t', args) =>
-            allM (map build_patmatch_term args)
+            map build_patmatch_term args
+            |> try (map the)
             |> Option.map (fn args' => CONSTRUCTOR (t', args')))
 
 fun retag_list [] = []
   | retag_list [x] = x
   | retag_list (x :: xs) =
-    (x |> map (I *** FST)) @ (xs |> map (map (I *** SND)) |> retag_list)
+  (map (apsnd FST) x) @ (retag_list (map (map (apsnd SND)) xs))
 
 fun extract_condition_paths (CONSTRUCTOR (c, args)) =
       retag_list ([(c, DONE)] ::
@@ -355,42 +327,33 @@ val argnames = map_range (fn i => "arg" ^ subscript (string_of_int (i+1)))
 fun replace_constructors _ (Const (\<^const_name>\<open>undefined\<close>, _)) =
     error "Correctness will not work with undefined! Rewrite to function that uses bot!"
   | replace_constructors ctxt t =
-    t
-    |> Term.strip_comb
-    |> (fn (hd, args) =>
-        map (replace_constructors ctxt) args
-        |> allM
-        |> Option.map (fn args' => (hd, args')))
-    |> Option.map (fn (h, args') =>
-       (case h of
-         Const (n, t') =>
-            (case (build_constructor_tag (n, t') ctxt) of
-              SOME cons_nat => (if (Term.binder_types #> length) t' = length args'
-                                then build_constructor_pairing args' cons_nat
-                                else error "Constructor not fully applied!")
-            | NONE => \<comment> \<open>non-constructor function, just keep it for now\<close>
-              let val _ = ()
-              in
-                Term.list_comb (Const (n, t'), args')
-              end)
-       | _ => Term.list_comb (h, args')));
+    Term.strip_comb t
+    ||> map (replace_constructors ctxt)
+    |> (fn (h, args') =>
+       case h of
+         Const (n, T) =>
+            (case build_constructor_tag ctxt (n, T) of
+              SOME cons_nat => build_constructor_pairing args' cons_nat
+            | NONE => Term.list_comb (h, args'))
+       | _ => Term.list_comb (h, args'));
 
 fun build_nat_condition ctxt thm =
-  thm
-  |> lhs_of
-  |> Term.args_of
-  |> (map build_patmatch_term #> allM)
-  |> Option.map (map extract_condition_paths)
-  |> Option.map (fn x => zip (argnames (length x)) x)
+  thm |> @{print}
+  |> lhs_of |> @{print}
+  |> Term.args_of |> @{print}
+  |> (map build_patmatch_term #> try (map the)) |> @{print}
+  |> Option.map (map extract_condition_paths) |> @{print}
+  |> Option.map (fn x => argnames (length x) ~~ x) |> @{print}
   |> Option.map
       (map (fn (arg', condition_paths) =>
         map (fn (match, path) =>
-          build_constructor_tag match ctxt
+          build_constructor_tag ctxt match
           |> Option.map (fn tag =>
             HOLogic.mk_eq (build_unpairing (Free (arg', @{typ "pair_repr"})) path, tag)))
-          condition_paths))
-  |> Option.mapPartial (map allM #> allM)
-  |> Option.map (List.concat #> mk_conj')
+          condition_paths)) |> @{print}
+  |> Option.mapPartial (map (try (map the)) #> try (map the))
+  |> Option.map List.concat
+  |> Option.map mk_conj' |> @{print}
 
 fun nat_encode_term ctxt thm =
   let
@@ -400,11 +363,11 @@ fun nat_encode_term ctxt thm =
       |> lhs_of
       |> Term.args_of
       |> map build_patmatch_term
-      |> allM
+      |> try (map the)
       |> the
       |> map extract_variable_paths
       |> (fn x =>
-        zip (argnames (length x)) x
+        argnames (length x) ~~ x
         |> map (fn (arg, paths_from_this_arg) => map (pair arg) paths_from_this_arg))
       |> List.concat
     val wrappers =
@@ -425,7 +388,8 @@ fun nat_encode_term ctxt thm =
     thm
     |> rhs_of
     |> replace_constructors ctxt
-    |> Option.map (fn t => fold (fn wf => fn t' => wf t') wrappers t)
+    |> (fn t => fold (fn wf => fn t' => wf t') wrappers t)
+    |> SOME (* TODO: remove option type *)
   end
 
 fun const_nat_unchanged s =
@@ -451,19 +415,18 @@ fun function_nat_rewrite s ctxt =
     val newfun_name = (Long_Name.base_name fun_name) ^ "_nat";
     val arg_Ts = (binder_types (fastype_of t));
     val arg_ts =
-      List.length arg_Ts
-      |> argnames
-      |> (map (fn n => Free (n, @{typ "pair_repr"})));
+      argnames (List.length arg_Ts)
+      |> map (fn argname => Free (argname, @{typ "pair_repr"}));
     val newfun_T = ((map (K @{typ "pair_repr"}) arg_Ts) ---> @{typ "pair_repr"});
     val newfun_t = Free (newfun_name, newfun_T);
     val lhs = Term.list_comb (newfun_t, arg_ts);
     val ite =
       Proof_Context.get_thms ctxt (fun_name ^ ".simps")
-      |> map (fn x => bothM (build_nat_condition ctxt x, nat_encode_term ctxt x))
-      |> allM
-      |> the |> @{print}
-      |> build_ite |> @{print}
-      |> Term.map_aterms (change_const_to_nat fun_name newfun_t) |> @{print};
+      |> map (fn x => join_opt_pair (build_nat_condition ctxt x, nat_encode_term ctxt x))
+      |> try (map the)
+      |> the |> split_list
+      |-> Ctr_Sugar_Util.mk_IfN (body_type newfun_T)
+      |> Term.map_aterms (change_const_to_nat fun_name newfun_t);
     val (_, newfun_lthy) =
       Partial_Function.add_partial_function
         "tailrec"
@@ -472,74 +435,64 @@ fun function_nat_rewrite s ctxt =
         ctxt;
   in
     newfun_lthy
-  end
+  end;
 
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>function_nat_rewrite\<close>
     "converts existing tail-recursive functions into nat encoded functions"
-    ((Parse.term ) >> function_nat_rewrite)
+    (Parse.term >> function_nat_rewrite)
 
 
-fun correctness_thm name (int : bool) ctxt : Proof.state =
+val _ =
+  Outer_Syntax.local_theory
+    \<^command_keyword>\<open>test2\<close>
+    "Test2"
+    (Parse.term >> function_nat_rewrite)
+
+
+fun function_nat_rewrite_correctness_cmd fn_str int ctxt  =
   let
-    val fn_eqns : thm list = Proof_Context.get_thms ctxt (name ^ ".simps")
-    val (fn_head, fn_args_orig) =
-      hd fn_eqns
-      |> lhs_of
-      |> Term.strip_comb
-      |> dest_Const *** I
-    val fn_arg_names : string list = argnames (length fn_args_orig)
-    val fn_arg_types : typ list = Term.binder_types (snd fn_head)
-    val fn_args : term list =
-      zip fn_arg_names fn_arg_types
-      |> map Free
-    val fn_args_encoded : term list =
-      zip (map (build_encoder_invocation ctxt NONE) fn_arg_types) fn_args
-      |> map (op $)
-    val run_nat = read_const' ctxt (name ^ "_nat")
-    val run_nat_with_encoded_args = Term.list_comb (run_nat, fn_args_encoded)
-    val decode_run_nat_with_encoded_args =
-      build_decoder_invocation ctxt NONE (Term.body_type (snd fn_head)) $ run_nat_with_encoded_args
-    val used_type_var_names : string list =
-      fn_eqns
-      |> map (Thm.prop_of #> HOLogic.dest_Trueprop #> collect_all_tvars)
-      |> List.concat
-      |> distinct (uncurry equal)
-      |> List.map (fst o fst) \<comment> \<open>Get the name of a \<open>TVar\<close> description\<close>
+    val (fn_name, (fn_T, fn_t)) =
+      Syntax.read_term ctxt fn_str
+      |> `Term.term_name
+      ||> `fastype_of
+    val fn_args =
+      map_index (fn (i, T) =>
+                 Free ("arg" ^ subscript (string_of_int (i + 1)), T)) (Term.binder_types fn_T)
+    val rhs = Term.list_comb (fn_t, fn_args)
+    val lhs =
+      map (fn t => (build_encoder_invocation ctxt NONE (fastype_of t)) $ t) fn_args
+      |> Term.list_comb o (pair (read_const' ctxt (fn_name ^ "_nat")))
+      |> (curry op $) (build_decoder_invocation ctxt NONE (Term.body_type fn_T))
+    val assms =
+      fold_atyps (insert (op =)) fn_T []
+      |> map (fn T =>
+                mk_wellbehaved_thm (encoder_free_term_of_type T) (decoder_free_term_of_type T))
+    val goal =
+      BNF_Util.mk_Trueprop_eq (lhs, rhs)
   in
     Specification.theorem
-    true
-    Thm.theoremK
-    NONE
-    (K I)
-    (Binding.name (name ^ "_nat_equiv"), [])
-    []
-    [Element.Assumes [
-        \<comment> \<open>for every free type 'a in the function signature: @{term "wellbehaved enc_'a dec_'a"}.\<close>
-        (Binding.empty_atts, List.map (fn tvn => (
-              mk_wellbehaved (Free ("enc_" ^ tvn, dummyT))
-                                                (Free ("dec_" ^ tvn, dummyT))
-              , []))
-              used_type_var_names)]
-    ]
-    (Element.Shows [
-        \<comment> \<open>Theorem results. @{term "DECODER (fn_nat ENCODED_ARGS) = fn ARGS"}\<close>
-        (Binding.empty_atts, [
-              ((HOLogic.mk_Trueprop o mk_eq_dummyT
-                o both (Term.map_types tvar_to_tfree))
-                  (decode_run_nat_with_encoded_args,
-                   (Term.list_comb (Const fn_head, fn_args)))
-              , [])])
-    ])
-    int
-    ctxt
-  end
+      true
+      Thm.theoremK
+      NONE
+      (K I)
+      (Binding.name (fn_name ^ "_nat_equiv"), [])
+      []
+      [Element.Assumes [(Binding.empty_atts, map (rpair []) assms)]]
+      (Element.Shows [(Binding.empty_atts, [(goal, [])])])
+      int
+      ctxt
+  end;
 
 val _ =
   Outer_Syntax.local_theory_to_proof'
-    \<^command_keyword>\<open>function_nat_rewrite_correctness\<close>
+    \<^command_keyword>\<open>test\<close>
+    "Test"
+    (Parse.term >> function_nat_rewrite_correctness_cmd)
+
+val _ =
+  Outer_Syntax.local_theory_to_proof' \<^command_keyword>\<open>function_nat_rewrite_correctness\<close>
     "converts existing functions into nat encoded functions"
-    (Parse.binding >> (fn bound => fn int => fn ctxt =>
-        correctness_thm (Binding.name_of bound) int ctxt))
+    (Parse.term >> function_nat_rewrite_correctness_cmd)
 end
