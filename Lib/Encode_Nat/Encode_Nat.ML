@@ -108,8 +108,28 @@ fun build_encoder_invocation ctxt freeT (T as Type (_, args)) =
   | build_encoder_invocation _ _ (T as TFree _) = encoder_free_term_of_type T
   | build_encoder_invocation _ _ (TVar _) = error "Can't build an encoder for TVar"
 
+fun pull_front i xs =
+  (Library.nth xs i) :: (Library.nth_drop i xs)
+
+fun get_ctrs_idx_bot ctxt T ctrs =
+let
+    val T_name = Long_Name.base_name (fst (dest_Type T))
+    val bot =
+      (Proof_Context.get_thms ctxt) ("bot_" ^ T_name ^ "_def")
+      |> hd
+      |> rhs_of
+      |> dest_Const
+      |> fst
+  in
+    Library.find_index ((curry (op =) bot) o fst o dest_Const) ctrs
+  end;
+
 fun build_encoder ctxt T ctrs casex =
   let
+    val _ = @{print} ctrs
+    val i = get_ctrs_idx_bot ctxt T ctrs
+    val ctrs = pull_front i ctrs
+    val _ = @{print} casex
     val lhs = Term.list_comb (encoder_free_term_of_type T, encoder_args_of_type T)
     val cases =
       ctrs
@@ -117,7 +137,8 @@ fun build_encoder ctxt T ctrs casex =
           let
             val ctr_args_Ts = (binder_types o type_of) ctr_t
             val encoded_args =
-              `(map (build_encoder_invocation ctxt (SOME T))) ctr_args_Ts
+              (map (build_encoder_invocation ctxt (SOME T)) ctr_args_Ts,
+               ctr_args_Ts)
               ||> (length #> (map_range Bound) #> rev)
               |> (op ~~)
               |> map (op $)
@@ -129,7 +150,6 @@ fun build_encoder ctxt T ctrs casex =
               |->  fold (fn (s, T) => fn t => Abs (s, T, t))
             val _ =
               binder_types (type_of ctr_t)
-
           in
             res
           end
@@ -195,6 +215,7 @@ fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
 
 fun build_decoder ctxt T ctrs =
   let
+    val i = get_ctrs_idx_bot ctxt T ctrs
     val lhs = Term.list_comb (decoder_free_term_of_type T, decoder_args_of_type T)
     val free_var = Free ("v", @{typ "pair_repr"})
     val (conditions, cases) =
@@ -216,6 +237,7 @@ fun build_decoder ctxt T ctrs =
           (condition, Term.list_comb (ctr_t, args_decoded))
         end)
      |> split_list
+     ||> pull_front i
     val rhs = if T = @{typ "nat"} then free_var
               else Ctr_Sugar_Util.mk_IfN T conditions cases
   in

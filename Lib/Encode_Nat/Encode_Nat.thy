@@ -9,6 +9,8 @@ theory Encode_Nat
     Main
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Tree"
+    "HOL-Library.List_Lexorder"
+    "HOL-Library.Product_Lexorder"
     "HOL-Library.Multiset"
     "HOL-Eisbach.Eisbach"
     "HOL-Eisbach.Eisbach_Tools"
@@ -22,6 +24,36 @@ theory Encode_Nat
     "function_nat_rewrite" :: thy_decl and
     "function_nat_rewrite_correctness" :: thy_goal
 begin
+
+
+instantiation char :: order_bot
+begin
+
+definition less_eq_char :: "char \<Rightarrow> char \<Rightarrow> bool" where
+  "(c1::char) \<le> c2 \<longleftrightarrow> of_char c1 \<le> (of_char c2 :: nat)"
+
+definition less_char :: "char \<Rightarrow> char \<Rightarrow> bool" where
+  "less_char c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
+
+definition bot_char :: "char" where
+  "bot_char = CHR 0x00"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case using less_char_def by simp
+next
+  case 2 show ?case using less_eq_char_def by simp
+next
+  case 3 thus ?case using less_eq_char_def by simp
+next
+  case 4 thus ?case using less_eq_char_def by simp
+next
+  case (5 a)
+  then show ?case
+    unfolding bot_char_def less_eq_char_def by (cases a, fastforce)
+qed
+
+end
 
 
 type_synonym pair_repr = nat
@@ -81,8 +113,30 @@ declare enc_nat.simps [simp del]
 datatype_nat_encode list
 declare enc_list.simps [simp del]
 
+value "bot::bool"
+value "0 = (bot::nat)"
+thm bot_nat_def
+lemma "(0::nat) = (bot::nat)"
+  by (simp add: bot_nat_def)
+
+
+ML \<open>
+val a = @{term "0::nat"};
+val b = @{term "bot::nat"};
+
+val goal = Logic.mk_equals (a, b);
+val ctxt = @{context};
+
+\<close>
+
 datatype_nat_encode bool
 declare enc_bool.simps [simp del]
+
+term "Product_Type.bool.case_bool a b c"
+term "case_list a b c"
+term "case_bool "
+
+value "enc_bool bot = bot"
 
 datatype_nat_encode char
 declare enc_char.simps [simp del]
@@ -164,7 +218,7 @@ inductive_set
 lemma
   shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x"
     and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x"
-   apply(simp, all \<open>induction rule: subpairings.induct\<close>)
+  apply(simp, all \<open>induction rule: subpairings.induct\<close>)
   using subpairings.intros by simp+
 
 lemma subpairings_le: "a \<in> subpairings x \<Longrightarrow> a \<le> x"
@@ -237,6 +291,8 @@ datatype_nat_decode bool
 termination by (decode_termination "measure id")
 declare dec_bool.simps[simp del]
 
+thm dec_bool.simps
+
 datatype_nat_wellbehaved bool
   by(intro ext, simp add: dec_bool.simps enc_bool.simps split:bool.split)
 thm encoding_bool_wellbehaved
@@ -285,7 +341,7 @@ datatype_nat_wellbehaved forest
   subgoal for x
     apply(induction x rule: forest.induct)
     using encoding_list_wellbehaved[OF assms(1)]
-     apply (simp add: enc_forest.simps pointfree_idE)
+    apply (simp add: enc_forest.simps pointfree_idE)
     subgoal for x
       apply (induction x rule: list.induct)
       by(simp add: enc_list.simps enc_forest.simps)+
@@ -321,7 +377,7 @@ thm reverset_nat.simps
 
 function_nat_rewrite_correctness reverset
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct)
-   apply(all \<open>subst reverset_nat.simps\<close>)
+  apply(all \<open>subst reverset_nat.simps\<close>)
   subgoal
     apply(subst enc_list.simps)
     using encoding_list_wellbehaved[OF assms(1)]
