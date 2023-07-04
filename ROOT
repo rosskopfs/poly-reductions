@@ -26,6 +26,18 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Small_StepT
     Big_Step_Small_Step_Equivalence
 
+session Expressions in "Expressions" = HOL +
+  directories
+    Basics
+    Global_Calls
+    Plus_Minus
+    Refinements
+    "Refinements/Assign_Pure"
+    Tail_Calls
+    Whiles
+  theories
+    Expression_Tail_Call_Whiles_Plus_Minus
+
 session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
   sessions
     "HOL-Library"
