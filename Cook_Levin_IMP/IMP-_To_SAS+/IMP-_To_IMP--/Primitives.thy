@@ -12,7 +12,6 @@ theory Primitives
     SAS_Plus_Plus_To_SAS_Plus
     IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
     "Poly_Reductions_Lib.Encode_Nat"
-    "HOL-Library.List_Lexorder"
 begin
 
 
@@ -27,59 +26,6 @@ lemma extract_lambda2: "(\<lambda>i .g i v) o f = (\<lambda>i. g (f i) v)"
 
 type_synonym IMP_Minus_com = Com.com
 type_synonym IMP_Minus_Minus_com = com
-
-
-datatype_nat_encode bool
-datatype_nat_decode bool
-termination by (decode_termination "measure id")
-
-declare enc_HOL_bool.simps[simp del]
-declare dec_HOL_bool.simps[simp del]
-
-datatype_nat_wellbehaved bool
-  by(intro ext, simp add: dec_HOL_bool.simps enc_HOL_bool.simps split:bool.split)
-
-thm enc_HOL_bool.simps
-thm dec_HOL_bool.simps
-thm HOL_bool_wellbehaved
-
-
-datatype_nat_encode char
-datatype_nat_decode char
-termination by (decode_termination "measure id")
-
-declare enc_String_char.simps[simp del]
-declare dec_String_char.simps[simp del]
-
-datatype_nat_wellbehaved char
-  apply(intro ext)
-  apply(simp add: enc_String_char.simps dec_String_char.simps)
-  subgoal
-    using HOL_bool_wellbehaved by (induction rule: char.induct) (simp add: pointfree_idE)
-  done
-
-thm enc_String_char.simps
-thm dec_String_char.simps
-thm String_char_wellbehaved
-
-
-
-value "dec_String_char bot"
-
-(*
-definition encode_char :: "char \<Rightarrow> nat" where
-"encode_char = of_char "
-
-definition decode_char :: "nat \<Rightarrow> char" where
-"decode_char = char_of "
-
-lemma idcharorg: "decode_char o encode_char = id"
-  by (simp add: decode_char_def encode_char_def)
-
-lemma idchar:"encode_char x  = encode_char y \<Longrightarrow> x = y"
-  by (simp add: encode_char_def)
-
-*)
 
 
 
@@ -97,8 +43,8 @@ function_nat_rewrite_correctness fst_helper
   apply(induction arg\<^sub>1 rule: fst_helper.induct)
   apply(all \<open>subst fst_helper_nat.simps\<close>)
   subgoal for a b
-    apply(subst enc_Product_Type_prod.simps)
-    by(simp add: assms pointfree_idE enc_Product_Type_prod.simps)
+    apply(subst enc_prod.simps)
+    by(simp add: assms pointfree_idE enc_prod.simps)
   done
 
 function_nat_rewrite snd_helper
@@ -106,139 +52,86 @@ function_nat_rewrite_correctness snd_helper
   by(natfn_correctness \<open>induct arg\<^sub>1 rule: snd_helper.induct\<close>
       assms: assms
       simps_nat: snd_helper_nat.simps
-      enc_simps: enc_Product_Type_prod.simps
-      args_wellbehaved: assms[THEN pointfree_idE])
-(*
-  apply(induction arg\<^sub>1 rule: snd_helper.induct)
-  apply(all \<open>subst snd_helper_nat.simps\<close>)
-  subgoal for a b
-    apply(subst enc_Product_Type_prod.simps)
-    by(simp add: assms pointfree_idE enc_Product_Type_prod.simps)
-  done
-*)
+      enc_simps: enc_prod.simps
+      args_wellbehaved: assms(1)[THEN pointfree_idE])
 
 definition "fst_nat \<equiv> fst_helper_nat"
 definition "snd_nat \<equiv> snd_helper_nat"
 
 lemma fst_nat_equiv:
-  assumes
-    "dec_a \<circ> enc_a = id" and
-    "dec_b \<circ> enc_b = id"
+  fixes enc_'a :: "('a::order_bot) \<Rightarrow> nat"
+    and enc_'b :: "('b::order_bot) \<Rightarrow> nat"
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "dec_'b \<circ> enc_'b = id"
+    and "dec_'a bot = bot"
+    and "dec_'b bot = bot"
   shows
-  "dec_a (fst_nat (enc_Product_Type_prod enc_a enc_b p)) = fst p"
-  using fst_helper_nat_equiv[OF assms]
-  by (subst fst_nat_def, subst fst_helper_eq[symmetric]) assumption
+  "dec_'a (fst_nat (enc_prod enc_'a enc_'b p)) = fst p"
+  using fst_helper_nat_equiv assms
+  by (subst fst_nat_def, subst fst_helper_eq[symmetric]) blast
 
 lemma snd_nat_equiv:
-  assumes
-    "dec_a \<circ> enc_a = id" and
-    "dec_b \<circ> enc_b = id"
+  fixes enc_'a :: "('a::order_bot) \<Rightarrow> nat"
+    and enc_'b :: "('b::order_bot) \<Rightarrow> nat"
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "dec_'b \<circ> enc_'b = id"
+    and "dec_'a bot = bot"
+    and "dec_'b bot = bot"
   shows
-  "dec_b (snd_nat (enc_Product_Type_prod enc_a enc_b p)) = snd p"
-  using snd_helper_nat_equiv[OF assms(2) assms(1)]
-  by (subst snd_nat_def, subst snd_helper_eq[symmetric]) assumption
+  "dec_'b (snd_nat (enc_prod enc_'a enc_'b p)) = snd p"
+  using snd_helper_nat_equiv assms
+  by (subst snd_nat_def, subst snd_helper_eq[symmetric]) blast
 
 lemma eq: "prod_encode (n,m) = (m+n) * (m+n+1) div 2 + n"
   by (simp add: add.commute prod_encode_def triangle_def)
 
 
-fun head :: "'a list \<Rightarrow> 'a" where
+
+fun head :: "('a::order_bot) list \<Rightarrow> 'a" where
   "head (x # xs) = x"
-| "head [] = undefined"
+| "head [] = bot"
 
-fun head_bot :: "('a::order_bot) list \<Rightarrow> 'a" where
-  "head_bot (x # xs) = x"
-| "head_bot [] = bot"
-
-thm hd_def
-
-ML \<open>
-val T = @{typ "nat"};
-Term.is_Type T;
-Term.is_TFree T;
-Term.is_TVar T;
-
-Ctr_Sugar.ctr_sugar_of @{context} "'a"
-\<close>
-
-term "bot::nat"
-
-ML \<open>
-@{term bot_nat}
-\<close>
-
-function_nat_rewrite head_bot
-thm head_bot_nat.simps
-function_nat_rewrite_correctness head_bot
-  apply(induction arg\<^sub>1 rule: head_bot.induct)
-   apply(all \<open>subst head_bot_nat.simps\<close>)
-  subgoal
-    using assms
-    by(simp add: pointfree_idE enc_Nat_nat.simps enc_List_list.simps)
-  subgoal
-    apply(simp add: enc_List_list.simps)
-    sorry
-  done
+function_nat_rewrite head
+function_nat_rewrite_correctness head
+  by (natfn_correctness \<open>induct arg\<^sub>1 rule: head.induct\<close>
+      assms: assms assms(1)[THEN pointfree_idE]
+      simps_nat: head_nat.simps
+      enc_simps: enc_list.simps pointfree_idE
+      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
 
 fun tail :: "'a list \<Rightarrow> 'a list" where
   "tail (x # xs) = xs"
 | "tail [] = []"
 
-
 function_nat_rewrite tail
-thm tail_nat.simps
-
-
 function_nat_rewrite_correctness tail
   by(natfn_correctness \<open>induct arg\<^sub>1 rule: tail.induct\<close>
       assms: assms
       simps_nat: tail_nat.simps
-      enc_simps: enc_List_list.simps
-      args_wellbehaved: List_list_wellbehaved[OF assms, THEN pointfree_idE])
+      enc_simps: enc_list.simps
+      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
 
-thm Encode_Nat.List_list_wellbehaved[of inj_on_imageI]
-thm inj_on_imageI[of ] Encode_Nat.List_list_wellbehaved
-thm inj_on_inverseI[of _ dec_List_list] List_list_wellbehaved
-thm
-lemma inj_enc_List_list:
-  assumes "inj enc_'a"
-    and "dec_'a \<circ> enc_'a = id"
-  shows "inj (enc_List_list enc_'a)"
-  apply(rule inj_on_inverseI)
-  using assms(1) List_list_wellbehaved[OF assms(2)]
+thm encoding_list_wellbehaved[of inj_on_imageI]
+thm inj_on_imageI[of ] encoding_list_wellbehaved inj_on_inverseI
+thm inj_on_inverseI[of _ "dec_list dec_'a" "enc_list enc_'a"] encoding_list_wellbehaved
 
-thm inj_on_inverseI[OF List_list_wellbehaved]
+lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
+  by (metis inj_on_inverseI pointfree_idE)
 
+thm inj_inverseI[OF encoding_list_wellbehaved]
 
-lemma "x = [] \<longleftrightarrow> enc_List_list enc xs = 0"
-  apply(simp add: enc_List_list.simps)
+lemma enc_list_nil: "xs = [] \<longleftrightarrow> enc_list enc_'a xs = 0"
+  by(simp add: enc_list.simps prod_encode_def split: list.split)
 
-lemma "xs = [] \<longleftrightarrow> list_encode xs = 0"
-  using list_encode_eq by force
+(* Necessary? *)
+lemma sub_head: "head_nat (enc_list enc_nat xs) = head xs"
+  by(cases xs; simp add: head_nat.simps enc_list.simps)
+lemma sub_tail: "tail_nat (enc_list enc_nat xs) = enc_list enc_nat (tail xs) "
+  by(cases xs; simp add: tail_nat.simps enc_list.simps)
 
-lemma sub_hd:"hd_nat (list_encode xs) = head xs"
-  by (cases xs,
-      simp add: hd_nat_def fst_nat_def prod_decode_aux.simps prod_decode_def,
-      simp add: hd_nat_def sub_fst)
-
-lemma sub_tl :"tl_nat (list_encode xs) = list_encode (tail xs) "
-  by (cases xs,
-      simp add: tl_nat_def snd_nat_def prod_decode_aux.simps prod_decode_def,
-      simp add: tl_nat_def sub_snd)
-
-lemma sub_head:" xs  \<noteq> [] \<Longrightarrow>head xs = hd xs"
-  apply (cases xs)
-   apply (auto simp add: hd_nat_def)
-  done
-
-lemma sub_tail :" xs \<noteq> [] \<Longrightarrow> tail xs = tl xs"
-  apply (cases xs)
-   apply (auto simp add: tl_nat_def)
-  done
 
 
 (*
-
 lemma [simp]: " tl_nat (Suc v) < Suc v"
   apply (auto simp add:tl_nat_def snd_nat_def)
   by (metis le_imp_less_Suc le_prod_encode_2 prod.exhaust_sel prod_decode_inverse)
@@ -253,44 +146,40 @@ lemma [simp]: "list_encode (tail (case prod_decode v of (x, y) \<Rightarrow> x #
   by (metis case_prod_beta tail.simps(2) le_imp_less_Suc le_prod_encode_2
  list_decode_inverse prod.exhaust_sel prod_decode_inverse)
 
-fun length_nat :: "nat \<Rightarrow> nat" where
-"length_nat 0 = 0"|
-"length_nat n = Suc (length_nat (tl_nat n))"
+*)
 
+term "size (xs::'a list)"
 
-lemma non_empty_positive : "list_encode (a #xs) > 0" by simp
+fun length_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> nat" where
+  "length_acc acc [] = acc"
+| "length_acc acc (x#xs) = length_acc (1 + acc) xs"
 
-lemma sub_length : "length_nat (list_encode xs) = length xs"
-  apply (induct xs)
-   apply (auto)
-  using tl_nat_def  by (simp add: snd_nat_def)
+lemma suc_length_acc: "Suc (length_acc acc xs) = length_acc (Suc acc) xs"
+  by(induction acc xs rule: length_acc.induct; simp)
 
+function_nat_rewrite length_acc
+function_nat_rewrite_correctness length_acc
+  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: length_acc.induct\<close>
+      assms: assms
+      simps_nat: length_acc_nat.simps
+      enc_simps: enc_list.simps
+      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
 
+fun length :: "'a list \<Rightarrow> nat" where
+  "length xs = length_acc 0 xs"
 
+lemma length_eq_length: "List.length xs = length xs"
+  by(induction xs; simp add: suc_length_acc)
 
+function_nat_rewrite length
+function_nat_rewrite_correctness length
+  using length_acc_nat_equiv[OF assms]
+  by(simp add: length_nat.simps prod_encode_def)
 
-definition cons :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"cons h t = Suc (prod_encode (h,t))"
+lemma non_empty_positive : "enc_list enc_'a (x#xs) > 0"
+  by(simp add: enc_list.simps prod_encode_def)
 
-bundle cons_syntax
-begin
-notation cons ("_ ## _" [1000, 61] 61)
-end
-
-bundle no_cons_syntax
-begin
-no_notation cons ("_ ## _" [1000, 61] 61)
-end
-
-unbundle cons_syntax
-
-lemma sub_cons: "cons x (list_encode xs) = list_encode (x#xs)"
-  by (auto simp add:cons_def)
-lemma [simp]: "0 < xs \<Longrightarrow> tl_nat xs < xs"
-  by (metis (no_types, lifting) One_nat_def Suc_diff_1 Suc_diff_eq_diff_pred Suc_inject
- add.left_neutral case_prod_beta comp_apply comp_def gr0_implies_Suc le_imp_less_Suc
- le_prod_encode_2 lessI plus_nat.simps(1) prod.simps(2) prod_decode_def prod_encode_def
- prod_encode_prod_decode_aux snd_nat_def split_conv tl_nat_def triangle_0)
+function_nat_rewrite takeWhile
 
 fun takeWhile_nat :: "(nat \<Rightarrow> bool) \<Rightarrow> nat \<Rightarrow> nat" where
 "takeWhile_nat P xs = (let h = hd_nat xs; t = tl_nat xs in (if xs = 0 then 0 else (if P h
@@ -318,267 +207,91 @@ list_decode_inverse nat_less_le non_empty_positive sub_hd sub_tl tail.simps(2))
 
 
 datatype_nat_encode option
-declare enc_Option_option.simps[simp del]
-thm enc_Option_option.simps
+declare enc_option.simps[simp del]
 
 datatype_nat_decode option
 termination by (decode_termination "measure snd")
-declare dec_Option_option.simps[simp del]
-declare dec_Option_option.simps[of _ "prod_encode _", simp]
-thm dec_Option_option.simps
+declare dec_option.simps[simp del]
+declare dec_option.simps[of _ "prod_encode _", simp]
+
 
 datatype_nat_wellbehaved option
-  by (wellbehavedness
-      induct_rule: option.induct
-      enc_simps: enc_Option_option.simps
-      assms: assms)
-thm Option_option_wellbehaved
-
-fun option_decode_auto where
-  "option_decode_auto n = dec_Option_option dec_Nat_nat n"
-fun option_encode_auto where
-  "option_encode_auto n = enc_Option_option enc_Nat_nat n"
-
-lemma "(\<And>x. f x = g x) \<Longrightarrow> f = g" by (rule HOL.ext)
-
-thm Option_option_wellbehaved[of enc_Nat_nat dec_Nat_nat]
-
-lemma foo:"wellbehaved enc dec \<Longrightarrow> dec (enc a) = a" by simp
-
-lemma option_wellbehaved[simp]: "option_decode_auto (option_encode_auto xs) = xs"
-  apply(simp only: option_decode_auto.simps option_encode_auto.simps)
-  apply(rule foo)
-  using Option_option_wellbehaved Nat_nat_wellbehaved by fastforce
-
-fun option_decode :: "nat \<Rightarrow> nat option" where
-"option_decode 0 = None"|
-"option_decode (Suc x) = Some x"
-
-fun option_encode :: "nat option \<Rightarrow> nat" where
-"option_encode None = 0"|
-"option_encode (Some x) = Suc x"
-
-lemma [simp]: "option_encode (option_decode xs) = xs"
-  by (metis option_decode.elims option_encode.simps(1) option_encode.simps(2))
-
-lemma [simp]: "option_decode (option_encode xs) = xs"
-  by (metis option_decode.simps(1) option_decode.simps(2) option_encode.elims)
-
-definition some_nat :: "nat \<Rightarrow> nat" where
-"some_nat = Suc"
-lemma sub_some [simp]: "some_nat x = option_encode (Some x)"
-  by (simp add: some_nat_def)
-
-
-
-
-
-definition vname_encode_auto :: "string \<Rightarrow> nat" where
-  "vname_encode_auto n = enc_List_list enc_String_char n"
-
-definition vname_decode_auto :: "nat \<Rightarrow> string" where
-  "vname_decode_auto n = dec_List_list dec_String_char n"
-
-definition vname_encode :: "string \<Rightarrow> nat" where
-"vname_encode v = list_encode (map encode_char v)"
-
-definition vname_decode :: "nat \<Rightarrow> string" where
-"vname_decode v = map decode_char (list_decode v)"
-
-lemma vname_id: "vname_decode (vname_encode xs) = xs"
-  by (auto simp add: vname_encode_def vname_decode_def idcharorg)
-
-lemma vname_inj: "inj vname_encode"
-  apply (auto simp add:inj_def)
-  by (metis vname_id)
-
-definition vname_list_encode :: "string list \<Rightarrow> nat" where
-"vname_list_encode l = list_encode (map vname_encode l)"
-
-definition vname_list_decode :: "nat \<Rightarrow> string list" where
-"vname_list_decode n = map vname_decode (list_decode n)"
-
-lemma vname_list_id:"vname_list_decode (vname_list_encode x) = x"
-  by (auto simp add: vname_list_encode_def vname_list_decode_def map_idI vname_id)
-
-fun append_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"append_nat 0 ys = ys"|
-"append_nat xs ys = cons (hd_nat xs) (append_nat (tl_nat xs) ys)"
-
-lemma sub_append: "append_nat (list_encode xs) (list_encode ys) = list_encode (xs @ ys)"
-  apply(induct xs)
-   apply (auto simp only: append.simps sub_cons sub_hd sub_tl)
-   apply auto
-  by (metis Suc_eq_plus1 add.commute add_diff_cancel_left' comp_def cons_def
-head.simps(2) prod.sel(2) prod_encode_inverse snd_nat_def
-sub_cons sub_hd tl_nat_def)
-
-
-fun append_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"append_acc acc 0 = acc"|
-"append_acc acc xs = append_acc ((hd_nat xs)## acc) (tl_nat xs)"
-
-fun reverse_nat_acc :: "nat \<Rightarrow>nat \<Rightarrow> nat" where
-"reverse_nat_acc acc n = (if n = 0 then acc else reverse_nat_acc ((hd_nat n) ## acc) (tl_nat n) )"
-
-lemma sub_reverse_nat_acc:"reverse_nat_acc (list_encode acc) (list_encode n) = list_encode (rev n @ acc) "
-  apply(induct n arbitrary: acc)
-  apply simp
-  apply(subst reverse_nat_acc.simps)
-  apply(auto simp only:sub_hd head.simps sub_tl tail.simps sub_cons rev.simps)
-  apply auto
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: option.induct; simp add: enc_option.simps)
   done
 
-definition reverse_nat :: "nat \<Rightarrow> nat" where
-"reverse_nat n = reverse_nat_acc 0 n"
 
-lemma sub_reverse:"reverse_nat (list_encode n) = list_encode (rev n)"
-  apply(auto simp only: reverse_nat_def )
-  using sub_reverse_nat_acc list_encode.simps(1)
-  by (metis append_Nil2)
-lemma reverse_nat_0:"(reverse_nat 0 =0)" by (auto simp add:reverse_nat_def)
+definition vname_encode :: "string \<Rightarrow> nat" where
+  "vname_encode n = enc_list enc_char n"
 
-lemma append_rev_nat:"append_nat (reverse_nat (Suc v)) xs = append_nat (reverse_nat (tl_nat (Suc v))) ((hd_nat (Suc v)) ## xs)"
-proof-
-  obtain ys where xs_def: "Suc v = list_encode ys"
-    by (metis list_decode_inverse)
-  then moreover obtain a ys' where xs_def_cons : "ys = a#ys'"
-    by (metis list_encode.elims nat.simps(3))
-  moreover obtain xs_list where "xs = list_encode xs_list"  by (metis list_decode_inverse)
-  ultimately show ?thesis by (auto simp add: sub_reverse sub_tl sub_hd sub_cons
-          sub_append simp del: list_encode.simps)
-qed
-lemma append_cons_nat_0 : "append_nat xs (a ## ys) \<noteq> 0"
-proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  moreover obtain xs' where xs_def_cons : "xs = list_encode xs'"
-   by (metis list_decode_inverse)
-  ultimately show ?thesis by (auto simp add: sub_reverse sub_tl sub_hd sub_cons
-          sub_append list_encode_eq simp flip: list_encode.simps)
-qed
-lemma cons_Nil:"xs ## ys \<noteq> 0"
-proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  then show ?thesis by (auto simp add: sub_cons
-          list_encode_eq simp flip: list_encode.simps)
-qed
-lemma tl_cons: "tl_nat (a##ys) = ys"
-proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  then show ?thesis by (auto simp add: sub_cons sub_tl
-          list_encode_eq simp flip: list_encode.simps)
-qed
+definition vname_decode :: "nat \<Rightarrow> string" where
+  "vname_decode n = dec_list dec_char n"
 
-lemma hd_cons: "hd_nat (a##ys) = a"
-proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  then show ?thesis by (auto simp add: sub_cons sub_hd
-          list_encode_eq simp flip: list_encode.simps)
-qed
-lemma rev_rev_nat: "reverse_nat (reverse_nat ys) = ys"
- proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  then show ?thesis by (auto simp add: sub_cons sub_reverse sub_hd
-          list_encode_eq simp flip: list_encode.simps)
-qed
+lemma vname_id: "vname_decode (vname_encode xs) = xs"
+  using encoding_list_wellbehaved[THEN pointfree_idE] encoding_char_wellbehaved
+  by (simp add: vname_encode_def vname_decode_def)
 
+lemma vname_inj: "inj vname_encode"
+  unfolding vname_encode_def
+  using inj_inverseI[OF encoding_list_wellbehaved, OF encoding_char_wellbehaved] .
 
-lemma append_nat_0: "append_nat ys 0 = ys"
-proof-
-  obtain ys' where xs_def: "ys = list_encode ys'"
-    by (metis list_decode_inverse)
-  then show ?thesis by (auto simp add: sub_append sub_hd
-          list_encode_eq simp flip: list_encode.simps)
-qed
-lemma cons0:"cons a 0 = list_encode [a]"
-  by (metis list_encode.simps(1) sub_cons)
+definition vname_list_encode :: "string list \<Rightarrow> nat" where
+  "vname_list_encode l = list_encode (map vname_encode l)"
 
-lemma append_nat_Suc:
-"append_nat xs (Suc v) = append_nat (append_nat xs ((hd_nat (Suc v))##0)) (tl_nat (Suc v))"
-proof -
-  obtain xs' v' where "xs =list_encode xs'" "Suc v = list_encode v'"
-    by (metis list_decode_inverse)
-  then moreover obtain a ys where "v' = a # ys"
-    by (metis Zero_neq_Suc list_encode.elims)
-  ultimately show ?thesis apply(auto simp add:sub_append  sub_hd cons0
-              sub_tl simp del:list_encode.simps) done
-qed
+definition vname_list_encode2 :: "string list \<Rightarrow> nat" where
+  "vname_list_encode2 l = enc_list (enc_list enc_char) l"
+
+definition vname_list_decode :: "nat \<Rightarrow> string list" where
+  "vname_list_decode n = map vname_decode (list_decode n)"
+
+definition vname_list_decode2 :: "nat \<Rightarrow> string list" where
+  "vname_list_decode2 n = dec_list (dec_list dec_char) n"
+
+lemma vname_list_id2: "vname_list_decode2 (vname_list_encode2 x) = x"
+  unfolding vname_list_encode2_def vname_list_decode2_def
+    using encoding_list_wellbehaved[
+            OF encoding_list_wellbehaved,
+            OF encoding_char_wellbehaved,
+            THEN pointfree_idE] .
+
+lemma vname_list_id: "vname_list_decode (vname_list_encode x) = x"
+  by (simp add: vname_list_encode_def vname_list_decode_def map_idI vname_id)
+
+lemma "loop_nat bot bot = bot"
+  by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
+
+(* TODO: rename *)
+lemma sub_reverse:
+  assumes "dec_'a \<circ> enc_'a = id"
+  shows "reverse_nat (enc_list enc_'a xs) = enc_list enc_'a (reverse xs)"
+  using reverse_nat_equiv assms reverse_nat_equiv2 by blast
+
+lemma reverse_nat_0:"(reverse_nat 0 = 0)"
+  by(simp add: reverse_nat.simps loop_nat.simps prod_decode_def prod_decode_aux.simps
+      prod_encode_def)
 
 lemma reverse_append_nat:
     "reverse_nat (append_nat xs ys) = append_nat (reverse_nat ys) (reverse_nat xs)"
-proof -
-obtain xs' ys' where "xs =list_encode xs'"  "ys = list_encode ys'"
-  by (metis list_decode_inverse)
-  thus ?thesis by(auto simp del:append_nat.simps list_encode.simps simp add: cons0 sub_cons
-          sub_append sub_reverse)
-qed
-lemma reverse_singleton_nat:
-"reverse_nat (a ## 0) = a ## 0" by(auto simp add: cons0 sub_reverse simp del:list_encode.simps)
-lemma append_singleton_nat :
-"append_nat (a##0) xs = a ## xs"
-proof -
-  obtain xs' where "xs = list_encode xs'"
- by (metis list_decode_inverse)
-  thus ?thesis by(auto simp del:append_nat.simps list_encode.simps simp add: cons0 sub_cons
-          sub_append )
-qed
+  oops
 
-lemma reverse_cons_nat:
-"reverse_nat (a ## xs) = append_nat (reverse_nat xs) (a##0) "
-proof -
-  obtain xs' where "xs= list_encode xs'"
-    by (metis list_decode_inverse)
-  thus ?thesis
-    apply (auto simp add:sub_append sub_reverse sub_cons cons0 simp del:
-                  list_encode.simps) done
-qed
+fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
+  "elemof _ [] = False"
+| "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
 
-lemma cons_is_reverse: "a ## reverse_nat xs = reverse_nat (append_nat xs (a##0))"
-proof -
-  obtain xs' where "xs= list_encode xs'"
-    by (metis list_decode_inverse)
-  thus ?thesis
-    apply (auto simp add:sub_append sub_reverse sub_cons cons0 simp del:
-                  list_encode.simps) done
-qed
-
-lemma append_induct: " reverse_nat(append_nat xs ys) =
-
-append_acc (reverse_nat xs) ys"
-  apply(induct ys  arbitrary: xs rule:length_nat.induct)
-   apply(simp add: append_nat_0)
-  apply (auto simp add: append_nat_Suc   reverse_append_nat reverse_singleton_nat
-append_singleton_nat simp flip: reverse_cons_nat)
-  apply(auto simp only: cons_is_reverse)
-  done
-
-definition append_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"append_tail xs ys = reverse_nat (append_acc (reverse_nat xs) ys)"
-
-lemma subtail_append:
-"append_tail xs ys = append_nat xs ys"
-  apply(auto simp only: append_tail_def)
-  using rev_rev_nat
-  by (metis append_induct)
+function_nat_rewrite elemof
 
 
-fun elemof :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"elemof e l = (if l = 0 then 0 else if hd_nat l = e then 1 else elemof e (tl_nat l))"
-
-lemma sub_elem_of: "elemof e (list_encode l) \<noteq> 0 =  (e \<in> set l)"
+lemma sub_elem_of: "elemof_nat e (enc_list enc_'a l) \<noteq> 0 = (e \<in> set l)"
   apply (induction l)
-   apply (subst elemof.simps)
-   apply(simp add: sub_hd sub_tl del:elemof.simps)
-  apply (subst elemof.simps)
-  apply (auto simp only: sub_hd sub_tl sub_tail sub_head head.simps tl_def list.distinct(2)
-split:if_splits
-        del:elemof.simps)
-           apply (auto)
+   apply (subst elemof_nat.simps)
+   apply(simp )
+   apply (subst elemof_nat.simps)
+   apply (auto simp only: sub_tail sub_head head.simps tl_def list.distinct(2)
+      split:if_splits
+      del:elemof.simps)
+             apply (auto)
   done
 
 lemma sub_elem_of2: "(elemof e (list_encode l) = 0) =  (e \<notin> set l)"
@@ -882,6 +595,7 @@ list_from_acc (reverse_nat (list_from_nat s n)) (s+n) m
     done
   done
 
+(*
 definition list_from_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 "list_from_tail s n = reverse_nat (list_from_acc 0 s n)"
 
