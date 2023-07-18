@@ -46,24 +46,40 @@ fun build_unpairing_from_idx t idx length =
     if idx = length - 1
     then repeat_snd (idx + 1) t
     else @{term fstP} $ repeat_snd (idx + 1) t
-  end
+  end;
+
+fun pull_front i xs =
+  (Library.nth xs i) :: (Library.nth_drop i xs);
+
+fun get_ctrs_idx_bot ctxt T ctrs =
+let
+    val T_name = Long_Name.base_name (fst (dest_Type T))
+    val bot' =
+      (Proof_Context.get_thms ctxt) ("bot_" ^ T_name ^ "_def")
+      |> hd
+      |> rhs_of
+      |> try (fst o dest_Const)
+  in
+    if is_none bot' then 0
+    else Library.find_index ((curry (op =) (the bot')) o fst o dest_Const) ctrs
+  end;
 
 fun build_constructor_tag ctxt (t as (_, T)) =
   let
-    val f = Const t
-    val sugar =
+    val ctrs =
       Term.body_type T
-      |> try Term.dest_Type
-      |> Option.map fst
-      |> Option.map (Ctr_Sugar.ctr_sugar_of ctxt)
-      |> Option.join
+      |> (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
+      |> Term.dest_Type
+      |> fst
+      |> Ctr_Sugar.ctr_sugar_of ctxt
+      |> Option.map #ctrs
+    val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0)
+    val ctrs = Option.map (pull_front i) ctrs
   in
-    case sugar of
-      SOME {ctrs, ...} =>
-        (case find_index (can (Ctr_Sugar_Util.fo_match ctxt f)) ctrs of
-          ~1 => NONE
-        | i => SOME (@{term atomic} $ HOLogic.mk_number @{typ nat} i))
-    | NONE => NONE
+    case Option.map (find_index (can (Ctr_Sugar_Util.fo_match ctxt (Const t)))) ctrs of
+        SOME (~1) => NONE
+      | SOME i => SOME (@{term atomic} $ HOLogic.mk_number @{typ nat} i)
+      | NONE => NONE
   end;
 
 fun build_constructor_pairing ts c =
@@ -108,29 +124,11 @@ fun build_encoder_invocation ctxt freeT (T as Type (_, args)) =
   | build_encoder_invocation _ _ (T as TFree _) = encoder_free_term_of_type T
   | build_encoder_invocation _ _ (TVar _) = error "Can't build an encoder for TVar"
 
-fun pull_front i xs =
-  (Library.nth xs i) :: (Library.nth_drop i xs)
-
-fun get_ctrs_idx_bot ctxt T ctrs =
-let
-    val T_name = Long_Name.base_name (fst (dest_Type T))
-    val bot' =
-      (Proof_Context.get_thms ctxt) ("bot_" ^ T_name ^ "_def")
-      |> hd
-      |> rhs_of
-      |> try (fst o dest_Const)
-  in
-    if is_none bot' then 0
-    else Library.find_index ((curry (op =) (the bot')) o fst o dest_Const) ctrs
-  end;
-
 fun build_encoder ctxt T ctrs casex =
   let
     val T = T |> (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
     val ctrs = map (map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))) ctrs
     val casex = map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"]))) casex
-    val i = get_ctrs_idx_bot ctxt T ctrs
-    val ctrs = pull_front i ctrs
     val lhs = Term.list_comb (encoder_free_term_of_type T, encoder_args_of_type T)
     val cases =
       ctrs
@@ -218,7 +216,6 @@ fun build_decoder ctxt T ctrs =
   let
     val T = T |> map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"]))
     val ctrs = map (map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))) ctrs
-    val i = get_ctrs_idx_bot ctxt T ctrs
     val lhs = Term.list_comb (decoder_free_term_of_type T, decoder_args_of_type T)
     val free_var = Free ("v", @{typ "pair_repr"})
     val (conditions, cases) =
@@ -240,7 +237,6 @@ fun build_decoder ctxt T ctrs =
           (condition, Term.list_comb (ctr_t, args_decoded))
         end)
      |> split_list
-     ||> pull_front i
     val rhs = if T = @{typ "nat"} then free_var
               else Ctr_Sugar_Util.mk_IfN T conditions cases
   in
@@ -377,6 +373,13 @@ fun build_nat_condition ctxt thm =
     |> mk_conj'
   end;
 
+fun change_if ctxt (t as ((c as Const ("HOL.If", _)) $ cond $ thn $ els)) =
+  if fst (Term.dest_Const (Term.head_of cond)) = "HOL.eq" then t
+  else c $ (decoder_const_term_of_type ctxt @{typ "bool"} $ cond) $ thn $ els
+  | change_if ctxt (t $ u) = change_if ctxt t $ u
+  | change_if _ x = x
+
+
 fun nat_encode_term ctxt thm =
   let
     fun absvar ((v, idx), typ) body = (v, typ, abstract_over (Var ((v, idx), typ), body))
@@ -406,6 +409,7 @@ fun nat_encode_term ctxt thm =
     thm
     |> rhs_of
     |> map_types tvar_to_tfree
+    |> change_if ctxt
     |> replace_constructors ctxt
     |> (fn t => fold (fn wf => fn t' => wf t') wrappers t)
   end
@@ -413,7 +417,13 @@ fun nat_encode_term ctxt thm =
 fun const_nat_unchanged s =
   if exists (fn x => String.isPrefix x s)
        ["HOL.", \<comment> \<open>\<open>If\<close>, \<open>Let\<close>, and more\<close>
-        "Nat.", "Num.", "Groups." \<comment> \<open>Relating to (natural) numbers\<close>
+        "Nat.", "Num.", "Groups.", \<comment> \<open>Relating to (natural) numbers\<close>
+        "enc"
+       ]
+  then true
+  else if exists (fn x => String.isPrefix x (Long_Name.base_name s)) \<comment> \<open>Very hacky\<close>
+       [
+        "dec"
        ]
   then true
   else exists (fn x => x = s)
@@ -423,33 +433,35 @@ fun mk_encoded_typ (Const (_, T)) =
   ((map (K @{typ "pair_repr"}) (binder_types T)) ---> @{typ "pair_repr"})
   | mk_encoded_typ _ = error "Can only make encoder of Const"
 
-fun change_const_to_nat parent parent_nat (t as Const (cident, ctyp)) =
-  if cident = parent then parent_nat
-  else if cident = "Orderings.bot_class.bot" then Const (cident, @{typ "pair_repr"})
-  else if cident = "HOL.If" then Const (cident, @{typ "bool \<Rightarrow> pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"})
-  else if cident = "HOL.eq" then Const (cident, @{typ "pair_repr \<Rightarrow> pair_repr \<Rightarrow> bool"})
-  else if const_nat_unchanged cident then Const (cident, ctyp)
-  else Const (cident ^ "_nat", mk_encoded_typ t)
- | change_const_to_nat _ _ x = x
+fun change_const_to_nat (t as Const (c, _)) =
+  if c = "Orderings.bot_class.bot" then Const (c, @{typ "pair_repr"})
+  else if c = "HOL.If" then Const (c, @{typ "bool \<Rightarrow> pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"})
+  else if c = "HOL.eq" then Const (c, @{typ "pair_repr \<Rightarrow> pair_repr \<Rightarrow> bool"})
+  else if const_nat_unchanged c then t
+  else Const (c ^ "_nat", mk_encoded_typ t)
+ | change_const_to_nat x = x;
 
+fun const_to_free (c, T) t =
+  Term.subst_atomic [(Const (c, T), Free (Long_Name.base_name c, T))] t;
 
 fun function_nat_rewrite s ctxt =
   let
-    val t = Syntax.read_term ctxt s;
-    val (fun_name, _) = Term.dest_Const t;
-    val newfun_name = (Long_Name.base_name fun_name) ^ "_nat";
-    val arg_Ts = (binder_types (fastype_of t));
+    val t = Syntax.read_term ctxt s
+    val (fun_name, _) = Term.dest_Const t
+    val newfun_name = (Long_Name.base_name fun_name) ^ "_nat"
+    val arg_Ts = (binder_types (fastype_of t))
     val arg_ts =
       argnames (List.length arg_Ts)
-      |> map (fn argname => Free (argname, @{typ "pair_repr"}));
-    val newfun_T = mk_encoded_typ t;
-    val newfun_t = Free (newfun_name, newfun_T);
-    val lhs = Term.list_comb (newfun_t, arg_ts);
+      |> map (fn argname => Free (argname, @{typ "pair_repr"}))
+    val newfun_T = mk_encoded_typ t
+    val newfun_t = Free (newfun_name, newfun_T)
+    val lhs = Term.list_comb (newfun_t, arg_ts)
     val ite =
       Proof_Context.get_thms ctxt (fun_name ^ ".simps")
       |> (fn thms => (map (build_nat_condition ctxt) thms, map (nat_encode_term ctxt) thms))
       |-> Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T)
-      |> Term.map_aterms (change_const_to_nat fun_name newfun_t)
+      |> Term.map_aterms change_const_to_nat
+      |> const_to_free (fun_name ^ "_nat", newfun_T)
     val (_, newfun_lthy) =
       Partial_Function.add_partial_function
         "tailrec"

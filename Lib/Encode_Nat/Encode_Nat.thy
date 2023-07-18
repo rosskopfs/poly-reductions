@@ -7,6 +7,7 @@
 theory Encode_Nat
   imports
     Main
+    "HOL-Library.Char_ord"
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Tree"
     "HOL-Library.List_Lexorder"
@@ -37,26 +38,12 @@ type_synonym pair_repr = nat
 instantiation char :: order_bot
 begin
 
-definition less_eq_char :: "char \<Rightarrow> char \<Rightarrow> bool" where
-  "(c1::char) \<le> c2 \<longleftrightarrow> of_char c1 \<le> (of_char c2 :: nat)"
-
-definition less_char :: "char \<Rightarrow> char \<Rightarrow> bool" where
-  "less_char c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
-
 definition bot_char :: "char" where
   "bot_char = CHR 0x00"
 
 instance
 proof(standard, goal_cases)
-  case 1 show ?case using less_char_def by simp
-next
-  case 2 show ?case using less_eq_char_def by simp
-next
-  case 3 thus ?case using less_eq_char_def by simp
-next
-  case 4 thus ?case using less_eq_char_def by simp
-next
-  case (5 a)
+  case (1 a)
   then show ?case
     unfolding bot_char_def less_eq_char_def by (cases a, fastforce)
 qed
