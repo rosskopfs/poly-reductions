@@ -158,29 +158,30 @@ corollary snd_prod_decode_lt_intro:
   shows "snd (prod_decode v) < v"
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
+lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
 
 datatype_nat_encode nat
 
-lemma enc_nat_bot: "enc_nat bot = bot"
-  by simp
+lemma enc_nat_bot: "enc_nat bot = bot" 
+  by (simp add: bot_nat_def prod_encode_0)
 
 datatype_nat_encode list
 declare enc_list.simps [simp del]
 
 lemma enc_list_bot: "enc_list enc_'a bot = bot"
-  by(simp add: enc_list.simps prod_encode_def bot_list_def bot_nat_def)
+  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def)
 
 datatype_nat_encode bool
 declare enc_bool.simps [simp del]
 
 lemma enc_bool_bot: "enc_bool bot = bot"
-  by(simp add: enc_bool.simps prod_encode_def bot_nat_def)
+  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def)
 
 datatype_nat_encode char
 declare enc_char.simps [simp del]
 
 lemma enc_char_bot: "enc_char bot = bot"
-  by(simp add: enc_char.simps enc_bool.simps prod_encode_def bot_nat_def bot_char_def)
+  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def)
 
 datatype_nat_encode prod
 declare enc_prod.simps [simp del]
@@ -189,19 +190,19 @@ lemma enc_prod_bot:
   assumes "enc_'a bot = bot"
     and "enc_'b bot = bot"
   shows "enc_prod enc_'a enc_'b bot = bot"
-  by (simp add: enc_prod.simps prod_encode_def bot_nat_def bot_prod_def assms)
+  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms)
 
 datatype_nat_encode tree
 declare enc_tree.simps [simp del]
 
 lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
-  by (simp add: enc_tree.simps prod_encode_def bot_nat_def bot_tree_def)
+  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def)
 
 datatype_nat_encode keyed_list_tree
 declare enc_keyed_list_tree.simps [simp del]
 
 lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"
-  by (simp add: enc_keyed_list_tree.simps prod_encode_def bot_nat_def bot_keyed_list_tree_def)
+  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def)
 
 
 (* TODO: Do we need similar lemmas for other data types? *)
@@ -297,7 +298,7 @@ method wellbehavedness
 
 
 datatype_nat_wellbehaved nat
-  using dec_nat.simps enc_nat.simps by fastforce
+  by(induction; simp)
 
 datatype_nat_wellbehaved bool
   by(intro ext, simp add: dec_bool.simps enc_bool.simps split:bool.split)
@@ -445,8 +446,36 @@ function_nat_rewrite_correctness subtreest
       encoding_list_wellbehaved[OF encoding_tree_wellbehaved, OF assms(1), THEN pointfree_idE])
 
 
+fun plus where
+    "plus 0 n = n"
+  | "plus (Suc m) n = plus m (Suc n)"
+
+lemma plus_equiv: "plus a b = a + b"
+  by(induction a arbitrary: b; simp)
+
+(* function_nat_rewrite plus
+function_nat_rewrite_correctness plus
+  using encoding_nat_wellbehaved[THEN pointfree_idE]
+  by(induction arg\<^sub>1 arg\<^sub>2 rule: plus.induct;
+      subst plus_nat.simps, simp add: enc_nat.simps plus_nat.simps, presburger?) *)
+
+fun bar :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "bar a b = a + b"
 
 
+ML \<open>
+
+@{term "n - 1"}
+
+\<close>
+
+
+function_nat_rewrite bar
+thm bar_nat.simps
+function_nat_rewrite_correctness bar
+  using encoding_nat_wellbehaved[THEN pointfree_idE]
+   
+  by(simp add: bar_nat.simps)
 
 
 (* TODOs/Things not wroking/Things to investigate *)
@@ -635,7 +664,7 @@ lemma b: "loop_nat 0 0 = 0"
   by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
 
 lemma c: "reverse_nat 0 = 0"
-  by(simp add: b reverse_nat.simps prod_encode_def)
+  by(simp add: b reverse_nat.simps prod_encode_0)
 
 lemma d: "append_nat 0 0 = 0"
   by(simp add: c b append_nat.simps)
@@ -732,24 +761,11 @@ function_nat_rewrite_correctness baz
   done
 
 
+(* can't handle case expressions *)
+fun test3 where
+  "test3 x = (case x of True \<Rightarrow> False | False \<Rightarrow> True)"
 
-
-
-
-
-
-
-
-
-
-
-fun bar :: "'a list \<Rightarrow> 'b list \<Rightarrow> ('a * 'b) list" where
-  "bar [] [] = []"
-| "bar [] _ = []"
-| "bar _ [] = []"
-| "bar (a#as) (b#bs) = (a, b) # (bar as bs)"
-
-(* function_nat_rewrite bar *)
+(* function_nat_rewrite foo *)
 
 
 end

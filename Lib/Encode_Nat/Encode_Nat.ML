@@ -26,9 +26,9 @@ fun mk_conj' [] = @{term "True"}
 
 val read_const' = Proof_Context.read_const {proper = false, strict = false}
 
-fun lhs_of thm = (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst) thm
+fun lhs_of_term t = (HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst) t
 
-fun rhs_of thm = (Thm.prop_of #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd) thm
+fun rhs_of_term t = (HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd) t
 
 datatype pairing_path =
   DONE |
@@ -57,7 +57,7 @@ let
     val bot' =
       (Proof_Context.get_thms ctxt) ("bot_" ^ T_name ^ "_def")
       |> hd
-      |> rhs_of
+      |> (rhs_of_term o Thm.prop_of)
       |> try (fst o dest_Const)
   in
     if is_none bot' then 0
@@ -69,9 +69,10 @@ fun build_constructor_tag ctxt (t as (_, T)) =
     val ctrs =
       Term.body_type T
       |> (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
-      |> Term.dest_Type
-      |> fst
-      |> Ctr_Sugar.ctr_sugar_of ctxt
+      |> try Term.dest_Type
+      |> Option.map fst
+      |> Option.map (Ctr_Sugar.ctr_sugar_of ctxt)
+      |> Option.join
       |> Option.map #ctrs
     val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0)
     val ctrs = Option.map (pull_front i) ctrs
@@ -358,18 +359,24 @@ fun replace_constructors _ (Const (\<^const_name>\<open>undefined\<close>, _)) =
             | NONE => Term.list_comb (h, args'))
        | _ => Term.list_comb (h, args'));
 
-fun build_nat_condition ctxt thm =
+fun build_nat_condition ctxt t =
   let
     fun mk_condition (arg, x) =
       map (fn (match, path) =>
-            the (build_constructor_tag ctxt match)
-            |> (pair (build_unpairing arg path) #> HOLogic.mk_eq)) x
-    val args_t = Term.args_of (lhs_of thm)
+            if match = ("Groups.zero_class.zero", @{typ "nat"})
+            then HOLogic.mk_eq (arg, HOLogic.mk_number @{typ nat} 0)
+            else
+              the (build_constructor_tag ctxt match)
+              |> (pair (build_unpairing arg path) #> HOLogic.mk_eq)) x
+    val args_t = Term.args_of (lhs_of_term t)
     val new_args_t = map (fn s => Free (s, @{typ "pair_repr"})) (argnames (length args_t))
-    val condition_paths = map (extract_condition_paths o build_patmatch_term) args_t
+    val condition_paths =
+      map build_patmatch_term args_t |> @{print}
+      |> map extract_condition_paths |> @{print} 
   in
-    map mk_condition (new_args_t ~~ condition_paths)
-    |> List.concat
+    (new_args_t ~~ condition_paths) |> @{print}
+    |> map mk_condition |> @{print}
+    |> List.concat |> @{print}
     |> mk_conj'
   end;
 
@@ -380,12 +387,12 @@ fun change_if ctxt (t as ((c as Const ("HOL.If", _)) $ cond $ thn $ els)) =
   | change_if _ x = x
 
 
-fun nat_encode_term ctxt thm =
+fun nat_encode_term ctxt t =
   let
     fun absvar ((v, idx), typ) body = (v, typ, abstract_over (Var ((v, idx), typ), body))
     val arguments_and_paths =
-      thm
-      |> lhs_of
+      t
+      |> lhs_of_term
       |> map_types tvar_to_tfree
       |> Term.args_of
       |> map build_patmatch_term
@@ -406,8 +413,8 @@ fun nat_encode_term ctxt thm =
              $ Abs (var_name, @{typ "pair_repr"}, abs_body)
           end)
   in
-    thm
-    |> rhs_of
+    t
+    |> rhs_of_term
     |> map_types tvar_to_tfree
     |> change_if ctxt
     |> replace_constructors ctxt
@@ -444,6 +451,24 @@ fun change_const_to_nat (t as Const (c, _)) =
 fun const_to_free (c, T) t =
   Term.subst_atomic [(Const (c, T), Free (Long_Name.base_name c, T))] t;
 
+fun replace_suc t =
+  let
+    fun minus_one v =
+          Const ("Groups.minus_class.minus", @{typ "nat \<Rightarrow> nat \<Rightarrow> nat"})
+            $ v $ Const ("Groups.one_class.one", @{typ "nat"})
+    fun substs_for_suc (t as (Const ("Nat.Suc", _) $ v)) = [(t, v), (v, minus_one v)]
+      | substs_for_suc _ = []
+    val substs =
+      Term.args_of (lhs_of_term t)
+      |> map substs_for_suc
+      |> Library.flat
+    val res =
+      t |> @{print}
+      |> Term.subst_free substs |> @{print}
+  in
+    res
+  end;
+
 fun function_nat_rewrite s ctxt =
   let
     val t = Syntax.read_term ctxt s
@@ -457,7 +482,9 @@ fun function_nat_rewrite s ctxt =
     val newfun_t = Free (newfun_name, newfun_T)
     val lhs = Term.list_comb (newfun_t, arg_ts)
     val ite =
-      Proof_Context.get_thms ctxt (fun_name ^ ".simps")
+      Proof_Context.get_thms ctxt (fun_name ^ ".simps") |> @{print}
+      |> map Thm.prop_of
+      |> map replace_suc |> @{print}
       |> (fn thms => (map (build_nat_condition ctxt) thms, map (nat_encode_term ctxt) thms))
       |-> Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T)
       |> Term.map_aterms change_const_to_nat
