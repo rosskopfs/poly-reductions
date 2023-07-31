@@ -345,7 +345,7 @@ method natfn_correctness
   induct_rule;
   \<comment> \<open>Unfold exactly one level of the natfn we're looking at—corresponding to the inductive step\<close>
   subst simps_nat;
-  insert args_wellbehaved; simp del: dels add: enc_simps; meson
+  insert args_wellbehaved; simp del: dels add: enc_simps; meson?
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
@@ -470,12 +470,7 @@ ML \<open>
 \<close>
 
 
-function_nat_rewrite bar
-thm bar_nat.simps
-function_nat_rewrite_correctness bar
-  using encoding_nat_wellbehaved[THEN pointfree_idE]
-   
-  by(simp add: bar_nat.simps)
+
 
 
 (* TODOs/Things not wroking/Things to investigate *)

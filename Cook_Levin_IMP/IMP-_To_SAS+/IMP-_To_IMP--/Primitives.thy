@@ -172,7 +172,7 @@ lemma non_empty_positive : "enc_list enc_'a (x#xs) > 0"
   by(simp add: enc_list.simps prod_encode_def)
 
 
-fun takeWhile_nat :: "(nat \<Rightarrow> bool) \<Rightarrow> nat \<Rightarrow> nat" where
+(* fun takeWhile_nat :: "(nat \<Rightarrow> bool) \<Rightarrow> nat \<Rightarrow> nat" where
   "takeWhile_nat P xs = (let h = hd_nat xs; t = tl_nat xs in (if xs = 0 then 0 else (if P h
             then cons h (takeWhile_nat P t) else 0)))"
 
@@ -194,7 +194,7 @@ lemma sub_dropWhile: "dropWhile_nat P (list_encode xs) = list_encode (dropWhile 
   apply (induct xs)
    apply simp
   by (metis dropWhile.simps(2) dropWhile_nat.elims head.simps(2)
-      list_decode_inverse nat_less_le non_empty_positive sub_hd sub_tl tail.simps(2))
+      list_decode_inverse nat_less_le non_empty_positive sub_hd sub_tl tail.simps(2)) *)
 
 
 datatype_nat_encode option
@@ -214,41 +214,29 @@ datatype_nat_wellbehaved option
   done
 
 
-definition vname_encode :: "string \<Rightarrow> nat" where
-  "vname_encode n = enc_list enc_char n"
+definition enc_vname :: "vname \<Rightarrow> nat" where
+  "enc_vname = enc_list enc_char"
 
-definition vname_decode :: "nat \<Rightarrow> string" where
-  "vname_decode n = dec_list dec_char n"
+definition dec_vname :: "nat \<Rightarrow> vname" where
+  "dec_vname = dec_list dec_char"
 
-lemma vname_id: "vname_decode (vname_encode xs) = xs"
-  using encoding_list_wellbehaved[THEN pointfree_idE] encoding_char_wellbehaved
-  by (simp add: vname_encode_def vname_decode_def)
+lemma encoding_vname_wellbehaved: "dec_vname \<circ> enc_vname = id"
+  unfolding enc_vname_def dec_vname_def
+  using encoding_list_wellbehaved[OF encoding_char_wellbehaved] .
 
-lemma vname_inj: "inj vname_encode"
-  unfolding vname_encode_def
-  using inj_inverseI[OF encoding_list_wellbehaved, OF encoding_char_wellbehaved] .
+lemmas inj_enc_vname = inj_inverseI[OF encoding_vname_wellbehaved]
 
 definition vname_list_encode :: "string list \<Rightarrow> nat" where
-  "vname_list_encode l = list_encode (map vname_encode l)"
-
-definition vname_list_encode2 :: "string list \<Rightarrow> nat" where
-  "vname_list_encode2 l = enc_list (enc_list enc_char) l"
+  "vname_list_encode = enc_list enc_vname"
 
 definition vname_list_decode :: "nat \<Rightarrow> string list" where
-  "vname_list_decode n = map vname_decode (list_decode n)"
-
-definition vname_list_decode2 :: "nat \<Rightarrow> string list" where
-  "vname_list_decode2 n = dec_list (dec_list dec_char) n"
-
-lemma vname_list_id2: "vname_list_decode2 (vname_list_encode2 x) = x"
-  unfolding vname_list_encode2_def vname_list_decode2_def
-  using encoding_list_wellbehaved[
-      OF encoding_list_wellbehaved,
-      OF encoding_char_wellbehaved,
-      THEN pointfree_idE] .
+  "vname_list_decode = dec_list dec_vname"
 
 lemma vname_list_id: "vname_list_decode (vname_list_encode x) = x"
-  by (simp add: vname_list_encode_def vname_list_decode_def map_idI vname_id)
+  unfolding vname_list_encode_def vname_list_decode_def
+  using encoding_list_wellbehaved[
+      OF encoding_vname_wellbehaved,
+      THEN pointfree_idE] .
 
 lemma "loop_nat bot bot = bot"
   by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
@@ -273,31 +261,6 @@ fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
 
 lemma elemof_set_in: "elemof x xs = (x \<in> set xs)"
   by(induction x xs rule: elemof.induct; simp)
-
-fun foo where
-  "foo x = True"
-
-function_nat_rewrite foo
-
-function_nat_rewrite_correctness foo
-  by(simp add: foo_nat.simps)
-
-fun bar where
-  "bar x = (if foo x then False else True)"
-
-ML \<open>
-@{term "if foo x then True else False"};
-@{term "enc_bool"};
-
-fun change_if ((c as Const ("HOL.If", _)) $ cond $ thn $ els) =
-  c $ (@{term "enc_bool"} $ cond) $ thn $ els
-  | change_if x = x
-
-\<close>
-
-function_nat_rewrite bar
-function_nat_rewrite_correctness bar
-  using  foo_nat_equiv[OF assms] by(simp add: bar_nat.simps)
 
 function_nat_rewrite elemof
 
@@ -374,36 +337,8 @@ function_nat_rewrite_correctness remdups
   using remdups_acc_nat_equiv[OF assms, of "[]" arg\<^sub>1]
   by(simp add: remdups_nat.simps enc_list.simps)
 
-
-lemma sub_remdups: "remdups_nat (enc_list enc_'a xs) = enc_list enc_'a (remdups xs)"
-  apply (subst remdups_nat.simps)
-  apply (induct xs)
-   apply (auto simp only:  tail.simps head.simps sub_tail sub_head remdups.simps sub_elemof
-      )
-   apply (auto)[1]
-  using "11" remdups_acc_nat.simps apply force
-  apply(auto simp add: remdups_acc.simps remdups_acc_nat.simps)
-  oops
-
-
 lemma non_empty_not_zero: "enc_list enc_'a (a # xs) \<noteq> 0"
   using non_empty_positive by simp
-
-lemma remdups_induct :
-  "reverse_nat (append_nat (reverse_nat acc) (remdups_nat xs)) = remdups_acc acc xs "
-proof -
-  obtain xs' acc' where "xs =list_encode xs'" "acc = list_encode acc'"
-    by (metis list_decode_inverse)
-  thus ?thesis apply(auto simp only: sub_reverse sub_remdups sub_append rev_append rev_rev_ident)
-    apply(induct xs' arbitrary: acc' xs acc)
-    apply simp
-    apply(subst remdups_acc.simps)
-    apply(auto simp add: sub_cons sub_hd sub_tl sub_elem_of2 sub_elem_of non_empty_positive non_empty_not_zero
-        simp del: list_encode.simps remdups_acc.simps append_nat.simps elemof.simps)
-    oops
-  qed
-
-
 
 lemma prod_sum_less:"0 < x \<Longrightarrow> (x, y) = prod_decode p \<Longrightarrow> x + y < p"
   by (smt Nat.add_0_right Suc_leI add.left_commute add_Suc_right le_imp_less_Suc le_prod_encode_2
@@ -422,7 +357,6 @@ lemma prod_snd_less2:"(x, y) = prod_decode p \<Longrightarrow> y \<le> p"
 
 lemma prod_fst_less2:"(x, y) = prod_decode p \<Longrightarrow> x \<le> p"
   using prod_sum_less by (metis le_prod_encode_1 prod_decode_inverse)
-
 
 
 
@@ -489,10 +423,10 @@ lemmas dec_com_prod_encode_simp[simp] = dec_com.simps[of  "prod_encode _"]
 datatype_nat_wellbehaved com
   apply (intro ext)
   subgoal for x
-    using encoding_list_wellbehaved[OF encoding_char_wellbehaved, THEN pointfree_idE] vname_list_id2
-      encoding_bit_wellbehaved[THEN pointfree_idE]
-    by (induction x rule: com.induct; simp add: vname_list_decode2_def vname_list_encode2_def
-        enc_com.simps)
+    using vname_list_id encoding_bit_wellbehaved[THEN pointfree_idE]
+      encoding_vname_wellbehaved[THEN pointfree_idE]
+    by (induction x rule: com.induct; simp add: dec_vname_def enc_vname_def vname_list_decode_def
+        vname_list_encode_def enc_com.simps)
   done
 
 fun nth :: "nat \<Rightarrow> ('a::order_bot) list \<Rightarrow> 'a" where
@@ -508,11 +442,8 @@ function_nat_rewrite_correctness nth
       enc_simps: enc_list.simps
       args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
 
-
-
 lemma pos_hd_less[termination_simp]: "x > 0 \<Longrightarrow> head_nat x < x"
   by(simp add: head_nat.simps bot_nat_def fst_prod_decode_less snd_prod_decode_lt_intro)
-
 
 lemma pos_tl_less[termination_simp]: "x > 0 \<Longrightarrow> tail_nat x < x"
   by(simp add: tail_nat.simps prod_encode_0 snd_prod_decode_less snd_prod_decode_lt_intro)
@@ -523,9 +454,6 @@ lemma nth_less[simp]: "nth_nat n x \<le> x"
       fst_prod_decode_lte snd_prod_decode_lte)
   oops
 
-lemma [simp]: "x > 0 \<Longrightarrow> nth_nat n x < x"
-  apply (induct n arbitrary:x)
-  oops
 
 (* fun map_nat :: "(nat\<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat" where
   "map_nat f n = (if n = 0 then 0 else cons (f (hd_nat n)) (map_nat f (tl_nat n)))"
@@ -568,20 +496,11 @@ datatype_nat_wellbehaved num
     by(induction x rule: num.induct; simp add: enc_num.simps)
   done
 
-lemma Suc_plus: "Suc (m + n) = Suc m + n"
-  by simp
-
-
 lemma remdups_map : "inj f \<Longrightarrow> remdups (map f xs) = map f (remdups xs)"
   apply (induction xs)
    apply simp
   apply (simp add: inj_def elemof_set_in)
   by (metis "8" append_Cons image_iff list.simps(9) remdups_acc_append)
-
-
-
-lemma vname_list_encode_as_comp:"vname_list_encode = list_encode o (map vname_encode)"
-  by (auto simp add:fun_eq_iff vname_list_encode_def)
 
 
 datatype_nat_encode domain_element
@@ -614,20 +533,19 @@ datatype_nat_wellbehaved variable
     by(induction x rule: variable.induct; simp add: enc_variable.simps)
   done
 
+definition enc_sas_assignment:: "variable * domain_element \<Rightarrow> nat" where
+  "enc_sas_assignment = enc_prod enc_variable enc_domain_element"
 
-definition sas_assignment_encode:: "variable * domain_element \<Rightarrow> nat" where
-  "sas_assignment_encode = enc_prod enc_variable enc_domain_element"
+definition dec_sas_assignment:: "nat \<Rightarrow> (variable * domain_element)" where
+  "dec_sas_assignment = dec_prod dec_variable dec_domain_element"
 
-definition sas_assignment_decode:: "nat \<Rightarrow> (variable * domain_element)" where
-  "sas_assignment_decode = dec_prod dec_variable dec_domain_element"
+lemma encoding_sas_assignment_wellbehaved: "dec_sas_assignment \<circ> enc_sas_assignment = id"
+  unfolding dec_sas_assignment_def enc_sas_assignment_def
+  using
+    encoding_prod_wellbehaved[OF encoding_variable_wellbehaved encoding_domain_element_wellbehaved]
+  .
 
-lemmas encoding_sas_assignment_wellbehaved =
-  encoding_prod_wellbehaved[OF encoding_variable_wellbehaved, OF encoding_domain_element_wellbehaved]
-
-fun someOf :: "'a option \<Rightarrow> 'a" where
-  "someOf (Some x) = x"
-
-definition map_to_list :: "('a,'b) map \<Rightarrow> ('a*'b) list" where
+definition map_to_list :: "('a,'b) map \<Rightarrow> ('a * 'b) list" where
   "map_to_list s \<equiv> (SOME l. map_of l = s)"
 
 lemma has_map:
@@ -638,13 +556,10 @@ proof -
   obtain n where n_def:"n = card (dom s)" by blast
   then show  "\<exists>l. map_of l = s " using assms
   proof (induct n arbitrary:s)
-    case 0
-    then have "dom s ={}" using card_eq_0_iff by simp
-    then show ?case  by simp
+    case 0 then show ?case by simp
   next
     case (Suc n)
-    hence "dom s  \<noteq> {}" using card_gt_0_iff
-      by force
+    hence "dom s  \<noteq> {}" using card_gt_0_iff by force
     then obtain x where x_def: "x \<in> dom s" by blast
     then obtain y where y_def: "s x = Some y" by fast
     obtain s' where s'_def: "s' = s(x:=None)" by blast
@@ -661,140 +576,165 @@ lemma map_to_list_id: "finite (dom s) \<Longrightarrow> map_of (map_to_list s) =
   using has_map
   by (metis (mono_tags) map_to_list_def someI_ex)
 
-definition sas_state_encode ::"sas_state \<Rightarrow> nat" where
-  "sas_state_encode xs = list_encode (map sas_assignment_encode (map_to_list xs)) "
+definition enc_sas_state ::"sas_state \<Rightarrow> nat" where
+  "enc_sas_state xs = enc_list enc_sas_assignment (map_to_list xs)"
 
-definition sas_state_decode :: "nat \<Rightarrow> sas_state" where
-  "sas_state_decode n = map_of (map sas_assignment_decode (list_decode n)) "
+definition dec_sas_state :: "nat \<Rightarrow> sas_state" where
+  "dec_sas_state n = map_of (dec_list dec_sas_assignment n)"
+
+lemma sas_state_id : "finite (dom x) \<Longrightarrow> dec_sas_state (enc_sas_state x) = x"
+  unfolding enc_sas_state_def dec_sas_state_def
+  using map_to_list_id
+    encoding_list_wellbehaved[OF encoding_sas_assignment_wellbehaved, THEN pointfree_idE]
+    encoding_sas_assignment_wellbehaved[THEN pointfree_idE]
+  by fastforce
+
+definition enc_imp_assignment:: "vname * bit \<Rightarrow> nat" where
+  "enc_imp_assignment = enc_prod enc_vname enc_bit"
+
+definition dec_imp_assignment:: "nat \<Rightarrow> (vname * bit)" where
+  "dec_imp_assignment = dec_prod dec_vname dec_bit"
+
+lemma encoding_imp_assignment_wellbehaved: "dec_imp_assignment \<circ> enc_imp_assignment = id"
+  unfolding enc_imp_assignment_def dec_imp_assignment_def
+  using encoding_prod_wellbehaved[OF encoding_vname_wellbehaved encoding_bit_wellbehaved] .
+
+definition enc_imp_state :: "imp_state \<Rightarrow> nat" where
+  "enc_imp_state xs = enc_list (enc_prod enc_vname enc_bit) (map_to_list xs)"
+
+definition dec_imp_state :: "nat \<Rightarrow> imp_state" where
+  "dec_imp_state n = map_of (dec_list (dec_prod dec_vname dec_bit) n)"
+
+lemma imp_state_id : "finite (dom x) \<Longrightarrow> dec_imp_state (enc_imp_state x) = x"
+  unfolding enc_imp_state_def dec_imp_state_def
+  using map_to_list_id encoding_imp_assignment_wellbehaved[THEN pointfree_idE]
+    encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF encoding_vname_wellbehaved
+      encoding_bit_wellbehaved, THEN pointfree_idE]
+  by fastforce
+
+definition enc_comm_imp_state:: "(com * imp_state) \<Rightarrow> nat" where
+  "enc_comm_imp_state = enc_prod enc_com enc_imp_state"
+
+definition dec_comm_imp_state:: "nat \<Rightarrow> (com * imp_state)" where
+  "dec_comm_imp_state = dec_prod dec_com dec_imp_state"
 
 
-lemma sas_state_id : "finite (dom x) \<Longrightarrow> sas_state_decode (sas_state_encode x) = x"
-  apply (auto simp only: sas_state_encode_def sas_state_decode_def map_to_list_id comp_def
-      list_encode_inverse map_map sas_assignment_id)
-  apply (auto simp add: map_to_list_id)
-  done
-
-
-
-
-fun imp_assignment_encode:: "vname * bit \<Rightarrow> nat" where
-"imp_assignment_encode (v,d) = prod_encode (vname_encode v, bit_encode d)"
-
-fun imp_assignment_decode:: "nat \<Rightarrow> (vname * bit)" where
-"imp_assignment_decode n = (case prod_decode n of (v,d) \<Rightarrow> (vname_decode v, bit_decode d))"
-
-lemma  imp_assignment_id: "imp_assignment_decode (imp_assignment_encode x) = x"
-  apply (cases x)
-  apply (auto simp only:vname_id bit_id imp_assignment_decode.simps imp_assignment_encode.simps
-        prod_encode_inverse)
-  done
-
-definition imp_state_encode :: "imp_state \<Rightarrow> nat" where
-"imp_state_encode xs = list_encode (map imp_assignment_encode (map_to_list xs)) "
-
-definition imp_state_decode :: "nat \<Rightarrow> imp_state" where
-"imp_state_decode n = map_of (map imp_assignment_decode (list_decode n))"
-
-lemma imp_state_id : " finite (dom x) \<Longrightarrow> imp_state_decode (imp_state_encode x) = x"
- apply (auto simp only: imp_state_encode_def imp_state_decode_def map_to_list_id comp_def
-      list_encode_inverse map_map imp_assignment_id)
-    apply (auto simp add: map_to_list_id)
-  done
-
-fun comm_imp_state_encode:: "(com * imp_state) \<Rightarrow> nat" where
-"comm_imp_state_encode (c,i) = prod_encode (comm_encode c, imp_state_encode i)"
-
-fun comm_imp_state_decode :: "nat \<Rightarrow> (com*imp_state)" where
-"comm_imp_state_decode n = (case prod_decode n of (c,i) \<Rightarrow> (comm_decode c, imp_state_decode i))"
+(* TODO: Should wellbehavedness lemmas always look like this? *)
+lemma encoding_prod_id:
+  assumes "dec_'a (enc_'a a) = a"
+    and "dec_'b (enc_'b b) = b"
+  shows "dec_prod dec_'a dec_'b (enc_prod enc_'a enc_'b (a, b)) = (a, b)"
+  using assms by (induction "(a, b)" rule: prod.induct; simp add: enc_prod.simps)
 
 lemma comm_imp_state_id:
-  "finite (dom (snd x)) \<Longrightarrow> comm_imp_state_decode (comm_imp_state_encode x) = x"
-  apply (cases x)
-  apply (auto simp only: comm_imp_state_encode.simps comm_imp_state_decode.simps comm_id imp_state_id prod_encode_inverse snd_def)
-  done
+  "finite (dom (snd x)) \<Longrightarrow> dec_comm_imp_state (enc_comm_imp_state x) = x"
+  unfolding enc_comm_imp_state_def dec_comm_imp_state_def
+  using encoding_prod_id[where ?enc_'a=enc_com and ?dec_'a=dec_com and ?enc_'b=enc_imp_state and
+      ?dec_'b=dec_imp_state] encoding_com_wellbehaved[THEN pointfree_idE] imp_state_id
+  by (cases x, simp)
 
-definition imp_assignment_list_encode :: "(vname,bit)assignment list \<Rightarrow> nat" where
-"imp_assignment_list_encode xs = list_encode (map imp_assignment_encode xs)"
+definition enc_imp_assignment_list :: "(vname, bit) assignment list \<Rightarrow> nat" where
+  "enc_imp_assignment_list = enc_list (enc_prod enc_vname enc_bit)"
 
-definition imp_assignment_list_decode :: "nat \<Rightarrow> (vname,bit)assignment list" where
-"imp_assignment_list_decode xs = map imp_assignment_decode (list_decode xs)"
+definition dec_imp_assignment_list :: "nat \<Rightarrow> (vname, bit) assignment list" where
+  "dec_imp_assignment_list = dec_list (dec_prod dec_vname dec_bit)"
 
-lemma imp_assignment_list_id: "imp_assignment_list_decode (imp_assignment_list_encode x) = x"
-  apply (auto simp only:imp_assignment_list_decode_def imp_assignment_list_encode_def list_encode_inverse
-      imp_assignment_id map_map comp_def map_idI)
-  done
+lemma encoding_imp_assignment_list_wellbehaved:
+  "dec_imp_assignment_list \<circ> enc_imp_assignment_list = id"
+  unfolding dec_imp_assignment_list_def enc_imp_assignment_list_def
+  using encoding_list_wellbehaved[OF encoding_prod_wellbehaved,
+      OF encoding_vname_wellbehaved encoding_bit_wellbehaved] .
 
+definition enc_cilist :: "(com * (vname * bit) list) \<Rightarrow> nat" where
+  "enc_cilist = enc_prod enc_com enc_imp_assignment_list"
 
-fun cilist_encode :: "(com * (vname*bit) list) \<Rightarrow> nat" where
-"cilist_encode (c,i) = prod_encode (comm_encode c, imp_assignment_list_encode i)"
+definition dec_cilist :: " nat \<Rightarrow> (com * (vname*bit) list)" where
+  "dec_cilist = dec_prod dec_com dec_imp_assignment_list"
 
-fun cilist_decode :: " nat \<Rightarrow> (com * (vname*bit) list)" where
-"cilist_decode n = (case prod_decode n of (c,i) \<Rightarrow>
-         (comm_decode c, imp_assignment_list_decode i))"
+lemma encoding_cilist_wellbehaved: "dec_cilist \<circ> enc_cilist = id"
+  unfolding dec_cilist_def enc_cilist_def
+  using
+    encoding_prod_wellbehaved[OF encoding_com_wellbehaved encoding_imp_assignment_list_wellbehaved]
+  .
 
-lemma cilist_id: "cilist_decode(cilist_encode x) = x"
-  apply (cases x)
-  apply (auto simp only: cilist_decode.simps cilist_encode.simps prod_encode_inverse comm_id imp_assignment_list_id)
-  done
+fun cilist_to_map:: "(com * (vname * bit) list) \<Rightarrow> (com * imp_state)" where
+  "cilist_to_map (c, i) = (c, map_of i)"
 
-fun cilist_to_map:: "(com*(vname*bit) list) \<Rightarrow> (com*imp_state) " where
-"cilist_to_map (c,i) = (c,map_of i)"
-
-
-
+(* TODO: make en-/decoder for record types *)
 type_synonym operator = "(variable, domain_element) sas_plus_operator"
 type_synonym problem = "(variable, domain_element) sas_plus_problem"
 
-definition sas_assignment_list_encode :: "(variable,domain_element)assignment list \<Rightarrow> nat" where
-"sas_assignment_list_encode xs =list_encode (map sas_assignment_encode xs)"
 
-definition sas_assignment_list_decode :: "nat \<Rightarrow> (variable,domain_element)assignment list" where
-"sas_assignment_list_decode xs = map sas_assignment_decode (list_decode xs)"
+definition enc_sas_assignment_list :: "(variable, domain_element) assignment list \<Rightarrow> nat" where
+  "enc_sas_assignment_list = enc_list (enc_prod enc_variable enc_domain_element)"
 
-lemma sas_assignment_list_id: "sas_assignment_list_decode (sas_assignment_list_encode x) = x"
-  apply (auto simp only:sas_assignment_list_decode_def sas_assignment_list_encode_def list_encode_inverse
-      sas_assignment_id map_map comp_def map_idI)
+definition dec_sas_assignment_list :: "nat \<Rightarrow> (variable, domain_element) assignment list" where
+  "dec_sas_assignment_list = dec_list (dec_prod dec_variable dec_domain_element)"
+
+lemma encoding_sas_assignment_list_wellbehaved:
+  "dec_sas_assignment_list \<circ> enc_sas_assignment_list = id"
+  unfolding dec_sas_assignment_list_def enc_sas_assignment_list_def
+  using encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF encoding_variable_wellbehaved
+      encoding_domain_element_wellbehaved] .
+
+definition enc_operator :: "operator \<Rightarrow> nat" where
+  "enc_operator op = enc_list enc_nat [enc_sas_assignment_list (precondition_of op),
+                                          enc_sas_assignment_list (effect_of op)]"
+
+definition dec_operator :: " nat \<Rightarrow> operator" where
+  "dec_operator n = (case dec_list dec_nat n of [p,e] \<Rightarrow>
+                        \<lparr>precondition_of = dec_sas_assignment_list p,
+                         effect_of = dec_sas_assignment_list e\<rparr>)"
+
+lemma encoding_operator_wellbehaved: "dec_operator \<circ> enc_operator = id"
+  apply(rule ext)
+  unfolding enc_operator_def dec_operator_def
+  using encoding_sas_assignment_list_wellbehaved[THEN pointfree_idE]
+    encoding_list_wellbehaved[OF encoding_nat_wellbehaved, THEN pointfree_idE]
+  by(simp)
+
+
+fun list_update_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> 'a list" where
+  "list_update_acc acc [] _ _ = acc"
+| "list_update_acc acc (x # xs) 0 v = append acc (v # xs)"
+| "list_update_acc acc (x # xs) (Suc i) v = list_update_acc (append acc [x]) xs i v"
+
+lemma list_update_acc_append: "list_update_acc acc xs i v = acc @ list_update xs i v"
+  using 8 by(induction acc xs i v rule: list_update_acc.induct; force)
+
+fun list_update where
+  "list_update xs i v = list_update_acc [] xs i v"
+
+lemma list_update_equiv: "list_update xs i v = List.list_update xs i v"
+  by (simp add: list_update_acc_append)
+
+declare append.simps[simp del]
+function_nat_rewrite list_update_acc
+function_nat_rewrite_correctness list_update_acc
+  apply(induction arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 arg\<^sub>4 rule: list_update_acc.induct; subst list_update_acc.simps)
+  subgoal
+    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+    apply(simp add: enc_list.simps prod_encode_0 )
+    by (metis atomic.simps less_nat_zero_code list_update_acc_nat.simps snd_prod_decode_lt_intro)
+  subgoal for acc x xs v
+    using append_nat_equiv[OF assms, of acc "v # xs"]
+      encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+    by(simp add: enc_list.simps list_update_acc_nat.simps)
+  subgoal for acc x xs i v
+    using append_nat_equiv[OF assms, of acc "[x]"]
+    apply(simp add: enc_list.simps list_update_acc_nat.simps prod_encode_0)
+    by(auto simp add: Let_def; metis (mono_tags, lifting) One_nat_def append_nat_equiv2 assms(1)
+        atomic.elims bot_list_def bot_nat_def enc_list.elims enc_list_bot list.simps(5) pair.elims)
   done
+declare append.simps[simp add]
+
+function_nat_rewrite list_update
+function_nat_rewrite_correctness list_update
+  using list_update_acc_nat_equiv[OF assms]
+  by (simp add: list_update_nat.simps prod_encode_0)
+    (metis bot_list_def bot_nat_def enc_list_bot)
 
 
-definition operator_encode :: "operator \<Rightarrow> nat" where
-"operator_encode op = list_encode [sas_assignment_list_encode (precondition_of op),
-                                    sas_assignment_list_encode (effect_of op)] "
-
-definition operator_decode :: " nat \<Rightarrow> operator" where
-"operator_decode n =  ( case list_decode n of  [p,e] \<Rightarrow>
-                       \<lparr>precondition_of = sas_assignment_list_decode p,
-                        effect_of = sas_assignment_list_decode e \<rparr> )  "
-
-lemma operator_id : " operator_decode (operator_encode x) = x"
-  apply (auto simp add:operator_decode_def operator_encode_def sas_assignment_list_id)
-  done
-
-fun list_update_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"list_update_nat l n v = (if l =0 then 0 else if n=0 then (v##tl_nat l) else (hd_nat l) ##
-               list_update_nat (tl_nat l) (n-1) v)"
-
-definition list_update_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"list_update_tail l n v = list_update_nat l n v"
-
-lemma subtail_list_update:
-"list_update_tail l n v = list_update_nat l n v" using list_update_tail_def by auto
-
-lemma sub_list_update :
-      "list_update_nat (list_encode l) n v = list_encode (list_update l n v) "
-  apply (induct l arbitrary:n)
-  apply (subst list_update_nat.simps)
-  apply (auto simp only: sub_hd sub_head sub_tl sub_cons list_encode_eq split:if_splits list.splits
-            simp flip: list_encode.simps)
-  apply ( simp  (no_asm) only: sub_head sub_tail list_encode.simps list_update_def)
-  apply simp
-   apply simp
-  apply (subst list_update_nat.simps)
-   apply (auto simp only: sub_hd sub_head sub_tl sub_cons list_encode_eq split:if_splits list.splits
-            simp flip: list_encode.simps)
-   apply simp
-  apply (simp only: head.simps sub_cons )
-  by (metis One_nat_def Suc_pred list_encode.simps(1) list_update_code(3) neq0_conv sub_cons tail.simps(2))
 
 fun restrict_list :: "('vname,'bit) assignment list \<Rightarrow> 'vname list \<Rightarrow> ('vname,'bit) assignment list" where
 "restrict_list [] s = []" |
