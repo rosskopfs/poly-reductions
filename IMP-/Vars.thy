@@ -1,12 +1,7 @@
 \<^marker>\<open>creator Fabian Huch\<close>
 (* todo merge with existing vars *)
-theory Vars imports Big_StepT
+theory Vars imports Big_StepT Restricted_Equality
 begin
-
-abbreviation
-  eq_on :: "('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a set \<Rightarrow> bool"
- ("(_ =/ _/ on _)" [50,0,50] 50) where
-"f = g on X == \<forall> x \<in> X. f x = g x"
 
 class vars =
   fixes vars :: "'a \<Rightarrow> vname list"
@@ -74,19 +69,17 @@ qed
 end
 
 
-lemma atomVal_eq_if_eq_on_vars [simp]:
+lemma atomVal_eq_if_eq_on_vars[simp]:
   "s\<^sub>1 = s\<^sub>2 on set (vars a) \<Longrightarrow> atomVal a s\<^sub>1 = atomVal a s\<^sub>2"
-  apply(induction a)
-  apply simp_all
-  done
+  by (induction a) auto
 
 lemma aval_eq_if_eq_on_vars [simp]:
   "s\<^sub>1 = s\<^sub>2 on set (vars a) \<Longrightarrow> aval a s\<^sub>1 = aval a s\<^sub>2"
-  apply(induction a)
-  apply auto
-  apply (metis UnCI atomVal_eq_if_eq_on_vars)+
+  apply (induction a)
+  apply auto 
+  using atomVal_eq_if_eq_on_vars eq_on_subset
+  apply (metis sup.cobounded1 sup.cobounded2)+
   done
-
 
 fun lvars :: "com \<Rightarrow> vname set" where
 "lvars SKIP = {}" |
@@ -143,24 +136,17 @@ lemma subst_sound:
   "\<lbrakk> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
     \<Longrightarrow> \<exists>t'. (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m on S"
 proof (induction c s z t arbitrary: s' rule: big_step_t_induct)
-  case Assign then show ?case
-    by (auto simp: subset_inj_on subsetD inj_on_contraD)
+  case Assign then show ?case unfolding eq_on_def
+    by (auto simp: subset_inj_on subsetD inj_on_contraD aval_eq_if_eq_on_vars[unfolded eq_on_def])
 next
-  case Seq then show ?case by fastforce
-next
-  case IfTrue then show ?case by fastforce
-next
-  case IfFalse then show ?case by fastforce
-next
-thm WhileTrue
   case (WhileTrue s\<^sub>1 b c x s\<^sub>2 y s\<^sub>3 z s\<^sub>1')
-  then obtain s\<^sub>2' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' \<circ> m on S" by force
-  with WhileTrue obtain s\<^sub>3' where 2: "(subst m (WHILE b\<noteq>0 DO c), s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' \<circ> m on S" by force
+  then obtain s\<^sub>2' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' \<circ> m on S" unfolding eq_on_def by force
+  with WhileTrue obtain s\<^sub>3' where 2: "(subst m (WHILE b\<noteq>0 DO c), s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' \<circ> m on S" unfolding eq_on_def by force
   have "(WHILE m b\<noteq>0 DO (subst m c), s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'"
     apply (rule big_step_t.WhileTrue)
     using 1 2 WhileTrue by auto
-  with 2 show ?case by auto
-qed auto
+  with 2 show ?case unfolding eq_on_def by auto
+qed (auto | fastforce)+
 
 lemma subst_complete:
   "\<lbrakk> (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t'; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
@@ -173,40 +159,16 @@ next
   then obtain x' a' where defs: "c = x' ::= a'" "x = m x'" "a = subst m a'" by (cases c) auto
   moreover have "(x' ::= a',s) \<Rightarrow>\<^bsup>Suc (Suc 0)\<^esup> s(x' := aval a' s)" by auto
   moreover have "s(x' := aval a' s) = s'(x := aval a s') \<circ> m on S"
-    by (smt (verit, best) Assign.prems(1) Assign.prems(2) Assign.prems(3) aval_eq_if_eq_on_vars
-        aval_subst calculation(1) calculation(2) calculation(3) comp_apply fun_upd_other
-        fun_upd_same in_mono inj_onD inj_onI list.set_intros(1) list.set_intros(2) vars_com.simps(2))
-  ultimately show ?case by auto
+    by (smt (verit, ccfv_SIG) Assign.hyps Assign Assign_tE calculation(1) calculation(4) subst_sound)
+  ultimately show ?case by blast
 next
-  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
-  then obtain c\<^sub>1' c\<^sub>2' where [simp]: "c = c\<^sub>1';; c\<^sub>2'" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
-  with Seq.prems have S: "set (vars c\<^sub>1') \<subseteq> S" "set (vars c\<^sub>2') \<subseteq> S" by auto
-  with Seq.hyps(2)[OF _ Seq.prems(1) S(1) Seq.prems(3)] obtain s\<^sub>2' where
-    1: "(c\<^sub>1',s\<^sub>1')\<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto
-  with Seq.hyps(4)[OF _ this(2), OF _ S(2) Seq.prems(3)] obtain s\<^sub>3' where
-    2: "(c\<^sub>2', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
-  from 1 2 Seq.hyps(5) show ?case by auto
+  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c s\<^sub>1') then show ?case by (cases c) (auto, fastforce)
 next
-  case (IfTrue s b c\<^sub>1 x t z c\<^sub>2 c s')
-  then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
-  with IfTrue have "set (vars c\<^sub>1') \<subseteq> S" by auto
-  with IfTrue.hyps(3)[OF _ IfTrue.prems(1) this IfTrue.prems(3)] obtain t' where
-    "(c\<^sub>1', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
-  with IfTrue have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
-  with IfTrue.hyps(4) show ?case by fastforce
+  case (IfTrue s b c\<^sub>1 x t z c\<^sub>2 c s') then show ?case by (cases c) (auto, fastforce)
 next
-  case (IfFalse s b c\<^sub>2 x t z c\<^sub>1 c s')
-  then obtain c\<^sub>1' c\<^sub>2' b' where [simp]: "c = IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" "c\<^sub>2 = subst m c\<^sub>2'" by (cases c) auto
-  with IfFalse have "set (vars c\<^sub>2') \<subseteq> S" by auto
-  with IfFalse.hyps(3)[OF _ IfFalse.prems(1) this IfFalse.prems(3)] obtain t' where
-    "(c\<^sub>2', s') \<Rightarrow>\<^bsup> x \<^esup> t'" "t' = t \<circ> m on S" by auto
-  with IfFalse have "(IF b'\<noteq>0 THEN c\<^sub>1' ELSE c\<^sub>2', s') \<Rightarrow>\<^bsup> Suc x \<^esup> t'" "t' = t o m on S" by auto
-  with IfFalse.hyps(4) show ?case by fastforce
+  case (IfFalse s b c\<^sub>2 x t z c\<^sub>1 c s') then show ?case by (cases c) (auto, fastforce)
 next
-  case (WhileFalse s b c\<^sub>1 c s')
-  then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
-  with WhileFalse show ?case apply auto
-    by (metis \<open>m b' = b\<close> big_step_t.WhileFalse)
+  case (WhileFalse s b c\<^sub>1 c s') then show ?case by (cases c) (auto, fastforce)
 next
   case (WhileTrue s\<^sub>1 b c\<^sub>1 x s\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
   then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
@@ -216,8 +178,21 @@ next
   with WhileTrue.hyps(5)[OF _ this(2) WhileTrue.prems(2) WhileTrue.prems(3)] obtain s\<^sub>3' where
     2: "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
   from 1 2 WhileTrue.hyps(1,6) WhileTrue.prems(1,2) have
-    "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
+    "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" unfolding eq_on_def by auto
   thus ?case by auto
 qed
+
+lemma noninterference: 
+  "(c,s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow> set (vars c) \<subseteq> S \<Longrightarrow> s = s' on S \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>\<^bsup> x \<^esup> t' \<and> t = t' on S"
+proof (induction c s x t arbitrary: s' rule: big_step_t_induct)
+  case (Assign x a s)
+  then show ?case 
+    using aval_eq_if_eq_on_vars big_step_t.Assign eq_on_def eq_on_subset fun_upd_apply set_subset_Cons vars_com.simps(2) by fastforce
+next
+  case (WhileTrue s1 b c x s2 y s3 z)
+  then show ?case apply auto
+    by (metis (mono_tags, lifting) WhileTrue.hyps(1) WhileTrue.hyps(4) big_step_t.WhileTrue eq_onE)
+qed fastforce+
+
 
 end
