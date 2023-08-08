@@ -12,6 +12,7 @@ theory Primitives
     SAS_Plus_Plus_To_SAS_Plus
     IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
     "Poly_Reductions_Lib.Encode_Nat"
+keywords "find_bot" :: thy_decl
 begin
 
 
@@ -226,14 +227,14 @@ lemma encoding_vname_wellbehaved: "dec_vname \<circ> enc_vname = id"
 
 lemmas inj_enc_vname = inj_inverseI[OF encoding_vname_wellbehaved]
 
-definition vname_list_encode :: "string list \<Rightarrow> nat" where
-  "vname_list_encode = enc_list enc_vname"
+definition enc_vname_list :: "string list \<Rightarrow> nat" where
+  "enc_vname_list = enc_list enc_vname"
 
-definition vname_list_decode :: "nat \<Rightarrow> string list" where
-  "vname_list_decode = dec_list dec_vname"
+definition dec_vname_list :: "nat \<Rightarrow> string list" where
+  "dec_vname_list = dec_list dec_vname"
 
-lemma vname_list_id: "vname_list_decode (vname_list_encode x) = x"
-  unfolding vname_list_encode_def vname_list_decode_def
+lemma vname_list_id: "dec_vname_list (enc_vname_list x) = x"
+  unfolding enc_vname_list_def dec_vname_list_def
   using encoding_list_wellbehaved[
       OF encoding_vname_wellbehaved,
       THEN pointfree_idE] .
@@ -317,16 +318,16 @@ function_nat_rewrite_correctness remdups_acc
 
 
 lemma append_assoc: "append (append xs ys) zs = append xs (append ys zs)"
-  unfolding 8 by simp
+  unfolding append_equiv by simp
 
 lemma remdups_acc_append: "remdups_acc acc xs = append acc (remdups_acc [] xs)"
   apply(induction xs arbitrary: acc)
    apply (simp add: 7)
-  by (metis "8" append_assoc remdups_acc.simps(2) self_append_conv2)
+  by (metis append_equiv append_assoc remdups_acc.simps(2) self_append_conv2)
 
 lemma "remdups xs = remdups_acc [] xs"
   apply(induction xs; simp add: elemof_set_in)
-  by (metis (full_types) "8" append_Cons remdups_acc_append)
+  by (metis (full_types) append_equiv append_Cons remdups_acc_append)
 
 fun remdups :: "'a list \<Rightarrow> 'a list" where
   "remdups xs = remdups_acc [] xs"
@@ -425,8 +426,8 @@ datatype_nat_wellbehaved com
   subgoal for x
     using vname_list_id encoding_bit_wellbehaved[THEN pointfree_idE]
       encoding_vname_wellbehaved[THEN pointfree_idE]
-    by (induction x rule: com.induct; simp add: dec_vname_def enc_vname_def vname_list_decode_def
-        vname_list_encode_def enc_com.simps)
+    by (induction x rule: com.induct; simp add: dec_vname_def enc_vname_def dec_vname_list_def
+        enc_vname_list_def enc_com.simps)
   done
 
 fun nth :: "nat \<Rightarrow> ('a::order_bot) list \<Rightarrow> 'a" where
@@ -441,6 +442,8 @@ function_nat_rewrite_correctness nth
       simps_nat: nth_nat.simps
       enc_simps: enc_list.simps
       args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
+
+thm nth_nat.simps
 
 lemma pos_hd_less[termination_simp]: "x > 0 \<Longrightarrow> head_nat x < x"
   by(simp add: head_nat.simps bot_nat_def fst_prod_decode_less snd_prod_decode_lt_intro)
@@ -500,7 +503,7 @@ lemma remdups_map : "inj f \<Longrightarrow> remdups (map f xs) = map f (remdups
   apply (induction xs)
    apply simp
   apply (simp add: inj_def elemof_set_in)
-  by (metis "8" append_Cons image_iff list.simps(9) remdups_acc_append)
+  by (metis append_equiv append_Cons image_iff list.simps(9) remdups_acc_append)
 
 
 datatype_nat_encode domain_element
@@ -617,6 +620,20 @@ definition enc_comm_imp_state:: "(com * imp_state) \<Rightarrow> nat" where
 
 definition dec_comm_imp_state:: "nat \<Rightarrow> (com * imp_state)" where
   "dec_comm_imp_state = dec_prod dec_com dec_imp_state"
+thm encoding_prod_wellbehaved
+
+(* Works well for prod here but for other algebraic datatypes? Needs t.pred_t for type t?
+   look into BNF? *)
+lemma encoding_prod_id_alt:
+  assumes "\<And>a b. P1 (a, b) \<Longrightarrow> P2 a"
+    and "\<And>a b. P1 (a, b) \<Longrightarrow> P3 b"
+    and "\<And>a. P2 a \<Longrightarrow>  dec_'a (enc_'a a) = a"
+    and "\<And>b. P3 b \<Longrightarrow> dec_'b (enc_'b b) = b"
+  shows "P1 (a,b) \<Longrightarrow> dec_prod dec_'a dec_'b (enc_prod enc_'a enc_'b (a, b)) = (a, b)"
+  using assms apply(induction "(a, b)" rule: prod.induct)
+  by(auto simp add: enc_prod.simps)
+
+
 
 
 (* TODO: Should wellbehavedness lemmas always look like this? *)
@@ -626,12 +643,20 @@ lemma encoding_prod_id:
   shows "dec_prod dec_'a dec_'b (enc_prod enc_'a enc_'b (a, b)) = (a, b)"
   using assms by (induction "(a, b)" rule: prod.induct; simp add: enc_prod.simps)
 
+
+
 lemma comm_imp_state_id:
   "finite (dom (snd x)) \<Longrightarrow> dec_comm_imp_state (enc_comm_imp_state x) = x"
   unfolding enc_comm_imp_state_def dec_comm_imp_state_def
   using encoding_prod_id[where ?enc_'a=enc_com and ?dec_'a=dec_com and ?enc_'b=enc_imp_state and
       ?dec_'b=dec_imp_state] encoding_com_wellbehaved[THEN pointfree_idE] imp_state_id
   by (cases x, simp)
+    (*   using encoding_prod_id_alt[of "finite o dom o snd" "\<lambda>x. True" "finite o dom"
+      dec_com enc_com dec_imp_state enc_imp_state]
+    encoding_com_wellbehaved[THEN pointfree_idE] imp_state_id
+  by (cases x; simp) *)
+
+
 
 definition enc_imp_assignment_list :: "(vname, bit) assignment list \<Rightarrow> nat" where
   "enc_imp_assignment_list = enc_list (enc_prod enc_vname enc_bit)"
@@ -664,6 +689,96 @@ fun cilist_to_map:: "(com * (vname * bit) list) \<Rightarrow> (com * imp_state)"
 type_synonym operator = "(variable, domain_element) sas_plus_operator"
 type_synonym problem = "(variable, domain_element) sas_plus_problem"
 
+instantiation sas_plus_operator_ext :: (order_bot, order_bot, order_bot) order_bot
+begin
+
+fun less_eq_sas_plus_operator_ext ::
+  "('a, 'b, 'c) sas_plus_operator_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_operator_scheme \<Rightarrow> bool" where
+  "less_eq_sas_plus_operator_ext
+    \<lparr>precondition_of = a1, effect_of = b1, \<dots> = c1\<rparr>
+    \<lparr>precondition_of = a2, effect_of = b2, \<dots> = c2\<rparr>
+       \<longleftrightarrow> (a1 \<le> a2 \<and> b1 \<le> b2 \<and> c1 \<le> c2)"
+
+definition less_sas_plus_operator_ext ::
+  "('a, 'b, 'c) sas_plus_operator_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_operator_scheme \<Rightarrow> bool" where
+  "less_sas_plus_operator_ext a b = (a \<le> b \<and> \<not> b \<le> a)"
+
+definition bot_sas_plus_operator_ext :: "('a, 'b, 'c) sas_plus_operator_scheme" where
+  "bot_sas_plus_operator_ext = \<lparr>precondition_of = bot,
+                                effect_of = bot, \<dots> = bot\<rparr>"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case using less_sas_plus_operator_ext_def by simp
+next
+  case (2 x) show ?case by (induction x; simp)
+next
+  case (3 x y z) thus ?case
+    by(induction x z arbitrary: y rule: less_eq_sas_plus_operator_ext.induct;
+        force elim: less_eq_sas_plus_operator_ext.elims)
+next
+  case (4 x y) thus ?case
+    by(induction x y rule: less_eq_sas_plus_operator_ext.induct;
+        force elim: less_eq_sas_plus_operator_ext.elims)
+next
+  case (5 a)
+  then show ?case unfolding bot_sas_plus_operator_ext_def by(cases a; simp)
+qed
+
+end
+
+instantiation sas_plus_problem_ext :: (order_bot, order_bot, order_bot) order_bot
+begin
+
+fun less_eq_sas_plus_problem_ext ::
+  "('a, 'b, 'c) sas_plus_problem_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_problem_scheme \<Rightarrow> bool" where
+  "less_eq_sas_plus_problem_ext
+    \<lparr>variables_of = a1,
+    operators_of = b1,
+    initial_of = c1,
+    goal_of = d1,
+    range_of = e1,
+    \<dots> = f1\<rparr>
+    \<lparr>variables_of = a2,
+    operators_of = b2,
+    initial_of = c2,
+    goal_of = d2,
+    range_of = e2,
+    \<dots> = f2\<rparr>
+       \<longleftrightarrow> (a1 \<le> a2 \<and> b1 \<le> b2 \<and> c1 \<le> c2 \<and> d1 \<le> d2 \<and> e1 \<le> e2 \<and> f1 \<le> f2)"
+
+definition less_sas_plus_problem_ext ::
+  "('a, 'b, 'c) sas_plus_problem_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_problem_scheme \<Rightarrow> bool" where
+  "less_sas_plus_problem_ext a b = (a \<le> b \<and> \<not> b \<le> a)"
+
+definition bot_sas_plus_problem_ext :: "('a, 'b, 'c) sas_plus_problem_scheme" where
+  "bot_sas_plus_problem_ext =
+  \<lparr>variables_of = bot,
+  operators_of = bot,
+  initial_of = bot,
+  goal_of = bot,
+  range_of = bot,
+  \<dots> = bot\<rparr>"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case using less_sas_plus_problem_ext_def by simp
+next
+  case (2 x) show ?case by (induction x; simp)
+next
+  case (3 x y z) thus ?case
+    by(induction x z arbitrary: y rule: less_eq_sas_plus_problem_ext.induct;
+        force elim: less_eq_sas_plus_problem_ext.elims)
+next
+  case (4 x y) thus ?case
+    by(induction x y rule: less_eq_sas_plus_problem_ext.induct;
+        force elim: less_eq_sas_plus_problem_ext.elims)
+next
+  case (5 a)
+  then show ?case unfolding bot_sas_plus_problem_ext_def by(cases a; simp)
+qed
+
+end
 
 definition enc_sas_assignment_list :: "(variable, domain_element) assignment list \<Rightarrow> nat" where
   "enc_sas_assignment_list = enc_list (enc_prod enc_variable enc_domain_element)"
@@ -677,12 +792,13 @@ lemma encoding_sas_assignment_list_wellbehaved:
   using encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF encoding_variable_wellbehaved
       encoding_domain_element_wellbehaved] .
 
+(* ad hoc manually written en-/decoder as there is no automatic conversion for record types yet *)
 definition enc_operator :: "operator \<Rightarrow> nat" where
   "enc_operator op = enc_list enc_nat [enc_sas_assignment_list (precondition_of op),
                                           enc_sas_assignment_list (effect_of op)]"
 
-definition dec_operator :: " nat \<Rightarrow> operator" where
-  "dec_operator n = (case dec_list dec_nat n of [p,e] \<Rightarrow>
+definition dec_operator :: "nat \<Rightarrow> operator" where
+  "dec_operator n = (case dec_list dec_nat n of [p, e] \<Rightarrow>
                         \<lparr>precondition_of = dec_sas_assignment_list p,
                          effect_of = dec_sas_assignment_list e\<rparr>)"
 
@@ -693,14 +809,13 @@ lemma encoding_operator_wellbehaved: "dec_operator \<circ> enc_operator = id"
     encoding_list_wellbehaved[OF encoding_nat_wellbehaved, THEN pointfree_idE]
   by(simp)
 
-
 fun list_update_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> 'a list" where
   "list_update_acc acc [] _ _ = acc"
 | "list_update_acc acc (x # xs) 0 v = append acc (v # xs)"
 | "list_update_acc acc (x # xs) (Suc i) v = list_update_acc (append acc [x]) xs i v"
 
 lemma list_update_acc_append: "list_update_acc acc xs i v = acc @ list_update xs i v"
-  using 8 by(induction acc xs i v rule: list_update_acc.induct; force)
+  using append_equiv by(induction acc xs i v rule: list_update_acc.induct; force)
 
 fun list_update where
   "list_update xs i v = list_update_acc [] xs i v"
@@ -708,7 +823,6 @@ fun list_update where
 lemma list_update_equiv: "list_update xs i v = List.list_update xs i v"
   by (simp add: list_update_acc_append)
 
-declare append.simps[simp del]
 function_nat_rewrite list_update_acc
 function_nat_rewrite_correctness list_update_acc
   apply(induction arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 arg\<^sub>4 rule: list_update_acc.induct; subst list_update_acc.simps)
@@ -722,11 +836,11 @@ function_nat_rewrite_correctness list_update_acc
     by(simp add: enc_list.simps list_update_acc_nat.simps)
   subgoal for acc x xs i v
     using append_nat_equiv[OF assms, of acc "[x]"]
-    apply(simp add: enc_list.simps list_update_acc_nat.simps prod_encode_0)
-    by(auto simp add: Let_def; metis (mono_tags, lifting) One_nat_def append_nat_equiv2 assms(1)
-        atomic.elims bot_list_def bot_nat_def enc_list.elims enc_list_bot list.simps(5) pair.elims)
+    apply(simp add: enc_list.simps list_update_acc_nat.simps prod_encode_0 del: append.simps)
+    by(auto simp add: Let_def simp del: append.simps; metis (mono_tags, lifting) One_nat_def
+        append_nat_equiv2 assms(1) atomic.elims bot_list_def bot_nat_def enc_list.elims enc_list_bot
+        list.simps(5) pair.elims)
   done
-declare append.simps[simp add]
 
 function_nat_rewrite list_update
 function_nat_rewrite_correctness list_update
@@ -734,21 +848,83 @@ function_nat_rewrite_correctness list_update
   by (simp add: list_update_nat.simps prod_encode_0)
     (metis bot_list_def bot_nat_def enc_list_bot)
 
+fun restrict_acc ::
+  "('vname, 'bit) assignment list \<Rightarrow> ('vname, 'bit) assignment list \<Rightarrow> 'vname list
+    \<Rightarrow> ('vname, 'bit) assignment list"
+  where
+    "restrict_acc acc [] s = acc" |
+    "restrict_acc acc ((x, y) # xs) s =
+    (if elemof x s then restrict_acc (append acc [(x, y)]) xs s else restrict_acc acc xs s)"
+
+lemma restrict_acc_append: "restrict_acc acc xs s = append acc (restrict_acc [] xs s)"
+  by(induction acc xs s arbitrary: acc s rule: restrict_acc.induct;
+      simp add: append_equiv elemof_set_in del: append.simps)
+    (metis append.assoc)
+
+function_nat_rewrite restrict_acc
+function_nat_rewrite_correctness restrict_acc
+ apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: restrict_acc.induct\<close>
+      assms: assms
+      simps_nat: restrict_acc_nat.simps
+      enc_simps: enc_list.simps enc_prod.simps
+      args_wellbehaved:
+      encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1), THEN pointfree_idE])
+  subgoal for acc x y xs s
+    using
+      elemof_nat_equiv[OF assms(3-4), of x s]
+      append_nat_equiv2[
+        OF encoding_prod_wellbehaved,
+        OF assms(3) assms(1),
+        of acc "[(x, y)]"]
+    by(simp add: enc_list.simps enc_prod.simps)
+  subgoal for acc x y xs s
+    using elemof_nat_equiv[OF assms(3-4), of x s]
+    by(simp add: enc_list.simps enc_prod.simps)
+  done
+
+fun restrict :: "('vname, 'bit) assignment list \<Rightarrow> 'vname list \<Rightarrow> ('vname, 'bit) assignment list"
+  where
+    "restrict xs s = restrict_acc [] xs s"
+
+function_nat_rewrite restrict
+function_nat_rewrite_correctness restrict
+  using restrict_acc_nat_equiv[OF assms]
+  by (metis atomic.simps bot_list_def bot_nat_def enc_list_bot pair.elims prod_encode_0
+      restrict.elims restrict_nat.simps)
+
+lemma sub_restrict_helper:
+  "map_of (restrict xs s) t = restrict_map (map_of xs) (set s) t"
+  apply (induction xs)
+  by (auto simp add: restrict_map_def elemof_set_in)
+    (metis append_equiv append_Cons restrict_acc_append map_of_Cons_code(2))+
+
+lemma sub_restrict:
+  "map_of (restrict xs s) = restrict_map (map_of xs) (set s)"
+  using sub_restrict_helper by fast
 
 
-fun restrict_list :: "('vname,'bit) assignment list \<Rightarrow> 'vname list \<Rightarrow> ('vname,'bit) assignment list" where
-"restrict_list [] s = []" |
-"restrict_list ((x,y)#xs) s = (if x \<in> set s then (x,y) # (restrict_list xs s) else restrict_list xs s)"
+(* TODO: remove restrict_list and only use restrict and auto generated restrict_nat *)
+fun restrict_list ::
+  "('vname, 'bit) assignment list \<Rightarrow> 'vname list \<Rightarrow> ('vname, 'bit) assignment list" where
+  "restrict_list [] s = []" |
+  "restrict_list ((x, y) # xs) s =
+    (if x \<in> set s then (x, y) # (restrict_list xs s) else restrict_list xs s)"
+
+lemma "restrict xs s = restrict_list xs s"
+  apply(induction xs s rule: restrict_list.induct)
+   apply (simp)
+  subgoal for x y xs s
+    using restrict_acc_append[of "[(x, y)]"] by (simp add: elemof_set_in)
+  done
 
 lemma sub_restrict_list_helper:
   "map_of (restrict_list xs s) t = restrict_map (map_of xs) (set s) t"
-  apply (induct xs)
-   apply (auto simp add:snd_def  restrict_map_def)
-  done
+  by (induction xs; fastforce simp add: restrict_map_def)
 
 lemma sub_restrict_list:
-"map_of (restrict_list xs s) = restrict_map (map_of xs) (set s)"
+  "map_of (restrict_list xs s) = restrict_map (map_of xs) (set s)"
   using sub_restrict_list_helper by fast
+
 
 record  ('variable, 'domain) sas_plus_list_problem =
   variables_ofl :: "'variable list" ("(_\<^sub>\<V>\<^sub>+)" [1000] 999)
@@ -757,148 +933,176 @@ record  ('variable, 'domain) sas_plus_list_problem =
   goal_ofl :: "('variable, 'domain) assignment list" ("(_\<^sub>G\<^sub>+)" [1000] 999)
   range_ofl :: "('variable, 'domain list) assignment list"
 
-fun vdlist_encode :: "(variable, domain_element list) assignment \<Rightarrow> nat" where
-"vdlist_encode (x,y) = prod_encode (variable_encode x,list_encode (map domain_element_encode y))"
+instantiation sas_plus_list_problem_ext :: (order_bot, order_bot, order_bot) order_bot
+begin
 
-fun vdlist_decode ::  "nat \<Rightarrow> (variable, domain_element list) assignment" where
-"vdlist_decode n = (case prod_decode n of (x,y) \<Rightarrow> (variable_decode x, map domain_element_decode (list_decode y)))"
+fun less_eq_sas_plus_list_problem_ext ::
+  "('a, 'b, 'c) sas_plus_list_problem_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_list_problem_scheme \<Rightarrow> bool" where
+  "less_eq_sas_plus_list_problem_ext
+    \<lparr>variables_ofl = a1,
+    operators_ofl = b1,
+    initial_ofl = c1,
+    goal_ofl = d1,
+    range_ofl = e1,
+    \<dots> = f1\<rparr>
+    \<lparr>variables_ofl = a2,
+    operators_ofl = b2,
+    initial_ofl = c2,
+    goal_ofl = d2,
+    range_ofl = e2,
+    \<dots> = f2\<rparr>
+       \<longleftrightarrow> (a1 \<le> a2 \<and> b1 \<le> b2 \<and> c1 \<le> c2 \<and> d1 \<le> d2 \<and> e1 \<le> e2 \<and> f1 \<le> f2)"
 
-lemma vdlist_id: "vdlist_decode (vdlist_encode x) = x"
-  apply (cases x)
-  apply (simp add: comp_def variable_id domain_element_id del:domain_element_decode.simps)
-  done
+definition less_sas_plus_list_problem_ext ::
+  "('a, 'b, 'c) sas_plus_list_problem_scheme \<Rightarrow> ('a, 'b, 'c) sas_plus_list_problem_scheme \<Rightarrow> bool" where
+  "less_sas_plus_list_problem_ext a b = (a \<le> b \<and> \<not> b \<le> a)"
 
-fun list_problem_to_problem ::
-  "('v,'d) sas_plus_list_problem \<Rightarrow>('v,'d)sas_plus_problem"
-  where   " list_problem_to_problem x =
-        \<lparr> variables_of = variables_ofl x,
-          operators_of = operators_ofl x,
-          initial_of = map_of (initial_ofl x),
-          goal_of = map_of (goal_ofl x),
-          range_of = map_of (range_ofl x)
-       \<rparr>"
+definition bot_sas_plus_list_problem_ext :: "('a, 'b, 'c) sas_plus_list_problem_scheme" where
+  "bot_sas_plus_list_problem_ext =
+  \<lparr>variables_ofl = bot,
+  operators_ofl = bot,
+  initial_ofl = bot,
+  goal_ofl = bot,
+  range_ofl = bot,
+  \<dots> = bot\<rparr>"
 
-definition list_problem_encode ::
-    "(variable,domain_element) sas_plus_list_problem \<Rightarrow>nat" where
-"list_problem_encode x = list_encode [list_encode (map variable_encode (variables_ofl x)),
-                                      list_encode (map operator_encode (operators_ofl x)),
-                                      sas_assignment_list_encode (initial_ofl x),
-                                       sas_assignment_list_encode (goal_ofl x),
-                                       list_encode (map vdlist_encode (range_ofl x)) ] "
-
-definition list_problem_decode ::"nat \<Rightarrow> (variable,domain_element) sas_plus_list_problem" where
-"list_problem_decode x = (case list_decode x of
-[var,op,i,g,r]  \<Rightarrow> \<lparr>           variables_ofl = map variable_decode (list_decode var),
-                               operators_ofl = map operator_decode (list_decode op),
-                               initial_ofl = sas_assignment_list_decode i,
-                               goal_ofl = sas_assignment_list_decode g,
-                               range_ofl = map vdlist_decode (list_decode r) \<rparr> )"
-
-lemma list_problem_id :
-      "list_problem_decode (list_problem_encode x) = x"
-  apply (auto simp only:list_problem_encode_def list_problem_decode_def list_encode_inverse)
-  apply (auto simp add: comp_def variable_id operator_id sas_assignment_list_id vdlist_id simp del: vdlist_decode.simps)
-  done
-
-declare elemof.simps [simp del]
-
-fun restrict_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"restrict_nat l s = (if l = 0 then 0 else (let t = restrict_nat (tl_nat l) s in (if elemof (fst_nat (hd_nat l)) s \<noteq> 0 then
-    (hd_nat l)## t else t))) "
-
-fun restrict_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"restrict_acc acc l s = (if l = 0 then acc else(if elemof (fst_nat (hd_nat l)) s \<noteq> 0 then
-   restrict_acc  ((hd_nat l)## acc) (tl_nat l) s else restrict_acc acc (tl_nat l) s)) "
-
-lemma sub_restrict_nat:
-  "restrict_nat (imp_assignment_list_encode l) (vname_list_encode s) = imp_assignment_list_encode (restrict_list l s)"
-  apply (simp only: vname_list_encode_def)
-  apply (induct l)
-   apply (simp add: imp_assignment_list_encode_def)
-  subgoal for x l
-    apply (cases x)
-  apply (subst restrict_nat.simps)
-    apply (auto simp only:  sub_cons restrict_list.simps list_encode_eq sub_tl  imp_assignment_list_encode_def sub_tail_map Let_def sub_fst sub_hd sub_head_map list.simps  head.simps imp_assignment_encode.simps fst_def tail.simps non_empty_positive  split:if_splits
-  simp flip: list_encode.simps
-)
-     apply (auto simp only: list_encode.simps sub_elem_of2)
-     apply simp
-    apply (metis imageE set_map vname_id)
-    done
-  done
-
-lemma sub_restrict_nat_gen:
-  "restrict_nat (list_encode (map prod_encode  l)) (list_encode s) = list_encode (map prod_encode  (restrict_list l s))"
-  apply(induct l)
-   apply (simp)
-  subgoal for x xs
-  apply (cases x)
-  apply (subst restrict_nat.simps)
-    apply (auto simp only:  sub_cons restrict_list.simps list_encode_eq sub_tl  imp_assignment_list_encode_def sub_tail_map Let_def sub_fst sub_hd sub_head_map list.simps  head.simps imp_assignment_encode.simps fst_def tail.simps non_empty_positive  split:if_splits
-  simp flip: list_encode.simps
-)
-     apply (auto simp only: list_encode.simps sub_elem_of2)
-    done
-  done
-
-lemma restrict_induct:
-"restrict_acc acc l s = append_nat (reverse_nat (restrict_nat l s)) acc"
-proof -
-  obtain acc' l' s' where "acc = list_encode (map prod_encode acc') "
-"l = list_encode (map prod_encode l')" "s = list_encode s'"
-    by (metis ex_map_conv list_decode_inverse prod_decode_inverse)
-  thus ?thesis apply (auto simp only: sub_restrict_nat_gen sub_reverse sub_append rev_map simp flip:
-        map_append)
-    apply(induct l' arbitrary: acc' acc l)
-    apply (subst restrict_acc.simps)
-     apply simp
-    apply (subst restrict_acc.simps)
-    apply (auto simp only: sub_hd head.simps fst_conv  sub_fst list.simps sub_cons sub_tl tail.simps sub_elem_of2)
-    apply (auto simp only:restrict_list.simps simp flip: list.map(2))
-    apply auto
-    done
+instance
+proof(standard, goal_cases)
+  case 1 show ?case using less_sas_plus_list_problem_ext_def by simp
+next
+  case (2 x) show ?case by (induction x; simp)
+next
+  case (3 x y z) thus ?case
+    by(induction x z arbitrary: y rule: less_eq_sas_plus_list_problem_ext.induct;
+        force elim: less_eq_sas_plus_list_problem_ext.elims)
+next
+  case (4 x y) thus ?case
+    by(induction x y rule: less_eq_sas_plus_list_problem_ext.induct;
+        force elim: less_eq_sas_plus_list_problem_ext.elims)
+next
+  case (5 a)
+  then show ?case unfolding bot_sas_plus_list_problem_ext_def by(cases a; simp)
 qed
 
-definition restrict_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat " where
-"restrict_tail l s = reverse_nat (restrict_acc 0 l s)"
+end
 
-lemma subtail_restrict:
-"restrict_tail l s =  restrict_nat l s"
-  using append_nat_0 restrict_induct restrict_tail_def rev_rev_nat by auto
+definition enc_vdlist :: "(variable, domain_element list) assignment \<Rightarrow> nat" where
+  "enc_vdlist = enc_prod enc_variable (enc_list enc_domain_element)"
 
-declare elemof.simps [simp]
+definition dec_vdlist :: "nat \<Rightarrow> (variable, domain_element list) assignment" where
+  "dec_vdlist = dec_prod dec_variable (dec_list dec_domain_element)"
 
+lemma encoding_vdlist_wellbehaved: "dec_vdlist \<circ> enc_vdlist = id"
+  unfolding dec_vdlist_def enc_vdlist_def
+  using encoding_prod_wellbehaved[OF encoding_variable_wellbehaved
+      encoding_list_wellbehaved[OF encoding_domain_element_wellbehaved]] .
+
+fun list_problem_to_problem :: "('v, 'd) sas_plus_list_problem \<Rightarrow> ('v, 'd) sas_plus_problem" where
+  "list_problem_to_problem x =
+    \<lparr>variables_of = variables_ofl x,
+     operators_of = operators_ofl x,
+     initial_of = map_of (initial_ofl x),
+     goal_of = map_of (goal_ofl x),
+     range_of = map_of (range_ofl x)\<rparr>"
+
+(* ad hoc manually written en-/decoder as there is no automatic conversion for record types yet *)
+definition enc_list_problem :: "(variable, domain_element) sas_plus_list_problem \<Rightarrow> nat" where
+  "enc_list_problem x = enc_list enc_nat [enc_list enc_variable (variables_ofl x),
+                                          enc_list enc_operator (operators_ofl x),
+                                          enc_sas_assignment_list (initial_ofl x),
+                                          enc_sas_assignment_list (goal_ofl x),
+                                          enc_list enc_vdlist (range_ofl x)]"
+
+definition dec_list_problem ::"nat \<Rightarrow> (variable, domain_element) sas_plus_list_problem" where
+  "dec_list_problem x = (case dec_list dec_nat x of [var,op,i,g,r] \<Rightarrow>
+                               \<lparr>variables_ofl = dec_list dec_variable var,
+                               operators_ofl = dec_list dec_operator op,
+                               initial_ofl = dec_sas_assignment_list i,
+                               goal_ofl = dec_sas_assignment_list g,
+                               range_ofl = dec_list dec_vdlist r\<rparr>)"
+
+lemma encoding_list_problem_wellbehaved: "dec_list_problem \<circ> enc_list_problem = id"
+  apply(rule ext)
+  unfolding enc_list_problem_def dec_list_problem_def
+  using
+    encoding_list_wellbehaved[OF encoding_variable_wellbehaved, THEN pointfree_idE]
+    encoding_list_wellbehaved[OF encoding_operator_wellbehaved, THEN pointfree_idE]
+    encoding_sas_assignment_list_wellbehaved[THEN pointfree_idE]
+    encoding_list_wellbehaved[OF encoding_vdlist_wellbehaved, THEN pointfree_idE]
+    encoding_list_wellbehaved[OF encoding_nat_wellbehaved, THEN pointfree_idE]
+  by(simp)
 
 
 type_synonym  var = "variable SAS_Plus_Plus_To_SAS_Plus.variable"
 type_synonym  dom = "domain_element SAS_Plus_Plus_To_SAS_Plus.domain_element"
-type_synonym  sas_plus_state = "(var,dom)  State_Variable_Representation.state"
+type_synonym  sas_plus_state = "(var, dom) State_Variable_Representation.state"
+
+ML \<open>
+fun rhs_of_term t = (HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd) t;
+
+fun find_bot ctxt T =
+
+  let
+    val T_base_name = Long_Name.base_name (fst (dest_Type T))
+    val T_name = (fst (dest_Type T))
+    val cond =
+      fastype_of #> try dest_Type #> Option.map fst #> (curry (op =) (SOME T_name))
+    val a =
+      Find_Theorems.find_theorems_cmd ctxt NONE NONE true [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
+      |> snd |> @{print}
+      |> map (snd #> Thm.prop_of #> rhs_of_term) |> @{print}
+      |> Library.get_first (fn t => if cond t then SOME t else NONE) |> @{print}
+      |> try (Option.map (fst o dest_Const)) |> @{print}
+      |> Option.join
+  in
+   ()
+  end
+
+fun find_bot_cmd tc st =
+  let
+    val ctxt = Toplevel.context_of st;
+    val T_name = fst (dest_Type (Syntax.parse_typ ctxt tc))
+    val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
+    val T = #T sugar
+    val _ = find_bot ctxt T
+  in () end
+
+val q = Outer_Syntax.command
+  \<^command_keyword>\<open>find_bot\<close>
+  "find all instantiations of a given type constructor"
+  (Parse.typ >> (fn tc => Toplevel.keep (find_bot_cmd tc)));
+\<close>
+
+find_bot list
+
+datatype_nat_encode SAS_Plus_Plus_To_SAS_Plus.variable
+
 fun var_encode :: "var \<Rightarrow> nat" where
-"var_encode Stage = 0 " |
-"var_encode (Var v) = Suc (variable_encode v)"
+  "var_encode Stage = 0 " |
+  "var_encode (Var v) = Suc (variable_encode v)"
 
 fun var_decode :: "nat \<Rightarrow> var" where
-"var_decode 0 = Stage"|
-"var_decode (Suc v) = (Var (variable_decode v))"
+  "var_decode 0 = Stage"|
+  "var_decode (Suc v) = (Var (variable_decode v))"
 
 lemma var_id: "var_decode (var_encode x) = x"
   apply (cases x)
-   apply (auto simp add:variable_id)
+  apply (auto simp add:variable_id)
   done
 
 fun dom_encode :: "dom \<Rightarrow> nat" where
-"dom_encode NonInit = 0"|
-"dom_encode Init = Suc 0"|
-"dom_encode (DE d) = Suc (Suc (domain_element_encode d))"
+  "dom_encode NonInit = 0"|
+  "dom_encode Init = Suc 0"|
+  "dom_encode (DE d) = Suc (Suc (domain_element_encode d))"
 
 fun dom_decode :: "nat \<Rightarrow> dom" where
-"dom_decode 0 = NonInit"|
-"dom_decode (Suc 0) = Init"|
-"dom_decode (Suc (Suc d)) = DE (domain_element_decode d)"
+  "dom_decode 0 = NonInit"|
+  "dom_decode (Suc 0) = Init"|
+  "dom_decode (Suc (Suc d)) = DE (domain_element_decode d)"
 
 lemma dom_id : "dom_decode (dom_encode x) = x"
- apply (cases x)
-   apply (auto simp add:domain_element_id simp del: domain_element_decode.simps)
+  apply (cases x)
+  apply (auto simp add:domain_element_id simp del: domain_element_decode.simps)
   done
 
 fun sas_plus_assignment_encode:: "(var,dom) assignment \<Rightarrow> nat" where
@@ -909,7 +1113,7 @@ fun sas_plus_assignment_decode:: " nat \<Rightarrow> (var,dom) assignment" where
                                 (var_decode v, dom_decode d))"
 
 lemma sas_plus_assignment_id:
-      "sas_plus_assignment_decode (sas_plus_assignment_encode x) = x"
+  "sas_plus_assignment_decode (sas_plus_assignment_encode x) = x"
   apply (cases x)
   apply (auto simp add:var_id dom_id)
   done
@@ -921,16 +1125,16 @@ definition sas_plus_assignment_list_decode ::  "nat \<Rightarrow> (var,dom) assi
   where "sas_plus_assignment_list_decode x = map sas_plus_assignment_decode (list_decode x)"
 
 lemma sas_plus_assignment_list_id:
-    "sas_plus_assignment_list_decode ( sas_plus_assignment_list_encode x) = x"
+  "sas_plus_assignment_list_decode ( sas_plus_assignment_list_encode x) = x"
   apply (auto simp add: sas_plus_assignment_list_encode_def  sas_plus_assignment_list_decode_def comp_def
-        sas_plus_assignment_id  simp del: sas_plus_assignment_decode.simps)
+      sas_plus_assignment_id  simp del: sas_plus_assignment_decode.simps)
   done
 
 fun islist_encode :: "(dom \<times> (variable,domain_element) assignment list) \<Rightarrow> nat" where
-"islist_encode (i,s) = prod_encode (dom_encode i, sas_assignment_list_encode s)"
+  "islist_encode (i,s) = prod_encode (dom_encode i, sas_assignment_list_encode s)"
 
 fun islist_decode :: "nat \<Rightarrow> (dom \<times> (variable,domain_element) assignment list)" where
-"islist_decode n = (case prod_decode n of (i,s) \<Rightarrow>
+  "islist_decode n = (case prod_decode n of (i,s) \<Rightarrow>
          (dom_decode i, sas_assignment_list_decode s))"
 
 lemma islist_id: "islist_decode(islist_encode x) = x"
@@ -939,20 +1143,20 @@ lemma islist_id: "islist_decode(islist_encode x) = x"
   done
 
 fun islist_to_map:: "(dom \<times> (variable,domain_element) assignment list) \<Rightarrow> (dom \<times> sas_state) " where
-"islist_to_map (i,s) = (i,map_of s)"
+  "islist_to_map (i,s) = (i,map_of s)"
 
 definition sas_plus_state_decode :: "nat \<Rightarrow> sas_plus_state" where
-"sas_plus_state_decode x = map_of (sas_plus_assignment_list_decode x)"
+  "sas_plus_state_decode x = map_of (sas_plus_assignment_list_decode x)"
 
 type_synonym operator_plus = "(var, dom) sas_plus_operator"
 type_synonym problem_plus = "(var, dom) sas_plus_problem"
 
 definition operator_plus_encode :: "operator_plus \<Rightarrow> nat" where
-"operator_plus_encode op = list_encode [sas_plus_assignment_list_encode (precondition_of op),
+  "operator_plus_encode op = list_encode [sas_plus_assignment_list_encode (precondition_of op),
                                     sas_plus_assignment_list_encode (effect_of op)] "
 
 definition operator_plus_decode :: " nat \<Rightarrow> operator_plus" where
-"operator_plus_decode n =  ( case list_decode n of  [p,e] \<Rightarrow>
+  "operator_plus_decode n =  ( case list_decode n of  [p,e] \<Rightarrow>
                        \<lparr>precondition_of = sas_plus_assignment_list_decode p,
                         effect_of = sas_plus_assignment_list_decode e \<rparr> )  "
 
@@ -961,15 +1165,15 @@ lemma operator_plus_id : " operator_plus_decode (operator_plus_encode x) = x"
   done
 
 fun the_nat :: "nat \<Rightarrow> nat" where
- "the_nat x = x-1"
+  "the_nat x = x-1"
 
 fun list_option_encode :: " nat list option \<Rightarrow> nat" where
-"list_option_encode None = 0"|
-"list_option_encode (Some x) = Suc (list_encode x)"
+  "list_option_encode None = 0"|
+  "list_option_encode (Some x) = Suc (list_encode x)"
 
 fun list_option_decode :: "nat \<Rightarrow>  nat list option" where
-"list_option_decode 0 = None"|
-"list_option_decode (Suc x) = Some (list_decode x)"
+  "list_option_decode 0 = None"|
+  "list_option_decode (Suc x) = Some (list_decode x)"
 
 lemma list_option_id:"list_option_decode (list_option_encode x) = x"
   apply (cases x)
@@ -982,18 +1186,18 @@ lemma sub_the: " the_nat (list_option_encode x) = list_encode (thef x)"
   done
 
 fun thefn :: "nat option \<Rightarrow> nat" where
-"thefn None = 0"|
-"thefn (Some x) = x"
+  "thefn None = 0"|
+  "thefn (Some x) = x"
 
 lemma sub_the2: "the_nat (option_encode  x) = thefn x"
   apply (cases x)
-  apply auto
+   apply auto
   done
 
 
 fun map_list_find ::"('a,'b) assignment list \<Rightarrow>'a \<Rightarrow> 'b option" where
-"map_list_find [] _ = None "|
-"map_list_find ((x,y)#xs) a = (if x =a then Some y else map_list_find xs a )"
+  "map_list_find [] _ = None "|
+  "map_list_find ((x,y)#xs) a = (if x =a then Some y else map_list_find xs a )"
 
 lemma sub_map_list_find: "map_list_find xs a = (map_of xs) a"
   apply (induct xs)
@@ -1001,25 +1205,25 @@ lemma sub_map_list_find: "map_list_find xs a = (map_of xs) a"
   done
 
 fun map_list_find_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"map_list_find_nat xs a = (if xs = 0 then 0 else if fst_nat (hd_nat xs) = a then some_nat (snd_nat (hd_nat xs))
+  "map_list_find_nat xs a = (if xs = 0 then 0 else if fst_nat (hd_nat xs) = a then some_nat (snd_nat (hd_nat xs))
   else map_list_find_nat (tl_nat xs) a) "
 
 lemma sub_map_list_find_nat:
-      "map_list_find_nat (list_encode (map prod_encode xs)) a =
+  "map_list_find_nat (list_encode (map prod_encode xs)) a =
         option_encode (map_list_find xs a)"
   apply (induct xs)
    apply simp
-  apply (subst  map_list_find_nat.simps)
-  apply (auto simp only: list.simps sub_hd head.simps sub_fst fst_def sub_snd snd_def sub_some sub_tl tail.simps
-        map_list_find.simps )
-  apply auto
+   apply (subst  map_list_find_nat.simps)
+   apply (auto simp only: list.simps sub_hd head.simps sub_fst fst_def sub_snd snd_def sub_some sub_tl tail.simps
+      map_list_find.simps )
+   apply auto
   done
 
 fun vdlist_plus_encode :: "(var, dom list) assignment \<Rightarrow> nat" where
-"vdlist_plus_encode (x,y) = prod_encode (var_encode x,list_encode (map dom_encode y))"
+  "vdlist_plus_encode (x,y) = prod_encode (var_encode x,list_encode (map dom_encode y))"
 
 fun vdlist_plus_decode ::  "nat \<Rightarrow> (var, dom list) assignment" where
-"vdlist_plus_decode n = (case prod_decode n of (x,y) \<Rightarrow> (var_decode x, map dom_decode (list_decode y)))"
+  "vdlist_plus_decode n = (case prod_decode n of (x,y) \<Rightarrow> (var_decode x, map dom_decode (list_decode y)))"
 
 lemma vdlist_plus_id: "vdlist_plus_decode (vdlist_plus_encode x) = x"
   apply (cases x)
@@ -1027,15 +1231,15 @@ lemma vdlist_plus_id: "vdlist_plus_decode (vdlist_plus_encode x) = x"
   done
 
 definition list_problem_plus_encode ::
-    "(var,dom) sas_plus_list_problem \<Rightarrow>nat" where
-"list_problem_plus_encode x = list_encode [list_encode (map var_encode (variables_ofl x)),
+  "(var,dom) sas_plus_list_problem \<Rightarrow>nat" where
+  "list_problem_plus_encode x = list_encode [list_encode (map var_encode (variables_ofl x)),
                                       list_encode (map operator_plus_encode (operators_ofl x)),
                                       sas_plus_assignment_list_encode (initial_ofl x),
                                        sas_plus_assignment_list_encode (goal_ofl x),
                                        list_encode (map vdlist_plus_encode (range_ofl x)) ] "
 
 definition list_problem_plus_decode ::"nat \<Rightarrow> (var,dom) sas_plus_list_problem" where
-"list_problem_plus_decode x = (case list_decode x of
+  "list_problem_plus_decode x = (case list_decode x of
 [var,op,i,g,r]  \<Rightarrow> \<lparr>           variables_ofl = map var_decode (list_decode var),
                                operators_ofl = map operator_plus_decode (list_decode op),
                                initial_ofl = sas_plus_assignment_list_decode i,
@@ -1043,7 +1247,7 @@ definition list_problem_plus_decode ::"nat \<Rightarrow> (var,dom) sas_plus_list
                                range_ofl = map vdlist_plus_decode (list_decode r) \<rparr> )"
 
 lemma list_problem_plus_id :
-      "list_problem_plus_decode (list_problem_plus_encode x) = x"
+  "list_problem_plus_decode (list_problem_plus_encode x) = x"
   apply (auto simp only:list_problem_plus_encode_def list_problem_plus_decode_def list_encode_inverse)
   apply (auto simp add: comp_def var_id operator_plus_id sas_plus_assignment_list_id vdlist_plus_id simp del: vdlist_plus_decode.simps)
   done

@@ -15,6 +15,67 @@ text \<open> We give a reduction from SAS++ to SAS+. The challenge here is to re
 
 datatype 'v variable =  Var 'v | Stage
 datatype 'd domain_element = DE 'd | Init | NonInit
+
+instantiation variable :: (order_bot) order_bot
+begin
+
+fun less_eq_variable :: "'a variable \<Rightarrow> 'a variable \<Rightarrow> bool" where
+  "less_eq_variable (Var v1) (Var v2) \<longleftrightarrow> v1 \<le> v2"
+| "less_eq_variable Stage _ \<longleftrightarrow> True"
+| "less_eq_variable _ Stage \<longleftrightarrow> False"
+
+definition less_variable :: "'a variable \<Rightarrow> 'a variable \<Rightarrow> bool" where
+  "less_variable c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
+
+definition bot_variable :: "'a variable" where
+  "bot_variable = Stage"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case by (simp add: less_variable_def)
+next
+  case 2 show ?case
+    using less_eq_variable.elims(3) by fastforce
+next
+  case 3 thus ?case by (fastforce elim: less_eq_variable.elims)
+next
+  case 4 thus ?case by (fastforce elim: less_eq_variable.elims)
+next
+  case 5 show ?case unfolding bot_variable_def by simp
+qed
+end
+
+instantiation domain_element :: (order_bot) order_bot
+begin
+
+fun less_eq_domain_element :: "'a domain_element \<Rightarrow> 'a domain_element \<Rightarrow> bool" where
+  "less_eq_domain_element (DE v1) (DE v2) \<longleftrightarrow> v1 \<le> v2"
+| "less_eq_domain_element Init _ \<longleftrightarrow> True"
+| "less_eq_domain_element _ Init \<longleftrightarrow> False"
+| "less_eq_domain_element NonInit _ \<longleftrightarrow> True"
+| "less_eq_domain_element _ NonInit \<longleftrightarrow> False"
+
+definition less_domain_element :: "'a domain_element \<Rightarrow> 'a domain_element \<Rightarrow> bool" where
+  "less_domain_element c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
+
+definition bot_domain_element :: "'a domain_element" where
+  "bot_domain_element = Init"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case by (simp add: less_domain_element_def)
+next
+  case 2 show ?case
+    using less_eq_domain_element.elims(3) by fastforce
+next
+  case 3 thus ?case by (fastforce elim: less_eq_domain_element.elims)
+next
+  case 4 thus ?case by (fastforce elim: less_eq_domain_element.elims)
+next
+  case 5 show ?case unfolding bot_domain_element_def by simp
+qed
+end
+
                                                                
 type_synonym ('v, 'd) state = "('v, 'd) State_Variable_Representation.state"
 type_synonym ('v, 'd) operator = "('v variable, 'd domain_element) sas_plus_operator"

@@ -1,5 +1,5 @@
 (*  Title:      Encode_Nat.thy
-    Author:     , TU Muenchen
+    Author:     Johannes Neubrand, TU Muenchen
     Author:     Andreas Vollert, TU Muenchen
     Copyright   2022, 2023
 *)
@@ -162,7 +162,7 @@ lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
 
 datatype_nat_encode nat
 
-lemma enc_nat_bot: "enc_nat bot = bot" 
+lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: bot_nat_def prod_encode_0)
 
 datatype_nat_encode list
@@ -347,6 +347,8 @@ method natfn_correctness
   subst simps_nat;
   insert args_wellbehaved; simp del: dels add: enc_simps; meson?
 
+
+
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
 | "reverset (l # ls) r = reverset ls (l # r)"
@@ -447,8 +449,8 @@ function_nat_rewrite_correctness subtreest
 
 
 fun plus where
-    "plus 0 n = n"
-  | "plus (Suc m) n = plus m (Suc n)"
+  "plus 0 n = n"
+| "plus (Suc m) n = plus m (Suc n)"
 
 lemma plus_equiv: "plus a b = a + b"
   by(induction a arbitrary: b; simp)
@@ -502,7 +504,7 @@ lemma loop_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"
   shows "loop_nat (enc_list enc_'a acc) (enc_list enc_'a xs) = enc_list enc_'a (loop acc xs)"
   apply(induction acc xs rule: loop.induct)
-  apply(all \<open>subst loop.simps\<close>)
+   apply(all \<open>subst loop.simps\<close>)
   by(simp add: loop_nat.simps enc_list.simps)+
 
 fun reverse where
@@ -521,17 +523,17 @@ lemma 2:"loop acc [x] = x # acc" by simp
 
 lemma 3:"loop acc xs = (loop [] xs) @ acc"
   apply(induction xs arbitrary: acc)
-  apply(simp)
+   apply(simp)
   by (metis append_Cons append_eq_append_conv2 loop.simps(2) same_append_eq)
 
 lemma 4:"loop [] (loop acc xs) = (loop [] acc) @ xs"
   apply(induction xs arbitrary: acc)
-  apply(simp)
+   apply(simp)
   using "3" by fastforce
 
 lemma 5:"loop [] (loop [] xs @ ys) = loop xs ys"
   apply(induction xs arbitrary: ys)
-  apply(simp)
+   apply(simp)
   by (metis "4" loop.simps(2))
 
 lemma 6:"(pair (atomic 0) (atomic 0)) = enc_list enc_'a []"
@@ -539,17 +541,17 @@ lemma 6:"(pair (atomic 0) (atomic 0)) = enc_list enc_'a []"
 
 lemma 7:"loop [] (loop [] xs) = xs"
   apply(induction xs)
-  apply(simp)
+   apply(simp)
   by (simp add: "4")
 
-lemma 8:"append xs ys = xs @ ys"
+lemma append_equiv:"append xs ys = xs @ ys"
   by (metis "3" "7" append.simps reverse.simps)
 
 lemma 9:"rev (rev xs) = xs"
   by (simp add: "7")
 
 lemma 10:"reverse (append xs ys) = append (reverse ys) (reverse xs)"
-  by (metis "4" "8" Encode_Nat.reverse.simps append.elims)
+  by (metis "4" append_equiv Encode_Nat.reverse.simps append.elims)
 
 lemma reverse_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"
@@ -620,12 +622,16 @@ fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
 function_nat_rewrite baz
 thm baz_nat.simps
 
+lemma prod_decode_0_snd: "snd (prod_decode 0) = 0" by eval
+lemma prod_decode_0_fst: "fst (prod_decode 0) = 0" by eval
+
+
 lemma 11:"prod_encode (0, 0) = enc_list enc_'a []"
   by(simp add: enc_list.simps)
 
 lemma "baz acc xs = baz2 acc xs"
   apply(induction xs arbitrary: acc)
-  apply(simp)
+   apply(simp)
   by (metis (no_types, lifting) "7" append.elims atail.elims baz.simps(1) baz.simps(3) baz.simps(4) baz2.simps(1) baz2.simps(2) reverse.elims)
 
 
@@ -636,8 +642,8 @@ lemma baz2_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"
   shows "baz2_nat (enc_list enc_'a acc) (enc_list (enc_list enc_'a) xss) = enc_list enc_'a (baz2 acc xss)"
   apply(induction acc xss rule: baz2.induct)
-  apply(all \<open>subst baz2.simps\<close>)
-  apply (metis "11" atomic.simps baz2_nat.simps fstP.simps fst_conv prod_encode_inverse)
+   apply(all \<open>subst baz2.simps\<close>)
+   apply (metis "11" atomic.simps baz2_nat.simps fstP.simps fst_conv prod_encode_inverse)
   apply(subst baz2_nat.simps)
   using append_nat_equiv2[OF assms]
   by (metis (mono_tags, lifting) atomic.simps enc_list.simps fstP.simps fst_conv list.simps(5) pair.simps prod_encode_inverse sndP.simps snd_conv zero_neq_one)
@@ -645,9 +651,9 @@ lemma baz2_nat_equiv2:
 
 function_nat_rewrite_correctness baz2
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: baz2.induct)
-  apply(all \<open>subst baz2.simps\<close>)
+   apply(all \<open>subst baz2.simps\<close>)
   using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
-  apply(simp add: baz2_nat.simps enc_list.simps)
+   apply(simp add: baz2_nat.simps enc_list.simps)
   using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
     baz2_nat_equiv2[OF assms(1)]
   by force
@@ -685,9 +691,9 @@ lemma baz_nat_equiv2:
     apply(simp add: IH[symmetric])
     apply(subst baz_nat.simps)
     apply(auto simp add: enc_list.simps)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
+       apply (simp add: prod_decode_aux.simps prod_decode_def)
+      apply (simp add: prod_decode_aux.simps prod_decode_def)
+     apply (simp add: prod_decode_aux.simps prod_decode_def)
     apply (simp add: prod_decode_aux.simps prod_decode_def)
     apply (subst pair.simps)+
     apply(subst prod_encode_def)+
@@ -702,7 +708,7 @@ lemma baz_nat_equiv2:
     and "dec_'a bot = bot"
   shows "baz_nat (enc_list enc_'a acc) (enc_list (enc_list enc_'a) xss) = enc_list enc_'a (baz acc xss)"
   apply(induction acc xss rule: baz.induct)
-  apply(all \<open>subst baz.simps\<close>)
+     apply(all \<open>subst baz.simps\<close>)
   subgoal for acc
     using append_nat_equiv2[OF assms(1)] append_nat_equiv[OF assms]
       append_nat_equiv3[OF assms(1)] append_nat_equiv4[OF assms(1)]
@@ -716,16 +722,13 @@ lemma baz_nat_equiv2:
     sorry
   oops
 
-
 function_nat_rewrite_correctness baz
-  apply(induction arg\<^sub>1 arg\<^sub>2 rule: baz.induct)
-  apply(all \<open>subst baz.simps\<close>)
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: baz.induct; subst baz.simps)
   subgoal for acc
-    apply(subst baz_nat.simps)
 
     using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
       append_nat_equiv[OF assms]
-      append_nat_equiv2[OF assms(1)]
+    apply(simp add: enc_list.simps)
     sorry
   subgoal for acc
     using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
@@ -738,16 +741,16 @@ function_nat_rewrite_correctness baz
     using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
       append_nat_equiv[OF assms]
       append_nat_equiv2[OF assms(1), of acc "(v # va)", symmetric]
+
     sorry
   subgoal premises IH for acc xs v va
     apply(simp add: baz_nat.simps)
 
     apply(auto simp add: enc_list.simps)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply (simp add: prod_decode_aux.simps prod_decode_def)
-    apply(simp add: Let_def)
+        apply (simp add: prod_decode_aux.simps prod_decode_def)
+       apply (simp add: prod_decode_aux.simps prod_decode_def)
+      apply (simp add: prod_decode_aux.simps prod_decode_def)
+     apply (simp add: prod_decode_aux.simps prod_decode_def)
     using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
       append_nat_equiv[OF assms]
       append_nat_equiv2[OF assms(1)]

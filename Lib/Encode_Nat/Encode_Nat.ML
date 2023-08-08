@@ -1,5 +1,5 @@
 (*  Title:      Encode_Nat.ML
-    Author:     , TU Muenchen
+    Author:     Johannes Neubrand, TU Muenchen
     Author:     Andreas Vollert, TU Muenchen
     Copyright   2022, 2023
 *)
@@ -53,12 +53,19 @@ fun pull_front i xs =
 
 fun get_ctrs_idx_bot ctxt T ctrs =
 let
-    val T_name = Long_Name.base_name (fst (dest_Type T))
+    val T_base_name = Long_Name.base_name (fst (dest_Type T)) |> @{print}
+    val T_name = (fst (dest_Type T))
+    val cond =
+      fastype_of #> try dest_Type #> Option.map fst #> (curry (op =) (SOME T_name))
+    (* TODO: find more efficient method. Can't use just the base name with find theorem as there
+      might be several datatypes with the same base name *)
     val bot' =
-      (Proof_Context.get_thms ctxt) ("bot_" ^ T_name ^ "_def")
-      |> hd
-      |> (rhs_of_term o Thm.prop_of)
-      |> try (fst o dest_Const)
+      Find_Theorems.find_theorems_cmd ctxt NONE NONE true [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
+      |> snd |> @{print}
+      |> map (snd #> Thm.prop_of #> rhs_of_term) |> @{print}
+      |> Library.get_first (fn t => if cond t then SOME t else NONE) |> @{print}
+      |> try (Option.map (fst o dest_Const)) |> @{print}
+      |> Option.join
   in
     if is_none bot' then 0
     else Library.find_index ((curry (op =) (the bot')) o fst o dest_Const) ctrs
@@ -74,8 +81,8 @@ fun build_constructor_tag ctxt (t as (_, T)) =
       |> Option.map (Ctr_Sugar.ctr_sugar_of ctxt)
       |> Option.join
       |> Option.map #ctrs
-    val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0)
-    val ctrs = Option.map (pull_front i) ctrs
+    val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0) |> @{print}
+    val ctrs = Option.map (pull_front i) (@{print} ctrs)
   in
     case Option.map (find_index (can (Ctr_Sugar_Util.fo_match ctxt (Const t)))) ctrs of
         SOME (~1) => NONE
@@ -162,7 +169,7 @@ fun build_encoder ctxt T ctrs casex =
 
 fun datatype_nat_encode_cmd T ctxt =
   let
-    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T))
+    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T)) |> @{print}
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
     val T = tvar_to_tfree (#T sugar)
     val casex =
@@ -328,15 +335,35 @@ fun retag_list [] = []
   | retag_list (x :: xs) =
   (map (apsnd FST) x) @ (retag_list (map (map (apsnd SND)) xs))
 
+(* TODO: Also replace with pairing_tree without retag? *)
 fun extract_condition_paths (CONSTRUCTOR (c, args)) =
       retag_list ([(c, DONE)] ::
         (case args of [] => [[]] \<comment> \<open>dummy arg for 0-arity constructor\<close>
                     | args => map extract_condition_paths args))
   | extract_condition_paths (VARIABLE _) = []
 
-fun extract_variable_paths (CONSTRUCTOR (_, args)) =
-      retag_list ([] :: map extract_variable_paths args)
-  | extract_variable_paths (VARIABLE n) = [(n, DONE)]
+datatype pairing_tree =
+  LEAF |
+  VAR of (indexname * typ) |
+  NODE of (pairing_tree * pairing_tree)
+
+fun mk_pairing_tree [] = LEAF
+  | mk_pairing_tree [(VARIABLE n)] = VAR n
+  | mk_pairing_tree ((VARIABLE n) :: xs) = NODE (VAR n, mk_pairing_tree xs)
+  | mk_pairing_tree ((CONSTRUCTOR (_, args)) :: xs) =
+      NODE (NODE (LEAF, mk_pairing_tree args), mk_pairing_tree xs)
+
+fun mk_path t =
+  let
+    fun mk_path p (VAR n) = [(n, p)]
+      | mk_path _ LEAF = []
+      | mk_path p (NODE (l, r)) = (mk_path (FST p) l) @ (mk_path (SND p) r)
+  in
+    mk_path DONE (@{print} t)
+  end;
+
+fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
+  | mk_variable_paths (CONSTRUCTOR (_, args)) = mk_path (NODE (LEAF, mk_pairing_tree args))
 
 val subscript =
   String.explode
@@ -371,12 +398,12 @@ fun build_nat_condition ctxt t =
     val args_t = Term.args_of (lhs_of_term t)
     val new_args_t = map (fn s => Free (s, @{typ "pair_repr"})) (argnames (length args_t))
     val condition_paths =
-      map build_patmatch_term args_t |> @{print}
-      |> map extract_condition_paths |> @{print} 
+      map build_patmatch_term args_t
+      |> map extract_condition_paths
   in
-    (new_args_t ~~ condition_paths) |> @{print}
-    |> map mk_condition |> @{print}
-    |> List.concat |> @{print}
+    (new_args_t ~~ condition_paths)
+    |> map mk_condition
+    |> List.concat
     |> mk_conj'
   end;
 
@@ -395,8 +422,8 @@ fun nat_encode_term ctxt t =
       |> lhs_of_term
       |> map_types tvar_to_tfree
       |> Term.args_of
-      |> map build_patmatch_term
-      |> map extract_variable_paths
+      |> map build_patmatch_term |> @{print}
+      |> map mk_variable_paths |> @{print}
       |> (fn x =>
         argnames (length x) ~~ x
         |> map (fn (arg, paths_from_this_arg) => map (pair arg) paths_from_this_arg))
@@ -463,8 +490,8 @@ fun replace_suc t =
       |> map substs_for_suc
       |> Library.flat
     val res =
-      t |> @{print}
-      |> Term.subst_free substs |> @{print}
+      t
+      |> Term.subst_free substs
   in
     res
   end;
@@ -481,12 +508,14 @@ fun function_nat_rewrite s ctxt =
     val newfun_T = mk_encoded_typ t
     val newfun_t = Free (newfun_name, newfun_T)
     val lhs = Term.list_comb (newfun_t, arg_ts)
-    val ite =
-      Proof_Context.get_thms ctxt (fun_name ^ ".simps") |> @{print}
+    val (nat_cond, t_encoded) =
+      Proof_Context.get_thms ctxt (fun_name ^ ".simps")
       |> map Thm.prop_of
-      |> map replace_suc |> @{print}
+      |> map replace_suc
       |> (fn thms => (map (build_nat_condition ctxt) thms, map (nat_encode_term ctxt) thms))
-      |-> Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T)
+
+    val ite =
+      Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T) nat_cond t_encoded
       |> Term.map_aterms change_const_to_nat
       |> const_to_free (fun_name ^ "_nat", newfun_T)
     val (_, newfun_lthy) =
