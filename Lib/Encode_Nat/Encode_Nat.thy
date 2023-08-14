@@ -165,7 +165,7 @@ datatype_nat_encode nat
 lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: bot_nat_def prod_encode_0)
 
-datatype_nat_encode list
+datatype_nat_encode "'a list"
 declare enc_list.simps [simp del]
 
 lemma enc_list_bot: "enc_list enc_'a bot = bot"
@@ -183,7 +183,7 @@ declare enc_char.simps [simp del]
 lemma enc_char_bot: "enc_char bot = bot"
   by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def)
 
-datatype_nat_encode prod
+datatype_nat_encode "('a, 'b) prod"
 declare enc_prod.simps [simp del]
 
 lemma enc_prod_bot:
@@ -192,13 +192,13 @@ lemma enc_prod_bot:
   shows "enc_prod enc_'a enc_'b bot = bot"
   by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms)
 
-datatype_nat_encode tree
+datatype_nat_encode "'a tree"
 declare enc_tree.simps [simp del]
 
 lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
   by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def)
 
-datatype_nat_encode keyed_list_tree
+datatype_nat_encode "('a, 'b) keyed_list_tree"
 declare enc_keyed_list_tree.simps [simp del]
 
 lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"

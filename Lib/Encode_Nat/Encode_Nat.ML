@@ -53,14 +53,14 @@ fun pull_front i xs =
 
 fun get_ctrs_idx_bot ctxt T ctrs =
 let
-    val T_base_name = Long_Name.base_name (fst (dest_Type T)) |> @{print}
+    val T_base_name = Long_Name.base_name (fst (dest_Type (@{print} T))) |> @{print}
     val T_name = (fst (dest_Type T))
     val cond =
       fastype_of #> try dest_Type #> Option.map fst #> (curry (op =) (SOME T_name))
     (* TODO: find more efficient method. Can't use just the base name with find theorem as there
       might be several datatypes with the same base name *)
     val bot' =
-      Find_Theorems.find_theorems_cmd ctxt NONE NONE true [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
+      Find_Theorems.find_theorems ctxt NONE NONE false [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
       |> snd |> @{print}
       |> map (snd #> Thm.prop_of #> rhs_of_term) |> @{print}
       |> Library.get_first (fn t => if cond t then SOME t else NONE) |> @{print}
@@ -81,7 +81,7 @@ fun build_constructor_tag ctxt (t as (_, T)) =
       |> Option.map (Ctr_Sugar.ctr_sugar_of ctxt)
       |> Option.join
       |> Option.map #ctrs
-    val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0) |> @{print}
+    val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0)
     val ctrs = Option.map (pull_front i) (@{print} ctrs)
   in
     case Option.map (find_index (can (Ctr_Sugar_Util.fo_match ctxt (Const t)))) ctrs of
@@ -98,13 +98,17 @@ fun build_constructor_pairing ts c =
     bcs c (if ts = [] then [@{term "atomic 0"}] else ts)
   end
 
-fun encoder_name_of_type (Type (name, _)) = "enc_" ^ (Long_Name.base_name name)
-  | encoder_name_of_type (TFree (name, _)) = "enc_" ^ (Long_Name.base_name name)
-  | encoder_name_of_type (TVar _) = error "Can't build an encoder for TVar"
+fun encoder_name_of_type ctxt (Type (name, _)) =
+      Name_Space.extern ctxt (Proof_Context.type_space ctxt) name
+      |> Long_Name.base_name
+      |> prefix "enc_"
+  | encoder_name_of_type _ (TFree (name, _)) =
+      prefix "enc_" name
+  | encoder_name_of_type _ (TVar _) = error "Can't build an encoder for TVar"
 
-fun encoder_args_of_type T =
+fun encoder_args_of_type ctxt T =
   snd (dest_Type T)
-  |> map (fn T => Free (encoder_name_of_type T, T --> @{typ "pair_repr"}))
+  |> map (fn T => Free (encoder_name_of_type ctxt T, T --> @{typ "pair_repr"}))
   |> (fn x => x @ [Free ("v", T)])
 
 fun encoder_type_of_type (T as Type (_, typargs)) =
@@ -114,22 +118,22 @@ fun encoder_type_of_type (T as Type (_, typargs)) =
   | encoder_type_of_type (T as TFree _) = T --> @{typ "pair_repr"}
   | encoder_type_of_type (TVar _) = error "Can't build an encoder for TVar"
 
-fun encoder_free_term_of_type T = Free (encoder_name_of_type T, encoder_type_of_type T)
+fun encoder_free_term_of_type ctxt T = Free (encoder_name_of_type ctxt T, encoder_type_of_type T)
 
 fun encoder_const_term_of_type ctxt (T as Type _) =
-      fst (dest_Const (read_const' ctxt (encoder_name_of_type T)))
+      fst (dest_Const (read_const' ctxt (encoder_name_of_type ctxt T)))
       |> (fn name => Const (name, encoder_type_of_type T))
   | encoder_const_term_of_type _ _ = error "Can't build a const encoder for TVar or TFree"
 
 fun build_encoder_invocation ctxt freeT (T as Type (_, args)) =
   let
     val t = if freeT = SOME T
-            then encoder_free_term_of_type T
+            then encoder_free_term_of_type ctxt T
             else encoder_const_term_of_type ctxt T
   in
     Term.list_comb (t, map (build_encoder_invocation ctxt freeT) args)
   end
-  | build_encoder_invocation _ _ (T as TFree _) = encoder_free_term_of_type T
+  | build_encoder_invocation ctxt _ (T as TFree _) = encoder_free_term_of_type ctxt T
   | build_encoder_invocation _ _ (TVar _) = error "Can't build an encoder for TVar"
 
 fun build_encoder ctxt T ctrs casex =
@@ -137,7 +141,7 @@ fun build_encoder ctxt T ctrs casex =
     val T = T |> (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
     val ctrs = map (map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))) ctrs
     val casex = map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"]))) casex
-    val lhs = Term.list_comb (encoder_free_term_of_type T, encoder_args_of_type T)
+    val lhs = Term.list_comb (encoder_free_term_of_type ctxt T, encoder_args_of_type ctxt T)
     val cases =
       ctrs
       |> map (fn ctr_t =>
@@ -169,7 +173,7 @@ fun build_encoder ctxt T ctrs casex =
 
 fun datatype_nat_encode_cmd T ctxt =
   let
-    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T)) |> @{print}
+    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T))
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
     val T = tvar_to_tfree (#T sugar)
     val casex =
@@ -177,8 +181,9 @@ fun datatype_nat_encode_cmd T ctxt =
       |> map_types tvar_to_tfree
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar)
     val eqns = build_encoder ctxt T ctrs casex
-    val fixes = [(Binding.name (encoder_name_of_type T), NONE, NoSyn)]
+    val fixes = [(Binding.name (encoder_name_of_type ctxt T), NONE, NoSyn)]
     val specs = [((Binding.empty_atts, eqns), [], [])]
+
   in Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt
   end
 
@@ -187,13 +192,17 @@ val _ =
     "Creates encoder for a data type"
     (Parse.typ >> datatype_nat_encode_cmd)
 
-fun decoder_name_of_type (Type (name, _)) = "dec_" ^ (Long_Name.base_name name)
-  | decoder_name_of_type (TFree (name, _)) = "dec_" ^ (Long_Name.base_name name)
-  | decoder_name_of_type (TVar _) = error "Can't build a decoder for TVar"
+fun decoder_name_of_type ctxt (Type (name, _)) =
+      Name_Space.extern ctxt (Proof_Context.type_space ctxt) name
+      |> Long_Name.base_name
+      |> prefix "dec_"
+  | decoder_name_of_type _ (TFree (name, _)) =
+      prefix "dec_" name
+  | decoder_name_of_type _ (TVar _) = error "Can't build a decoder for TVar"
 
-fun decoder_args_of_type T =
+fun decoder_args_of_type ctxt T =
   snd (dest_Type T)
-  |> map (fn T => Free (decoder_name_of_type T, @{typ "pair_repr"} --> T))
+  |> map (fn T => Free (decoder_name_of_type ctxt T, @{typ "pair_repr"} --> T))
   |> (fn x => x @ [Free ("v", @{typ "pair_repr"})])
 
 fun decoder_type_of_type (T as Type (_, typargs)) =
@@ -203,28 +212,28 @@ fun decoder_type_of_type (T as Type (_, typargs)) =
   | decoder_type_of_type (T as TFree _) = @{typ "pair_repr"} --> T
   | decoder_type_of_type (TVar _) = error "Can't build a decoder for TVar"
 
-fun decoder_free_term_of_type T = Free (decoder_name_of_type T, decoder_type_of_type T)
+fun decoder_free_term_of_type ctxt T = Free (decoder_name_of_type ctxt T, decoder_type_of_type T)
 
 fun decoder_const_term_of_type ctxt (T as Type _) =
-      fst (dest_Const (read_const' ctxt (decoder_name_of_type T)))
+      fst (dest_Const (read_const' ctxt (decoder_name_of_type ctxt T)))
       |> (fn name => Const (name, decoder_type_of_type T))
   | decoder_const_term_of_type _ _ = error "Can't build a Const decoder for a type variable"
 
 fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
   let
-    val t = if freeT = SOME T then decoder_free_term_of_type T
+    val t = if freeT = SOME T then decoder_free_term_of_type ctxt T
             else decoder_const_term_of_type ctxt T
   in
     list_comb (t, map (build_decoder_invocation ctxt freeT) args)
   end
-  | build_decoder_invocation _ _ (T as TFree _) = decoder_free_term_of_type T
+  | build_decoder_invocation ctxt _ (T as TFree _) = decoder_free_term_of_type ctxt T
   | build_decoder_invocation _ _ (TVar _) = error "Can't build a decoder for TVar"
 
 fun build_decoder ctxt T ctrs =
   let
     val T = T |> map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"]))
     val ctrs = map (map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))) ctrs
-    val lhs = Term.list_comb (decoder_free_term_of_type T, decoder_args_of_type T)
+    val lhs = Term.list_comb (decoder_free_term_of_type ctxt T, decoder_args_of_type ctxt T)
     val free_var = Free ("v", @{typ "pair_repr"})
     val (conditions, cases) =
       ctrs
@@ -258,7 +267,7 @@ fun datatype_nat_decode_cmd T ctxt =
     val T = tvar_to_tfree (#T sugar)
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar)
     val eqns = build_decoder ctxt T ctrs
-    val fixes = [(Binding.name (decoder_name_of_type T), NONE, NoSyn)]
+    val fixes = [(Binding.name (decoder_name_of_type ctxt T), NONE, NoSyn)]
     val specs = [((Binding.empty_atts, eqns), [], [])]
     fun pat_completeness_auto ctxt =
             Pat_Completeness.pat_completeness_tac ctxt 1 THEN auto_tac ctxt
@@ -272,9 +281,12 @@ val _ =
     "creates decoder for a datatype"
     (Parse.typ >> datatype_nat_decode_cmd)
 
-fun mk_wellbehaved_thm_name (Type (name, _)) =
-    "encoding_" ^ Long_Name.base_name name ^ "_wellbehaved"
-  | mk_wellbehaved_thm_name _ = error "Can't generate wellbehaved theorem name for type variables"
+fun mk_wellbehaved_thm_name ctxt (Type (name, _)) =
+      Name_Space.extern ctxt (Proof_Context.type_space ctxt) name
+      |> Long_Name.base_name
+      |> prefix "encoding_"
+      |> suffix "_wellbehaved"
+  | mk_wellbehaved_thm_name _ _ = error "Can't generate wellbehaved theorem name for type variables"
 
 fun mk_wellbehaved_thm enc dec =
   let
@@ -287,7 +299,7 @@ fun wellbehavedness_thm T int ctxt =
   let
     val T = map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])) T
     val (encoder_args, decoder_args) =
-      apply2 (fst o split_last) (encoder_args_of_type T, decoder_args_of_type T)
+      apply2 (fst o split_last) (encoder_args_of_type ctxt T, decoder_args_of_type ctxt T)
     val encoder = Term.list_comb (encoder_const_term_of_type ctxt T, encoder_args)
     val decoder = Term.list_comb (decoder_const_term_of_type ctxt T, decoder_args)
     val assms = map (uncurry mk_wellbehaved_thm) (encoder_args ~~ decoder_args)
@@ -298,7 +310,7 @@ fun wellbehavedness_thm T int ctxt =
       Thm.theoremK
       NONE
       (K I)
-      (Binding.name (mk_wellbehaved_thm_name T), [])
+      (Binding.name (mk_wellbehaved_thm_name ctxt T), [])
       []
       [Element.Assumes [(Binding.empty_atts, map (rpair []) assms)]]
       (Element.Shows [(Binding.empty_atts, [(goal, [])])])
@@ -540,9 +552,9 @@ val _ =
     "Test2"
     (Parse.term >> function_nat_rewrite)
 
-fun mk_dec_bot_eq_bot T =
+fun mk_dec_bot_eq_bot ctxt T =
   let
-    val lhs = decoder_free_term_of_type T $ (Const (\<^const_name>\<open>bot\<close>, @{typ "pair_repr"}))
+    val lhs = decoder_free_term_of_type ctxt T $ (Const (\<^const_name>\<open>bot\<close>, @{typ "pair_repr"}))
     val rhs = Const (\<^const_name>\<open>bot\<close>, T)
   in
     BNF_Util.mk_Trueprop_eq (lhs, rhs)
@@ -567,8 +579,8 @@ fun function_nat_rewrite_correctness_cmd fn_str int ctxt  =
     val assms =
       fold_atyps (insert (op =)) fn_T []
       |> map (fn T =>
-                [mk_wellbehaved_thm (encoder_free_term_of_type T) (decoder_free_term_of_type T),
-                 mk_dec_bot_eq_bot T])
+                [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
+                 mk_dec_bot_eq_bot ctxt T])
       |> flat
     val goal =
       BNF_Util.mk_Trueprop_eq (lhs, rhs)

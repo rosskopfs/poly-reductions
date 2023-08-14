@@ -226,21 +226,24 @@ definition SAS_Plus_Plus_To_SAS_Plus:: "('v, 'd) sas_plus_problem \<Rightarrow> 
       range_of = ((\<lambda>x. Some (map DE x)) \<circ>\<^sub>m (range_of P) 
         \<circ>\<^sub>m (\<lambda>x. (case x of Var x \<Rightarrow> Some x | Stage \<Rightarrow> None)))(Stage \<mapsto> [Init, NonInit])\<rparr>"
 
-lemma SAS_Plus_Plus_To_SAS_Plus_valid: 
+
+lemma SAS_Plus_Plus_To_SAS_Plus_valid:
   assumes "is_valid_problem_sas_plus_plus P"
-  shows "is_valid_problem_sas_plus (SAS_Plus_Plus_To_SAS_Plus P)" 
-  using assms apply(auto simp: is_valid_problem_sas_plus_plus_def is_valid_problem_sas_plus_def 
+  shows "is_valid_problem_sas_plus (SAS_Plus_Plus_To_SAS_Plus P)"
+  using assms
+  apply(auto simp: is_valid_problem_sas_plus_plus_def is_valid_problem_sas_plus_def
       SAS_Plus_Plus_To_SAS_Plus_def list_all_def is_valid_operator_sas_plus_def Let_def
       initialization_operators_def SAS_Plus_Plus_Operator_To_SAS_Plus_Operator_def ListMem_iff)
-               apply auto
+                apply fastforce
+               apply fastforce
               apply fastforce
              apply fastforce
             apply fastforce
            apply fastforce
           apply blast
          apply blast
-         apply(auto simp: initial_state_def map_comp_def SAS_Plus_Plus_State_To_SAS_Plus_def 
-        split: variable.splits if_splits option.splits)
+        apply(auto simp: initial_state_def map_comp_def SAS_Plus_Plus_State_To_SAS_Plus_def
+      split: variable.splits if_splits option.splits)
   by (meson assms is_valid_problem_sas_plus_plus_then(1) range_of_not_empty)+
 
 lemma stage_of_initial_state[simp]: "((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) Stage = Some Init" 
@@ -473,17 +476,18 @@ lemma SAS_Plus_To_SAS_Plus_Plus:
   shows "\<exists>plan'. length plan' \<le> length plan
     \<and> is_serial_solution_for_problem_sas_plus_plus P plan'"
 proof-
-  let ?plan = "chain_applicable_prefix ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) plan" 
-  obtain k where k_def: "k < length ?plan 
+  let ?plan = "chain_applicable_prefix ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) plan"
+  obtain k where k_def: "k < length ?plan
     \<and> list_all (\<lambda>op. op \<in> set (initialization_operators P)) (take k ?plan)
     \<and> ?plan ! k = \<lparr> precondition_of = [(Stage, Init)], effect_of = [(Stage, NonInit)]\<rparr>
-    \<and> list_all (\<lambda>op. op \<in> set (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator ((P)\<^sub>\<O>\<^sub>+))) 
+    \<and> list_all (\<lambda>op. op \<in> set (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator ((P)\<^sub>\<O>\<^sub>+)))
       (drop (k + 1) ?plan)"
-    using exE[OF SAS_plus_plan_structure[where ?s ="((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)" 
-            and ?P = P and ?plan = ?plan]] assms set_of_chain_applicable_prefix 
-    by(force simp: is_serial_solution_for_problem_def list_all_def map_le_def Let_def 
-        execute_chain_applicable_prefix SAS_Plus_Plus_To_SAS_Plus_def initial_state_def ListMem_iff 
-        SAS_Plus_Plus_State_To_SAS_Plus_def)+
+    using exE[OF SAS_plus_plan_structure[where ?s ="((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)"
+          and ?P = P and ?plan = ?plan]] assms
+      set_of_chain_applicable_prefix[of "((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)" "plan"]
+    by(force simp: is_serial_solution_for_problem_def list_all_def map_le_def Let_def
+        execute_chain_applicable_prefix SAS_Plus_Plus_To_SAS_Plus_def initial_state_def
+        SAS_Plus_Plus_State_To_SAS_Plus_def)
 
   let ?prefix = "take k ?plan" 
   obtain I' where I'_def: "execute_serial_plan_sas_plus ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) ?prefix 

@@ -12,7 +12,6 @@ theory Primitives
     SAS_Plus_Plus_To_SAS_Plus
     IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
     "Poly_Reductions_Lib.Encode_Nat"
-keywords "find_bot" :: thy_decl
 begin
 
 
@@ -863,7 +862,7 @@ lemma restrict_acc_append: "restrict_acc acc xs s = append acc (restrict_acc [] 
 
 function_nat_rewrite restrict_acc
 function_nat_rewrite_correctness restrict_acc
- apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: restrict_acc.induct\<close>
+  apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: restrict_acc.induct\<close>
       assms: assms
       simps_nat: restrict_acc_nat.simps
       enc_simps: enc_list.simps enc_prod.simps
@@ -1032,121 +1031,93 @@ lemma encoding_list_problem_wellbehaved: "dec_list_problem \<circ> enc_list_prob
     encoding_list_wellbehaved[OF encoding_nat_wellbehaved, THEN pointfree_idE]
   by(simp)
 
+(* We have to define a type alias because the type "variable" is already defined *)
+type_alias sas_variable = SAS_Plus_Plus_To_SAS_Plus.variable
+datatype_nat_encode sas_variable
+datatype_nat_decode sas_variable
+termination by (decode_termination "measure snd")
+datatype_nat_wellbehaved sas_variable
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: SAS_Plus_Plus_To_SAS_Plus.variable.induct; simp add: enc_list.simps)
+  done
 
-type_synonym  var = "variable SAS_Plus_Plus_To_SAS_Plus.variable"
-type_synonym  dom = "domain_element SAS_Plus_Plus_To_SAS_Plus.domain_element"
+type_synonym  var = "variable sas_variable"
+
+definition enc_var :: "var \<Rightarrow> nat" where
+  "enc_var = enc_sas_variable enc_variable"
+
+definition dec_var :: "nat \<Rightarrow> var" where
+  "dec_var = dec_sas_variable dec_variable"
+
+lemma encoding_var_wellbehaved: "dec_var \<circ> enc_var = id"
+  unfolding dec_var_def enc_var_def
+  using encoding_sas_variable_wellbehaved[OF encoding_variable_wellbehaved] .
+
+type_alias sas_domain_element = SAS_Plus_Plus_To_SAS_Plus.domain_element
+datatype_nat_encode sas_domain_element
+datatype_nat_decode sas_domain_element
+termination by (decode_termination "measure snd")
+datatype_nat_wellbehaved sas_domain_element
+  apply(intro ext)
+  subgoal for x
+    using assms[THEN pointfree_idE]
+    by(induction x rule: SAS_Plus_Plus_To_SAS_Plus.domain_element.induct; simp add: enc_list.simps)
+  done
+
+type_synonym  dom = "domain_element sas_domain_element"
+
+definition enc_dom :: "dom \<Rightarrow> nat" where
+  "enc_dom = enc_sas_domain_element enc_domain_element"
+
+definition dec_dom :: "nat \<Rightarrow> dom" where
+  "dec_dom = dec_sas_domain_element dec_domain_element"
+
+lemma encoding_dom_wellbehaved: "dec_dom \<circ> enc_dom = id"
+  unfolding dec_dom_def enc_dom_def
+  using encoding_sas_domain_element_wellbehaved[OF encoding_domain_element_wellbehaved] .
+
+definition enc_sas_plus_assignment :: "(var, dom) assignment \<Rightarrow> nat" where
+  "enc_sas_plus_assignment = enc_prod enc_var enc_dom"
+
+definition dec_sas_plus_assignment:: "nat \<Rightarrow> (var, dom) assignment" where
+  "dec_sas_plus_assignment = dec_prod dec_var dec_dom"
+
+lemma encoding_sas_plus_assignment_wellbehaved:
+  "dec_sas_plus_assignment \<circ> enc_sas_plus_assignment = id"
+  unfolding dec_sas_plus_assignment_def enc_sas_plus_assignment_def
+  using encoding_prod_wellbehaved[OF encoding_var_wellbehaved encoding_dom_wellbehaved] .
+
+definition enc_sas_plus_assignment_list ::  "(var, dom) assignment list \<Rightarrow> nat" where
+  "enc_sas_plus_assignment_list = enc_list enc_sas_plus_assignment"
+
+definition dec_sas_plus_assignment_list ::  "nat \<Rightarrow> (var, dom) assignment list" where
+  "dec_sas_plus_assignment_list = dec_list dec_sas_plus_assignment"
+
+lemma encoding_sas_plus_assignment_list_wellbehaved:
+  "dec_sas_plus_assignment_list \<circ> enc_sas_plus_assignment_list = id"
+  unfolding dec_sas_plus_assignment_list_def enc_sas_plus_assignment_list_def
+  using encoding_list_wellbehaved[OF encoding_sas_plus_assignment_wellbehaved] .
+
+definition enc_islist :: "(dom \<times> (variable, domain_element) assignment list) \<Rightarrow> nat" where
+  "enc_islist = enc_prod enc_dom enc_sas_assignment_list"
+
+definition dec_islist :: "nat \<Rightarrow> (dom \<times> (variable, domain_element) assignment list)" where
+  "dec_islist = dec_prod dec_dom dec_sas_assignment_list"
+
+lemma encoding_islist_wellbehaved: "dec_islist \<circ> enc_islist = id"
+  unfolding dec_islist_def enc_islist_def
+  using encoding_prod_wellbehaved[OF encoding_dom_wellbehaved encoding_sas_assignment_list_wellbehaved]
+  .
+
+fun islist_to_map:: "(dom \<times> (variable, domain_element) assignment list) \<Rightarrow> (dom \<times> sas_state)" where
+  "islist_to_map (i,s) = (i, map_of s)"
+
 type_synonym  sas_plus_state = "(var, dom) State_Variable_Representation.state"
 
-ML \<open>
-fun rhs_of_term t = (HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd) t;
-
-fun find_bot ctxt T =
-
-  let
-    val T_base_name = Long_Name.base_name (fst (dest_Type T))
-    val T_name = (fst (dest_Type T))
-    val cond =
-      fastype_of #> try dest_Type #> Option.map fst #> (curry (op =) (SOME T_name))
-    val a =
-      Find_Theorems.find_theorems_cmd ctxt NONE NONE true [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
-      |> snd |> @{print}
-      |> map (snd #> Thm.prop_of #> rhs_of_term) |> @{print}
-      |> Library.get_first (fn t => if cond t then SOME t else NONE) |> @{print}
-      |> try (Option.map (fst o dest_Const)) |> @{print}
-      |> Option.join
-  in
-   ()
-  end
-
-fun find_bot_cmd tc st =
-  let
-    val ctxt = Toplevel.context_of st;
-    val T_name = fst (dest_Type (Syntax.parse_typ ctxt tc))
-    val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
-    val T = #T sugar
-    val _ = find_bot ctxt T
-  in () end
-
-val q = Outer_Syntax.command
-  \<^command_keyword>\<open>find_bot\<close>
-  "find all instantiations of a given type constructor"
-  (Parse.typ >> (fn tc => Toplevel.keep (find_bot_cmd tc)));
-\<close>
-
-find_bot list
-
-datatype_nat_encode SAS_Plus_Plus_To_SAS_Plus.variable
-
-fun var_encode :: "var \<Rightarrow> nat" where
-  "var_encode Stage = 0 " |
-  "var_encode (Var v) = Suc (variable_encode v)"
-
-fun var_decode :: "nat \<Rightarrow> var" where
-  "var_decode 0 = Stage"|
-  "var_decode (Suc v) = (Var (variable_decode v))"
-
-lemma var_id: "var_decode (var_encode x) = x"
-  apply (cases x)
-  apply (auto simp add:variable_id)
-  done
-
-fun dom_encode :: "dom \<Rightarrow> nat" where
-  "dom_encode NonInit = 0"|
-  "dom_encode Init = Suc 0"|
-  "dom_encode (DE d) = Suc (Suc (domain_element_encode d))"
-
-fun dom_decode :: "nat \<Rightarrow> dom" where
-  "dom_decode 0 = NonInit"|
-  "dom_decode (Suc 0) = Init"|
-  "dom_decode (Suc (Suc d)) = DE (domain_element_decode d)"
-
-lemma dom_id : "dom_decode (dom_encode x) = x"
-  apply (cases x)
-  apply (auto simp add:domain_element_id simp del: domain_element_decode.simps)
-  done
-
-fun sas_plus_assignment_encode:: "(var,dom) assignment \<Rightarrow> nat" where
-  "sas_plus_assignment_encode (v,d) = prod_encode(var_encode v, dom_encode d)"
-
-fun sas_plus_assignment_decode:: " nat \<Rightarrow> (var,dom) assignment" where
-  "sas_plus_assignment_decode n = (case prod_decode n of (v,d) \<Rightarrow>
-                                (var_decode v, dom_decode d))"
-
-lemma sas_plus_assignment_id:
-  "sas_plus_assignment_decode (sas_plus_assignment_encode x) = x"
-  apply (cases x)
-  apply (auto simp add:var_id dom_id)
-  done
-
-definition sas_plus_assignment_list_encode ::  "(var,dom) assignment list \<Rightarrow> nat "
-  where "sas_plus_assignment_list_encode x = list_encode (map sas_plus_assignment_encode x)"
-
-definition sas_plus_assignment_list_decode ::  "nat \<Rightarrow> (var,dom) assignment list"
-  where "sas_plus_assignment_list_decode x = map sas_plus_assignment_decode (list_decode x)"
-
-lemma sas_plus_assignment_list_id:
-  "sas_plus_assignment_list_decode ( sas_plus_assignment_list_encode x) = x"
-  apply (auto simp add: sas_plus_assignment_list_encode_def  sas_plus_assignment_list_decode_def comp_def
-      sas_plus_assignment_id  simp del: sas_plus_assignment_decode.simps)
-  done
-
-fun islist_encode :: "(dom \<times> (variable,domain_element) assignment list) \<Rightarrow> nat" where
-  "islist_encode (i,s) = prod_encode (dom_encode i, sas_assignment_list_encode s)"
-
-fun islist_decode :: "nat \<Rightarrow> (dom \<times> (variable,domain_element) assignment list)" where
-  "islist_decode n = (case prod_decode n of (i,s) \<Rightarrow>
-         (dom_decode i, sas_assignment_list_decode s))"
-
-lemma islist_id: "islist_decode(islist_encode x) = x"
-  apply (cases x)
-  apply (auto simp only: islist_decode.simps islist_encode.simps prod_encode_inverse dom_id sas_assignment_list_id)
-  done
-
-fun islist_to_map:: "(dom \<times> (variable,domain_element) assignment list) \<Rightarrow> (dom \<times> sas_state) " where
-  "islist_to_map (i,s) = (i,map_of s)"
-
-definition sas_plus_state_decode :: "nat \<Rightarrow> sas_plus_state" where
-  "sas_plus_state_decode x = map_of (sas_plus_assignment_list_decode x)"
+definition dec_sas_plus_state :: "nat \<Rightarrow> sas_plus_state" where
+  "dec_sas_plus_state x = map_of (dec_list (dec_prod dec_var dec_dom) x)"
 
 type_synonym operator_plus = "(var, dom) sas_plus_operator"
 type_synonym problem_plus = "(var, dom) sas_plus_problem"
