@@ -160,13 +160,28 @@ function_nat_rewrite_correctness length_acc
 fun length :: "'a list \<Rightarrow> nat" where
   "length xs = length_acc 0 xs"
 
-lemma length_eq_length: "List.length xs = length xs"
-  by(induction xs; simp add: suc_length_acc)
+declare length.simps[simp del]
+
+lemma length_eq_length: "length xs = List.length xs"
+  by(induction xs; simp add: length.simps flip: suc_length_acc)
 
 function_nat_rewrite length
 function_nat_rewrite_correctness length
   using length_acc_nat_equiv[OF assms]
-  by(simp add: length_nat.simps prod_encode_0)
+  by(simp add: length_nat.simps length.simps prod_encode_0)
+
+lemma length_acc_add_acc: "length_acc acc xs = acc + (length_acc 0 xs)"
+proof(induction xs arbitrary: acc)
+  case Nil show ?case by simp
+next
+  case (Cons _ _ acc) show ?case
+    unfolding length_acc.simps
+    by (subst Cons[of "1 + acc"], simp add: suc_length_acc)
+qed
+
+lemma length_append_add: "length (append xs ys) = length xs + length ys"
+  unfolding append_equiv
+  by(induction xs; simp add: length.simps length_acc_add_acc[of "Suc 0"])
 
 lemma non_empty_positive : "enc_list enc_'a (x#xs) > 0"
   by(simp add: enc_list.simps prod_encode_def)
@@ -238,8 +253,8 @@ lemma vname_list_id: "dec_vname_list (enc_vname_list x) = x"
       OF encoding_vname_wellbehaved,
       THEN pointfree_idE] .
 
-lemma "loop_nat bot bot = bot"
-  by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
+lemma "reverse_acc_nat bot bot = bot"
+  by(simp add: reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps)
 
 (* TODO: rename *)
 lemma sub_reverse:
@@ -248,7 +263,7 @@ lemma sub_reverse:
   using reverse_nat_equiv assms reverse_nat_equiv2 by blast
 
 lemma reverse_nat_0:"(reverse_nat 0 = 0)"
-  by(simp add: reverse_nat.simps loop_nat.simps prod_decode_def prod_decode_aux.simps
+  by(simp add: reverse_nat.simps reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps
       prod_encode_0)
 
 lemma reverse_append_nat:
@@ -321,7 +336,7 @@ lemma append_assoc: "append (append xs ys) zs = append xs (append ys zs)"
 
 lemma remdups_acc_append: "remdups_acc acc xs = append acc (remdups_acc [] xs)"
   apply(induction xs arbitrary: acc)
-   apply (simp add: 7)
+   apply(simp add: append_equiv reverse_equiv[simplified])
   by (metis append_equiv append_assoc remdups_acc.simps(2) self_append_conv2)
 
 lemma "remdups xs = remdups_acc [] xs"
@@ -1337,57 +1352,38 @@ qed
 fun del :: "('a, 'b) assignment list \<Rightarrow> 'a \<Rightarrow> ('a, 'b) assignment list" where
   "del xs a = del_acc [] xs a"
 
+declare del.simps[simp del]
+
 function_nat_rewrite del
 function_nat_rewrite_correctness del
   using del_acc_nat_equiv[OF assms, of "[]" arg\<^sub>1 arg\<^sub>2]
-  by (simp add: prod_encode_0 del_nat.simps enc_list.simps)
+  by (simp add: del.simps prod_encode_0 del_nat.simps enc_list.simps)
 
-lemma foo:"del_acc acc xs a = append acc (del_acc [] xs a)"
-  apply(induction acc arbitrary: xs)
-   apply(auto simp add: append_equiv simp del: append.simps )
-  sorry
+
+lemma del_acc_filter: "del_acc acc xs a = append acc (filter (\<lambda>x. fst x \<noteq> a) xs)"
+  by(induction xs arbitrary: acc; fastforce simp add: append_equiv simp flip: append.simps)
 
 lemma del_filter: "del xs a = filter (\<lambda>x. fst x \<noteq> a) xs"
-  apply(induction xs)
-   apply simp
-  subgoal for p xs
-    apply(cases p)
-    apply(simp)
-    by (metis Cons_eq_appendI append_equiv foo)
+  by(simp add: del_acc_filter del.simps)
 
+lemma length_del_dec: "length (del xs x) < Suc (length xs)"
+  unfolding length_eq_length
+  by (induction xs; simp add: del_filter)
 
-
-fun del_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "del_nat xs a = (if xs =0 then 0 else if fst_nat (hd_nat xs) = a then del_nat (tl_nat xs) a else cons
-(hd_nat xs)  (del_nat (tl_nat xs) a) )"
-lemma sub_del: "del_nat (list_encode (map prod_encode xs)) a = list_encode (map prod_encode (del xs a))"
-  apply (induct xs)
-   apply simp
-   apply (subst del_nat.simps)
-   apply (simp only: sub_fst sub_hd sub_tl sub_cons list.simps head.simps tail.simps)
-  subgoal for ax xs
-     apply (cases ax)
-     apply auto
-    done
-  done
-
-lemma [termination_simp]:"length (del xs x) < Suc (length xs)"
-  apply (induct xs)
-   apply auto
-  done
-
-lemma del_correct: "\<forall>(x,y) \<in> set (del xs a). x \<noteq> a"
-  apply (induct xs)
-   apply auto
-  by (smt case_prod_conv set_ConsD)
+lemma del_correct: "\<forall>(x, y) \<in> set (del xs a). x \<noteq> a"
+  by (induction xs; simp add: del_filter split: prod.split)
 
 lemma del_correct_corr: " a \<noteq> x \<Longrightarrow> map_of (del xs a) x = map_of xs x"
-  apply (induct xs)
-   apply (auto split:if_splits)
-  done
-fun nub :: "('a,'b) assignment list \<Rightarrow> ('a,'b) assignment list" where
+  by (induction xs; simp add: del_filter)
+
+function nub :: "('a, 'b) assignment list \<Rightarrow> ('a, 'b) assignment list" where
   "nub [] = [] "|
-  "nub ((x,y)#xs) = (x,y) # nub (del xs x) "
+  "nub ((x, y) # xs) = (x, y) # nub (del xs x)"
+  by (auto, metis clearjunk.cases surj_pair)
+termination
+  by (relation "measure length"; simp add: length_eq_length)
+    (simp add: length_del_dec flip: length_eq_length)
+
 
 lemma del_shorter : "length (del xs a) \<le> length xs"
   apply (induct xs)

@@ -488,85 +488,88 @@ fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
 (* function_nat_rewrite fn_test2 *)
 
 
-fun loop where
-  "loop acc [] = acc"
-| "loop acc (x#xs) = loop (x#acc) xs"
+fun reverse_acc where
+  "reverse_acc acc [] = acc"
+| "reverse_acc acc (x#xs) = reverse_acc (x#acc) xs"
 
-function_nat_rewrite loop
-function_nat_rewrite_correctness loop
-  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: loop.induct\<close>
+
+function_nat_rewrite reverse_acc
+function_nat_rewrite_correctness reverse_acc
+  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: reverse_acc.induct\<close>
       assms: assms
-      simps_nat: loop_nat.simps
+      simps_nat: reverse_acc_nat.simps
       enc_simps: enc_list.simps
       args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
 
-lemma loop_nat_equiv2:
+lemma reverse_acc_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"
-  shows "loop_nat (enc_list enc_'a acc) (enc_list enc_'a xs) = enc_list enc_'a (loop acc xs)"
-  apply(induction acc xs rule: loop.induct)
-   apply(all \<open>subst loop.simps\<close>)
-  by(simp add: loop_nat.simps enc_list.simps)+
+  shows "reverse_acc_nat (enc_list enc_'a acc) (enc_list enc_'a xs)
+           = enc_list enc_'a (reverse_acc acc xs)"
+  by (induction acc xs rule: reverse_acc.induct;
+      subst reverse_acc.simps;
+      simp add: reverse_acc_nat.simps enc_list.simps)
 
 fun reverse where
-  "reverse xs = loop [] xs"
+  "reverse xs = reverse_acc [] xs"
+
+lemma reverse_acc_append_acc: "reverse_acc acc xs = (reverse_acc [] xs) @ acc"
+proof(induction xs arbitrary: acc)
+  case Nil show ?case by simp
+next
+  case (Cons x xs)
+  show ?case using Cons[of "(x # acc)"] Cons[of "[x]"] by simp
+qed
+
+lemma reverse_equiv: "reverse xs = rev xs"
+  by(induction xs; simp)
+    (subst reverse_acc_append_acc, simp)
 
 function_nat_rewrite reverse
 function_nat_rewrite_correctness reverse
-  using loop_nat_equiv[OF assms, of "[]"]
+  using reverse_acc_nat_equiv[OF assms, of "[]"]
   by (subst reverse.simps, simp add: reverse_nat.simps enc_list.simps)
 
+
 fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
-  "append xs ys = loop ys (reverse xs)"
+  "append xs ys = reverse_acc ys (reverse xs)"
 
 
-lemma 2:"loop acc [x] = x # acc" by simp
+lemma append_nil: "append xs [] = xs"
+proof(induction xs)
+  case Nil show ?case by simp
+next
+  case (Cons a xs)
+  have "reverse_acc [] (reverse_acc acc xs) = (reverse_acc [] acc) @ xs" for acc
+    using reverse_acc_append_acc by(induction xs arbitrary: acc; force)
+  then show ?case by simp
+qed
 
-lemma 3:"loop acc xs = (loop [] xs) @ acc"
-  apply(induction xs arbitrary: acc)
-   apply(simp)
-  by (metis append_Cons append_eq_append_conv2 loop.simps(2) same_append_eq)
-
-lemma 4:"loop [] (loop acc xs) = (loop [] acc) @ xs"
-  apply(induction xs arbitrary: acc)
-   apply(simp)
-  using "3" by fastforce
-
-lemma 5:"loop [] (loop [] xs @ ys) = loop xs ys"
-  apply(induction xs arbitrary: ys)
-   apply(simp)
-  by (metis "4" loop.simps(2))
-
-lemma 6:"(pair (atomic 0) (atomic 0)) = enc_list enc_'a []"
-  by(simp add: enc_list.simps)
-
-lemma 7:"loop [] (loop [] xs) = xs"
-  apply(induction xs)
-   apply(simp)
-  by (simp add: "4")
 
 lemma append_equiv:"append xs ys = xs @ ys"
-  by (metis "3" "7" append.simps reverse.simps)
+proof(cases xs)
+  case Nil then show ?thesis by simp
+next
+  case (Cons x xs)
+  then show ?thesis
+    by (simp add: reverse_acc_append_acc[of ys "(reverse (x # xs))"] del: reverse.simps
+        List.append.append_Cons, simp add: append_nil flip: append.simps del: reverse.simps
+        List.append.append_Cons)
+qed
 
-lemma 9:"rev (rev xs) = xs"
-  by (simp add: "7")
-
-lemma 10:"reverse (append xs ys) = append (reverse ys) (reverse xs)"
-  by (metis "4" append_equiv Encode_Nat.reverse.simps append.elims)
 
 lemma reverse_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"
   shows "reverse_nat (enc_list enc_'a xs) = enc_list enc_'a (reverse xs)"
-  apply(induction xs rule: reverse.induct)
-  apply(subst reverse.simps)
-  using loop_nat_equiv2[OF assms]
-  by (metis "6" reverse_nat.simps)
+  apply(induction xs rule: reverse.induct; subst reverse.simps)
+  using reverse_acc_nat_equiv2[OF assms, of "[]"]
+  by(simp add: reverse_nat.simps enc_list.simps)
 
 function_nat_rewrite append
 function_nat_rewrite_correctness append
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: append.induct)
   apply(all \<open>subst append.simps\<close>)
   apply(subst append_nat.simps)
-  using reverse_nat_equiv2[OF assms(1)] loop_nat_equiv[OF assms]
+  using reverse_nat_equiv2[OF assms(1)] reverse_acc_nat_equiv[OF assms]
   by(simp)
 
 lemma append_nat_equiv2:
@@ -574,7 +577,7 @@ lemma append_nat_equiv2:
   shows "append_nat (enc_list enc_'a xs) (enc_list enc_'a ys) = enc_list enc_'a (append xs ys)"
   apply(induction xs ys rule: append.induct)
   apply(subst append.simps)
-  using loop_nat_equiv2[OF assms] reverse_nat_equiv2[OF assms]
+  using reverse_acc_nat_equiv2[OF assms] reverse_nat_equiv2[OF assms]
   using append_nat.simps by simp
 
 lemma append_nat_equiv3:
@@ -584,7 +587,7 @@ lemma append_nat_equiv3:
           = enc_list enc_'a (append xs (f ys))"
   apply(induction xs "f ys" rule: append.induct)
   apply(subst append.simps)
-  using loop_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms(2)
+  using reverse_acc_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms(2)
   by (simp add: append_nat.simps)
 
 lemma append_nat_equiv4:
@@ -594,7 +597,7 @@ lemma append_nat_equiv4:
           = enc_list enc_'a (append (f xs) ys)"
   apply(induction "f xs" ys rule: append.induct)
   apply(subst append.simps)
-  using loop_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms(2)
+  using reverse_acc_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms(2)
   by (simp add: append_nat.simps)
 
 lemma append_nat_equiv5:
@@ -605,7 +608,7 @@ lemma append_nat_equiv5:
           = enc_list enc_'a (append (f xs) (g ys))"
   apply(induction "f xs" "g ys" rule: append.induct)
   apply(subst append.simps)
-  using loop_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms
+  using reverse_acc_nat_equiv2[OF assms(1)] reverse_nat_equiv2[OF assms(1)] assms
   by (simp add: append_nat.simps)
 
 
@@ -628,12 +631,6 @@ lemma prod_decode_0_fst: "fst (prod_decode 0) = 0" by eval
 
 lemma 11:"prod_encode (0, 0) = enc_list enc_'a []"
   by(simp add: enc_list.simps)
-
-lemma "baz acc xs = baz2 acc xs"
-  apply(induction xs arbitrary: acc)
-   apply(simp)
-  by (metis (no_types, lifting) "7" append.elims atail.elims baz.simps(1) baz.simps(3) baz.simps(4) baz2.simps(1) baz2.simps(2) reverse.elims)
-
 
 
 function_nat_rewrite baz2
@@ -661,8 +658,8 @@ function_nat_rewrite_correctness baz2
 lemma a: "(fstP (sndP (enc_list (enc_list enc_'a) [[]]))) = 0"
   by(simp add: enc_list.simps prod_encode_def prod_decode_def prod_decode_aux.simps)
 
-lemma b: "loop_nat 0 0 = 0"
-  by(simp add: loop_nat.simps prod_decode_def prod_decode_aux.simps)
+lemma b: "reverse_acc_nat 0 0 = 0"
+  by(simp add: reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps)
 
 lemma c: "reverse_nat 0 = 0"
   by(simp add: b reverse_nat.simps prod_encode_0)
