@@ -247,6 +247,12 @@ declare dec_prod.simps[simp del]
   (* Why? *)
 lemmas dec_prod_prod_encode_simp[simp] = dec_prod.simps[of _ _ "prod_encode _"]
 
+lemma dec_prod_bot:
+  assumes "dec_'a bot = bot" and "dec_'b bot = bot"
+  shows "dec_prod dec_'a dec_'b bot = bot"
+  using assms
+  by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def)
+
 datatype_nat_decode tree
 termination by (decode_termination "measure snd")
 declare dec_tree.simps[simp del]

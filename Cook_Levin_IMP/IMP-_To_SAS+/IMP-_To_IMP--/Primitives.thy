@@ -1236,9 +1236,9 @@ definition enc_impm_assignment :: "(vname, nat) assignment \<Rightarrow> nat" wh
 definition dec_impm_assignment :: "nat \<Rightarrow> (vname, nat) assignment" where
   "dec_impm_assignment = dec_prod dec_vname dec_nat"
 
-lemma encoding_impm_assignment_wellbehaved: "dec_impm_assignment \<circ> enc_impm_assignment = id"
-  unfolding dec_impm_assignment_def enc_impm_assignment_def
-  using encoding_prod_wellbehaved[OF encoding_vname_wellbehaved encoding_nat_wellbehaved] .
+lemmas encoding_impm_assignment_wellbehaved =
+  encoding_prod_wellbehaved[OF encoding_vname_wellbehaved encoding_nat_wellbehaved,
+    folded dec_impm_assignment_def enc_impm_assignment_def]
 
 definition enc_impm_assignment_list :: "(vname, nat) assignment list \<Rightarrow> nat" where
   "enc_impm_assignment_list = enc_list enc_impm_assignment"
@@ -1246,10 +1246,9 @@ definition enc_impm_assignment_list :: "(vname, nat) assignment list \<Rightarro
 definition dec_impm_assignment_list :: "nat \<Rightarrow> (vname, nat) assignment list" where
   "dec_impm_assignment_list = dec_list dec_impm_assignment"
 
-lemma encoding_impm_assignment_list_wellbehaved:
-  "dec_impm_assignment_list \<circ> enc_impm_assignment_list = id"
-  unfolding dec_impm_assignment_list_def enc_impm_assignment_list_def
-  using encoding_list_wellbehaved[OF encoding_impm_assignment_wellbehaved] .
+lemmas encoding_impm_assignment_list_wellbehaved =
+  encoding_list_wellbehaved [OF encoding_impm_assignment_wellbehaved,
+    folded dec_impm_assignment_list_def enc_impm_assignment_list_def]
 
 definition enc_bit_option :: "bit option \<Rightarrow> nat" where
   "enc_bit_option = enc_option enc_bit"
@@ -1257,9 +1256,10 @@ definition enc_bit_option :: "bit option \<Rightarrow> nat" where
 definition dec_bit_option :: "nat \<Rightarrow> bit option" where
   "dec_bit_option = dec_option dec_bit"
 
-lemma encoding_bit_option_wellbehaved: "dec_bit_option \<circ> enc_bit_option = id"
-  unfolding dec_bit_option_def enc_bit_option_def
-  using encoding_option_wellbehaved[OF encoding_bit_wellbehaved] .
+lemmas encoding_bit_option_wellbehaved =
+  encoding_option_wellbehaved [OF encoding_bit_wellbehaved,
+    folded dec_bit_option_def enc_bit_option_def]
+
 
 lemma inj_fun_list_find:
   "inj f \<Longrightarrow> fun_list_find (map (\<lambda> (x, y). (f x, y) ) xs) (f x) = fun_list_find xs x"
@@ -1324,34 +1324,30 @@ fun del_acc ::
     (if x = a then del_acc acc xs a else del_acc (append acc [(x, y)]) xs a)"
 
 function_nat_rewrite del_acc
-function_nat_rewrite_correctness del_acc
-proof(induction arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: del_acc.induct)
-  case (1 acc uu)
-  then show ?case
-    using encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1), THEN pointfree_idE]
-    by(simp add: enc_list.simps del_acc_nat.simps)
-next
-  case (2 acc x y xs a)
-  have let_arg_substs:"fstP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs)) = atomic 1"
-    "sndP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))) =
-            enc_list (enc_prod enc_'a enc_'b) xs"
-    "sndP (sndP (fstP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))))) = enc_'b y "
-    "fstP (sndP (fstP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))))) = enc_'a x"
-    "(pair (atomic 1) (pair (pair (atomic 0) (pair (enc_'a x) (enc_'b y))) (pair (atomic 0) (atomic 0)))) =
-        enc_list (enc_prod enc_'a enc_'b) [(x, y)]"
-    by (simp add: enc_list.simps enc_prod.simps)+
-  show ?case using 2 assms(3)[THEN pointfree_idE]
-      append_nat_equiv2[OF encoding_prod_wellbehaved, OF assms(3) assms(1)]
-    by (subst del_acc_nat.simps del_acc.simps;
-        simp only: let_arg_substs Let_def;
-        simp del: append.simps)
-      metis
-qed
 
+
+lemma del_acc_nat_equiv2:
+  assumes "(dec_'b::nat \<Rightarrow> 'b::order_bot) \<circ> enc_'b = id"
+    and "dec_'b bot = bot"
+    and "dec_'a \<circ> enc_'a = id"
+    and "dec_'a bot = bot"
+  shows "del_acc_nat (enc_list (enc_prod enc_'a enc_'b) acc) (enc_list (enc_prod enc_'a enc_'b) xs) (enc_'a a)
+          = enc_list (enc_prod enc_'a enc_'b) (del_acc acc xs a)"
+  apply(induction acc xs a rule: del_acc.induct; subst del_acc.simps; subst del_acc_nat.simps)
+  subgoal by (simp add: enc_list.simps)
+  subgoal for acc x y xs a
+    using inj_inverseI[OF assms(3), THEN injD, of x a]
+      append_nat_equiv2[OF encoding_prod_wellbehaved, OF assms(3) assms(1), of acc "[(x, y)]"]
+    by (fastforce simp: enc_list.simps enc_prod.simps)
+  done
+
+function_nat_rewrite_correctness del_acc
+  using del_acc_nat_equiv2[OF assms, THEN arg_cong, of "dec_list (dec_prod dec_'a dec_'b)"]
+    encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1), THEN pointfree_idE]
+  by(simp)
 
 fun del :: "('a, 'b) assignment list \<Rightarrow> 'a \<Rightarrow> ('a, 'b) assignment list" where
   "del xs a = del_acc [] xs a"
-
 declare del.simps[simp del]
 
 function_nat_rewrite del
@@ -1376,6 +1372,44 @@ lemma del_correct: "\<forall>(x, y) \<in> set (del xs a). x \<noteq> a"
 lemma del_correct_corr: " a \<noteq> x \<Longrightarrow> map_of (del xs a) x = map_of xs x"
   by (induction xs; simp add: del_filter)
 
+function nub_acc :: "('a, 'b) assignment list \<Rightarrow> ('a, 'b) assignment list \<Rightarrow> ('a, 'b) assignment list" where
+  "nub_acc acc [] = acc "|
+  "nub_acc acc ((x, y) # xs) = nub_acc (append acc [(x, y)]) (del xs x)"
+  by (auto, metis clearjunk.cases surj_pair)
+termination
+  by (relation "measure (length \<circ> snd)";
+      simp add: length_eq_length;
+      simp add: length_del_dec flip: length_eq_length)
+
+
+
+lemma del_nat_equiv2:
+  assumes "(dec_'b::nat \<Rightarrow> 'b::order_bot) \<circ> enc_'b = id"
+    and "dec_'b bot = bot"
+    and "dec_'a \<circ> enc_'a = id"
+    and "dec_'a bot = bot"
+  shows "del_nat (enc_list (enc_prod enc_'a enc_'b) xs) (enc_'a a)
+          = enc_list (enc_prod enc_'a enc_'b) (del xs a)"
+  apply(induction xs a rule: del.induct; subst del.simps; subst del_nat.simps)
+  using del_acc_nat_equiv2[OF assms, of "[]"]
+  by(simp add: enc_list.simps)
+
+
+declare append.simps[simp del]
+function_nat_rewrite nub_acc
+function_nat_rewrite_correctness nub_acc
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: nub_acc.induct; subst nub_acc.simps; subst nub_acc_nat.simps)
+  subgoal
+    using encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1),
+        THEN pointfree_idE]
+    by(simp add: enc_list.simps)
+  subgoal for acc x y xs
+    using append_nat_equiv2[OF encoding_prod_wellbehaved, OF assms(3) assms(1), of acc "[(x, y)]"]
+      del_nat_equiv2[OF assms]
+    by(simp add: enc_list.simps, simp add: enc_prod.simps)
+  done
+
+
 function nub :: "('a, 'b) assignment list \<Rightarrow> ('a, 'b) assignment list" where
   "nub [] = [] "|
   "nub ((x, y) # xs) = (x, y) # nub (del xs x)"
@@ -1384,11 +1418,29 @@ termination
   by (relation "measure length"; simp add: length_eq_length)
     (simp add: length_del_dec flip: length_eq_length)
 
+lemma 1:"nub_acc (acc1 @ acc2) xs = acc1 @ (nub_acc acc2 xs)"
+  by(induction acc2 xs rule: nub_acc.induct; simp add: append_equiv del: append.simps)
+
+
+lemma 2:"nub_acc acc xs = acc @ (nub_acc [] xs)"
+  apply(induction acc xs arbitrary: acc rule: nub_acc.induct)
+   apply simp
+  subgoal premises p for acc x y xs acc1
+    by ( simp add: 1 append_equiv p[of "(append acc1 [(x, y)])"] del: append.simps)
+  done
+
+lemma "nub xs = nub_acc [] xs"
+  apply (induction xs rule:nub.induct)
+   apply simp
+  subgoal premises p for x y xs
+    by (simp add: p 2[of "[(x, y)]" "(del xs x)"])
+  done
 
 lemma del_shorter : "length (del xs a) \<le> length xs"
-  apply (induct xs)
-   apply auto
-  done
+  unfolding length_eq_length
+  by (induction xs; simp add: del_filter le_SucI)
+
+
 
 function nub_nat :: "nat \<Rightarrow> nat" where
   "nub_nat xs = (if xs = 0 then 0 else (hd_nat xs) ## nub_nat (del_nat xs (fst_nat (hd_nat xs))))"
@@ -1416,10 +1468,10 @@ termination
 
 lemma sub_nub: "nub_nat (list_encode( map prod_encode xs)) = list_encode (map prod_encode (nub xs))"
   apply (induct xs rule:nub.induct)
-  apply simp
-  apply (subst nub_nat.simps)
-  apply (auto simp only: sub_hd sub_cons  sub_del )
-  apply (auto simp add: sub_fst list_encode_eq sub_cons  simp del:nub_nat.simps list_encode.simps(2) simp flip: list_encode.simps(1))
+   apply simp
+   apply (subst nub_nat.simps)
+   apply (auto simp only: sub_hd sub_cons  sub_del )
+   apply (auto simp add: sub_fst list_encode_eq sub_cons  simp del:nub_nat.simps list_encode.simps(2) simp flip: list_encode.simps(1))
   done
 
 
@@ -1430,19 +1482,19 @@ lemma del_includes: "set (del xs x) \<subseteq> set xs"
 
 lemma nub_includes: "set (nub xs) \<subseteq> set xs"
   apply (induct xs rule: nub.induct)
-  apply (auto)
+   apply (auto)
   using del_includes apply fast
   using del_includes apply fast
   done
 
 lemma nub_correct : "distinct (map fst (nub xs))"
   apply (induct xs rule:nub.induct)
-  apply auto
+   apply auto
   using nub_includes del_correct by fastforce
 
 lemma map_of_nub_apply:"map_of (nub xs) x = map_of xs x"
   apply (induct xs rule:nub.induct)
-  apply (auto simp add: del_correct_corr)
+   apply (auto simp add: del_correct_corr)
   done
 lemma map_of_nub:"map_of (nub xs)  = map_of xs "
   using map_of_nub_apply by fast
@@ -1490,7 +1542,7 @@ lemma del_inj: "inj f \<Longrightarrow>del (map (\<lambda>(a, y). (f a, y)) I) (
   done
 lemma nub_inj : "inj f \<Longrightarrow> nub (map (\<lambda>(a, y). (f a, y)) I) = map (\<lambda>(a, y). (f a, y)) (nub I)"
   apply (induct I rule:nub.induct)
-  apply (auto simp add:inj_def del_inj)
+   apply (auto simp add:inj_def del_inj)
   done
 lemma ran_inj: "inj f \<Longrightarrow>ran_list (map (\<lambda>(a, y). (f a, y)) I) = ran_list I"
   apply (induct I)
