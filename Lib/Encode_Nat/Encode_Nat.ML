@@ -53,7 +53,7 @@ fun pull_front i xs =
 
 fun get_ctrs_idx_bot ctxt T ctrs =
 let
-    val T_base_name = Long_Name.base_name (fst (dest_Type (@{print} T))) |> @{print}
+    val T_base_name = Long_Name.base_name (fst (dest_Type T))
     val T_name = (fst (dest_Type T))
     val cond =
       fastype_of #> try dest_Type #> Option.map fst #> (curry (op =) (SOME T_name))
@@ -61,10 +61,10 @@ let
       might be several datatypes with the same base name *)
     val bot' =
       Find_Theorems.find_theorems ctxt NONE NONE false [(true, Find_Theorems.Name ("bot_" ^ T_base_name ^ "_def"))]
-      |> snd |> @{print}
-      |> map (snd #> Thm.prop_of #> rhs_of_term) |> @{print}
-      |> Library.get_first (fn t => if cond t then SOME t else NONE) |> @{print}
-      |> try (Option.map (fst o dest_Const)) |> @{print}
+      |> snd
+      |> map (snd #> Thm.prop_of #> rhs_of_term)
+      |> Library.get_first (fn t => if cond t then SOME t else NONE)
+      |> try (Option.map (fst o dest_Const))
       |> Option.join
   in
     if is_none bot' then 0
@@ -82,7 +82,7 @@ fun build_constructor_tag ctxt (t as (_, T)) =
       |> Option.join
       |> Option.map #ctrs
     val i = Option.getOpt (Option.map (get_ctrs_idx_bot ctxt (Term.body_type T)) ctrs, 0)
-    val ctrs = Option.map (pull_front i) (@{print} ctrs)
+    val ctrs = Option.map (pull_front i) ctrs
   in
     case Option.map (find_index (can (Ctr_Sugar_Util.fo_match ctxt (Const t)))) ctrs of
         SOME (~1) => NONE
@@ -371,7 +371,7 @@ fun mk_path t =
       | mk_path _ LEAF = []
       | mk_path p (NODE (l, r)) = (mk_path (FST p) l) @ (mk_path (SND p) r)
   in
-    mk_path DONE (@{print} t)
+    mk_path DONE t
   end;
 
 fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
@@ -434,8 +434,8 @@ fun nat_encode_term ctxt t =
       |> lhs_of_term
       |> map_types tvar_to_tfree
       |> Term.args_of
-      |> map build_patmatch_term |> @{print}
-      |> map mk_variable_paths |> @{print}
+      |> map build_patmatch_term
+      |> map mk_variable_paths
       |> (fn x =>
         argnames (length x) ~~ x
         |> map (fn (arg, paths_from_this_arg) => map (pair arg) paths_from_this_arg))
@@ -525,10 +525,11 @@ fun function_nat_rewrite s ctxt =
       |> map Thm.prop_of
       |> map replace_suc
       |> (fn thms => (map (build_nat_condition ctxt) thms, map (nat_encode_term ctxt) thms))
-
+      |>> @{print}
+      ||> @{print}
     val ite =
-      Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T) nat_cond t_encoded
-      |> Term.map_aterms change_const_to_nat
+      Ctr_Sugar_Util.mk_IfN (Term.body_type newfun_T) nat_cond t_encoded |> @{print}
+      |> Term.map_aterms change_const_to_nat |> @{print}
       |> const_to_free (fun_name ^ "_nat", newfun_T)
     val (_, newfun_lthy) =
       Partial_Function.add_partial_function
@@ -584,6 +585,63 @@ fun function_nat_rewrite_correctness_cmd fn_str int ctxt  =
       |> flat
     val goal =
       BNF_Util.mk_Trueprop_eq (lhs, rhs)
+  in
+    Specification.theorem
+      true
+      Thm.theoremK
+      NONE
+      (K I)
+      (Binding.name (fn_name ^ "_nat_equiv"), [])
+      []
+      [Element.Assumes [(Binding.empty_atts, map (rpair []) assms)]]
+      (Element.Shows [(Binding.empty_atts, [(goal, [])])])
+      int
+      ctxt
+  end;
+
+
+
+fun function_nat_rewrite_correctness_cmd fn_str int ctxt  =
+  let
+    val (fn_name, (fn_T, fn_t)) =
+      Syntax.read_term ctxt fn_str
+      |> map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
+      |> `Term.term_name
+      ||> `fastype_of
+    val fn_args =
+      map_index (fn (i, T) =>
+                 Free ("arg" ^ subscript (string_of_int (i + 1)), T)) (Term.binder_types fn_T)
+    val rhs = Term.list_comb (fn_t, fn_args)
+      |> (curry op $) (build_encoder_invocation ctxt NONE (Term.body_type fn_T))
+    val lhs =
+      map (fn t => (build_encoder_invocation ctxt NONE (fastype_of t)) $ t) fn_args
+      |> Term.list_comb o (pair (read_const' ctxt (fn_name ^ "_nat")))
+    val _ = fn_T
+    val assms =
+      fold_atyps (insert (op =)) fn_T []
+      |> map (fn T =>
+                [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
+                 mk_dec_bot_eq_bot ctxt T])
+      |> flat
+    val foo =
+      Proof_Context.get_thms ctxt (fn_name ^ ".simps")
+      |> @{print}
+    val argnames =
+      map_range (fn i => "arg" ^ subscript (string_of_int (i + 1))) (length (Term.binder_types fn_T))
+    val schemvars =
+      fold_atyps (insert (op =)) fn_T []
+      |> map (fn T => [encoder_name_of_type ctxt T, decoder_name_of_type ctxt T])
+      |> flat
+      |> (curry op @) argnames
+    val goal =
+      BNF_Util.mk_Trueprop_eq (lhs, rhs)
+    val induction_rule =
+      Proof_Context.get_thms ctxt (fn_name ^ ".induct")
+      |> @{print}
+    (*val a =
+      Goal.prove ctxt schemvars assms goal
+      (fn {context=ctxt, prems, ...} => 
+        Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1)*)
   in
     Specification.theorem
       true

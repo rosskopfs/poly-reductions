@@ -365,9 +365,80 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
+
 function_nat_rewrite reverset
 
+thm reverset_nat.simps
+
+lemma h1:"(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
+lemma h12:"(fstP (enc_list enc_'a (l # ls)) = atomic 0) = False" by (simp add: enc_list.simps)
+
+lemma h2:"sndP (sndP (enc_list enc_'a (l # ls))) = enc_list enc_'a ls" by (simp add: enc_list.simps)
+lemma h3:"fstP (sndP (enc_list enc_'a (l # ls))) = enc_'a l" by (simp add: enc_list.simps)
+lemma h4:"(pair (atomic 1) (pair (enc_'a l) (enc_list enc_'a r))) = enc_list enc_'a (l # r)"
+  by (simp add: enc_list.simps)
+
+thm reverset.induct
+
+ML \<open>
+let
+  val ctxt = @{context}
+  val assms = [@{prop "dec_'a \<circ> enc_'a = id"}, @{prop "dec_'a bot = bot"}]
+  val goal = @{prop "reverset_nat (enc_list enc_'a xs) (enc_list enc_'a ys) = enc_list enc_'a (reverset xs ys)"}
+in
+  Goal.prove ctxt ["dec_'a", "enc_'a", "xs", "ys"] assms goal
+  (fn {context=ctxt, prems, ...} =>
+  Induct_Tacs.induct_tac ctxt [[SOME "xs", SOME "ys"]] (SOME [@{thm "reverset.induct"}]) 1
+  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset.simps"} 1
+  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset_nat.simps"} 1
+  THEN simp_tac ((clear_simpset ctxt addsimps @{thms "h1" "if_True" "Let_def"})) 1
+  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset.simps"} 1
+  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset_nat.simps"} 1
+  THEN simp_tac ((clear_simpset ctxt addsimps @{thms "h12" "h2" "h3" "h4" "if_False" "Let_def"})) 1)
+end;
+
+\<close>
+
+
+
 function_nat_rewrite_correctness reverset
+  apply(tactic \<open>Induct_Tacs.induct_tac @{context} [[SOME "arg\<^sub>1", SOME "arg\<^sub>2"]] (SOME [@{thm "reverset.induct"}]) 1\<close>)
+
+   apply(tactic \<open>EVERY1 [
+EqSubst.eqsubst_tac @{context} [0] @{thms "reverset.simps"},
+EqSubst.eqsubst_tac @{context} [0] @{thms "reverset_nat.simps"}
+]\<close>)
+apply(tactic \<open>simp_tac (addsimps (clear_simpset @{context},@{thms "h1" "if_True" "Let_def"})) 1\<close>)
+
+
+
+  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms "reverset.simps"} 1\<close>)
+  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms "reverset_nat.simps"} 1\<close>)
+apply(tactic \<open>simp_tac (addsimps (clear_simpset @{context},@{thms "h12" "h2" "h3" "h4" "if_False" "Let_def"})) 1\<close>)
+
+  done
+proof(induct arg\<^sub>1 arg\<^sub>2 rule: reverset.induct)
+  case (1 r)
+  have h1:"(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
+  show ?case
+    apply(subst reverset.simps; subst reverset_nat.simps)
+    apply(subst h1)
+    apply(subst if_True)
+    unfolding Let_def
+    by(rule refl)
+next
+  case (2 l ls r)
+  have h1:"(fstP (enc_list enc_'a (l # ls)) = atomic 0) = False" by (simp add: enc_list.simps)
+  have h2:"sndP (sndP (enc_list enc_'a (l # ls))) = enc_list enc_'a ls" by (simp add: enc_list.simps)
+  have h3:"fstP (sndP (enc_list enc_'a (l # ls))) = enc_'a l" by (simp add: enc_list.simps)
+  have h4:"(pair (atomic 1) (pair (enc_'a l) (enc_list enc_'a r))) = enc_list enc_'a (l # r)"
+    by (simp add: enc_list.simps)
+  show ?case
+    apply(subst reverset.simps; subst reverset_nat.simps)
+    using 2
+    by(simp only: h1 h2 h3 h4 Let_def if_False)
+qed
+thm reverset_nat_equiv[no_vars]
   by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: reverset.induct\<close>
       assms: assms
       simps_nat: reverset_nat.simps
