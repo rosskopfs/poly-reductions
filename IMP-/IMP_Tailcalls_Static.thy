@@ -1,4 +1,4 @@
-theory IMP_Tailcalls imports IMP_Calls begin
+theory IMP_Tailcalls_Static imports IMP_Calls begin
 
 unbundle no_com_syntax
 unbundle com'_syntax

@@ -50,7 +50,7 @@ text \<open>For compilation to IMP-, skip to final proof.\<close>
 
 code_pred big_step_t' .
 
-declare big_step_t'.intros [intro]
+declare big_step_t'.intros[intro]
 
 lemmas big_step_t'_induct = big_step_t'.induct[split_format(complete)]
 
@@ -105,6 +105,8 @@ next
   then show ?case apply auto using Vars.noninterference[of c s z t S s'] by fastforce
 qed fastforce+
 
+lemma var'_unchanged: "(c,s) \<Rightarrow>'\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> s v = t v"
+  by (induction c s z t rule: big_step_t'_induct) auto
 
 section "Inlining"
 

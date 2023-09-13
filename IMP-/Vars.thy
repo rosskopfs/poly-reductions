@@ -1,6 +1,6 @@
 \<^marker>\<open>creator Fabian Huch\<close>
 (* todo merge with existing vars *)
-theory Vars imports Big_StepT Restricted_Equality
+theory Vars imports Big_StepT Eq_On
 begin
 
 class vars =
@@ -128,6 +128,13 @@ lemma aval_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> aval (subst m
 
 lemma var_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> s v = t v"
   by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
+
+lemma fresh_var_changed: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> (c,s(v:=y)) \<Rightarrow>\<^bsup>z\<^esup> t(v:=y)"
+proof (induction c s z t arbitrary:  rule: big_step_t_induct)
+  case (Assign x a s)
+  hence " s(v := y, x := aval a (s(v := y))) = s(x := aval a s, v := y)" by force
+  thus ?case using big_step_t.Assign[of x a "s(v:=y)"] by argo
+qed auto
 
 lemma lvars_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> lvars c \<Longrightarrow> s v = t v"
   by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
