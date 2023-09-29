@@ -559,15 +559,64 @@ fun function_nat_rewrite s ctxt =
       |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
       |> `(map build_patmatch_term)
       |>> map mk_variable_paths |> @{print}
-      |> op ~~
-      |> map (fn (ps, t) => t)
+      |>> map (map snd)
+      |> Library.swap
+      |> op ~~ |> @{print}
+      |> map (fn (t, ps) => map (pair t) ps)
+      |> flat
+      |> map (uncurry build_unpairing) |> @{print}
+    val args =
+      Proof_Context.get_thms ctxt (fun_name ^ ".simps") |> @{print}
+      |> map Thm.prop_of
+      |> map (map_types tvar_to_tfree)
+      |> map lhs_of_term
+    fun mk_encoder_invocation ctxt (T as Type (_, typargs)) =
+          Term.list_comb (encoder_const_term_of_type ctxt T, map (mk_encoder_invocation ctxt) typargs)
+      | mk_encoder_invocation ctxt (T as TFree _) = encoder_free_term_of_type ctxt T
+      | mk_encoder_invocation _ _ = error "Can't build an encoder for TVar"
+    fun encode_term ctxt t =
+      Term.list_comb (mk_encoder_invocation ctxt (type_of t), [t])
+    val let_simps =
+      args
+      |> flat o map (snd o Term.strip_comb) |> @{print}
+      |> filter (not o is_Var)
+      |> flat o map (fn t =>
+        map (pair (encode_term ctxt t)) (((map (Library.apfst Var)) o mk_variable_paths o build_patmatch_term) t))
+      |> map (fn (enc_t, (var, p)) =>
+          (BNF_Util.mk_Trueprop_eq (build_unpairing enc_t p, encode_term ctxt var),
+           fold_aterms (fn Var ((s,_),_) => insert (op =) s | _ => I) var [])) |> @{print}
+    fun collect_encoders ctxt (T as Type (_, Ts)) =
+        fold (insert (op =)) (flat (map (collect_encoders ctxt) Ts)) [encoder_name_of_type ctxt T]
+      | collect_encoders _ _ = []
+    val encoder_simps =
+      args
+      |> flat o map (snd o Term.strip_comb) |> @{print}
+      |> filter (not o is_Var)
+      |> map (collect_encoders ctxt o type_of) |> @{print}
+      |> foldl1 (uncurry (union (op =))) |> @{print}
+      |> map (suffix ".simps")
+      |> flat o map (Proof_Context.get_thms ctxt) |> @{print}
+    val foo =
+      let_simps
+      |> map (fn (t, vars) =>
+        Thm.cterm_of ctxt t
+        |> Goal.init |> @{print}
+        |> full_simp_tac (ctxt addsimps encoder_simps @ @{thms fstP.simps sndP.simps atomic.simps pair.simps}) 1
+        |> Seq.hd |> @{print}
+       )
+    val foo =
+      let_simps
+      |> map (fn (t, vars) =>
+        Goal.prove ctxt vars [] t
+      (fn {context=ctxt, prems, ...} => 
+        full_simp_tac (ctxt addsimps encoder_simps @ @{thms fstP.simps sndP.simps atomic.simps pair.simps}) 1}
+       ))
       
-    val _ = Int.max
     val (nat_cond, t_encoded) =
       Proof_Context.get_thms ctxt (fun_name ^ ".simps")
       |> map Thm.prop_of
       |> map replace_suc
-      |> (fn thms => (map (build_nat_condition ctxt) thms, map (nat_encode_term ctxt) thms))
+      |> (fn ts => (map (build_nat_condition ctxt) ts, map (nat_encode_term ctxt) ts))
       |>> @{print}
       ||> @{print}
     val ite =
@@ -876,6 +925,8 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
                 thm
                 |> Thm.prems_of  |> @{print}
                 |> map (f []) |> @{print}
+                |> flat |> @{print}
+              val _ : conv = undefined
             in
               Seq.single thm
             end

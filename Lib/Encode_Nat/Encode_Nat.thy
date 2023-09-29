@@ -562,6 +562,8 @@ lemma "((1::nat) = 0) = False"
 lemma "((1::nat) = 1) = True"
   by simp
 
+thm prefixest_nat.simps[simplified]
+
 function_nat_rewrite_correctness prefixest
 proof(induct arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct)
   case (1 v vs ps)
