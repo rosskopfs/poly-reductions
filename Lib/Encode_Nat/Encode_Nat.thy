@@ -24,6 +24,7 @@ theory Encode_Nat
     "datatype_nat_decode" :: thy_goal and
     "datatype_nat_wellbehaved" :: thy_goal and
     "function_nat_rewrite" :: thy_decl and
+    "function_nat_rewrite_auto" :: thy_decl and
     "function_nat_rewrite_correctness" :: thy_goal
 begin
 
@@ -379,7 +380,6 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
-
 function_nat_rewrite reverset
 
 thm reverset_nat.simps[no_vars]
@@ -543,18 +543,35 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
+
+
 ML \<open>
 
-
-
-
-  @{thm List.successively.induct}
-  |> Thm.prems_of
-  |> map (Term.strip_abs_eta 5)
+@{term "prefixest ((hd (y # ys)) # xs) b"}
+|> Term.args_of
+|> map Term.args_of
+|> flat
+  
 \<close>
 
+function_nat_rewrite_auto prefixest
 function_nat_rewrite prefixest
-test prefixest
+
+
+lemma "\<And>v vs ps.
+     Encode_Nat.prefixest_nat (enc_list enc_'a vs) (enc_list (enc_list enc_'a) ((v # vs) # ps)) = enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps)) \<Longrightarrow>
+     Encode_Nat.prefixest_nat (enc_list enc_'a vs) (pair (atomic 1) (pair (pair (atomic 1) (pair (enc_'a v) (enc_list enc_'a vs))) (enc_list (enc_list enc_'a) ps))) =
+     enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps))"
+  apply(simp add: enc_list.simps)
+
+thm h2 h3 prefixest_nat.simps
+
+lemma "\<And>v vs ps.
+     prefixest_nat (enc_list enc_'a vs) (enc_list (enc_list enc_'a) ((v # vs) # ps)) = enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps)) \<Longrightarrow>
+     (let ps = enc_list (enc_list enc_'a) ps; vsa = sndP (sndP (enc_list enc_'a (v # vs))); v = fstP (sndP (enc_list enc_'a (v # vs)))
+      in prefixest_nat vsa (pair (atomic 1) (pair (pair (atomic 1) (pair v vsa)) ps))) =
+     enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps))"
+  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms h2 h3} 1\<close>)
 
 lemma "((1::nat) = 0) = False"
   by simp
@@ -590,11 +607,17 @@ next
   have h2:"(pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)))
           = enc_list (enc_list enc_'a) ([] # ps)"
     by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
+  have h3: "enc_list enc_'a [] = pair (atomic 0) (atomic 0)"
+    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
+  have h4: "enc_list (enc_list enc_'a) ps = enc_list (enc_list enc_'a) ps"
+    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
   show ?case
     apply(subst prefixest.simps, subst prefixest_nat.simps)
     apply(subst h1)
     apply(subst if_False)
     apply(subst Let_def)+
+    apply(subst h3[symmetric])
+    apply(subst h4[symmetric]) 
     apply(subst h2)
     using encoding_list_wellbehaved[OF encoding_list_wellbehaved, OF assms(1), THEN pointfree_idE, of "[] # ps"]
     .
