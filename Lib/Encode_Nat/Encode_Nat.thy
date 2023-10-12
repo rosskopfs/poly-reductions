@@ -367,79 +367,10 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
-function_nat_rewrite reverset
-
-
-
-(*function_nat_rewrite_correctness reverset
-  apply(tactic \<open>Induct_Tacs.induct_tac @{context} [[SOME "arg\<^sub>1", SOME "arg\<^sub>2"]] (SOME [@{thm "reverset.induct"}]) 1
-      THEN ALLGOALS (EqSubst.eqsubst_tac @{context} [0] @{thms "reverset_nat.simps"})
-      THEN ALLGOALS (EqSubst.eqsubst_tac @{context} [0] @{thms "reverset.simps"})
-      THEN ALLGOALS (full_simp_tac (@{context} addsimps @{thms "enc_list.simps"}))
-      THEN ALLGOALS (full_simp_tac (@{context} addsimps @{thms "fstP.simps" "sndP.simps" "atomic.simps" "pair.simps"}))
-  \<close>)
-
-  apply(tactic \<open>
-    full_simp_tac (@{context} addsimps @{thms "enc_list.simps"}) 1
-    THEN full_simp_tac (@{context} addsimps @{thms "fstP.simps" "sndP.simps" "atomic.simps" "pair.simps"}) 1
-\<close>)
-
-  apply(tactic \<open>
-    full_simp_tac (@{context} addsimps @{thms "enc_list.simps"}) 1
-\<close>)
-  apply(tactic \<open>full_simp_tac (@{context} addsimps @{thms fstP.simps sndP.simps atomic.simps pair.simps}) 1\<close>)
-  apply(simp add: fstP.simps sndP.simps atomic.simps pair.simps)
-
-  apply(tactic \<open>Induct_Tacs.induct_tac @{context} [[SOME "arg\<^sub>1", SOME "arg\<^sub>2"]] (SOME [@{thm "reverset.induct"}]) 1\<close>)
-
-   apply(tactic \<open>EVERY1 [
-EqSubst.eqsubst_tac @{context} [0] @{thms "reverset.simps"},
-EqSubst.eqsubst_tac @{context} [0] @{thms "reverset_nat.simps"}
-]\<close>)
-
-
-   apply(tactic \<open>simp_tac (addsimps (clear_simpset @{context},@{thms "h1" "if_True" "Let_def"})) 1\<close>)
-
-
-
-  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms "reverset.simps"} 1\<close>)
-  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms "reverset_nat.simps"} 1\<close>)
-
-  apply(simp add: enc_list.simps, simp add: fstP.simps sndP.simps atomic.simps pair.simps)
-
-  apply(tactic \<open>simp_tac (addsimps (clear_simpset @{context},@{thms "h12" "h2" "h3" "h4" "if_False" "Let_def"})) 1\<close>)
-
-  done
-proof(induct arg\<^sub>1 arg\<^sub>2 rule: reverset.induct)
-  case (1 r)
-  have h1:"(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
-  show ?case
-    apply(subst reverset.simps; subst reverset_nat.simps)
-    apply(subst h1)
-    apply(subst if_True)
-    unfolding Let_def
-    by(rule refl)
-next
-  case (2 l ls r)
-  have h1:"(fstP (enc_list enc_'a (l # ls)) = atomic 0) = False" by (simp add: enc_list.simps)
-  have h2:"sndP (sndP (enc_list enc_'a (l # ls))) = enc_list enc_'a ls" by (simp add: enc_list.simps)
-  have h3:"fstP (sndP (enc_list enc_'a (l # ls))) = enc_'a l" by (simp add: enc_list.simps)
-  have h4:"(pair (atomic 1) (pair (enc_'a l) (enc_list enc_'a r))) = enc_list enc_'a (l # r)"
-    by (simp add: enc_list.simps)
-  show ?case
-    apply(subst reverset.simps; subst reverset_nat.simps)
-    using 2
-    by(simp only: h1 h2 h3 h4 Let_def if_False)
-qed
-thm reverset_nat_equiv[no_vars]
-  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: reverset.induct\<close>
-      assms: assms
-      simps_nat: reverset_nat.simps
-      enc_simps: enc_list.simps
-      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
-*)
+function_nat_rewrite_auto reverset
 
 thm reverset_nat_equiv
+
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
   "prefixes (v # vs) = (v # vs) # (prefixes vs)"
@@ -456,13 +387,6 @@ corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
 
-
-ML \<open>
-
-@{term "(a, b)"}
-
-\<close>
-
 function_nat_rewrite_auto prefixest
 thm prefixest_nat_equiv
 
@@ -471,6 +395,8 @@ fun prefixes2 where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
+
+function_nat_rewrite_auto prefixes2
 function_nat_rewrite prefixes2
 
 lemma dec_list_bot: "dec_list dec_'a bot = bot"
@@ -482,10 +408,10 @@ function_nat_rewrite_correctness prefixes2
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct; subst prefixes2_nat.simps)
   subgoal for ps
     using reverset_nat_equiv[
+        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]",
         OF encoding_list_wellbehaved,
         OF assms(1),
-        OF dec_list_bot,
-        of "[] # ps" "[]"]
+        OF dec_list_bot]
     by(simp add: enc_list.simps)
   by(simp add: enc_list.simps Let_def)
 

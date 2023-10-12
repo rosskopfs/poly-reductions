@@ -942,7 +942,7 @@ fun function_nat_rewrite_auto s ctxt =
           t |> @{print}
           |> fst o strip_comb |> @{print}
           |> try dest_Const |> @{print}
-          |> Option.map (build_constructor_tag ctxt) |> @{print}
+          |> Option.map (build_constructor_tag ctxt) (* probably not the most performant way *)
           |> Option.join
           |> Option.map (K [t])
           |> (fn x => Option.getOpt (x, []))
@@ -971,7 +971,7 @@ fun function_nat_rewrite_auto s ctxt =
 
     val ctr_simps =
       map Thm.prop_of fun_simps
-      |> map rhs_of_term
+      |> map rhs_of_term |> @{print}
       |> map normalize_type
       |> map collect_args
       |> (fn x => fold (union (op =)) x [])
@@ -1057,7 +1057,29 @@ fun function_nat_rewrite_auto s ctxt =
     val fun_nat_simps =
       Proof_Context.get_thms ctxt' (fun_name ^ "_nat.simps") |> @{print}
 
+        fun collect_const_invocations t =
+      let
+        val (fn_t, args) = strip_comb t
+        val v =
+          dest_Const fn_t
+          |> (fn (fn_name, fn_T) => (fn_name, build_constructor_tag ctxt (fn_name, fn_T)))
+          ||> Option.map (K false)
+          ||> (fn x => Option.getOpt (x, true))
+          |> (fn (fn_name, b) => if fn_name <> fun_name andalso b then [(fn_name, args)] else [])
+          handle TERM _ => []
+      in
+        map collect_const_invocations args
+        |> (fn x => fold (union (op =)) x v)
+      end
 
+    val const_invocations =
+      map Thm.prop_of fun_simps
+      |> map rhs_of_term
+      |> map normalize_type
+      |> map collect_const_invocations
+      |> (fn x => fold (union (op =)) x [])
+      |> map (apfst (suffix "_nat_equiv")) |> @{print}
+    
     fun if_exp_simp_tac ctxt thm =
       let
         val if_simps =
@@ -1073,27 +1095,16 @@ fun function_nat_rewrite_auto s ctxt =
       end
 
     fun solve_subgoal_tac ctxt =
-      if_exp_simp_tac ctxt
+      print_tac ctxt "before if"
+      THEN (if_exp_simp_tac ctxt)
+      THEN (print_tac ctxt "after if")
       THEN (EqSubst.eqsubst_tac ctxt [0] @{thms HOL.if_False HOL.if_True} 1)
+      THEN (print_tac ctxt "after sub if")
       THEN (simp_tac (clear_simpset ctxt addsimps let_simps_thms addsimps @{thms HOL.Let_def}) 1)
-      THEN (simp_tac (clear_simpset ctxt addsimps ctr_simps) 1)
-
-    val correctness_thm =
-      Goal.prove ctxt' schemvars assms goal
-        (fn {context=ctxt, prems, ...} =>
-           Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
-           THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt [0] fun_simps)
-                           THEN' (EqSubst.eqsubst_tac ctxt [0] fun_nat_simps))
-           THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
-             solve_subgoal_tac ctxt
-             ) ctxt ))
-      |> @{print}
-
-    val correctness_thm_name =
-      Binding.name fun_nat_name
-      |> Binding.suffix_name "_equiv"
-    val (_, ctxt'') =
-      Local_Theory.note ((correctness_thm_name, []), [correctness_thm]) ctxt'
+      THEN (print_tac ctxt "after let simps and let def")
+      THEN TRY (simp_tac (clear_simpset ctxt addsimps ctr_simps) 1)
+      THEN (print_tac ctxt "after constructor simps")
+    
 
     val g =
       Thm.cterm_of ctxt' goal |> @{print}
@@ -1108,6 +1119,26 @@ fun function_nat_rewrite_auto s ctxt =
         ctxt'))
       |> Seq.hd |> @{print}
       |> Goal.finish ctxt' |> @{print}
+
+    val correctness_thm =
+      Goal.prove ctxt' schemvars assms goal
+        (fn {context=ctxt, prems, ...} =>
+           Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
+           THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt [0] fun_simps)
+                           THEN' (EqSubst.eqsubst_tac ctxt [0] fun_nat_simps))
+           THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
+             solve_subgoal_tac ctxt
+             ) ctxt ))
+      |> @{print}
+
+
+    val correctness_thm_name =
+      Binding.name fun_nat_name
+      |> Binding.suffix_name "_equiv"
+
+    val (_, ctxt'') =
+      Local_Theory.note ((correctness_thm_name, []), [correctness_thm]) ctxt'
+
   in
     ctxt''
   end;
