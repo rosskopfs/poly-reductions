@@ -122,19 +122,15 @@ end
 
 fun atomic :: "nat \<Rightarrow> pair_repr" where
   "atomic a = a"
-declare atomic.simps[simp del]
 
 fun pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
   where "pair l r = prod_encode (l, r)"
-declare pair.simps[simp del]
 
 fun fstP :: "pair_repr \<Rightarrow> pair_repr" where
   "fstP v = fst (prod_decode v)"
-declare fstP.simps[simp del]
 
 fun sndP :: "pair_repr \<Rightarrow> pair_repr" where
   "sndP v = snd (prod_decode v)"
-declare sndP.simps[simp del]
 
 
 
@@ -148,7 +144,7 @@ lemma prod_decode_less:
   using assms
     le_prod_encode_1[of "fstP v" "sndP v"]
     le_prod_encode_2[of "sndP v" "fstP v"]
-  by (simp add: fstP.simps sndP.simps)+
+  by simp+
 
 lemma prod_decode_lte:
   assumes "v \<le> v'"
@@ -175,20 +171,19 @@ datatype_nat_encode "'a list"
 declare enc_list.simps [simp del]
 
 lemma enc_list_bot: "enc_list enc_'a bot = bot"
-  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def atomic.simps pair.simps)
+  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def)
 
 datatype_nat_encode bool
 declare enc_bool.simps [simp del]
 
 lemma enc_bool_bot: "enc_bool bot = bot"
-  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def atomic.simps pair.simps)
+  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def)
 
 datatype_nat_encode char
 declare enc_char.simps [simp del]
 
 lemma enc_char_bot: "enc_char bot = bot"
-  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def atomic.simps
-      pair.simps)
+  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def)
 
 datatype_nat_encode "('a, 'b) prod"
 declare enc_prod.simps [simp del]
@@ -197,21 +192,19 @@ lemma enc_prod_bot:
   assumes "enc_'a bot = bot"
     and "enc_'b bot = bot"
   shows "enc_prod enc_'a enc_'b bot = bot"
-  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def atomic.simps pair.simps
-      assms)
+  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms)
 
 datatype_nat_encode "'a tree"
 declare enc_tree.simps [simp del]
 
 lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
-  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def atomic.simps pair.simps)
+  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def)
 
 datatype_nat_encode "('a, 'b) keyed_list_tree"
 declare enc_keyed_list_tree.simps [simp del]
 
 lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"
-  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def
-      atomic.simps pair.simps)
+  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def)
 
 
 (* TODO: Do we need similar lemmas for other data types? *)
@@ -224,7 +217,7 @@ lemma enc_List_list_cong[fundef_cong]:
 
 method decode_termination for t =
   relation t, auto;
-  (auto simp: fstP.simps sndP.simps atomic.simps intro!: prod_decode_less snd_prod_decode_lt_intro)?
+  (auto intro!: prod_decode_less snd_prod_decode_lt_intro)?
 
 
 datatype_nat_decode nat
@@ -260,8 +253,7 @@ lemma dec_prod_bot:
   assumes "dec_'a bot = bot" and "dec_'b bot = bot"
   shows "dec_prod dec_'a dec_'b bot = bot"
   using assms
-  by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def
-      fstP.simps sndP.simps)
+  by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def)
 
 datatype_nat_decode tree
 termination by (decode_termination "measure snd")
@@ -285,8 +277,8 @@ inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
 lemma
   shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x"
     and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x"
-   apply(simp add: fstP.simps sndP.simps, all \<open>induction rule: subpairings.induct\<close>)
-  using subpairings.intros by (simp add: fstP.simps sndP.simps)+
+   apply(simp , all \<open>induction rule: subpairings.induct\<close>)
+  using subpairings.intros by simp+
 
 (* TODO: Do we need similar lemmas for other data types? *)
 lemma dec_List_list_cong[fundef_cong]:
@@ -317,36 +309,31 @@ datatype_nat_wellbehaved nat
   by(induction; simp)
 
 datatype_nat_wellbehaved bool
-  by(intro ext, simp add: dec_bool.simps enc_bool.simps fstP.simps sndP.simps atomic.simps
-      pair.simps split:bool.split)
+  by(intro ext, simp add: dec_bool.simps enc_bool.simps split:bool.split)
 
 datatype_nat_wellbehaved list
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: list.induct; simp add: enc_list.simps fstP.simps sndP.simps atomic.simps
-        pair.simps)
+    by(induction x rule: list.induct; simp add: enc_list.simps)
   done
 
 datatype_nat_wellbehaved char
   using encoding_bool_wellbehaved[THEN pointfree_idE]
-  by(intro ext, simp add: dec_char.simps enc_char.simps fstP.simps sndP.simps atomic.simps
-      pair.simps split:char.split)
+  by(intro ext, simp add: dec_char.simps enc_char.simps split: char.split)
 
 datatype_nat_wellbehaved prod
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: prod.induct; simp add: enc_prod.simps fstP.simps sndP.simps atomic.simps
-        pair.simps)
+    by(induction x rule: prod.induct; simp add: enc_prod.simps)
   done
 
 datatype_nat_wellbehaved tree
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: tree.induct; simp add: enc_tree.simps fstP.simps sndP.simps atomic.simps
-        pair.simps)
+    by(induction x rule: tree.induct; simp add: enc_tree.simps)
   done
 
 datatype_nat_wellbehaved keyed_list_tree
@@ -354,7 +341,7 @@ datatype_nat_wellbehaved keyed_list_tree
   subgoal for x
     apply(induction x rule: keyed_list_tree.induct)
     using encoding_list_wellbehaved[OF assms(2), THEN pointfree_idE] assms(1)[THEN pointfree_idE]
-    by (simp add: enc_keyed_list_tree.simps fstP.simps sndP.simps atomic.simps pair.simps)+
+    by (simp add: enc_keyed_list_tree.simps)+
   done
 
 method natfn_correctness
@@ -382,81 +369,6 @@ lemma reverset_correct: "reverset l [] = rev l"
 
 function_nat_rewrite reverset
 
-thm reverset_nat.simps[no_vars]
-
-
-lemma encoding_list_tl: "sndP (sndP (enc_list enc_'a (x # xs))) = enc_list enc_'a xs"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma encoding_list_hd: "fstP (sndP (enc_list enc_'a (x # xs))) = enc_'a x"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma encoding_prod_fst: "fstP (sndP (enc_prod enc_'a enc_'b (a, b))) = enc_'a a"
-  by (simp add: enc_prod.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma encoding_prod_snd: "sndP (sndP (enc_prod enc_'a enc_'b (a, b))) = enc_'b b"
-  by (simp add: enc_prod.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma h1:"(fstP (enc_list enc_'a []) = atomic 0) = True"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma h12:"(fstP (enc_list enc_'a (l # ls)) = atomic 0) = False"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma h2:"sndP (sndP (enc_list enc_'a (l # ls))) = enc_list enc_'a ls"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma h3:"fstP (sndP (enc_list enc_'a (l # ls))) = enc_'a l"
-  by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-
-lemma h4:"(pair (atomic 1) (pair (enc_'a l) (enc_list enc_'a r))) = enc_list enc_'a (l # r)"
-  by (simp add: enc_list.simps)
-
-thm reverset.induct[of _ xs ys]
-
-thm reverset_nat.simps[of "(enc_list enc_'a arg\<^sub>1)" "(enc_list enc_'a arg\<^sub>2)", THEN reverset.induct]
-
-ML \<open>
-  (fn (t $ u) => u) @{term "hd ([] @ [])"}
-\<close>
-
-lemma foo: "\<lbrakk>\<And>r. reverset_nat (enc_list enc_'a []) (enc_list enc_'a r) = enc_list enc_'a (reverset [] r);
-  \<And>l ls r.
-     reverset_nat (enc_list enc_'a ls) (enc_list enc_'a (l # r)) = enc_list enc_'a (reverset ls (l # r)) \<Longrightarrow>
-     reverset_nat (enc_list enc_'a (l # ls)) (enc_list enc_'a r) = enc_list enc_'a (reverset (l # ls) r)\<rbrakk>
-  \<Longrightarrow> (reverset_nat (enc_list enc_'a arg\<^sub>1) (enc_list enc_'a arg\<^sub>2) = enc_list enc_'a (reverset arg\<^sub>1 arg\<^sub>2))"
-  sorry
-  
-ML \<open>
-
-@{term "fstP (enc_list enc_'a (l # ls)) = atomic 0"}
-\<close>
-
-local_setup \<open>
-let
-  val ctxt = @{context}
-  val assms = [@{prop "dec_'a \<circ> enc_'a = id"}, @{prop "dec_'a bot = bot"}]
-  val goal = @{prop "reverset_nat (enc_list enc_'a xs) (enc_list enc_'a ys) = enc_list enc_'a (reverset xs ys)"}
-  val t = 
-  Goal.prove ctxt ["dec_'a", "enc_'a", "xs", "ys"] assms goal
-  (fn {context=ctxt, prems, ...} =>
-  Induct_Tacs.induct_tac ctxt [[SOME "xs", SOME "ys"]] (SOME [@{thm "reverset.induct"}]) 1
-  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset.simps"} 1
-  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset_nat.simps"} 1
-  THEN simp_tac ((clear_simpset ctxt addsimps @{thms "h1" "if_True" "Let_def"})) 1
-  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset.simps"} 1
-  THEN EqSubst.eqsubst_tac ctxt [0] @{thms "reverset_nat.simps"} 1
-  THEN simp_tac ((clear_simpset ctxt addsimps @{thms "h12" "h2" "h3" "h4" "if_False" "Let_def"})) 1)
-  in
-    Local_Theory.note ((@{binding "my_thm"}, []), [t]) #> snd
-end
-\<close>
-
-thm my_thm reverset.induct
-
-test reverset
-
-thm reverset_nat_equiv
 
 
 (*function_nat_rewrite_correctness reverset
@@ -547,89 +459,13 @@ corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
 
 ML \<open>
 
-@{term "prefixest ((hd (y # ys)) # xs) b"}
-|> Term.args_of
-|> map Term.args_of
-|> flat
-  
+@{term "(a, b)"}
+
 \<close>
 
 function_nat_rewrite_auto prefixest
-function_nat_rewrite prefixest
+thm prefixest_nat_equiv
 
-
-lemma "\<And>v vs ps.
-     Encode_Nat.prefixest_nat (enc_list enc_'a vs) (enc_list (enc_list enc_'a) ((v # vs) # ps)) = enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps)) \<Longrightarrow>
-     Encode_Nat.prefixest_nat (enc_list enc_'a vs) (pair (atomic 1) (pair (pair (atomic 1) (pair (enc_'a v) (enc_list enc_'a vs))) (enc_list (enc_list enc_'a) ps))) =
-     enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps))"
-  apply(simp add: enc_list.simps)
-
-thm h2 h3 prefixest_nat.simps
-
-lemma "\<And>v vs ps.
-     prefixest_nat (enc_list enc_'a vs) (enc_list (enc_list enc_'a) ((v # vs) # ps)) = enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps)) \<Longrightarrow>
-     (let ps = enc_list (enc_list enc_'a) ps; vsa = sndP (sndP (enc_list enc_'a (v # vs))); v = fstP (sndP (enc_list enc_'a (v # vs)))
-      in prefixest_nat vsa (pair (atomic 1) (pair (pair (atomic 1) (pair v vsa)) ps))) =
-     enc_list (enc_list enc_'a) (prefixest vs ((v # vs) # ps))"
-  apply(tactic \<open>EqSubst.eqsubst_tac @{context} [0] @{thms h2 h3} 1\<close>)
-
-lemma "((1::nat) = 0) = False"
-  by simp
-
-lemma "((1::nat) = 1) = True"
-  by simp
-
-thm prefixest_nat.simps[simplified]
-
-function_nat_rewrite_correctness prefixest
-proof(induct arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct)
-  case (1 v vs ps)
-  have h1:"(fstP (enc_list enc_'a (v # vs)) = atomic 1) = True"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  have h2:"sndP (sndP (enc_list enc_'a (v # vs))) = enc_list enc_'a vs"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  have h3:"(pair (atomic 1) (pair (pair (atomic 1) (pair (enc_'a v) (enc_list enc_'a vs))) (enc_list (enc_list enc_'a) ps)))
-             = enc_list (enc_list enc_'a) ((v # vs) # ps)"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  show ?case
-    apply(subst prefixest.simps, subst prefixest_nat.simps)
-    apply(subst h1)
-    apply(subst if_True)
-    apply(subst encoding_list_tl)
-    apply(subst encoding_list_hd)
-    apply(subst Let_def)+
-    apply(subst h3)
-    using 1 .
-next
-  case (2 ps)
-  have h1:"(fstP (enc_list enc_'a []) = atomic 1) = False"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  have h2:"(pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)))
-          = enc_list (enc_list enc_'a) ([] # ps)"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  have h3: "enc_list enc_'a [] = pair (atomic 0) (atomic 0)"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  have h4: "enc_list (enc_list enc_'a) ps = enc_list (enc_list enc_'a) ps"
-    by (simp add: enc_list.simps fstP.simps sndP.simps atomic.simps pair.simps)
-  show ?case
-    apply(subst prefixest.simps, subst prefixest_nat.simps)
-    apply(subst h1)
-    apply(subst if_False)
-    apply(subst Let_def)+
-    apply(subst h3[symmetric])
-    apply(subst h4[symmetric]) 
-    apply(subst h2)
-    using encoding_list_wellbehaved[OF encoding_list_wellbehaved, OF assms(1), THEN pointfree_idE, of "[] # ps"]
-    .
-qed
-
-
-  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct\<close>
-      assms: assms
-      simps_nat: prefixest_nat.simps
-      enc_simps: enc_list.simps
-      args_wellbehaved:
-      encoding_list_wellbehaved[OF encoding_list_wellbehaved, OF assms(1), THEN pointfree_idE])
 
 fun prefixes2 where
   "prefixes2 [] ps = reverset ([] # ps) []"
@@ -638,7 +474,8 @@ fun prefixes2 where
 function_nat_rewrite prefixes2
 
 lemma dec_list_bot: "dec_list dec_'a bot = bot"
-  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def)
+  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def fstP.simps
+      atomic.simps)
 
 function_nat_rewrite_correctness prefixes2
   using assms
