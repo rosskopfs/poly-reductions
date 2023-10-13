@@ -395,6 +395,14 @@ fun prefixes2 where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
+thm reverset_nat_equiv reverset.simps
+
+
+
+
+ML \<open>
+ Envir.subst_type
+\<close>
 
 function_nat_rewrite_auto prefixes2
 function_nat_rewrite prefixes2

@@ -897,7 +897,7 @@ fun function_nat_rewrite_auto s ctxt =
     val normalize_type =
       map_aterms (fn Var ((s, _), T) => Free (s, T) | x => x)
       #> map_types tvar_to_tfree
-      #> map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
+      #> map_types (map_type_tfree (fn (name, _) => TFree (name, [@{class "Orderings.order_bot"}])))
 
     val t = Syntax.read_term ctxt s |> normalize_type
     val (fun_name, _) = Term.dest_Const t
@@ -1057,7 +1057,7 @@ fun function_nat_rewrite_auto s ctxt =
     val fun_nat_simps =
       Proof_Context.get_thms ctxt' (fun_name ^ "_nat.simps") |> @{print}
 
-        fun collect_const_invocations t =
+    fun collect_const_invocations t =
       let
         val (fn_t, args) = strip_comb t
         val v =
@@ -1072,6 +1072,83 @@ fun function_nat_rewrite_auto s ctxt =
         |> (fn x => fold (union (op =)) x v)
       end
 
+    fun collect_const_invocations2 t =
+      let
+        val (fn_t, args) = strip_comb t
+        val v =
+          dest_Const fn_t
+          |> (fn (fn_name, fn_T) => (fn_name, build_constructor_tag ctxt (fn_name, fn_T)))
+          ||> Option.map (K false)
+          ||> (fn x => Option.getOpt (x, true))
+          |> (fn (fn_name, b) => if fn_name <> fun_name andalso b then [t] else [])
+          handle TERM _ => []
+      in
+        map collect_const_invocations2 args
+        |> (fn x => fold (union (op =)) x v)
+      end
+
+    fun get_args thm =
+      Thm.prop_of thm |> @{print}
+      |> lhs_of_term
+      |> snd o Term.strip_comb
+      |> map (fn t => (Term.fastype_of t, t))
+
+
+    val equiv_thms_inst_vars =
+      map Thm.prop_of fun_simps
+      |> map rhs_of_term |> @{print}
+      
+      |> map collect_const_invocations2
+      |> (fn x => fold (union (op =)) x []) |> @{print}
+      |> map (fn t => 
+        let
+        val ((s,_), args) =
+            strip_comb t
+            |>> dest_Const
+        val add_sort_order_bot =
+          Term.map_type_tvar (fn (n, s) => TVar (n, [@{class "Orderings.order_bot"}]))
+        
+        val reg_invoc =
+          (read_const' ctxt' s)
+          |> map_types add_sort_order_bot
+
+        val inv_fun_arg_Ts =
+          binder_types (fastype_of (read_const' ctxt' s))
+          |> map add_sort_order_bot |> @{print}
+
+        val inv_fun_arg_ts =
+          inv_fun_arg_Ts
+          |> map_index (fn (i, T) => Var ((argname i, 0), T)) |> @{print}
+          
+        val a =
+          Term.list_comb (reg_invoc, inv_fun_arg_ts) |> @{print}
+          |> Thm.cterm_of ctxt' |> @{print}
+
+        val b =
+          map_types add_sort_order_bot t
+          |> Thm.cterm_of ctxt' |> @{print}
+        val substs = Thm.first_order_match (a, b) |> @{print}
+
+        val equiv_thm = hd (Proof_Context.get_thms ctxt (s ^ "_nat_equiv")) |> @{print}
+        in
+          Thm.instantiate substs equiv_thm
+        end
+        )
+      |> @{print}
+
+
+    val bla = 
+      map Thm.prop_of fun_simps
+      |> map rhs_of_term
+      |> map normalize_type
+      |> map collect_const_invocations
+      |> (fn x => fold (union (op =)) x [])
+      |> map (apfst (suffix "_nat.simps")) |> @{print}
+      |> map (apfst (hd o Proof_Context.get_thms ctxt'))
+      |> map (apfst (snd o Term.strip_comb o lhs_of_term o Thm.prop_of))
+      |> map (fn (args, inst_args) => map dest_Var args ~~ map (Thm.cterm_of ctxt') inst_args)
+      |> map Vars.make |> @{print}
+
     val const_invocations =
       map Thm.prop_of fun_simps
       |> map rhs_of_term
@@ -1079,6 +1156,13 @@ fun function_nat_rewrite_auto s ctxt =
       |> map collect_const_invocations
       |> (fn x => fold (union (op =)) x [])
       |> map (apfst (suffix "_nat_equiv")) |> @{print}
+      |> map (apfst (hd o Proof_Context.get_thms ctxt')) (* should always be only one thm *)
+      |> map (fn (thm, args) => (thm, get_args thm, map (fn t => (Term.fastype_of t, t)) args))
+      |> map (fn (thm, orig_args, new_args) => (thm, map snd orig_args, map snd new_args))
+      |> map (fn (thm, a, b) => (thm, map dest_Var a, map (Thm.cterm_of ctxt') b))
+      |> map (fn (thm, a, b) => (thm, (a ~~ b)))
+      |> map (fn (thm, l) => ((TVars.empty, Vars.make l), thm))
+      |> map (uncurry Thm.instantiate) |> @{print}
     
     fun if_exp_simp_tac ctxt thm =
       let
