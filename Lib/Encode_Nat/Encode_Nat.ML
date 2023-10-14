@@ -974,8 +974,9 @@ fun function_nat_rewrite_auto s ctxt =
       |> map rhs_of_term |> @{print}
       |> map normalize_type
       |> map collect_args
-      |> (fn x => fold (union (op =)) x [])
-      |> filter (fn t => size_of_term t > 1) (* don't need simplification for a term itself *)
+      |> (fn x => fold (union (op =)) x []) |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
+      |> filter (fn t => size_of_term t > 1 orelse is_Const t) |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of (* don't need simplification for a term itself *)
+      |> map (fn t => let val _ = @{print} (fastype_of t) in t end) |> @{print}
       |> (fn ts => (map (replace_constructors ctxt) ts, map (encode_term ctxt) ts))
       |> (fn (lhs, rhs) =>
              ((lhs, rhs),
@@ -1135,35 +1136,24 @@ fun function_nat_rewrite_auto s ctxt =
         end
         )
       |> @{print}
-
-
-    val bla = 
-      map Thm.prop_of fun_simps
-      |> map rhs_of_term
-      |> map normalize_type
-      |> map collect_const_invocations
-      |> (fn x => fold (union (op =)) x [])
-      |> map (apfst (suffix "_nat.simps")) |> @{print}
-      |> map (apfst (hd o Proof_Context.get_thms ctxt'))
-      |> map (apfst (snd o Term.strip_comb o lhs_of_term o Thm.prop_of))
-      |> map (fn (args, inst_args) => map dest_Var args ~~ map (Thm.cterm_of ctxt') inst_args)
-      |> map Vars.make |> @{print}
-
-    val const_invocations =
-      map Thm.prop_of fun_simps
-      |> map rhs_of_term
-      |> map normalize_type
-      |> map collect_const_invocations
-      |> (fn x => fold (union (op =)) x [])
-      |> map (apfst (suffix "_nat_equiv")) |> @{print}
-      |> map (apfst (hd o Proof_Context.get_thms ctxt')) (* should always be only one thm *)
-      |> map (fn (thm, args) => (thm, get_args thm, map (fn t => (Term.fastype_of t, t)) args))
-      |> map (fn (thm, orig_args, new_args) => (thm, map snd orig_args, map snd new_args))
-      |> map (fn (thm, a, b) => (thm, map dest_Var a, map (Thm.cterm_of ctxt') b))
-      |> map (fn (thm, a, b) => (thm, (a ~~ b)))
-      |> map (fn (thm, l) => ((TVars.empty, Vars.make l), thm))
-      |> map (uncurry Thm.instantiate) |> @{print}
     
+    fun equiv_thms_inst_prems ctxt thm =
+      let
+        val wellbehaved_thms = 
+          Thm.prems_of thm |> @{print}
+          |> map rhs_of_term
+          |> filter (fn Const ("Fun.id", _) => true | _ => false) |> @{print}
+          |> map (body_type o fastype_of) |> @{print}
+          |> map (Long_Name.base_name o fst o dest_Type) 
+          |> map (prefix "encoding_" o suffix "_wellbehaved") |> @{print}
+          |> map (hd o Proof_Context.get_thms ctxt) |> @{print}
+      in
+        thm OF wellbehaved_thms
+      end;
+
+    val equiv_thms_inst =
+      map (equiv_thms_inst_prems ctxt) equiv_thms_inst_vars |> @{print}
+
     fun if_exp_simp_tac ctxt thm =
       let
         val if_simps =
@@ -1178,40 +1168,63 @@ fun function_nat_rewrite_auto s ctxt =
         EqSubst.eqsubst_tac ctxt [0] if_simps 1 thm
       end
 
-    fun solve_subgoal_tac ctxt =
-      print_tac ctxt "before if"
-      THEN (if_exp_simp_tac ctxt)
-      THEN (print_tac ctxt "after if")
-      THEN (EqSubst.eqsubst_tac ctxt [0] @{thms HOL.if_False HOL.if_True} 1)
-      THEN (print_tac ctxt "after sub if")
-      THEN (simp_tac (clear_simpset ctxt addsimps let_simps_thms addsimps @{thms HOL.Let_def}) 1)
-      THEN (print_tac ctxt "after let simps and let def")
-      THEN TRY (simp_tac (clear_simpset ctxt addsimps ctr_simps) 1)
-      THEN (print_tac ctxt "after constructor simps")
+    fun solve_subgoal_tac ctxt prems =
+      let
+        fun maybe_of thms thm =
+          fold (fn asm => fn thm => the_default thm (try (curry op OF thm) [asm])) thms thm
+        val equiv_thms_inst2 =
+          equiv_thms_inst |> @{print}
+          |> map (maybe_of prems) |> @{print}
+        val bla =
+          map Thm.prems_of equiv_thms_inst2 |> @{print}
+          |> map (map (body_type o fastype_of o rhs_of_term)) |> @{print}
+          |> map (map (Long_Name.base_name o fst o dest_Type))
+          |> map (map (prefix "dec_" o suffix "_bot")) |> @{print}
+          |> map (map (hd o Proof_Context.get_thms ctxt))
+          |> (fn x => map_product maybe_of x equiv_thms_inst2) |> @{print}
+          
+      in
+        print_tac ctxt "before if"
+        THEN (if_exp_simp_tac ctxt)
+        THEN (print_tac ctxt "after if")
+        THEN (EqSubst.eqsubst_tac ctxt [0] @{thms HOL.if_False HOL.if_True} 1)
+        THEN (print_tac ctxt "after sub if")
+        THEN (simp_tac (clear_simpset ctxt addsimps let_simps_thms addsimps @{thms HOL.Let_def}) 1)
+        THEN (print_tac ctxt "after let simps and let def")
+        THEN TRY (simp_tac (clear_simpset ctxt addsimps ctr_simps) 1)
+        THEN (print_tac ctxt "after constructor simps")
+        THEN TRY (EqSubst.eqsubst_tac ctxt [0] bla 1)
+        THEN (print_tac ctxt "after invoke simps")
+      end;
     
 
-    val g =
+    (* val g =
       Thm.cterm_of ctxt' goal |> @{print}
       |> Goal.init |> @{print}
       |> (Induct_Tacs.induct_tac ctxt' [map SOME argnames] (SOME induction_rule) 1
           THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt' [0] fun_simps)
                           THEN' (EqSubst.eqsubst_tac ctxt' [0] fun_nat_simps))) |> @{print}
       |> Seq.hd |> @{print}
-      |> (ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
-          solve_subgoal_tac ctxt
+      |> (ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, prems = prems, ...} =>
+          solve_subgoal_tac ctxt prems
           )
         ctxt'))
       |> Seq.hd |> @{print}
-      |> Goal.finish ctxt' |> @{print}
-
+      |> Goal.finish ctxt' |> @{print} *)
+    
     val correctness_thm =
       Goal.prove ctxt' schemvars assms goal
         (fn {context=ctxt, prems, ...} =>
            Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
            THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt [0] fun_simps)
                            THEN' (EqSubst.eqsubst_tac ctxt [0] fun_nat_simps))
-           THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
-             solve_subgoal_tac ctxt
+           THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt,...} =>
+             let
+                val _ = prems |> @{print}
+                val _ = Assumption.all_prems_of ctxt |> @{print}
+             in
+             solve_subgoal_tac ctxt prems
+             end
              ) ctxt ))
       |> @{print}
 

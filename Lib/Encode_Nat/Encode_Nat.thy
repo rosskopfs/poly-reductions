@@ -420,6 +420,8 @@ function_nat_rewrite_correctness prefixes2
         OF encoding_list_wellbehaved,
         OF assms(1),
         OF dec_list_bot]
+     reverset_nat_equiv[
+        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]"] encoding_list_wellbehaved
     by(simp add: enc_list.simps)
   by(simp add: enc_list.simps Let_def)
 
