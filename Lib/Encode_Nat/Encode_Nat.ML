@@ -162,8 +162,6 @@ fun build_encoder ctxt T ctrs casex =
               ||> the
               ||> build_constructor_pairing encoded_args
               |->  fold (fn (s, T) => fn t => Abs (s, T, t))
-            val _ =
-              binder_types (type_of ctr_t)
           in
             res
           end
@@ -188,6 +186,107 @@ fun datatype_nat_encode_cmd T ctxt =
     val specs = [((Binding.empty_atts, eqns), [], [])]
 
   in Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt
+  end
+
+fun mk_encoded_typ (Const (_, T)) =
+  ((map (K @{typ "pair_repr"}) (binder_types T)) ---> @{typ "pair_repr"})
+  | mk_encoded_typ _ = error "Can only make encoder of Const"
+
+fun build_better_encoder ctxt T ctrs casex =
+  let
+    val lhs = Term.list_comb (encoder_free_term_of_type ctxt T, encoder_args_of_type ctxt T)
+    val ctr_nat_ts =
+      ctrs |> @{print}
+      |> map (fn ctr_t =>
+          let
+            val ctr_nat_args =
+              (binder_types o type_of) ctr_t
+              |> map_index (fn (i, _) => Free ("v" ^ string_of_int i, @{typ "pair_repr"}))
+              |> @{print}
+            val ctr_nat_rhs =
+              build_constructor_tag ctxt (dest_Const ctr_t)
+              |> the
+              |> build_constructor_pairing ctr_nat_args
+            val ctr_nat_name = Term.term_name ctr_t ^ "_nat"
+            val ctr_nat_t =
+              Free (ctr_nat_name, mk_encoded_typ ctr_t) |> @{print}
+          in
+            (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
+          end
+        )  |> @{print}
+    val ctxt' =
+      let
+        fun f (_, ctr_nat_lhs, ctr_nat_args, ctr_nat_rhs) ctxt =
+          let
+            val _ = BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
+              |> Thm.cterm_of ctxt |> @{print}
+            val ctr_nat_equ =
+              BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
+          in
+            snd (Specification.definition NONE [] [] (Binding.empty_atts, ctr_nat_equ) ctxt)
+          end
+      in 
+        fold f ctr_nat_ts ctxt
+      end
+    val cases =
+      ctrs ~~ ctr_nat_ts |> @{print}
+      |> map (fn (ctr_t, (ctr_nat_name, _, _, _)) =>
+          let
+            val ctr_args_Ts = (binder_types o type_of) ctr_t
+            val encoded_args =
+              (map (build_encoder_invocation ctxt (SOME T)) ctr_args_Ts, ctr_args_Ts)
+              ||> (length #> (map_range Bound) #> rev)
+              |-> map2 (curry op $)
+            val res = (rev (map_index (fn (i, T) => ("v" ^ string_of_int i, T)) ctr_args_Ts),
+                Term.list_comb (read_const' ctxt' ctr_nat_name |> @{print}, encoded_args))
+              |->  fold (fn (s, T) => fn t => Abs (s, T, t))
+          in
+            res
+          end
+        ) |> map (Thm.cterm_of ctxt')|> @{print} |> map (Thm.term_of)
+    val rhs = if T = @{typ "nat"} then Free ("v", T)
+              else Term.list_comb (casex, cases @ [Free ("v", T)])
+  in
+    (ctxt', BNF_Util.mk_Trueprop_eq (lhs, rhs))
+  end
+
+fun normalize_type (Type (s, Ts)) = Type (s, map normalize_type Ts)
+  | normalize_type (TFree (s, sort)) =
+    let
+      val new_sort = if sort = [@{class "HOL.type"}]
+                     then [@{class "Orderings.order_bot"}]
+                     else insert (op =) @{class "Orderings.order_bot"} sort
+    in
+      TFree (s, new_sort)
+    end
+  | normalize_type (TVar (i, sort)) =
+    let
+      val new_sort = if sort = [@{class "HOL.type"}]
+                     then [@{class "Orderings.order_bot"}]
+                     else insert (op =) @{class "Orderings.order_bot"} sort
+    in
+      TVar (i, new_sort)
+    end;
+
+val normalize_type_of_term =
+      map_aterms (fn Var ((s, _), T) => Free (s, T) | x => x)
+      #> map_types tvar_to_tfree
+      #> map_types normalize_type
+
+fun datatype_nat_encode_cmd T ctxt =
+  let
+    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T))
+    val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
+    val T = tvar_to_tfree (#T sugar) |> normalize_type |> @{print}
+    val casex =
+      subst_atomic_types [(body_type (type_of (#casex sugar)), @{typ "pair_repr"})] (#casex sugar)
+      |> normalize_type_of_term
+    val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar) |> map normalize_type_of_term
+    val (ctxt', eqns) = build_better_encoder ctxt T ctrs casex
+    val fixes = [(Binding.name (encoder_name_of_type ctxt T), NONE, NoSyn)]
+    val specs = [((Binding.empty_atts, eqns), [], [])]
+
+  in Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt'
   end
 
 val _ =
@@ -527,10 +626,6 @@ fun const_nat_unchanged s =
   then true
   else exists (fn x => x = s)
         (List.map (fst o dest_Const) [@{term fstP}, @{term sndP}, @{term atomic}, @{term pair}])
-
-fun mk_encoded_typ (Const (_, T)) =
-  ((map (K @{typ "pair_repr"}) (binder_types T)) ---> @{typ "pair_repr"})
-  | mk_encoded_typ _ = error "Can only make encoder of Const"
 
 fun change_const_to_nat (t as Const (c, _)) =
   if c = "Orderings.bot_class.bot" then Const (c, @{typ "pair_repr"})
@@ -968,6 +1063,28 @@ fun function_nat_rewrite_auto s ctxt =
       |> (fn x => fold (union (op =)) x [])
       |> map (suffix ".simps")
       |> flat o map (Proof_Context.get_thms ctxt) |> @{print}
+
+    val better_ctr_simps =
+      map Thm.prop_of fun_simps
+      |> map rhs_of_term |> @{print}
+      |> map normalize_type
+      |> map collect_args
+      |> (fn x => fold (union (op =)) x []) |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
+      |> filter (fn t => size_of_term t > 1 orelse is_Const t) |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of (* don't need simplification for a term itself *)
+      |> map (fn t => let val _ = @{print} (fastype_of t) in t end) |> @{print}
+      |> (fn ts => (map (replace_constructors ctxt) ts, map (encode_term ctxt) ts))
+      |> (fn (lhs, rhs) =>
+             ((lhs, rhs),
+              map (fn t => fold_aterms (fn Free (s, _) => insert (op =) s | _ => I) t []) rhs))
+      |>> apfst (map (map_aterms (fn t as Free _ => encode_term ctxt t | x => x)))
+      |>> op ~~
+      |>> map BNF_Util.mk_Trueprop_eq
+      |> op ~~
+      |> map (fn (t, vars) =>
+          Goal.prove ctxt vars [] t
+            (fn {context=ctxt, prems, ...} =>
+              asm_full_simp_tac (ctxt addsimps encoder_simps) 1
+             )) |> @{print}
 
     val ctr_simps =
       map Thm.prop_of fun_simps

@@ -167,23 +167,32 @@ datatype_nat_encode nat
 lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: bot_nat_def prod_encode_0)
 
+
+
 datatype_nat_encode "'a list"
 declare enc_list.simps [simp del]
 
+thm enc_list.simps Cons_nat_def
+
+
+lemma "Nil_nat = enc_list enc_'a []"
+  by (simp add: enc_list.simps Nil_nat_def)
+
 lemma enc_list_bot: "enc_list enc_'a bot = bot"
-  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def)
+  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def Nil_nat_def)
 
 datatype_nat_encode bool
 declare enc_bool.simps [simp del]
 
 lemma enc_bool_bot: "enc_bool bot = bot"
-  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def)
+  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def False_nat_def)
 
 datatype_nat_encode char
 declare enc_char.simps [simp del]
 
 lemma enc_char_bot: "enc_char bot = bot"
-  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def)
+  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def Char_nat_def
+      False_nat_def)
 
 datatype_nat_encode "('a, 'b) prod"
 declare enc_prod.simps [simp del]
@@ -192,19 +201,20 @@ lemma enc_prod_bot:
   assumes "enc_'a bot = bot"
     and "enc_'b bot = bot"
   shows "enc_prod enc_'a enc_'b bot = bot"
-  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms)
+  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms Pair_nat_def)
 
 datatype_nat_encode "'a tree"
 declare enc_tree.simps [simp del]
 
 lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
-  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def)
+  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def Leaf_nat_def)
 
 datatype_nat_encode "('a, 'b) keyed_list_tree"
 declare enc_keyed_list_tree.simps [simp del]
 
 lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"
-  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def)
+  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def
+      KLeaf_nat_def)
 
 
 (* TODO: Do we need similar lemmas for other data types? *)
@@ -309,31 +319,31 @@ datatype_nat_wellbehaved nat
   by(induction; simp)
 
 datatype_nat_wellbehaved bool
-  by(intro ext, simp add: dec_bool.simps enc_bool.simps split:bool.split)
+  by(intro ext, simp add: dec_bool.simps enc_bool.simps True_nat_def False_nat_def split:bool.split)
 
 datatype_nat_wellbehaved list
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: list.induct; simp add: enc_list.simps)
+    by(induction x rule: list.induct; simp add: enc_list.simps Nil_nat_def Cons_nat_def)
   done
 
 datatype_nat_wellbehaved char
   using encoding_bool_wellbehaved[THEN pointfree_idE]
-  by(intro ext, simp add: dec_char.simps enc_char.simps split: char.split)
+  by(intro ext, simp add: dec_char.simps enc_char.simps Char_nat_def split: char.split)
 
 datatype_nat_wellbehaved prod
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: prod.induct; simp add: enc_prod.simps)
+    by(induction x rule: prod.induct; simp add: enc_prod.simps Pair_nat_def)
   done
 
 datatype_nat_wellbehaved tree
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: tree.induct; simp add: enc_tree.simps)
+    by(induction x rule: tree.induct; simp add: enc_tree.simps Leaf_nat_def Node_nat_def)
   done
 
 datatype_nat_wellbehaved keyed_list_tree
@@ -341,7 +351,7 @@ datatype_nat_wellbehaved keyed_list_tree
   subgoal for x
     apply(induction x rule: keyed_list_tree.induct)
     using encoding_list_wellbehaved[OF assms(2), THEN pointfree_idE] assms(1)[THEN pointfree_idE]
-    by (simp add: enc_keyed_list_tree.simps)+
+    by (simp add: enc_keyed_list_tree.simps KLeaf_nat_def KNode_nat_def)+
   done
 
 method natfn_correctness
@@ -390,6 +400,42 @@ corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
 function_nat_rewrite_auto prefixest
 thm prefixest_nat_equiv
 
+lemma reverset_length: "length xs = length (reverset xs [])"
+  by(induction xs; simp add: reverset_rev)
+
+function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "foo [] acc = acc"
+| "foo (x # xs) acc = foo (reverset xs []) (x # (reverset acc []))"
+     apply auto
+  using prefixes.cases by blast
+termination sorry
+
+thm enc_list.simps
+
+lemma Nil_nat: "enc_list enc_'a [] = pair (atomic 0) (atomic 0)"
+  by(simp add: enc_list.simps)
+
+lemma Cons_nat: "enc_list enc_'a (x # xs) =
+  pair (atomic 1) (pair (enc_'a x) (enc_list enc_'a xs))"
+  by(simp add: enc_list.simps)
+
+function_nat_rewrite_auto foo
+function_nat_rewrite foo
+function_nat_rewrite_correctness foo
+proof(induction arg\<^sub>1 arg\<^sub>2 rule: foo.induct)
+  case (1 acc)
+  then show ?case
+    apply(subst foo.simps; subst foo_nat.simps)
+    by(simp add: Cons_nat Nil_nat)
+next
+  case (2 x xs acc)
+  then show ?case
+    apply(subst foo.simps; subst foo_nat.simps)
+    using reverset_nat_equiv[OF assms, of xs "[]"]
+    reverset_nat_equiv[OF assms, of acc "[]"]
+    reverset_nat_equiv
+    by (simp add: Cons_nat Nil_nat)
+qed
 
 fun prefixes2 where
   "prefixes2 [] ps = reverset ([] # ps) []"
@@ -404,14 +450,41 @@ ML \<open>
  Envir.subst_type
 \<close>
 
+
+lemma dec_list_bot: "dec_list dec_'a bot = bot"
+  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def)
+
 function_nat_rewrite_auto prefixes2
 function_nat_rewrite prefixes2
 
-lemma dec_list_bot: "dec_list dec_'a bot = bot"
-  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def fstP.simps
-      atomic.simps)
+lemma hh: "(pair (atomic 0) (atomic 0)) = enc_list enc_'a []" by (simp add: enc_list.simps)
 
 function_nat_rewrite_correctness prefixes2
+proof(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct)
+  case (1 ps)
+  have h1: "(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
+  have h2: "pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)) = 
+            enc_list (enc_list enc_'a) ([] # ps)" by (simp add: enc_list.simps)
+  have h3: "(pair (atomic 0) (atomic 0)) = enc_list (enc_list enc_'a) []" by (simp add: enc_list.simps)
+  show ?case
+    apply(subst prefixes2_nat.simps; subst prefixes2.simps)
+    using reverset_nat_equiv[
+        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]"] encoding_list_wellbehaved assms dec_list_bot
+    apply(force simp add: Cons_nat Nil_nat)
+    using reverset_nat_equiv[
+        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]",
+        OF encoding_list_wellbehaved,
+        OF assms(1),
+        OF dec_list_bot]
+    by(simp add: Cons_nat Nil_nat)
+next
+  case (2 a b ps)
+  then show ?case
+    apply(subst prefixes2_nat.simps; subst prefixes2.simps)
+    using assms
+    by(simp add: Cons_nat Nil_nat)
+qed
+
   using assms
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct; subst prefixes2_nat.simps)
   subgoal for ps
