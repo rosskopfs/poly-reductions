@@ -234,6 +234,19 @@ fun translate1 :: "vname \<Rightarrow> tcom \<Rightarrow> com'" where
 definition translate :: "vname \<Rightarrow> tcom \<Rightarrow> com'" where
   "translate CONT c = WHILE CONT\<noteq>0 DO (CONT::=A (N 0);;translate1 CONT c)"
 
+lemma set_vars_translate1_subs:
+  "set (vars (translate1 CONT c)) \<subseteq> insert CONT (set (vars c))"
+  by (induction CONT c rule: translate1.induct) auto
+
+lemma subs_set_vars_translate1:
+  "set (vars c) \<subseteq> set (vars (translate1 CONT c))"
+  by (induction CONT c rule: translate1.induct) auto
+
+lemma set_vars_translate:
+  "set (vars (translate CONT c)) = insert CONT (set (vars c))"
+  unfolding translate_def
+  using set_vars_translate1_subs subs_set_vars_translate1
+  by fastforce
 
 lemma no_tail_cont1: "\<lbrakk>(translate1 CONT c,s)\<Rightarrow>'\<^bsup>z\<^esup> t; \<not>tails c; CONT \<notin> set (vars c)\<rbrakk> \<Longrightarrow> t CONT = s CONT"
   by (induction c arbitrary: s t z) (auto, metis)
@@ -454,6 +467,10 @@ qed (auto simp: translate_def)
 section \<open>Final compilation\<close>
 definition compile :: "tcom \<Rightarrow> com'" where
   "compile c = (let CONT = fresh (vars c) ''CONTINUE'' in CONT::=A (N 1);;translate CONT c)"
+
+lemma set_vars_compile:
+  "set (vars (compile c)) = insert (fresh (vars c) ''CONTINUE'') (set (vars c))"
+  unfolding compile_def Let_def by (simp add: set_vars_translate)
 
 lemma compile_sound:
   assumes c_sem: "c \<turnstile> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t"
