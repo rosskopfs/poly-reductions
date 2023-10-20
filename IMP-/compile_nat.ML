@@ -12,13 +12,13 @@ structure Compiled_Consts = Generic_Data
   val merge = Symtab.join (K fst)
 );
 
-fun declare_compiled_const name {ret_reg, arg_regs, compiled} =
+fun declare_compiled_const name compiled_const =
   Local_Theory.declaration {syntax = false, pervasive = false, pos = Position.thread_data ()}
     (fn phi =>
       let
-        val data = {ret_reg = ret_reg, arg_regs = arg_regs, compiled = Morphism.term phi compiled}
+        val compiled_const' = map_compiled (Morphism.term phi) compiled_const
       in
-        Compiled_Consts.map (fn tab => Symtab.update_new (name, data) tab)
+        Compiled_Consts.map (fn tab => Symtab.update_new (name, compiled_const') tab)
       end)
 
 fun get_compiled_const ctxt f_name =
