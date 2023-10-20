@@ -117,7 +117,7 @@ definition [compiled_const_defs add]:
 
 lemma t_big_step_t_tCall_Not_IMP:
   assumes "C \<turnstile> (tCall Not_IMP ''Not_ret'', s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''Not_ret'' \<noteq> 0 \<longleftrightarrow> s ''Not_x'' = 0"
+  shows "s' ''Not_ret'' \<noteq> 0 \<longleftrightarrow> \<not> (s ''Not_x'' \<noteq> 0)"
   using assms unfolding Not_IMP_def by safe simp_all
 
 lemma t_big_step_t_tCall_eq_IMP:
