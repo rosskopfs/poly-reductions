@@ -132,7 +132,7 @@ fun fstP :: "pair_repr \<Rightarrow> pair_repr" where
 fun sndP :: "pair_repr \<Rightarrow> pair_repr" where
   "sndP v = snd (prod_decode v)"
 
-
+lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
 
 ML_file \<open>./Encode_Nat.ML\<close>
 
@@ -160,8 +160,6 @@ corollary snd_prod_decode_lt_intro:
   shows "snd (prod_decode v) < v"
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
-lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
-
 datatype_nat_encode nat
 
 lemma enc_nat_bot: "enc_nat bot = bot"
@@ -169,7 +167,7 @@ lemma enc_nat_bot: "enc_nat bot = bot"
 
 
 
-datatype_nat_encode "'a list"
+datatype_nat_encode list
 declare enc_list.simps [simp del]
 
 thm enc_list.simps Cons_nat_def
@@ -377,6 +375,28 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
+ML \<open>
+  Term.abs ("bla", @{typ "'a"}) (abstract_over (@{term "x"}, @{term "hd (x # xs)"}))
+  |> Thm.cterm_of @{context}
+\<close>
+
+test2 list
+
+test2 bool
+
+test2 char
+
+test2 prod
+
+test2 tree
+
+test2 keyed_list_tree
+function_nat_rewrite reverset
+function_nat_rewrite_correctness reverset
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct; subst reverset.simps; subst reverset_nat.simps)
+  using Cons_nat_equiv Nil_nat_equiv assms encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
+  by(simp add: enc_list.simps Nil_nat_def Cons_nat_def)+
+
 function_nat_rewrite_auto reverset
 
 thm reverset_nat_equiv
@@ -463,7 +483,7 @@ function_nat_rewrite_correctness prefixes2
 proof(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct)
   case (1 ps)
   have h1: "(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
-  have h2: "pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)) = 
+  have h2: "pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)) =
             enc_list (enc_list enc_'a) ([] # ps)" by (simp add: enc_list.simps)
   have h3: "(pair (atomic 0) (atomic 0)) = enc_list (enc_list enc_'a) []" by (simp add: enc_list.simps)
   show ?case
@@ -739,7 +759,7 @@ function_nat_rewrite_correctness baz2
   by force
 
 lemma a: "(fstP (sndP (enc_list (enc_list enc_'a) [[]]))) = 0"
-  by(simp add: enc_list.simps prod_encode_def prod_decode_def prod_decode_aux.simps)
+  by(si mp add: enc_list.simps prod_encode_def prod_decode_def prod_decode_aux.simps)
 
 lemma b: "reverse_acc_nat 0 0 = 0"
   by(simp add: reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps)
