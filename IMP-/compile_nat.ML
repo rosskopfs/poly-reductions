@@ -92,14 +92,12 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
       | go _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_arg_reg i\<close>\<close>\<close>
       | go bounds cont (If (idx, (cond, e1, e2))) =
         let
-          val cond_reg = "IfNeqZeroCond_" ^ Int.toString idx |> HOLogic.mk_string
+          val cond_reg = "If_" ^ Int.toString idx |> HOLogic.mk_string
           val cond_IMP = go bounds (fn rhs => \<^Const>\<open>tAssign for cond_reg rhs\<close>) cond
-          val ret_reg = "IfNeqZero_" ^ Int.toString idx |> HOLogic.mk_string
-          val (e1_IMP, e2_IMP) =
-            @{apply 2} (go bounds (fn rhs => \<^Const>\<open>tAssign for ret_reg rhs\<close>)) (e1, e2)
+          val (e1_IMP, e2_IMP) = @{apply 2} (go bounds cont) (e1, e2)
           val if_IMP = \<^Const>\<open>tIf for cond_reg e1_IMP e2_IMP\<close>
         in
-          mk_Seq [cond_IMP, if_IMP, cont \<^Const>\<open>A for \<^Const>\<open>V for ret_reg\<close>\<close>]
+          mk_Seq [cond_IMP, if_IMP]
         end
       | go bounds cont (Let (idx, (x, (e1, e2)))) =
         let
