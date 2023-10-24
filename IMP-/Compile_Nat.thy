@@ -131,9 +131,15 @@ lemma eq_IMP_func_correct:
   shows "s' ''eq_ret'' = eq_nat (s ''eq_x'') (s ''eq_y'')"
   using assms unfolding eq_IMP_def eq_nat_def by auto
 
-definition "not_nat (n :: nat) \<equiv> 1 - (eq_nat n 0)"
+definition "not_nat (n :: nat) \<equiv> eq_nat n 0"
 
 compile_nat not_nat_def basename not
+
+declare_compiled_const HOL.Not
+  return_register "not_ret"
+  argument_registers "not_n"
+  compiled "inline (compile not_IMP)"
+
 
 end
 

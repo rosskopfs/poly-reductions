@@ -48,7 +48,7 @@ val update_state_state_app_eqsq : (int -> tactic) -> Proof.context -> thm ->
 val update_state_state_app_eq_tac : (int -> tactic) -> Proof.context -> int -> tactic
 
 (* update state equality following a subprogram call *)
-val update_state_call_tac : thm -> Proof.context -> int -> tactic
+val update_state_call_tac : Proof.context -> int -> tactic
 
 end
 
@@ -154,13 +154,13 @@ fun init_state_eq_thm ctxt IMP_state =
     cterm\<open>State IMP_state\<close> for IMP_state :: AExp.state\<close>
   in infer_instantiate' ctxt [SOME cstate] @{thm STATE_start} end
 
-fun init_state_eq_tac ctxt =
+val init_state_eq_tac =
   let
-    fun tac (SOME IMP_state) = Thm.cterm_of ctxt IMP_state
+    fun tac ctxt (SOME IMP_state) = Thm.cterm_of ctxt IMP_state
         |> init_state_eq_thm ctxt
         |> U.insert_tac
-      | tac NONE = (writeln "Could not find IMP state premise"; K no_tac)
-  in U.SUBGOAL_PREMS_CONCL (find_IMP_big_step_state o fst) tac end
+      | tac _ NONE = (writeln "Could not find IMP state premise"; K no_tac)
+  in U.FOCUS_PARAMS_CTXT' (U.SUBGOAL_PREMS_CONCL (find_IMP_big_step_state o fst) o tac) end
 
 (* remove state equality premise *)
 
@@ -294,7 +294,7 @@ fun find_update_state_call_correctness_prem cassign_prem cprems =
     |> U.dest_Trueprop |> U.dest_eq |> snd |> dest_assign_prem_rhs
   in U.find_first_index (is_lhs_eq_prop v o Thm.term_of) cprems end
 
-fun update_state_call_tac imp_to_HOL_state_thm =
+val update_state_call_tac =
   let
     fun find_correctness_prem ctxt cassign_prem =
       let
@@ -313,7 +313,7 @@ fun update_state_call_tac imp_to_HOL_state_thm =
       in find_cassign_prem_prop state_eq_lhs_state #> U.seq_of_opt f_none end
     fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
       {prems=[state_eq_thm, assign_thm, correctness_eq_thm], context=ctxt,...} =
-        update_state_state_eq_updatesq [imp_to_HOL_state_thm, correctness_eq_thm] ctxt state_eq_thm
+        update_state_state_eq_updatesq [correctness_eq_thm] ctxt state_eq_thm
           interp_state_lhs_state_eq_thm assign_thm
         |> Seq.map U.insert_tac
         |> Seq_Monad.flat2

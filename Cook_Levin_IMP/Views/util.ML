@@ -144,7 +144,7 @@ val move_prems_to_front_conv = sort (rev_order o int_ord)
 (* tactic combinators *)
 fun HEADGOAL f = f 1
 
-fun TRY' tac =  tac ORELSE' K all_tac
+fun TRY' tac = tac ORELSE' K all_tac
 fun EVERY_ARG tac = EVERY o map tac
 fun EVERY_ARG' tac = EVERY' o map tac
 
