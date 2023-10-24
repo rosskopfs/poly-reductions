@@ -216,7 +216,6 @@ fun compile_cmd f_def basenamepos_opt lthy =
       |> tc_ast_of_term (f_name, f_typ) f_args
       |> IMP_Minus_of_tc_ast (f_ret_name, map fst f_args) (get_compiled_const (Context.Proof lthy))
       |> (fn t => rewrite \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>)
-      |> (fn t => \<^Const>\<open>inline for \<^Const>\<open>compile for t\<close>\<close>)
 
     val f_IMP_binding =
       f_IMP_namepos
@@ -226,6 +225,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_IMP_const =
       Binding.name_of f_IMP_binding
       |> Proof_Context.read_const {proper = true, strict = true} lthy'
+      |> (fn t => \<^Const>\<open>inline for \<^Const>\<open>compile for t\<close>\<close>)
 
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
                      , compiled = f_IMP_const}

@@ -70,7 +70,7 @@ qed
 
 lemma tbig_step_t_rm_tSKIP:
   assumes "C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "\<exists>t'. C \<turnstile> (rm_tSKIP c, s) \<Rightarrow>\<^bsup>t'\<^esup> s' \<and> t' \<le> t" 
+  shows "\<exists>t'. C \<turnstile> (rm_tSKIP c, s) \<Rightarrow>\<^bsup>t'\<^esup> s' \<and> t' \<le> t"
   using assms
 proof(induction c arbitrary: s t s' rule: rm_tSKIP.induct)
   case (1 c1 c2)
@@ -105,35 +105,35 @@ ML_file\<open>compile_nat.ML\<close>
 context includes com_syntax aexp_syntax no_com'_syntax
 begin
 
-definition [compiled_const_defs add]:
-  "Not_IMP \<equiv> ''Not_ret'' ::= (N 1 \<ominus> V ''Not_x'')"
+definition "eq_nat (n :: nat) m \<equiv> if n = m then (1 :: nat) else 0"
 
 definition [compiled_const_defs add]:
-  "eq_IMP \<equiv> 
+  "eq_IMP \<equiv>
     ''eq_x_Sub_y'' ::= (V ''eq_x'' \<ominus> V ''eq_y'');;
-    ''eq_y_Sub_x'' ::= (V ''eq_y'' \<ominus> V ''eq_x'');;
-    ''eq_neq'' ::= (V ''eq_x_Sub_y'' \<oplus> V ''eq_y_Sub_x'');;
-    ''eq_ret'' ::= (N 1 \<ominus> V ''eq_neq'')"
+    (''eq_y_Sub_x'' ::= (V ''eq_y'' \<ominus> V ''eq_x'');;
+    (''eq_neq'' ::= (V ''eq_x_Sub_y'' \<oplus> V ''eq_y_Sub_x'');;
+    (IF ''eq_neq'' \<noteq>0
+    THEN ''eq_ret'' ::= A (N 0)
+    ELSE ''eq_ret'' ::= A (N 1))))"
 
-lemma t_big_step_t_tCall_Not_IMP:
-  assumes "C \<turnstile> (tCall Not_IMP ''Not_ret'', s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''Not_ret'' \<noteq> 0 \<longleftrightarrow> \<not> (s ''Not_x'' \<noteq> 0)"
-  using assms unfolding Not_IMP_def by safe simp_all
-
-lemma t_big_step_t_tCall_eq_IMP:
-  assumes "C \<turnstile> (tCall eq_IMP ''eq_ret'', s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''eq_ret'' \<noteq> 0 \<longleftrightarrow> s ''eq_x'' = s ''eq_y''"
-  using assms unfolding eq_IMP_def by safe simp_all
-
-declare_compiled_const Not
-  return_register "Not_ret"
-  argument_registers "Not_x"
-  compiled Not_IMP
+declare_compiled_const eq_nat
+  return_register "eq_ret"
+  argument_registers "eq_x" "eq_y"
+  compiled eq_IMP
 
 declare_compiled_const HOL.eq
   return_register "eq_ret"
   argument_registers "eq_x" "eq_y"
   compiled eq_IMP
+
+lemma eq_IMP_func_correct:
+  assumes "(eq_IMP, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  shows "s' ''eq_ret'' = eq_nat (s ''eq_x'') (s ''eq_y'')"
+  using assms unfolding eq_IMP_def eq_nat_def by auto
+
+definition "not_nat (n :: nat) \<equiv> 1 - (eq_nat n 0)"
+
+compile_nat not_nat_def basename not
 
 end
 

@@ -44,6 +44,7 @@ session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
   directories
     "IMP_Minus"
     "IMP_Minus_Calls"
+    "IMP_Minus_Tailcalls"
     "ML_Typeclasses"
     "ML_Typeclasses/State"
   theories
