@@ -5,6 +5,27 @@ theory HOL_To_IMP_Minus_Tailcalls_Tactics
     IMP_Minus.Compile_Nat
 begin
 
+lemma inline_compile_complete:
+  assumes "(inline (compile c), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  assumes "invar c"
+  obtains t' s'' where
+    "c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t' - 7\<^esup> s''" "s' = s'' on set (vars c)"
+    "t' \<le> t" "t \<le> (t' + 1) * (1 + size\<^sub>c (compile c))"
+proof -
+  from inline[OF assms(1)] obtain t' s'' where
+    "(compile c, s) \<Rightarrow>'\<^bsup>t'\<^esup> s''"
+    "s' = s'' on set (vars (compile c))" and
+    t': "t' \<le> t" "t \<le> (t' + 1) * (1 + size\<^sub>c (compile c))"
+    by blast
+  from compile_complete[OF this(1) \<open>invar c\<close>] obtain s''' where
+    "c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t' - 7\<^esup> s'''" "s'' = s''' on set (vars c)"
+    by blast
+  with \<open>s' = s'' on set (vars (compile c))\<close> have "s' = s''' on set (vars c)"
+    by (simp add: eq_on_def set_vars_compile)
+  with \<open>c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t' - 7\<^esup> s'''\<close> t' show ?thesis
+    using that by blast
+qed
+
 unbundle Com.no_com_syntax
 unbundle IMP_Tailcalls_Dynamic.tcom_syntax
 
@@ -27,8 +48,7 @@ lemma Not_IMP_func_correct:
   shows "s' ''not_ret'' = not_nat (s ''not_x'')"
   using assms
   apply -
-  apply (erule inline)
-  apply (erule compile_complete)
+  apply (erule inline_compile_complete)
   apply (simp add: not_IMP_def)
   (*apply (simp only: set_vars_compile vars_tcom.simps)*)
   subgoal 
