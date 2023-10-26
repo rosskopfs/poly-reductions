@@ -391,13 +391,27 @@ test2 prod
 test2 tree
 
 test2 keyed_list_tree
+
+
+function_nat_rewrite_auto reverset
+
+
 function_nat_rewrite reverset
+
+ML \<open>
+val t = @{term "reverset [] (x # (reverset [] ( y # ys)))"};
+
+Term.fold_aterms (fn t as Const _ => insert (op =) t | _ => I) t [];
+
+head_of @{term "x # xs"} |> fastype_of |> body_type
+\<close>
+
+
 function_nat_rewrite_correctness reverset
   apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct; subst reverset.simps; subst reverset_nat.simps)
   using Cons_nat_equiv Nil_nat_equiv assms encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
   by(simp add: enc_list.simps Nil_nat_def Cons_nat_def)+
 
-function_nat_rewrite_auto reverset
 
 thm reverset_nat_equiv
 

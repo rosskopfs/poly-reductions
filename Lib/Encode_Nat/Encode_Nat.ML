@@ -196,30 +196,30 @@ fun build_better_encoder ctxt T ctrs casex =
   let
     val lhs = Term.list_comb (encoder_free_term_of_type ctxt T, encoder_args_of_type ctxt T)
     val ctr_nat_ts =
-      ctrs |> @{print}
+      ctrs
       |> map (fn ctr_t =>
           let
             val ctr_nat_args =
               (binder_types o type_of) ctr_t
               |> map_index (fn (i, _) => Free ("v" ^ string_of_int i, @{typ "pair_repr"}))
-              |> @{print}
+
             val ctr_nat_rhs =
               build_constructor_tag ctxt (dest_Const ctr_t)
               |> the
               |> build_constructor_pairing ctr_nat_args
             val ctr_nat_name = Term.term_name ctr_t ^ "_nat"
             val ctr_nat_t =
-              Free (ctr_nat_name, mk_encoded_typ ctr_t) |> @{print}
+              Free (ctr_nat_name, mk_encoded_typ ctr_t)
           in
             (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
           end
-        )  |> @{print}
+        )
     val ctxt' =
       let
         fun f (_, ctr_nat_lhs, ctr_nat_args, ctr_nat_rhs) ctxt =
           let
             val _ = BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
-              |> Thm.cterm_of ctxt |> @{print}
+              |> Thm.cterm_of ctxt
             val ctr_nat_equ =
               BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
           in
@@ -229,7 +229,7 @@ fun build_better_encoder ctxt T ctrs casex =
         fold f ctr_nat_ts ctxt
       end
     val cases =
-      ctrs ~~ ctr_nat_ts |> @{print}
+      ctrs ~~ ctr_nat_ts
       |> map (fn (ctr_t, (ctr_nat_name, _, _, _)) =>
           let
             val ctr_args_Ts = (binder_types o type_of) ctr_t
@@ -238,12 +238,12 @@ fun build_better_encoder ctxt T ctrs casex =
               ||> (length #> (map_range Bound) #> rev)
               |-> map2 (curry op $)
             val res = (rev (map_index (fn (i, T) => ("v" ^ string_of_int i, T)) ctr_args_Ts),
-                Term.list_comb (read_const' ctxt' ctr_nat_name |> @{print}, encoded_args))
+                Term.list_comb (read_const' ctxt' ctr_nat_name , encoded_args))
               |->  fold (fn (s, T) => fn t => Abs (s, T, t))
           in
             res
           end
-        ) |> map (Thm.cterm_of ctxt')|> @{print} |> map (Thm.term_of)
+        ) |> map (Thm.cterm_of ctxt') |> map (Thm.term_of)
     val rhs = if T = @{typ "nat"} then Free ("v", T)
               else Term.list_comb (casex, cases @ [Free ("v", T)])
   in
@@ -277,7 +277,7 @@ fun datatype_nat_encode_cmd T ctxt =
   let
     val T_name = fst (dest_Type (Syntax.parse_typ ctxt T))
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
-    val T = tvar_to_tfree (#T sugar) |> normalize_type |> @{print}
+    val T = tvar_to_tfree (#T sugar) |> normalize_type
     val casex =
       subst_atomic_types [(body_type (type_of (#casex sugar)), @{typ "pair_repr"})] (#casex sugar)
       |> normalize_type_of_term
@@ -515,13 +515,13 @@ fun nat_encode_term ctxt t =
       t
       |> lhs_of_term
       |> map_types tvar_to_tfree
-      |> Term.args_of |> @{print}
+      |> Term.args_of
       |> map build_patmatch_term
       |> map mk_variable_paths
       |> (fn x =>
         argnames (length x) ~~ x
         |> map (fn (arg, paths_from_this_arg) => map (pair arg) paths_from_this_arg))
-      |> List.concat |> @{print}
+      |> List.concat
     val wrappers =
       arguments_and_paths
       |> map (fn (argname_new, ((var_indexname, vartyp_old), varpath)) => fn term =>
@@ -548,7 +548,7 @@ fun nat_encode_term ctxt t =
     val arguments_and_paths =
       lhs_of_term t
       |> map_types tvar_to_tfree
-      |> Term.args_of |> @{print}
+      |> Term.args_of
       |> map build_patmatch_term
       |> map mk_variable_paths
       |> flat o map_index (fn (i, x) => map (pair (argname i)) x)
@@ -567,14 +567,14 @@ fun nat_encode_term ctxt t =
       |> map_types tvar_to_tfree
       |> change_if ctxt
 
-      |> fold (fn f => fn x => f x) wrappers |> @{print}
+      |> fold (fn f => fn x => f x) wrappers
     val ret' =
       t
       |> rhs_of_term
       |> map_types tvar_to_tfree
       |> change_if ctxt
       |> replace_constructors ctxt
-      |> fold (fn f => fn x => f x) wrappers |> @{print}
+      |> fold (fn f => fn x => f x) wrappers
   in
     ret
   end
@@ -642,13 +642,13 @@ fun build_nat_condition ctxt t =
     val ret =
       (new_args_t ~~ condition_paths)
       |> map mk_condition
-      |> List.concat |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
-      |> mk_conj' |> @{print}
+      |> List.concat |> map (Thm.cterm_of ctxt)  |> map Thm.term_of
+      |> mk_conj'
     val foo =
-      new_args_t ~~ map (change_const_to_nat ctxt fun_name) args_t |> @{print}
+      new_args_t ~~ map (change_const_to_nat ctxt fun_name) args_t
       |> filter (is_Const o snd)
-      |> map HOLogic.mk_eq |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
-      |> mk_conj'  |> @{print}
+      |> map HOLogic.mk_eq |> map (Thm.cterm_of ctxt)  |> map Thm.term_of
+      |> mk_conj'
   in
     ret
   end;
@@ -658,7 +658,7 @@ fun nat_encode_term ctxt t =
     val arguments_and_paths =
       lhs_of_term t
       |> map_types tvar_to_tfree
-      |> Term.args_of |> @{print}
+      |> Term.args_of
       |> map build_patmatch_term
       |> map mk_variable_paths
       |> flat o map_index (fn (i, x) => map (pair (argname i)) x)
@@ -679,14 +679,14 @@ fun nat_encode_term ctxt t =
       |> map_types tvar_to_tfree
       |> change_if ctxt
 
-      |> fold (fn f => fn x => f x) wrappers |> @{print}
+      |> fold (fn f => fn x => f x) wrappers
     val ret' =
       t
       |> rhs_of_term
       |> map_types tvar_to_tfree
       |> change_if ctxt
       |> replace_constructors ctxt
-      |> fold (fn f => fn x => f x) wrappers |> @{print}
+      |> fold (fn f => fn x => f x) wrappers
   in
     ret
   end
@@ -806,11 +806,11 @@ fun function_nat_rewrite_correctness_cmd2 fn_str ctxt =
       |> flat
       |> (curry op @) argnames
     val goal =
-      BNF_Util.mk_Trueprop_eq (lhs, rhs) |> @{print}
+      BNF_Util.mk_Trueprop_eq (lhs, rhs)
     val encoder_simps =
-        Library.distinct (op =) ((body_type fn_T)::(binder_types fn_T)) |> @{print}
-        |> map (suffix ".simps" o encoder_name_of_type ctxt) |> @{print}
-        |> map (Proof_Context.get_thms ctxt) |> @{print}
+        Library.distinct (op =) ((body_type fn_T)::(binder_types fn_T))
+        |> map (suffix ".simps" o encoder_name_of_type ctxt)
+        |> map (Proof_Context.get_thms ctxt)
         |> flat
     val other_simps =
         ["fstP.simps", "sndP.simps", "atomic.simps", "pair.simps"]
@@ -833,15 +833,15 @@ fun function_nat_rewrite_correctness_cmd2 fn_str ctxt =
       | f acc (Abs (_, _, t)) = f acc t
       | f acc _ = acc
     val g =
-      Thm.cterm_of ctxt goal |> @{print}
+      Thm.cterm_of ctxt goal
       |> Goal.init
       |> (Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
       THEN ALLGOALS (EqSubst.eqsubst_tac ctxt [0] fn_nat_simps)
       THEN ALLGOALS (EqSubst.eqsubst_tac ctxt [0] fn_simps))
-      |> Seq.hd |> @{print}
+      |> Seq.hd
       |> (ALLGOALS (simp_tac (ctxt addsimps encoder_simps))) |> Seq.hd
       |> (ALLGOALS (simp_tac (ctxt addsimps other_simps)))
-      |> Seq.hd |> @{print}
+      |> Seq.hd
     val a =
       Goal.prove ctxt schemvars assms goal
       (fn {context=ctxt, prems, ...} =>
@@ -891,11 +891,11 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
       |> flat
       |> (curry op @) argnames
     val goal =
-      BNF_Util.mk_Trueprop_eq (lhs, rhs) |> @{print}
+      BNF_Util.mk_Trueprop_eq (lhs, rhs)
     val encoder_simps =
-        Library.distinct (op =) ((body_type fn_T)::(binder_types fn_T)) |> @{print}
-        |> map (suffix ".simps" o encoder_name_of_type ctxt) |> @{print}
-        |> map (Proof_Context.get_thms ctxt) |> @{print}
+        Library.distinct (op =) ((body_type fn_T)::(binder_types fn_T))
+        |> map (suffix ".simps" o encoder_name_of_type ctxt)
+        |> map (Proof_Context.get_thms ctxt)
         |> flat
     val other_simps =
         ["fstP.simps", "sndP.simps", "atomic.simps", "pair.simps"]
@@ -922,12 +922,12 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
       | f acc (Abs (_, _, t)) = f acc t
       | f acc _ = acc
     val g =
-      Thm.cterm_of ctxt goal |> @{print}
+      Thm.cterm_of ctxt goal
       |> Goal.init
       |> (Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
       THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt [0] fn_nat_simps)
                       THEN' (EqSubst.eqsubst_tac ctxt [0] fn_simps)))
-      |> Seq.hd |> @{print}
+      |> Seq.hd
       |> (ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
           (let
             fun foo thm =
@@ -958,9 +958,9 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
           end)
           )
         ctxt))
-      |> Seq.hd |> @{print}
+      |> Seq.hd
       |> ALLGOALS (EqSubst.eqsubst_tac ctxt [0] @{thms HOL.if_False HOL.if_True})
-      |> Seq.hd |> @{print}
+      |> Seq.hd
       |> (HEADGOAL (Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
           (let
             fun foo thm =
@@ -971,9 +971,9 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
                 | f acc _ = acc
               val if_subst_tac =
                 thm
-                |> Thm.prems_of  |> @{print}
-                |> map (f []) |> @{print}
-                |> flat |> @{print}
+                |> Thm.prems_of
+                |> map (f [])
+                |> flat
               val _ : conv = undefined
             in
               Seq.single thm
@@ -983,7 +983,7 @@ fun function_nat_rewrite_correctness_cmd3 fn_str int ctxt =
           end)
           )
         ctxt))
-      |> Seq.hd |> @{print}
+      |> Seq.hd
     (*val a =
       Goal.prove ctxt schemvars assms goal
       (fn {context=ctxt, prems, ...} =>
@@ -1016,25 +1016,25 @@ val _ =
 fun construct_equiv_lemma ctxt t =
   let
     val fun_base_name = Long_Name.base_name (fst (Term.dest_Const t))
-    val fun_T = fastype_of t |> @{print}
+    val fun_T = fastype_of t
     val (fun_arg_Ts, fun_body_T) = Term.strip_type fun_T
     val fun_arg_ts =
       map_index (fn (i, T) => Free ("arg" ^ subscript (string_of_int (i + 1)), T)) fun_arg_Ts
 
     val correctness_rhs =
       Term.list_comb (t, fun_arg_ts)
-      |> (curry op $) (build_encoder_invocation ctxt NONE fun_body_T) |> @{print}
+      |> (curry op $) (build_encoder_invocation ctxt NONE fun_body_T)
 
     val correctness_lhs =
       map (fn t => (build_encoder_invocation ctxt NONE (fastype_of t)) $ t) fun_arg_ts
-      |> Term.list_comb o (pair (read_const' ctxt (fun_base_name ^ "_nat"))) |> @{print}
+      |> Term.list_comb o (pair (read_const' ctxt (fun_base_name ^ "_nat")))
 
     val assms =
       fold_atyps (insert (op =)) fun_T []
       |> flat o map (fn T =>
                 [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
                  mk_dec_bot_eq_bot ctxt T])
-      |> @{print}
+
     val argnames =
       map_range (fn i => "arg" ^ subscript (string_of_int (i + 1))) (length (Term.binder_types fun_T))
 
@@ -1042,7 +1042,7 @@ fun construct_equiv_lemma ctxt t =
       fold_atyps (insert (op =)) fun_T []
       |> map (fn T => [encoder_name_of_type ctxt T, decoder_name_of_type ctxt T])
       |> flat
-      |> (curry op @) argnames |> @{print}
+      |> (curry op @) argnames
     val goal =
       BNF_Util.mk_Trueprop_eq (correctness_lhs, correctness_rhs)
   in
@@ -1052,34 +1052,34 @@ fun construct_equiv_lemma ctxt t =
 fun constructor_equiv_lemma ctxt t =
   let
     val (schemvars, assms, goal) = construct_equiv_lemma ctxt t
-    val _ = schemvars |> @{print}
-    val _ = map (Thm.cterm_of ctxt) assms |> @{print}
-    val _ = Thm.cterm_of ctxt goal |> @{print}
+    val _ = schemvars
+    val _ = map (Thm.cterm_of ctxt) assms
+    val _ = Thm.cterm_of ctxt goal
 
     val encoder_simp =
       encoder_name_of_type ctxt (Term.body_type (fastype_of t))
       |> suffix ".simps"
-      |> Proof_Context.get_thms ctxt |> @{print}
+      |> Proof_Context.get_thms ctxt
 
     val const_def =
       Long_Name.base_name (fst (dest_Const t))
       |> suffix "_nat_def"
-      |> Proof_Context.get_thms ctxt |> @{print}
+      |> Proof_Context.get_thms ctxt
 
     val thm =
       Goal.prove ctxt schemvars assms goal
         (fn {context=ctxt, prems, ...} =>
            asm_full_simp_tac (ctxt addsimps encoder_simp addsimps const_def) 1)
-      |> @{print}
+
   in
     thm
   end;
 
 fun constructor_equiv_lemmas_cmd T ctxt =
   let
-    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T)) |> @{print}
+    val T_name = fst (dest_Type (Syntax.parse_typ ctxt T))
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the
-    val T = tvar_to_tfree (#T sugar) |> normalize_type |> @{print}
+    val T = tvar_to_tfree (#T sugar) |> normalize_type
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar) |> map normalize_type_of_term
     val goals = map (constructor_equiv_lemma ctxt) ctrs
     val names = map (suffix "_nat_equiv" o Term.term_name) ctrs
@@ -1121,12 +1121,12 @@ fun function_nat_rewrite_auto s ctxt =
       map Thm.prop_of fun_simps
       |> map replace_suc (* morally replace "f (Suc n) = g n" by "f n = g (n - 1)" *)
       |> (fn ts => (map (build_nat_condition ctxt) ts, map (nat_encode_term ctxt) ts))
-      |-> Ctr_Sugar_Util.mk_IfN (Term.body_type fun_nat_T) |> @{print}
-      |> Term.map_aterms (change_const_to_nat ctxt fun_name) |> @{print}
+      |-> Ctr_Sugar_Util.mk_IfN (Term.body_type fun_nat_T)
+      |> Term.map_aterms (change_const_to_nat ctxt fun_name)
       |> const_to_free (fun_name ^ "_nat", fun_nat_T)
       |> normalize_type_of_term
 
-    val (_, fun_nat_lthy) =
+    val ((_, fun_nat_simps2), fun_nat_lthy) =
       Partial_Function.add_partial_function
         "tailrec"
         [(Binding.name fun_nat_name, NONE, NoSyn)]
@@ -1162,9 +1162,9 @@ fun function_nat_rewrite_auto s ctxt =
       let
         (* add t itself if whole term is a constructor *)
         val term_if_ctr =
-          t |> @{print}
-          |> fst o strip_comb |> @{print}
-          |> try dest_Const |> @{print}
+          t
+          |> fst o strip_comb
+          |> try dest_Const
           |> Option.map (build_constructor_tag ctxt) (* probably not the most performant way *)
           |> Option.join
           |> Option.map (K [t])
@@ -1199,7 +1199,7 @@ fun function_nat_rewrite_auto s ctxt =
       |> (fn x => fold (union (op =)) x [])
       |> map (encoder_name_of_type ctxt)
       |> map (suffix ".simps")
-      |> flat o map (Proof_Context.get_thms ctxt) |> @{print}
+      |> flat o map (Proof_Context.get_thms ctxt)
 
     val ctr_simps =
       fun_patmached_arg_ts (* we should probably go through all types in the whole function *)
@@ -1211,7 +1211,7 @@ fun function_nat_rewrite_auto s ctxt =
       |> flat o map the_list
       |> flat o map #ctrs
       |> map ((suffix "_nat_def") o Long_Name.base_name o fst o dest_Const)
-      |> flat o map (Proof_Context.get_thms ctxt) |> @{print}
+      |> flat o map (Proof_Context.get_thms ctxt)
 
 
 
@@ -1233,7 +1233,7 @@ fun function_nat_rewrite_auto s ctxt =
           Goal.prove ctxt vars [] t
             (fn {context=ctxt, prems, ...} =>
                asm_full_simp_tac (ctxt addsimps encoder_simps addsimps ctr_simps) 1
-             )) |> @{print}
+             ))
 
 
 
@@ -1243,55 +1243,66 @@ fun function_nat_rewrite_auto s ctxt =
 
 
     val (schemvars, assms, goal) = construct_equiv_lemma ctxt' t
+    val _ = Thm.cterm_of ctxt' goal |> @{print}
 
     val induction_rule =
       Proof_Context.get_thms ctxt' (fun_name ^ ".induct")
     val fun_nat_simps =
       Proof_Context.get_thms ctxt' (fun_name ^ "_nat.simps") |> @{print}
 
-    fun collect_const_invocations t =
+
+    fun is_constructor_call ctxt t =
       let
-        val (fn_t, args) = strip_comb t
-        val v =
-          dest_Const fn_t
-          |> (fn (fn_name, fn_T) => (fn_name, build_constructor_tag ctxt (fn_name, fn_T)))
-          ||> Option.map (K false)
-          ||> (fn x => Option.getOpt (x, true))
-          |> (fn (fn_name, b) => if fn_name <> fun_name andalso b then [(fn_name, args)] else [])
-          handle TERM _ => []
+        val t = head_of t
+        val typ_name = fst (dest_Type (body_type (fastype_of t))) |> @{print}
+        val sugar = Ctr_Sugar.ctr_sugar_of ctxt typ_name
       in
-        map collect_const_invocations args
-        |> (fn x => fold (union (op =)) x v)
-      end
+        member (op =) (#ctrs (the sugar)) t |> @{print}
+      end;
 
     fun collect_const_invocations2 t =
       let
         val (fn_t, args) = strip_comb t
         val v =
           dest_Const fn_t
-          |> (fn (fn_name, fn_T) => (fn_name, build_constructor_tag ctxt (fn_name, fn_T)))
-          ||> Option.map (K false)
-          ||> (fn x => Option.getOpt (x, true))
-          |> (fn (fn_name, b) => if fn_name <> fun_name andalso b then [t] else [])
+          |> (fn (fn_name, _) => if fn_name <> fun_name then [t] else [])
           handle TERM _ => []
       in
         map collect_const_invocations2 args
         |> (fn x => fold (union (op =)) x v)
       end
 
-    fun get_args thm =
-      Thm.prop_of thm |> @{print}
-      |> lhs_of_term
-      |> snd o Term.strip_comb
-      |> map (fn t => (Term.fastype_of t, t))
+    fun collect_const_invocations t =
+      let
+        val (fn_t, args) = strip_comb t |> @{print}
+        val acc = (if fst (dest_Const fn_t) <> fun_name then [t] else [])
+        handle TERM _ => [] |> @{print}
+      in
+        map collect_const_invocations args
+        |> (fn x => fold (union (op =)) x acc)
+      end;
+
+    val (const_ctr_ts, cons_ts) =
+      map Thm.prop_of fun_simps
+      |> map rhs_of_term
+      |> map collect_const_invocations |> @{print}
+      |> Library.foldl1 (merge (op =))
+      |> (fn ts =>
+          fold (fn t => if is_constructor_call ctxt t
+                        then apfst (cons t) else apsnd (cons t)) ts ([], []))
+      |> @{print}
+
+    val ctr_simpss =
+      map (suffix "_nat_def" o Long_Name.base_name o fst o dest_Const o head_of) const_ctr_ts
+      |> maps (Proof_Context.get_thms ctxt') |> @{print}
 
 
     val equiv_thms_inst_vars =
       map Thm.prop_of fun_simps
-      |> map rhs_of_term |> @{print}
+      |> map rhs_of_term
 
-      |> map collect_const_invocations2
-      |> (fn x => fold (union (op =)) x []) |> @{print}
+      |> map collect_const_invocations |> @{print}
+      |> (fn x => fold (union (op =)) x [])
       |> map (fn t =>
         let
         val ((s,_), args) =
@@ -1306,44 +1317,45 @@ fun function_nat_rewrite_auto s ctxt =
 
         val inv_fun_arg_Ts =
           binder_types (fastype_of (read_const' ctxt' s))
-          |> map add_sort_order_bot |> @{print}
+          |> map add_sort_order_bot
 
         val inv_fun_arg_ts =
           inv_fun_arg_Ts
-          |> map_index (fn (i, T) => Var ((argname i, 0), T)) |> @{print}
+          |> map_index (fn (i, T) => Var ((argname i, 0), T))
 
         val a =
-          Term.list_comb (reg_invoc, inv_fun_arg_ts) |> @{print}
-          |> Thm.cterm_of ctxt' |> @{print}
+          Term.list_comb (reg_invoc, inv_fun_arg_ts)
+          |> Thm.cterm_of ctxt'
 
         val b =
           map_types add_sort_order_bot t
-          |> Thm.cterm_of ctxt' |> @{print}
-        val substs = Thm.first_order_match (a, b) |> @{print}
+          |> Thm.cterm_of ctxt'
+        val substs = Thm.first_order_match (a, b)
 
-        val equiv_thm = hd (Proof_Context.get_thms ctxt (s ^ "_nat_equiv")) |> @{print}
+        val equiv_thm = hd (Proof_Context.get_thms ctxt (Long_Name.base_name s ^ "_nat_equiv"))
         in
           Thm.instantiate substs equiv_thm
         end
         )
       |> @{print}
 
+
     fun equiv_thms_inst_prems ctxt thm =
       let
         val wellbehaved_thms =
-          Thm.prems_of thm |> @{print}
+          Thm.prems_of thm
           |> map rhs_of_term
-          |> filter (fn Const ("Fun.id", _) => true | _ => false) |> @{print}
+          |> filter (fn Const ("Fun.id", _) => true | _ => false)
           |> map (body_type o fastype_of) |> @{print}
           |> map (Long_Name.base_name o fst o dest_Type)
-          |> map (prefix "encoding_" o suffix "_wellbehaved") |> @{print}
-          |> map (hd o Proof_Context.get_thms ctxt) |> @{print}
+          |> map (prefix "encoding_" o suffix "_wellbehaved")
+          |> map (hd o Proof_Context.get_thms ctxt)
       in
         thm OF wellbehaved_thms
       end;
 
-    val equiv_thms_inst =
-      map (equiv_thms_inst_prems ctxt) equiv_thms_inst_vars |> @{print}
+    (* val equiv_thms_inst =
+      map (equiv_thms_inst_prems ctxt) equiv_thms_inst_vars  *)
 
     fun if_exp_simp_tac ctxt thm =
       let
@@ -1359,23 +1371,27 @@ fun function_nat_rewrite_auto s ctxt =
         EqSubst.eqsubst_tac ctxt [0] if_simps 1 thm
       end
 
-    fun solve_subgoal_tac ctxt prems =
+    fun solve_subgoal_tac ctxt prems i =
       let
         fun maybe_of thms thm =
           fold (fn asm => fn thm => the_default thm (try (curry op OF thm) [asm])) thms thm
         val equiv_thms_inst2 =
-          equiv_thms_inst |> @{print}
-          |> map (maybe_of prems) |> @{print}
+          equiv_thms_inst_vars
+          |> map (maybe_of prems)
         val bla =
-          map Thm.prems_of equiv_thms_inst2 |> @{print}
-          |> map (map (body_type o fastype_of o rhs_of_term)) |> @{print}
+          map Thm.prems_of equiv_thms_inst2
+          |> map (map (body_type o fastype_of o rhs_of_term))  |> @{print}
           |> map (map (Long_Name.base_name o fst o dest_Type))
-          |> map (map (prefix "dec_" o suffix "_bot")) |> @{print}
+          |> map (map (prefix "dec_" o suffix "_bot"))
           |> map (map (hd o Proof_Context.get_thms ctxt))
-          |> (fn x => map_product maybe_of x equiv_thms_inst2) |> @{print}
+          |> (fn x => map_product maybe_of x equiv_thms_inst2)
 
       in
-        print_tac ctxt "before if"
+        print_tac ctxt "start solve subgoal"
+        THEN EqSubst.eqsubst_tac ctxt [0] [fun_nat_simps2] i
+        THEN print_tac ctxt "after subst nat fun"
+        THEN EqSubst.eqsubst_tac ctxt [0] fun_simps i
+        THEN print_tac ctxt "after subst fun"
         THEN (if_exp_simp_tac ctxt)
         THEN (print_tac ctxt "after if")
         THEN (EqSubst.eqsubst_tac ctxt [0] @{thms HOL.if_False HOL.if_True} 1)
@@ -1386,39 +1402,40 @@ fun function_nat_rewrite_auto s ctxt =
         THEN (print_tac ctxt "after constructor simps") *)
         THEN TRY (EqSubst.eqsubst_tac ctxt [0] bla 1)
         THEN (print_tac ctxt "after invoke simps")
+        THEN (asm_full_simp_tac (ctxt addsimps ctr_simpss) 1)
+        THEN (print_tac ctxt "after final simps")
       end;
 
 
-    (* val g =
-      Thm.cterm_of ctxt' goal |> @{print}
-      |> Goal.init |> @{print}
-      |> (Induct_Tacs.induct_tac ctxt' [map SOME argnames] (SOME induction_rule) 1
-          THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt' [0] fun_simps)
-                          THEN' (EqSubst.eqsubst_tac ctxt' [0] fun_nat_simps))) |> @{print}
+     val g =
+      Thm.cterm_of ctxt' goal
+      |> Goal.init
+      |> (Induct_Tacs.induct_tac ctxt' [map SOME argnames] (SOME induction_rule) 1)
       |> Seq.hd |> @{print}
       |> (ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, prems = prems, ...} =>
-          solve_subgoal_tac ctxt prems
+          solve_subgoal_tac ctxt (@{print} prems) 1
           )
         ctxt'))
       |> Seq.hd |> @{print}
-      |> Goal.finish ctxt' |> @{print} *)
+      |> Goal.finish ctxt'
 
 
     val correctness_thm =
       Goal.prove ctxt' schemvars assms goal
         (fn {context=ctxt, prems, ...} =>
-           Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
-           THEN ALLGOALS ((EqSubst.eqsubst_tac ctxt [0] fun_simps)
-                           THEN' (EqSubst.eqsubst_tac ctxt [0] fun_nat_simps))
-           THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt,...} =>
+           print_tac ctxt (@{print} "Start")
+           THEN Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
+           THEN (print_tac ctxt "after induction")
+           THEN HEADGOAL (solve_subgoal_tac ctxt prems)
+           THEN HEADGOAL (solve_subgoal_tac ctxt prems)
+(*            THEN ALLGOALS (Subgoal.FOCUS_PARAMS (fn {context = ctxt, params = params, ...} =>
              let
-                val _ = prems
-                val _ = Assumption.all_prems_of ctxt
+
              in
-             solve_subgoal_tac ctxt prems
+             solve_subgoal_tac ctxt prems 1
              end
-             ) ctxt ))
-      |> @{print}
+             ) ctxt ) *)
+      )
 
 
     val correctness_thm_name =
