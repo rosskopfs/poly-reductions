@@ -8,11 +8,11 @@ definition max_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 definition max3_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "max3_nat x y z \<equiv> max_nat (max_nat x y) z"
 
-fun nat_add :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "nat_add x y z =
+fun add_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "add_nat x y z =
     (if x \<noteq> 0
-      then nat_add (x - 1) y (z + 1)
-      else (if y \<noteq> 0 then nat_add x (y - 1) (z + 1) else z))"
+      then add_nat (x - 1) y (z + 1)
+      else (if y \<noteq> 0 then add_nat x (y - 1) (z + 1) else z))"
 
 definition test_let :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "test_let x y \<equiv> let u = 10; v = u + y in v + x"
@@ -23,7 +23,7 @@ begin
 
 compile_nat max_nat_def basename max
 compile_nat max3_nat_def basename max3
-compile_nat nat_add.simps(1)
+compile_nat add_nat.simps(1) basename add
 compile_nat test_let_def
 
 end
