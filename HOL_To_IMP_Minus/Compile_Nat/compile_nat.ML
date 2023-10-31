@@ -1,3 +1,4 @@
+(*TODO: signature*)
 structure Compile_Nat = struct
 
 type compiled_const = { ret_reg : string, arg_regs : string list, compiled : term }
@@ -21,8 +22,8 @@ fun declare_compiled_const name compiled_const =
         Compiled_Consts.map (fn tab => Symtab.update_new (name, compiled_const') tab)
       end)
 
-fun get_compiled_const ctxt f_name =
-  Compiled_Consts.get ctxt
+fun get_compiled_const context f_name =
+  Compiled_Consts.get context
   |> (fn tab => Symtab.lookup tab f_name)
   |> the
   handle Option.Option => error ("Unknown compiled constant: " ^ quote f_name)
@@ -222,8 +223,8 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const =
       Binding.name_of f_IMP_binding
-      |> Proof_Context.read_const {proper = true, strict = true} lthy'
-      |> (fn t => \<^Const>\<open>inline for \<^Const>\<open>compile for t\<close>\<close>)
+      |> Proof_Context.read_const {proper = false, strict = false} lthy'
+      |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
                      , compiled = f_IMP_const}
@@ -256,7 +257,7 @@ in
     (parser >> (fn (((const, ret_reg), arg_regs), compiled) => fn lthy =>
       let
         val (const_name, const_ty) =
-          Proof_Context.read_const {proper = true, strict = true} lthy const
+          Proof_Context.read_const {proper = false, strict = false} lthy const
           |> Term.dest_Const
         val compiled_term = Syntax.read_term lthy compiled
 
@@ -335,8 +336,7 @@ in
               ]
           end
         fun pretty_compiled_const (name, {ret_reg, arg_regs, compiled}) =
-          let
-            val const = Proof_Context.read_const {proper = true, strict = true} lthy name
+          let val const = Proof_Context.read_const {proper = false, strict = false} lthy name
           in
             Syntax.pretty_term lthy const ::
             Pretty.fbrk ::

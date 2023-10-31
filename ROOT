@@ -38,34 +38,27 @@ session Expressions in "Expressions" = HOL +
   theories
     Expression_Tail_Call_Whiles_Plus_Minus
 
-session IMP_Minus_Views in "Cook_Levin_IMP/Views" = IMP_Minus +
+session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
   sessions
     "HOL-Library"
+    "ML_Unification"
+    "SpecCheck"
   directories
-    "IMP_Minus"
-    "IMP_Minus_Calls"
-    "IMP_Minus_Tailcalls"
+    "Compile_Nat"
     "ML_Typeclasses"
     "ML_Typeclasses/State"
+    "Refinements"
+    "Views"
+    "Views/IMP_Tailcalls"
   theories
-    "Views_Cook_Levin_IMP_Minus"
-    "Let_To_IMP_Minus_Locale"
-    "Let_To_IMP_Minus_Tactics"
-    "States_Cook_Levin_IMP_Minus_Calls"
-    "Let_To_IMP_Minus_Calls_Locale"
-    "Let_To_IMP_Minus_Calls_Tactics"
-
-session IMP_Minus_Views_Examples in "Cook_Levin_IMP/Views/Examples" = Cook_Levin_IMP +
-  theories
-    "Elemof"
-    "Filter_Defined_Acc"
-    "Filter_Defined_Acc_Call"
+    Compile_Nat
+    HOL_To_IMP_Tailcalls_Tactics
+    HOL_To_IMP_Minus_Arithmetics
 
 session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
   sessions
     Poly_Reductions_Lib
-    IMP_Minus
-    IMP_Minus_Views
+    HOL_To_IMP_Minus
     "HOL-Real_Asymp"
     Landau_Symbols
     Verified_SAT_Based_AI_Planning

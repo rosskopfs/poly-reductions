@@ -1,10 +1,11 @@
 theory Compile_Nat
-  imports IMP_Tailcalls_Dynamic
-  keywords
-    "compile_nat" :: thy_decl and "basename" and
-    "declare_compiled_const" :: thy_decl and
-      "return_register" and "argument_registers" and "compiled" and
-    "print_compiled_consts" :: diag
+imports
+  IMP_Minus.IMP_Tailcalls_Dynamic
+keywords
+  "compile_nat" :: thy_decl and "basename" and
+  "declare_compiled_const" :: thy_decl and
+  "return_register" and "argument_registers" and "compiled" and
+  "print_compiled_consts" :: diag
 begin
 
 fun measure_assoc where
@@ -99,48 +100,13 @@ next
   qed
 qed auto
 
+definition "tailcall_to_IMP_Minus \<equiv> inline o compile"
+
+lemma tailcall_to_IMP_Minus_eq: "tailcall_to_IMP_Minus c = inline (compile c)"
+  unfolding tailcall_to_IMP_Minus_def by simp
+
 named_theorems compiled_const_defs
 ML_file\<open>compile_nat.ML\<close>
 
-context includes com_syntax aexp_syntax no_com'_syntax
-begin
-
-definition "eq_nat (n :: nat) m \<equiv> if n = m then (1 :: nat) else 0"
-
-definition [compiled_const_defs add]:
-  "eq_IMP \<equiv>
-    ''eq_x_Sub_y'' ::= (V ''eq_x'' \<ominus> V ''eq_y'');;
-    (''eq_y_Sub_x'' ::= (V ''eq_y'' \<ominus> V ''eq_x'');;
-    (''eq_neq'' ::= (V ''eq_x_Sub_y'' \<oplus> V ''eq_y_Sub_x'');;
-    (IF ''eq_neq'' \<noteq>0
-    THEN ''eq_ret'' ::= A (N 0)
-    ELSE ''eq_ret'' ::= A (N 1))))"
-
-declare_compiled_const eq_nat
-  return_register "eq_ret"
-  argument_registers "eq_x" "eq_y"
-  compiled eq_IMP
-
-declare_compiled_const HOL.eq
-  return_register "eq_ret"
-  argument_registers "eq_x" "eq_y"
-  compiled eq_IMP
-
-lemma eq_IMP_func_correct:
-  assumes "(eq_IMP, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''eq_ret'' = eq_nat (s ''eq_x'') (s ''eq_y'')"
-  using assms unfolding eq_IMP_def eq_nat_def by auto
-
-definition "not_nat (n :: nat) \<equiv> eq_nat n 0"
-
-compile_nat not_nat_def basename not
-
-declare_compiled_const HOL.Not
-  return_register "not_ret"
-  argument_registers "not_n"
-  compiled "inline (compile not_IMP)"
-
-
-end
 
 end

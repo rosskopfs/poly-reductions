@@ -1,18 +1,18 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory States_Cook_Levin_IMP_Minus_Calls
+theory States_IMP_Tailcalls
   imports
-    IMP_Minus.IMP_Calls
-    Simps_To
+    IMP_Minus.IMP_Tailcalls_Dynamic
     Views_Base
     ML_State_Seq
+    View_Utils
+    ML_Unification.Simps_To
+    SpecCheck.SpecCheck_Show
 begin
 
 paragraph \<open>Summary\<close>
-text \<open>Views adapted to track @{session IMP_Minus} state changes in the
-@{session Cook_Levin_IMP} refinement theorems.\<close>
+text \<open>Views adapted to track @{theory IMP_Minus.IMP_Tailcalls_Dynamic} state changes.\<close>
 
-text\<open>The next lemmas are needed since, in the Cook-Levin project,
-the correctness theorems for the refinements state their state changes in terms
+text\<open>The next lemmas are needed since the big-step semantics state their state changes in terms
 of functions (i.e. the semantics of states) directly.
 
 In principle, we may not require being able to inject a @{type state} into a @{term State}.\<close>
@@ -53,13 +53,13 @@ lemma state_state_app_eqI:
 
 lemma STATE_state_app_eqI:
   assumes "STATE (interp_state st) = STATE (interp_state st')"
-  and  "SIMPS_TO (interp_state st) s"
-  and "SIMPS_TO (interp_state st' k) val"
+  and "PROP SIMPS_TO (interp_state st) s"
+  and "PROP SIMPS_TO (interp_state st' k) val"
   shows "s k = val"
-  using assms unfolding STATE_eq SIMPS_TO_iff
+  using assms unfolding STATE_eq SIMPS_TO_eq atomize_eq
   by (fact state_state_app_eqI)
 
-text \<open>The following is used to update a view equality according to a new
+text \<open>The following is used to update a state equality according to a new
 retrieval condition.\<close>
 
 lemma update_state_state_app_eq:
@@ -72,14 +72,14 @@ lemma update_state_state_app_eq:
 
 lemma update_STATE_state_app_eq:
   assumes "STATE (interp_state st) = STATE (interp_state st')"
-  and  "SIMPS_TO (interp_state st) s"
+  and  "PROP SIMPS_TO (interp_state st) s"
   and "s k = val"
-  and "SIMPS_TO val val'"
+  and "PROP SIMPS_TO val val'"
   shows "STATE (interp_state st) = STATE (interp_state (update_state st' k val'))"
-  using assms unfolding STATE_eq SIMPS_TO_iff
+  using assms unfolding STATE_eq SIMPS_TO_eq atomize_eq
   by (fact update_state_state_app_eq)
 
-text \<open>The following is used to update a view equality according to a new
+text \<open>The following is used to update a state equality according to a new
 update condition.\<close>
 
 lemma update_state_state_eq_update:
@@ -92,14 +92,15 @@ lemma update_state_state_eq_update:
 
 lemma update_STATE_state_eq_update:
   assumes "STATE (interp_state st) = STATE (interp_state st')"
-  and  "SIMPS_TO (interp_state st) s"
+  and  "PROP SIMPS_TO (interp_state st) s"
   and "s' = s(k := val)"
-  and "SIMPS_TO val val'"
+  and "PROP SIMPS_TO val val'"
   shows "STATE (interp_state (State s')) = STATE (interp_state (update_state st' k val'))"
-  using assms unfolding STATE_eq SIMPS_TO_iff by (fact update_state_state_eq_update)
+  using assms unfolding STATE_eq SIMPS_TO_eq atomize_eq
+  by (fact update_state_state_eq_update)
 
 
-ML_file\<open>state_cook_levin_imp_minus_calls.ML\<close>
+ML_file\<open>state_imp_tailcalls.ML\<close>
 
 (*TODO:
 1. the framework currently only collects a big state equality without
@@ -108,8 +109,6 @@ a (complex) series of update operations.
 We could instead simplify the states themselves to speed up the proofs and
 make them more reliable. Currently, we rely on @{method fastforce} to simplify
 the chain of operations.
-
-2. integrate the logger from https://github.com/kappelmann/logger-isabelle
 *)
 
 end
