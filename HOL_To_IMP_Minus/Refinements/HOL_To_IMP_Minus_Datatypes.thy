@@ -17,8 +17,8 @@ lemma triangle_IMP_func_correct [func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms triangle_def} @{thm triangle_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+     @{thms triangle_def} @{context} 1\<close>)
   done
 
 text \<open>up next: encoding of products, sums, etc. See @{term prod_encode}\<close>

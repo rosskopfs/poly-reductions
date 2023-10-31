@@ -3,7 +3,6 @@ theory HOL_To_IMP_Tailcalls_Tactics
   imports
     States_IMP_Tailcalls
     Compile_Nat
-    (*"HOL-Library.Simps_Case_Conv"*)
 begin
 
 lemma tailcall_to_IMP_Minus_complete:
@@ -53,49 +52,14 @@ theorem tIf_tE':
     | t' where "t = Suc t'" and "s b = 0" and "c \<turnstile>(c2, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
   using assms by auto
 
+end
+
 ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
 
 ML \<open>
   structure H = HOL_To_IMP_Tailcalls_Tactics
   structure SIT = State_IMP_Tailcalls
 \<close>
-
-(*lemma case_nat_eq_if: "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) = (if n = 0 then x else f (n - 1))"
-  unfolding Nitpick.case_nat_unfold by simp
-
-fun add_nat_pat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"add_nat_pat 0 0 z = z" |
-"add_nat_pat 0 (Suc y) z = add_nat_pat 0 y (Suc z)" |
-"add_nat_pat (Suc x) y z = add_nat_pat x y (Suc z)"
-declare add_nat_pat.simps[simp del]
-                        
-case_of_simps add_nat_pat_eq[simplified Nitpick.case_nat_unfold] : add_nat_pat.simps
-compile_nat add_nat_pat_eq basename add_pat
-
-lemma add_nat_pat_IMP_func_correct[cl_func_correct]:
-  assumes "(inline (compile (add_pat_IMP)), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''add_pat_ret'' = add_nat_pat (s ''add_pat_x1a'') (s ''add_pat_x2a'') (s ''add_pat_x3ba'')"
-  using assms                                 
-  apply (rule inline_compile_correct_if_correct)
-  apply (simp add: add_pat_IMP_def)
-  apply (simp add: add_pat_IMP_def)
-  subgoal for t s'
-  apply (induction "(s ''add_pat_x1a'')" "(s ''add_pat_x2a'')" "(s ''add_pat_x3ba'')" arbitrary: s t rule: add_nat_pat.induct)
-  apply simp
-  apply (tactic \<open>H.run_finish_tac @{thms add_nat_pat.simps} @{thm add_pat_IMP_def} 
-    @{thms cl_func_correct} @{context} 1\<close>)
-  apply simp
-  apply (tactic \<open>H.run_tac @{thm add_pat_IMP_def} @{thms cl_func_correct} @{context} 1\<close>)
-  (*apply (tactic \<open>H.finish_non_tailcall_tac @{thms add_nat_pat.simps} @{context} 1\<close>)*)
-  apply (tactic \<open>SIT.rewrite_all_state_app_tac' (fn ctxt => View_Util.subst_first_tac ctxt o single) @{context} 1\<close>)
-  apply (tactic \<open>SIT.remove_state_eq_tac @{context} 1\<close>)
-  (*apply (tactic \<open>View_Util.subst_first_tac @{context} @{thms add_nat_pat.simps} 1\<close>)*)
-    (*THEN' VU.subst_first_tac ctxt HOL_program_eqs*)
-    (*THEN' TU.TRY' (REPEAT_ALL_NEW (VU.subst_first_tac ctxt @{thm Let_def} ORELSE' if_split_tac ctxt))*)
-    (*THEN_ALL_NEW finish_goal_tac)*)
-  oops
-*)
-end
   
 
 end

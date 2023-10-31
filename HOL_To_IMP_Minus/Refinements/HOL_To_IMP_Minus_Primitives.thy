@@ -36,8 +36,8 @@ lemma true_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms true_nat_def} @{thm true_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms true_nat_def} @{context} 1\<close>)
   done
 
 lemma true_nat_eq_one[simp]: "true_nat = 1"
@@ -62,8 +62,8 @@ lemma false_IMP_func_correct [func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms false_nat_def} @{thm false_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct}
+    @{thms false_nat_def} @{context} 1\<close>)
   done
 
 lemma false_nat_eq_one[simp]: "false_nat = 0"
@@ -83,8 +83,8 @@ lemma id_IMP_func_correct [func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms id_nat_def} @{thm id_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct}
+    @{thms id_nat_def} @{context} 1\<close>)
   done
 
 lemma id_nat_eq_id[simp]: "id_nat = id"
@@ -151,10 +151,10 @@ lemma not_IMP_func_correct [func_correct]:
   shows "s' ''not_ret'' = not_nat (s ''not_n'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: not_IMP_def)
-  apply (simp add: not_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms not_nat_def} @{thm not_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms not_nat_def} @{context} 1\<close>)
   done
 
 lemma not_nat_eq_nat_of_bool_eq_false[simp]: "not_nat n = nat_of_bool (n = false_nat)"
@@ -175,10 +175,10 @@ lemma max_IMP_func_correct[func_correct]:
   shows "s' ''max_ret'' = max_nat (s ''max_x'') (s ''max_y'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: max_IMP_def)
-  apply (simp add: max_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms max_nat_def} @{thm max_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms max_nat_def} @{context} 1\<close>)
   done
 
 lemma max_nat_eq[simp]: "max_nat x y = max x y"
@@ -199,10 +199,10 @@ lemma min_IMP_func_correct[func_correct]:
   shows "s' ''min_ret'' = min_nat (s ''min_x'') (s ''min_y'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: min_IMP_def)
-  apply (simp add: min_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms min_nat_def} @{thm min_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms min_nat_def} @{context} 1\<close>)
   done
 
 lemma min_nat_eq[simp]: "min_nat x y = min x y"
@@ -224,8 +224,8 @@ lemma and_nat_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms and_nat_def} @{thm and_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms and_nat_def} @{context} 1\<close>)
   done
 
 lemma and_nat_eq[simp]: "and_nat x y = nat_of_bool (is_true_nat x \<and> is_true_nat y)"
@@ -247,8 +247,8 @@ lemma or_nat_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms or_nat_def} @{thm or_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms or_nat_def} @{context} 1\<close>)
   done
 
 lemma or_nat_eq[simp]: "or_nat x y = nat_of_bool (is_true_nat x \<or> is_true_nat y)"
@@ -270,8 +270,8 @@ lemma le_nat_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms le_nat_def} @{thm le_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms le_nat_def} @{context} 1\<close>)
   done
 
 lemma le_nat_eq[simp]: "le_nat x y = nat_of_bool (x \<le> y)"
@@ -293,8 +293,8 @@ lemma lt_nat_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms lt_nat_def}  @{thm lt_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms lt_nat_def} @{context} 1\<close>)
   done
 
 lemma lt_nat_eq[simp]: "lt_nat x y = nat_of_bool (x < y)"

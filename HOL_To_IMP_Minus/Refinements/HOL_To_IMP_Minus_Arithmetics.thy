@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Minus_Arithmetics
   imports
-    HOL_To_IMP_Minus_Primitives
+    HOL_To_IMP_Minus_Fun_Pattern_Setup
     "HOL-Library.Discrete"
 begin
 
@@ -11,7 +11,7 @@ begin
 definition [compiled_const_defs add]: "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
-  return_register "suc_ret"
+  return_register "suc_ret"                                                     
   argument_registers "suc_x"
   compiled suc_IMP
 
@@ -21,22 +21,24 @@ lemma suc_IMP_func_correct [func_correct]:
   using assms unfolding suc_IMP_def by auto
 
 fun mul_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "mul_acc_nat x y z = (if x \<noteq> 0 then mul_acc_nat (x - 1) y (z + y) else z)"
+"mul_acc_nat 0 _ z = z" |
+"mul_acc_nat (Suc x) y z = mul_acc_nat x y (y + z)"
 declare mul_acc_nat.simps[simp del]
-
-compile_nat mul_acc_nat.simps basename mul_acc
+                        
+case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
+compile_nat mul_acc_nat_eq basename mul_acc
 
 lemma mul_acc_nat_IMP_func_correct[func_correct]:
   assumes "(tailcall_to_IMP_Minus mul_acc_IMP, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "s' ''mul_acc_ret'' = mul_acc_nat (s ''mul_acc_x'') (s ''mul_acc_y'') (s ''mul_acc_z'')"
+  shows "s' ''mul_acc_ret'' = mul_acc_nat (s ''mul_acc_x1a'') (s ''mul_acc_x2a'') (s ''mul_acc_x3ba'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: mul_acc_IMP_def)
-  apply (simp add: mul_acc_IMP_def)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
   subgoal for t s'
-  apply (induction "(s ''mul_acc_x'')" "(s ''mul_acc_y'')" "(s ''mul_acc_z'')" arbitrary: s t rule: mul_acc_nat.induct)
-  apply (tactic \<open>H.run_finish_tac @{thms mul_acc_nat.simps} @{thm mul_acc_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (induction "(s ''mul_acc_x1a'')" "(s ''mul_acc_x2a'')" "(s ''mul_acc_x3ba'')" arbitrary: s t rule: mul_acc_nat.induct)
+  apply (tactic \<open>H.start_run_finish_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms mul_acc_nat.simps} @{context} 1\<close>)+
   done
   done
 
@@ -59,10 +61,10 @@ lemma mul_nat_IMP_func_correct[func_correct]:
   shows "s' ''mul_ret'' = mul_nat (s ''mul_x'') (s ''mul_y'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: mul_IMP_def)
-  apply (simp add: mul_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms mul_nat_def} @{thm mul_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+    @{thms mul_nat_def} @{context} 1\<close>)
   done
 
 lemma mul_nat_eq_mul[simp]: "mul_nat x y = x * y"
@@ -79,12 +81,12 @@ lemma div_acc_nat_IMP_func_correct[func_correct]:
   shows "s' ''div_acc_ret'' = div_acc_nat (s ''div_acc_x'') (s ''div_acc_y'') (s ''div_acc_z'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: div_acc_IMP_def)
-  apply (simp add: div_acc_IMP_def)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
   subgoal for t s'
   apply (induction "(s ''div_acc_x'')" "(s ''div_acc_y'')" "(s ''div_acc_z'')" arbitrary: s t rule: div_acc_nat.induct)
-  apply (tactic \<open>H.run_finish_tac @{thms div_acc_nat.simps} @{thm div_acc_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct}
+    @{thms div_acc_nat.simps} @{context} 1\<close>)
   done
   done
 
@@ -106,10 +108,10 @@ lemma div_nat_IMP_func_correct[func_correct]:
   shows "s' ''div_ret'' = div_nat (s ''div_x'') (s ''div_y'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: div_IMP_def)
-  apply (simp add: div_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms div_nat_def} @{thm div_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct}
+    @{thms div_nat_def} @{context} 1\<close>)
   done
 
 lemma div_nat_eq_div[simp]: "div_nat x y = x div y"
@@ -125,10 +127,10 @@ lemma square_nat_IMP_func_correct[func_correct]:
   shows "s' ''square_ret'' = square_nat (s ''square_x'')"
   using assms                                 
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
-  apply (simp add: square_IMP_def)
-  apply (simp add: square_IMP_def)
-  apply (tactic \<open>H.run_finish_tac @{thms square_nat_def} @{thm square_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (subst compiled_const_defs, simp)
+  apply (subst compiled_const_defs, simp)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+     @{thms square_nat_def} @{context} 1\<close>)
   done
 
 lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
@@ -159,8 +161,8 @@ lemma sqrt_aux_IMP_func_correct[func_correct]:
   apply (subst compiled_const_defs, simp)
   subgoal for t s'
   apply (induction "s ''sqrt_aux_x''" "s ''sqrt_aux_L''" "s ''sqrt_aux_R''" arbitrary: s t rule: sqrt_aux_nat.induct)
-  apply (tactic \<open>H.run_finish_tac @{thms sqrt_aux_nat.simps} @{thm sqrt_aux_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+     @{thms sqrt_aux_nat.simps} @{context} 1\<close>)
   done
   done
 
@@ -190,8 +192,8 @@ lemma sqrt_IMP_func_correct[func_correct]:
   apply (rule tailcall_to_IMP_Minus_correct_if_correct)
   apply (subst compiled_const_defs, simp)
   apply (subst compiled_const_defs, simp)
-  apply (tactic \<open>H.run_finish_tac @{thms sqrt_nat_def} @{thm sqrt_IMP_def}
-    @{thms func_correct} @{context} 1\<close>)
+  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms func_correct} 
+     @{thms sqrt_nat_def} @{context} 1\<close>)
   done
 
 lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"

@@ -3,16 +3,15 @@ This repository sets out to formalize some classic results about NP-completeness
 
 ## Using
 
-The theories in this repository are developed with [Isabelle2022](https://isabelle.in.tum.de)
+The theories in this repository are developed with the current development version of [Isabelle](https://isabelle.in.tum.de) and the [AFP](https://www.isa-afp.org/download/).
 
-For checking and browsing the theories following sessions are needed:
+For checking and browsing the theories, the following additional sessions are needed:
+- [NREST](https://github.com/hydrogenoxide/NREST): make it available in the same way as the AFP, i.e., with `isabelle components -u /path/to/NREST`.
 
-- from the AFP: `Landau_Symbols`, `Verified_SAT_Based_AI_Planning`, `Graph_Theory`. Download those sessions (or the whole AFP) and follow [AFP's Using Guide](https://www.isa-afp.org/using.html) to make them available for your Isabelle setup.
-- from [here](https://github.com/hydrogenoxide/NREST): `NREST`. Make it available in the same way as the AFP, i.e., with `isabelle components -u /path/to/NREST`.
+You have to tell Isabelle about the multiple sessions the project defines: `isabelle components -u /path/to/this/repository`.
+Now, you can use `isabelle build -D .` in the root folder of this repository to check all sessions.
 
-You have to tell Isabelle about the multiple sessions the project defines: `isabelle components -u /path/to/this/repository`. Now, you can use `isabelle build -D .` in the root folder of this repository to check all sessions.
-
-For browsing the theories we recommend `isabelle jedit -l HOL-Analysis Poly_Reductions.thy &`.
+For browsing the theories, we recommend `isabelle jedit -l HOL-Analysis Poly_Reductions.thy &`.
 The first startup will pre-build `HOL-Analysis`---which will take a while. All following invocations of Isabelle/JEdit will be quick.
 
 If you want to look only at Karp's Reductions: `isabelle jedit -l HOL-Analysis Karp21/All_Reductions_Poly.thy &`.

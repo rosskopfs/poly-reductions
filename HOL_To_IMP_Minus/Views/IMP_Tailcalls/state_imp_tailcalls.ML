@@ -19,6 +19,10 @@ val dest_STATE_cinterp_state : cterm -> cterm
 val is_IMP_big_step_state : term -> bool
 val is_IMP_big_step_state_prop : term -> bool
 
+(* state retrieval utils *)
+val mk_state_retrieval : term -> term -> term
+val is_state_retrieval : term -> term -> bool
+
 (* interpretation of state *)
 val interp_state_SIMPS_TO_thm_resultsq : Proof.context -> cterm ->
   (thm * cterm) Seq.seq
@@ -27,11 +31,11 @@ val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq : (cterm list * Proo
   ((int * cterm list) * Proof.context), thm * cterm) State_Seq.t
 
 (* rewrite state retrieval based on state equality *)
-val rewrite_state_app_tac : (thm -> int -> tactic) -> Proof.context -> thm ->
+val rewrite_state_retrieval_tac : (thm -> int -> tactic) -> Proof.context -> thm ->
   thm -> int -> tactic
-val rewrite_all_state_app_tac : (thm -> int -> tactic) -> Proof.context -> thm ->
+val rewrite_all_state_retrieval_tac : (thm -> int -> tactic) -> Proof.context -> thm ->
   thm -> int -> tactic
-val rewrite_all_state_app_tac' : (Proof.context -> thm -> int -> tactic) ->
+val rewrite_all_state_retrieval_tac' : (Proof.context -> thm -> int -> tactic) ->
   Proof.context -> int -> tactic
 
 (* initialise state equality premise *)
@@ -52,9 +56,9 @@ val update_state_state_eq_updatesq : thm list -> Proof.context -> thm -> thm -> 
 val update_state_assign_tac : Proof.context -> int -> tactic
 
 (* update state equality according to a new retrieval condition *)
-val update_state_state_app_eqsq : (int -> tactic) -> Proof.context -> thm ->
+val update_state_state_retrieval_eqsq : (int -> tactic) -> Proof.context -> thm ->
   thm -> thm -> thm Seq.seq
-val update_state_state_app_eq_tac : (int -> tactic) -> Proof.context -> int -> tactic
+val update_state_state_retrieval_eq_tac : (int -> tactic) -> Proof.context -> int -> tactic
 
 (* update state equality following a subprogram call *)
 val update_state_call_tac : Proof.context -> int -> tactic
@@ -105,6 +109,16 @@ val get_IMP_big_step_state =
 val find_IMP_big_step_state = find_first is_IMP_big_step_state_prop
   #> Option.map (get_IMP_big_step_state o VU.dest_Trueprop)
 
+(* state retrieval utils *)
+fun mk_state_retrieval state key = state $ key
+fun is_state_retrieval state s_app = state aconv head_of s_app
+
+fun is_state_retrieval_eq_prop state = GU.try_bool
+  (\<^Const_fn>\<open>HOL.eq _ for s_app _ => \<open>is_state_retrieval state s_app\<close>\<close> o VU.dest_Trueprop)
+
+fun find_state_retrieval_eq_prop lhs_state =
+  GU.find_first_index (is_state_retrieval_eq_prop lhs_state o Thm.term_of)
+
 (* interpretation of state *)
 
 val interp_reflect_thms = @{thms interp_state_State_eq}
@@ -122,29 +136,29 @@ fun interp_state_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt =
   #> fst
   #> dest_STATE_cinterp_state
   #> interp_state_SIMPS_TO_thm_resultsq ctxt
-
+  
 (* rewrite state retrieval based on state equality *)
 
 structure Seq_Monad = Monad(Seq_Monad_Base)
 
-fun state_app_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm = 
+fun state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm = 
   @{thm STATE_state_app_eqI}
   |> HEADGOAL (VU.resolve_all_tac ctxt [state_eq_thm, state_lhs_state_SIMPS_TO_thm])
 
-fun rewrite_state_app_if_SIMPS_TO_tac subst_tac ctxt state_app_eq_thm =
-  subst_tac state_app_eq_thm
+fun rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt state_retrieval_eq_thm =
+  subst_tac state_retrieval_eq_thm
   THEN' simp_interp_state_tac ctxt
   THEN' Simplifier.simp_tac ctxt
   THEN' finish_SIMPS_TO_tac ctxt
 
-fun rewrite_state_app_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
-  state_app_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
-  |> Seq.map (rewrite_state_app_if_SIMPS_TO_tac subst_tac ctxt)
+fun rewrite_state_retrieval_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
+  state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
+  |> Seq.map (rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt)
 
-val rewrite_state_app_tac = Seq_Monad.flat2 oooo rewrite_state_app_tacsq
+val rewrite_state_retrieval_tac = Seq_Monad.flat2 oooo rewrite_state_retrieval_tacsq
                  
-val rewrite_all_state_app_tac =
-  Seq_Monad.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_app_tacsq
+val rewrite_all_state_retrieval_tac =
+  Seq_Monad.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_retrieval_tacsq
 
 val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
   SS.get ()
@@ -152,10 +166,10 @@ val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
   SS_THEN SSS.lift_push_state_monad fst (fn (_, cstate_eq_prem) => fn (_, ctxt) =>
     interp_state_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt cstate_eq_prem)
 
-fun rewrite_all_state_app_tac' subst_tac =
+fun rewrite_all_state_retrieval_tac' subst_tac =
   let         
     fun rewrite_focused_tac state_lhs_state_SIMPS_TO_thm {prems=[state_eq_thm], context=ctxt,...} =
-      rewrite_all_state_app_tac (subst_tac ctxt) ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
+      rewrite_all_state_retrieval_tac (subst_tac ctxt) ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
     val rewrite_tac =
       interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq
       SS_THEN SS.lift_state_single (fn (state_lhs_state_SIMPS_TO_thm, _) =>
@@ -215,7 +229,7 @@ fun update_state_state_eq_updatesq simp_thms ctxt state_eq_thm
   let
     val simp_thms = simp_thms @ @{thms AExp.aval.simps AExp.atomVal.simps}
     val simp_tac = Simplifier.safe_simp_tac (VU.set_simps ctxt simp_thms)
-      THEN' rewrite_all_state_app_tac (VU.subst_first_tac ctxt o single) ctxt
+      THEN' rewrite_all_state_retrieval_tac (VU.subst_first_tac ctxt o single) ctxt
         state_eq_thm interp_state_lhs_state_eq_SIMPS_TO_thm
     val tac =
       VU.resolve_all_tac ctxt [state_eq_thm, interp_state_lhs_state_eq_SIMPS_TO_thm, assign_thm]
@@ -263,43 +277,37 @@ val update_state_assign_tac =
       #> Seq_Monad.flat2
   in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (new_state_eq_tac oo SSS.SRS.init)) end
 
-fun is_state_app_eq_prop state = GU.try_bool
-  (\<^Const_fn>\<open>HOL.eq _ for s_app _ => \<open>(head_of s_app) aconv state\<close>\<close> o VU.dest_Trueprop)
-
-fun find_state_app_eq_prop lhs_state =
-  GU.find_first_index (is_state_app_eq_prop lhs_state o Thm.term_of)
-
-fun update_state_state_app_eqsq simp_tac ctxt state_eq_thm interp_state_lhs_state_eq_SIMPS_TO_thm
-  state_app_eq_thm =
+fun update_state_state_retrieval_eqsq simp_tac ctxt state_eq_thm interp_state_lhs_state_eq_SIMPS_TO_thm
+  state_retrieval_eq_thm =
   let val tac =
-    VU.resolve_all_tac ctxt [state_eq_thm, interp_state_lhs_state_eq_SIMPS_TO_thm, state_app_eq_thm]
+    VU.resolve_all_tac ctxt [state_eq_thm, interp_state_lhs_state_eq_SIMPS_TO_thm, state_retrieval_eq_thm]
     THEN' simp_tac
     THEN' finish_SIMPS_TO_tac ctxt
     |> SOLVED' |> HEADGOAL
   in tac @{thm update_STATE_state_app_eq} end
 
-fun update_state_state_app_eq_tac simp_tac =
+fun update_state_state_retrieval_eq_tac simp_tac =
   let
-    fun find_state_app_eq_prem ctxt cstate_lhs_state =
+    fun find_state_retrieval_eq_prem ctxt cstate_lhs_state =
       let
         val state_lhs_state = Thm.term_of cstate_lhs_state
         fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
-            Pretty.str "Could not find state application premise for state ",
+            Pretty.str "Could not find state retrieval premise for state ",
             Syntax.pretty_term ctxt state_lhs_state
           ] |> Pretty.string_of)
-      in find_state_app_eq_prop state_lhs_state #> VU.seq_of_opt f_none end
+      in find_state_retrieval_eq_prop state_lhs_state #> VU.seq_of_opt f_none end
     fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
-      {prems=[state_eq_thm, state_app_eq_thm], context=ctxt,...} =
-      update_state_state_app_eqsq simp_tac ctxt state_eq_thm interp_state_lhs_state_eq_thm state_app_eq_thm
+      {prems=[state_eq_thm, state_retrieval_eq_thm], context=ctxt,...} =
+      update_state_state_retrieval_eqsq simp_tac ctxt state_eq_thm interp_state_lhs_state_eq_thm state_retrieval_eq_thm
       |> Seq.map (fn thm => TU.insert_tac [thm] ctxt)
       |> Seq_Monad.flat2
     val new_state_eq_tac =
       interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq
       SS_THEN SSS.lift_push_state_monad fst (fn (_, cstate_eq_lhs_state) => fn ((_, cprems), ctxt) =>
-        find_state_app_eq_prem ctxt cstate_eq_lhs_state cprems)
-      SS_THEN SS.lift_state_single (fn (state_app_eq_prem_index, _) =>
+        find_state_retrieval_eq_prem ctxt cstate_eq_lhs_state cprems)
+      SS_THEN SS.lift_state_single (fn (state_retrieval_eq_prem_index, _) =>
         fn ((interp_state_lhs_state_eq_thm, (state_eq_prem_index, _)), ctxt) =>
-        TU.focus_delete_prems_tac (successors [state_eq_prem_index, state_app_eq_prem_index])
+        TU.focus_delete_prems_tac (successors [state_eq_prem_index, state_retrieval_eq_prem_index])
           (insert_new_state_eq_tac interp_state_lhs_state_eq_thm)
           ctxt)
       |> SS.eval
