@@ -43,13 +43,29 @@ qed
 context includes Com.no_com_syntax IMP_Tailcalls_Dynamic.tcom_syntax
 begin
 
-lemma tAssignD: "c \<turnstile> (x ::= a, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = 2 \<and> s' = s(x := aval a s)"
+(*rules without time*)
+theorem tSeq_E:
+  assumes "c \<turnstile>(c1;; c2, s1) \<Rightarrow>\<^bsup>t\<^esup>  s3"
+  obtains t' s2 t'' where "c \<turnstile>(c1, s1) \<Rightarrow>\<^bsup>t'\<^esup> s2" and "c \<turnstile>(c2, s2) \<Rightarrow>\<^bsup>t''\<^esup> s3"
+  using assms by auto
+
+lemma tAssignD: "c \<turnstile> (x ::= a, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> s' = s(x := aval a s)"
   by auto
 
-theorem tIf_tE':
+theorem tIf_E:
   assumes "c \<turnstile>(IF b\<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup>t\<^esup>  s'"
-  obtains t' where "t = Suc t'" and "s b \<noteq> 0" and "c \<turnstile>(c1, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
-    | t' where "t = Suc t'" and "s b = 0" and "c \<turnstile>(c2, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
+  obtains t' where "s b \<noteq> 0" and "c \<turnstile>(c1, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
+    | t' where "s b = 0" and "c \<turnstile>(c2, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
+  using assms by auto
+
+theorem tCall_E:
+  assumes "c \<turnstile>(CALL C RETURN v, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  obtains t' s'' where "s' = s(v := s'' v)" and "(C, s) \<Rightarrow>\<^bsup>t'\<^esup> s''"
+  using assms by auto
+
+lemma tTail_E:
+  assumes "c \<turnstile>(tTAIL, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  obtains t' where "c \<turnstile>(c, s) \<Rightarrow>\<^bsup>t'\<^esup> s'"
   using assms by auto
 
 end

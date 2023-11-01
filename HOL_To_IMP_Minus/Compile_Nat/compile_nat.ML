@@ -57,7 +57,7 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
         let val (index', rev_args') = fold fold_step args (index, [])
         in (index', TailCall (rev rev_args')) end
       | index_tc_ast index t = (index, t)
-      
+
     fun build_tc_ast t =
       if can HOLogic.dest_number t then Number (HOLogic.dest_number t |> snd)
       else
@@ -76,7 +76,7 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
           if (g_name, g_typ) = (f_name, f_typ)
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
-        | h => raise TERM ("Unexpected head of term:", [h]) 
+        | h => raise TERM ("Unexpected head of term:", [h])
   in
     t |> build_tc_ast |> index_tc_ast 0 |> snd
   end
@@ -186,7 +186,7 @@ fun reflect_eq thm =
   | t => raise TERM ("Unexpected head of term:", [Term.head_of t])
 
 val compiled_const_suffix_cfg =
-  Attrib.setup_config_string \<^binding>\<open>compiled_const_suffix\<close> (K "IMP")
+  Attrib.setup_config_string \<^binding>\<open>compiled_const_suffix\<close> (K "IMP_tailcall")
 
 fun compile_cmd f_def basenamepos_opt lthy =
   let
@@ -198,9 +198,9 @@ fun compile_cmd f_def basenamepos_opt lthy =
       |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
 
     val (f_name, f_typ) = f_def |> Thm.lhs_of |> Thm.term_of |> Term.head_of |> Term.dest_Const
-    
+
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
-    
+
     val f_ret_name = fst f_IMP_namepos ^ "_ret"
     fun mk_arg_name arg_name = fst f_IMP_namepos ^ "_" ^ arg_name
     val f_args = map (@{apply 2 (1)} mk_arg_name) args
@@ -290,7 +290,7 @@ in
               |> Pretty.block
               |> Pretty.string_of |> error
             else ()
- 
+
         val compiled_const = {ret_reg = ret_reg, arg_regs = arg_regs,
                               compiled = Syntax.read_term lthy compiled}
       in

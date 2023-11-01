@@ -76,19 +76,19 @@ fun tbig_step_t_program_conv IMP_program_defs ct = (if SIT.is_IMP_big_step_state
     |> Conv.arg1_conv
     |> arg2_of_4_conv
   else Conv.no_conv) ct
-  
+
 fun tbig_step_t_program_prem_conv IMP_program_defs i =
   Conversion_Util.repeat_forall_conv (fn _ => fn _ =>
     Conversion_Util.move_prem_to_front_conv i
     then_conv Conv.prems_conv 1 (HOLogic.Trueprop_conv (tbig_step_t_program_conv IMP_program_defs))
   )
 
-fun rewrite_IMP_program_defs_tac IMP_program_defs = 
+fun rewrite_IMP_program_defs_tac IMP_program_defs =
   let fun tac ctxt prems = case GU.find_first_index SIT.is_IMP_big_step_state_prop prems of
     SOME (i, _) => CONVERSION (tbig_step_t_program_prem_conv IMP_program_defs (i + 1) ctxt)
    | NONE => (writeln "Could not find IMP big step premise"; K no_tac)
   in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (fst o snd) o tac) end
-  
+
 fun start_tac IMP_program_defs ctxt =
   rewrite_IMP_program_defs_tac IMP_program_defs ctxt
   THEN' SIT.init_state_eq_tac ctxt
@@ -98,7 +98,7 @@ val rewrite_eq_state_retrieval_sym_tac =
     fun rewrite_focused_tac {prems, context=ctxt,...} =
       let val prems_flipped =
         map (fn thm => Thm.proof_attributes [Calculation.symmetric] thm ctxt |> fst) prems
-      in 
+      in
         REPEAT_ALL_NEW (VU.subst_first_tac ctxt prems_flipped)
         THEN' TU.insert_tac prems_flipped ctxt
       end
@@ -114,32 +114,32 @@ val rewrite_eq_state_retrieval_sym_tac =
         in TU.focus_delete_prems_tac eq_state_retrieval_prems rewrite_focused_tac ctxt end)
       |> SS.eval
       #> Seq_Monad.flat2
-  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (rewrite_tac oo SSS.SRS.init)) end  
-  
-fun seq_tac ctxt = eresolve_tac ctxt @{thms tSeq_tE}
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (rewrite_tac oo SSS.SRS.init)) end
+
+fun seq_tac ctxt = eresolve_tac ctxt @{thms tSeq_E}
 
 fun assign_tac ctxt = dresolve_tac ctxt @{thms tAssignD}
-  THEN' eresolve_tac ctxt @{thms conjE}
+  (*THEN' eresolve_tac ctxt @{thms conjE}*)
   THEN' SIT.update_state_assign_tac ctxt
-                                            
-fun call_tac correctness_thm ctxt = eresolve_tac ctxt @{thms tCall_tE}
+
+fun call_tac correctness_thm ctxt = eresolve_tac ctxt @{thms tCall_E}
   THEN' dresolve_tac ctxt [correctness_thm]
   (*update state*)
   THEN' SIT.update_state_call_tac ctxt
 
-fun if_tac ctxt = eresolve_tac ctxt @{thms tIf_tE'}
+fun if_tac ctxt = eresolve_tac ctxt @{thms tIf_E}
   THEN_ALL_NEW (SIT.rewrite_all_state_retrieval_tac' (fn ctxt => VU.subst_first_asm_tac ctxt o single) ctxt)
 
-fun step_update_state_tac correctness_thm_state_def_pairs ctxt = TU.TRY' (seq_tac ctxt)
+fun step_update_state_tac correctness_thms ctxt = TU.TRY' (seq_tac ctxt)
   THEN' FIRST' (assign_tac ctxt :: if_tac ctxt ::
-    map (fn thm => call_tac thm ctxt) correctness_thm_state_def_pairs)
+    map (fn thm => call_tac thm ctxt) correctness_thms)
 
 val run_tac = REPEAT_ALL_NEW oo step_update_state_tac
 
-fun start_run_tac after_start_tac IMP_program_defs correctness_thm_state_def_pairs ctxt =
+fun start_run_tac after_start_tac IMP_program_defs correctness_thms ctxt =
   start_tac IMP_program_defs ctxt
   THEN' after_start_tac ctxt
-  THEN' run_tac correctness_thm_state_def_pairs ctxt
+  THEN' run_tac correctness_thms ctxt
 
 val start_run_no_pattern_fun_tac = start_run_tac (K o K all_tac)
 
@@ -154,7 +154,7 @@ fun finish_non_tailcall_tac HOL_program_eqs ctxt =
 
 (* tailcalls *)
 
-fun tailcall_tac ctxt = eresolve_tac ctxt @{thms tTail_tE}
+fun tailcall_tac ctxt = eresolve_tac ctxt @{thms tTail_E}
 
 (*TODO: move somewhere else*)
 val mk_register = HOLogic.mk_string
@@ -183,7 +183,7 @@ fun rewrite_insert_current_registers_eq_tac register_terms =
           THEN' Tactic_Util.insert_tac [eq_thm] ctxt
         fun rewrite_insert_state_register_eq_tac prems =
           let val simp_tac = asm_full_simp_tac (ctxt addsimps prems)
-          in 
+          in
             uncurry (state_register_eq_thmsq simp_tac)
             #> Seq.map rewrite_insert_tac
             #> Seq_Monad.flat2
@@ -201,7 +201,7 @@ fun rewrite_insert_current_registers_eq_tac register_terms =
   in TU.CSUBGOAL_STRIPPED (fst o snd) o (current_value_tac oo SSS.SRS.init) end
 
 val rewrite_insert_current_registers_eq_tac' =
-  let fun focused_tac ctxt concl = 
+  let fun focused_tac ctxt concl =
     let
       val (hol_term, args) = VU.dest_Trueprop concl |> VU.dest_eq |> snd |> strip_comb
       val registers = dest_Const hol_term |> fst
@@ -224,9 +224,9 @@ fun finish_tailcall_tac HOL_program_eqs ctxt =
 fun finish_tac HOL_program_eqs ctxt = finish_tailcall_tac HOL_program_eqs ctxt
   ORELSE' finish_non_tailcall_tac HOL_program_eqs ctxt
 
-fun start_run_finish_tac after_start_tac IMP_program_defs correctness_thm_state_def_pairs
+fun start_run_finish_tac after_start_tac IMP_program_defs correctness_thms
   HOL_program_eqs ctxt =
-  start_run_tac after_start_tac IMP_program_defs correctness_thm_state_def_pairs ctxt
+  start_run_tac after_start_tac IMP_program_defs correctness_thms ctxt
   THEN_ALL_NEW finish_tac HOL_program_eqs ctxt
 
 val start_run_finish_no_pattern_fun_tac = start_run_finish_tac (K o K all_tac)

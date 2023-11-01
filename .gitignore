@@ -4,6 +4,7 @@
 *.log
 *.out
 *.gz
+*.code-workspace
 Test.thy
 
 # Created by https://www.toptal.com/developers/gitignore/api/emacs,vim,visualstudiocode
