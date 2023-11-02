@@ -1,5 +1,5 @@
 theory HOL_To_IMP_Minus_Goal_Commands
-  imports Compile_Nat
+  imports Compile_Nat 
   keywords "HOL_To_IMP_Minus_func_correct" :: thy_goal_defn
 begin
 
@@ -72,7 +72,7 @@ in
 
           val pos = Position.thread_data ()
           val attr =
-            Named_Theorems.add "HOL_To_IMP_Minus_Goal_Commands.IMP_Minus_func_correct"
+            Named_Theorems.add \<^named_theorems>\<open>IMP_Minus_func_correct\<close>
             (* Func_Correct_Thms.func_correct_attr *)
           val func_correct_attr =
             Attrib.internal pos (K attr)
