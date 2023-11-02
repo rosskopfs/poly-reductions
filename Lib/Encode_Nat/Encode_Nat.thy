@@ -376,8 +376,7 @@ lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
 ML \<open>
-  Term.abs ("bla", @{typ "'a"}) (abstract_over (@{term "x"}, @{term "hd (x # xs)"}))
-  |> Thm.cterm_of @{context}
+  Proof_Context.read_const {proper = false, strict = false} @{context} "Cons"
 \<close>
 
 test2 list
@@ -392,28 +391,12 @@ test2 tree
 
 test2 keyed_list_tree
 
+lemma dec_list_bot: "dec_list dec_'a bot = bot"
+  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def)
 
 function_nat_rewrite_auto reverset
-
-
-function_nat_rewrite reverset
-
-ML \<open>
-val t = @{term "reverset [] (x # (reverset [] ( y # ys)))"};
-
-Term.fold_aterms (fn t as Const _ => insert (op =) t | _ => I) t [];
-
-head_of @{term "x # xs"} |> fastype_of |> body_type
-\<close>
-
-
-function_nat_rewrite_correctness reverset
-  apply(induction arg\<^sub>1 arg\<^sub>2 rule: reverset.induct; subst reverset.simps; subst reverset_nat.simps)
-  using Cons_nat_equiv Nil_nat_equiv assms encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
-  by(simp add: enc_list.simps Nil_nat_def Cons_nat_def)+
-
-
 thm reverset_nat_equiv
+
 
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
@@ -430,8 +413,72 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
+ML \<open>
+fun can_resolve bottom_rl rls =
+  (case Seq.chop 2 (Drule.multi_resolve NONE rls bottom_rl) of
+    ([_], _) => true
+  | _ => false);
+
+@{typ "'a \<Rightarrow> 'a"} |> dest_Type
+\<close>
+
+thm encoding_list_wellbehaved dec_list_bot
 
 function_nat_rewrite_auto prefixest
+
+function_nat_rewrite prefixest
+function_nat_rewrite_correctness prefixest
+proof(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct)
+  case (1 v vs ps)
+  have h1: "(fstP (enc_list enc_'a (v # vs)) = atomic 1) = True"
+    by (simp add: enc_list.simps Cons_nat_def)
+  have h2: "sndP (sndP (enc_list enc_'a (v # vs))) = enc_list enc_'a vs"
+    by (simp add: enc_list.simps Cons_nat_def)
+  have h3: "fstP (sndP (enc_list enc_'a (v # vs))) = enc_'a v"
+    by (simp add: enc_list.simps Cons_nat_def)
+  show ?case
+    apply(subst prefixest.simps; subst prefixest_nat.simps)
+    apply(subst h1)
+    apply(subst if_True)
+    apply(simp only: h2 h3 Let_def)
+    apply(subst Cons_nat_equiv[where arg\<^sub>1=v and arg\<^sub>2=vs, OF assms])
+    using Cons_nat_equiv[where arg\<^sub>1="v # vs" and arg\<^sub>2=ps]
+           dec_list_bot
+    apply(subst Cons_nat_equiv[where arg\<^sub>1="v # vs" and arg\<^sub>2=ps, OF encoding_list_wellbehaved,
+          OF assms(1), OF dec_list_bot])
+    using 1 apply(assumption)
+    done
+next
+  case (2 ps)
+  have h1: "(fstP (enc_list enc_'a []) = atomic 1) = False"
+    by (simp add: enc_list.simps Nil_nat_def)
+  show ?case
+    apply(subst prefixest.simps; subst prefixest_nat.simps)
+    apply(subst h1)
+    apply(subst if_False)
+    apply(simp only: Let_def)
+    apply(subst Nil_nat_equiv[OF assms])
+    apply(subst Cons_nat_equiv[where arg\<^sub>1="[]" and arg\<^sub>2=ps, OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot])
+    using pointfree_idE[OF encoding_list_wellbehaved, OF encoding_list_wellbehaved, OF assms(1)]
+    apply simp
+    done
+qed
+
+  apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct; subst prefixest.simps; subst prefixest_nat.simps)
+  subgoal for v vs ps
+    using
+      pointfree_idE[OF encoding_list_wellbehaved, OF assms(1)]
+      Nil_nat_equiv[OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
+      Cons_nat_equiv[where arg\<^sub>1=v and arg\<^sub>2=vs, OF assms]
+      Cons_nat_equiv[where arg\<^sub>1="v # vs" and arg\<^sub>2=ps, OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
+      Cons_nat_equiv[where arg\<^sub>1="[]" and arg\<^sub>2=ps, OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
+
+    apply(auto simp add: enc_list.simps Nil_nat_def Cons_nat_def)
+    sorry
+  subgoal
+    sorry
+  done
+
 thm prefixest_nat_equiv
 
 lemma reverset_length: "length xs = length (reverset xs [])"
@@ -485,8 +532,7 @@ ML \<open>
 \<close>
 
 
-lemma dec_list_bot: "dec_list dec_'a bot = bot"
-  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def)
+
 
 function_nat_rewrite_auto prefixes2
 function_nat_rewrite prefixes2
