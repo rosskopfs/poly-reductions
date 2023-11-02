@@ -16,6 +16,8 @@ val dest_STATE_eq_cprop : cterm -> cterm * cterm
 val dest_STATE_cinterp_state : cterm -> cterm
 
 (* big step state utils *)
+val dest_IMP_big_step_state : term -> (term * term) * term * term
+val dest_IMP_big_step_state_prop : term -> (term * term) * term * term
 val is_IMP_big_step_state : term -> bool
 val is_IMP_big_step_state_prop : term -> bool
 
@@ -100,14 +102,14 @@ fun find_cstate_eq_prop_seq ctxt cprops =
   in find_cstate_eq_prop cprops |> VU.seq_of_opt f_none end
 
 (* big step state utils *)
-
-val is_IMP_big_step_state = GU.try_bool (\<^Const_fn>\<open>tbig_step_t for _ _ _ _ => true\<close>)
-val is_IMP_big_step_state_prop = GU.try_bool (is_IMP_big_step_state o VU.dest_Trueprop)
-val get_IMP_big_step_state =
-  \<^Const_fn>\<open>tbig_step_t for _ \<^Const>\<open>Pair _ _ for _ state\<close> _ _ => state\<close>
+val dest_IMP_big_step_state =
+  \<^Const_fn>\<open>tbig_step_t for _ \<^Const>\<open>Pair _ _ for c s\<close> t s' => \<open>((c, s), t, s')\<close>\<close>
+val dest_IMP_big_step_state_prop = dest_IMP_big_step_state o VU.dest_Trueprop
+val is_IMP_big_step_state = can dest_IMP_big_step_state
+val is_IMP_big_step_state_prop = can dest_IMP_big_step_state_prop
 
 val find_IMP_big_step_state = find_first is_IMP_big_step_state_prop
-  #> Option.map (get_IMP_big_step_state o VU.dest_Trueprop)
+  #> Option.map (dest_IMP_big_step_state_prop #> (fn ((_, s), _, _) => s))
 
 (* state retrieval utils *)
 fun mk_state_retrieval state key = state $ key

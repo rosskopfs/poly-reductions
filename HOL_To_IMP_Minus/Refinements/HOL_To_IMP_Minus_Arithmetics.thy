@@ -28,11 +28,9 @@ compile_nat mul_acc_nat_eq basename mul_acc
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  subgoal for t s'
-  apply (induction "(s ''mul_acc_x1a'')" "(s ''mul_acc_x2a'')" "(s ''mul_acc_x3ba'')" arbitrary: s t rule: mul_acc_nat.induct)
-  apply (tactic \<open>H.start_run_finish_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
+  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
+   apply (tactic \<open>H.start_run_finish_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
     @{thms mul_acc_nat.simps} @{context} 1\<close>)+
-  done
   done
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
@@ -66,11 +64,9 @@ compile_nat div_acc_nat.simps basename div_acc
 
 HOL_To_IMP_Minus_func_correct div_acc_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  subgoal for t s'
-  apply (induction "(s ''div_acc_x'')" "(s ''div_acc_y'')" "(s ''div_acc_z'')" arbitrary: s t rule: div_acc_nat.induct)
+  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
   apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
     @{thms div_acc_nat.simps} @{context} 1\<close>)
-  done
   done
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
@@ -127,11 +123,9 @@ compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  subgoal for t s'
-  apply (induction "s ''sqrt_aux_x''" "s ''sqrt_aux_L''" "s ''sqrt_aux_R''" arbitrary: s t rule: sqrt_aux_nat.induct)
+  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
   apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
      @{thms sqrt_aux_nat.simps} @{context} 1\<close>)
-  done
   done
 
 lemma square_sqrt_aux_nat_le:

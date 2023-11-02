@@ -31,11 +31,9 @@ compile_nat add_nat_pat_eq basename add_pat
 
 HOL_To_IMP_Minus_func_correct add_nat_pat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  subgoal for t s'
-  apply (induction "(s ''add_pat_x1a'')" "(s ''add_pat_x2a'')" "(s ''add_pat_x3ba'')" arbitrary: s t rule: add_nat_pat.induct)
+  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
   apply (tactic \<open>H.start_run_finish_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
     @{thms add_nat_pat.simps} @{context} 1\<close>)+
-  done
   done
 
 end

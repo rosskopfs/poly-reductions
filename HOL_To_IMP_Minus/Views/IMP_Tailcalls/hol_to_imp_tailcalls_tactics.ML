@@ -45,6 +45,8 @@ val start_run_finish_no_pattern_fun_tac : thm list -> thm list -> thm list -> Pr
 val start_run_finish_pattern_fun_tac : thm list -> thm list -> thm list -> Proof.context -> int ->
   tactic
 
+val induction_tac : Proof.context -> int -> tactic
+
 end
 
 structure HOL_To_IMP_Tailcalls_Tactics : HOL_TO_IMP_TAILCALLS_TACTICS =
@@ -233,4 +235,31 @@ val start_run_finish_no_pattern_fun_tac = start_run_finish_tac (K o K all_tac)
 val start_run_pattern_fun_tac = start_run_tac rewrite_eq_state_retrieval_sym_tac
 val start_run_finish_pattern_fun_tac = start_run_finish_tac rewrite_eq_state_retrieval_sym_tac
 
+val induction_tac =
+  let
+    fun focused_tac ctxt (prems, concl) =
+      case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+        SOME ((_, s), t, _) =>
+          let
+            val const =
+              concl
+              |> HOLogic.dest_Trueprop
+              |> HOLogic.dest_eq |> snd
+              |> Term.strip_comb |> fst 
+            val def_insts =
+              dest_Const const |> fst
+              |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
+              |> #arg_regs
+              |> map (fn r => s $ HOLogic.mk_string r)
+              |> map (fn r => SOME (NONE, (r, false)))
+            val arbitrary = map dest_Free [s, t]
+            val inducts = Function.get_info ctxt const |> #inducts
+          in
+            Induction.induction_tac ctxt true [def_insts] [arbitrary] [] inducts []
+          end
+      | _ => K no_tac
+  in
+    TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac)
+  end
+    
 end
