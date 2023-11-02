@@ -142,6 +142,42 @@ HOL_To_IMP_Minus_func_correct not_nat
 lemma not_nat_eq_nat_of_bool_eq_false[simp]: "not_nat n = nat_of_bool (n = false_nat)"
   unfolding not_nat_def by simp
 
+definition [simp]: "plus_nat (x :: nat) y \<equiv> x + y"
+definition [simp]: "minus_nat (x :: nat) y \<equiv> x - y"
+
+context includes com_syntax no_com'_syntax
+begin
+
+definition [compiled_const_defs add]:
+  "plus_IMP \<equiv> ''plus_ret'' ::= (V ''plus_x'' \<oplus> V ''plus_y'')"
+definition [compiled_const_defs add]:
+  "minus_IMP \<equiv> ''minus_ret'' ::= (V ''minus_x'' \<ominus> V ''minus_y'')"
+
+end
+
+declare_compiled_const "plus_nat"
+  return_register "plus_ret"
+  argument_registers "plus_x" "plus_y"
+  compiled "plus_IMP"
+declare_compiled_const "Groups.plus"
+  return_register "plus_ret"
+  argument_registers "plus_x" "plus_y"
+  compiled "plus_IMP"
+
+declare_compiled_const "minus_nat"
+  return_register "minus_ret"
+  argument_registers "minus_x" "minus_y"
+  compiled "minus_IMP"
+declare_compiled_const "Groups.minus"
+  return_register "minus_ret"
+  argument_registers "minus_x" "minus_y"
+  compiled "minus_IMP"
+
+HOL_To_IMP_Minus_func_correct plus_nat
+  by (auto simp: compiled_const_defs)
+HOL_To_IMP_Minus_func_correct minus_nat
+  by (auto simp: compiled_const_defs)
+
 definition max_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "max_nat x y \<equiv> if x - y \<noteq> 0 then x else y"
 

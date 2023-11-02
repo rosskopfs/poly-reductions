@@ -121,45 +121,21 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
         in
           mk_Seq (es_IMP @ [\<^Const>\<open>tTAIL\<close>])
         end
-      | go bounds cont (Call (idx, ((g_name, g_typ), es))) =
+      | go bounds cont (Call (_, ((g_name, _), es))) =
         let
-          fun mk_boperand bop (bop_side, e) =
-            let
-              val reg =
-                Term.term_name bop ^ bop_side ^ "_" ^ Int.toString idx
-                |> HOLogic.mk_string
-            in
-              (reg, go bounds (fn rhs => \<^Const>\<open>tAssign for reg rhs\<close>) e)
-            end
-          fun mk_bop bop (e1, e2) =
-            let
-              val ((lhs_reg, lhs_IMP), (rhs_reg, rhs_IMP)) =
-                @{apply 2} (mk_boperand bop) (("Lhs", e1), ("Rhs", e2))
-            in
-              mk_Seq [ lhs_IMP, rhs_IMP
-                     , cont (bop $ \<^Const>\<open>V for lhs_reg\<close> $ \<^Const>\<open>V for rhs_reg\<close>)
-                     ]
-            end
-      in
-        case (Const (g_name, g_typ), es) of
-          (\<^Const>\<open>Groups.plus \<^typ>\<open>nat\<close>\<close>, [e1, e2]) => mk_bop \<^Const>\<open>Plus\<close> (e1, e2)
-        | (\<^Const>\<open>Groups.minus \<^typ>\<open>nat\<close>\<close>, [e1, e2]) => mk_bop \<^Const>\<open>Sub\<close> (e1, e2)
-        | _ =>
-          let
-            val g_compiled = lookup_fn g_name
-            val g_ret = #ret_reg g_compiled
-            fun g_arg_reg i = nth (#arg_regs g_compiled) i |> HOLogic.mk_string
-            fun g_arg_cont i rhs = \<^Const>\<open>tAssign for \<open>g_arg_reg i\<close> rhs\<close>
-            val g_args_IMP =
-              map_index (fn (i, e) => go bounds (g_arg_cont i) e) es
-          in
-            g_args_IMP @
-            [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
-            , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
-            ]
-            |> mk_Seq
-          end
-      end
+          val g_compiled = lookup_fn g_name
+          val g_ret = #ret_reg g_compiled
+          fun g_arg_reg i = nth (#arg_regs g_compiled) i |> HOLogic.mk_string
+          fun g_arg_cont i rhs = \<^Const>\<open>tAssign for \<open>g_arg_reg i\<close> rhs\<close>
+          val g_args_IMP =
+            map_index (fn (i, e) => go bounds (g_arg_cont i) e) es
+        in
+          g_args_IMP @
+          [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
+          , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
+          ]
+          |> mk_Seq
+        end
   in
     go [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
   end
