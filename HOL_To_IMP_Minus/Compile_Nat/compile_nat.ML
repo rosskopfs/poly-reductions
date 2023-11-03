@@ -4,7 +4,7 @@ structure Compile_Nat = struct
 type compiled_const = { ret_reg : string, arg_regs : string list, compiled : term }
 
 fun map_compiled f (c : compiled_const) =
-  {ret_reg = #ret_reg c, arg_regs = #arg_regs c, compiled = f (#compiled c) }
+  { ret_reg = #ret_reg c, arg_regs = #arg_regs c, compiled = f (#compiled c) }
 
 structure Compiled_Consts = Generic_Data
 (
@@ -24,7 +24,7 @@ fun declare_compiled_const name compiled_const =
           |> Binding.name_of
         val compiled_const' = map_compiled (Morphism.term phi) compiled_const
       in
-        Compiled_Consts.map (fn tab => Symtab.update_new (name', compiled_const') tab)
+        Compiled_Consts.map (Symtab.update_new (name', compiled_const'))
       end)
 
 fun get_compiled_const context f_name =
@@ -131,9 +131,9 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
             map_index (fn (i, e) => go bounds (g_arg_cont i) e) es
         in
           g_args_IMP @
-          [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
-          , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
-          ]
+            [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
+            , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
+            ]
           |> mk_Seq
         end
   in
@@ -191,7 +191,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val simp_thms = map reflect_eq @{thms assoc_right_tSeq.simps tseq.simps rm_tSKIP.simps}
     val rewrite = Raw_Simplifier.rewrite_term simp_thy simp_thms []
     val f_IMP =
-         def_body
+      def_body
       |> curry Term.subst_bounds (rev f_args_vars)
       |> tc_ast_of_term (f_name, f_typ) f_args
       |> IMP_Minus_of_tc_ast (f_ret_name, map fst f_args) (get_compiled_const (Context.Proof lthy))
@@ -208,7 +208,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
-                     , compiled = f_IMP_const}
+                     , compiled = f_IMP_const }
   in
     lthy'
     |> declare_compiled_const f_name f_compiled
