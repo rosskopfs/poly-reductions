@@ -130,16 +130,15 @@ fun assign_tac ctxt = dresolve_tac ctxt @{thms tAssignD}
 fun call_tac correctness_thm_for =
   let
     fun focused_tac ctxt prems =
-      case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+      (case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
         SOME ((\<^Const>\<open>tCall for c _\<close>, _), _, _) =>
-          (case correctness_thm_for c of
-            NONE => K no_tac
-          | SOME thm =>
+          case correctness_thm_for c of
+            SOME thm =>
               eresolve_tac ctxt @{thms tCall_E}
               THEN' dresolve_tac ctxt [thm]
               (*update state*)
               THEN' SIT.update_state_call_tac ctxt)
-       | _ => K no_tac               
+       handle Match => K no_tac               
   in
     TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (snd #> fst) o focused_tac)
   end
