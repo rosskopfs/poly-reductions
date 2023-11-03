@@ -6,6 +6,7 @@ correspondence with HOL programs.
 *)
 signature HOL_TO_IMP_TAILCALLS_TACTICS =
 sig
+include HAS_LOGGER
 
 val if_split_tac : Proof.context -> int ->tactic
 
@@ -17,20 +18,19 @@ val seq_tac : Proof.context -> int -> tactic
 
 val assign_tac : Proof.context -> int -> tactic
 
-val call_tac : (term -> thm option) -> Proof.context -> int -> tactic
+(*retrieve functional correctness theorem from program constant*)
+type func_correct_retrieval = Proof.context -> term -> (thm list) option
+val retrieve_func_correct : func_correct_retrieval
+
+val call_tac : func_correct_retrieval -> Proof.context -> int -> tactic
 
 val if_tac : Proof.context -> int -> tactic
 
-val step_update_state_tac : (term -> thm option) -> Proof.context -> int -> tactic
+val step_update_state_tac : func_correct_retrieval -> Proof.context -> int -> tactic
 
-val run_tac : (term -> thm option) -> Proof.context -> int -> tactic
+val run_tac : func_correct_retrieval -> Proof.context -> int -> tactic
 
-val start_run_tac : (Proof.context -> int -> tactic) -> thm list -> (term -> thm option) ->
-  Proof.context -> int -> tactic
-val start_run_no_pattern_fun_tac : thm list -> (term -> thm option) ->
-  Proof.context -> int -> tactic
-val start_run_pattern_fun_tac : thm list -> (term -> thm option) ->
-  Proof.context -> int -> tactic
+val start_run_tac : thm list -> func_correct_retrieval -> Proof.context -> int -> tactic
 
 val tailcall_tac : Proof.context -> int -> tactic
 
@@ -40,20 +40,20 @@ val finish_non_tailcall_tac : thm list -> Proof.context -> int -> tactic
 val finish_tailcall_tac : thm list -> Proof.context -> int -> tactic
 val finish_tac : thm list -> Proof.context -> int -> tactic
 
-val start_run_finish_tac : (Proof.context -> int -> tactic) ->
-  thm list -> (term -> thm option) -> thm list ->
-  Proof.context -> int -> tactic
-val start_run_finish_no_pattern_fun_tac : thm list -> (term -> thm option) -> thm list ->
-  Proof.context -> int -> tactic
-val start_run_finish_pattern_fun_tac : thm list -> (term -> thm option) -> thm list ->
-  Proof.context -> int -> tactic
+val start_run_finish_tac : thm list -> func_correct_retrieval -> thm list -> Proof.context -> int -> tactic
 
-val induction_tac : Proof.context -> int -> tactic
+(*retrieve induction rule from function constant*)
+type induction_retrieval = Proof.context -> term -> (thm list) option
+val retrieve_function_inducts : induction_retrieval
+
+val setup_induction_tac : induction_retrieval -> Proof.context -> int -> tactic
 
 end
 
 structure HOL_To_IMP_Tailcalls_Tactics : HOL_TO_IMP_TAILCALLS_TACTICS =
 struct
+
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "IMP_Tailcall_Tactics"
 
 structure VU = View_Util
 structure GU = General_Util
@@ -91,7 +91,7 @@ fun tbig_step_t_program_prem_conv IMP_program_defs i =
 fun rewrite_IMP_program_defs_tac IMP_program_defs =
   let fun tac ctxt prems = case GU.find_first_index SIT.is_IMP_big_step_state_prop prems of
     SOME (i, _) => CONVERSION (tbig_step_t_program_prem_conv IMP_program_defs (i + 1) ctxt)
-   | NONE => (writeln "Could not find IMP big step premise"; K no_tac)
+   | NONE => (@{log Logger.WARN} ctxt (K "Could not find IMP big step premise"); K no_tac)
   in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (fst o snd) o tac) end
 
 fun start_tac IMP_program_defs ctxt =
@@ -127,46 +127,45 @@ fun assign_tac ctxt = dresolve_tac ctxt @{thms tAssignD}
   (*THEN' eresolve_tac ctxt @{thms conjE}*)
   THEN' SIT.update_state_assign_tac ctxt
 
-fun call_tac correctness_thm_for =
-  let
-    fun focused_tac ctxt prems =
-      (case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
-        SOME ((\<^Const>\<open>tCall for c _\<close>, _), _, _) =>
-          case correctness_thm_for c of
-            SOME thm =>
-              eresolve_tac ctxt @{thms tCall_E}
-              THEN' dresolve_tac ctxt [thm]
-              (*update state*)
-              THEN' SIT.update_state_call_tac ctxt)
-       handle Match => K no_tac               
-  in
-    TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (snd #> fst) o focused_tac)
-  end
+func_correct_retrieval
 
+fun call_tac get_correctness_thm =
+  let fun focused_tac ctxt prems = (case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+    SOME ((\<^Const>\<open>tCall for c _\<close>, _), _, _) =>
+      case get_correctness_thm c of
+        SOME thm =>
+          eresolve_tac ctxt @{thms tCall_E}
+          THEN' dresolve_tac ctxt [thm]
+          (*update state*)
+          THEN' SIT.update_state_call_tac ctxt)
+    handle Match => K no_tac               
+  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (snd #> fst) o focused_tac) end
+
+type func_correct_retrieval = Proof.context -> term -> (thm list) option
+val retrieve_func_correct = HOL_To_IMP_Minus_Func_Correct_Thms.get_theorem
 
 fun if_tac ctxt = eresolve_tac ctxt @{thms tIf_E}
   THEN_ALL_NEW (SIT.rewrite_all_state_retrieval_tac' (fn ctxt => VU.subst_first_asm_tac ctxt o single) ctxt)
 
-fun step_update_state_tac correctness_thm_for ctxt = TU.TRY' (seq_tac ctxt)
-  THEN' FIRST' [assign_tac ctxt, if_tac ctxt, call_tac correctness_thm_for ctxt] 
+fun step_update_state_tac get_correctness_thm ctxt = TU.TRY' (seq_tac ctxt)
+  THEN' FIRST' [assign_tac ctxt, if_tac ctxt, call_tac get_correctness_thm ctxt] 
 
 val run_tac = REPEAT_ALL_NEW oo step_update_state_tac
 
-fun start_run_tac after_start_tac IMP_program_defs correctness_thm_for ctxt =
+fun start_run_tac IMP_program_defs get_correctness_thm ctxt =
   start_tac IMP_program_defs ctxt
-  THEN' after_start_tac ctxt
-  THEN' run_tac correctness_thm_for ctxt
-
-val start_run_no_pattern_fun_tac = start_run_tac (K o K all_tac)
+  (*needed for inductions of functions defined on pattern matching; they create equalities of the
+    form "t = s ''<register>''", which have to be rewritten in the goal's conclusion"*)
+  THEN' TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt)
+  THEN' run_tac get_correctness_thm ctxt
 
 fun simp_HOL_def_tac ctxt = asm_full_simp_tac (ctxt addsimps @{thms Let_def})
 
 fun finish_non_tailcall_tac HOL_program_eqs ctxt =
-  (SIT.rewrite_all_state_retrieval_tac' (fn ctxt => VU.subst_first_tac ctxt o single) ctxt
+  SIT.rewrite_all_state_retrieval_tac' (fn ctxt => VU.subst_first_tac ctxt o single) ctxt
   THEN' SIT.remove_state_eq_tac ctxt
   THEN' VU.subst_first_tac ctxt HOL_program_eqs
-  THEN_ALL_NEW simp_HOL_def_tac ctxt)
-  |> SOLVED'
+  THEN_ALL_NEW simp_HOL_def_tac ctxt
 
 (* tailcalls *)
 
@@ -229,51 +228,42 @@ val rewrite_insert_current_registers_eq_tac' =
 fun finish_tailcall_tac HOL_program_eqs ctxt =
   let val finish_goal_tac = Metis_Tactic.metis_tac [] ATP_Problem_Generate.combsN ctxt []
   in
-    (tailcall_tac ctxt
+    tailcall_tac ctxt
     THEN' VU.subst_first_tac ctxt HOL_program_eqs
     THEN' TU.TRY' (simp_HOL_def_tac ctxt)
     THEN' rewrite_insert_current_registers_eq_tac' ctxt
-    THEN_ALL_NEW finish_goal_tac)
-    |> SOLVED'
+    THEN_ALL_NEW finish_goal_tac
   end
 
-fun finish_tac HOL_program_eqs ctxt = finish_tailcall_tac HOL_program_eqs ctxt
+fun finish_tac HOL_program_eqs ctxt = SOLVED' (finish_tailcall_tac HOL_program_eqs ctxt)
   ORELSE' finish_non_tailcall_tac HOL_program_eqs ctxt
 
-fun start_run_finish_tac after_start_tac IMP_program_defs correctness_thms
+fun start_run_finish_tac IMP_program_defs correctness_thms
   HOL_program_eqs ctxt =
-  start_run_tac after_start_tac IMP_program_defs correctness_thms ctxt
+  start_run_tac IMP_program_defs correctness_thms ctxt
   THEN_ALL_NEW finish_tac HOL_program_eqs ctxt
 
-val start_run_finish_no_pattern_fun_tac = start_run_finish_tac (K o K all_tac)
-val start_run_pattern_fun_tac = start_run_tac rewrite_eq_state_retrieval_sym_tac
-val start_run_finish_pattern_fun_tac = start_run_finish_tac rewrite_eq_state_retrieval_sym_tac
+type induction_retrieval = Proof.context -> term -> (thm list) option
+val retrieve_function_inducts = #inducts oo Function.get_info
 
-val induction_tac =
-  let
-    fun focused_tac ctxt (prems, concl) =
-      case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
-        SOME ((_, s), t, _) =>
-          let
-            val const =
-              concl
-              |> HOLogic.dest_Trueprop
-              |> HOLogic.dest_eq |> snd
-              |> Term.strip_comb |> fst
-            val def_insts =
-              dest_Const const |> fst
-              |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
-              |> #arg_regs
-              |> map (fn r => s $ HOLogic.mk_string r)
-              |> map (fn r => SOME (NONE, (r, false)))
-            val arbitrary = map dest_Free [s, t]
-            val inducts = Function.get_info ctxt const |> #inducts
-          in
-            Induction.induction_tac ctxt true [def_insts] [arbitrary] [] inducts []
-          end
-      | _ => K no_tac
-  in
-    TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac)
-  end
-    
+fun setup_induction_tac get_inducts =
+  let fun focused_tac ctxt (prems, concl) =
+    case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+      SOME ((_, s), t, _) =>
+        let
+          val const = concl
+            |> VU.dest_Trueprop
+            |> VU.dest_eq |> snd
+            |> Term.strip_comb |> fst
+          val def_insts = dest_Const const |> fst
+            |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
+            |> #arg_regs
+            |> map (mk_state_register_retrieval s)
+            |> map (fn r => SOME (NONE, (r, false)))
+          val arbitrary = map dest_Free [s, t]
+          val inducts = get_inducts ctxt const
+        in Induction.induction_tac ctxt true [def_insts] [arbitrary] [] inducts [] end
+   | NONE => (@{log Logger.WARN} ctxt (K "Could not find IMP big step premise"); K no_tac)
+  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac) end
+
 end

@@ -2,7 +2,10 @@
 theory HOL_To_IMP_Tailcalls_Tactics
   imports
     States_IMP_Tailcalls
-    Compile_Nat
+    HOL_To_IMP_Minus_Goal_Commands
+    ML_Unification.ML_Functor_Instances
+    ML_Unification.ML_Method_Utils
+    ML_Unification.ML_Parsing_Utils
 begin
 
 lemma tailcall_to_IMP_Minus_complete:
@@ -71,11 +74,26 @@ lemma tTail_E:
 end
 
 ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
+ML_file \<open>hol_to_imp_tactics.ML\<close>
+
+ML\<open>
+  @{functor_instance struct_name = Standard_HOL_To_IMP_Tactics
+    and functor_name = HOL_To_IMP_Tactics
+    and id = \<open>""\<close>
+    and more_args = \<open>val init_args = {
+      IMP_defs = SOME Compile_Nat.get_compiled_const_defs,
+      func_corrects = SOME get_IMP_Minus_func_correct,
+      HOL_eqs = SOME (K []),
+      induction = SOME HOL_To_IMP_Tailcalls_Tactics.retrieve_function_inducts
+    }\<close>}
+\<close>
+local_setup \<open>Standard_HOL_To_IMP_Tactics.setup_attribute NONE\<close>
+local_setup \<open>Standard_HOL_To_IMP_Tactics.setup_method NONE\<close>
 
 ML \<open>
   structure H = HOL_To_IMP_Tailcalls_Tactics
   structure SIT = State_IMP_Tailcalls
 \<close>
-  
+
 
 end

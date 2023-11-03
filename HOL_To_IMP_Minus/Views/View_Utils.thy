@@ -6,7 +6,7 @@ theory View_Utils
 begin
 
 paragraph \<open>Summary\<close>
-text \<open>General ML utilities to track IMP state changes.\<close>
+text \<open>General ML utilities to track state changes.\<close>
 
 ML_file\<open>util.ML\<close>
 

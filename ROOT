@@ -48,6 +48,7 @@ session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
     "ML_Typeclasses"
     "ML_Typeclasses/State"
     "Refinements"
+    "Refinements/Automation"
     "Views"
     "Views/IMP_Tailcalls"
   theories

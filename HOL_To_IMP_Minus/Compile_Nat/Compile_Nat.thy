@@ -1,11 +1,13 @@
 theory Compile_Nat
-imports
-  IMP_Minus.IMP_Tailcalls_Dynamic
-keywords
-  "compile_nat" :: thy_decl and "basename" and
-  "declare_compiled_const" :: thy_decl and
-  "return_register" and "argument_registers" and "compiled" and
-  "print_compiled_consts" :: diag
+  imports
+    IMP_Minus.IMP_Tailcalls_Dynamic
+    ML_Unification.ML_Logger
+    ML_Unification.Setup_Result_Commands
+  keywords
+    "compile_nat" :: thy_decl and "basename" and
+    "declare_compiled_const" :: thy_decl and
+    "return_register" and "argument_registers" and "compiled" and
+    "print_compiled_consts" :: diag
 begin
 
 fun measure_assoc where
@@ -106,6 +108,7 @@ lemma tailcall_to_IMP_Minus_eq: "tailcall_to_IMP_Minus c = inline (compile c)"
   unfolding tailcall_to_IMP_Minus_def by simp
 
 named_theorems compiled_const_defs
+setup_result HOL_to_IMP_base_logger = \<open>Logger.new_logger Logger.root_logger "HOL_To_IMP_Base"\<close>
 ML_file\<open>compile_nat.ML\<close>
 
 

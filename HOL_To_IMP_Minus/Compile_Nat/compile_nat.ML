@@ -1,6 +1,10 @@
 (*TODO: signature*)
 structure Compile_Nat = struct
 
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compiler"
+
+fun get_compiled_const_defs ctxt = Named_Theorems.get ctxt \<^named_theorems>\<open>compiled_const_defs\<close>
+
 type compiled_const = { ret_reg : string, arg_regs : string list, compiled : term }
 
 fun map_compiled f (c : compiled_const) =
@@ -328,15 +332,12 @@ in
               ]
             |> Pretty.item
           end
-        val _ =
-          Compiled_Consts.get (Context.Proof lthy)
+        val _ = @{log Logger.INFO} lthy (fn _ => Compiled_Consts.get (Context.Proof lthy)
           |> Symtab.dest
           |> map pretty_compiled_const
           |> Pretty.big_list "Compiled constants:"
-          |> Pretty.writeln
-      in
-        lthy
-      end))
+          |> Pretty.string_of)
+      in lthy end))
 end
 
 end

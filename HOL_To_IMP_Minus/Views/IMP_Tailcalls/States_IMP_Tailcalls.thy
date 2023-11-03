@@ -99,7 +99,6 @@ lemma update_STATE_state_eq_update:
   using assms unfolding STATE_eq SIMPS_TO_eq atomize_eq
   by (fact update_state_state_eq_update)
 
-
 ML_file\<open>state_imp_tailcalls.ML\<close>
 
 (*TODO:

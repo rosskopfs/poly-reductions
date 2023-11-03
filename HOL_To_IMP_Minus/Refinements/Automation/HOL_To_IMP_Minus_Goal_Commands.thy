@@ -31,6 +31,11 @@ attribute_setup IMP_Minus_func_correct = \<open>
     end)
 \<close>
 
+ML\<open>
+  fun get_IMP_Minus_func_correct ctxt = Named_Theorems.get ctxt
+    \<^named_theorems>\<open>IMP_Minus_func_correct\<close>
+\<close>
+
 ML \<open>
 local
   val parser =
