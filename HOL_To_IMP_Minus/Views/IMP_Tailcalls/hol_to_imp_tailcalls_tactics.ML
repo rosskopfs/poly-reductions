@@ -17,18 +17,20 @@ val seq_tac : Proof.context -> int -> tactic
 
 val assign_tac : Proof.context -> int -> tactic
 
-val call_tac : thm -> Proof.context -> int -> tactic
+val call_tac : (term -> thm option) -> Proof.context -> int -> tactic
 
 val if_tac : Proof.context -> int -> tactic
 
-val step_update_state_tac : thm list -> Proof.context -> int -> tactic
+val step_update_state_tac : (term -> thm option) -> Proof.context -> int -> tactic
 
-val run_tac : thm list -> Proof.context -> int -> tactic
+val run_tac : (term -> thm option) -> Proof.context -> int -> tactic
 
-val start_run_tac : (Proof.context -> int -> tactic) -> thm list -> thm list -> Proof.context ->
-  int -> tactic
-val start_run_no_pattern_fun_tac : thm list -> thm list -> Proof.context -> int -> tactic
-val start_run_pattern_fun_tac : thm list -> thm list -> Proof.context -> int -> tactic
+val start_run_tac : (Proof.context -> int -> tactic) -> thm list -> (term -> thm option) ->
+  Proof.context -> int -> tactic
+val start_run_no_pattern_fun_tac : thm list -> (term -> thm option) ->
+  Proof.context -> int -> tactic
+val start_run_pattern_fun_tac : thm list -> (term -> thm option) ->
+  Proof.context -> int -> tactic
 
 val tailcall_tac : Proof.context -> int -> tactic
 
@@ -38,12 +40,13 @@ val finish_non_tailcall_tac : thm list -> Proof.context -> int -> tactic
 val finish_tailcall_tac : thm list -> Proof.context -> int -> tactic
 val finish_tac : thm list -> Proof.context -> int -> tactic
 
-val start_run_finish_tac : (Proof.context -> int -> tactic) -> thm list -> thm list -> thm list ->
+val start_run_finish_tac : (Proof.context -> int -> tactic) ->
+  thm list -> (term -> thm option) -> thm list ->
   Proof.context -> int -> tactic
-val start_run_finish_no_pattern_fun_tac : thm list -> thm list -> thm list -> Proof.context ->
-  int -> tactic
-val start_run_finish_pattern_fun_tac : thm list -> thm list -> thm list -> Proof.context -> int ->
-  tactic
+val start_run_finish_no_pattern_fun_tac : thm list -> (term -> thm option) -> thm list ->
+  Proof.context -> int -> tactic
+val start_run_finish_pattern_fun_tac : thm list -> (term -> thm option) -> thm list ->
+  Proof.context -> int -> tactic
 
 val induction_tac : Proof.context -> int -> tactic
 
@@ -124,24 +127,36 @@ fun assign_tac ctxt = dresolve_tac ctxt @{thms tAssignD}
   (*THEN' eresolve_tac ctxt @{thms conjE}*)
   THEN' SIT.update_state_assign_tac ctxt
 
-fun call_tac correctness_thm ctxt = eresolve_tac ctxt @{thms tCall_E}
-  THEN' dresolve_tac ctxt [correctness_thm]
-  (*update state*)
-  THEN' SIT.update_state_call_tac ctxt
+fun call_tac correctness_thm_for =
+  let
+    fun focused_tac ctxt prems =
+      case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+        SOME ((\<^Const>\<open>tCall for c _\<close>, _), _, _) =>
+          (case correctness_thm_for c of
+            NONE => K no_tac
+          | SOME thm =>
+              eresolve_tac ctxt @{thms tCall_E}
+              THEN' dresolve_tac ctxt [thm]
+              (*update state*)
+              THEN' SIT.update_state_call_tac ctxt)
+       | _ => K no_tac               
+  in
+    TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (snd #> fst) o focused_tac)
+  end
+
 
 fun if_tac ctxt = eresolve_tac ctxt @{thms tIf_E}
   THEN_ALL_NEW (SIT.rewrite_all_state_retrieval_tac' (fn ctxt => VU.subst_first_asm_tac ctxt o single) ctxt)
 
-fun step_update_state_tac correctness_thms ctxt = TU.TRY' (seq_tac ctxt)
-  THEN' FIRST' (assign_tac ctxt :: if_tac ctxt ::
-    map (fn thm => call_tac thm ctxt) correctness_thms)
+fun step_update_state_tac correctness_thm_for ctxt = TU.TRY' (seq_tac ctxt)
+  THEN' FIRST' [assign_tac ctxt, if_tac ctxt, call_tac correctness_thm_for ctxt] 
 
 val run_tac = REPEAT_ALL_NEW oo step_update_state_tac
 
-fun start_run_tac after_start_tac IMP_program_defs correctness_thms ctxt =
+fun start_run_tac after_start_tac IMP_program_defs correctness_thm_for ctxt =
   start_tac IMP_program_defs ctxt
   THEN' after_start_tac ctxt
-  THEN' run_tac correctness_thms ctxt
+  THEN' run_tac correctness_thm_for ctxt
 
 val start_run_no_pattern_fun_tac = start_run_tac (K o K all_tac)
 
@@ -245,7 +260,7 @@ val induction_tac =
               concl
               |> HOLogic.dest_Trueprop
               |> HOLogic.dest_eq |> snd
-              |> Term.strip_comb |> fst 
+              |> Term.strip_comb |> fst
             val def_insts =
               dest_Const const |> fst
               |> Compile_Nat.get_compiled_const (Context.Proof ctxt)

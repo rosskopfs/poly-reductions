@@ -10,10 +10,11 @@ begin
 
 compile_nat triangle_def basename triangle
 
+ML \<open>HOL_To_IMP_Minus_Func_Correct_Thms.get (Context.Proof @{context})\<close>
+
 HOL_To_IMP_Minus_func_correct triangle
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms triangle_def} @{context} 1\<close>)
+  apply (start_run_finish triangle_def)
   done
 
 text \<open>up next: encoding of products, sums, etc. See @{term prod_encode}\<close>

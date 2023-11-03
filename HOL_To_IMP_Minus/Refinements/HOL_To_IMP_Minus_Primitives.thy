@@ -1,8 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Minus_Primitives
   imports
-    HOL_To_IMP_Tailcalls_Tactics
-    HOL_To_IMP_Minus_Goal_Commands
+    HOL_To_IMP_Minus_Methods
 begin
 term tailcall_to_IMP_Minus
 locale HOL_To_IMP_Minus =
@@ -28,15 +27,10 @@ declare_compiled_const True
   argument_registers
   compiled "tailcall_to_IMP_Minus true_IMP_tailcall"
 
-method preprocess_HOL_To_IMP_Minus_func_correct =
-  (erule tailcall_to_IMP_Minus_correct_if_correct),
-  (subst compiled_const_defs, simp),
-  (subst compiled_const_defs, simp)
 
 HOL_To_IMP_Minus_func_correct true_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms true_nat_def} @{context} 1\<close>)
+  apply (start_run_finish true_nat_def)
   done
 
 lemma true_nat_eq_one[simp]: "true_nat = 1"
@@ -56,8 +50,7 @@ declare_compiled_const False
 
 HOL_To_IMP_Minus_func_correct false_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms false_nat_def} @{context} 1\<close>)
+  apply (start_run_finish false_nat_def)
   done
 
 lemma false_nat_eq_one[simp]: "false_nat = 0"
@@ -72,8 +65,7 @@ compile_nat id_nat_def basename id
 
 HOL_To_IMP_Minus_func_correct id_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms id_nat_def} @{context} 1\<close>)
+  apply (start_run_finish id_nat_def)
   done
 
 lemma id_nat_eq_id[simp]: "id_nat = id"
@@ -135,8 +127,7 @@ declare_compiled_const HOL.Not
 
 HOL_To_IMP_Minus_func_correct not_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms not_nat_def} @{context} 1\<close>)
+  apply (start_run_finish not_nat_def)
   done
 
 lemma not_nat_eq_nat_of_bool_eq_false[simp]: "not_nat n = nat_of_bool (n = false_nat)"
@@ -190,8 +181,7 @@ declare_compiled_const max
 
 HOL_To_IMP_Minus_func_correct max_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms max_nat_def} @{context} 1\<close>)
+  apply (start_run_finish max_nat_def)
   done
 
 lemma max_nat_eq[simp]: "max_nat x y = max x y"
@@ -209,8 +199,7 @@ declare_compiled_const min
 
 HOL_To_IMP_Minus_func_correct min_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms min_nat_def} @{context} 1\<close>)
+  apply (start_run_finish min_nat_def)
   done
 
 lemma min_nat_eq[simp]: "min_nat x y = min x y"
@@ -227,8 +216,7 @@ declare_compiled_const conj
 
 HOL_To_IMP_Minus_func_correct and_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms and_nat_def} @{context} 1\<close>)
+  apply (start_run_finish and_nat_def)
   done
 
 lemma and_nat_eq[simp]: "and_nat x y = nat_of_bool (is_true_nat x \<and> is_true_nat y)"
@@ -245,8 +233,7 @@ declare_compiled_const disj
 
 HOL_To_IMP_Minus_func_correct or_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms or_nat_def} @{context} 1\<close>)
+  apply (start_run_finish or_nat_def)
   done
 
 lemma or_nat_eq[simp]: "or_nat x y = nat_of_bool (is_true_nat x \<or> is_true_nat y)"
@@ -263,8 +250,7 @@ declare_compiled_const "ord_class.less_eq"
 
 HOL_To_IMP_Minus_func_correct le_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms le_nat_def} @{context} 1\<close>)
+  apply (start_run_finish le_nat_def)
   done
 
 lemma le_nat_eq[simp]: "le_nat x y = nat_of_bool (x \<le> y)"
@@ -281,8 +267,7 @@ declare_compiled_const "ord_class.less"
 
 HOL_To_IMP_Minus_func_correct lt_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms lt_nat_def} @{context} 1\<close>)
+  apply (start_run_finish lt_nat_def)
   done
 
 lemma lt_nat_eq[simp]: "lt_nat x y = nat_of_bool (x < y)"

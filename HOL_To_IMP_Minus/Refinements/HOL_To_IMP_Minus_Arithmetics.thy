@@ -28,9 +28,7 @@ compile_nat mul_acc_nat_eq basename mul_acc
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
-   apply (tactic \<open>H.start_run_finish_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms mul_acc_nat.simps} @{context} 1\<close>)+
+  apply(start_run_finish (induction, pattern) mul_acc_nat_eq)
   done
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
@@ -49,8 +47,7 @@ declare_compiled_const "times"
 
 HOL_To_IMP_Minus_func_correct mul_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms mul_nat_def} @{context} 1\<close>)
+  apply(start_run_finish mul_nat_def)
   done
 
 lemma mul_nat_eq_mul[simp]: "mul_nat x y = x * y"
@@ -64,9 +61,7 @@ compile_nat div_acc_nat.simps basename div_acc
 
 HOL_To_IMP_Minus_func_correct div_acc_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms div_acc_nat.simps} @{context} 1\<close>)
+  apply(start_run_finish (induction) div_acc_nat.simps)
   done
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
@@ -84,8 +79,7 @@ declare_compiled_const "divide"
 
 HOL_To_IMP_Minus_func_correct div_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms div_nat_def} @{context} 1\<close>)
+  apply (start_run_finish div_nat_def)
   done
 
 lemma div_nat_eq_div[simp]: "div_nat x y = x div y"
@@ -98,8 +92,7 @@ compile_nat square_nat_def basename square
 
 HOL_To_IMP_Minus_func_correct square_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms square_nat_def} @{context} 1\<close>)
+  apply (start_run_finish square_nat_def)
   done
 
 lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
@@ -123,9 +116,7 @@ compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.induction_tac @{context} 1\<close>)
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms sqrt_aux_nat.simps} @{context} 1\<close>)
+  apply(start_run_finish (induction) sqrt_aux_nat.simps)
   done
 
 lemma square_sqrt_aux_nat_le:
@@ -149,8 +140,7 @@ compile_nat sqrt_nat_def basename sqrt
 
 HOL_To_IMP_Minus_func_correct sqrt_nat
   apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_no_pattern_fun_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms sqrt_nat_def} @{context} 1\<close>)
+  apply (start_run_finish sqrt_nat_def)
   done
 
 lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"

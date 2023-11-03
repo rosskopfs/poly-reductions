@@ -1,39 +1,35 @@
 theory HOL_To_IMP_Minus_Goal_Commands
-  imports Compile_Nat 
+  imports Compile_Nat
   keywords "HOL_To_IMP_Minus_func_correct" :: thy_goal_defn
 begin
 
-(* ML \<open>
-structure Func_Correct_Thms = Generic_Data
+ML \<open>
+structure HOL_To_IMP_Minus_Func_Correct_Thms = Generic_Data
 (
   type T = thm Termtab.table;
   val empty = Termtab.empty
   val merge = Termtab.join (K fst)
 )
 
-structure Func_Correct_Thms = struct
-open Func_Correct_Thms
+structure HOL_To_IMP_Minus_Func_Correct_Thms = struct
+open HOL_To_IMP_Minus_Func_Correct_Thms
 
 fun func_correct_attr c =
-  Thm.declaration_attribute (fn thm => Func_Correct_Thms.map (Termtab.update_new (c, thm)))
+  Thm.declaration_attribute (fn thm => map (Termtab.update_new (c, thm)))
 
-val get_theorem = Termtab.lookup o Func_Correct_Thms.get o Context.Proof
+val get_theorem = Termtab.lookup o get o Context.Proof
 end
 \<close>
 
-attribute_setup func_correct = \<open>
+attribute_setup IMP_Minus_func_correct = \<open>
   Scan.lift Parse.const :|-- (fn cs => fn (context, tks) =>
     let
       val ctxt = Context.proof_of context
       val c = Proof_Context.read_const {proper = false, strict = false} ctxt cs
     in
-      (Func_Correct_Thms.func_correct_attr c, (context, tks))
+      (HOL_To_IMP_Minus_Func_Correct_Thms.func_correct_attr c, (context, tks))
     end)
-\<close> *)
-
-(*TODO: replace with above attribute once the tactics are able to fetch
-correctness theorems based on the program/term that is called.*)
-named_theorems IMP_Minus_func_correct "functional correctness theorems of IMP- programs"
+\<close>
 
 ML \<open>
 local
@@ -71,12 +67,9 @@ in
           val goal_stmt = Element.Shows [(Binding.empty_atts, [(goal, [])])]
 
           val pos = Position.thread_data ()
-          val attr =
-            Named_Theorems.add \<^named_theorems>\<open>IMP_Minus_func_correct\<close>
-            (* Func_Correct_Thms.func_correct_attr *)
           val func_correct_attr =
-            Attrib.internal pos (K attr)
-            (* Attrib.internal pos (fn phi => attr (Morphism.term phi IMP_program)) *)
+            Attrib.internal pos (fn phi =>
+              HOL_To_IMP_Minus_Func_Correct_Thms.func_correct_attr (Morphism.term phi IMP_program))
           val binding = binding |> Binding.is_empty (fst binding) ?
             apfst (fn _ => [Term.term_name const_term, "IMP_Minus_func_correct"]
               |> map Binding.name
