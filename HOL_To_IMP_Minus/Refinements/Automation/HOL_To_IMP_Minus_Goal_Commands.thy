@@ -14,8 +14,7 @@ structure HOL_To_IMP_Minus_Func_Correct_Thms = Generic_Data
 structure HOL_To_IMP_Minus_Func_Correct_Thms = struct
 open HOL_To_IMP_Minus_Func_Correct_Thms
 
-fun func_correct_attr c =
-  Thm.declaration_attribute (fn thm => map (Termtab.update_new (c, thm)))
+val func_correct_attr = Thm.declaration_attribute o (map o Termtab.update_new oo pair)
 
 val get_theorem = Termtab.lookup o get o Context.Proof
 end
@@ -29,11 +28,6 @@ attribute_setup IMP_Minus_func_correct = \<open>
     in
       (HOL_To_IMP_Minus_Func_Correct_Thms.func_correct_attr c, (context, tks))
     end)
-\<close>
-
-ML\<open>
-  fun get_IMP_Minus_func_correct ctxt = Named_Theorems.get ctxt
-    \<^named_theorems>\<open>IMP_Minus_func_correct\<close>
 \<close>
 
 ML \<open>

@@ -1,9 +1,53 @@
-(*TODO: signature*)
-structure Compile_Nat = struct
+(*  Title:      HOL_To_IMP_Minus/compile_nat.ML
+    Author:     Lukas Stevens, TU Muenchen
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compiler"
+Compiler from HOL-tailrecursive functions on natural numbers to IMP with tailcalls.
+*)
+signature COMPILE_NAT = sig
+include HAS_LOGGER
 
-fun get_compiled_const_defs ctxt = Named_Theorems.get ctxt \<^named_theorems>\<open>compiled_const_defs\<close>
+val get_compiled_const_def : Proof.context -> term -> thm option
+
+type compiled_const = {arg_regs: string list, compiled: term, ret_reg: string}
+val get_compiled_const : Context.generic -> string -> compiled_const
+
+val compiled_const_suffix_cfg : string Config.T
+val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_theory
+end
+
+structure Compile_Nat : COMPILE_NAT = struct
+
+structure Compiled_Const_Defs = Generic_Data(
+  type T = thm Termtab.table;
+  val empty = Termtab.empty
+  val merge = Termtab.join (K fst)
+)
+
+val get_compiled_const_def = Termtab.lookup o Compiled_Const_Defs.get o Context.Proof
+
+val compiled_const_from_def = Thm.lhs_of #> Thm.term_of #> Term.head_of
+
+fun update_compiled_const_def thm = compiled_const_from_def thm
+  |> rpair thm
+  |> Termtab.update_new
+  |> Compiled_Const_Defs.map
+val update_compiled_const_def_attr = Thm.declaration_attribute update_compiled_const_def
+
+fun delete_compiled_const_def thm = compiled_const_from_def thm
+  |> Termtab.delete
+  |> Compiled_Const_Defs.map
+val delete_compiled_const_def_attr = Thm.declaration_attribute delete_compiled_const_def
+
+val compiled_const_def_binding = \<^binding>\<open>compiled_const_def\<close>
+
+val setup_compiled_const_def_attr = Attrib.add_del
+  update_compiled_const_def_attr delete_compiled_const_def_attr
+
+val _ = Theory.setup (
+  Attrib.setup compiled_const_def_binding setup_compiled_const_def_attr
+    "add/del compiled IMP constant definition")
+
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_Nat"
 
 type compiled_const = { ret_reg : string, arg_regs : string list, compiled : term }
 
@@ -27,9 +71,7 @@ fun declare_compiled_const name compiled_const =
           |> Morphism.binding phi
           |> Binding.name_of
         val compiled_const' = map_compiled (Morphism.term phi) compiled_const
-      in
-        Compiled_Consts.map (Symtab.update_new (name', compiled_const'))
-      end)
+      in Compiled_Consts.map (Symtab.update_new (name', compiled_const')) end)
 
 fun get_compiled_const context f_name =
   Compiled_Consts.get context
@@ -40,12 +82,12 @@ fun get_compiled_const context f_name =
 (* We index Ifs, Lets, Calls with unique numbers such that we can easily
    invent new register names without passing a context around *)
 datatype tc_ast = If of int * (tc_ast * tc_ast * tc_ast) |
-                  Number of int |
-                  Arg of int |
-                  Let of (int * (string * (tc_ast * tc_ast))) |
-                  LetBound of int |
-                  Call of int * ((string * typ) * tc_ast list) |
-                  TailCall of tc_ast list
+  Number of int |
+  Arg of int |
+  Let of (int * (string * (tc_ast * tc_ast))) |
+  LetBound of int |
+  Call of int * ((string * typ) * tc_ast list) |
+  TailCall of tc_ast list
 
 fun tc_ast_of_term (f_name, f_typ) f_args t =
   let
@@ -148,13 +190,12 @@ fun define_compiled compiled_binding compiled lthy =
   let
     val pos = Binding.pos_of compiled_binding
 
-    val def_attrs =
-      \<^named_theorems>\<open>compiled_const_defs\<close>
-      |> Named_Theorems.add |> Attrib.internal pos o K
+    val def_attr = Attrib.internal pos
+      (Thm.declaration_attribute o (update_compiled_const_def oo Morphism.thm))
 
     val ((fv, (def_name, def_thm)), lthy') =
       Local_Theory.define ((compiled_binding, NoSyn),
-                          ((Thm.def_binding compiled_binding, [def_attrs]), compiled))
+                          ((Thm.def_binding compiled_binding, [def_attr]), compiled))
                           lthy
     val _ =
       Proof_Display.print_consts true pos lthy' (K false) [Term.dest_Free fv]
@@ -203,7 +244,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
 
     val f_IMP_binding =
       f_IMP_namepos
-      |>> (fn n => n ^ "_" ^ Config.get lthy compiled_const_suffix_cfg)
+      |>> (suffix ("_" ^ Config.get lthy compiled_const_suffix_cfg))
       |> Binding.make
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const =
@@ -304,16 +345,14 @@ in
           |> Pretty.block
         fun pretty_compiled compiled =
           let
-            fun unfold1_term thms t =
-              Thm.cterm_of lthy t
-              |> Thm.reflexive
-              |> Conv.fconv_rule (Conv.try_conv (Conv.arg_conv (Conv.rewrs_conv thms)))
-              |> Thm.cprop_of |> Thm.dest_equals |> snd |> Thm.term_of
-            val compiled =
-              if not verbose then compiled
-                else
-                  compiled
-                  |> unfold1_term (\<^named_theorems>\<open>compiled_const_defs\<close> |> Named_Theorems.get lthy)
+            fun unfold1_term thms =
+              Thm.cterm_of lthy
+              #> Thm.reflexive
+              #> Conv.fconv_rule (Conv.try_conv (Conv.arg_conv (Conv.rewrs_conv thms)))
+              #> Thm.cprop_of #> Thm.dest_equals #> snd #> Thm.term_of
+            val compiled = (verbose ? (Compiled_Const_Defs.get (Context.Proof lthy)
+              |> Termtab.dest |> map snd |> unfold1_term))
+              compiled
           in
             Pretty.block
               [ Pretty.keyword2 "compiled", Pretty.brk 1

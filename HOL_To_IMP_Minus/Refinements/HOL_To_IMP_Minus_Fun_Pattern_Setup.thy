@@ -29,7 +29,7 @@ declare add_nat_pat.simps[simp del]
 case_of_simps add_nat_pat_eq[unfolded case_nat_eq_if] : add_nat_pat.simps
 compile_nat add_nat_pat_eq basename add_pat
 
-HOL_To_IMP_Minus_func_correct add_nat_pat by (cooker (tailcall) HOL_eqs = add_nat_pat.simps)
+HOL_To_IMP_Minus_func_correct add_nat_pat by (cook mode = tailcall)
 
 end
 

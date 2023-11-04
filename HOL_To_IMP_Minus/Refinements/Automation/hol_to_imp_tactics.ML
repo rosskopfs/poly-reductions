@@ -3,97 +3,188 @@
 
 HOL to IMP tactics with arguments from context.
 *)
-@{parse_entries (sig) PARSE_HOL_TO_IMP_TACTICS_ARGS
-  [IMP_defs, func_corrects, HOL_eqs, induction, mode]}
+@{parse_entries (sig) PARSE_HOL_TO_IMP_TACTICS_CONTEXT_ARGS
+  [get_IMP_def, get_func_corrects, get_HOL_eqs, get_HOL_inducts]}
 
-@{parse_entries (sig) PARSE_HOL_TO_IMP_CONTEXT_ARGS
-  [IMP_defs, func_corrects, HOL_eqs, induction]}
+@{parse_entries (sig) PARSE_HOL_TO_IMP_MINUS_TACTICS_ARGS
+  [IMP_def, func_corrects, HOL_eqs, HOL_inducts, mode]}
 
 @{parse_entries (sig) PARSE_HOL_TO_IMP_TAILCALLS_MODES
   [tailcall, nontailcall]}
 
-signature HOL_TO_IMP_TACTICS_ARGS =
+signature HOL_TO_IMP_MINUS_TACTICS_ARGS =
 sig
-  val preprocess_tac : thm list -> Proof.context -> int -> tactic
+include HAS_LOGGER
 
-  structure PA : PARSE_HOL_TO_IMP_TACTICS_ARGS
-  structure PCA : PARSE_HOL_TO_IMP_CONTEXT_ARGS
-  val PCA_entries_from_PA_entries : ('a, 'b, 'c, 'd, 'e) PA.entries -> ('a, 'b, 'c, 'd) PCA.entries
-  val PA_entries_from_PCA_entries : ('a, 'b, 'c, 'd) PCA.entries -> 'e ->
-    ('a, 'b, 'c, 'd, 'e) PA.entries
+val preprocess_tac : HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval -> Proof.context -> int ->
+  tactic
 
-  structure PM : PARSE_HOL_TO_IMP_TAILCALLS_MODES
-  type mode = PM.key
-  val parse_mode : mode parser
+(*retrieve induction rule for HOL constant*)
+type HOL_inducts_retrieval = Proof.context -> term -> (thm list) option
+val get_HOL_inducts : HOL_inducts_retrieval
 
-  type args = (thm list, thm list, thm list, HOL_To_IMP_Tailcalls_Tactics.induction_retrieval,
-    mode) PA.entries
-  type context_args = (Proof.context -> thm list, Proof.context -> thm list, Proof.context -> thm list,
-    HOL_To_IMP_Tailcalls_Tactics.induction_retrieval) PCA.entries
+val setup_induction_tac : HOL_inducts_retrieval -> Proof.context -> int -> tactic
 
-  val cooker_tac : args -> Proof.context -> int -> tactic
+structure PA : PARSE_HOL_TO_IMP_MINUS_TACTICS_ARGS
+structure PCA : PARSE_HOL_TO_IMP_TACTICS_CONTEXT_ARGS
 
-  val arg_parsers : (thm list context_parser, thm list context_parser, thm list context_parser,
-    thm list option context_parser, mode parser) PA.entries
+structure PM : PARSE_HOL_TO_IMP_TAILCALLS_MODES
+type mode = PM.key
+val parse_mode : mode parser
+
+type context_args = (HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval,
+  HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval,
+  HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
+type args = (thm, thm list, thm list, thm list, mode) PA.entries
+
+val cook_tac : context_args -> mode -> Proof.context -> int -> tactic
+
+val context_arg_parsers : (ML_Code_Util.code parser, ML_Code_Util.code parser,
+  ML_Code_Util.code parser, ML_Code_Util.code parser) PCA.entries
+val arg_parsers : (thm context_parser, thm list context_parser, thm list context_parser,
+  thm list context_parser, mode parser) PA.entries
+
 end
 
-structure HOL_To_IMP_Tactics_Args : HOL_TO_IMP_TACTICS_ARGS =
+structure HOL_To_IMP_Minus_Tactics_Args : HOL_TO_IMP_MINUS_TACTICS_ARGS =
 struct
 
-structure HITT = HOL_To_IMP_Tailcalls_Tactics
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Minus_Tactics_Args"
+
+structure GU = General_Util
+structure VU = View_Util
+structure HTIT = HOL_To_IMP_Tailcalls_Tactics
+structure TU = Tactic_Util
+structure SIT = State_IMP_Tailcalls
 structure PU = Parse_Util
 
-fun preprocess_tac IMP_program_defs ctxt =
-  eresolve_tac ctxt @{thms tailcall_to_IMP_Minus_correct_if_correct}
-  THEN' REPEAT_DETERM_N 2 o (EqSubst.eqsubst_tac ctxt [0] IMP_program_defs
-    THEN' Simplifier.simp_tac ctxt)
+val dest_IMP_Minus_big_step_state =
+  \<^Const_fn>\<open>big_step_t for \<^Const>\<open>Pair _ _ for \<^Const>\<open>tailcall_to_IMP_Minus for c\<close>
+    s\<close> t s' => \<open>((c, s), t, s')\<close>\<close>
+val dest_IMP_Minus_big_step_state_prop = dest_IMP_Minus_big_step_state o VU.dest_Trueprop
 
-@{parse_entries (struct) PA
-  [IMP_defs, func_corrects, HOL_eqs, induction, mode]}
+fun preprocess_tac get_IMP_def =
+  let fun tac ctxt prems =
+    let fun solve_simple_tac c =
+      (EqSubst.eqsubst_tac ctxt [0] (get_IMP_def ctxt c |> the_list)
+      THEN' Simplifier.simp_tac ctxt)
+      |> SOLVED'
+    in case get_first (try dest_IMP_Minus_big_step_state_prop) prems of
+        SOME ((c, _), _, _) =>
+          eresolve_tac ctxt @{thms tailcall_to_IMP_Minus_correct_if_correct}
+          THEN' solve_simple_tac c
+          THEN' solve_simple_tac c
+      | NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
+            Pretty.str "Could not find IMP big step premise in premises ",
+            SpecCheck_Show.list (Syntax.pretty_term ctxt) prems
+          ] |> Pretty.string_of); K no_tac)
+    end
+  in TU.SUBGOAL_STRIPPED (fst o snd) o tac end
+
+open State_Seq_Abbrevs
+
+val rewrite_eq_state_retrieval_sym_tac =
+  let
+    fun rewrite_focused_tac {prems, context=ctxt,...} =
+      let val prems_flipped =
+        map (fn thm => Thm.proof_attributes [Calculation.symmetric] thm ctxt |> fst) prems
+      in
+        REPEAT_ALL_NEW (VU.subst_first_tac ctxt prems_flipped)
+        THEN' TU.insert_tac prems_flipped ctxt
+      end
+    val rewrite_tac =
+      SIT.interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq
+      SS_THEN SS.lift_state_single (fn (_, state_SIMPS_TO_cterm) =>
+        fn ((_, cprems), ctxt) =>
+        let
+          val state_SIMPS_TO_term = Thm.term_of state_SIMPS_TO_cterm
+          val is_eq_state_retrieval_prem = GU.try_bool (Thm.term_of #> VU.dest_Trueprop #>
+            \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SIT.is_state_retrieval state_SIMPS_TO_term s_app\<close>\<close>)
+          val eq_state_retrieval_prems = GU.find_indices is_eq_state_retrieval_prem cprems |> map (curry (op+) 1)
+        in TU.focus_delete_prems_tac eq_state_retrieval_prems rewrite_focused_tac ctxt end)
+      |> SS.eval
+      #> Seq_Monad.flat2
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (rewrite_tac oo SSS.SRS.init)) end
+
+type HOL_inducts_retrieval = Proof.context -> term -> (thm list) option
+fun get_HOL_inducts ctxt = try (#inducts o Function.get_info ctxt) #> Option.join
+
+fun setup_induction_tac get_inducts =
+  let fun focused_tac ctxt (prems, concl) =
+    case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+      SOME ((_, s), t, _) =>
+        let
+          val const = concl
+            |> VU.dest_Trueprop
+            |> VU.dest_eq |> snd
+            |> Term.strip_comb |> fst
+          val def_insts = dest_Const const |> fst
+            |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
+            |> #arg_regs
+            |> map (HOL_To_IMP_Util.mk_state_register_retrieval s)
+            |> map (fn r => SOME (NONE, (r, false)))
+          val arbitrary = map dest_Free [s, t]
+          val inducts = get_inducts ctxt const
+        in
+          Induction.induction_tac ctxt true [def_insts] [arbitrary] [] inducts []
+          THEN_ALL_NEW (
+            (*TODO: fix hack*)
+            SIT.init_state_eq_tac ctxt
+            (*needed for inductions of functions defined on pattern matching; they create equalities of the
+              form "t = s ''<register>''", which have to be rewritten in the goal's conclusion"*)
+            THEN' TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt)
+            THEN' SIT.remove_state_eq_tac ctxt
+          )
+        end
+   | NONE => (@{log Logger.WARN} ctxt (K "Could not find IMP big step premise"); K no_tac)
+  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac) end
+
 @{parse_entries (struct) PCA
-  [IMP_defs, func_corrects, HOL_eqs, induction]}
-
-fun PCA_entries_from_PA_entries {IMP_defs = IMP_defs, func_corrects = func_corrects,
-  HOL_eqs = HOL_eqs, induction = induction,...} =
-  {IMP_defs = IMP_defs, func_corrects = func_corrects, HOL_eqs = HOL_eqs, induction = induction}
-fun PA_entries_from_PCA_entries {IMP_defs = IMP_defs, func_corrects = func_corrects,
-  HOL_eqs = HOL_eqs, induction = induction} mode = { IMP_defs = IMP_defs,
-    func_corrects = func_corrects, HOL_eqs = HOL_eqs, induction = induction , mode = SOME mode}
+  [get_IMP_def, get_func_corrects, get_HOL_eqs, get_HOL_inducts]}
+@{parse_entries (struct) PA
+  [IMP_def, func_corrects, HOL_eqs, HOL_inducts, mode]}
 
 @{parse_entries (struct) PM
   [tailcall, nontailcall]}
-
 type mode = PM.key
 val parse_mode = PM.parse_key
 
-type args = (thm list, thm list, thm list, HITT.induction_retrieval, mode) PA.entries
-type context_args = (Proof.context -> thm list, Proof.context -> thm list, Proof.context -> thm list,
-  HITT.induction_retrieval) PCA.entries
+type context_args = (HTIT.IMP_def_retrieval, HTIT.func_corrects_retrieval,
+  HTIT.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
+type args = (thm, thm list, thm list, thm list, mode) PA.entries
 
-fun cooker_tac args ctxt =
+fun cook_tac context_args mode ctxt =
   let
-    val IMP_program_defs = PA.get_IMP_defs args
-    val IMP_func_corrects = PA.get_func_corrects args
-    val HOL_eqs = PA.get_HOL_eqs args
+    val get_IMP_def = PCA.get_get_IMP_def context_args
+    val get_func_corrects = PCA.get_get_func_corrects context_args
+    val get_HOL_eqs = PCA.get_get_HOL_eqs context_args
   in
-    K (print_tac ctxt "Cooking 👨‍🍳👩‍🍳")
-    THEN' preprocess_tac IMP_program_defs ctxt
-    THEN' (case PA.get_mode args of
-      PM.tailcall _ => HITT.setup_induction_tac (PA.get_induction args) ctxt
+    preprocess_tac get_IMP_def ctxt
+    THEN' (fn _ => fn state => (@{log Logger.INFO} ctxt (K "Cooking 👨‍🍳👩‍🍳"); all_tac state))
+    THEN' (case mode of
+      PM.tailcall _ => setup_induction_tac (PCA.get_get_HOL_inducts context_args) ctxt
       | _ => K all_tac)
-    THEN_ALL_NEW HITT.start_run_finish_tac IMP_program_defs IMP_func_corrects HOL_eqs ctxt
-    THEN' (fn _ => fn st => if Thm.nprems_of st = 0
+    THEN_ALL_NEW HTIT.start_run_finish_tac get_IMP_def get_func_corrects get_HOL_eqs ctxt
+    THEN' (fn _ => fn st => if Thm.no_prems st
       then (writeln "Dinner served! 😍😍😍"; all_tac st)
       else (writeln "Overcooked 🔥🤯"; all_tac st))
   end
 
 val arg_parsers = {
-  IMP_defs = SOME (PU.nonempty_thms (K "must provide at least one IMP definition")),
-  func_corrects = SOME (PU.nonempty_thms
-    (K "must provide at least one functional correctness theorem")),
+  IMP_def = SOME PU.thm,
+  func_corrects = SOME
+    (PU.nonempty_thms (K "must provide at least one functional correctness theorem")),
   HOL_eqs = SOME (PU.nonempty_thms (K "must provide at least one equation for the HOL term")),
-  induction = SOME (K "must provide at least one induction rule" |> PU.nonempty_thms |> PU.option'),
+  HOL_inducts = SOME (PU.nonempty_thms (K "must provide at least one induction rule")),
   mode = SOME parse_mode
+}
+
+val context_arg_parsers = {
+  get_IMP_def = SOME (PU.nonempty_code (K "retrieval for IMP definition may not be empty")),
+  get_func_corrects = SOME (PU.nonempty_code
+    (K "retrieval for functional correctness theorems may not be empty")),
+  get_HOL_eqs = SOME (PU.nonempty_code (K "retrieval for HOL term equations may not be empty")),
+  get_HOL_inducts = SOME (PU.nonempty_code (K "retrieval for induction rules may not be empty"))
 }
 
 end
@@ -102,34 +193,32 @@ signature HOL_TO_IMP_TACTICS =
 sig
   structure Data : GENERIC_DATA
 
-  val get_args : Context.generic -> HOL_To_IMP_Tactics_Args.context_args
-  val map_args : (HOL_To_IMP_Tactics_Args.context_args -> HOL_To_IMP_Tactics_Args.context_args) ->
+  val get_args : Context.generic -> HOL_To_IMP_Minus_Tactics_Args.context_args
+  val map_args : (HOL_To_IMP_Minus_Tactics_Args.context_args -> HOL_To_IMP_Minus_Tactics_Args.context_args) ->
     Context.generic -> Context.generic
 
-  val get_IMP_defs : Context.generic -> Proof.context -> thm list
-  val map_IMP_defs : ((Proof.context -> thm list) -> Proof.context -> thm list) ->
-    Context.generic -> Context.generic
+  val get_get_IMP_def : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval
+  val map_get_IMP_def : (HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
+    HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval) -> Context.generic -> Context.generic
 
-  val get_func_corrects : Context.generic -> Proof.context -> thm list
-  val map_func_corrects : ((Proof.context -> thm list) -> Proof.context -> thm list) ->
-    Context.generic -> Context.generic
+  val get_get_func_corrects : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval
+  val map_get_func_corrects : (HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval ->
+    HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval) -> Context.generic -> Context.generic
 
-  val get_HOL_eqs : Context.generic -> Proof.context -> thm list
-  val map_HOL_eqs : ((Proof.context -> thm list) -> Proof.context -> thm list) ->
-    Context.generic -> Context.generic
+  val get_get_HOL_eqs : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval
+  val map_get_HOL_eqs : (HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval ->
+    HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval) -> Context.generic -> Context.generic
 
-  val get_induction : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.induction_retrieval
-  val map_induction : (HOL_To_IMP_Tailcalls_Tactics.induction_retrieval ->
-    HOL_To_IMP_Tailcalls_Tactics.induction_retrieval) -> Context.generic -> Context.generic
+  val get_get_HOL_inducts : Context.generic -> HOL_To_IMP_Minus_Tactics_Args.HOL_inducts_retrieval
+  val map_get_HOL_inducts : (HOL_To_IMP_Minus_Tactics_Args.HOL_inducts_retrieval ->
+    HOL_To_IMP_Minus_Tactics_Args.HOL_inducts_retrieval) -> Context.generic -> Context.generic
 
-  val cooker_context_args_tac : HOL_To_IMP_Tactics_Args.context_args ->
-    HOL_To_IMP_Tactics_Args.mode -> Proof.context -> int -> tactic
-  val cooker_tac : HOL_To_IMP_Tactics_Args.mode -> Proof.context -> int -> tactic
+  val cook_tac : HOL_To_IMP_Minus_Tactics_Args.mode -> Proof.context -> int -> tactic
 
   val binding : binding
 
   val attribute : (ML_Code_Util.code, ML_Code_Util.code, ML_Code_Util.code, ML_Code_Util.code)
-    HOL_To_IMP_Tactics_Args.PCA.entries * Position.T -> attribute
+    HOL_To_IMP_Minus_Tactics_Args.PCA.entries * Position.T -> attribute
   val parse_attribute : attribute parser
   val setup_attribute : string option -> local_theory -> local_theory
 
@@ -139,11 +228,11 @@ end
 
 functor HOL_To_IMP_Tactics(A : sig
     structure FIA : FUNCTOR_INSTANCE_ARGS
-    val init_args : HOL_To_IMP_Tactics_Args.context_args
+    val init_args : HOL_To_IMP_Minus_Tactics_Args.context_args
   end) : HOL_TO_IMP_TACTICS =
 struct
 
-structure HITA = HOL_To_IMP_Tactics_Args
+structure HITA = HOL_To_IMP_Minus_Tactics_Args
 structure PA = HITA.PA
 structure PCA = HITA.PCA
 structure PM = HITA.PM
@@ -160,56 +249,39 @@ end)
 val get_args = Data.get
 val map_args = Data.map
 
-val get_IMP_defs = PCA.get_IMP_defs o get_args
-val map_IMP_defs = map_args o PCA.map_IMP_defs
+val get_get_IMP_def = PCA.get_get_IMP_def o get_args
+val map_get_IMP_def = map_args o PCA.map_get_IMP_def
 
-val get_func_corrects = PCA.get_func_corrects o get_args
-val map_func_corrects = map_args o PCA.map_func_corrects
+val get_get_func_corrects = PCA.get_get_func_corrects o get_args
+val map_get_func_corrects = map_args o PCA.map_get_func_corrects
 
-val get_HOL_eqs = PCA.get_HOL_eqs o get_args
-val map_HOL_eqs = map_args o PCA.map_HOL_eqs
+val get_get_HOL_eqs = PCA.get_get_HOL_eqs o get_args
+val map_get_HOL_eqs = map_args o PCA.map_get_HOL_eqs
 
-val get_induction = PCA.get_induction o get_args
-val map_induction = map_args o PCA.map_induction
+val get_get_HOL_inducts = PCA.get_get_HOL_inducts o get_args
+val map_get_HOL_inducts = map_args o PCA.map_get_HOL_inducts
 
-fun cooker_context_args_tac context_args mode ctxt =
-  let
-    fun apply_ctxt f = f ctxt
-    val context_args = context_args
-      |> PCA.map_IMP_defs apply_ctxt
-      |> PCA.map_func_corrects apply_ctxt
-      |> PCA.map_HOL_eqs apply_ctxt
-    val args = HITA.PA_entries_from_PCA_entries context_args mode
-  in HITA.cooker_tac args ctxt end
+fun cook_tac mode ctxt = HITA.cook_tac (get_args (Context.Proof ctxt)) mode ctxt
 
-fun cooker_tac mode ctxt = cooker_context_args_tac (get_args (Context.Proof ctxt)) mode ctxt
-
-val binding = FIU.mk_binding_id_prefix "cooker"
-
-val context_arg_parsers = {
-  IMP_defs = SOME (PU.nonempty_code (K "retrieval for IMP definition may not be empty")),
-  func_corrects = SOME (PU.nonempty_code
-    (K "retrieval for functional correctness theorems may not be empty")),
-  HOL_eqs = SOME (PU.nonempty_code (K "retrieval for HOL term equations may not be empty")),
-  induction = SOME (PU.nonempty_code (K "retrieval for induction rules may not be empty"))
-}
+val binding = FIU.mk_binding_id_prefix "cook"
 
 val parse_attribute_arg_entries =
   let
-    val parsers = context_arg_parsers
-    val parse_value = PCA.parse_entry (PCA.get_IMP_defs parsers)
-      (PCA.get_func_corrects parsers) (PCA.get_HOL_eqs parsers) (PCA.get_induction parsers)
+    val parsers = HITA.context_arg_parsers
+    val parse_value = PCA.parse_entry (PCA.get_get_IMP_def parsers)
+      (PCA.get_get_func_corrects parsers) (PCA.get_get_HOL_eqs parsers)
+      (PCA.get_get_HOL_inducts parsers)
     val parse_entry = Parse_Key_Value.parse_entry PCA.parse_key PU.eq parse_value
   in PCA.parse_entries_required Parse.and_list1 [] parse_entry (PCA.empty_entries ()) end
 
 fun attribute (entries, pos) =
   let
-    fun code_PCA_op operation = MCU.flat_read ["HOL_To_IMP_Tactics_Args.PCA", ".", operation]
+    fun code_PCA_op operation = MCU.flat_read ["HOL_To_IMP_Minus_Tactics_Args.PCA", ".", operation]
     val code_from_key = code_PCA_op o PCA.key_to_string
-    fun code_from_entry (PCA.IMP_defs c) = c
-      | code_from_entry (PCA.func_corrects c) = c
-      | code_from_entry (PCA.HOL_eqs c) = c
-      | code_from_entry (PCA.induction c) = c
+    fun code_from_entry (PCA.get_IMP_def c) = c
+      | code_from_entry (PCA.get_func_corrects c) = c
+      | code_from_entry (PCA.get_HOL_eqs c) = c
+      | code_from_entry (PCA.get_HOL_inducts c) = c
     val code_entries = PCA.key_entry_entries_from_entries entries
       |> map (fn (k, v) => code_from_key k @ MCU.atomic (code_from_entry v))
       |> MCU.list
@@ -226,32 +298,31 @@ val setup_attribute = Attrib.local_setup binding
 
 val parse_method_arg_entries =
   let
-    val parsers = HITA.arg_parsers |> HITA.PCA_entries_from_PA_entries
-    val parse_value = PCA.parse_entry (PCA.get_IMP_defs parsers)
-      (PCA.get_func_corrects parsers) (PCA.get_HOL_eqs parsers) (PCA.get_induction parsers)
-    val parse_entry = Parse_Key_Value.parse_entry' (Scan.lift PCA.parse_key) (Scan.lift PU.eq) parse_value
-  in PCA.parse_entries_required' Parse.and_list1' [] parse_entry (PCA.empty_entries ()) end
+    val parsers = HITA.arg_parsers
+    val parse_value = PA.parse_entry (PA.get_IMP_def parsers) (PA.get_func_corrects parsers)
+      (PA.get_HOL_eqs parsers) (PA.get_HOL_inducts parsers) (PA.get_mode parsers |> Scan.lift)
+    val parse_entry = Parse_Key_Value.parse_entry' (Scan.lift PA.parse_key) (Scan.lift PU.eq)
+      parse_value
+  in PA.parse_entries_required' Parse.and_list1' [] parse_entry (PA.empty_entries ()) end
 
 val parse_method =
   let
-    val parse_mode = Scan.optional (PU.parenths (PA.get_mode HITA.arg_parsers |> Parse.!!!))
-      (PM.key PM.nontailcall)
-    fun ignore_ctxt opt = Option.map K opt
-    val merge_entries = PCA.map_IMP_defs_safe ignore_ctxt
-      #> PCA.map_func_corrects_safe ignore_ctxt
-      #> PCA.map_HOL_eqs_safe ignore_ctxt
-      #> PCA.map_induction_safe (Option.map (K o K))
-      #> PCA.merge_entries
-      #> map_args
-      #> Context.proof_map
+    val default_entries = PA.empty_entries () |> fold PA.set_entry [PA.mode (PM.key PM.nontailcall)]
+    fun mk_retrieval t = Option.map (K o K o SOME) t
+    fun merge_entries {IMP_def, func_corrects, HOL_eqs, HOL_inducts,...} =
+      {get_IMP_def = mk_retrieval IMP_def, get_func_corrects = mk_retrieval func_corrects,
+      get_HOL_eqs = mk_retrieval HOL_eqs,
+      get_HOL_inducts = mk_retrieval HOL_inducts}
+      |> PCA.merge_entries
+      |> map_args
+      |> Context.proof_map
   in
-    Scan.lift parse_mode
-    -- (parse_method_arg_entries |> Parse.!!!! |> PU.option')
-    >> (fn (mode, entries) => the_default I (Option.map merge_entries entries)
-      #> SIMPLE_METHOD' o cooker_tac mode)
+    (PU.optional' (parse_method_arg_entries |> Parse.!!!!) default_entries)
+    >> (fn entries => merge_entries entries
+      #> SIMPLE_METHOD' o cook_tac (PA.get_mode entries))
   end
 
 val setup_method = Method.local_setup binding parse_method o
-  the_default ("HOL to IMP tactics arguments (" ^ FIU.FIA.full_name ^ ")")
+  the_default ("HOL to IMP tactics (" ^ FIU.FIA.full_name ^ ")")
 
 end

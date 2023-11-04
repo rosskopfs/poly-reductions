@@ -74,15 +74,10 @@ val logger = Logger.setup_new_logger Logger.root_logger "State_IMP_Tailcalls"
 
 (*TODO: FIXME: use SIMPS_TO_UNIF instead of SIMPS_TO*)
 fun finish_SIMPS_TO_tac ctxt = resolve_tac ctxt [@{thm SIMPS_TOI}]
-                                  
+
 structure VU = View_Util
 structure GU = General_Util
 structure TU = Tactic_Util
-
-structure SS = State_Seq
-structure SSS = State_Stack_Seq
-infix 1 SS_THEN
-val op SS_THEN = op State_Seq_THEN
 
 (* state equality utils *)
 
@@ -91,11 +86,11 @@ val is_STATE_eq_prop = GU.try_bool
     o VU.dest_Trueprop)
 val find_cstate_eq_prop = GU.find_first_index (is_STATE_eq_prop o Thm.term_of)
 val dest_STATE_eq_cprop = VU.cdest_eq o VU.cdest_Trueprop
-                
+
 val dest_STATE_cinterp_state = Thm.dest_arg
-                
+
 fun find_cstate_eq_prop_seq ctxt cprops =
-  let fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
+  let fun f_none _ = @{log Logger.WARN} ctxt (fn _ => Pretty.block [
       Pretty.str "Could not find STATE premise in ",
       SpecCheck_Show.list (Syntax.pretty_term ctxt o Thm.term_of) cprops
     ] |> Pretty.string_of)
@@ -138,12 +133,12 @@ fun interp_state_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt =
   #> fst
   #> dest_STATE_cinterp_state
   #> interp_state_SIMPS_TO_thm_resultsq ctxt
-  
+
 (* rewrite state retrieval based on state equality *)
 
 structure Seq_Monad = Monad(Seq_Monad_Base)
 
-fun state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm = 
+fun state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
   @{thm STATE_state_app_eqI}
   |> HEADGOAL (VU.resolve_all_tac ctxt [state_eq_thm, state_lhs_state_SIMPS_TO_thm])
 
@@ -158,9 +153,11 @@ fun rewrite_state_retrieval_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SI
   |> Seq.map (rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt)
 
 val rewrite_state_retrieval_tac = Seq_Monad.flat2 oooo rewrite_state_retrieval_tacsq
-                 
+
 val rewrite_all_state_retrieval_tac =
   Seq_Monad.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_retrieval_tacsq
+
+open State_Seq_Abbrevs
 
 val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
   SS.get ()
@@ -169,7 +166,7 @@ val interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
     interp_state_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt cstate_eq_prem)
 
 fun rewrite_all_state_retrieval_tac' subst_tac =
-  let         
+  let
     fun rewrite_focused_tac state_lhs_state_SIMPS_TO_thm {prems=[state_eq_thm], context=ctxt,...} =
       rewrite_all_state_retrieval_tac (subst_tac ctxt) ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
     val rewrite_tac =
@@ -256,7 +253,7 @@ val update_state_assign_tac =
     fun find_assign_prem ctxt cstate_eq_lhs_state =
       let
         val state_eq_lhs_state = Thm.term_of cstate_eq_lhs_state
-        fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
+        fun f_none _ = @{log Logger.WARN} ctxt (fn _ => Pretty.block [
             Pretty.str "Could not find assign premise for state ",
             Syntax.pretty_term ctxt state_eq_lhs_state
           ] |> Pretty.string_of)
@@ -293,7 +290,7 @@ fun update_state_state_retrieval_eq_tac simp_tac =
     fun find_state_retrieval_eq_prem ctxt cstate_lhs_state =
       let
         val state_lhs_state = Thm.term_of cstate_lhs_state
-        fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
+        fun f_none _ = @{log Logger.WARN} ctxt (fn _ => Pretty.block [
             Pretty.str "Could not find state retrieval premise for state ",
             Syntax.pretty_term ctxt state_lhs_state
           ] |> Pretty.string_of)
@@ -323,12 +320,12 @@ fun find_update_state_call_correctness_prem cassign_prem cprems =
   let val (_, (_, v)) = Thm.term_of cassign_prem
     |> VU.dest_Trueprop |> VU.dest_eq |> snd |> dest_assign_prem_rhs
   in GU.find_first_index (is_lhs_eq_prop v o Thm.term_of) cprems end
-                            
-val update_state_call_tac =              
-  let                      
+
+val update_state_call_tac =
+  let
     fun find_correctness_prem ctxt cassign_prem =
       let
-        fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
+        fun f_none _ = @{log Logger.WARN} ctxt (fn _ => Pretty.block [
           Pretty.str "Could not find correctness premise for assignment ",
           Syntax.pretty_term ctxt (Thm.term_of cassign_prem)
         ] |> Pretty.string_of)
@@ -336,7 +333,7 @@ val update_state_call_tac =
     fun find_assign_prem ctxt cstate_eq_lhs_state =
       let
         val state_eq_lhs_state = Thm.term_of cstate_eq_lhs_state
-        fun f_none _ = @{log Logger.DEBUG} ctxt (fn _ => Pretty.block [
+        fun f_none _ = @{log Logger.WARN} ctxt (fn _ => Pretty.block [
             Pretty.str "Could not find assign premise for state ",
             Syntax.pretty_term ctxt state_eq_lhs_state
           ] |> Pretty.string_of)

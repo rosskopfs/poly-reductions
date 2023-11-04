@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Minus_Primitives
   imports
-    HOL_To_IMP_Minus_Methods
+    HOL_To_IMP_Tailcalls_Tactics
 begin
 
 locale HOL_To_IMP_Minus =
@@ -27,13 +27,16 @@ declare_compiled_const True
   argument_registers
   compiled "tailcall_to_IMP_Minus true_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct true_nat by (cooker HOL_eqs = true_nat_def)
+(* ML\<open>
+  val d = Standard_HOL_To_IMP_Tactics.Data.get (Context.Proof @{context})
+    |> #get_func_corrects |> the |> (fn f => f @{context} @{term "tailcall_to_IMP_Minus true_IMP_tailcall"})
+\<close> *)
 
-lemma true_nat_eq_one[simp]: "true_nat = 1"
-  unfolding true_nat_def by simp
+HOL_To_IMP_Minus_func_correct true_nat by cook
 
-lemma is_true_nat_true_nat[iff]: "is_true_nat true_nat"
-  by simp
+lemma true_nat_eq_one[simp]: "true_nat = 1" unfolding true_nat_def by simp
+
+lemma is_true_nat_true_nat[iff]: "is_true_nat true_nat" by simp
 
 definition "false_nat \<equiv> (0 :: nat)"
 
@@ -44,10 +47,9 @@ declare_compiled_const False
   argument_registers
   compiled "tailcall_to_IMP_Minus false_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct false_nat by (cooker HOL_eqs = false_nat_def)
+HOL_To_IMP_Minus_func_correct false_nat by cook
 
-lemma false_nat_eq_one[simp]: "false_nat = 0"
-  unfolding false_nat_def by simp
+lemma false_nat_eq_one[simp]: "false_nat = 0" unfolding false_nat_def by simp
 
 lemma is_false_nat_false_nat[iff]: "is_false_nat false_nat"
   unfolding false_nat_def by simp
@@ -56,7 +58,7 @@ definition "id_nat x \<equiv> (x :: nat)"
 
 compile_nat id_nat_def basename id
 
-HOL_To_IMP_Minus_func_correct id_nat by (cooker HOL_eqs = id_nat_def)
+HOL_To_IMP_Minus_func_correct id_nat by cook
 
 lemma id_nat_eq_id[simp]: "id_nat = id"
   unfolding id_nat_def by (rule ext) simp
@@ -79,7 +81,7 @@ definition "eq_nat (n :: nat) m \<equiv> nat_of_bool (n = m)"
 context includes com_syntax no_com'_syntax
 begin
 
-definition [compiled_const_defs]:
+definition [compiled_const_def]:
   "eq_IMP \<equiv>
     ''eq_x_Sub_y'' ::= (V ''eq_x'' \<ominus> V ''eq_y'');;
     ''eq_y_Sub_x'' ::= (V ''eq_y'' \<ominus> V ''eq_x'');;
@@ -115,7 +117,7 @@ declare_compiled_const HOL.Not
   argument_registers "not_n"
   compiled "tailcall_to_IMP_Minus not_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct not_nat by (cooker HOL_eqs = not_nat_def)
+HOL_To_IMP_Minus_func_correct not_nat by cook
 
 lemma not_nat_eq_nat_of_bool_eq_false[simp]: "not_nat n = nat_of_bool (n = false_nat)"
   unfolding not_nat_def by simp
@@ -129,8 +131,8 @@ lemma sub_nat_eq[simp]: "sub_nat = (-)" unfolding sub_nat_def by simp
 context includes com_syntax no_com'_syntax
 begin
 
-definition [compiled_const_defs]: "add_IMP \<equiv> ''add_ret'' ::= (V ''add_x'' \<oplus> V ''add_y'')"
-definition [compiled_const_defs]: "sub_IMP \<equiv> ''sub_ret'' ::= (V ''sub_x'' \<ominus> V ''sub_y'')"
+definition [compiled_const_def]: "add_IMP \<equiv> ''add_ret'' ::= (V ''add_x'' \<oplus> V ''add_y'')"
+definition [compiled_const_def]: "sub_IMP \<equiv> ''sub_ret'' ::= (V ''sub_x'' \<ominus> V ''sub_y'')"
 
 end
 
@@ -152,10 +154,8 @@ declare_compiled_const "Groups.minus"
   argument_registers "sub_x" "sub_y"
   compiled "sub_IMP"
 
-HOL_To_IMP_Minus_func_correct add_nat
-  by (auto simp: compiled_const_defs)
-HOL_To_IMP_Minus_func_correct sub_nat
-  by (auto simp: compiled_const_defs)
+HOL_To_IMP_Minus_func_correct add_nat by (auto simp: add_IMP_def)
+HOL_To_IMP_Minus_func_correct sub_nat by (auto simp: sub_IMP_def)
 
 definition max_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "max_nat x y \<equiv> if x - y \<noteq> 0 then x else y"
@@ -167,7 +167,7 @@ declare_compiled_const max
   argument_registers "max_x" "max_y"
   compiled "tailcall_to_IMP_Minus max_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct max_nat by (cooker HOL_eqs = max_nat_def)
+HOL_To_IMP_Minus_func_correct max_nat by cook
 
 lemma max_nat_eq[simp]: "max_nat x y = max x y"
   unfolding max_nat_def by simp
@@ -182,7 +182,7 @@ declare_compiled_const min
   argument_registers "min_x" "min_y"
   compiled "tailcall_to_IMP_Minus min_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct min_nat by (cooker HOL_eqs = min_nat_def)
+HOL_To_IMP_Minus_func_correct min_nat by cook
 
 lemma min_nat_eq[simp]: "min_nat x y = min x y"
   unfolding min_nat_def by simp
@@ -196,7 +196,7 @@ declare_compiled_const conj
   argument_registers "and_x" "and_y"
   compiled "tailcall_to_IMP_Minus and_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct and_nat by (cooker HOL_eqs = and_nat_def)
+HOL_To_IMP_Minus_func_correct and_nat by cook
 
 lemma and_nat_eq[simp]: "and_nat x y = nat_of_bool (is_true_nat x \<and> is_true_nat y)"
   unfolding and_nat_def nat_of_bool_def by auto
@@ -210,7 +210,7 @@ declare_compiled_const disj
   argument_registers "or_x" "or_y"
   compiled "tailcall_to_IMP_Minus or_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct or_nat by (cooker HOL_eqs = or_nat_def)
+HOL_To_IMP_Minus_func_correct or_nat by cook
 
 lemma or_nat_eq[simp]: "or_nat x y = nat_of_bool (is_true_nat x \<or> is_true_nat y)"
   unfolding or_nat_def nat_of_bool_def by auto
@@ -224,7 +224,7 @@ declare_compiled_const "ord_class.less_eq"
   argument_registers "le_x" "le_y"
   compiled "tailcall_to_IMP_Minus le_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct le_nat by (cooker HOL_eqs = le_nat_def)
+HOL_To_IMP_Minus_func_correct le_nat by cook
 
 lemma le_nat_eq[simp]: "le_nat x y = nat_of_bool (x \<le> y)"
   unfolding le_nat_def by simp
@@ -238,7 +238,7 @@ declare_compiled_const "ord_class.less"
   argument_registers "lt_x" "lt_y"
   compiled "tailcall_to_IMP_Minus lt_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct lt_nat by (cooker HOL_eqs = lt_nat_def)
+HOL_To_IMP_Minus_func_correct lt_nat by cook
 
 lemma lt_nat_eq[simp]: "lt_nat x y = nat_of_bool (x < y)"
   unfolding lt_nat_def nat_of_bool_def by auto

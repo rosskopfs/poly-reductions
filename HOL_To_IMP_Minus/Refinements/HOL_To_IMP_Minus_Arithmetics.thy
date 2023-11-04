@@ -8,7 +8,7 @@ begin
 context HOL_To_IMP_Minus
 begin
 
-definition [compiled_const_defs add]: "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
+definition [compiled_const_def]: "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
   return_register "suc_ret"
@@ -26,11 +26,7 @@ declare mul_acc_nat.simps[simp del]
 case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
-HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.setup_induction_tac @{context} 1\<close>)
-   apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms mul_acc_nat.simps} @{context} 1\<close>)+
+HOL_To_IMP_Minus_func_correct mul_acc_nat by (cook mode = tailcall)
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
   by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
@@ -46,11 +42,7 @@ declare_compiled_const "times"
   argument_registers "mul_x" "mul_y"
   compiled "tailcall_to_IMP_Minus mul_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct mul_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms mul_nat_def} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct mul_nat by cook
 
 lemma mul_nat_eq_mul[simp]: "mul_nat x y = x * y"
   unfolding mul_nat_def by simp
@@ -61,12 +53,7 @@ declare div_acc_nat.simps[simp del]
 
 compile_nat div_acc_nat.simps basename div_acc
 
-HOL_To_IMP_Minus_func_correct div_acc_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.setup_induction_tac @{context} 1\<close>)
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms div_acc_nat.simps} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct div_acc_nat by (cook mode = tailcall)
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
   by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
@@ -81,11 +68,7 @@ declare_compiled_const "divide"
   argument_registers "div_x" "div_y"
   compiled "tailcall_to_IMP_Minus div_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct div_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-    @{thms div_nat_def} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct div_nat by cook
 
 lemma div_nat_eq_div[simp]: "div_nat x y = x div y"
   unfolding div_nat_def by simp
@@ -95,11 +78,7 @@ definition square_nat :: "nat \<Rightarrow> nat" where
 
 compile_nat square_nat_def basename square
 
-HOL_To_IMP_Minus_func_correct square_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms square_nat_def} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct square_nat by cook
 
 lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
   unfolding square_nat_def by (simp add: power2_eq_square)
@@ -120,12 +99,7 @@ declare sqrt_aux_nat.simps[simp del]
 
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
-HOL_To_IMP_Minus_func_correct sqrt_aux_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply(tactic \<open>H.setup_induction_tac @{context} 1\<close>)
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms sqrt_aux_nat.simps} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct sqrt_aux_nat by (cook mode = tailcall)
 
 lemma square_sqrt_aux_nat_le:
   assumes "L\<^sup>2 \<le> x" "x < R\<^sup>2"
@@ -146,11 +120,7 @@ definition sqrt_nat :: "nat \<Rightarrow> nat" where
 
 compile_nat sqrt_nat_def basename sqrt
 
-HOL_To_IMP_Minus_func_correct sqrt_nat
-  apply preprocess_HOL_To_IMP_Minus_func_correct
-  apply (tactic \<open>H.start_run_finish_tac @{thms compiled_const_defs} @{thms IMP_Minus_func_correct}
-     @{thms sqrt_nat_def} @{context} 1\<close>)
-  done
+HOL_To_IMP_Minus_func_correct sqrt_nat by cook
 
 lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"
   using square_sqrt_aux_nat_le unfolding sqrt_nat_def by (simp add: power2_eq_square)
