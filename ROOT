@@ -50,10 +50,8 @@ session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
     "Refinements"
     "Refinements/Automation"
     "Views"
-    "Views/IMP_Tailcalls"
+    "Views/IMP"
   theories
-    Compile_Nat
-    HOL_To_IMP_Tailcalls_Tactics
     HOL_To_IMP_Minus_Arithmetics
 
 session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +

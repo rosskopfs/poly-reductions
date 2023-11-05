@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Minus_Primitives
   imports
-    HOL_To_IMP_Tailcalls_Tactics
+    HOL_To_IMP_Tactics
 begin
 
 locale HOL_To_IMP_Minus =
@@ -26,11 +26,6 @@ declare_compiled_const True
   return_register "true_ret"
   argument_registers
   compiled "tailcall_to_IMP_Minus true_IMP_tailcall"
-
-(* ML\<open>
-  val d = Standard_HOL_To_IMP_Tactics.Data.get (Context.Proof @{context})
-    |> #get_func_corrects |> the |> (fn f => f @{context} @{term "tailcall_to_IMP_Minus true_IMP_tailcall"})
-\<close> *)
 
 HOL_To_IMP_Minus_func_correct true_nat by cook
 
@@ -81,7 +76,7 @@ definition "eq_nat (n :: nat) m \<equiv> nat_of_bool (n = m)"
 context includes com_syntax no_com'_syntax
 begin
 
-definition [compiled_const_def]:
+definition [compiled_IMP_Minus_const_def]:
   "eq_IMP \<equiv>
     ''eq_x_Sub_y'' ::= (V ''eq_x'' \<ominus> V ''eq_y'');;
     ''eq_y_Sub_x'' ::= (V ''eq_y'' \<ominus> V ''eq_x'');;
@@ -131,8 +126,8 @@ lemma sub_nat_eq[simp]: "sub_nat = (-)" unfolding sub_nat_def by simp
 context includes com_syntax no_com'_syntax
 begin
 
-definition [compiled_const_def]: "add_IMP \<equiv> ''add_ret'' ::= (V ''add_x'' \<oplus> V ''add_y'')"
-definition [compiled_const_def]: "sub_IMP \<equiv> ''sub_ret'' ::= (V ''sub_x'' \<ominus> V ''sub_y'')"
+definition [compiled_IMP_Minus_const_def]: "add_IMP \<equiv> ''add_ret'' ::= (V ''add_x'' \<oplus> V ''add_y'')"
+definition [compiled_IMP_Minus_const_def]: "sub_IMP \<equiv> ''sub_ret'' ::= (V ''sub_x'' \<ominus> V ''sub_y'')"
 
 end
 

@@ -1,4 +1,4 @@
-(*  Title:  Views/IMP_Tailcalls/hol_to_imp_tactics.ML
+(*  Title:  Refinements/hol_to_imp_tactics.ML
     Author: Kevin Kappelmann
 
 HOL to IMP tactics with arguments from context.
@@ -34,7 +34,7 @@ val parse_mode : mode parser
 
 type context_args = (HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval,
   HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval,
-  HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
+  HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
 type args = (thm, thm list, thm list, thm list, mode) PA.entries
 
 val cook_tac : context_args -> mode -> Proof.context -> int -> tactic
@@ -49,92 +49,88 @@ end
 structure HOL_To_IMP_Minus_Tactics_Args : HOL_TO_IMP_MINUS_TACTICS_ARGS =
 struct
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Minus_Tactics_Args"
+val logger = Logger.setup_new_logger HOL_To_IMP_Tactics_Base.logger "HOL_To_IMP_Minus_Tactics_Args"
 
 structure GU = General_Util
-structure VU = View_Util
+structure HTIB = HOL_To_IMP_Tactics_Base
+structure HTIU = HOL_To_IMP_Util
 structure HTIT = HOL_To_IMP_Tailcalls_Tactics
 structure TU = Tactic_Util
-structure SIT = State_IMP_Tailcalls
+structure SUT = State_Update_Tracking
+structure SUTIT = State_Update_Tracking_IMP_Tailcalls
 structure PU = Parse_Util
 
-val dest_IMP_Minus_big_step_state =
-  \<^Const_fn>\<open>big_step_t for \<^Const>\<open>Pair _ _ for \<^Const>\<open>tailcall_to_IMP_Minus for c\<close>
-    s\<close> t s' => \<open>((c, s), t, s')\<close>\<close>
-val dest_IMP_Minus_big_step_state_prop = dest_IMP_Minus_big_step_state o VU.dest_Trueprop
+val dest_tailcall_to_IMP_Minus = \<^Const_fn>\<open>tailcall_to_IMP_Minus for c => c\<close>
+
+val dest_tailcall_to_IMP_Minus_big_step =
+  HTIU.dest_IMP_Minus_big_step #> (fn ((c, _), _, _) => dest_tailcall_to_IMP_Minus c)
 
 fun preprocess_tac get_IMP_def =
   let fun tac ctxt prems =
-    let fun solve_simple_tac c =
+    let fun solve_simple_goal_tac c =
       (EqSubst.eqsubst_tac ctxt [0] (get_IMP_def ctxt c |> the_list)
       THEN' Simplifier.simp_tac ctxt)
       |> SOLVED'
-    in case get_first (try dest_IMP_Minus_big_step_state_prop) prems of
-        SOME ((c, _), _, _) =>
+    in case get_first (try
+      (HTIU.dest_Trueprop #> dest_tailcall_to_IMP_Minus_big_step)) prems of
+        SOME c =>
           eresolve_tac ctxt @{thms tailcall_to_IMP_Minus_correct_if_correct}
-          THEN' solve_simple_tac c
-          THEN' solve_simple_tac c
+          THEN' solve_simple_goal_tac c
+          THEN' solve_simple_goal_tac c
       | NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
-            Pretty.str "Could not find IMP big step premise in premises ",
-            SpecCheck_Show.list (Syntax.pretty_term ctxt) prems
-          ] |> Pretty.string_of); K no_tac)
+            Pretty.str "Could not find ",
+            Syntax.pretty_term ctxt @{term tailcall_to_IMP_Minus},
+            Pretty.str " big step in premises ",
+            HTIU.pretty_prems ctxt prems
+          ] |> Pretty.string_of);
+          K no_tac)
     end
   in TU.SUBGOAL_STRIPPED (fst o snd) o tac end
 
 open State_Seq_Abbrevs
 
-val rewrite_eq_state_retrieval_sym_tac =
+fun flip_eq_thm thm = Thm.proof_attributes [Calculation.symmetric] thm #> fst
+
+fun rewrite_eq_state_retrieval_sym_tac state_SIMPS_TO_term =
   let
     fun rewrite_focused_tac {prems, context=ctxt,...} =
-      let val prems_flipped =
-        map (fn thm => Thm.proof_attributes [Calculation.symmetric] thm ctxt |> fst) prems
+      let val prems_flipped = map (fn thm => flip_eq_thm thm ctxt) prems
       in
-        REPEAT_ALL_NEW (VU.subst_first_tac ctxt prems_flipped)
+        REPEAT_ALL_NEW (HTIU.subst_first_tac ctxt prems_flipped)
         THEN' TU.insert_tac prems_flipped ctxt
       end
-    val rewrite_tac =
-      SIT.interp_state_lhs_state_eq_SIMPS_TO_thm_result_state_seq
-      SS_THEN SS.lift_state_single (fn (_, state_SIMPS_TO_cterm) =>
-        fn ((_, cprems), ctxt) =>
-        let
-          val state_SIMPS_TO_term = Thm.term_of state_SIMPS_TO_cterm
-          val is_eq_state_retrieval_prem = GU.try_bool (Thm.term_of #> VU.dest_Trueprop #>
-            \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SIT.is_state_retrieval state_SIMPS_TO_term s_app\<close>\<close>)
-          val eq_state_retrieval_prems = GU.find_indices is_eq_state_retrieval_prem cprems |> map (curry (op+) 1)
-        in TU.focus_delete_prems_tac eq_state_retrieval_prems rewrite_focused_tac ctxt end)
-      |> SS.eval
-      #> Seq_Monad.flat2
-  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (rewrite_tac oo SSS.SRS.init)) end
+    fun rewrite_tac ctxt cprems =
+      let
+        val is_eq_state_retrieval_prem = GU.try_bool (Thm.term_of #> HTIU.dest_Trueprop #>
+          \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SUT.is_state_state_retrieval state_SIMPS_TO_term s_app\<close>\<close>)
+        val eq_state_retrieval_prems = GU.find_indices is_eq_state_retrieval_prem cprems
+      in
+        TU.focus_delete_prems_tac (HTIU.successors eq_state_retrieval_prems) rewrite_focused_tac
+          ctxt
+      end
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o rewrite_tac) end
 
 type HOL_inducts_retrieval = Proof.context -> term -> (thm list) option
 fun get_HOL_inducts ctxt = try (#inducts o Function.get_info ctxt) #> Option.join
 
 fun setup_induction_tac get_inducts =
   let fun focused_tac ctxt (prems, concl) =
-    case get_first (try SIT.dest_IMP_big_step_state_prop) prems of
+    case get_first (try SUTIT.dest_IMP_big_step_prop) prems of
       SOME ((_, s), t, _) =>
         let
-          val const = concl
-            |> VU.dest_Trueprop
-            |> VU.dest_eq |> snd
-            |> Term.strip_comb |> fst
-          val def_insts = dest_Const const |> fst
+          val head = concl |> HTIB.dest_eq_HOL_term_prop |> head_of
+          val instantiations = dest_Const head |> fst
             |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
             |> #arg_regs
             |> map (HOL_To_IMP_Util.mk_state_register_retrieval s)
-            |> map (fn r => SOME (NONE, (r, false)))
+            |> map (fn t => SOME (NONE, (t, false)))
           val arbitrary = map dest_Free [s, t]
-          val inducts = get_inducts ctxt const
+          val inducts = get_inducts ctxt head
         in
-          Induction.induction_tac ctxt true [def_insts] [arbitrary] [] inducts []
-          THEN_ALL_NEW (
-            (*TODO: fix hack*)
-            SIT.init_state_eq_tac ctxt
-            (*needed for inductions of functions defined on pattern matching; they create equalities of the
-              form "t = s ''<register>''", which have to be rewritten in the goal's conclusion"*)
-            THEN' TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt)
-            THEN' SIT.remove_state_eq_tac ctxt
-          )
+          Induction.induction_tac ctxt true [instantiations] [arbitrary] [] inducts []
+          (*needed for inductions of functions defined on pattern matching; they create equalities of the
+            form "t = s ''<register>''", which have to be rewritten in the goal's conclusion"*)
+          THEN_ALL_NEW (TU.TRY' (rewrite_eq_state_retrieval_sym_tac s ctxt))
         end
    | NONE => (@{log Logger.WARN} ctxt (K "Could not find IMP big step premise"); K no_tac)
   in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac) end
@@ -150,7 +146,7 @@ type mode = PM.key
 val parse_mode = PM.parse_key
 
 type context_args = (HTIT.IMP_def_retrieval, HTIT.func_corrects_retrieval,
-  HTIT.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
+  HTIB.HOL_eqs_retrieval, HOL_inducts_retrieval) PCA.entries
 type args = (thm, thm list, thm list, thm list, mode) PA.entries
 
 fun cook_tac context_args mode ctxt =
@@ -160,14 +156,14 @@ fun cook_tac context_args mode ctxt =
     val get_HOL_eqs = PCA.get_get_HOL_eqs context_args
   in
     preprocess_tac get_IMP_def ctxt
-    THEN' (fn _ => fn state => (@{log Logger.INFO} ctxt (K "Cooking 👨‍🍳👩‍🍳"); all_tac state))
+    THEN' (fn _ => fn st => (@{log Logger.INFO} ctxt (K "👨‍🍳 Cooking 👩‍🍳"); all_tac st))
     THEN' (case mode of
       PM.tailcall _ => setup_induction_tac (PCA.get_get_HOL_inducts context_args) ctxt
       | _ => K all_tac)
     THEN_ALL_NEW HTIT.start_run_finish_tac get_IMP_def get_func_corrects get_HOL_eqs ctxt
     THEN' (fn _ => fn st => if Thm.no_prems st
-      then (writeln "Dinner served! 😍😍😍"; all_tac st)
-      else (writeln "Overcooked 🔥🤯"; all_tac st))
+      then (@{log Logger.INFO} ctxt (K "Dinner served! 😍🍲😍"); all_tac st)
+      else (@{log Logger.INFO} ctxt (K "Overcooked 🔥🤯"); all_tac st))
   end
 
 val arg_parsers = {
@@ -205,9 +201,9 @@ sig
   val map_get_func_corrects : (HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval ->
     HOL_To_IMP_Tailcalls_Tactics.func_corrects_retrieval) -> Context.generic -> Context.generic
 
-  val get_get_HOL_eqs : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval
-  val map_get_HOL_eqs : (HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval ->
-    HOL_To_IMP_Tailcalls_Tactics.HOL_eqs_retrieval) -> Context.generic -> Context.generic
+  val get_get_HOL_eqs : Context.generic -> HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval
+  val map_get_HOL_eqs : (HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval ->
+    HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval) -> Context.generic -> Context.generic
 
   val get_get_HOL_inducts : Context.generic -> HOL_To_IMP_Minus_Tactics_Args.HOL_inducts_retrieval
   val map_get_HOL_inducts : (HOL_To_IMP_Minus_Tactics_Args.HOL_inducts_retrieval ->
@@ -311,8 +307,7 @@ val parse_method =
     fun mk_retrieval t = Option.map (K o K o SOME) t
     fun merge_entries {IMP_def, func_corrects, HOL_eqs, HOL_inducts,...} =
       {get_IMP_def = mk_retrieval IMP_def, get_func_corrects = mk_retrieval func_corrects,
-      get_HOL_eqs = mk_retrieval HOL_eqs,
-      get_HOL_inducts = mk_retrieval HOL_inducts}
+        get_HOL_eqs = mk_retrieval HOL_eqs, get_HOL_inducts = mk_retrieval HOL_inducts}
       |> PCA.merge_entries
       |> map_args
       |> Context.proof_map

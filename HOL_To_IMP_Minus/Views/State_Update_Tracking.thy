@@ -1,34 +1,21 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory States_IMP_Tailcalls
+theory State_Update_Tracking
   imports
-    IMP_Minus.IMP_Tailcalls_Dynamic
     Views_Base
-    ML_State_Seq
-    View_Utils
     ML_Unification.Simps_To
-    SpecCheck.SpecCheck_Show
+    HOL_To_IMP_Base
+    ML_State_Seq
 begin
 
-paragraph \<open>Summary\<close>
-text \<open>Views adapted to track @{theory IMP_Minus.IMP_Tailcalls_Dynamic} state changes.\<close>
-
-text\<open>The next lemmas are needed since the big-step semantics state their state changes in terms
-of functions (i.e. the semantics of states) directly.
-
-In principle, we may not require being able to inject a @{type state} into a @{term State}.\<close>
-
-lemma interp_state_State_eq:
-  "interp_state (State s) = s"
+lemma interp_state_State_eq: "interp_state (State s) = s"
   unfolding interp_state_def by simp
 
-text \<open>We now set up the framework that tracks state changes of IMP commands
-by using a @{typ "(vname, val) state"}. More precisely, we will keep track of
-a state equality that relates the initial state of an IMP program to its current
-state.
+paragraph \<open>Summary\<close>
+text \<open>Using @{type view}s to track sequential state updates. More precisely,
+we will keep track of a state equality that relates intermediate states
+to the initial state. This tracking happens in a special premise, which we set up next.\<close>
 
-This tracking happens in a special premise, which we set up next.\<close>
-
-definition "STATE (s :: AExp.state) \<equiv> s"
+definition "STATE s \<equiv> s"
 
 text \<open>@{term STATE} is just a wrapper that contains a state.\<close>
 
@@ -65,7 +52,7 @@ retrieval condition.\<close>
 lemma update_state_state_app_eq:
   assumes "interp_state st = interp_state st'"
   and "interp_state st = s"
-  and "s k = val"
+  and "s k = val" \<comment>\<open>the new retrieval condition\<close>
   and "val = val'"
   shows "interp_state st = interp_state (update_state st' k val')"
   using assms by auto
@@ -85,7 +72,7 @@ update condition.\<close>
 lemma update_state_state_eq_update:
   assumes "interp_state st = interp_state st'"
   and "interp_state st = s"
-  and "s' = s(k := val)"
+  and "s' = s(k := val)" \<comment>\<open>the update condition\<close>
   and "val = val'"
   shows "interp_state (State s') = interp_state (update_state st' k val')"
   using assms by (simp add: interp_state_State_eq)
@@ -99,15 +86,13 @@ lemma update_STATE_state_eq_update:
   using assms unfolding STATE_eq SIMPS_TO_eq atomize_eq
   by (fact update_state_state_eq_update)
 
-ML_file\<open>state_imp_tailcalls.ML\<close>
+ML_file\<open>state_update_tracking.ML\<close>
 
 (*TODO:
 1. the framework currently only collects a big state equality without
-simplifying it. As a result, every retrieval from these views needs to simplify
+simplifying it. As a result, every state retrieval needs to simplify
 a (complex) series of update operations.
-We could instead simplify the states themselves to speed up the proofs and
-make them more reliable. Currently, we rely on @{method fastforce} to simplify
-the chain of operations.
+We could instead simplify the states themselves to speed up the proofs.
 *)
 
 end

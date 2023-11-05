@@ -4,7 +4,7 @@ theory Views_Base
 begin
 
 paragraph \<open>Summary\<close>
-text \<open>Views are abstractions of function restrictions They consist of a
+text \<open>Views are abstractions of function restrictions. They consist of a
 state and set of keys on which the state is restricted on.\<close>
 
 lemma insert_impE:

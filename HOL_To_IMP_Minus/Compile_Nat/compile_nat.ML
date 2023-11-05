@@ -8,6 +8,9 @@ include HAS_LOGGER
 
 val get_compiled_const_def : Proof.context -> term -> thm option
 
+val update_compiled_const_def_attr : attribute
+val delete_compiled_const_def_attr : attribute
+
 type compiled_const = {arg_regs: string list, compiled: term, ret_reg: string}
 val get_compiled_const : Context.generic -> string -> compiled_const
 
@@ -16,6 +19,8 @@ val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_
 end
 
 structure Compile_Nat : COMPILE_NAT = struct
+
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_Nat"
 
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Termtab.table;
@@ -38,7 +43,7 @@ fun delete_compiled_const_def thm = compiled_const_from_def thm
   |> Compiled_Const_Defs.map
 val delete_compiled_const_def_attr = Thm.declaration_attribute delete_compiled_const_def
 
-val compiled_const_def_binding = \<^binding>\<open>compiled_const_def\<close>
+val compiled_const_def_binding = \<^binding>\<open>compiled_IMP_Minus_const_def\<close>
 
 val setup_compiled_const_def_attr = Attrib.add_del
   update_compiled_const_def_attr delete_compiled_const_def_attr
@@ -46,8 +51,6 @@ val setup_compiled_const_def_attr = Attrib.add_del
 val _ = Theory.setup (
   Attrib.setup compiled_const_def_binding setup_compiled_const_def_attr
     "add/del compiled IMP constant definition")
-
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_Nat"
 
 type compiled_const = { ret_reg : string, arg_regs : string list, compiled : term }
 

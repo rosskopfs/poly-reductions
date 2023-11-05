@@ -8,7 +8,8 @@ begin
 context HOL_To_IMP_Minus
 begin
 
-definition [compiled_const_def]: "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
+definition [compiled_IMP_Minus_const_def]:
+  "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
   return_register "suc_ret"
@@ -100,6 +101,17 @@ declare sqrt_aux_nat.simps[simp del]
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat by (cook mode = tailcall)
+(*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
+(*
+apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
+apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
+apply (tactic \<open>H.start_tac H.get_IMP_def @{context} 1\<close>)
+apply (tactic \<open>H.run_tac H.get_func_corrects @{context} 1\<close>)
+apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
+apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
+apply (tactic \<open>H.finish_non_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
+done
+*)
 
 lemma square_sqrt_aux_nat_le:
   assumes "L\<^sup>2 \<le> x" "x < R\<^sup>2"
