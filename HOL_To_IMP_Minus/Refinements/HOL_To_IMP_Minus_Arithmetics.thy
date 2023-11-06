@@ -9,11 +9,11 @@ context HOL_To_IMP_Minus
 begin
 
 definition [compiled_IMP_Minus_const_def]:
-  "suc_IMP \<equiv> Com.Assign ''suc_ret'' (V ''suc_x'' \<oplus> N 1)"
+  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
-  return_register "suc_ret"
-  argument_registers "suc_x"
+  return_register "suc.ret"
+  argument_registers "suc.args.x"
   compiled suc_IMP
 
 HOL_To_IMP_Minus_func_correct Suc
@@ -39,8 +39,8 @@ definition mul_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 compile_nat mul_nat_def basename mul
 
 declare_compiled_const "times"
-  return_register "mul_ret"
-  argument_registers "mul_x" "mul_y"
+  return_register "mul.ret"
+  argument_registers "mul.args.x" "mul.args.y"
   compiled "tailcall_to_IMP_Minus mul_IMP_tailcall"
 
 HOL_To_IMP_Minus_func_correct mul_nat by cook
@@ -65,8 +65,8 @@ definition div_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 compile_nat div_nat_def basename div
 
 declare_compiled_const "divide"
-  return_register "div_ret"
-  argument_registers "div_x" "div_y"
+  return_register "div.ret"
+  argument_registers "div.args.x" "div.args.y"
   compiled "tailcall_to_IMP_Minus div_IMP_tailcall"
 
 HOL_To_IMP_Minus_func_correct div_nat by cook

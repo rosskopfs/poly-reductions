@@ -16,6 +16,8 @@ val get_compiled_const : Context.generic -> string -> compiled_const
 
 val compiled_const_suffix_cfg : string Config.T
 val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_theory
+
+val register_sep_cfg : string Config.T
 end
 
 structure Compile_Nat : COMPILE_NAT = struct
@@ -135,7 +137,7 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
     t |> build_tc_ast |> index_tc_ast 0 |> snd
   end
 
-fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
+fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
   let
     fun f_arg_reg i = nth f_arg_names i |> HOLogic.mk_string
 
@@ -147,7 +149,9 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
       | go _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_arg_reg i\<close>\<close>\<close>
       | go bounds cont (If (idx, (cond, e1, e2))) =
         let
-          val cond_reg = "If_" ^ Int.toString idx |> HOLogic.mk_string
+          val cond_reg =
+            register_sep ^ "If" ^ register_sep ^ Int.toString idx
+            |> HOLogic.mk_string
           val cond_IMP = go bounds (fn rhs => \<^Const>\<open>tAssign for cond_reg rhs\<close>) cond
           val (e1_IMP, e2_IMP) = @{apply 2} (go bounds cont) (e1, e2)
           val if_IMP = \<^Const>\<open>tIf for cond_reg e1_IMP e2_IMP\<close>
@@ -156,7 +160,9 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn e =
         end
       | go bounds cont (Let (idx, (x, (e1, e2)))) =
         let
-          val x_reg = x ^ "_" ^ Int.toString idx |> HOLogic.mk_string
+          val x_reg =
+            register_sep ^ x ^ register_sep ^ Int.toString idx
+            |> HOLogic.mk_string
           val e1_IMP = go bounds (fn rhs => \<^Const>\<open>tAssign for x_reg rhs\<close>) e1
           val e2_IMP = go (x_reg :: bounds) cont e2
         in
@@ -217,6 +223,9 @@ fun reflect_eq thm =
 val compiled_const_suffix_cfg =
   Attrib.setup_config_string \<^binding>\<open>compiled_const_suffix\<close> (K "IMP_tailcall")
 
+val register_sep_cfg =
+  Attrib.setup_config_string \<^binding>\<open>register_seperator\<close> (K ".")
+
 fun compile_cmd f_def basenamepos_opt lthy =
   let
     val pos = Position.thread_data ()
@@ -230,8 +239,10 @@ fun compile_cmd f_def basenamepos_opt lthy =
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
-    val f_ret_name = fst f_IMP_namepos ^ "_ret"
-    fun mk_arg_name arg_name = fst f_IMP_namepos ^ "_" ^ arg_name
+    val register_sep = Config.get lthy register_sep_cfg
+    val f_ret_name = fst f_IMP_namepos ^ register_sep ^ "ret"
+    fun mk_arg_name arg_name =
+      fst f_IMP_namepos ^ register_sep ^ "args" ^ register_sep ^ arg_name
     val f_args = map (@{apply 2 (1)} mk_arg_name) args
     val f_args_vars = map (Var o @{apply 2 (1)} (fn n => (n, 0))) f_args
 
@@ -242,12 +253,15 @@ fun compile_cmd f_def basenamepos_opt lthy =
       def_body
       |> curry Term.subst_bounds (rev f_args_vars)
       |> tc_ast_of_term (f_name, f_typ) f_args
-      |> IMP_Minus_of_tc_ast (f_ret_name, map fst f_args) (get_compiled_const (Context.Proof lthy))
+      |> IMP_Minus_of_tc_ast
+          (f_ret_name, map fst f_args)
+          (get_compiled_const (Context.Proof lthy))
+          register_sep
       |> (fn t => rewrite \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>)
 
     val f_IMP_binding =
       f_IMP_namepos
-      |>> (suffix ("_" ^ Config.get lthy compiled_const_suffix_cfg))
+      |>> suffix ("_" ^ Config.get lthy compiled_const_suffix_cfg)
       |> Binding.make
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const =
