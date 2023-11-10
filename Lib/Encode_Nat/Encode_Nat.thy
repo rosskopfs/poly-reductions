@@ -422,12 +422,14 @@ fun can_resolve bottom_rl rls =
 @{typ "'a \<Rightarrow> 'a"} |> dest_Type
 \<close>
 
-thm encoding_list_wellbehaved dec_list_bot
+thm Cons_nat_equiv[where ?arg\<^sub>1="xs :: 'a::order_bot list" and ?arg\<^sub>2="xss",
+    OF encoding_list_wellbehaved[OF encoding_nat_wellbehaved] ]
+  encoding_list_wellbehaved[OF encoding_nat_wellbehaved]
 
 function_nat_rewrite_auto prefixest
 
-function_nat_rewrite prefixest
-function_nat_rewrite_correctness prefixest
+
+(* function_nat_rewrite_correctness prefixest
 proof(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct)
   case (1 v vs ps)
   have h1: "(fstP (enc_list enc_'a (v # vs)) = atomic 1) = True"
@@ -462,22 +464,9 @@ next
     using pointfree_idE[OF encoding_list_wellbehaved, OF encoding_list_wellbehaved, OF assms(1)]
     apply simp
     done
-qed
+qed *)
 
-  apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixest.induct; subst prefixest.simps; subst prefixest_nat.simps)
-  subgoal for v vs ps
-    using
-      pointfree_idE[OF encoding_list_wellbehaved, OF assms(1)]
-      Nil_nat_equiv[OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
-      Cons_nat_equiv[where arg\<^sub>1=v and arg\<^sub>2=vs, OF assms]
-      Cons_nat_equiv[where arg\<^sub>1="v # vs" and arg\<^sub>2=ps, OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
-      Cons_nat_equiv[where arg\<^sub>1="[]" and arg\<^sub>2=ps, OF encoding_list_wellbehaved, OF assms(1), OF dec_list_bot]
 
-    apply(auto simp add: enc_list.simps Nil_nat_def Cons_nat_def)
-    sorry
-  subgoal
-    sorry
-  done
 
 thm prefixest_nat_equiv
 
@@ -491,38 +480,17 @@ function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   using prefixes.cases by blast
 termination sorry
 
-thm enc_list.simps
+thm enc_list.simps[simplified Nil_nat_def]
 
-lemma Nil_nat: "enc_list enc_'a [] = pair (atomic 0) (atomic 0)"
-  by(simp add: enc_list.simps)
-
-lemma Cons_nat: "enc_list enc_'a (x # xs) =
-  pair (atomic 1) (pair (enc_'a x) (enc_list enc_'a xs))"
-  by(simp add: enc_list.simps)
 
 function_nat_rewrite_auto foo
-function_nat_rewrite foo
-function_nat_rewrite_correctness foo
-proof(induction arg\<^sub>1 arg\<^sub>2 rule: foo.induct)
-  case (1 acc)
-  then show ?case
-    apply(subst foo.simps; subst foo_nat.simps)
-    by(simp add: Cons_nat Nil_nat)
-next
-  case (2 x xs acc)
-  then show ?case
-    apply(subst foo.simps; subst foo_nat.simps)
-    using reverset_nat_equiv[OF assms, of xs "[]"]
-    reverset_nat_equiv[OF assms, of acc "[]"]
-    reverset_nat_equiv
-    by (simp add: Cons_nat Nil_nat)
-qed
 
-fun prefixes2 where
+
+fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list" where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
-thm reverset_nat_equiv reverset.simps
+thm reverset_nat_equiv reverset.simps[symmetric]
 
 
 
