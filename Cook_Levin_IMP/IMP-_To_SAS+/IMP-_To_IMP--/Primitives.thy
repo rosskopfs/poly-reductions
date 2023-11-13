@@ -38,22 +38,9 @@ fun snd_helper where
 lemma fst_helper_eq: "fst_helper = fst" by fastforce
 lemma snd_helper_eq: "snd_helper = snd" by fastforce
 
-function_nat_rewrite fst_helper
-function_nat_rewrite_correctness fst_helper
-  apply(induction arg\<^sub>1 rule: fst_helper.induct)
-  apply(all \<open>subst fst_helper_nat.simps\<close>)
-  subgoal for a b
-    apply(subst enc_prod.simps)
-    by(simp add: assms pointfree_idE enc_prod.simps)
-  done
+function_nat_rewrite_auto fst_helper
 
-function_nat_rewrite snd_helper
-function_nat_rewrite_correctness snd_helper
-  by(natfn_correctness \<open>induct arg\<^sub>1 rule: snd_helper.induct\<close>
-      assms: assms
-      simps_nat: snd_helper_nat.simps
-      enc_simps: enc_prod.simps
-      args_wellbehaved: assms(1)[THEN pointfree_idE])
+function_nat_rewrite_auto snd_helper
 
 definition "fst_nat \<equiv> fst_helper_nat"
 definition "snd_nat \<equiv> snd_helper_nat"
@@ -66,7 +53,7 @@ lemma fst_nat_equiv:
     and "dec_'a bot = bot"
     and "dec_'b bot = bot"
   shows
-    "dec_'a (fst_nat (enc_prod enc_'a enc_'b p)) = fst p"
+    "fst_nat (enc_prod enc_'a enc_'b p) = enc_'a (fst p)"
   using fst_helper_nat_equiv assms
   by (subst fst_nat_def, subst fst_helper_eq[symmetric]) blast
 
@@ -78,7 +65,7 @@ lemma snd_nat_equiv:
     and "dec_'a bot = bot"
     and "dec_'b bot = bot"
   shows
-    "dec_'b (snd_nat (enc_prod enc_'a enc_'b p)) = snd p"
+    "snd_nat (enc_prod enc_'a enc_'b p) = enc_'b (snd p)"
   using snd_helper_nat_equiv assms
   by (subst snd_nat_def, subst snd_helper_eq[symmetric]) blast
 
@@ -91,25 +78,13 @@ fun head :: "('a::order_bot) list \<Rightarrow> 'a" where
   "head [] = bot"
 | "head (x # xs) = x"
 
-function_nat_rewrite head
-function_nat_rewrite_correctness head
-  by (natfn_correctness \<open>induct arg\<^sub>1 rule: head.induct\<close>
-      assms: assms assms(1)[THEN pointfree_idE]
-      simps_nat: head_nat.simps
-      enc_simps: enc_list.simps pointfree_idE
-      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
+function_nat_rewrite_auto head
 
 fun tail :: "'a list \<Rightarrow> 'a list" where
   "tail (x # xs) = xs"
 | "tail [] = []"
 
-function_nat_rewrite tail
-function_nat_rewrite_correctness tail
-  by(natfn_correctness \<open>induct arg\<^sub>1 rule: tail.induct\<close>
-      assms: assms
-      simps_nat: tail_nat.simps
-      enc_simps: enc_list.simps
-      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE])
+function_nat_rewrite_auto tail
 
 thm encoding_list_wellbehaved[of inj_on_imageI]
 thm inj_on_imageI[of ] encoding_list_wellbehaved inj_on_inverseI
@@ -121,7 +96,7 @@ lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
 thm inj_inverseI[OF encoding_list_wellbehaved]
 
 lemma enc_list_nil: "xs = [] \<longleftrightarrow> enc_list enc_'a xs = 0"
-  by(simp add: enc_list.simps prod_encode_def split: list.split)
+  by(simp add: enc_list.simps prod_encode_def Nil_nat_def Cons_nat_def split: list.split)
 
 (*
 lemma [simp]: " tl_nat (Suc v) < Suc v"
@@ -147,15 +122,16 @@ fun length_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> nat" where
 lemma suc_length_acc: "Suc (length_acc acc xs) = length_acc (Suc acc) xs"
   by(induction acc xs rule: length_acc.induct; simp)
 
-function_nat_rewrite length_acc
+ML \<open>
+  exists (fn x => String.isPrefix x "Groups.plus_class.plus")
+       ["HOL.", \<comment> \<open>\<open>If\<close>, \<open>Let\<close>, and more\<close>
+        "Nat.", "Num.", "Groups.", \<comment> \<open>Relating to (natural) numbers\<close>
+        "enc"
+       ]
+\<close>
+
+function_nat_rewrite_auto length_acc
 thm length_acc_nat.simps
-function_nat_rewrite_correctness length_acc
-  by (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 rule: length_acc.induct\<close>
-      assms: assms(1)[THEN pointfree_idE] assms(2)
-      simps_nat: length_acc_nat.simps
-      enc_simps: enc_list.simps
-      args_wellbehaved: encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
-      encoding_nat_wellbehaved[THEN pointfree_idE])
 
 fun length :: "'a list \<Rightarrow> nat" where
   "length xs = length_acc 0 xs"
@@ -165,10 +141,8 @@ declare length.simps[simp del]
 lemma length_eq_length: "length xs = List.length xs"
   by(induction xs; simp add: length.simps flip: suc_length_acc)
 
-function_nat_rewrite length
-function_nat_rewrite_correctness length
-  using length_acc_nat_equiv[OF assms]
-  by(simp add: length_nat.simps length.simps prod_encode_0)
+function_nat_rewrite_auto length
+
 
 lemma length_acc_add_acc: "length_acc acc xs = acc + (length_acc 0 xs)"
 proof(induction xs arbitrary: acc)
@@ -183,8 +157,8 @@ lemma length_append_add: "length (append xs ys) = length xs + length ys"
   unfolding append_equiv
   by(induction xs; simp add: length.simps length_acc_add_acc[of "Suc 0"])
 
-lemma non_empty_positive : "enc_list enc_'a (x#xs) > 0"
-  by(simp add: enc_list.simps prod_encode_def)
+lemma non_empty_positive: "enc_list enc_'a (x # xs) > 0"
+  by(simp add: enc_list.simps prod_encode_def Nil_nat_def Cons_nat_def)
 
 
 (* fun takeWhile_nat :: "(nat \<Rightarrow> bool) \<Rightarrow> nat \<Rightarrow> nat" where
@@ -225,7 +199,7 @@ datatype_nat_wellbehaved option
   apply(intro ext)
   subgoal for x
     using assms[THEN pointfree_idE]
-    by(induction x rule: option.induct; simp add: enc_option.simps)
+    by(induction x rule: option.induct; simp add: enc_option.simps None_nat_def Some_nat_def)
   done
 
 
@@ -260,11 +234,12 @@ lemma "reverse_acc_nat bot bot = bot"
 lemma sub_reverse:
   assumes "dec_'a \<circ> enc_'a = id"
   shows "reverse_nat (enc_list enc_'a xs) = enc_list enc_'a (reverse xs)"
-  using reverse_nat_equiv assms reverse_nat_equiv2 by blast
+  using reverse_nat_equiv assms
+  oops
 
 lemma reverse_nat_0:"(reverse_nat 0 = 0)"
   by(simp add: reverse_nat.simps reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps
-      prod_encode_0)
+      prod_encode_0 Nil_nat_def)
 
 lemma reverse_append_nat:
   "reverse_nat (append_nat xs ys) = append_nat (reverse_nat ys) (reverse_nat xs)"
@@ -277,7 +252,7 @@ fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
 lemma elemof_set_in: "elemof x xs = (x \<in> set xs)"
   by(induction x xs rule: elemof.induct; simp)
 
-function_nat_rewrite elemof
+function_nat_rewrite_auto elemof
 
 lemma elemof_nat_equiv2:
   assumes "dec_'a \<circ> enc_'a = id"

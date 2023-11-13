@@ -749,6 +749,12 @@ fun construct_equiv_lemma ctxt t =
           [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
            mk_dec_bot_eq_bot ctxt T])
 
+    (* Only add bot assumption if bot is used in function? *)
+    val assms =
+      fold_atyps (insert (op =)) fun_T []
+      |> maps (fn T =>
+          [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T)])
+
     val argnames =
       map_range (fn i => "arg" ^ subscript (string_of_int (i + 1))) (length (Term.binder_types fun_T))
 
@@ -983,53 +989,21 @@ fun function_nat_rewrite_auto s ctxt =
 
           val substs = Thm.first_order_match (a, b)
 
-          val equiv_thm = hd (Proof_Context.get_thms ctxt' (Long_Name.base_name s ^ "_nat_equiv"))
+          val equiv_thm =
+            if const_nat_unchanged (@{print} s) |> @{print}
+            then NONE |> @{print}
+            else SOME (hd (Proof_Context.get_thms ctxt' (Long_Name.base_name s ^ "_nat_equiv"))) |> @{print}
         in
-          Thm.instantiate substs equiv_thm
+          Option.map (Thm.instantiate substs) equiv_thm
         end
         )
+      |> map_filter I
 
     val const_equiv_thms =
       maps const_equiv_thms_of_thm fun_simps
       |> @{print}
 
-    val const_equiv_thms' =
-      const_ts
-      |> map (fn t =>
-        let
-        val ((s, _), _) =
-            strip_comb t
-            |>> dest_Const
-        val add_sort_order_bot =
-          Term.map_type_tvar (fn (n, _) => TVar (n, [@{class "Orderings.order_bot"}]))
 
-        val inv_fun_arg_Ts =
-          binder_types (fastype_of (read_const' ctxt' s))
-          |> map add_sort_order_bot
-
-        val reg_invoc =
-          (read_const' ctxt' s)
-          |> map_types add_sort_order_bot
-
-        val inv_fun_arg_ts =
-          inv_fun_arg_Ts
-          |> map_index (fn (i, T) => Var ((argname i, 0), T))
-
-        val a =
-          Term.list_comb (reg_invoc, inv_fun_arg_ts)
-          |> Thm.cterm_of ctxt'
-
-        val b =
-          map_types add_sort_order_bot t
-          |> Thm.cterm_of ctxt'
-
-        val substs = Thm.first_order_match (a, b)
-
-        val equiv_thm = hd (Proof_Context.get_thms ctxt' (Long_Name.base_name s ^ "_nat_equiv"))
-        in
-          Thm.instantiate substs equiv_thm
-        end
-        ) |> @{print}
 
 
     (* val equiv_thms_inst =
@@ -1095,6 +1069,7 @@ fun function_nat_rewrite_auto s ctxt =
           |> const_equiv_thms_of_thm
           |> map instantiate_equiv
           |> map_filter I |> @{print}
+          |> map (simplify (clear_simpset ctxt addsimps (Proof_Context.get_thms ctxt "enc_nat.simps")))
           |> map (fn thm => (EqSubst.eqsubst_tac ctxt [1] [thm] j))
           |> foldl1 ((op THEN))
           handle Empty => all_tac
@@ -1120,12 +1095,15 @@ fun function_nat_rewrite_auto s ctxt =
         THEN print_tac ctxt "after subst const equiv thms instantiated" *)
 (*         THEN Method.insert_tac ctxt (assms @ wellbehaved_thms @ const_equiv_thms) 1
         THEN (print_tac ctxt "after insert prems and wellbehaved") *)
-        THEN subst_nat_invocation_tac i
+        THEN (subst_nat_invocation_tac i)
         (* THEN TRY (asm_full_simp_tac (clear_simpset ctxt addsimps (@{print} const_equiv_thms_instantiated)) i) *)
-        THEN (print_tac ctxt "after bar")
+        THEN (print_tac ctxt "after subst nat invocations")
         (* THEN TRY (auto_tac (ctxt addsimps (encoder_simps @ ctr_simps @ const_equiv_thms_instantiated)) ) *)
         THEN (print_tac ctxt "after equiv simps")
-        THEN TRY (blast_tac ctxt i)
+        THEN TRY (asm_full_simp_tac ctxt i)
+        THEN (print_tac ctxt "after almost last simps")
+        THEN TRY (auto_tac (ctxt addsimps encoder_simps) )
+        THEN (print_tac ctxt "after last simps")
         ) ctxt (@{print} j)
       end;
 

@@ -161,9 +161,10 @@ corollary snd_prod_decode_lt_intro:
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
 datatype_nat_encode nat
+  declare enc_nat.simps[simp del]
 
 lemma enc_nat_bot: "enc_nat bot = bot"
-  by (simp add: bot_nat_def prod_encode_0)
+  by (simp add: enc_nat.simps bot_nat_def prod_encode_0)
 
 
 
@@ -314,7 +315,7 @@ method wellbehavedness
 
 
 datatype_nat_wellbehaved nat
-  by(induction; simp)
+  by(induction; simp add: enc_nat.simps)
 
 datatype_nat_wellbehaved bool
   by(intro ext, simp add: dec_bool.simps enc_bool.simps True_nat_def False_nat_def split:bool.split)
