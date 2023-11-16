@@ -440,13 +440,32 @@ thm Cons_nat_equiv[where ?arg\<^sub>1="xs :: 'a::order_bot list" and ?arg\<^sub>
 
 function_nat_rewrite_auto prefixest
 
-
-
-
 thm prefixest_nat_equiv
 
 lemma reverset_length: "length xs = length (reverset xs [])"
   by(induction xs; simp add: reverset_rev)
+
+
+
+
+
+fun foo :: "'a \<Rightarrow> bool" where
+  "foo a = (if True then True else False)"
+
+function_nat_rewrite_auto foo
+
+fun bar :: "'a \<Rightarrow> 'a \<Rightarrow> bool" where
+  "bar a b = (if a = b then True else False)"
+
+function_nat_rewrite_auto bar
+
+
+
+
+
+
+
+
 
 function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "foo [] acc = acc"

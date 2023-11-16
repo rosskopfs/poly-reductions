@@ -50,8 +50,6 @@ lemma fst_nat_equiv:
     and enc_'b :: "('b::order_bot) \<Rightarrow> nat"
   assumes "dec_'a \<circ> enc_'a = id"
     and "dec_'b \<circ> enc_'b = id"
-    and "dec_'a bot = bot"
-    and "dec_'b bot = bot"
   shows
     "fst_nat (enc_prod enc_'a enc_'b p) = enc_'a (fst p)"
   using fst_helper_nat_equiv assms
@@ -62,8 +60,6 @@ lemma snd_nat_equiv:
     and enc_'b :: "('b::order_bot) \<Rightarrow> nat"
   assumes "dec_'a \<circ> enc_'a = id"
     and "dec_'b \<circ> enc_'b = id"
-    and "dec_'a bot = bot"
-    and "dec_'b bot = bot"
   shows
     "snd_nat (enc_prod enc_'a enc_'b p) = enc_'b (snd p)"
   using snd_helper_nat_equiv assms
@@ -71,8 +67,6 @@ lemma snd_nat_equiv:
 
 lemma eq: "prod_encode (n,m) = (m+n) * (m+n+1) div 2 + n"
   by (simp add: add.commute prod_encode_def triangle_def)
-
-
 
 fun head :: "('a::order_bot) list \<Rightarrow> 'a" where
   "head [] = bot"
@@ -202,7 +196,6 @@ datatype_nat_wellbehaved option
     by(induction x rule: option.induct; simp add: enc_option.simps None_nat_def Some_nat_def)
   done
 
-
 definition enc_vname :: "vname \<Rightarrow> nat" where
   "enc_vname = enc_list enc_char"
 
@@ -230,27 +223,18 @@ lemma vname_list_id: "dec_vname_list (enc_vname_list x) = x"
 lemma "reverse_acc_nat bot bot = bot"
   by(simp add: reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps)
 
-(* TODO: rename *)
-lemma sub_reverse:
-  assumes "dec_'a \<circ> enc_'a = id"
-  shows "reverse_nat (enc_list enc_'a xs) = enc_list enc_'a (reverse xs)"
-  using reverse_nat_equiv assms
-  oops
-
-lemma reverse_nat_0:"(reverse_nat 0 = 0)"
-  by(simp add: reverse_nat.simps reverse_acc_nat.simps prod_decode_def prod_decode_aux.simps
-      prod_encode_0 Nil_nat_def)
-
-lemma reverse_append_nat:
-  "reverse_nat (append_nat xs ys) = append_nat (reverse_nat ys) (reverse_nat xs)"
-  oops
-
 fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
   "elemof _ [] = False"
 | "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
 
 lemma elemof_set_in: "elemof x xs = (x \<in> set xs)"
   by(induction x xs rule: elemof.induct; simp)
+
+thm elemof.simps
+
+
+
+
 
 function_nat_rewrite_auto elemof
 
