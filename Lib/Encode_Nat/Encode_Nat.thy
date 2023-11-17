@@ -21,7 +21,7 @@ theory Encode_Nat
     "test" :: thy_goal and
     "test2" :: thy_decl and
     "datatype_nat_encode" :: thy_decl and
-    "datatype_nat_decode" :: thy_goal and
+    "datatype_nat_decode" :: thy_decl and
     "datatype_nat_wellbehaved" :: thy_goal and
     "function_nat_rewrite" :: thy_decl and
     "function_nat_rewrite_auto" :: thy_decl and
@@ -134,6 +134,9 @@ fun sndP :: "pair_repr \<Rightarrow> pair_repr" where
 
 lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
 
+lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
+  by(rule inj_on_inverseI, rule pointfree_idE, simp)
+
 ML_file \<open>./Encode_Nat.ML\<close>
 
 
@@ -161,7 +164,7 @@ corollary snd_prod_decode_lt_intro:
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
 datatype_nat_encode nat
-  declare enc_nat.simps[simp del]
+declare enc_nat.simps[simp del]
 
 lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: enc_nat.simps bot_nat_def prod_encode_0)
@@ -228,12 +231,16 @@ method decode_termination for t =
   relation t, auto;
   (auto intro!: prod_decode_less snd_prod_decode_lt_intro)?
 
+declare prod_decode_less[termination_simp]
+declare snd_prod_decode_lt_intro[termination_simp]
+
+
 
 datatype_nat_decode nat
-termination by (decode_termination "measure id")
+
+
 
 datatype_nat_decode list
-termination by (decode_termination "measure snd")
 declare dec_list.simps[simp del]
   (* Why? *)
 lemmas dec_list_prod_encode_simp[simp] = dec_list.simps[of _ "prod_encode _"]
@@ -241,19 +248,16 @@ lemmas dec_list_prod_encode_simp[simp] = dec_list.simps[of _ "prod_encode _"]
 thm dec_list.simps
 
 datatype_nat_decode bool
-termination by (decode_termination "measure id")
 declare dec_bool.simps[simp del]
   (* Why? *)
 lemmas dec_bool_prod_encode_simp[simp] = dec_bool.simps[of "prod_encode _"]
 
 datatype_nat_decode char
-termination by (decode_termination "measure id")
 declare dec_char.simps[simp del]
   (* Why? *)
 lemmas dec_char_prod_encode_simp[simp] = dec_char.simps[of "prod_encode _"]
 
 datatype_nat_decode prod
-termination by (decode_termination "measure (snd o snd)")
 declare dec_prod.simps[simp del]
   (* Why? *)
 lemmas dec_prod_prod_encode_simp[simp] = dec_prod.simps[of _ _ "prod_encode _"]
@@ -265,13 +269,11 @@ lemma dec_prod_bot:
   by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def)
 
 datatype_nat_decode tree
-termination by (decode_termination "measure snd")
 declare dec_tree.simps[simp del]
   (* Why? *)
 lemmas dec_tree_prod_encode_simp[simp] = dec_tree.simps[of _ "prod_encode _"]
 
 datatype_nat_decode keyed_list_tree
-termination by (decode_termination "measure (snd o snd)")
 declare dec_keyed_list_tree.simps[simp del]
   (* Why? *)
 lemmas dec_keyed_list_tree_prod_encode_simp[simp]
@@ -289,7 +291,6 @@ lemma
    apply(simp , all \<open>induction rule: subpairings.induct\<close>)
   using subpairings.intros by simp+
 
-(* TODO: Do we need similar lemmas for other data types? *)
 lemma dec_List_list_cong[fundef_cong]:
   assumes "x = y"
     and "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
@@ -297,22 +298,6 @@ lemma dec_List_list_cong[fundef_cong]:
   unfolding assms(1) using assms(2)
   by (induction dec\<^sub>a y rule: dec_list.induct;
       metis subpairings_sndP_imp dec_list.simps subpairings.intros(1) subpairings.intros(2))
-
-(* No longer working. TODO? *)
-method wellbehavedness_case
-  uses assms enc_simps uses_wellbehaved =
-  subst enc_simps,
-  insert assms,
-  insert uses_wellbehaved,
-  auto
-
-(* No longer working. TODO? *)
-method wellbehavedness
-  uses induct_rule assms enc_simps uses_wellbehaved =
-  (intro ext, insert TrueI, match premises in True \<Rightarrow> \<open>induction rule: induct_rule\<close>);
-  (solves \<open>wellbehavedness_case
-            assms: assms enc_simps: enc_simps uses_wellbehaved: uses_wellbehaved\<close>)?
-
 
 datatype_nat_wellbehaved nat
   by(induction; simp add: enc_nat.simps)
@@ -418,19 +403,7 @@ corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
 ML \<open>
-    fun collect_const_nat_invocations t =
-      let
-        val (fn_t, args) = strip_comb t
-        val consts_of_args = maps collect_const_nat_invocations args
-      in
-        consts_of_args @ (if is_Const fn_t then [(fn_t, args)] else [])
-        handle TERM _ => consts_of_args |> @{print}
-      end;
-
-collect_const_nat_invocations @{term "((v # ((k#y) #ks)) # (a#as))"}
-|> map (fn (t, ts) => (Thm.cterm_of @{context} t, map (Thm.cterm_of @{context}) ts));
-
-maps (K [1]) [2,3] @ [5]
+    @{typ "('a list \<times> 'b) list"} |> dest_Type
 
 \<close>
 
@@ -446,36 +419,11 @@ lemma reverset_length: "length xs = length (reverset xs [])"
   by(induction xs; simp add: reverset_rev)
 
 
-
-
-
-fun foo :: "'a \<Rightarrow> bool" where
-  "foo a = (if True then True else False)"
-
-function_nat_rewrite_auto foo
-
-fun bar :: "'a \<Rightarrow> 'a \<Rightarrow> bool" where
-  "bar a b = (if a = b then True else False)"
-
-function_nat_rewrite_auto bar
-
-
-
-
-
-
-
-
-
 function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "foo [] acc = acc"
 | "foo (x # xs) acc = foo (reverset xs []) (x # (reverset acc []))"
-     apply auto
-  using prefixes.cases by blast
-termination sorry
-
-thm enc_list.simps[simplified Nil_nat_def]
-
+  using reverset.cases by blast+
+termination by(relation "measure (length o fst)"; simp add: reverset_correct)
 
 function_nat_rewrite_auto foo
 
@@ -484,61 +432,8 @@ fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list"
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
-thm reverset_nat_equiv reverset.simps[symmetric]
-
-
-
-
-ML \<open>
- Envir.subst_type
-\<close>
-
-
-
-
 function_nat_rewrite_auto prefixes2
-  (* function_nat_rewrite prefixes2
 
-lemma hh: "(pair (atomic 0) (atomic 0)) = enc_list enc_'a []" by (simp add: enc_list.simps)
-
-function_nat_rewrite_correctness prefixes2
-proof(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct)
-  case (1 ps)
-  have h1: "(fstP (enc_list enc_'a []) = atomic 0) = True" by (simp add: enc_list.simps)
-  have h2: "pair (atomic 1) (pair (pair (atomic 0) (atomic 0)) (enc_list (enc_list enc_'a) ps)) =
-            enc_list (enc_list enc_'a) ([] # ps)" by (simp add: enc_list.simps)
-  have h3: "(pair (atomic 0) (atomic 0)) = enc_list (enc_list enc_'a) []" by (simp add: enc_list.simps)
-  show ?case
-    apply(subst prefixes2_nat.simps; subst prefixes2.simps)
-    using reverset_nat_equiv[
-        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]"] encoding_list_wellbehaved assms dec_list_bot
-    apply(force simp add: Cons_nat Nil_nat)
-    using reverset_nat_equiv[
-        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]",
-        OF encoding_list_wellbehaved,
-        OF assms(1),
-        OF dec_list_bot]
-    by(simp add: Cons_nat Nil_nat)
-next
-  case (2 a b ps)
-  then show ?case
-    apply(subst prefixes2_nat.simps; subst prefixes2.simps)
-    using assms
-    by(simp add: Cons_nat Nil_nat)
-qed
-
-  using assms
-  apply(induction arg\<^sub>1 arg\<^sub>2 rule: prefixes2.induct; subst prefixes2_nat.simps)
-  subgoal for ps
-    using reverset_nat_equiv[
-        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]",
-        OF encoding_list_wellbehaved,
-        OF assms(1),
-        OF dec_list_bot]
-     reverset_nat_equiv[
-        where arg\<^sub>1="[] # ps" and arg\<^sub>2="[]"] encoding_list_wellbehaved
-    by(simp add: enc_list.simps)
-  by(simp add: enc_list.simps Let_def) *)
 
 fun subtrees :: "'a tree \<Rightarrow> 'a tree list" where
   "subtrees \<langle>\<rangle> = []"
@@ -552,8 +447,7 @@ function subtreest :: "'a tree \<Rightarrow> 'a tree list \<Rightarrow> 'a tree 
   by simp_all (metis neq_Leaf_iff splice.cases surj_pair)
 termination
   by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
-                <*mlex*> {}")
-      (simp_all add: wf_mlex mlex_less)
+                <*mlex*> {}"; simp add: wf_mlex mlex_less)
 
 lemma subtrees_subtreest:
   "mset (subtrees t @ concat (map subtrees ts) @ stk) = mset (subtreest t ts stk)"
@@ -564,46 +458,6 @@ lemma subtreest_correct: "mset (subtrees t) = mset (subtreest t [] [])"
 
 function_nat_rewrite_auto subtreest
 
-
-
-fun plus where
-  "plus 0 n = n"
-| "plus (Suc m) n = plus m (Suc n)"
-
-lemma plus_equiv: "plus a b = a + b"
-  by(induction a arbitrary: b; simp)
-
-(* function_nat_rewrite plus
-function_nat_rewrite_correctness plus
-  using encoding_nat_wellbehaved[THEN pointfree_idE]
-  by(induction arg\<^sub>1 arg\<^sub>2 rule: plus.induct;
-      subst plus_nat.simps, simp add: enc_nat.simps plus_nat.simps, presburger?) *)
-
-fun bar :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "bar a b = a + b"
-
-
-ML \<open>
-
-@{term "n - 1"}
-
-\<close>
-
-
-
-
-
-(* TODOs/Things not wroking/Things to investigate *)
-
-
-fun fn_test1 :: "nat \<Rightarrow> nat" where
-  "fn_test1 x = (if x = 3 then 5 else 7)"
-
-fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
-  "fn_test2 a = 2"
-
-(* function_nat_rewrite fn_test1 *)
-(* function_nat_rewrite fn_test2 *)
 
 
 fun reverse_acc where
@@ -663,13 +517,35 @@ function_nat_rewrite_auto append
 
 
 
+(* TODOs/Things not wroking/Things to investigate *)
+
+fun plus where
+  "plus 0 n = n"
+| "plus (Suc m) n = plus m (Suc n)"
+
+lemma plus_equiv: "plus a b = a + b"
+  by(induction a arbitrary: b; simp)
+
+(* function_nat_rewrite_auto plus *)
+
+
+fun fn_test1 :: "nat \<Rightarrow> nat" where
+  "fn_test1 x = (if x = 3 then 5 else 7)"
+
+fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
+  "fn_test2 a = 2"
+
+(* function_nat_rewrite_auto fn_test1 *)
+(* function_nat_rewrite_auto fn_test2 *)
+
+
 
 fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
   "baz acc [[]] = acc"
 | "baz acc [] = acc"
 | "baz acc (xs#xss) = baz (append acc xs) xss"
 
-
+(* function_nat_rewrite_auto baz *)
 
 fun bazz where
   "bazz acc [[]] = acc"
@@ -681,89 +557,17 @@ fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
   "baz2 acc [] = acc"
 | "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
 
-thm bazz.simps
-
-ML \<open>
-
-datatype pairing_path =
-  DONE |
-  FST of pairing_path |
-  SND of pairing_path;
-
-datatype patmatch_term =
-  CONSTRUCTOR of (string * typ) * (patmatch_term list) |
-  VARIABLE of (indexname * typ);
-
-fun build_patmatch_term (Var v) = VARIABLE v
-  | build_patmatch_term (Free (s, T)) = VARIABLE ((s, 0), T)
-  | build_patmatch_term t =
-      Term.strip_comb t |> @{print}
-      |>> Term.dest_Const
-      ||> map build_patmatch_term
-      |> CONSTRUCTOR;
-
-datatype pairing_tree =
-  LEAF |
-  VAR of (indexname * typ) |
-  NODE of (pairing_tree * pairing_tree);
-
-fun mk_pairing_tree [] = LEAF
-  | mk_pairing_tree [(VARIABLE n)] = VAR n
-  | mk_pairing_tree ((VARIABLE n) :: xs) = NODE (VAR n, mk_pairing_tree xs)
-  | mk_pairing_tree ((CONSTRUCTOR (_, [])) :: xs) =
-      NODE (NODE (LEAF, LEAF), mk_pairing_tree xs) |> @{print}
-  | mk_pairing_tree ((CONSTRUCTOR (_, args)) :: xs) =
-      NODE (NODE (LEAF, mk_pairing_tree args), mk_pairing_tree xs);
-
-fun mk_path t =
-  let
-    fun mk_path p (VAR n) = [(n, p)]
-      | mk_path _ LEAF = []
-      | mk_path p (NODE (l, r)) = (mk_path (FST p) l) @ (mk_path (SND p) r);
-  in
-    mk_path DONE t
-  end;
-
-fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
-  | mk_variable_paths (CONSTRUCTOR (_, args)) = mk_path (NODE (LEAF, mk_pairing_tree args));
-
-val t1 = @{term "[] # y # ys"};
-
-val t2 = @{term "(x::'a list) # y # ys"};
-
-build_patmatch_term t1 |> @{print}
-|> mk_variable_paths;
-
-build_patmatch_term t2 |> @{print}
-|> mk_variable_paths;
-
-\<close>
-
-lemma "fstP (sndP (sndP (sndP (enc_list (enc_list enc_'a) (xs # v # va))))) = enc_list enc_'a v"
-  apply(simp add: enc_list.simps Cons_nat_def Nil_nat_def)
-  done
-
-
-function_nat_rewrite_auto bazz
-
-function_nat_rewrite baz
-thm baz_nat.simps
-
-function_nat_rewrite bazz
-thm baz_nat.simps bazz_nat.simps
-
 
 function_nat_rewrite_auto baz2
 
-
-
+(* function_nat_rewrite_auto bazz *)
 
 
 (* can't handle case expressions *)
 fun test3 where
   "test3 x = (case x of True \<Rightarrow> False | False \<Rightarrow> True)"
 
-(* function_nat_rewrite foo *)
+(* function_nat_rewrite_auto test3 *)
 
 
 end

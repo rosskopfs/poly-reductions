@@ -246,7 +246,8 @@ fun datatype_nat_encode_cmd T ctxt =
     val (ctxt', eqns) = build_better_encoder ctxt T ctrs casex;
     val fixes = [(Binding.name (encoder_name_of_type ctxt T), NONE, NoSyn)];
     val specs = [((Binding.empty_atts, eqns), [], [])];
-  in Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt'
+  in
+    Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt'
   end;
 
 val _ =
@@ -332,10 +333,8 @@ fun datatype_nat_decode_cmd T ctxt =
     val eqns = build_decoder ctxt T ctrs;
     val fixes = [(Binding.name (decoder_name_of_type ctxt T), NONE, NoSyn)];
     val specs = [((Binding.empty_atts, eqns), [], [])];
-    fun pat_completeness_auto ctxt =
-            Pat_Completeness.pat_completeness_tac ctxt 1 THEN auto_tac ctxt;
   in
-    snd (Function.add_function fixes specs Function_Fun.fun_config pat_completeness_auto ctxt)
+    Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt
   end;
 
 val _ =
@@ -449,21 +448,6 @@ fun argname i = "arg" ^ subscript (string_of_int (i + 1));
 
 val argnames = map_range argname;
 
-fun replace_constructors _ (Const (\<^const_name>\<open>undefined\<close>, _)) =
-    error "Correctness will not work with undefined! Rewrite to function that uses bot!"
-  | replace_constructors _ (t as (Const (\<^const_name>\<open>bot\<close>, _))) = t
-  | replace_constructors ctxt t =
-    Term.strip_comb t
-    ||> map (replace_constructors ctxt)
-    |> (fn (h, args') =>
-       case h of
-         Const (n, T) =>
-            (case build_constructor_tag ctxt (n, T) of
-              SOME cons_nat => build_constructor_pairing args' cons_nat
-            | NONE => Term.list_comb (h, args'))
-       | _ => Term.list_comb (h, args'));
-
-
 fun change_if ctxt (t as ((c as Const ("HOL.If", _)) $ cond $ thn $ els)) =
   if fst (Term.dest_Const (Term.head_of cond)) = "HOL.eq" then t
   else c $ (decoder_const_term_of_type ctxt @{typ "bool"} $ cond) $ thn $ els
@@ -531,7 +515,7 @@ fun build_nat_condition ctxt t =
     val ret =
       (new_args_t ~~ condition_paths)
       |> map mk_condition
-      |> List.concat |> map (Thm.cterm_of ctxt)  |> map Thm.term_of
+      |> List.concat
       |> mk_conj';
   in
     ret
@@ -562,8 +546,8 @@ fun nat_encode_term ctxt t =
   in
     t
     |> rhs_of_term
-    |> map_types tvar_to_tfree
-    |> change_if ctxt |> Thm.cterm_of ctxt |> @{print} |> Thm.term_of
+    |> map_types tvar_to_tfree |> @{print}
+    |> change_if ctxt
     |> fold (fn f => fn x => f x) wrappers
   end;
 
@@ -758,13 +742,6 @@ fun construct_equiv_lemma ctxt uses_bot t =
     val assms =
       fold_atyps (insert (op =)) fun_T []
       |> maps (fn T =>
-          [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
-           mk_dec_bot_eq_bot ctxt T])
-
-    (* Only add bot assumption if bot is used in function? *)
-    val assms =
-      fold_atyps (insert (op =)) fun_T []
-      |> maps (fn T =>
           [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T)]
           |> uses_bot ? ((curry op ::) (mk_enc_bot_eq_bot ctxt T)))
 
@@ -848,9 +825,12 @@ fun function_nat_rewrite_auto s ctxt =
     val fun_nat_lhs = Term.list_comb (fun_nat_t, fun_nat_arg_ts)
     val fun_nat_rhs =
       map Thm.prop_of fun_simps
-      |> map replace_suc (* "morally" replace "f (Suc n) = g n" by "f n = g (n - 1)" *)
-      |> (fn ts => (map (build_nat_condition ctxt) ts, map (nat_encode_term ctxt) ts))
+      |> map replace_suc (* "morally" replace "f (Suc n) = g n" by "f n = g (n - 1)" *) |> @{print}
+      |> (fn ts => (map (build_nat_condition ctxt) ts, map (nat_encode_term ctxt) ts)) |> @{print}
       |-> Ctr_Sugar_Util.mk_IfN (Term.body_type fun_nat_T)
+      |> map_aterms (fn Const ("HOL.undefined", _) =>
+                        error "Cannot use undefined! Rewrite function using bot!"
+                      | t => t)
       |> Term.map_aterms (change_const_to_nat ctxt fun_name)
       |> const_to_free (fun_name ^ "_nat", fun_nat_T)
       |> normalize_type_of_term |> @{print} |> Thm.cterm_of ctxt |> @{print} |> Thm.term_of
@@ -891,7 +871,19 @@ fun function_nat_rewrite_auto s ctxt =
       |> maps collect_types_of_term
       |> map collect_concrete_types
       |> map (filter_out is_funtype)
-      |> foldl1 (merge (op =))
+      |> foldl1 (merge (op =)) |> @{print}
+
+    val wellbehaved_thms =
+      let
+        fun inst_wellbehaved (Type (s, Ts)) =
+            "encoding_" ^ (Long_Name.base_name s) ^ "_wellbehaved"
+            |> hd o Proof_Context.get_thms ctxt
+            |> (fn thm => [thm OF (maps inst_wellbehaved Ts)])
+          | inst_wellbehaved _ = []
+      in
+        maps inst_wellbehaved type_typ_in_fun |> @{print}
+        |> map (curry (op OF) @{thm pointfree_idE} o single)
+      end;
 
     val encoder_simps =
       map (encoder_name_of_type ctxt') type_typ_in_fun
@@ -941,17 +933,7 @@ fun function_nat_rewrite_auto s ctxt =
                THEN asm_full_simp_tac (ctxt addsimps encoder_simps addsimps ctr_simps) 1
                THEN print_tac ctxt "after"
              )
-          end)|> @{print}
-
-    fun collect_const_invocations t =
-      let
-        val (fn_t, args) = strip_comb t
-        val acc = (if fst (dest_Const fn_t) <> fun_name then [t] else [])
-        handle TERM _ => []
-      in
-        map collect_const_invocations args
-        |> (fn x => fold (union (op =)) x acc)
-      end;
+          end);
 
     fun collect_const_nat_invocations t =
       let
@@ -961,18 +943,6 @@ fun function_nat_rewrite_auto s ctxt =
           @ (if is_Const fn_t andalso fst (dest_Const fn_t) <> fun_name
              then [(fn_t, args)] else [])
       end;
-
-    val const_ts =
-      map Thm.prop_of fun_simps
-      |> map rhs_of_term
-      |> map collect_const_invocations
-      |> Library.foldl1 (merge (op =))
-
-    val const_ts_alt =
-      map Thm.prop_of fun_simps
-      |> map rhs_of_term
-      |> map (map_types normalize_type)
-      |> maps collect_const_nat_invocations
 
     fun const_equiv_thms_of_thm thm =
       Thm.prop_of thm
@@ -1046,7 +1016,7 @@ fun function_nat_rewrite_auto s ctxt =
         val _ = assms |> @{print}
         fun instantiate_equiv thm =
           let
-            val prem = Thm.major_prem_of thm
+            val prem = Thm.major_prem_of thm |> @{print}
           in
             case rhs_of_term prem of
               Const ("Fun.id", id_T) =>
@@ -1058,9 +1028,11 @@ fun function_nat_rewrite_auto s ctxt =
                     |> Option.map (curry (op OF) thm o single)
                     |> the |> instantiate_equiv
                 | TVar _ => get_first (try (curry (op OF) thm o single)) assms
-                            |> the |> instantiate_equiv
+                            |> the |> @{print}
+                            |> instantiate_equiv
                 | _ => get_first (try (curry (op OF) thm o single)) assms
-                            |> the |> instantiate_equiv )
+                            |> the |> @{print}
+                            |> instantiate_equiv )
             | Const ("Orderings.bot_class.bot", bot_T) =>
                 (case body_type bot_T of
                   Type (s, _) => Long_Name.base_name s
@@ -1077,17 +1049,17 @@ fun function_nat_rewrite_auto s ctxt =
           end
           handle THM _ => SOME thm
           handle Option => NONE
-        val const_equiv_thms_instantiated =
-          const_equiv_thms
-          |> map instantiate_equiv
-          |> map_filter I |> @{print}
+        val injective_assms =
+          filter (fn thm =>
+            case rhs_of_term (Thm.prop_of thm) of Const ("Fun.id", _) => true | _ => false) assms
+          |> map (curry (op OF) @{thm inj_inverseI} o single) |> @{print}
         fun subst_nat_invocation_tac j =
           nth fun_simps (i - 1)
           |> const_equiv_thms_of_thm
           |> map instantiate_equiv
           |> map_filter I |> @{print}
-          |> map (simplify (clear_simpset ctxt addsimps (Proof_Context.get_thms ctxt "enc_nat.simps")))
-          |> map (fn thm => (EqSubst.eqsubst_tac ctxt [1] [thm] j))
+          |> map (simplify (clear_simpset ctxt addsimps (Proof_Context.get_thms ctxt "enc_nat.simps"))) |> @{print}
+          |> map (fn thm => (TRY (EqSubst.eqsubst_tac ctxt [1] [thm] j) THEN print_tac ctxt ""))
           |> foldl1 ((op THEN))
           handle Empty => all_tac
 
@@ -1095,33 +1067,26 @@ fun function_nat_rewrite_auto s ctxt =
         val i = 1
       in
         Subgoal.FOCUS_PARAMS (fn {context = ctxt, ...} =>
-        print_tac ctxt "start solve subgoal"
-        THEN EqSubst.eqsubst_tac ctxt [0] fun_nat_simps i
-        THEN print_tac ctxt "after subst nat fun"
-        THEN EqSubst.eqsubst_tac ctxt [0] fun_simps i
-        THEN print_tac ctxt "after subst fun"
-        THEN REPEAT_DETERM (if_exp_simp_tac ctxt i)
-        THEN (print_tac ctxt "after if")
-        THEN (simp_tac (clear_simpset ctxt addsimps let_simps_thms addsimps @{thms HOL.Let_def}) i)
-        THEN (print_tac ctxt "after let simps and let def")
-        (* THEN TRY (simp_tac (clear_simpset ctxt addsimps ctr_simps) 1)
-        THEN (print_tac ctxt "after constructor simps") *)
-         (* THEN foo
-        THEN print_tac ctxt "after foo" *)
-(*         THEN TRY (simp_tac (clear_simpset ctxt addsimps const_equiv_thms_instantiated) i)
-        THEN print_tac ctxt "after subst const equiv thms instantiated" *)
-(*         THEN Method.insert_tac ctxt (assms @ wellbehaved_thms @ const_equiv_thms) 1
-        THEN (print_tac ctxt "after insert prems and wellbehaved") *)
-        THEN (subst_nat_invocation_tac i)
-        (* THEN TRY (asm_full_simp_tac (clear_simpset ctxt addsimps (@{print} const_equiv_thms_instantiated)) i) *)
-        THEN (print_tac ctxt "after subst nat invocations")
-        (* THEN TRY (auto_tac (ctxt addsimps (encoder_simps @ ctr_simps @ const_equiv_thms_instantiated)) ) *)
-        THEN (print_tac ctxt "after equiv simps")
-        THEN TRY (asm_full_simp_tac (ctxt addsimps assms) i)
-        THEN (print_tac ctxt "after almost last simps")
-        THEN TRY (auto_tac (ctxt addsimps encoder_simps addsimps assms) )
-        THEN (print_tac ctxt "after last simps")
-        ) ctxt (@{print} j)
+          print_tac ctxt "start solve subgoal"
+          THEN EqSubst.eqsubst_tac ctxt [0] fun_nat_simps i
+          THEN print_tac ctxt "after subst nat fun"
+          THEN EqSubst.eqsubst_tac ctxt [0] fun_simps i
+          THEN print_tac ctxt "after subst fun"
+          THEN REPEAT_DETERM (if_exp_simp_tac ctxt i)
+          THEN (print_tac ctxt "after if")
+          THEN (simp_tac (clear_simpset ctxt addsimps let_simps_thms addsimps @{thms HOL.Let_def}) i)
+          THEN (print_tac ctxt "after let simps and let def")
+          THEN (subst_nat_invocation_tac i)
+          THEN (print_tac ctxt "after subst nat invocations")
+          THEN TRY (Method.insert_tac ctxt injective_assms i)
+          THEN (print_tac ctxt "after insert injective assumptions")
+          THEN TRY (asm_full_simp_tac (ctxt addsimps assms addsimps @{thms inj_def}) i)
+          THEN (print_tac ctxt "after simp with inj")
+          THEN TRY (asm_full_simp_tac (ctxt  addsimps assms addsimps wellbehaved_thms) i)
+          THEN (print_tac ctxt "after simp with wellbehaved thms")
+          THEN TRY (asm_full_simp_tac (ctxt addsimps encoder_simps) i)
+          THEN (print_tac ctxt "after simp with encoder simps")
+        ) ctxt j
       end;
 
     val (schemvars, assms, goal) = construct_equiv_lemma ctxt' uses_bot t
