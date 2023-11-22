@@ -90,8 +90,7 @@ next
     by blast
   from this have split_dis:"split1 \<inter> split2 = {}"
     unfolding split1_def split2_def
-    apply auto
-    by (metis doubleton_eq_iff prod.inject)
+    by(fastforce simp add: doubleton_eq_iff)
 
   from Suc(1) finE' E'_card have card1:"card split1 = card (\<Union> E')"
     unfolding split1_def

@@ -1,8 +1,0 @@
-chapter Poly_Reductions
-
-session IMP_Minus = "HOL-Eisbach" + 
-  theories
-    Com
-    Big_StepT
-    Small_StepT
-    Big_Step_Small_Step_Equivalence
