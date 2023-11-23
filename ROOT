@@ -22,22 +22,6 @@ session Poly_Reductions_Lib in Lib = "HOL-Analysis" +
     SAT_Definition
     "Encode_Nat/Encode_Nat"
 
-session Karp21 in Karp21 = Poly_Reductions_Lib +
-  sessions
-    "HOL-Real_Asymp"
-    Landau_Symbols
-    NREST
-  directories
-    CNF_SAT_To_Clique
-    CNF_SAT_To_TC
-    HC_To_UHC
-    TC_To_ChrN
-    VC_Set_To_VC_List
-    VC_To_FNS
-    VC_To_HC
-  theories
-    All_Reductions_Poly
-
 session IMP_Minus in "IMP-" = "HOL-Eisbach" +
   theories
     Com
@@ -45,10 +29,38 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Small_StepT
     Big_Step_Small_Step_Equivalence
 
+session Expressions in "Expressions" = HOL +
+  directories
+    Basics
+    Global_Calls
+    Plus_Minus
+    Refinements
+    "Refinements/Assign_Pure"
+    Tail_Calls
+    Whiles
+  theories
+    Expression_Tail_Call_Whiles_Plus_Minus
+
+session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
+  sessions
+    "HOL-Library"
+    "ML_Unification"
+    "SpecCheck"
+  directories
+    "Compile_Nat"
+    "ML_Typeclasses"
+    "ML_Typeclasses/State"
+    "Refinements"
+    "Refinements/Automation"
+    "Views"
+    "Views/IMP"
+  theories
+    HOL_To_IMP_Minus_Arithmetics
+
 session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
   sessions
     Poly_Reductions_Lib
-    IMP_Minus
+    HOL_To_IMP_Minus
     "HOL-Real_Asymp"
     Landau_Symbols
     Verified_SAT_Based_AI_Planning

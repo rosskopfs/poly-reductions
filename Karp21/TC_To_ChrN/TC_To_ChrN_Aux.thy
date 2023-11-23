@@ -513,7 +513,7 @@ proof -
     using chromatik_card3
     by blast
   from this asms show ?thesis
-    using card.infinite not_finite_existsD by fastforce
+    using card.infinite not_finite_existsD by fastforce 
 qed
 
 

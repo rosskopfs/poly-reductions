@@ -1,4 +1,3 @@
-
 text \<open>Extensions to Discrete.thy, in particular an implementation of square root by bisection\<close>
 
 theory Discrete_Extensions
