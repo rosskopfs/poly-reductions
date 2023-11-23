@@ -18,7 +18,7 @@ theory Encode_Nat
     "HOL-Eisbach.Eisbach_Tools"
     Test
   keywords
-    "test" :: thy_goal and
+    "test" :: thy_decl and
     "test2" :: thy_decl and
     "datatype_nat_encode" :: thy_decl and
     "datatype_nat_decode" :: thy_decl and
@@ -171,7 +171,7 @@ lemma enc_nat_bot: "enc_nat bot = bot"
 
 datatype_nat_encode list
 print_theorems
-thm enc_list.simps 
+thm enc_list.simps
 
 lemma "Nil_nat = enc_list enc_'a []"
   by (simp add: enc_list.simps Nil_nat_def)
@@ -234,7 +234,7 @@ datatype_nat_decode nat
 datatype_nat_decode list
 print_theorems
 
-  (* TODO: Automate that *)
+(* TODO: Automate that *)
 lemmas dec_list_prod_encode_simp[simp] = dec_list.simps[of _ "prod_encode _"]
 
 thm dec_list.simps
@@ -350,11 +350,62 @@ lemma dec_list_bot: "dec_list dec_'a bot = bot"
 lemma dec_tree_bot: "dec_tree dec_'a bot = bot"
   by(simp add: dec_tree.simps prod_decode_def prod_decode_aux.simps bot_tree_def)
 
+term "case_list acc (\<lambda>x xs. x # acc) xs"
 
+definition case_list_nat :: "nat \<Rightarrow> (nat \<Rightarrow> nat \<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat" where
+  "case_list_nat f g xs =
+  (if fstP xs = atomic 0 then f else g (fstP (sndP xs)) (sndP (sndP xs)))"
 
+term "case_list"
+
+lemma "(case dec_list dec_'a xs of [] => f | a # as => g a as)
+  = (if fstP xs = atomic 0 then f else g (dec_'a (fstP (sndP xs))) (dec_list dec_'a (sndP (sndP xs))))"
+  by (simp add: dec_list.simps)
+
+term "foo [] = f1"
+term "foo (x # xs) = f1 x xs"
+
+ML \<open>
+  hd [1, 2, 3]
+\<close>
+
+term "case_keyed_list_tree"
+
+test keyed_list_tree
+
+test list
+test bool
+test char
+test prod
+test tree
+
+lemma
+  fixes f::"'a \<Rightarrow> 'b"
+  assumes "dec_'a \<circ> enc_'a = id"
+    and "dec_'b \<circ> enc_'b = id"
+    and "f_nat = (\<lambda>x. enc_'b (f (dec_'a x)))"
+  shows "f_nat (enc_'a x) = enc_'b (f x)"
+  using assms
+  by (simp add: pointfree_idE)
+
+lemma foo:
+  fixes enc_'a :: "'a::order_bot \<Rightarrow> nat"
+    and dec_'a :: "nat \<Rightarrow> 'a"
+    and enc_'b :: "'b::order_bot \<Rightarrow> nat"
+    and dec_'b :: "nat \<Rightarrow> 'b"
+  assumes "\<And>x xs. g_nat (enc_'b x) (enc_list enc_'b xs) = enc_'a (g x xs)"
+  shows "enc_'a (case_list f (\<lambda>x xs. g x xs) xs) =
+          case_list_nat (enc_'a f) (\<lambda>x xs. g_nat x xs) (enc_list enc_'b xs)"
+  unfolding case_list_nat_def using assms
+  by(induction xs; simp add: enc_list.simps Nil_nat_def Cons_nat_def)+
+
+lemma "case_list f (\<lambda>x xs. g x xs) xs =
+      (if xs = [] then f else g (hd xs) (tl xs))"
+  oops
 function_nat_rewrite_auto reverset
 print_theorems
-thm reverset_nat.induct
+
+thm List.list.case_eq_if
 
 thm reverset_nat_equiv encoding_list_wellbehaved[THEN pointfree_idE]
 
@@ -547,7 +598,7 @@ fun test3 where
 
 (*
 
-TODO: case_list xs f (\<lambda> a as. g a as) = if ... then f else g (fst (snd (arg1)) .. 
+TODO: case_list xs f (\<lambda> a as. g a as) = if ... then f else g (fst (snd (arg1)) ..
 
 *)
 

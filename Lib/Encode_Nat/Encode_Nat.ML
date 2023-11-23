@@ -285,6 +285,11 @@ fun decoder_const_term_of_type ctxt (T as Type _) =
       |> (fn name => Const (name, decoder_type_of_type T))
   | decoder_const_term_of_type _ _ = error "Can't build a Const decoder for a type variable";
 
+fun decoder_term_of_type' ctxt (T as Type (_, Ts)) = list_comb (decoder_const_term_of_type ctxt T, map (decoder_term_of_type' ctxt) Ts)
+  | decoder_term_of_type' ctxt (T as TFree _) = decoder_free_term_of_type ctxt T
+  | decoder_term_of_type' ctxt (T as TVar ((_, i), _)) =
+      Var ((decoder_name_of_type ctxt T, i), decoder_type_of_type T);
+
 fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
   let
     val t = if freeT = SOME T then decoder_free_term_of_type ctxt T
@@ -451,6 +456,9 @@ fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
 val subscript = implode o map (prefix "\<^sub>") o Symbol.explode;
 
 fun argname i = "arg" ^ subscript (string_of_int (i + 1));
+
+fun funname i = "f" ^ subscript (string_of_int (i + 1));
+
 
 val argnames = map_range argname;
 
@@ -647,64 +655,6 @@ fun function_nat_rewrite_correctness_cmd fn_str int ctxt  =
       ctxt
   end;
 
-
-
-fun function_nat_rewrite_correctness_cmd2 fn_str ctxt =
-  let
-    val (fn_name, (fn_T, fn_t)) =
-      Syntax.read_term ctxt fn_str
-      |> map_types (map_type_tfree (fn (name, _) => TFree (name, ["Orderings.order_bot"])))
-      |> `Term.term_name
-      ||> `fastype_of
-    val fn_args =
-      map_index (fn (i, T) =>
-                 Free ("arg" ^ subscript (string_of_int (i + 1)), T)) (Term.binder_types fn_T)
-    val rhs = Term.list_comb (fn_t, fn_args)
-      |> (curry op $) (build_encoder_invocation ctxt NONE (Term.body_type fn_T))
-    val lhs =
-      map (fn t => (build_encoder_invocation ctxt NONE (fastype_of t)) $ t) fn_args
-      |> Term.list_comb o (pair (read_const' ctxt (fn_name ^ "_nat")))
-    val _ = fn_T
-    val assms =
-      fold_atyps (insert (op =)) fn_T []
-      |> maps (fn T =>
-                [mk_wellbehaved_thm (encoder_free_term_of_type ctxt T) (decoder_free_term_of_type ctxt T),
-                 mk_dec_bot_eq_bot ctxt T])
-    val argnames =
-      map_range (fn i => "arg" ^ subscript (string_of_int (i + 1))) (length (Term.binder_types fn_T))
-    val schemvars =
-      fold_atyps (insert (op =)) fn_T []
-      |> maps (fn T => [encoder_name_of_type ctxt T, decoder_name_of_type ctxt T])
-      |> (curry op @) argnames
-    val goal =
-      BNF_Util.mk_Trueprop_eq (lhs, rhs)
-    val encoder_simps =
-        Library.distinct (op =) ((body_type fn_T)::(binder_types fn_T))
-        |> map (suffix ".simps" o encoder_name_of_type ctxt)
-        |> maps (Proof_Context.get_thms ctxt)
-    val other_simps =
-        ["fstP.simps", "sndP.simps", "atomic.simps", "pair.simps"]
-        |> maps (Proof_Context.get_thms ctxt)
-    val induction_rule =
-      Proof_Context.get_thms ctxt (fn_name ^ ".induct")
-    val fn_nat_simps =
-      Proof_Context.get_thms ctxt (fn_name ^ "_nat.simps")
-    val fn_simps =
-      Proof_Context.get_thms ctxt (fn_name ^ ".simps")
-    val bla =
-      Induct_Tacs.induct_tac ctxt [map SOME argnames] (SOME induction_rule) 1
-      THEN ALLGOALS (EqSubst.eqsubst_tac ctxt [0] fn_nat_simps)
-      THEN ALLGOALS (EqSubst.eqsubst_tac ctxt [0] fn_simps)
-      THEN ALLGOALS (full_simp_tac (ctxt addsimps encoder_simps))
-      THEN ALLGOALS (full_simp_tac (ctxt addsimps other_simps))
-    val a =
-      Goal.prove ctxt schemvars assms goal (fn {...} => bla)
-    val _ = Proof_Context.add_fixes_cmd
-  in
-    Local_Theory.note ((Binding.name (fn_name ^ "_nat_equiv"), []), [a]) ctxt
-    |> snd
-  end;
-
 fun get_conditions_of_ifs t =
   let
     fun f acc (Const ("HOL.If", _) $ cond $ u) = insert (op =) cond (f acc u)
@@ -715,11 +665,81 @@ fun get_conditions_of_ifs t =
     f [] t
   end;
 
+fun if_exp_of_case_exp_cmd T ctxt =
+  let
+
+    fun nat_encode_term ctxt t =
+      let
+        val arguments_and_paths =
+          lhs_of_term t
+          |> map_types tvar_to_tfree
+          |> Term.args_of
+          |> map build_patmatch_term
+          |> map mk_variable_paths
+          |> flat o map_index (fn (i, x) => map (pair (argname i)) x);
+        val wrappers =
+          let
+            fun f (fun_arg_name, ((_, T), pattern_var_path)) term =
+              term $ (decoder_term_of_type' ctxt T $ build_unpairing (Free (fun_arg_name, @{typ "pair_repr"})) pattern_var_path)
+          in map f arguments_and_paths
+          end;
+      in
+        rhs_of_term t
+        |> map_types tvar_to_tfree
+        |> change_if ctxt
+        |> fold (fn f => fn x => f x) wrappers
+      end;
+
+    val {T, ctrs, casex, ...} = the (Ctr_Sugar.ctr_sugar_of ctxt (fst (dest_Type (Syntax.parse_typ ctxt T))));
+
+    val args =
+      map (binder_types o fastype_of) ctrs
+      |> map (map_index (fn (i, T) => Free (argname i, T)))
+
+    val end_T = tvar_to_tfree (body_type (fastype_of casex))
+
+    val fun_ts =
+      binder_types (fastype_of casex)
+      |> fst o split_last
+      |> map_index (fn (i, T) => Free (funname i, T))
+
+    val arg1 = decoder_term_of_type' ctxt (tvar_to_tfree T) $ Free (argname 0, @{typ pair_repr})
+
+    val case_exp = map_types tvar_to_tfree (list_comb (casex, fun_ts)) $ arg1
+
+    val if_exp =
+      map Term.list_comb (ctrs ~~ args) ~~ fun_ts
+      |> map (fn (t, rhs) => BNF_Util.mk_Trueprop_eq (Term.dummy_pattern (fastype_of t --> end_T) $ t, rhs))
+      |> (fn t => (map (build_nat_condition ctxt) t, map (nat_encode_term ctxt) t))
+      |-> Ctr_Sugar_Util.mk_IfN end_T
+
+    val goal = BNF_Util.mk_Trueprop_eq (case_exp, if_exp)
+
+    val T_base_name = Long_Name.base_name (fst (dest_Type T))
+
+    val decoder_simps =
+      Proof_Context.get_thms ctxt ("dec_" ^ T_base_name ^ ".simps")
+
+    val schemvars =
+      fold_atyps (insert (op =)) (tvar_to_tfree T) []
+      |> maps (fn T => [decoder_name_of_type ctxt T])
+      |> (curry op @) (map (fst o dest_Free) fun_ts)
+      |> (curry op @) [argname 0]
+
+    val thm =
+      Goal.prove ctxt schemvars [] (normalize_type_of_term goal)
+        (fn {context=ctxt, ...} => asm_full_simp_tac (ctxt addsimps decoder_simps) 1)
+
+    val name = "case_" ^ T_base_name ^ "_eq_if"
+  in
+    Local_Theory.note ((Binding.name name, []), [thm]) ctxt |> snd
+  end;
+
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>test\<close>
     "Test"
-    (Parse.term >> function_nat_rewrite_correctness_cmd2)
+    (Parse.typ >> if_exp_of_case_exp_cmd)
 
 val _ =
   Outer_Syntax.local_theory_to_proof' \<^command_keyword>\<open>function_nat_rewrite_correctness\<close>
@@ -993,16 +1013,6 @@ fun function_nat_rewrite_auto s ctxt =
         end
         )
       |> map_filter I
-
-    val const_equiv_thms =
-      maps const_equiv_thms_of_thm fun_simps
-      |> @{print}
-
-
-
-
-    (* val equiv_thms_inst =
-      map (equiv_thms_inst_prems ctxt) equiv_thms_inst_vars  *)
 
     fun if_exp_simp_tac ctxt i thm =
       let
