@@ -174,10 +174,8 @@ lemma sub_dropWhile: "dropWhile_nat P (list_encode xs) = list_encode (dropWhile 
 
 
 datatype_nat_encode option
-declare enc_option.simps[simp del]
 
 datatype_nat_decode option
-declare dec_option.simps[simp del]
 declare dec_option.simps[of _ "prod_encode _", simp]
 
 
@@ -283,29 +281,26 @@ lemma prod_fst_less2:"(x, y) = prod_decode p \<Longrightarrow> x \<le> p"
   using prod_sum_less by (metis le_prod_encode_1 prod_decode_inverse)
 
 datatype_nat_encode atomExp
-declare enc_atomExp.simps [simp del]
 
 lemma enc_atomExp_bot: "enc_atomExp bot = bot"
   by(simp add: enc_atomExp.simps prod_encode_0 bot_atomExp_def bot_nat_def N_nat_def enc_nat.simps)
 
 datatype_nat_decode atomExp
-declare dec_atomExp.simps[simp del]
 lemmas dec_atomExp_prod_encode_simp[simp] = dec_atomExp.simps[of  "prod_encode _"]
 
 datatype_nat_wellbehaved atomExp
   using encoding_list_wellbehaved[OF encoding_char_wellbehaved, THEN pointfree_idE]
-  by (intro ext, simp add: enc_atomExp.simps N_nat_def V_nat_def enc_nat.simps split: atomExp.split)
+  by (intro ext, simp add: enc_atomExp.simps N_nat_def V_nat_def enc_nat.simps dec_nat.simps
+      split: atomExp.split)
 
 
 datatype_nat_encode aexp
-declare enc_aexp.simps [simp del]
 
 lemma enc_aexp_bot: "enc_aexp bot = bot"
   by(simp add: enc_atomExp.simps enc_aexp.simps prod_encode_0 bot_atomExp_def bot_aexp_def
       bot_nat_def enc_nat.simps A_nat_def N_nat_def)
 
 datatype_nat_decode aexp
-declare dec_aexp.simps[simp del]
 lemmas dec_aexp_prod_encode_simp[simp] = dec_aexp.simps[of  "prod_encode _"]
 
 datatype_nat_wellbehaved aexp
@@ -315,13 +310,11 @@ datatype_nat_wellbehaved aexp
 
 
 datatype_nat_encode bit
-declare enc_bit.simps [simp del]
 
 lemma enc_bit_bot: "enc_bit bot = bot"
   by(simp add: enc_bit.simps prod_encode_0 bot_bit_def bot_nat_def Zero_nat_def)
 
 datatype_nat_decode bit
-declare dec_bit.simps[simp del]
 lemmas dec_bit_prod_encode_simp[simp] = dec_bit.simps[of  "prod_encode _"]
 
 datatype_nat_wellbehaved bit
@@ -329,13 +322,11 @@ datatype_nat_wellbehaved bit
   by (intro ext, simp add: enc_bit.simps Zero_nat_def One_nat_def split: bit.split)
 
 datatype_nat_encode com
-declare enc_com.simps [simp del]
 
 lemma enc_com_bot: "enc_com bot = bot"
   by(simp add: enc_com.simps prod_encode_0 bot_com_def bot_nat_def SKIP_nat_def)
 
 datatype_nat_decode com
-declare dec_com.simps[simp del]
 lemmas dec_com_prod_encode_simp[simp] = dec_com.simps[of  "prod_encode _"]
 
 datatype_nat_wellbehaved com
@@ -360,13 +351,8 @@ lemma pos_hd_less[termination_simp]: "x > 0 \<Longrightarrow> head_nat x < x"
   by(simp add: head_nat.simps bot_nat_def fst_prod_decode_less snd_prod_decode_lt_intro)
 
 lemma pos_tl_less[termination_simp]: "x > 0 \<Longrightarrow> tail_nat x < x"
-  by(simp add: tail_nat.simps prod_encode_0 snd_prod_decode_less snd_prod_decode_lt_intro)
-
-lemma nth_less[simp]: "nth_nat n x \<le> x"
-  apply(induct n arbitrary:x)
-   apply(auto simp add: nth_nat.simps head_nat.simps tail_nat.simps snd_nat_def
-      fst_prod_decode_lte snd_prod_decode_lte)
-  oops
+  by(simp add: tail_nat.simps prod_encode_0 snd_prod_decode_less snd_prod_decode_lt_intro
+      Nil_nat_def)
 
 
 (* fun map_nat :: "(nat\<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat" where
@@ -395,56 +381,33 @@ proof(standard, goal_cases)
 qed
 end
 
-datatype_nat_encode num
-declare enc_num.simps[simp del]
 
-datatype_nat_decode num
-termination by (decode_termination "measure id")
-declare dec_num.simps[simp del]
-declare dec_num.simps[of "prod_encode _", simp]
-
-
-datatype_nat_wellbehaved num
-  apply(intro ext)
-  subgoal for x
-    by(induction x rule: num.induct; simp add: enc_num.simps)
-  done
-
-lemma remdups_map : "inj f \<Longrightarrow> remdups (map f xs) = map f (remdups xs)"
-  apply (induction xs)
-   apply simp
-  apply (simp add: inj_def elemof_set_in)
-  by (metis append_equiv append_Cons image_iff list.simps(9) remdups_acc_append)
+lemma remdups_map: "inj f \<Longrightarrow> remdups (map f xs) = map f (remdups xs)"
+  by (induction xs; simp add: inj_def elemof_set_in)
+    (metis append_equiv append_Cons image_iff list.simps(9) remdups_acc_append)
 
 
 datatype_nat_encode domain_element
-declare enc_domain_element.simps[simp del]
-
 datatype_nat_decode domain_element
-termination by (decode_termination "measure id")
-declare dec_domain_element.simps[simp del]
 declare dec_domain_element.simps[of "prod_encode _", simp]
 
 datatype_nat_wellbehaved domain_element
   apply(intro ext)
   subgoal for x
     using encoding_bit_wellbehaved[THEN pointfree_idE] encoding_com_wellbehaved[THEN pointfree_idE]
-    by(induction x rule: domain_element.induct; simp add: enc_domain_element.simps)
+    by(induction x rule: domain_element.induct; simp add: enc_domain_element.simps EV_nat_def
+        PCV_nat_def)
   done
 
 datatype_nat_encode variable
-declare enc_variable.simps[simp del]
-
 datatype_nat_decode variable
-termination by (decode_termination "measure id")
-declare dec_variable.simps[simp del]
 declare dec_variable.simps[of "prod_encode _", simp]
 
 datatype_nat_wellbehaved variable
   apply(intro ext)
   subgoal for x
     using encoding_list_wellbehaved[OF encoding_char_wellbehaved, THEN pointfree_idE]
-    by(induction x rule: variable.induct; simp add: enc_variable.simps)
+    by(induction x rule: variable.induct; simp add: enc_variable.simps VN_nat_def PC_nat_def)
   done
 
 definition enc_sas_assignment:: "variable * domain_element \<Rightarrow> nat" where
@@ -542,9 +505,7 @@ lemma encoding_prod_id_alt:
     and "\<And>b. P3 b \<Longrightarrow> dec_'b (enc_'b b) = b"
   shows "P1 (a,b) \<Longrightarrow> dec_prod dec_'a dec_'b (enc_prod enc_'a enc_'b (a, b)) = (a, b)"
   using assms apply(induction "(a, b)" rule: prod.induct)
-  by(auto simp add: enc_prod.simps)
-
-
+  by(auto simp add: enc_prod.simps Pair_nat_def)
 
 
 (* TODO: Should wellbehavedness lemmas always look like this? *)
@@ -552,8 +513,7 @@ lemma encoding_prod_id:
   assumes "dec_'a (enc_'a a) = a"
     and "dec_'b (enc_'b b) = b"
   shows "dec_prod dec_'a dec_'b (enc_prod enc_'a enc_'b (a, b)) = (a, b)"
-  using assms by (induction "(a, b)" rule: prod.induct; simp add: enc_prod.simps)
-
+  using assms by (induction "(a, b)" rule: prod.induct; simp add: enc_prod.simps Pair_nat_def)
 
 
 lemma comm_imp_state_id:
@@ -562,12 +522,6 @@ lemma comm_imp_state_id:
   using encoding_prod_id[where ?enc_'a=enc_com and ?dec_'a=dec_com and ?enc_'b=enc_imp_state and
       ?dec_'b=dec_imp_state] encoding_com_wellbehaved[THEN pointfree_idE] imp_state_id
   by (cases x, simp)
-    (*   using encoding_prod_id_alt[of "finite o dom o snd" "\<lambda>x. True" "finite o dom"
-      dec_com enc_com dec_imp_state enc_imp_state]
-    encoding_com_wellbehaved[THEN pointfree_idE] imp_state_id
-  by (cases x; simp) *)
-
-
 
 definition enc_imp_assignment_list :: "(vname, bit) assignment list \<Rightarrow> nat" where
   "enc_imp_assignment_list = enc_list (enc_prod enc_vname enc_bit)"
@@ -734,30 +688,9 @@ fun list_update where
 lemma list_update_equiv: "list_update xs i v = List.list_update xs i v"
   by (simp add: list_update_acc_append)
 
-function_nat_rewrite list_update_acc
-function_nat_rewrite_correctness list_update_acc
-  apply(induction arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 arg\<^sub>4 rule: list_update_acc.induct; subst list_update_acc.simps)
-  subgoal
-    using encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
-    apply(simp add: enc_list.simps prod_encode_0 )
-    by (metis atomic.simps less_nat_zero_code list_update_acc_nat.simps snd_prod_decode_lt_intro)
-  subgoal for acc x xs v
-    using append_nat_equiv[OF assms, of acc "v # xs"]
-      encoding_list_wellbehaved[OF assms(1), THEN pointfree_idE]
-    by(simp add: enc_list.simps list_update_acc_nat.simps)
-  subgoal for acc x xs i v
-    using append_nat_equiv[OF assms, of acc "[x]"]
-    apply(simp add: enc_list.simps list_update_acc_nat.simps prod_encode_0 del: append.simps)
-    by(auto simp add: Let_def simp del: append.simps; metis (mono_tags, lifting) One_nat_def
-        append_nat_equiv2 assms(1) atomic.elims bot_list_def bot_nat_def enc_list.elims enc_list_bot
-        list.simps(5) pair.elims)
-  done
+function_nat_rewrite_auto list_update_acc
 
-function_nat_rewrite list_update
-function_nat_rewrite_correctness list_update
-  using list_update_acc_nat_equiv[OF assms]
-  by (simp add: list_update_nat.simps prod_encode_0)
-    (metis bot_list_def bot_nat_def enc_list_bot)
+function_nat_rewrite_auto list_update
 
 fun restrict_acc ::
   "('vname, 'bit) assignment list \<Rightarrow> ('vname, 'bit) assignment list \<Rightarrow> 'vname list
@@ -772,36 +705,59 @@ lemma restrict_acc_append: "restrict_acc acc xs s = append acc (restrict_acc [] 
       simp add: append_equiv elemof_set_in del: append.simps)
     (metis append.assoc)
 
+
+
+function_nat_rewrite_auto restrict_acc
 function_nat_rewrite restrict_acc
+
+
 function_nat_rewrite_correctness restrict_acc
-  apply (natfn_correctness \<open>induct arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: restrict_acc.induct\<close>
-      assms: assms
-      simps_nat: restrict_acc_nat.simps
-      enc_simps: enc_list.simps enc_prod.simps
-      args_wellbehaved:
-      encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1), THEN pointfree_idE])
-  subgoal for acc x y xs s
-    using
-      elemof_nat_equiv[OF assms(3-4), of x s]
-      append_nat_equiv2[
-        OF encoding_prod_wellbehaved,
-        OF assms(3) assms(1),
-        of acc "[(x, y)]"]
-    by(simp add: enc_list.simps enc_prod.simps)
-  subgoal for acc x y xs s
-    using elemof_nat_equiv[OF assms(3-4), of x s]
-    by(simp add: enc_list.simps enc_prod.simps)
-  done
+proof(induction arg\<^sub>1 arg\<^sub>2 arg\<^sub>3 rule: restrict_acc.induct)
+  case (1 acc s)
+  show ?case
+    apply(subst restrict_acc.simps)
+    apply(subst restrict_acc_nat.simps)
+    using encoding_list_wellbehaved[OF encoding_prod_wellbehaved, OF assms(3) assms(1), THEN pointfree_idE]
+    apply(simp add: enc_list.simps enc_prod.simps Nil_nat_def)
+    done
+next
+  case (2 acc x y xs s)
+  have h1: "(fstP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs)) = atomic 0) = False"
+    by(simp add: enc_list.simps Cons_nat_def)
+  have h2: "sndP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))) =
+      enc_list (enc_prod enc_'a enc_'b) xs"
+    by(simp add: enc_list.simps Cons_nat_def)
+  have h3: "sndP (sndP (fstP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))))) = enc_'b y"
+    by(simp add: enc_list.simps enc_prod.simps Cons_nat_def Pair_nat_def)
+  have h4: "fstP (sndP (fstP (sndP (enc_list (enc_prod enc_'a enc_'b) ((x, y) # xs))))) = enc_'a x"
+    by(simp add: enc_list.simps enc_prod.simps Cons_nat_def Pair_nat_def)
+  show ?case
+    apply(subst restrict_acc.simps)
+    apply(subst restrict_acc_nat.simps)
+    apply(simp only: h1 if_False)
+    apply(simp only: h2 h3 h4 Let_def)
+    
+    apply(subst Pair_nat_equiv[OF assms(1) assms(3), of x y])
+    apply(subst elemof_nat_equiv[OF assms(3), of x s])
+    apply(subst Nil_nat_equiv[OF encoding_prod_wellbehaved, OF assms(3) assms(1)])
+    apply(subst Cons_nat_equiv[OF encoding_prod_wellbehaved, OF assms(3) assms(1), of "(x,y)"])
+    apply(subst append_nat_equiv[OF encoding_prod_wellbehaved, OF assms(3) assms(1), of acc "[(x,y)]"])
+
+    apply(simp only: encoding_bool_wellbehaved[THEN pointfree_idE])
+    using 2 by simp
+
+qed
+
 
 fun restrict :: "('vname, 'bit) assignment list \<Rightarrow> 'vname list \<Rightarrow> ('vname, 'bit) assignment list"
   where
     "restrict xs s = restrict_acc [] xs s"
 
+function_nat_rewrite_auto restrict
 function_nat_rewrite restrict
 function_nat_rewrite_correctness restrict
   using restrict_acc_nat_equiv[OF assms]
-  by (metis atomic.simps bot_list_def bot_nat_def enc_list_bot pair.elims prod_encode_0
-      restrict.elims restrict_nat.simps)
+  by (metis Nil_nat_equiv assms(3) bot_list_def enc_list_bot restrict.elims restrict_nat.simps)
 
 lemma sub_restrict_helper:
   "map_of (restrict xs s) t = restrict_map (map_of xs) (set s) t"

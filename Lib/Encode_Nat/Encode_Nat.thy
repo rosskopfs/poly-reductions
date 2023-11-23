@@ -164,18 +164,14 @@ corollary snd_prod_decode_lt_intro:
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
 datatype_nat_encode nat
-declare enc_nat.simps[simp del]
+
 
 lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: enc_nat.simps bot_nat_def prod_encode_0)
 
-
-
 datatype_nat_encode list
-declare enc_list.simps [simp del]
-
-thm enc_list.simps Cons_nat_def
-
+print_theorems
+thm enc_list.simps 
 
 lemma "Nil_nat = enc_list enc_'a []"
   by (simp add: enc_list.simps Nil_nat_def)
@@ -184,20 +180,17 @@ lemma enc_list_bot: "enc_list enc_'a bot = bot"
   by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def Nil_nat_def)
 
 datatype_nat_encode bool
-declare enc_bool.simps [simp del]
 
 lemma enc_bool_bot: "enc_bool bot = bot"
   by(simp add: enc_bool.simps prod_encode_0 bot_nat_def False_nat_def)
 
 datatype_nat_encode char
-declare enc_char.simps [simp del]
 
 lemma enc_char_bot: "enc_char bot = bot"
   by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def Char_nat_def
       False_nat_def)
 
 datatype_nat_encode "('a, 'b) prod"
-declare enc_prod.simps [simp del]
 
 lemma enc_prod_bot:
   assumes "enc_'a bot = bot"
@@ -206,13 +199,11 @@ lemma enc_prod_bot:
   by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms Pair_nat_def)
 
 datatype_nat_encode "'a tree"
-declare enc_tree.simps [simp del]
 
 lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
   by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def Leaf_nat_def)
 
 datatype_nat_encode "('a, 'b) keyed_list_tree"
-declare enc_keyed_list_tree.simps [simp del]
 
 lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"
   by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def
@@ -241,25 +232,20 @@ datatype_nat_decode nat
 
 
 datatype_nat_decode list
-declare dec_list.simps[simp del]
-  (* Why? *)
+print_theorems
+
+  (* TODO: Automate that *)
 lemmas dec_list_prod_encode_simp[simp] = dec_list.simps[of _ "prod_encode _"]
 
 thm dec_list.simps
 
 datatype_nat_decode bool
-declare dec_bool.simps[simp del]
-  (* Why? *)
 lemmas dec_bool_prod_encode_simp[simp] = dec_bool.simps[of "prod_encode _"]
 
 datatype_nat_decode char
-declare dec_char.simps[simp del]
-  (* Why? *)
 lemmas dec_char_prod_encode_simp[simp] = dec_char.simps[of "prod_encode _"]
 
 datatype_nat_decode prod
-declare dec_prod.simps[simp del]
-  (* Why? *)
 lemmas dec_prod_prod_encode_simp[simp] = dec_prod.simps[of _ _ "prod_encode _"]
 
 lemma dec_prod_bot:
@@ -269,13 +255,9 @@ lemma dec_prod_bot:
   by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def)
 
 datatype_nat_decode tree
-declare dec_tree.simps[simp del]
-  (* Why? *)
 lemmas dec_tree_prod_encode_simp[simp] = dec_tree.simps[of _ "prod_encode _"]
 
 datatype_nat_decode keyed_list_tree
-declare dec_keyed_list_tree.simps[simp del]
-  (* Why? *)
 lemmas dec_keyed_list_tree_prod_encode_simp[simp]
   = dec_keyed_list_tree.simps[of _ _ "prod_encode _"]
 
@@ -300,7 +282,7 @@ lemma dec_List_list_cong[fundef_cong]:
       metis subpairings_sndP_imp dec_list.simps subpairings.intros(1) subpairings.intros(2))
 
 datatype_nat_wellbehaved nat
-  by(induction; simp add: enc_nat.simps)
+  by(induction; simp add: enc_nat.simps dec_nat.simps)
 
 datatype_nat_wellbehaved bool
   by(intro ext, simp add: dec_bool.simps enc_bool.simps True_nat_def False_nat_def split:bool.split)
@@ -338,18 +320,6 @@ datatype_nat_wellbehaved keyed_list_tree
     by (simp add: enc_keyed_list_tree.simps KLeaf_nat_def KNode_nat_def)+
   done
 
-method natfn_correctness
-  methods induct_rule
-  uses assms simps_nat dels enc_simps args_wellbehaved =
-  \<comment> \<open>Add wellbehavedness assumptions to get induction hypotheses\<close>
-  print_fact assms, print_fact args_wellbehaved, insert assms,
-  \<comment> \<open>Computation induction over the original function\<close>
-  induct_rule;
-  \<comment> \<open>Unfold exactly one level of the natfn we're looking at—corresponding to the inductive step\<close>
-  subst simps_nat;
-  insert args_wellbehaved; simp del: dels add: enc_simps; meson?
-
-
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
@@ -361,12 +331,9 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
-ML \<open>
-  Proof_Context.read_const {proper = false, strict = false} @{context} "Cons"
-\<close>
-
+(* TODO: put into other commands *)
 test2 list
-
+thm Cons_nat_equiv
 test2 bool
 
 test2 char
@@ -383,10 +350,13 @@ lemma dec_list_bot: "dec_list dec_'a bot = bot"
 lemma dec_tree_bot: "dec_tree dec_'a bot = bot"
   by(simp add: dec_tree.simps prod_decode_def prod_decode_aux.simps bot_tree_def)
 
+
+
 function_nat_rewrite_auto reverset
-thm reverset_nat_equiv
+print_theorems
+thm reverset_nat.induct
 
-
+thm reverset_nat_equiv encoding_list_wellbehaved[THEN pointfree_idE]
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
   "prefixes (v # vs) = (v # vs) # (prefixes vs)"
@@ -402,18 +372,8 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
-ML \<open>
-    @{typ "('a list \<times> 'b) list"} |> dest_Type
-
-\<close>
-
-thm Cons_nat_equiv[where ?arg\<^sub>1="xs :: 'a::order_bot list" and ?arg\<^sub>2="xss",
-    OF encoding_list_wellbehaved[OF encoding_nat_wellbehaved] ]
-  encoding_list_wellbehaved[OF encoding_nat_wellbehaved]
-
 function_nat_rewrite_auto prefixest
 
-thm prefixest_nat_equiv
 
 lemma reverset_length: "length xs = length (reverset xs [])"
   by(induction xs; simp add: reverset_rev)
@@ -426,6 +386,7 @@ function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 termination by(relation "measure (length o fst)"; simp add: reverset_correct)
 
 function_nat_rewrite_auto foo
+print_theorems
 
 
 fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list" where
@@ -457,7 +418,7 @@ lemma subtreest_correct: "mset (subtrees t) = mset (subtreest t [] [])"
   using subtrees_subtreest[of t "[]" "[]"] by simp
 
 function_nat_rewrite_auto subtreest
-
+print_theorems
 
 
 fun reverse_acc where
@@ -465,8 +426,9 @@ fun reverse_acc where
 | "reverse_acc acc (x#xs) = reverse_acc (x#acc) xs"
 
 
-function_nat_rewrite_auto reverse_acc
 
+function_nat_rewrite_auto reverse_acc
+thm reverse_acc_nat.simps
 
 fun reverse where
   "reverse xs = reverse_acc [] xs"
@@ -515,10 +477,6 @@ qed
 
 function_nat_rewrite_auto append
 
-
-
-(* TODOs/Things not wroking/Things to investigate *)
-
 fun plus where
   "plus 0 n = n"
 | "plus (Suc m) n = plus m (Suc n)"
@@ -526,18 +484,36 @@ fun plus where
 lemma plus_equiv: "plus a b = a + b"
   by(induction a arbitrary: b; simp)
 
-(* function_nat_rewrite_auto plus *)
+function_nat_rewrite_auto plus
 
+
+datatype_nat_encode num
+
+
+datatype_nat_decode num
+lemmas dec_num_prod_encode_simp[simp] = dec_num.simps[of "prod_encode _"]
+
+datatype_nat_wellbehaved num
+  apply(intro ext)
+  subgoal for x
+    by(induction x rule: num.induct; simp add: enc_num.simps One_nat_def Bit1_nat_def Bit0_nat_def)
+  done
 
 fun fn_test1 :: "nat \<Rightarrow> nat" where
   "fn_test1 x = (if x = 3 then 5 else 7)"
 
+function_nat_rewrite_auto fn_test1
+
+
 fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
   "fn_test2 a = 2"
 
-(* function_nat_rewrite_auto fn_test1 *)
-(* function_nat_rewrite_auto fn_test2 *)
+function_nat_rewrite_auto fn_test2
 
+
+
+
+(* TODOs/Things not wroking/Things to investigate *)
 
 
 fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
@@ -569,5 +545,10 @@ fun test3 where
 
 (* function_nat_rewrite_auto test3 *)
 
+(*
+
+TODO: case_list xs f (\<lambda> a as. g a as) = if ... then f else g (fst (snd (arg1)) .. 
+
+*)
 
 end

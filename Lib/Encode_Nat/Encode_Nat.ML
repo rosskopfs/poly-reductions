@@ -239,15 +239,18 @@ fun datatype_nat_encode_cmd T ctxt =
     val T_name = fst (dest_Type (Syntax.parse_typ ctxt T));
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the;
     val T = tvar_to_tfree (#T sugar) |> normalize_type;
+    val encoder_name = encoder_name_of_type ctxt T;
     val casex =
       subst_atomic_types [(body_type (type_of (#casex sugar)), @{typ "pair_repr"})] (#casex sugar)
       |> normalize_type_of_term;
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar) |> map normalize_type_of_term;
     val (ctxt', eqns) = build_better_encoder ctxt T ctrs casex;
-    val fixes = [(Binding.name (encoder_name_of_type ctxt T), NONE, NoSyn)];
+    val fixes = [(Binding.name encoder_name, NONE, NoSyn)];
     val specs = [((Binding.empty_atts, eqns), [], [])];
+    val ctxt'' = Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt';
+    val simp_thm = Proof_Context.get_thms ctxt'' (encoder_name ^ ".simps");
   in
-    Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt'
+    Local_Theory.note ((Binding.empty, @{attributes [simp del]}), simp_thm) ctxt'' |> snd
   end;
 
 val _ =
@@ -329,12 +332,15 @@ fun datatype_nat_decode_cmd T ctxt =
     val T_name = fst (dest_Type (Syntax.parse_typ ctxt T));
     val sugar = Ctr_Sugar.ctr_sugar_of ctxt T_name |> the;
     val T = tvar_to_tfree (#T sugar);
+    val decoder_name = decoder_name_of_type ctxt T;
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar);
     val eqns = build_decoder ctxt T ctrs;
-    val fixes = [(Binding.name (decoder_name_of_type ctxt T), NONE, NoSyn)];
+    val fixes = [(Binding.name decoder_name, NONE, NoSyn)];
     val specs = [((Binding.empty_atts, eqns), [], [])];
+    val ctxt' = Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt;
+    val simp_thm = Proof_Context.get_thms ctxt' (decoder_name ^ ".simps");
   in
-    Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt
+    Local_Theory.note ((Binding.empty, @{attributes [simp del]}), simp_thm) ctxt' |> snd
   end;
 
 val _ =
@@ -591,14 +597,14 @@ val _ =
 fun mk_dec_bot_eq_bot ctxt T =
   let
     val lhs = decoder_free_term_of_type ctxt T $ (Const (\<^const_name>\<open>bot\<close>, @{typ "pair_repr"}))
-    val rhs = Const (\<^const_name>\<open>bot\<close>, T)
+    val rhs = \<^Const>\<open>bot T\<close>
   in
     BNF_Util.mk_Trueprop_eq (lhs, rhs)
   end;
 
 fun mk_enc_bot_eq_bot ctxt T =
   let
-    val lhs = encoder_free_term_of_type ctxt T $ (Const (\<^const_name>\<open>bot\<close>, T))
+    val lhs = encoder_free_term_of_type ctxt T $ \<^Const>\<open>bot T\<close>
     val rhs = Const (\<^const_name>\<open>bot\<close>, @{typ "pair_repr"})
   in
     BNF_Util.mk_Trueprop_eq (lhs, rhs)
@@ -693,6 +699,7 @@ fun function_nat_rewrite_correctness_cmd2 fn_str ctxt =
       THEN ALLGOALS (full_simp_tac (ctxt addsimps other_simps))
     val a =
       Goal.prove ctxt schemvars assms goal (fn {...} => bla)
+    val _ = Proof_Context.add_fixes_cmd
   in
     Local_Theory.note ((Binding.name (fn_name ^ "_nat_equiv"), []), [a]) ctxt
     |> snd
@@ -907,7 +914,8 @@ fun function_nat_rewrite_auto s ctxt =
       fun_patmached_arg_ts
       |> map (Thm.cterm_of ctxt)
       |> map Thm.term_of
-      |> filter (not o is_Var) (* don't need simplification for a variable itself *)
+      |> filter_out is_Var (* don't need simplification for a variable itself *)
+      |> filter_out (curry (op =) @{typ "nat"} o fastype_of) (* don't need anything for nat *)
       |> maps (fn t =>
         let
           val _ = t |> Thm.cterm_of ctxt |> @{print}
@@ -1059,7 +1067,7 @@ fun function_nat_rewrite_auto s ctxt =
           |> map instantiate_equiv
           |> map_filter I |> @{print}
           |> map (simplify (clear_simpset ctxt addsimps (Proof_Context.get_thms ctxt "enc_nat.simps"))) |> @{print}
-          |> map (fn thm => (TRY (EqSubst.eqsubst_tac ctxt [1] [thm] j) THEN print_tac ctxt ""))
+          |> map (fn thm => (EqSubst.eqsubst_tac ctxt [1] [thm] j) THEN print_tac ctxt "")
           |> foldl1 ((op THEN))
           handle Empty => all_tac
 
