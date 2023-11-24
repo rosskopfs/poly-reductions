@@ -438,7 +438,7 @@ proof -
     
     have strict_subset: "\<Union> ((`) ?f ` S) \<subset> ?f ` X"
       using prems(1)
-      by (metis \<open>inj_on ?f X\<close> image_Union inj_on_strict_subset)
+      by (metis \<open>inj_on ?f X\<close> image_Union image_strict_mono)
     hence "(\<Sum>x\<in>\<Union> ((`) ?f ` S). ?p ^ x) < (\<Sum>x\<in>?f ` X. ?p ^ x)"
       proof-
         from strict_subset obtain b where b_def: "b \<in> ?f ` X - \<Union> ((`) ?f ` S)" 

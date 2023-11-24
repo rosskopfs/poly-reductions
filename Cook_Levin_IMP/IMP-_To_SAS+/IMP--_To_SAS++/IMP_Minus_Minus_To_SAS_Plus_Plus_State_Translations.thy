@@ -71,7 +71,7 @@ qed auto
 
 lemma snd_sas_plus_state_to_imp_minus_updated[simp]:
   "snd (sas_plus_state_to_imp_minus
-                (imp_minus_state_to_sas_plus (c, is)(VN x \<mapsto> y)))
+                ((imp_minus_state_to_sas_plus (c, is))(VN x \<mapsto> y)))
     = is(x := (case y of EV y' \<Rightarrow> Some y' | _ \<Rightarrow> None))"
   by (auto simp: imp_minus_state_to_sas_plus_def sas_plus_state_to_imp_minus_def
       Let_def map_comp_def option.case_eq_if)
@@ -105,8 +105,8 @@ lemma map_of_map_VN_EV: "map_of (map (\<lambda>v. (VN v, EV y)) vs) (VN a) =
   map_option EV (map_of (map (\<lambda>v. (v, y)) vs) a)"
   apply(induction vs) by auto
 
-lemma map_leq_imp_minus_state_to_sas_plus_iff:
-  "map_of (map (\<lambda>v. (VN v, EV y)) vs)(PC \<mapsto> PCV c) \<subseteq>\<^sub>m imp_minus_state_to_sas_plus (c, is)
+lemma map_leq_imp_minus_state_to_sas_plus_iff: 
+  "(map_of (map (\<lambda>v. (VN v, EV y)) vs))(PC \<mapsto> PCV c) \<subseteq>\<^sub>m imp_minus_state_to_sas_plus (c, is)
   \<longleftrightarrow> map_of (map (\<lambda>v. (v, y)) vs) \<subseteq>\<^sub>m is"
   by(auto simp: imp_minus_state_to_sas_plus_def map_le_def map_comp_def map_of_SomeD
       dom_map_of_conv_image_fst map_of_map_VN_EV split: option.splits)
