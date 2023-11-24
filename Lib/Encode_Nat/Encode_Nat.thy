@@ -14,8 +14,6 @@ theory Encode_Nat
     "HOL-Library.Product_Lexorder"
     "HOL-Library.Multiset"
     "HOL-Library.Option_ord"
-    "HOL-Eisbach.Eisbach"
-    "HOL-Eisbach.Eisbach_Tools"
     Test
   keywords
     "test" :: thy_decl and
@@ -217,11 +215,6 @@ lemma enc_List_list_cong[fundef_cong]:
   shows "enc_list enc\<^sub>a xs = enc_list enc\<^sub>b ys"
   using assms by (induction xs arbitrary: ys; auto simp add: enc_list.simps)
 
-
-method decode_termination for t =
-  relation t, auto;
-  (auto intro!: prod_decode_less snd_prod_decode_lt_intro)?
-
 declare prod_decode_less[termination_simp]
 declare snd_prod_decode_lt_intro[termination_simp]
 
@@ -268,17 +261,16 @@ inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
 | "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
 
 lemma
-  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x"
-    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x"
-   apply(simp , all \<open>induction rule: subpairings.induct\<close>)
-  using subpairings.intros by simp+
+  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?P)")
+    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?Q)")
+  by(induction rule: subpairings.induct; blast intro: subpairings.intros)+
 
 lemma dec_List_list_cong[fundef_cong]:
   assumes "x = y"
     and "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
   shows "dec_list dec\<^sub>a x = dec_list dec\<^sub>b y"
   unfolding assms(1) using assms(2)
-  by (induction dec\<^sub>a y rule: dec_list.induct;
+  by(induction dec\<^sub>a y rule: dec_list.induct,
       metis subpairings_sndP_imp dec_list.simps subpairings.intros(1) subpairings.intros(2))
 
 datatype_nat_wellbehaved nat
