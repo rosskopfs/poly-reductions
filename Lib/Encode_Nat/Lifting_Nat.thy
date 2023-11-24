@@ -28,11 +28,6 @@ lemma cr_nat_Abs_nat[transfer_rule]:
 
 end
 
-text \<open>
-  This locale needs to instantiated for every base type.
-  The first axiom probably has to be proved by the user.
-  The second axiom is already proved automatically.
-\<close>
 
 abbreviation "fstP x \<equiv> fst (prod_decode x)"
 abbreviation "sndP x \<equiv> snd (prod_decode x)"
