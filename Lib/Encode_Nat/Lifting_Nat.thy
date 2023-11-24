@@ -267,7 +267,6 @@ schematic_goal rev_tr_nat_synth:
   apply (rule HOL.refl)
   done
 
-\<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
 lemma rev_tr_nat_synth_def:
   assumes "accn = Rep_nat_list Rep_nat acc"
   assumes "xsn = Rep_nat_list Rep_nat acc"
@@ -275,7 +274,9 @@ lemma rev_tr_nat_synth_def:
     = case_list_nat accn (\<lambda>x3a. rev_tr_nat (prod_encode (1, prod_encode (x3a, accn)))) xsn"
   using assms rev_tr_nat_def rev_tr_nat_synth[unfolded cr_nat_list_def]
   by (metis nat_list.Abs_nat_Rep_nat_id)
-  
+
+\<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
+thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 end
 
 end
