@@ -37,11 +37,11 @@ lemma SAS_Plus_Plus_State_To_SAS_Plus_Stage[simp]:
   by (auto simp: SAS_Plus_Plus_State_To_SAS_Plus_def)
 
 lemma SAS_Plus_Plus_State_To_SAS_Plus_update_stage[simp]:
-  "SAS_Plus_Plus_State_To_SAS_Plus (a, s)(Stage \<mapsto> b) = SAS_Plus_Plus_State_To_SAS_Plus (b, s)"
+  "(SAS_Plus_Plus_State_To_SAS_Plus (a, s))(Stage \<mapsto> b) = SAS_Plus_Plus_State_To_SAS_Plus (b, s)"
   by (auto simp: SAS_Plus_Plus_State_To_SAS_Plus_def map_comp_def fun_eq_iff)
 
 lemma SAS_Plus_Plus_State_To_SAS_Plus_update_Var[simp]:
-  "SAS_Plus_Plus_State_To_SAS_Plus (i, s)(Var x \<mapsto> DE y) 
+  "(SAS_Plus_Plus_State_To_SAS_Plus (i, s))(Var x \<mapsto> DE y)
     = SAS_Plus_Plus_State_To_SAS_Plus(i, s(x \<mapsto> y))"
   by (auto simp: SAS_Plus_Plus_State_To_SAS_Plus_def map_comp_def fun_eq_iff 
       split: option.splits variable.splits)

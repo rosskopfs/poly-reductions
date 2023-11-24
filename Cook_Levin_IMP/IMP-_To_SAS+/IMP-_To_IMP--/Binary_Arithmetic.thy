@@ -179,7 +179,7 @@ proof(rule ccontr)
     hence "nth_bit x (Discrete.log x) = Zero" by auto
     moreover have "x div 2 ^ Discrete.log x = 1" 
       using Discrete.log_exp2_gt log_exp2_le[OF \<open>x > 0\<close>]
-      by (metis Euclidean_Division.div_eq_0_iff One_nat_def leD less_2_cases_iff 
+      by (metis Euclidean_Rings.div_eq_0_iff One_nat_def leD less_2_cases_iff
           less_mult_imp_div_less power_not_zero zero_neq_numeral)
     ultimately show False by(auto simp: nth_bit_def nth_bit_nat_is_right_shift nat_to_bit_cases)
   next 
@@ -252,7 +252,7 @@ proof(induction a)
     case (Suc nat)
     hence "((Suc a) * n - (n - 1)) div n = (n + (a * n - (n - 1))) div n" 
       using Suc.prems by auto
-    also have "... = 1 + (a * n - (n - 1)) div n" using Suc.prems div_geq by auto
+    also have "... = 1 + (a * n - (n - 1)) div n" using Suc.prems Euclidean_Rings.le_div_geq by auto
     finally show ?thesis using Suc  using Suc.IH Suc.prems by auto
   qed auto
 qed auto
@@ -281,7 +281,7 @@ next
   hence "(a * n + b mod n - c mod n) div n = (a * n + (b mod n - c mod n)) div n" by simp
   hence "(a * n + b mod n - c mod n) div n = a + (b mod n - c mod n) div n" using \<open>n > 1\<close> by auto
   thus ?thesis using \<open>\<not> b mod n < c mod n\<close>
-    by (metis (mono_tags, lifting) Euclidean_Division.div_eq_0_iff add_cancel_left_right diff_zero 
+    by (metis (mono_tags, lifting) Euclidean_Rings.div_eq_0_iff add_cancel_left_right diff_zero
         less_imp_diff_less mod_less_divisor neq0_conv)
 qed
 
@@ -522,7 +522,7 @@ proof
   assume "bit_list_to_nat l = y" 
   hence "y = bit_list_to_nat l" by simp
   hence "y div 2 ^ length l = 0" by(simp add: \<open>y = bit_list_to_nat l\<close> bit_list_to_nat_right_shift)
-  hence "y < 2 ^ length l" by (simp add: Euclidean_Division.div_eq_0_iff)
+  hence "y < 2 ^ length l" by (simp add: Euclidean_Rings.div_eq_0_iff)
   thus "y < 2 ^ length l \<and> (\<forall>i < length l. l ! i = nth_bit y i)"  
     by(simp add: \<open>y = bit_list_to_nat l\<close>)
 next

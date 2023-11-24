@@ -130,10 +130,10 @@ proof -
 qed
 
 lemma imp_minus_state_to_sas_plus_update_VN[simp]: "(\<lambda>a. if a = PC then Some (PCV c2) 
-   else (imp_minus_state_to_sas_plus (c1, is1)(VN x \<mapsto> EV y)) a) 
+   else ((imp_minus_state_to_sas_plus (c1, is1))(VN x \<mapsto> EV y)) a)
     = imp_minus_state_to_sas_plus (c2, is1(x \<mapsto> y))"
 proof -
-  have "(if a = PC then Some (PCV c2) else ((imp_minus_state_to_sas_plus (c1, is1)(VN x \<mapsto> EV y)) a))
+  have "(if a = PC then Some (PCV c2) else (((imp_minus_state_to_sas_plus (c1, is1))(VN x \<mapsto> EV y)) a))
     = (imp_minus_state_to_sas_plus (c2, is1(x \<mapsto> y))) a" for a
     by (auto simp: imp_minus_state_to_sas_plus_def map_comp_def split: variable.splits)
   then show ?thesis by auto
@@ -144,7 +144,7 @@ lemma VN_PC_map_le_iff[simp]: "[VN v \<mapsto> y, PC \<mapsto> x] \<subseteq>\<^
   by (auto simp: map_le_def imp_minus_state_to_sas_plus_def option.case_eq_if map_comp_def)
 
 lemma operator_with_PC_updated_applicable_iff[simp]: "op \<in> set (com_to_operators c1) \<Longrightarrow> 
-  map_of (precondition_of op)(PC \<mapsto> PCV c2) \<subseteq>\<^sub>m imp_minus_state_to_sas_plus (c2, s)
+  (map_of (precondition_of op))(PC \<mapsto> PCV c2) \<subseteq>\<^sub>m imp_minus_state_to_sas_plus (c2, s)
   \<longleftrightarrow>  map_of (precondition_of op) \<subseteq>\<^sub>m imp_minus_state_to_sas_plus (c1, s)"
   by(auto simp: imp_minus_state_to_sas_plus_def map_le_def)
 
