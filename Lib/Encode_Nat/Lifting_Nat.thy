@@ -1,4 +1,4 @@
-theory Lifting_nat
+theory Lifting_Nat
   imports Main "HOL-Library.Nat_Bijection" "HOL-Library.Simps_Case_Conv"
 begin
 
