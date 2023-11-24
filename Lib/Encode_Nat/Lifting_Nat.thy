@@ -234,9 +234,9 @@ lemma rev_tr_nat_synth_def:
   assumes "xsn = Abs_nat xs"
   shows "rev_tr_nat TYPE('a) accn xsn
     = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (prod_encode (1, prod_encode (x3a, accn)))) xsn"
-  using assms rev_tr_nat_def rev_tr_nat_synth[unfolded cr_nat_def]
-  using Rep_nat_Abs_nat_id
-  by (smt (z3) case_list_nat_cong)
+  apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
+  apply(use assms in \<open>simp_all add: rev_tr_nat_def\<close>)
+  done
 
 \<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
