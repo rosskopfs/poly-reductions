@@ -188,7 +188,7 @@ lemma rev_tr_nat_synth_def:
 
 \<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
-
+term "BNF_Composition"
 
 fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
   "elemof _ [] = False"
@@ -277,6 +277,8 @@ lemma If_nat_synth_def:
   apply(rule HOL.trans[OF _ If_nat_synth[unfolded cr_nat_def, symmetric]])
   unfolding If_nat_def assms by simp+
 
+thm If_nat_synth_def[unfolded case_bool_nat_def]
+
 
 fun takeWhile :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "takeWhile P [] = []" |
@@ -318,5 +320,79 @@ lemma takeWhile_nat_synth_def:
   apply(rule HOL.trans[OF _ takeWhile_nat_synth[unfolded cr_nat_def, symmetric]])
   using assms apply(simp add: takeWhile_nat_def rel_fun_def cr_nat_def)+
   done
+
+thm takeWhile_nat_synth_def[unfolded case_list_nat_def]
+
+fun head :: "'a list \<Rightarrow> 'a" where
+  "head [] = undefined" |
+  "head (x # _) = x"
+
+case_of_simps head_case_def: head.simps
+
+definition head_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat" where
+  "head_nat _ xsn \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (head (Rep_nat xsn))"
+
+lemma head_nat_lifting[transfer_rule]:
+  includes lifting_syntax
+  shows "(cr_nat ===> cr_nat) (head_nat TYPE('a::lift_nat)) (head :: 'a list \<Rightarrow> _)"
+  unfolding head_nat_def cr_nat_def
+  by(simp add: rel_fun_def)
+
+schematic_goal head_nat_synth:
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
+  shows "cr_nat ?t ((head :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn))"
+  apply (subst head_case_def)
+  apply transfer_prover_start
+     apply transfer_step+
+  apply (rule HOL.refl)
+  done
+
+lemma head_nat_synth_def:
+  fixes xs :: "'a::lift_nat list"
+  assumes "xsn = Abs_nat xs"
+  shows "head_nat TYPE('a) xsn
+    = case_list_nat (Abs_nat (undefined::'a)) (\<lambda>x2a x1a. x2a) xsn"
+  apply(rule HOL.trans[OF _ head_nat_synth[unfolded cr_nat_def, symmetric]])
+  using assms apply(simp add: head_nat_def rel_fun_def cr_nat_def)+
+  done
+thm head_nat_synth_def[unfolded case_list_nat_def]
+
+fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "append xs [] = xs" |
+  "append xs ys = rev_tr ys (rev_tr [] xs)"
+
+
+case_of_simps append_case_def: append.simps
+
+definition append_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "append_nat _ xsn ysn \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (append (Rep_nat xsn) (Rep_nat ysn))"
+
+lemma append_nat_lifting[transfer_rule]:
+  includes lifting_syntax
+  shows "(cr_nat ===> cr_nat ===> cr_nat) (append_nat TYPE('a::lift_nat))
+  (append :: 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list)"
+  by(simp add: append_nat_def rel_fun_def comp_def cr_nat_def)
+
+schematic_goal append_nat_synth:
+  includes lifting_syntax
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) ysn (Rep_nat ysn)"
+  shows "cr_nat ?t ((append :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn) (Rep_nat ysn))"
+  apply (subst append_case_def)
+  apply transfer_prover_start
+          apply transfer_step+
+  apply (rule HOL.refl)
+  done
+
+lemma append_nat_synth_def:
+  fixes xs :: "'a::lift_nat list" and ys :: "'a list"
+  assumes "xsn = Abs_nat xs"
+  assumes "ysn = Abs_nat ys"
+  shows "append_nat TYPE('a) xsn ysn = case_list_nat xsn (\<lambda>x3a x2ba. rev_tr_nat TYPE('a)
+                (Cons_nat x3a x2ba) (rev_tr_nat TYPE('a) Nil_nat xsn)) ysn"
+  apply(rule HOL.trans[OF _ append_nat_synth[unfolded cr_nat_def, symmetric]])
+  using assms apply(simp add: append_nat_def rel_fun_def cr_nat_def)+
+  done
+
 
 end
