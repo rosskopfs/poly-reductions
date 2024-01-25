@@ -119,6 +119,8 @@ fun encoder_name_of_type ctxt (Type (name, _)) =
   | encoder_name_of_type _ (TFree (name, _)) = prefix "enc_" name
   | encoder_name_of_type _ (TVar ((name, _), _)) = prefix "enc_" name;
 
+(* fun encoder_name_of_type _ _ = "Abs_nat" *)
+
 fun encoder_args_of_type ctxt T =
   snd (dest_Type T)
   |> map (fn T => Free (encoder_name_of_type ctxt T, T --> @{typ "pair_repr"}))
@@ -131,7 +133,14 @@ fun encoder_type_of_type (T as Type (_, typargs)) =
   | encoder_type_of_type (T as TFree _) = T --> @{typ "pair_repr"}
   | encoder_type_of_type (T as TVar _) = T --> @{typ "pair_repr"};
 
-fun encoder_free_term_of_type ctxt T = Free (encoder_name_of_type ctxt T, encoder_type_of_type T);
+(* fun encoder_type_of_type T = T --> @{typ "pair_repr"} *)
+
+
+fun encoder_free_term_of_type _ T =
+  Const ("Encode_Nat.lift_nat_class.Abs_nat", T --> @{typ "pair_repr"});
+
+fun build_decoder_invocation _ _ T =
+  Const ("Encode_Nat.lift_nat_class.Rep_nat", @{typ "pair_repr"} --> T);
 
 fun encoder_const_term_of_type ctxt (T as Type _) =
       fst (dest_Const (read_const' ctxt (encoder_name_of_type ctxt T)))
@@ -143,90 +152,154 @@ fun encoder_term_of_type ctxt (T as Type _) = encoder_const_term_of_type ctxt T
   | encoder_term_of_type ctxt (T as TVar ((_, i), _)) =
       Var ((encoder_name_of_type ctxt T, i), encoder_type_of_type T);
 
-fun build_encoder_invocation ctxt freeT (T as Type (_, args)) =
-  let
-    val t = if freeT = SOME T
-            then encoder_free_term_of_type ctxt T
-            else encoder_const_term_of_type ctxt T;
-  in
-    Term.list_comb (t, map (build_encoder_invocation ctxt freeT) args)
-  end
-  | build_encoder_invocation ctxt _ (T as TFree _) = encoder_free_term_of_type ctxt T
-  | build_encoder_invocation _ _ (TVar _) = error "Can't build an encoder for TVar";
+fun build_encoder_invocation _ _ T =
+  Const ("Encode_Nat.lift_nat_class.Abs_nat", T --> @{typ "pair_repr"});
 
 
 fun mk_encoded_typ (Const (_, T)) =
   ((map (K @{typ "pair_repr"}) (binder_types T)) ---> @{typ "pair_repr"})
   | mk_encoded_typ _ = error "Can only make encoder of Const";
 
+fun lift_ctrs ctrs ctxt =
+  let
+    fun lift_ctr ctr_t =
+      let
+        val ctr_nat_args =
+          (binder_types o type_of) ctr_t
+          |> map_index (fn (i, _) => Free ("v" ^ string_of_int i, @{typ "pair_repr"}));
+        val ctr_nat_rhs =
+          build_constructor_tag ctxt (dest_Const ctr_t)
+          |> the
+          |> build_constructor_pairing ctr_nat_args;
+        val ctr_nat_name = Term.term_name ctr_t ^ "_nat";
+        val ctr_nat_t = Free (ctr_nat_name, mk_encoded_typ ctr_t);
+      in
+        (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
+      end
+    val ctr_nat_ts = map lift_ctr ctrs
+
+    fun f (_, ctr_nat_lhs, ctr_nat_args, ctr_nat_rhs) ctxt =
+      let
+        val ctr_nat_equ =
+          BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
+      in
+        snd (Specification.definition NONE [] [] (Binding.empty_atts, ctr_nat_equ) ctxt)
+      end;
+  in
+    fold f ctr_nat_ts ctxt |> @{print}
+  end
+
 fun build_better_encoder ctxt T ctrs casex =
   let
-    val lhs = Term.list_comb (encoder_free_term_of_type ctxt T, encoder_args_of_type ctxt T);
-    val ctr_nat_ts =
-      ctrs
-      |> map (fn ctr_t =>
-          let
-            val ctr_nat_args =
-              (binder_types o type_of) ctr_t
-              |> map_index (fn (i, _) => Free ("v" ^ string_of_int i, @{typ "pair_repr"}));
-            val ctr_nat_rhs =
-              build_constructor_tag ctxt (dest_Const ctr_t)
-              |> the
-              |> build_constructor_pairing ctr_nat_args;
-            val ctr_nat_name = Term.term_name ctr_t ^ "_nat";
-            val ctr_nat_t = Free (ctr_nat_name, mk_encoded_typ ctr_t);
-          in
-            (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
-          end
-        );
-    val ctxt' =
-      let
-        fun f (_, ctr_nat_lhs, ctr_nat_args, ctr_nat_rhs) ctxt =
-          let
-            val _ = BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs)
-              |> Thm.cterm_of ctxt;
-            val ctr_nat_equ =
-              BNF_Util.mk_Trueprop_eq (Term.list_comb (ctr_nat_lhs, ctr_nat_args), ctr_nat_rhs);
-          in
-            snd (Specification.definition NONE [] [] (Binding.empty_atts, ctr_nat_equ) ctxt)
-          end;
-      in
-        fold f ctr_nat_ts ctxt
-      end;
-    val cases =
-      ctrs ~~ ctr_nat_ts
-      |> map (fn (ctr_t, (ctr_nat_name, _, _, _)) =>
-          let
-            val ctr_args_Ts = (binder_types o type_of) ctr_t;
-            val encoded_args =
-              (map (build_encoder_invocation ctxt (SOME T)) ctr_args_Ts, ctr_args_Ts)
-              ||> (length #> (map_range Bound) #> rev)
-              |-> map2 (curry op $);
-            val res = (rev (map_index (fn (i, T) => ("v" ^ string_of_int i, T)) ctr_args_Ts),
-                Term.list_comb (read_const' ctxt' ctr_nat_name , encoded_args))
-              |->  fold (fn (s, T) => fn t => Abs (s, T, t));
-          in
-            res
-          end
-        ) |> map (Thm.cterm_of ctxt') |> map (Thm.term_of);
-    val rhs = if T = @{typ "nat"} then Free ("v", T)
-              else Term.list_comb (casex, cases @ [Free ("v", T)]);
+
+    val foo =
+       Proof_Context.theory_of ctxt
+      |> Class.instantiation ([fst (dest_Type T)], map dest_TFree (snd (dest_Type T)), \<^sort>\<open>lift_nat\<close>)
+      |> lift_ctrs ctrs
+      |> (fn ctxt =>
+        let
+          val ctr_nat_ts =
+            ctrs
+            |> map (fn ctr_t =>
+              let
+                val ctr_nat_args =
+                  (binder_types o type_of) ctr_t
+                  |> map_index (fn (i, _) => Free ("v" ^ string_of_int i, @{typ "pair_repr"}));
+                val ctr_nat_rhs =
+                  build_constructor_tag ctxt (dest_Const ctr_t)
+                  |> the
+                  |> build_constructor_pairing ctr_nat_args;
+                val ctr_nat_name = Term.term_name ctr_t ^ "_nat";
+                val ctr_nat_t = Free (ctr_nat_name, mk_encoded_typ ctr_t);
+              in
+                (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
+              end
+            );
+          val cases =
+            ctrs ~~ ctr_nat_ts
+            |> map (fn (ctr_t, (ctr_nat_name, _, _, _)) =>
+                let
+                  val ctr_args_Ts = (binder_types o type_of) ctr_t;
+                  val encoded_args =
+                    (map (build_encoder_invocation ctxt (SOME T)) ctr_args_Ts, ctr_args_Ts)
+                    ||> (length #> (map_range Bound) #> rev)
+                    |-> map2 (curry op $);
+                in
+                  fold (fn (s, T) => fn t => Abs (s, T, t))
+                    (rev (map_index (fn (i, T) => ("v" ^ string_of_int i, T)) ctr_args_Ts))
+                    (Term.list_comb (read_const' ctxt ctr_nat_name , encoded_args))
+                end
+              ) |> @{print} |> map (Thm.cterm_of ctxt) |> @{print} |> map (Thm.term_of);
+          val rhs = if T = @{typ "nat"} then Free ("v", T)
+                    else Term.list_comb (casex, cases @ [Free ("v", T)])
+          val T_name = Long_Name.base_name (fst (dest_Type T))
+          val abs_lhs = list_comb(Free ("Abs_nat_" ^ T_name, T --> @{typ "pair_repr"}), [Free ("v", T)])
+          val abs_t = BNF_Util.mk_Trueprop_eq(abs_lhs, rhs)
+            |> @{print} |>  (Thm.cterm_of ctxt) |> @{print} |>  (Thm.term_of)
+          val fixes = [(Binding.name ("Abs_nat_" ^ T_name), NONE, NoSyn)]
+          val specs = [((Binding.empty_atts, abs_t), [], [])]
+        in
+          Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt |> @{print}
+        end
+        )
+      |> (fn ctxt =>
+        let
+          val T = T |> map_type_tfree (fn (name, _) => TFree (name, ["Encode_Nat.lift_nat"]))
+          val ctrs = map (map_types (map_type_tfree (fn (name, _) =>
+                            TFree (name, ["Encode_Nat.lift_nat"])))) ctrs;
+          val T_name = Long_Name.base_name (fst (dest_Type T))
+          val lhs =
+            Free ("Rep_nat_" ^ T_name, @{typ "pair_repr"} --> T) $ Free ("v", @{typ "pair_repr"})
+            |> @{print}
+          val free_var = Free ("v", @{typ "pair_repr"});
+          val (conditions, cases) =
+            ctrs
+            |> map (fn ctr_t =>
+              let
+                val ctr_args_Ts = (Term.binder_types o Term.type_of) ctr_t;
+                val args_decoded =
+                  ctr_args_Ts
+                  |> curry (op ~~) (map_range I (length ctr_args_Ts))
+                  |> map (fn (i, e) =>
+                          build_decoder_invocation ctxt (SOME T) e
+                          $ build_unpairing_from_idx free_var i (length ctr_args_Ts));
+                val condition =
+                  build_constructor_tag ctxt (dest_Const ctr_t) |> @{print}
+                  |> the
+                  |> curry HOLogic.mk_eq (@{term "fstP"} $ free_var);
+              in
+                (condition, Term.list_comb (ctr_t, args_decoded))
+              end)
+           |> split_list;
+          val rhs = if T = @{typ "nat"} then free_var
+                    else Ctr_Sugar_Util.mk_IfN T conditions cases;
+
+          val rep_t =
+            BNF_Util.mk_Trueprop_eq(lhs, rhs)
+            |> @{print} |>  (Thm.cterm_of ctxt) |> @{print} |>  (Thm.term_of)
+          val fixes = [(Binding.name ("Rep_nat_" ^ T_name), NONE, NoSyn)]
+          val specs = [((Binding.empty_atts, rep_t), [], [])]
+        in
+          Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt |> @{print}
+        end
+        )
   in
-    (ctxt', BNF_Util.mk_Trueprop_eq (lhs, rhs))
+    (* (ctxt', BNF_Util.mk_Trueprop_eq (@{print} lhs, @{print} rhs)) *)
+    (ctxt, Term.dummy)
   end;
 
 fun normalize_type (Type (s, Ts)) = Type (s, map normalize_type Ts)
   | normalize_type (TFree (s, sort)) =
     let
       val new_sort = if sort = [@{class "HOL.type"}]
-                     then [@{class "Orderings.order_bot"}]
-                     else insert (op =) @{class "Orderings.order_bot"} sort;
+                     then [@{class "Encode_Nat.lift_nat"}]
+                     else insert (op =) @{class "Encode_Nat.lift_nat"} sort;
     in TFree (s, new_sort) end
   | normalize_type (TVar (i, sort)) =
     let
       val new_sort = if sort = [@{class "HOL.type"}]
-                     then [@{class "Orderings.order_bot"}]
-                     else insert (op =) @{class "Orderings.order_bot"} sort;
+                     then [@{class "Encode_Nat.lift_nat"}]
+                     else insert (op =) @{class "Encode_Nat.lift_nat"} sort;
     in TVar (i, new_sort) end;
 
 val normalize_type_of_term =
@@ -244,13 +317,18 @@ fun datatype_nat_encode_cmd T ctxt =
       subst_atomic_types [(body_type (type_of (#casex sugar)), @{typ "pair_repr"})] (#casex sugar)
       |> normalize_type_of_term;
     val ctrs = map (map_types tvar_to_tfree) (#ctrs sugar) |> map normalize_type_of_term;
-    val (ctxt', eqns) = build_better_encoder ctxt T ctrs casex;
-    val fixes = [(Binding.name encoder_name, NONE, NoSyn)];
+    val (ctxt', eqns) = build_better_encoder ctxt T ctrs casex ||> @{print}
+    val fixes = [(Binding.name "Abs_nat", NONE, NoSyn)];
     val specs = [((Binding.empty_atts, eqns), [], [])];
+
+
+
+
     val ctxt'' = Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt';
-    val simp_thm = Proof_Context.get_thms ctxt'' (encoder_name ^ ".simps");
+    (* val simp_thm = Proof_Context.get_thms ctxt'' (encoder_name ^ ".simps"); *)
   in
-    Local_Theory.note ((Binding.empty, @{attributes [simp del]}), simp_thm) ctxt'' |> snd
+    (* Local_Theory.note ((Binding.empty, @{attributes [simp del]}), simp_thm) ctxt'' |> snd *)
+    ctxt'
   end;
 
 val _ =
@@ -264,7 +342,7 @@ fun decoder_name_of_type ctxt (Type (name, _)) =
       |> prefix "dec_"
   | decoder_name_of_type _ (TFree (name, _)) =
       prefix "dec_" name
-  | decoder_name_of_type _ (TVar _) = error "Can't build a decoder for TVar";
+  | decoder_name_of_type _ (TVar ((name, _), _)) = prefix "dec_" name;
 
 fun decoder_args_of_type ctxt T =
   snd (dest_Type T)
@@ -276,7 +354,7 @@ fun decoder_type_of_type (T as Type (_, typargs)) =
       |> (fn x => x @ [@{typ "pair_repr"}])
       ---> T
   | decoder_type_of_type (T as TFree _) = @{typ "pair_repr"} --> T
-  | decoder_type_of_type (TVar _) = error "Can't build a decoder for TVar";
+  | decoder_type_of_type (T as TVar _) = @{typ "pair_repr"} --> T;
 
 fun decoder_free_term_of_type ctxt T = Free (decoder_name_of_type ctxt T, decoder_type_of_type T);
 
@@ -285,10 +363,9 @@ fun decoder_const_term_of_type ctxt (T as Type _) =
       |> (fn name => Const (name, decoder_type_of_type T))
   | decoder_const_term_of_type _ _ = error "Can't build a Const decoder for a type variable";
 
-fun decoder_term_of_type' ctxt (T as Type (_, Ts)) = list_comb (decoder_const_term_of_type ctxt T, map (decoder_term_of_type' ctxt) Ts)
-  | decoder_term_of_type' ctxt (T as TFree _) = decoder_free_term_of_type ctxt T
-  | decoder_term_of_type' ctxt (T as TVar ((_, i), _)) =
-      Var ((decoder_name_of_type ctxt T, i), decoder_type_of_type T);
+fun decoder_term_of_type' ctxt (T as Type (_, Ts)) =
+      list_comb (decoder_const_term_of_type ctxt T, map (decoder_term_of_type' ctxt) Ts)
+  | decoder_term_of_type' ctxt T = decoder_free_term_of_type ctxt T;
 
 fun build_decoder_invocation ctxt freeT (T as Type (_, args)) =
   let
@@ -672,7 +749,7 @@ fun if_exp_of_case_exp_cmd T ctxt =
       let
         val arguments_and_paths =
           lhs_of_term t
-          |> map_types tvar_to_tfree
+          (* |> map_types tvar_to_tfree *)
           |> Term.args_of
           |> map build_patmatch_term
           |> map mk_variable_paths
@@ -685,7 +762,29 @@ fun if_exp_of_case_exp_cmd T ctxt =
           end;
       in
         rhs_of_term t
-        |> map_types tvar_to_tfree
+        (* |> map_types tvar_to_tfree *)
+        |> change_if ctxt
+        |> fold (fn f => fn x => f x) wrappers
+      end;
+
+    fun nat_encode_term2 ctxt t =
+      let
+        val arguments_and_paths =
+          lhs_of_term t
+          (* |> map_types tvar_to_tfree *)
+          |> Term.args_of
+          |> map build_patmatch_term
+          |> map mk_variable_paths
+          |> flat o map_index (fn (i, x) => map (pair (argname i)) x);
+        val wrappers =
+          let
+            fun f (fun_arg_name, ((_, T), pattern_var_path)) term =
+              term $ (build_unpairing (Free (fun_arg_name, @{typ "pair_repr"})) pattern_var_path)
+          in map f arguments_and_paths
+          end;
+      in
+        rhs_of_term t
+        (* |> map_types tvar_to_tfree *)
         |> change_if ctxt
         |> fold (fn f => fn x => f x) wrappers
       end;
@@ -694,14 +793,26 @@ fun if_exp_of_case_exp_cmd T ctxt =
 
     val args =
       map (binder_types o fastype_of) ctrs
-      |> map (map_index (fn (i, T) => Free (argname i, T)))
+      |> map (map_index (fn (i, T) => Free (argname i,  T))) |> @{print}
 
     val end_T = tvar_to_tfree (body_type (fastype_of casex))
+    val end_T =  (body_type (fastype_of casex)) |> @{print}
+
+    (*val tfree_to_tvar = Term.map_type_tfree (TVar o fst *** I);*)
+
 
     val fun_ts =
       binder_types (fastype_of casex)
       |> fst o split_last
-      |> map_index (fn (i, T) => Free (funname i, T))
+      |> map_index (fn (i, T) => Free (funname i, T)) |> @{print}
+
+    val fun_ts2 =
+      binder_types (fastype_of casex)
+      |> fst o split_last
+      |> map strip_type
+      |> map (fn (Ts, _) => (map (K @{typ pair_repr}) Ts) ---> @{typ pair_repr})
+      |> map_index (fn (i, T) => Free (funname i, T)) |> @{print}
+      |> map (Thm.cterm_of ctxt) |> @{print} |> map Thm.term_of
 
     val arg1 = decoder_term_of_type' ctxt (tvar_to_tfree T) $ Free (argname 0, @{typ pair_repr})
 
@@ -712,6 +823,21 @@ fun if_exp_of_case_exp_cmd T ctxt =
       |> map (fn (t, rhs) => BNF_Util.mk_Trueprop_eq (Term.dummy_pattern (fastype_of t --> end_T) $ t, rhs))
       |> (fn t => (map (build_nat_condition ctxt) t, map (nat_encode_term ctxt) t))
       |-> Ctr_Sugar_Util.mk_IfN end_T
+
+    val if_exp_2 =
+      map Term.list_comb (ctrs ~~ args) ~~ fun_ts2
+      |> map (fn (t, rhs) => BNF_Util.mk_Trueprop_eq (Term.dummy_pattern (fastype_of t --> @{typ pair_repr}) $ t, rhs))
+      |> (fn t => (map (build_nat_condition ctxt) t, map (nat_encode_term2 ctxt) t))
+      |-> Ctr_Sugar_Util.mk_IfN @{typ pair_repr}
+      |> Thm.cterm_of ctxt |> @{print} |> Thm.term_of
+      |> fold lambda ((Free (argname 0, @{typ pair_repr}))::(rev fun_ts2))
+      |> Thm.cterm_of ctxt |> @{print} |> Thm.term_of
+
+    val T_base_name = Long_Name.base_name (fst (dest_Type T))
+    val case_nat_binding_name = Binding.name ("case_" ^ T_base_name ^ "_nat")
+
+    val ctxt = Local_Theory.define ((case_nat_binding_name, NoSyn),
+      ((Binding.suffix_name "_def" case_nat_binding_name, []), map_types tvar_to_tfree if_exp_2)) ctxt |> snd |> @{print}
 
     val goal = BNF_Util.mk_Trueprop_eq (case_exp, if_exp)
 

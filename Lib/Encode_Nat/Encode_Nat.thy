@@ -26,6 +26,33 @@ theory Encode_Nat
     "function_nat_rewrite_correctness" :: thy_goal
 begin
 
+
+class lift_nat = order_bot +
+  fixes Abs_nat :: "'a \<Rightarrow> nat"
+  fixes Rep_nat :: "nat \<Rightarrow> 'a"
+  assumes Rep_nat_Abs_nat_id[simp]: "\<And>x. Rep_nat (Abs_nat x) = x"
+begin
+lemma inj_Abs_nat: "inj Abs_nat"
+  by(rule inj_on_inverseI[of _ Rep_nat], simp)
+
+definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
+  "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
+
+lemma typedef_nat: "type_definition Abs_nat Rep_nat (Abs_nat ` UNIV)"
+  by (unfold_locales) auto
+
+lemmas typedef_nat_transfer[OF typedef_nat cr_nat_def, transfer_rule] =
+  typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
+
+lemma cr_nat_Abs_nat[transfer_rule]:
+  "cr_nat (Abs_nat x) x"
+  unfolding cr_nat_def by simp
+
+end
+
+
+
+
 declare [[ML_print_depth = 50]]
 
 datatype ('a, 'b) keyed_list_tree =
@@ -135,10 +162,8 @@ lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
 lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
   by(rule inj_on_inverseI, rule pointfree_idE, simp)
 
-ML_file \<open>./Encode_Nat.ML\<close>
 
-
-lemma prod_decode_less:
+lemma prod_decode_less[termination_simp]:
   assumes "v < v'"
   shows fst_prod_decode_less: "fst (prod_decode v) < v'"
     and snd_prod_decode_less: "snd (prod_decode v) < v'"
@@ -156,20 +181,63 @@ lemma prod_decode_lte:
 lemma snd_prod_encode_lt: "a > 0 \<Longrightarrow> b < prod_encode (a, b)"
   by (induction b; simp add: prod_encode_def)
 
-corollary snd_prod_decode_lt_intro:
+corollary snd_prod_decode_lt_intro[termination_simp]:
   assumes "fstP v \<noteq> 0"
   shows "snd (prod_decode v) < v"
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
-datatype_nat_encode nat
+ML_file \<open>./Encode_Nat.ML\<close>
 
+datatype_nat_encode nat print_theorems
+
+ML \<open>Sign.of_sort @{theory} (@{typ nat}, @{sort "lift_nat"})\<close>
 
 lemma enc_nat_bot: "enc_nat bot = bot"
   by (simp add: enc_nat.simps bot_nat_def prod_encode_0)
 
+instantiation nat :: lift_nat
+begin
+
+definition Abs_nat_nat_def:
+  "Abs_nat \<equiv> id"
+
+definition Rep_nat_nat_def:
+  "Rep_nat \<equiv> id"
+
+instance
+  by (intro_classes, simp add: Abs_nat_nat_def Rep_nat_nat_def )
+
+end
+
+
+
 datatype_nat_encode list
 print_theorems
 thm enc_list.simps
+
+instantiation list :: (lift_nat) lift_nat
+begin
+
+definition "Nil_nat = pair (atomic 0) (atomic 0)"
+definition "Cons_nat v0 v1 = pair (atomic 1) (pair v0 v1)"
+
+fun Rep_nat_list ::"nat \<Rightarrow> 'a list" where
+  "Rep_nat_list v =
+  (if fstP v = atomic 0 then []
+   else Rep_nat (fstP (sndP v)) # Rep_nat (sndP (sndP v)))"
+
+fun Abs_nat_list where
+  "Abs_nat_list v =
+  (case v of [] \<Rightarrow> Nil_nat | v0 # v1 \<Rightarrow> Cons_nat (Abs_nat v0) (Abs_nat v1))"
+
+instance
+  apply (intro_classes)
+  subgoal for x
+    apply(induction x)
+    by(simp add: Abs_nat_nat_def Rep_nat_nat_def Nil_nat_def Cons_nat_def)+
+  done
+end
+
 
 lemma "Nil_nat = enc_list enc_'a []"
   by (simp add: enc_list.simps Nil_nat_def)
@@ -215,8 +283,7 @@ lemma enc_List_list_cong[fundef_cong]:
   shows "enc_list enc\<^sub>a xs = enc_list enc\<^sub>b ys"
   using assms by (induction xs arbitrary: ys; auto simp add: enc_list.simps)
 
-declare prod_decode_less[termination_simp]
-declare snd_prod_decode_lt_intro[termination_simp]
+
 
 
 
@@ -344,9 +411,6 @@ lemma dec_tree_bot: "dec_tree dec_'a bot = bot"
 
 term "case_list acc (\<lambda>x xs. x # acc) xs"
 
-definition case_list_nat :: "nat \<Rightarrow> (nat \<Rightarrow> nat \<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat" where
-  "case_list_nat f g xs =
-  (if fstP xs = atomic 0 then f else g (fstP (sndP xs)) (sndP (sndP xs)))"
 
 term "case_list"
 
@@ -354,22 +418,26 @@ lemma "(case dec_list dec_'a xs of [] => f | a # as => g a as)
   = (if fstP xs = atomic 0 then f else g (dec_'a (fstP (sndP xs))) (dec_list dec_'a (sndP (sndP xs))))"
   by (simp add: dec_list.simps)
 
+
 term "foo [] = f1"
 term "foo (x # xs) = f1 x xs"
 
 ML \<open>
   hd [1, 2, 3]
 \<close>
-
+thm case_list_def
+term "case_list a b c"
 term "case_keyed_list_tree"
 
-test keyed_list_tree
+test keyed_list_tree print_theorems
 
-test list
-test bool
-test char
-test prod
-test tree
+thm "case_nat_def"
+test nat (* todo *)
+test list print_theorems
+test bool print_theorems
+test char print_theorems
+test prod print_theorems
+test tree print_theorems
 
 lemma
   fixes f::"'a \<Rightarrow> 'b"

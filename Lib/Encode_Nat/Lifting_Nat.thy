@@ -6,32 +6,6 @@ theory Lifting_Nat
     Encode_Nat
 begin
 
-section \<open>Lifting to \<^typ>\<open>nat\<close>\<close>
-
-class lift_nat = order_bot +
-  fixes Abs_nat :: "'a \<Rightarrow> nat"
-  fixes Rep_nat :: "nat \<Rightarrow> 'a"
-  assumes Rep_nat_Abs_nat_id[simp]: "\<And>x. Rep_nat (Abs_nat x) = x"
-begin
-
-lemma inj_Abs_nat: "inj Abs_nat"
-  by(rule inj_on_inverseI[of _ Rep_nat], simp)
-
-definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
-  "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
-
-lemma typedef_nat: "type_definition Abs_nat Rep_nat (Abs_nat ` UNIV)"
-  by (unfold_locales) auto
-
-lemmas typedef_nat_transfer[OF typedef_nat cr_nat_def, transfer_rule] =
-  typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
-
-lemma cr_nat_Abs_nat[transfer_rule]:
-  "cr_nat (Abs_nat x) x"
-  unfolding cr_nat_def by simp
-
-end
-
 
 section \<open>Lifting from \<^typ>\<open>bool\<close>\<close>
 
@@ -116,6 +90,33 @@ instance
 
 
 end
+
+instantiation prod :: (lift_nat, lift_nat) lift_nat
+begin
+
+definition "Abs_nat_prod \<equiv> enc_prod (Abs_nat :: 'a \<Rightarrow> nat) (Abs_nat :: 'b \<Rightarrow> nat)"
+
+
+definition "Rep_nat_prod \<equiv> dec_prod (Rep_nat :: nat \<Rightarrow> 'a) (Rep_nat :: nat \<Rightarrow> 'b)"
+
+
+
+instance
+  apply(intro_classes)
+  unfolding Rep_nat_prod_def Abs_nat_prod_def
+  apply(rule encoding_prod_wellbehaved[THEN pointfree_idE])
+  using Rep_nat_Abs_nat_id by fastforce+
+
+end
+
+term "Abs_nat::bool \<Rightarrow> nat"
+
+ML \<open>
+  @{term "Abs_nat (True, False)"};
+  Const ("Encode_Nat.lift_nat_class.Abs_nat", @{typ "bool \<Rightarrow> nat"})
+  |> Thm.cterm_of @{context}
+
+\<close>
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
@@ -231,10 +232,6 @@ thm elemof_nat_synth_def[unfolded case_list_nat_def]
 
 definition If_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "If_nat _ c t f \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (If (Rep_nat c) (Rep_nat t) (Rep_nat f))"
-
-definition case_bool_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "case_bool_nat t f c =
-  (if fstP c = atomic 1 then t else f)"
 
 lemma case_bool_nat_equiv:
   "enc_'a (case_bool t f c) = case_bool_nat (enc_'a t) (enc_'a f) (enc_bool c)"
