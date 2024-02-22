@@ -42,7 +42,7 @@ session Expressions in "Expressions" = HOL +
 session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
   sessions
     "HOL-Library"
-    "ML_Unification"
+    ML_Unification
     "SpecCheck"
   directories
     "Compile_Nat"
