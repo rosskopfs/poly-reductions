@@ -27,7 +27,7 @@ theory Encode_Nat
 begin
 
 
-class lift_nat = order_bot +
+class lift_nat =
   fixes Abs_nat :: "'a \<Rightarrow> nat"
   fixes Rep_nat :: "nat \<Rightarrow> 'a"
   assumes Rep_nat_Abs_nat_id[simp]: "\<And>x. Rep_nat (Abs_nat x) = x"
@@ -60,89 +60,6 @@ datatype ('a, 'b) keyed_list_tree =
   KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
 
 type_synonym pair_repr = nat
-
-instantiation char :: order_bot
-begin
-
-definition bot_char :: "char" where
-  "bot_char = CHR 0x00"
-
-instance
-proof(standard, goal_cases)
-  case (1 a)
-  then show ?case
-    unfolding bot_char_def less_eq_char_def by (cases a, fastforce)
-qed
-end
-
-instantiation tree :: (order) order_bot
-begin
-
-fun less_eq_tree :: "'a tree \<Rightarrow> 'a tree \<Rightarrow> bool" where
-  "less_eq_tree \<langle>\<rangle> _ \<longleftrightarrow> True"
-| "less_eq_tree _ \<langle>\<rangle> \<longleftrightarrow> False"
-| "less_eq_tree \<langle>l1, a1, r1\<rangle> \<langle>l2, a2, r2\<rangle> \<longleftrightarrow>
-    (l1 \<le> l2 \<and> r1 \<le> r2 \<and> a1 \<le> a2)"
-
-definition less_tree :: "'a tree \<Rightarrow> 'a tree \<Rightarrow> bool" where
-  "less_tree t1 t2 = (t1 \<le> t2 \<and> \<not> t2 \<le> t1)"
-
-definition bot_tree :: "'a tree" where
-  "bot_tree = \<langle>\<rangle>"
-
-instance
-proof(standard, goal_cases)
-  case 1 show ?case using less_tree_def by simp
-next
-  case (2 t) show ?case by(induction t; simp)
-next
-  case (3 t1 t2 t3) thus ?case
-    by(induction t1 t3 arbitrary: t2 rule: less_eq_tree.induct; force elim: less_eq_tree.elims)
-next
-  case (4 t1 t2) thus ?case
-    by(induction t1 t2 rule: less_eq_tree.induct; force elim: less_eq_tree.elims)
-next
-  case (5 a)
-  then show ?case
-    unfolding bot_tree_def less_eq_tree.simps by simp
-qed
-end
-
-instantiation keyed_list_tree :: (order, order) order_bot
-begin
-
-fun less_eq_keyed_list_tree :: "('a, 'b) keyed_list_tree \<Rightarrow> ('a, 'b) keyed_list_tree \<Rightarrow> bool" where
-  "less_eq_keyed_list_tree KLeaf _ \<longleftrightarrow> True"
-| "less_eq_keyed_list_tree _ KLeaf \<longleftrightarrow> False"
-| "less_eq_keyed_list_tree (KNode l1 a1 bs1 r1) (KNode l2 a2 bs2 r2) \<longleftrightarrow>
-    (l1 \<le> l2 \<and> r1 \<le> r2 \<and> a1 \<le> a2 \<and> bs1 \<le> bs2)"
-
-definition less_keyed_list_tree :: "('a, 'b) keyed_list_tree \<Rightarrow> ('a, 'b) keyed_list_tree \<Rightarrow> bool"
-  where
-    "less_keyed_list_tree t1 t2 = (t1 \<le> t2 \<and> \<not> t2 \<le> t1)"
-
-definition bot_keyed_list_tree :: "('a, 'b) keyed_list_tree" where
-  "bot_keyed_list_tree = KLeaf"
-
-instance
-proof(standard, goal_cases)
-  case 1 show ?case using less_keyed_list_tree_def by simp
-next
-  case (2 t) show ?case by(induction t; simp)
-next
-  case (3 t1 t2 t3) thus ?case
-    by(induction t1 t3 arbitrary: t2 rule: less_eq_keyed_list_tree.induct;
-        force elim: less_eq_keyed_list_tree.elims)
-next
-  case (4 t1 t2) thus ?case
-    by(induction t1 t2 rule: less_eq_keyed_list_tree.induct;
-        force elim: less_eq_keyed_list_tree.elims)
-next
-  case (5 a)
-  then show ?case
-    unfolding bot_keyed_list_tree_def less_eq_keyed_list_tree.simps by simp
-qed
-end
 
 
 fun atomic :: "nat \<Rightarrow> pair_repr" where
@@ -186,102 +103,46 @@ corollary snd_prod_decode_lt_intro[termination_simp]:
   shows "snd (prod_decode v) < v"
   by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
+
+
+
+inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
+  "x \<in> subpairings x"
+| "t \<in> subpairings x \<Longrightarrow> fstP t \<in> subpairings x"
+| "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
+
+lemma
+  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?P)")
+    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?Q)")
+  by(induction rule: subpairings.induct; blast intro: subpairings.intros)+
+
+
+
 ML_file \<open>./Encode_Nat.ML\<close>
 
-datatype_nat_encode nat print_theorems
-
-ML \<open>Sign.of_sort @{theory} (@{typ nat}, @{sort "lift_nat"})\<close>
-
-lemma enc_nat_bot: "enc_nat bot = bot"
-  by (simp add: enc_nat.simps bot_nat_def prod_encode_0)
-
-instantiation nat :: lift_nat
-begin
-
-definition Abs_nat_nat_def:
-  "Abs_nat \<equiv> id"
-
-definition Rep_nat_nat_def:
-  "Rep_nat \<equiv> id"
-
-instance
-  by (intro_classes, simp add: Abs_nat_nat_def Rep_nat_nat_def )
-
-end
 
 
+datatype_nat_encode nat
+print_theorems
 
 datatype_nat_encode list
 print_theorems
-thm enc_list.simps
-
-instantiation list :: (lift_nat) lift_nat
-begin
-
-definition "Nil_nat = pair (atomic 0) (atomic 0)"
-definition "Cons_nat v0 v1 = pair (atomic 1) (pair v0 v1)"
-
-fun Rep_nat_list ::"nat \<Rightarrow> 'a list" where
-  "Rep_nat_list v =
-  (if fstP v = atomic 0 then []
-   else Rep_nat (fstP (sndP v)) # Rep_nat (sndP (sndP v)))"
-
-fun Abs_nat_list where
-  "Abs_nat_list v =
-  (case v of [] \<Rightarrow> Nil_nat | v0 # v1 \<Rightarrow> Cons_nat (Abs_nat v0) (Abs_nat v1))"
-
-instance
-  apply (intro_classes)
-  subgoal for x
-    apply(induction x)
-    by(simp add: Abs_nat_nat_def Rep_nat_nat_def Nil_nat_def Cons_nat_def)+
-  done
-end
-
-
-lemma "Nil_nat = enc_list enc_'a []"
-  by (simp add: enc_list.simps Nil_nat_def)
-
-lemma enc_list_bot: "enc_list enc_'a bot = bot"
-  by(simp add: enc_list.simps prod_encode_0 bot_list_def bot_nat_def Nil_nat_def)
 
 datatype_nat_encode bool
-
-lemma enc_bool_bot: "enc_bool bot = bot"
-  by(simp add: enc_bool.simps prod_encode_0 bot_nat_def False_nat_def)
+print_theorems
 
 datatype_nat_encode char
-
-lemma enc_char_bot: "enc_char bot = bot"
-  by(simp add: enc_char.simps enc_bool.simps prod_encode_0 bot_nat_def bot_char_def Char_nat_def
-      False_nat_def)
+print_theorems
 
 datatype_nat_encode "('a, 'b) prod"
-
-lemma enc_prod_bot:
-  assumes "enc_'a bot = bot"
-    and "enc_'b bot = bot"
-  shows "enc_prod enc_'a enc_'b bot = bot"
-  by (simp add: enc_prod.simps prod_encode_0 bot_nat_def bot_prod_def assms Pair_nat_def)
+print_theorems
 
 datatype_nat_encode "'a tree"
-
-lemma enc_tree_bot: "enc_tree enc_'a bot = bot"
-  by (simp add: enc_tree.simps prod_encode_0 bot_nat_def bot_tree_def Leaf_nat_def)
+print_theorems
 
 datatype_nat_encode "('a, 'b) keyed_list_tree"
+print_theorems
 
-lemma enc_keyed_list_tree_bot: "enc_keyed_list_tree enc_'a enc_'b bot = bot"
-  by (simp add: enc_keyed_list_tree.simps prod_encode_0 bot_nat_def bot_keyed_list_tree_def
-      KLeaf_nat_def)
-
-
-(* TODO: Do we need similar lemmas for other data types? *)
-lemma enc_List_list_cong[fundef_cong]:
-  assumes "xs = ys"
-    and "\<And>x. x \<in> set ys \<Longrightarrow> enc\<^sub>a x = enc\<^sub>b x"
-  shows "enc_list enc\<^sub>a xs = enc_list enc\<^sub>b ys"
-  using assms by (induction xs arbitrary: ys; auto simp add: enc_list.simps)
 
 
 
