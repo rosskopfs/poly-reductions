@@ -18,7 +18,7 @@ theory Encode_Nat
   keywords
     "test" :: thy_decl and
     "test2" :: thy_decl and
-    "datatype_nat_encode" :: thy_decl and
+    "datatype_lift_nat" :: thy_decl and
     "datatype_nat_decode" :: thy_decl and
     "datatype_nat_wellbehaved" :: thy_goal and
     "function_nat_rewrite" :: thy_decl and
@@ -122,123 +122,33 @@ ML_file \<open>./Encode_Nat.ML\<close>
 
 
 
-datatype_nat_encode nat
+datatype_lift_nat nat
 print_theorems
 
-datatype_nat_encode list
+test list
 print_theorems
 
-datatype_nat_encode bool
-print_theorems
 
-datatype_nat_encode char
-print_theorems
-
-datatype_nat_encode "('a, 'b) prod"
-print_theorems
-
-datatype_nat_encode "'a tree"
-print_theorems
-
-datatype_nat_encode "('a, 'b) keyed_list_tree"
+test bool
 print_theorems
 
 
 
-
-
-
-datatype_nat_decode nat
-
-
-
-datatype_nat_decode list
+test char
 print_theorems
 
-(* TODO: Automate that *)
-lemmas dec_list_prod_encode_simp[simp] = dec_list.simps[of _ "prod_encode _"]
 
-thm dec_list.simps
-
-datatype_nat_decode bool
-lemmas dec_bool_prod_encode_simp[simp] = dec_bool.simps[of "prod_encode _"]
-
-datatype_nat_decode char
-lemmas dec_char_prod_encode_simp[simp] = dec_char.simps[of "prod_encode _"]
-
-datatype_nat_decode prod
-lemmas dec_prod_prod_encode_simp[simp] = dec_prod.simps[of _ _ "prod_encode _"]
-
-lemma dec_prod_bot:
-  assumes "dec_'a bot = bot" and "dec_'b bot = bot"
-  shows "dec_prod dec_'a dec_'b bot = bot"
-  using assms
-  by(simp add: dec_prod.simps prod_decode_def bot_prod_def prod_decode_aux.simps bot_nat_def)
-
-datatype_nat_decode tree
-lemmas dec_tree_prod_encode_simp[simp] = dec_tree.simps[of _ "prod_encode _"]
-
-datatype_nat_decode keyed_list_tree
-lemmas dec_keyed_list_tree_prod_encode_simp[simp]
-  = dec_keyed_list_tree.simps[of _ _ "prod_encode _"]
+test prod
+print_theorems
 
 
-inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
-  "x \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> fstP t \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
+test tree
+print_theorems
 
-lemma
-  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?P)")
-    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?Q)")
-  by(induction rule: subpairings.induct; blast intro: subpairings.intros)+
 
-lemma dec_List_list_cong[fundef_cong]:
-  assumes "x = y"
-    and "\<And>t. t \<in> subpairings y \<Longrightarrow> dec\<^sub>a t = dec\<^sub>b t"
-  shows "dec_list dec\<^sub>a x = dec_list dec\<^sub>b y"
-  unfolding assms(1) using assms(2)
-  by(induction dec\<^sub>a y rule: dec_list.induct,
-      metis subpairings_sndP_imp dec_list.simps subpairings.intros(1) subpairings.intros(2))
+test keyed_list_tree
+print_theorems
 
-datatype_nat_wellbehaved nat
-  by(induction; simp add: enc_nat.simps dec_nat.simps)
-
-datatype_nat_wellbehaved bool
-  by(intro ext, simp add: dec_bool.simps enc_bool.simps True_nat_def False_nat_def split:bool.split)
-
-datatype_nat_wellbehaved list
-  apply(intro ext)
-  subgoal for x
-    using assms[THEN pointfree_idE]
-    by(induction x rule: list.induct; simp add: enc_list.simps Nil_nat_def Cons_nat_def)
-  done
-
-datatype_nat_wellbehaved char
-  using encoding_bool_wellbehaved[THEN pointfree_idE]
-  by(intro ext, simp add: dec_char.simps enc_char.simps Char_nat_def split: char.split)
-
-datatype_nat_wellbehaved prod
-  apply(intro ext)
-  subgoal for x
-    using assms[THEN pointfree_idE]
-    by(induction x rule: prod.induct; simp add: enc_prod.simps Pair_nat_def)
-  done
-
-datatype_nat_wellbehaved tree
-  apply(intro ext)
-  subgoal for x
-    using assms[THEN pointfree_idE]
-    by(induction x rule: tree.induct; simp add: enc_tree.simps Leaf_nat_def Node_nat_def)
-  done
-
-datatype_nat_wellbehaved keyed_list_tree
-  apply(intro ext)
-  subgoal for x
-    apply(induction x rule: keyed_list_tree.induct)
-    using encoding_list_wellbehaved[OF assms(2), THEN pointfree_idE] assms(1)[THEN pointfree_idE]
-    by (simp add: enc_keyed_list_tree.simps KLeaf_nat_def KNode_nat_def)+
-  done
 
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -252,6 +162,8 @@ lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
 (* TODO: put into other commands *)
+
+(*
 test2 list
 thm Cons_nat_equiv
 test2 bool
@@ -263,72 +175,25 @@ test2 prod
 test2 tree
 
 test2 keyed_list_tree
-
-lemma dec_list_bot: "dec_list dec_'a bot = bot"
-  by(simp add: dec_list.simps prod_decode_def prod_decode_aux.simps bot_list_def)
-
-lemma dec_tree_bot: "dec_tree dec_'a bot = bot"
-  by(simp add: dec_tree.simps prod_decode_def prod_decode_aux.simps bot_tree_def)
-
-term "case_list acc (\<lambda>x xs. x # acc) xs"
+ *)
 
 
-term "case_list"
+(* Do nat manually as lifting of nat is different *)
+lemma case_nat_eq_if:
+  "(case Rep_nat arg\<^sub>1 of 0 \<Rightarrow> f\<^sub>1 | Suc x \<Rightarrow> f\<^sub>2 x) = (if arg\<^sub>1 = 0 then f\<^sub>1 else f\<^sub>2 ((Rep_nat arg\<^sub>1) - 1))"
+  by(simp add: Rep_nat_nat.simps split: nat.split)
 
-lemma "(case dec_list dec_'a xs of [] => f | a # as => g a as)
-  = (if fstP xs = atomic 0 then f else g (dec_'a (fstP (sndP xs))) (dec_list dec_'a (sndP (sndP xs))))"
-  by (simp add: dec_list.simps)
+definition case_nat_nat where
+  "case_nat_nat \<equiv>
+    \<lambda>(f\<^sub>1::nat) (f\<^sub>2::nat \<Rightarrow> nat) (arg\<^sub>1::nat). if fstP arg\<^sub>1 = 0 then f\<^sub>1 else f\<^sub>2 (arg\<^sub>1 - 1)"
 
+test2 list print_theorems
+test2 bool print_theorems
+test2 char print_theorems
+test2 prod print_theorems
+test2 tree print_theorems
+test2 keyed_list_tree print_theorems
 
-term "foo [] = f1"
-term "foo (x # xs) = f1 x xs"
-
-ML \<open>
-  hd [1, 2, 3]
-\<close>
-thm case_list_def
-term "case_list a b c"
-term "case_keyed_list_tree"
-
-test keyed_list_tree print_theorems
-
-thm "case_nat_def"
-test nat (* todo *)
-test list print_theorems
-test bool print_theorems
-test char print_theorems
-test prod print_theorems
-test tree print_theorems
-
-lemma
-  fixes f::"'a \<Rightarrow> 'b"
-  assumes "dec_'a \<circ> enc_'a = id"
-    and "dec_'b \<circ> enc_'b = id"
-    and "f_nat = (\<lambda>x. enc_'b (f (dec_'a x)))"
-  shows "f_nat (enc_'a x) = enc_'b (f x)"
-  using assms
-  by (simp add: pointfree_idE)
-
-lemma foo:
-  fixes enc_'a :: "'a::order_bot \<Rightarrow> nat"
-    and dec_'a :: "nat \<Rightarrow> 'a"
-    and enc_'b :: "'b::order_bot \<Rightarrow> nat"
-    and dec_'b :: "nat \<Rightarrow> 'b"
-  assumes "\<And>x xs. g_nat (enc_'b x) (enc_list enc_'b xs) = enc_'a (g x xs)"
-  shows "enc_'a (case_list f (\<lambda>x xs. g x xs) xs) =
-          case_list_nat (enc_'a f) (\<lambda>x xs. g_nat x xs) (enc_list enc_'b xs)"
-  unfolding case_list_nat_def using assms
-  by(induction xs; simp add: enc_list.simps Nil_nat_def Cons_nat_def)+
-
-lemma "case_list f (\<lambda>x xs. g x xs) xs =
-      (if xs = [] then f else g (hd xs) (tl xs))"
-  oops
-function_nat_rewrite_auto reverset
-print_theorems
-
-thm List.list.case_eq_if
-
-thm reverset_nat_equiv encoding_list_wellbehaved[THEN pointfree_idE]
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
   "prefixes (v # vs) = (v # vs) # (prefixes vs)"
@@ -344,8 +209,6 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
-function_nat_rewrite_auto prefixest
-
 
 lemma reverset_length: "length xs = length (reverset xs [])"
   by(induction xs; simp add: reverset_rev)
@@ -357,15 +220,9 @@ function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   using reverset.cases by blast+
 termination by(relation "measure (length o fst)"; simp add: reverset_correct)
 
-function_nat_rewrite_auto foo
-print_theorems
-
-
 fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list" where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
-
-function_nat_rewrite_auto prefixes2
 
 
 fun subtrees :: "'a tree \<Rightarrow> 'a tree list" where
@@ -389,18 +246,12 @@ lemma subtrees_subtreest:
 lemma subtreest_correct: "mset (subtrees t) = mset (subtreest t [] [])"
   using subtrees_subtreest[of t "[]" "[]"] by simp
 
-function_nat_rewrite_auto subtreest
-print_theorems
 
 
 fun reverse_acc where
   "reverse_acc acc [] = acc"
 | "reverse_acc acc (x#xs) = reverse_acc (x#acc) xs"
 
-
-
-function_nat_rewrite_auto reverse_acc
-thm reverse_acc_nat.simps
 
 fun reverse where
   "reverse xs = reverse_acc [] xs"
@@ -416,8 +267,6 @@ qed
 lemma reverse_equiv: "reverse xs = rev xs"
   by(induction xs; simp)
     (subst reverse_acc_append_acc, simp)
-
-function_nat_rewrite_auto reverse
 
 
 fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -447,7 +296,6 @@ next
 qed
 
 
-function_nat_rewrite_auto append
 
 fun plus where
   "plus 0 n = n"
@@ -456,31 +304,18 @@ fun plus where
 lemma plus_equiv: "plus a b = a + b"
   by(induction a arbitrary: b; simp)
 
-function_nat_rewrite_auto plus
+
+test num
+test2 num
 
 
-datatype_nat_encode num
-
-
-datatype_nat_decode num
-lemmas dec_num_prod_encode_simp[simp] = dec_num.simps[of "prod_encode _"]
-
-datatype_nat_wellbehaved num
-  apply(intro ext)
-  subgoal for x
-    by(induction x rule: num.induct; simp add: enc_num.simps One_nat_def Bit1_nat_def Bit0_nat_def)
-  done
 
 fun fn_test1 :: "nat \<Rightarrow> nat" where
   "fn_test1 x = (if x = 3 then 5 else 7)"
 
-function_nat_rewrite_auto fn_test1
-
 
 fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
   "fn_test2 a = 2"
-
-function_nat_rewrite_auto fn_test2
 
 
 
@@ -506,7 +341,7 @@ fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
 | "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
 
 
-function_nat_rewrite_auto baz2
+
 
 (* function_nat_rewrite_auto bazz *)
 

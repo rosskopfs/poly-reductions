@@ -6,28 +6,13 @@ theory Lifting_Nat
     Encode_Nat
 begin
 
-
 section \<open>Lifting from \<^typ>\<open>bool\<close>\<close>
 
-instantiation bool :: lift_nat
-begin
-
-definition Abs_nat_bool_def:
-  "Abs_nat \<equiv> enc_bool"
-
-definition Rep_nat_bool_def:
-  "Rep_nat \<equiv> dec_bool"
-
-instance
-  by (intro_classes, simp add: Abs_nat_bool_def Rep_nat_bool_def enc_bool.simps True_nat_def
-      False_nat_def split: bool.split)
-
-end
 
 lemma Domainp_nat_bool_rel[transfer_domain_rule]:
   "Domainp (cr_nat :: _ \<Rightarrow> bool \<Rightarrow> _) = (\<lambda>x. x = False_nat \<or> x = True_nat)"
-  unfolding cr_nat_def Abs_nat_bool_def
-  by (auto simp add:  enc_bool.simps split:bool.split)
+  unfolding cr_nat_def Abs_nat_bool.simps
+  by (auto split:bool.split)
 
 context includes lifting_syntax
 begin
@@ -35,24 +20,25 @@ begin
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
 lemma cr_nat_bool_True[transfer_rule]:
   "cr_nat True_nat True"
-  unfolding cr_nat_def Abs_nat_bool_def
-  by(simp add: enc_bool.simps)
+  unfolding cr_nat_def Abs_nat_bool.simps
+  by simp
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
 lemma cr_nat_bool_False[transfer_rule]:
   "cr_nat False_nat False"
-  unfolding cr_nat_def Abs_nat_bool_def
-  by(simp add: enc_bool.simps)
+  unfolding cr_nat_def Abs_nat_bool.simps
+  by simp
+
 
 lemma nat_bool_rel_conj[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat) min (\<and>)"
-  unfolding cr_nat_def Abs_nat_bool_def
-  by (simp add: rel_fun_def enc_bool.simps False_nat_def prod_encode_def split:bool.splits)
+  "(cr_nat ===> cr_nat ===> cr_nat) max (\<and>)"
+  unfolding cr_nat_def Abs_nat_bool.simps
+  by (simp add: False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
 
 lemma nat_bool_rel_disj[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat) max (\<or>)"
-  unfolding cr_nat_def Abs_nat_bool_def
-  by (simp add: rel_fun_def enc_bool.simps False_nat_def prod_encode_def split:bool.splits)
+  "(cr_nat ===> cr_nat ===> cr_nat) min (\<or>)"
+  unfolding cr_nat_def Abs_nat_bool.simps
+  by (simp add: False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
 
 term "(cr_nat ===> cr_nat) P_nat P"
 
@@ -72,42 +58,6 @@ section \<open>Lifting from \<^typ>\<open>'a list\<close>\<close>
 
 
 
-instantiation list :: (lift_nat) lift_nat
-begin
-
-definition "Abs_nat_list \<equiv> enc_list (Abs_nat :: 'a \<Rightarrow> nat)"
-
-
-definition "Rep_nat_list \<equiv> dec_list (Rep_nat :: nat \<Rightarrow> 'a)"
-
-
-
-instance
-  apply(intro_classes)
-  unfolding Rep_nat_list_def Abs_nat_list_def
-  using encoding_list_wellbehaved[THEN pointfree_idE] eq_id_iff
-  by fastforce
-
-
-end
-
-instantiation prod :: (lift_nat, lift_nat) lift_nat
-begin
-
-definition "Abs_nat_prod \<equiv> enc_prod (Abs_nat :: 'a \<Rightarrow> nat) (Abs_nat :: 'b \<Rightarrow> nat)"
-
-
-definition "Rep_nat_prod \<equiv> dec_prod (Rep_nat :: nat \<Rightarrow> 'a) (Rep_nat :: nat \<Rightarrow> 'b)"
-
-
-
-instance
-  apply(intro_classes)
-  unfolding Rep_nat_prod_def Abs_nat_prod_def
-  apply(rule encoding_prod_wellbehaved[THEN pointfree_idE])
-  using Rep_nat_Abs_nat_id by fastforce+
-
-end
 
 term "Abs_nat::bool \<Rightarrow> nat"
 
@@ -138,22 +88,22 @@ begin
 \<close>
 lemma cr_nat_list_Nil[transfer_rule]:
   "cr_nat (Nil_nat) []"
-  unfolding cr_nat_def Abs_nat_list_def
-  by(simp add: enc_list.simps Nil_nat_def)
+  unfolding cr_nat_def
+  by(simp add: Abs_nat_list.simps Nil_nat_def)
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
 lemma cr_nat_list_Cons[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) Cons_nat (#)"
-  unfolding cr_nat_def Abs_nat_list_def
-  by (simp add: rel_fun_def enc_list.simps)
+  unfolding cr_nat_def
+  by (simp add: rel_fun_def Abs_nat_list.simps)
 
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
 lemma cr_nat_list_case_list[transfer_rule]:
   "(R ===> (cr_nat ===> cr_nat ===> R) ===> cr_nat ===> R) case_list_nat case_list"
-  unfolding cr_nat_def case_list_nat_def Abs_nat_list_def
+  unfolding cr_nat_def case_list_nat_def
   using case_list_eq_if
-  by (simp add: rel_fun_def Nil_nat_def Cons_nat_def enc_list.simps split: list.split)
+  by (simp add: rel_fun_def Nil_nat_def Cons_nat_def Abs_nat_list.simps split: list.split)
 
 \<comment> \<open>Can be proved with Kevin's transport framework\<close>
 
@@ -236,15 +186,14 @@ definition If_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<
 lemma case_bool_nat_equiv:
   "enc_'a (case_bool t f c) = case_bool_nat (enc_'a t) (enc_'a f) (enc_bool c)"
   unfolding case_bool_nat_def
-  by(simp add: enc_bool.simps True_nat_def False_nat_def split: bool.split)
+  apply(simp add: Abs_nat_bool.simps True_nat_def False_nat_def split: bool.split)
+  oops
 
 lemma cr_nat_bool_case_bool[transfer_rule]:
   includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat) case_bool_nat case_bool"
-  unfolding cr_nat_def case_bool_nat_def Abs_nat_bool_def
-  using case_bool_eq_if
-  by (simp add: rel_fun_def False_nat_def True_nat_def enc_bool.simps split: bool.split)
-
+  unfolding cr_nat_def case_bool_nat_def
+  by (simp add: rel_fun_def False_nat_def True_nat_def Abs_nat_bool.simps split: bool.split)
 
 lemma If_nat_lifting[transfer_rule]:
   includes lifting_syntax
