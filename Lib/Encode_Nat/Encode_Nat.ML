@@ -128,8 +128,9 @@ fun mk_encoded_typ (Const (_, T)) =
   ((map (K \<^typ>\<open>pair_repr\<close>) (binder_types T)) ---> \<^typ>\<open>pair_repr\<close>)
   | mk_encoded_typ _ = error "Can only make encoder of Const";
 
-fun lift_ctrs ctrs ctxt =
+fun lift_ctrs T ctrs ctxt =
   let
+    val (_, ctxt) = Local_Theory.begin_nested ctxt
     fun lift_ctr ctr_t =
       let
         val ctr_nat_args =
@@ -145,7 +146,7 @@ fun lift_ctrs ctrs ctxt =
         (ctr_nat_name, ctr_nat_t, ctr_nat_args, ctr_nat_rhs)
       end
     val ctr_nat_ts = map lift_ctr ctrs
-
+                                                        
     fun f (_, ctr_nat_lhs, ctr_nat_args, ctr_nat_rhs) (thms, ctxt) =
       let
         val ctr_nat_equ =
@@ -155,8 +156,49 @@ fun lift_ctrs ctrs ctxt =
       in
         (thm::thms, ctxt)
       end;
-  in
+    val (thms, (ctxt, old_ctxt)) =
     fold f ctr_nat_ts ([], ctxt)
+    ||> `Local_Theory.end_nested
+    val phi = Proof_Context.export_morphism old_ctxt ctxt
+
+    fun build_type [T'] =
+            [[\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>, [\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>,
+              \<^typ>\<open>nat\<close> --> \<^typ>\<open>nat\<close>, T' --> T] ---> \<^typ>\<open>bool\<close>
+      | build_type (T'::arg_Ts) =
+          let
+            val n = length arg_Ts + 1
+            val (_::_::snd_arg_T) = binder_types (build_type arg_Ts)
+            val T1 = replicate n \<^typ>\<open>nat\<close> ---> \<^typ>\<open>nat\<close>
+            val T2 = (T'::arg_Ts) ---> T
+            val _ = split_last snd_arg_T |> fst |> split_last |> fst |> @{print}
+          in
+              [[\<^typ>\<open>nat\<close>, T'] ---> \<^typ>\<open>bool\<close>, snd_arg_T ---> \<^typ>\<open>bool\<close>, T1, T2] ---> \<^typ>\<open>bool\<close>
+          end
+
+    val foo =
+      ctrs ~~ ctr_nat_ts
+      |> map (fn (ctr_t, (ctr_nat_name, _, ctr_nat_args, _)) =>
+        let
+          fun rel_funs [] = error "Empty type list"
+            | rel_funs [T'] =
+              list_comb
+              (Const (\<^const_name>\<open>rel_fun\<close>, build_type [T']), [\<^Const>\<open>cr_nat T'\<close>, \<^Const>\<open>cr_nat T'\<close>])
+            | rel_funs (T'::arg_Ts) =
+              let
+                val rel_fun_T = build_type (T'::arg_Ts)
+              in
+                list_comb
+                  (Const (\<^const_name>\<open>rel_fun\<close>, rel_fun_T), [\<^Const>\<open>cr_nat T'\<close>, rel_funs arg_Ts])
+              end
+          
+        in
+          if null ctr_nat_args
+          then list_comb (\<^Const>\<open>cr_nat T\<close>, [read_const' ctxt ctr_nat_name, ctr_t])
+          else list_comb (rel_funs (binder_types (fastype_of ctr_t)), [read_const' ctxt ctr_nat_name, ctr_t])
+        end)
+      |> map (fn t => t |> @{print} |> Thm.cterm_of ctxt |> @{print})    
+  in
+    (map (Morphism.thm phi) thms, ctxt)
   end
 
 fun add_abs_rep_fun T casex ctrs ctxt =
@@ -230,7 +272,7 @@ fun datatype_lift_nat T ctrs casex (thy : theory) =
     val (new_ctrs, lthy) =
       Class.instantiation ([T_name], map dest_TFree T_typ_args, \<^sort>\<open>lift_nat\<close>) thy
       |> Local_Theory.begin_nested |> snd
-      |> lift_ctrs ctrs
+      |> lift_ctrs T ctrs
       ||> add_abs_rep_fun T casex ctrs
     val new_lthy = Local_Theory.end_nested lthy
     val phi = Proof_Context.export_morphism lthy new_lthy
@@ -297,11 +339,36 @@ val _ =
     "Test"
     (Parse.typ >> datatype_lift_nat_cmd >> (Toplevel.begin_main_target false));
 
+fun ctr_equiv T ctr lthy =
+  let
+    val (ctr_name, _) = dest_Const ctr
+  in
+    ()
+  end
+
+fun ctrs_equiv T ctrs lthy =
+  let
+  in
+    lthy
+  end
+
+fun ctrs_equiv_cmd T lthy =
+  let
+    val sugar =
+      fst (dest_Type (Syntax.parse_typ lthy T))
+      |> Ctr_Sugar.ctr_sugar_of lthy
+      |> the;
+    val T = normalize_type (tvar_to_tfree (#T sugar));
+    val ctrs = map (normalize_type_of_term o map_types tvar_to_tfree) (#ctrs sugar);
+  in
+    ctrs_equiv T ctrs lthy
+  end
+
 val _ =
-  Outer_Syntax.command
+  Outer_Syntax.local_theory
     \<^command_keyword>\<open>test\<close>
     "Test"
-    (Parse.typ >> datatype_lift_nat_cmd >> (Toplevel.begin_main_target false))
+    (Parse.typ >> ctrs_equiv_cmd)
 
 fun decoder_name_of_type ctxt (Type (name, _)) =
       Name_Space.extern ctxt (Proof_Context.type_space ctxt) name

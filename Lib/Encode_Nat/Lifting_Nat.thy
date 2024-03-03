@@ -40,7 +40,6 @@ lemma nat_bool_rel_disj[transfer_rule]:
   unfolding cr_nat_def Abs_nat_bool.simps
   by (simp add: False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
 
-term "(cr_nat ===> cr_nat) P_nat P"
 
 end
 
@@ -52,21 +51,6 @@ schematic_goal
   done
 
 
-section \<open>Lifting from \<^typ>\<open>'a list\<close>\<close>
-
-\<comment> \<open>Already provided by the datatype compiler\<close>
-
-
-
-
-term "Abs_nat::bool \<Rightarrow> nat"
-
-ML \<open>
-  @{term "Abs_nat (True, False)"};
-  Const ("Encode_Nat.lift_nat_class.Abs_nat", @{typ "bool \<Rightarrow> nat"})
-  |> Thm.cterm_of @{context}
-
-\<close>
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
@@ -77,6 +61,9 @@ case_of_simps rev_tr_case_def: rev_tr.simps
 \<comment> \<open>Can be lifted with Kevin's transport framework\<close>
 definition rev_tr_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "rev_tr_nat _ acc xs \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (rev_tr (Rep_nat acc) (Rep_nat xs))"
+
+datatype_lift_nat option
+test2 option
 
 context includes lifting_syntax
 begin
@@ -90,6 +77,22 @@ lemma cr_nat_list_Nil[transfer_rule]:
   "cr_nat (Nil_nat) []"
   unfolding cr_nat_def
   by(simp add: Abs_nat_list.simps Nil_nat_def)
+
+declare [[show_types = true]]
+term "(cr_nat::nat \<Rightarrow> nat \<Rightarrow> bool) Zero_nat 0"
+
+term "Char_nat"
+term "Char"
+
+term "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
+  Char_nat Char"
+
+term "rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat
+   (rel_fun cr_nat (rel_fun cr_nat cr_nat))))))) Char_nat Char"
+
+term "(cr_nat ===> cr_nat ===> cr_nat) Pair_nat Pair"
+
+term "rel_fun cr_nat (rel_fun cr_nat cr_nat) Pair_nat Pair"
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
 lemma cr_nat_list_Cons[transfer_rule]:

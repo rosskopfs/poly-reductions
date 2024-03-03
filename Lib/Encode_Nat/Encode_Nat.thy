@@ -125,30 +125,28 @@ ML_file \<open>./Encode_Nat.ML\<close>
 datatype_lift_nat nat
 print_theorems
 
+datatype_lift_nat list
+print_theorems
+
+datatype_lift_nat bool
+print_theorems
+
+datatype_lift_nat char
+print_theorems
+
+datatype_lift_nat prod
+print_theorems
+
+datatype_lift_nat tree
+print_theorems
+
+datatype_lift_nat keyed_list_tree
+print_theorems
+
+datatype_lift_nat num
+test2 num
+
 test list
-print_theorems
-
-
-test bool
-print_theorems
-
-
-
-test char
-print_theorems
-
-
-test prod
-print_theorems
-
-
-test tree
-print_theorems
-
-
-test keyed_list_tree
-print_theorems
-
 
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -305,8 +303,6 @@ lemma plus_equiv: "plus a b = a + b"
   by(induction a arbitrary: b; simp)
 
 
-test num
-test2 num
 
 
 
