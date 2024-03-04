@@ -17,28 +17,16 @@ lemma Domainp_nat_bool_rel[transfer_domain_rule]:
 context includes lifting_syntax
 begin
 
-\<comment> \<open>Needs to be provided by the datatype compiler\<close>
-lemma cr_nat_bool_True[transfer_rule]:
-  "cr_nat True_nat True"
-  unfolding cr_nat_def Abs_nat_bool.simps
-  by simp
-
-\<comment> \<open>Needs to be provided by the datatype compiler\<close>
-lemma cr_nat_bool_False[transfer_rule]:
-  "cr_nat False_nat False"
-  unfolding cr_nat_def Abs_nat_bool.simps
-  by simp
-
 
 lemma nat_bool_rel_conj[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) max (\<and>)"
   unfolding cr_nat_def Abs_nat_bool.simps
-  by (simp add: False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
+  by (simp add: pair_def False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
 
 lemma nat_bool_rel_disj[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) min (\<or>)"
   unfolding cr_nat_def Abs_nat_bool.simps
-  by (simp add: False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
+  by (simp add: pair_def False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
 
 
 end
@@ -73,40 +61,23 @@ begin
   We probably should introduce definitions for the nat versions of
   each constructor.
 \<close>
-lemma cr_nat_list_Nil[transfer_rule]:
-  "cr_nat (Nil_nat) []"
-  unfolding cr_nat_def
-  by(simp add: Abs_nat_list.simps Nil_nat_def)
 
-declare [[show_types = true]]
-term "(cr_nat::nat \<Rightarrow> nat \<Rightarrow> bool) Zero_nat 0"
-
-term "Char_nat"
-term "Char"
-
-term "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
-  Char_nat Char"
-
-term "rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat (rel_fun cr_nat
-   (rel_fun cr_nat (rel_fun cr_nat cr_nat))))))) Char_nat Char"
-
-term "(cr_nat ===> cr_nat ===> cr_nat) Pair_nat Pair"
-
-term "rel_fun cr_nat (rel_fun cr_nat cr_nat) Pair_nat Pair"
-
-\<comment> \<open>Needs to be provided by the datatype compiler\<close>
-lemma cr_nat_list_Cons[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat) Cons_nat (#)"
-  unfolding cr_nat_def
-  by (simp add: rel_fun_def Abs_nat_list.simps)
+thm cr_nat_def case_nat_nat_def
+lemma cr_nat_nat_case_nat[transfer_rule]:
+  "(R ===> (cr_nat ===> R) ===> cr_nat ===> R) case_nat_nat case_nat"
+  unfolding cr_nat_def case_nat_nat_def
+  using case_nat_eq_if
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def zero_nat_def Suc_nat_def Abs_nat_nat.simps split: nat.split)
 
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
+
+
 lemma cr_nat_list_case_list[transfer_rule]:
   "(R ===> (cr_nat ===> cr_nat ===> R) ===> cr_nat ===> R) case_list_nat case_list"
   unfolding cr_nat_def case_list_nat_def
   using case_list_eq_if
-  by (simp add: rel_fun_def Nil_nat_def Cons_nat_def Abs_nat_list.simps split: list.split)
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def Nil_nat_def Cons_nat_def Abs_nat_list.simps split: list.split)
 
 \<comment> \<open>Can be proved with Kevin's transport framework\<close>
 
@@ -142,12 +113,12 @@ lemma rev_tr_nat_synth_def:
 
 \<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
-term "BNF_Composition"
+
+
 
 fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
   "elemof _ [] = False"
 | "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
-
 
 case_of_simps elemof_case_def: elemof.simps
 
@@ -159,7 +130,6 @@ lemma elemof_nat_lifting[transfer_rule]:
   shows "(cr_nat ===> cr_nat ===> cr_nat) (elemof_nat TYPE('a::lift_nat)) (elemof :: 'a \<Rightarrow> _)"
   unfolding elemof_nat_def cr_nat_def
   by(simp add: rel_fun_def)
-
 
 schematic_goal elemof_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) xn (Rep_nat xn)"
@@ -186,17 +156,12 @@ thm elemof_nat_synth_def[unfolded case_list_nat_def]
 definition If_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "If_nat _ c t f \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (If (Rep_nat c) (Rep_nat t) (Rep_nat f))"
 
-lemma case_bool_nat_equiv:
-  "enc_'a (case_bool t f c) = case_bool_nat (enc_'a t) (enc_'a f) (enc_bool c)"
-  unfolding case_bool_nat_def
-  apply(simp add: Abs_nat_bool.simps True_nat_def False_nat_def split: bool.split)
-  oops
 
 lemma cr_nat_bool_case_bool[transfer_rule]:
   includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat) case_bool_nat case_bool"
   unfolding cr_nat_def case_bool_nat_def
-  by (simp add: rel_fun_def False_nat_def True_nat_def Abs_nat_bool.simps split: bool.split)
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def False_nat_def True_nat_def Abs_nat_bool.simps split: bool.split)
 
 lemma If_nat_lifting[transfer_rule]:
   includes lifting_syntax
@@ -343,5 +308,44 @@ lemma append_nat_synth_def:
   using assms apply(simp add: append_nat_def rel_fun_def cr_nat_def)+
   done
 
+
+
+
+fun plus :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "plus m 0 = m" |
+  "plus m (Suc n) = Suc (plus m n)"
+
+case_of_simps plus_case_def: plus.simps
+
+definition plus_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "plus_nat m n \<equiv> Abs_nat (plus (Rep_nat m) (Rep_nat n))"
+
+lemma plus_nat_lifting[transfer_rule]:
+  includes lifting_syntax
+  shows "(cr_nat ===> cr_nat ===> cr_nat) plus_nat plus"
+  unfolding plus_nat_def cr_nat_def
+  by(simp add: rel_fun_def)
+
+schematic_goal plus_nat_synth:
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> nat \<Rightarrow> bool) mn (Rep_nat mn)"
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> nat \<Rightarrow> bool) nn (Rep_nat nn)"
+  shows "cr_nat ?t (plus (Rep_nat mn) (Rep_nat nn))"
+  apply (subst plus_case_def)
+  apply transfer_prover_start
+        apply transfer_step+
+  apply (rule HOL.refl)
+  done
+
+lemma plus_nat_synth_def:
+  fixes m :: nat and n :: nat
+  assumes "mn = Abs_nat m"
+  assumes "nn = Abs_nat n"
+  shows "plus_nat mn nn
+    = case_nat_nat mn (\<lambda>x2ba. Suc_nat (plus_nat mn x2ba)) nn"
+  apply(rule HOL.trans[OF _ plus_nat_synth[unfolded cr_nat_def, symmetric]])
+  using assms cr_nat_nat_equiv
+    apply(simp add: plus_nat_def rel_fun_def cr_nat_def)+
+  done
+thm plus_nat_synth_def[unfolded case_nat_nat_def]
 
 end

@@ -18,12 +18,7 @@ theory Encode_Nat
   keywords
     "test" :: thy_decl and
     "test2" :: thy_decl and
-    "datatype_lift_nat" :: thy_decl and
-    "datatype_nat_decode" :: thy_decl and
-    "datatype_nat_wellbehaved" :: thy_goal and
-    "function_nat_rewrite" :: thy_decl and
-    "function_nat_rewrite_auto" :: thy_decl and
-    "function_nat_rewrite_correctness" :: thy_goal
+    "datatype_lift_nat" :: thy_decl
 begin
 
 
@@ -65,16 +60,19 @@ type_synonym pair_repr = nat
 fun atomic :: "nat \<Rightarrow> pair_repr" where
   "atomic a = a"
 
-fun pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
+definition pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
   where "pair l r = prod_encode (l, r)"
 
-fun fstP :: "pair_repr \<Rightarrow> pair_repr" where
+definition fstP :: "pair_repr \<Rightarrow> pair_repr" where
   "fstP v = fst (prod_decode v)"
 
-fun sndP :: "pair_repr \<Rightarrow> pair_repr" where
+definition sndP :: "pair_repr \<Rightarrow> pair_repr" where
   "sndP v = snd (prod_decode v)"
 
-lemma prod_encode_0: "prod_encode (0,0) = 0" by (simp add: prod_encode_def)
+lemmas [termination_simp] = fstP_def sndP_def
+
+lemma prod_encode_0: "prod_encode (0, 0) = 0"
+  by (simp add: prod_encode_def)
 
 lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
   by(rule inj_on_inverseI, rule pointfree_idE, simp)
@@ -87,7 +85,7 @@ lemma prod_decode_less[termination_simp]:
   using assms
     le_prod_encode_1[of "fstP v" "sndP v"]
     le_prod_encode_2[of "sndP v" "fstP v"]
-  by simp+
+  by (simp add: fstP_def sndP_def)+
 
 lemma prod_decode_lte:
   assumes "v \<le> v'"
@@ -101,7 +99,7 @@ lemma snd_prod_encode_lt: "a > 0 \<Longrightarrow> b < prod_encode (a, b)"
 corollary snd_prod_decode_lt_intro[termination_simp]:
   assumes "fstP v \<noteq> 0"
   shows "snd (prod_decode v) < v"
-  by (metis assms fstP.simps gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
+  by (metis assms fstP_def gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
 
 
 
@@ -119,7 +117,6 @@ lemma
 
 
 ML_file \<open>./Encode_Nat.ML\<close>
-
 
 
 datatype_lift_nat nat
@@ -144,9 +141,17 @@ datatype_lift_nat keyed_list_tree
 print_theorems
 
 datatype_lift_nat num
-test2 num
+print_theorems
 
-test list
+
+test2 nat print_theorems
+test2 list print_theorems
+test2 bool print_theorems
+test2 char print_theorems
+test2 prod print_theorems
+test2 tree print_theorems
+test2 keyed_list_tree print_theorems
+test2 num print_theorems
 
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -159,38 +164,7 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
 
-(* TODO: put into other commands *)
 
-(*
-test2 list
-thm Cons_nat_equiv
-test2 bool
-
-test2 char
-
-test2 prod
-
-test2 tree
-
-test2 keyed_list_tree
- *)
-
-
-(* Do nat manually as lifting of nat is different *)
-lemma case_nat_eq_if:
-  "(case Rep_nat arg\<^sub>1 of 0 \<Rightarrow> f\<^sub>1 | Suc x \<Rightarrow> f\<^sub>2 x) = (if arg\<^sub>1 = 0 then f\<^sub>1 else f\<^sub>2 ((Rep_nat arg\<^sub>1) - 1))"
-  by(simp add: Rep_nat_nat.simps split: nat.split)
-
-definition case_nat_nat where
-  "case_nat_nat \<equiv>
-    \<lambda>(f\<^sub>1::nat) (f\<^sub>2::nat \<Rightarrow> nat) (arg\<^sub>1::nat). if fstP arg\<^sub>1 = 0 then f\<^sub>1 else f\<^sub>2 (arg\<^sub>1 - 1)"
-
-test2 list print_theorems
-test2 bool print_theorems
-test2 char print_theorems
-test2 prod print_theorems
-test2 tree print_theorems
-test2 keyed_list_tree print_theorems
 
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
