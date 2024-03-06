@@ -143,16 +143,8 @@ print_theorems
 datatype_lift_nat num
 print_theorems
 
-
-test2 nat print_theorems
-test2 list print_theorems
-test2 bool print_theorems
-test2 char print_theorems
-test2 prod print_theorems
-test2 tree print_theorems
-test2 keyed_list_tree print_theorems
-test2 num print_theorems
-
+datatype_lift_nat option
+print_theorems
 
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"

@@ -33,11 +33,7 @@ end
 
 schematic_goal
   shows "cr_nat ?t (a \<and> (b \<or> c))"
-  apply transfer_prover_start
-       apply transfer_step+
-  apply (rule HOL.refl)
-  done
-
+  by transfer_prover
 
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -50,9 +46,6 @@ case_of_simps rev_tr_case_def: rev_tr.simps
 definition rev_tr_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "rev_tr_nat _ acc xs \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (rev_tr (Rep_nat acc) (Rep_nat xs))"
 
-datatype_lift_nat option
-test2 option
-
 context includes lifting_syntax
 begin
 
@@ -61,23 +54,39 @@ begin
   We probably should introduce definitions for the nat versions of
   each constructor.
 \<close>
-
-thm cr_nat_def case_nat_nat_def
 lemma cr_nat_nat_case_nat[transfer_rule]:
   "(R ===> (cr_nat ===> R) ===> cr_nat ===> R) case_nat_nat case_nat"
   unfolding cr_nat_def case_nat_nat_def
   using case_nat_eq_if
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def zero_nat_def Suc_nat_def Abs_nat_nat.simps split: nat.split)
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def zero_nat_def Suc_nat_def Abs_nat_nat.simps
+      split: nat.split)
+
+term "case_bool"
+term "case_list"
+term "case_nat"
+term "case_char"
+term "case_nat_nat"
+term "case_list_nat"
+
+lemma cr_nat_bool_case_bool[transfer_rule]:
+  "(R ===> R ===> cr_nat ===> R) case_bool_nat case_bool"
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def True_nat_def False_nat_def
+      case_nat_eq_if Abs_nat_bool.simps cr_nat_def case_bool_nat_def split: bool.split)
+
+lemma cr_nat_char_case_char:
+  "((cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> R)
+    ===> cr_nat ===> R) case_char_nat case_char"
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def Char_nat_def case_nat_eq_if
+      Abs_nat_char.simps cr_nat_def case_char_nat_def split: char.split)
 
 
 \<comment> \<open>Needs to be provided by the datatype compiler\<close>
-
-
 lemma cr_nat_list_case_list[transfer_rule]:
   "(R ===> (cr_nat ===> cr_nat ===> R) ===> cr_nat ===> R) case_list_nat case_list"
   unfolding cr_nat_def case_list_nat_def
   using case_list_eq_if
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def Nil_nat_def Cons_nat_def Abs_nat_list.simps split: list.split)
+  by (simp add: rel_fun_def pair_def fstP_def sndP_def Nil_nat_def Cons_nat_def Abs_nat_list.simps
+      split: list.split)
 
 \<comment> \<open>Can be proved with Kevin's transport framework\<close>
 
@@ -95,10 +104,8 @@ schematic_goal rev_tr_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   shows "cr_nat ?t ((rev_tr :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat accn) (Rep_nat xsn))"
   apply (subst rev_tr_case_def)
-  apply transfer_prover_start
-        apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
+
 
 lemma rev_tr_nat_synth_def:
   fixes acc :: "'a::lift_nat list" and xs :: "'a list"
@@ -136,10 +143,7 @@ schematic_goal elemof_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   shows "cr_nat ?t ((elemof :: 'a::lift_nat \<Rightarrow> _) (Rep_nat xn) (Rep_nat xsn))"
   apply (subst elemof_case_def)
-  apply transfer_prover_start
-           apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma elemof_nat_synth_def:
   fixes x :: "'a::lift_nat " and xs :: "'a list"
@@ -157,12 +161,6 @@ definition If_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<
   "If_nat _ c t f \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (If (Rep_nat c) (Rep_nat t) (Rep_nat f))"
 
 
-lemma cr_nat_bool_case_bool[transfer_rule]:
-  includes lifting_syntax
-  shows "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat) case_bool_nat case_bool"
-  unfolding cr_nat_def case_bool_nat_def
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def False_nat_def True_nat_def Abs_nat_bool.simps split: bool.split)
-
 lemma If_nat_lifting[transfer_rule]:
   includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
@@ -177,10 +175,7 @@ schematic_goal If_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (Rep_nat f)"
   shows "cr_nat ?t ((If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
   apply (subst If_case_def)
-  apply transfer_prover_start
-      apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma If_nat_synth_def:
   fixes c :: "bool" and t :: "'a::lift_nat" and f :: "'a"
@@ -218,10 +213,7 @@ schematic_goal takeWhile_nat_synth:
   assumes [transfer_rule]:"(cr_nat ===> cr_nat) P_nat P"
   shows "cr_nat ?t ((takeWhile :: ('a::lift_nat \<Rightarrow> bool) \<Rightarrow> _) P (Rep_nat xsn))"
   apply (subst takeWhile_case_def)
-  apply transfer_prover_start
-          apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma takeWhile_nat_synth_def:
   includes lifting_syntax
@@ -256,10 +248,7 @@ schematic_goal head_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   shows "cr_nat ?t ((head :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn))"
   apply (subst head_case_def)
-  apply transfer_prover_start
-     apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma head_nat_synth_def:
   fixes xs :: "'a::lift_nat list"
@@ -293,10 +282,7 @@ schematic_goal append_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) ysn (Rep_nat ysn)"
   shows "cr_nat ?t ((append :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn) (Rep_nat ysn))"
   apply (subst append_case_def)
-  apply transfer_prover_start
-          apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma append_nat_synth_def:
   fixes xs :: "'a::lift_nat list" and ys :: "'a list"
@@ -331,10 +317,7 @@ schematic_goal plus_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> nat \<Rightarrow> bool) nn (Rep_nat nn)"
   shows "cr_nat ?t (plus (Rep_nat mn) (Rep_nat nn))"
   apply (subst plus_case_def)
-  apply transfer_prover_start
-        apply transfer_step+
-  apply (rule HOL.refl)
-  done
+  by transfer_prover
 
 lemma plus_nat_synth_def:
   fixes m :: nat and n :: nat
@@ -346,6 +329,7 @@ lemma plus_nat_synth_def:
   using assms cr_nat_nat_equiv
     apply(simp add: plus_nat_def rel_fun_def cr_nat_def)+
   done
+
 thm plus_nat_synth_def[unfolded case_nat_nat_def]
 
 end
