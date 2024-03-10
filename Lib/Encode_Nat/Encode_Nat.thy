@@ -1,19 +1,14 @@
 (*  Title:      Encode_Nat.thy
     Author:     Johannes Neubrand, TU Muenchen
     Author:     Andreas Vollert, TU Muenchen
-    Copyright   2022, 2023
+    Copyright   2022, 2023, 2024
 *)
 
 theory Encode_Nat
   imports
     Main
-    "HOL-Library.Char_ord"
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Tree"
-    "HOL-Library.List_Lexorder"
-    "HOL-Library.Product_Lexorder"
-    "HOL-Library.Multiset"
-    "HOL-Library.Option_ord"
     Test
   keywords
     "test" :: thy_decl and
@@ -21,12 +16,12 @@ theory Encode_Nat
     "datatype_lift_nat" :: thy_decl
 begin
 
-
 class lift_nat =
   fixes Abs_nat :: "'a \<Rightarrow> nat"
   fixes Rep_nat :: "nat \<Rightarrow> 'a"
   assumes Rep_nat_Abs_nat_id[simp]: "\<And>x. Rep_nat (Abs_nat x) = x"
 begin
+
 lemma inj_Abs_nat: "inj Abs_nat"
   by(rule inj_on_inverseI[of _ Rep_nat], simp)
 
@@ -46,19 +41,13 @@ lemma cr_nat_Abs_nat[transfer_rule]:
 end
 
 
+type_synonym pair_repr = nat
 
-
-declare [[ML_print_depth = 50]]
 
 datatype ('a, 'b) keyed_list_tree =
   KLeaf |
   KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
 
-type_synonym pair_repr = nat
-
-
-fun atomic :: "nat \<Rightarrow> pair_repr" where
-  "atomic a = a"
 
 definition pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
   where "pair l r = prod_encode (l, r)"
@@ -74,50 +63,31 @@ lemmas [termination_simp] = fstP_def sndP_def
 lemma prod_encode_0: "prod_encode (0, 0) = 0"
   by (simp add: prod_encode_def)
 
-lemma inj_inverseI: "g \<circ> f = id \<Longrightarrow> inj f"
-  by(rule inj_on_inverseI, rule pointfree_idE, simp)
-
-
 lemma prod_decode_less[termination_simp]:
   assumes "v < v'"
   shows fst_prod_decode_less: "fst (prod_decode v) < v'"
     and snd_prod_decode_less: "snd (prod_decode v) < v'"
-  using assms
-    le_prod_encode_1[of "fstP v" "sndP v"]
-    le_prod_encode_2[of "sndP v" "fstP v"]
+  using assms le_prod_encode_1[of "fstP v" "sndP v"] le_prod_encode_2[of "sndP v" "fstP v"]
   by (simp add: fstP_def sndP_def)+
 
-lemma prod_decode_lte:
-  assumes "v \<le> v'"
-  shows fst_prod_decode_lte: "fst (prod_decode v) \<le> v'"
-    and snd_prod_decode_lte: "snd (prod_decode v) \<le> v'"
-  using prod_decode_less[of v "Suc v'"] assms by simp+
+lemma prod_encode_less:
+  assumes "0 < a"
+  shows fst_prod_encode_less: "a < prod_encode (a, b)"
+    and snd_prod_encode_less: "b < prod_encode (a, b)"
+  using assms by (induction a; simp add: prod_encode_def)+
 
-lemma snd_prod_encode_lt: "a > 0 \<Longrightarrow> b < prod_encode (a, b)"
-  by (induction b; simp add: prod_encode_def)
-
-corollary snd_prod_decode_lt_intro[termination_simp]:
-  assumes "fstP v \<noteq> 0"
+corollary prod_decode_less_intro[termination_simp]:
+  assumes "0 < fstP v"
   shows "snd (prod_decode v) < v"
-  by (metis assms fstP_def gr0I prod.collapse snd_prod_encode_lt prod_decode_inverse)
+    and "fst (prod_decode v) < v"
+  using assms prod_decode_inverse[of v]
+  by (cases "prod_decode v"; fastforce simp add: fstP_def prod_encode_less)+
 
 
-
-
-inductive_set subpairings :: "pair_repr \<Rightarrow> pair_repr set" for x where
-  "x \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> fstP t \<in> subpairings x"
-| "t \<in> subpairings x \<Longrightarrow> sndP t \<in> subpairings x"
-
-lemma
-  shows subpairings_fstP_imp: "a \<in> subpairings (fstP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?P)")
-    and subpairings_sndP_imp: "a \<in> subpairings (sndP x) \<Longrightarrow> a \<in> subpairings x" (is "(PROP ?Q)")
-  by(induction rule: subpairings.induct; blast intro: subpairings.intros)+
-
-
-
+declare [[ML_print_depth = 50]]
 ML_file \<open>./Encode_Nat.ML\<close>
 
+declare [[show_types = true]]
 
 datatype_lift_nat nat
 print_theorems
@@ -146,6 +116,10 @@ print_theorems
 datatype_lift_nat option
 print_theorems
 
+
+
+(* functions for tesiting later *)
+
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
 | "reverset (l # ls) r = reverset ls (l # r)"
@@ -155,8 +129,6 @@ lemma reverset_rev: "reverset l r = rev l @ r"
 
 lemma reverset_correct: "reverset l [] = rev l"
   by (simp add: reverset_rev)
-
-
 
 
 fun prefixes :: "'a list \<Rightarrow> ('a list) list" where
@@ -202,13 +174,6 @@ function subtreest :: "'a tree \<Rightarrow> 'a tree list \<Rightarrow> 'a tree 
 termination
   by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
                 <*mlex*> {}"; simp add: wf_mlex mlex_less)
-
-lemma subtrees_subtreest:
-  "mset (subtrees t @ concat (map subtrees ts) @ stk) = mset (subtreest t ts stk)"
-  by (induction t ts stk rule: subtreest.induct; simp)
-
-lemma subtreest_correct: "mset (subtrees t) = mset (subtreest t [] [])"
-  using subtrees_subtreest[of t "[]" "[]"] by simp
 
 
 
@@ -281,16 +246,11 @@ fun fn_test2 :: "('a::order_bot) \<Rightarrow> nat" where
 
 
 
-
-(* TODOs/Things not wroking/Things to investigate *)
-
-
 fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
   "baz acc [[]] = acc"
 | "baz acc [] = acc"
 | "baz acc (xs#xss) = baz (append acc xs) xss"
 
-(* function_nat_rewrite_auto baz *)
 
 fun bazz where
   "bazz acc [[]] = acc"
@@ -303,21 +263,8 @@ fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
 | "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
 
 
-
-
-(* function_nat_rewrite_auto bazz *)
-
-
-(* can't handle case expressions *)
 fun test3 where
   "test3 x = (case x of True \<Rightarrow> False | False \<Rightarrow> True)"
 
-(* function_nat_rewrite_auto test3 *)
-
-(*
-
-TODO: case_list xs f (\<lambda> a as. g a as) = if ... then f else g (fst (snd (arg1)) ..
-
-*)
 
 end

@@ -13,12 +13,13 @@ structure Encode_Nat : ENCODE_NAT =
 struct
 
 open BNF_Util
+open HOLogic
 
 val read_const' = Proof_Context.read_const {proper = false, strict = false};
 
-val lhs_of_term = HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst;
+val lhs_of_term = dest_Trueprop #> dest_eq #> fst;
 
-val rhs_of_term = HOLogic.dest_Trueprop #> HOLogic.dest_eq #> snd;
+val rhs_of_term = dest_Trueprop #> dest_eq #> snd;
 
 val pair_defs = @{thms pair_def fstP_def sndP_def};
 
@@ -73,7 +74,7 @@ fun mk_unpairing_from_idx t idx length =
   in if idx = length - 1 then snd_t else \<^Const>\<open>fstP for snd_t\<close> end;
 
 fun mk_constructor_tag ctrs ctxt t =
-  find_index (can (Ctr_Sugar_Util.fo_match ctxt t)) ctrs |> HOLogic.mk_number \<^typ>\<open>nat\<close>;
+  find_index (can (Ctr_Sugar_Util.fo_match ctxt t)) ctrs |> mk_number \<^typ>\<open>nat\<close>;
 
 fun mk_constructor_pairing [] = error "Emtpy argument list"
   | mk_constructor_pairing [t] = \<^Const>\<open>pair for t \<^term>\<open>0::nat\<close>\<close>
@@ -104,36 +105,13 @@ fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
 fun mk_condition_paths (CONSTRUCTOR (c, args)) = (c, FST DONE) :: (maps (mk_condition_paths) args)
   | mk_condition_paths (VARIABLE _) = [];
 
-fun mk_cr_type (T : typ) (Ts : typ list) =
-  let
-    val n = length Ts;
-    val T1 = [\<^typ>\<open>nat\<close>, hd Ts] ---> \<^typ>\<open>bool\<close>;
-    val T2 =
-      if n = 1 then [\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>
-      else (tl o tl) (binder_types (mk_cr_type T (tl Ts))) ---> \<^typ>\<open>bool\<close>;
-    val T3 = replicate n \<^typ>\<open>nat\<close> ---> \<^typ>\<open>nat\<close>;
-    val T4 = Ts ---> T;
-  in [T1, T2, T3, T4] ---> \<^typ>\<open>bool\<close> end;
-
-fun mk_rel_funs T Ts =
-  let
-    val t = Const (\<^const_name>\<open>rel_fun\<close>, mk_cr_type T Ts);
-    val args =
-      case Ts of
-        [] => error "Empty type list"
-      | [T'] => [\<^Const>\<open>cr_nat T'\<close>, \<^Const>\<open>cr_nat T\<close>]
-      | (T'::arg_Ts) => [\<^Const>\<open>cr_nat T'\<close>, mk_rel_funs T arg_Ts];
-  in list_comb (t, args) end;
-
 fun mk_cr_nat_equiv ctxt ctr_t =
   let
-    val (ctr_nat_name, (ctr_Ts, T)) =
-      dest_Const (head_of ctr_t)
-      |>> suffix "_nat" o Long_Name.base_name
-      ||> strip_type;
-    val args = [read_const' ctxt ctr_nat_name, ctr_t];
-    val t = if null ctr_Ts then \<^Const>\<open>cr_nat T\<close> else mk_rel_funs T ctr_Ts;
-  in list_comb (t, args) end;
+    fun mk_rel_funs (T as Type (\<^type_name>\<open>fun\<close>, _)) =
+          dest_funT T |> apply2 mk_rel_funs |-> mk_rel_fun
+      | mk_rel_funs T =  \<^Const>\<open>cr_nat T\<close>;
+    val (ctr_nat_name, T) = dest_Const (head_of ctr_t) |>> suffix "_nat" o Long_Name.base_name;
+  in list_comb (mk_rel_funs T, [read_const' ctxt ctr_nat_name, ctr_t]) end;
 
 fun lift_ctr ctrs ctr_t ctxt =
   let
@@ -150,13 +128,13 @@ fun lift_ctr ctrs ctr_t ctxt =
 
 fun lift_ctrs ctrs ctxt =
   let
-    val (thms, (phi, ctxt)) =
+    val (ctrs_nat_defs, (phi, ctxt)) =
     snd (Local_Theory.begin_nested ctxt)
     |> fold_map (lift_ctr ctrs) ctrs
     ||> `Local_Theory.end_nested
     ||> (fn (ctxt, old_ctxt) => (Proof_Context.export_morphism old_ctxt ctxt, ctxt));
     val cr_nat_equiv_terms = map (mk_cr_nat_equiv ctxt) ctrs;
-  in ((cr_nat_equiv_terms, map (Morphism.thm phi) thms), ctxt) end;
+  in ((cr_nat_equiv_terms, map (Morphism.thm phi) ctrs_nat_defs), ctxt) end;
 
 fun add_abs_rep_fun T casex ctrs ctxt =
   let
@@ -192,7 +170,7 @@ fun add_abs_rep_fun T casex ctrs ctxt =
 
     val rep_lhs = \<^Const>\<open>Rep_nat T\<close> $ \<^term>\<open>v::pair_repr\<close>;
     val rep_conditions =
-      map (mk_constructor_tag ctrs ctxt #> curry HOLogic.mk_eq (\<^term>\<open>fstP v::pair_repr\<close>)) ctrs;
+      map (mk_constructor_tag ctrs ctxt #> curry mk_eq (\<^term>\<open>fstP v::pair_repr\<close>)) ctrs;
     val rep_cases = map mk_rep_case ctrs;
     val rep_rhs = Ctr_Sugar_Util.mk_IfN T rep_conditions rep_cases;
   in
@@ -202,7 +180,7 @@ fun add_abs_rep_fun T casex ctrs ctxt =
 fun build_nat_condition ctrs ctxt t =
   let
     fun mk_condition arg (match, path) =
-      HOLogic.mk_eq (mk_unpairing arg path, mk_constructor_tag ctrs ctxt match);
+      mk_eq (mk_unpairing arg path, mk_constructor_tag ctrs ctxt match);
     fun mk_conditions (arg, paths) = map (mk_condition arg) paths;
     val args_t = Term.args_of (lhs_of_term t);
     val new_args_t = map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>)) (argnames (length args_t));
@@ -210,7 +188,7 @@ fun build_nat_condition ctrs ctxt t =
     map (mk_condition_paths o mk_patmatch_term) args_t
     |> (curry op ~~) new_args_t
     |> maps mk_conditions
-    |> foldl1 HOLogic.mk_conj
+    |> foldl1 mk_conj
   end;
 
 fun if_exp_of_case_exp T ctrs casex ctxt =
@@ -266,7 +244,7 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
       |-> mk_IfN \<^typ>\<open>pair_repr\<close>
       |> fold lambda ((Free (argname 0, \<^typ>\<open>pair_repr\<close>))::(rev fun_ts2));
 
-    val (_, ctxt) =
+    val ((_, (_, case_nat_def_thm)), ctxt) =
       Local_Theory.define
         ((case_nat_binding_name, NoSyn),
           ((Binding.suffix_name "_def" case_nat_binding_name, []), if_exp_2))
@@ -284,65 +262,97 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
 
     val name = "case_" ^ T_base_name ^ "_eq_if";
   in
-    Local_Theory.note ((Binding.name name, []), [thm]) ctxt |> snd
+    Local_Theory.note ((Binding.name name, []), [thm]) ctxt |>> snd |>> cons case_nat_def_thm
   end;
+
+fun cr_nat_case_nat_equiv thms T ctxt =
+  let
+    fun mk_cr_nat_case_nat_equiv free_T (T as Type (\<^type_name>\<open>fun\<close>, _)) =
+          dest_funT T |> apply2 (mk_cr_nat_case_nat_equiv free_T) |-> mk_rel_fun
+      | mk_cr_nat_case_nat_equiv free_T T =
+          if T = free_T then Free ("R", [\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>) else \<^Const>\<open>cr_nat T\<close>;
+
+    val T_base_name = Long_Name.base_name (fst (dest_Type T));
+    val case_t = read_const' ctxt ("case_" ^ T_base_name) |> normalize_type_of_term;
+    val case_t_T = fastype_of case_t;
+    val case_nat_t = read_const' ctxt ("case_" ^ T_base_name ^ "_nat");
+    val body_T = body_type case_t_T;
+
+    val goal =
+      list_comb (mk_cr_nat_case_nat_equiv body_T case_t_T, [case_nat_t, case_t]) |> mk_Trueprop;
+
+    val simps = Proof_Context.get_thm ctxt (T_base_name ^ ".split") :: thms;
+    val thm =
+      Goal.prove ctxt ["R"] [] goal
+        (fn {context=ctxt, ...} => asm_full_simp_tac (ctxt addsimps simps) 1);
+    val name = "cr_nat_" ^ T_base_name ^ "_case_" ^ T_base_name;
+  in Local_Theory.note ((Binding.name name, @{attributes [transfer_rule]}), [thm]) ctxt end;
 
 fun datatype_lift_nat T ctrs casex (thy : theory) =
   let
     val (T_name, T_typ_args) = dest_Type T;
     val T_base_name = Long_Name.base_name T_name;
-    val ((cr_nat_equiv_terms, new_ctrs), lthy) =
+
+    (* Add nat version of constructors and start instantiation of lift_nat class*)
+    val ((cr_nat_equiv_terms, ctrs_nat_defs), lthy) =
       Class.instantiation ([T_name], map dest_TFree T_typ_args, \<^sort>\<open>lift_nat\<close>) thy
-      |> Local_Theory.begin_nested |> snd
+      |> snd o Local_Theory.begin_nested
       |> lift_ctrs ctrs
       ||> add_abs_rep_fun T casex ctrs;
-    val new_lthy = Local_Theory.end_nested lthy;
-    val phi = Proof_Context.export_morphism lthy new_lthy;
+    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val ctrs_nat_defs = map (Morphism.thm phi) ctrs_nat_defs;
 
+    (* Remove abs/rep nat simps from simp set as they would make problems later *)
     val abs_rep_simps =
-      [Proof_Context.get_thm new_lthy ("Rep_nat_" ^ T_base_name ^ ".simps"),
-        Proof_Context.get_thm new_lthy ("Abs_nat_" ^ T_base_name ^ ".simps")];
-
+      [Proof_Context.get_thm lthy ("Rep_nat_" ^ T_base_name ^ ".simps"),
+        Proof_Context.get_thm lthy ("Abs_nat_" ^ T_base_name ^ ".simps")];
     val (_, new_lthy) =
-      Local_Theory.note ((Binding.empty, @{attributes [simp del]}), abs_rep_simps) new_lthy;
-
-    val new_ctrs = map (Morphism.thm phi) new_ctrs;
+      Local_Theory.note ((Binding.empty, @{attributes [simp del]}), abs_rep_simps) lthy;
 
     val simps =
-      @{thms rel_fun_def cr_nat_def prod_encode_0} @ abs_rep_simps @ new_ctrs @ pair_defs;
+      @{thms rel_fun_def cr_nat_def} @ abs_rep_simps @ ctrs_nat_defs @ pair_defs;
 
-    val instantiated_lthy =
+    val lthy =
       Class.prove_instantiation_instance (fn ctxt =>
         Class.intro_classes_tac ctxt []
         THEN HEADGOAL (Subgoal.FOCUS_PARAMS_FIXED (fn {context = ctxt, ...} =>
           let
             val var = Free ("x", T);
             val inst =
-              lambda var (HOLogic.mk_eq (\<^Const>\<open>Rep_nat T for \<^Const>\<open>Abs_nat T for var\<close>\<close>, var))
+              lambda var (mk_eq (\<^Const>\<open>Rep_nat T for \<^Const>\<open>Abs_nat T for var\<close>\<close>, var))
               |> Thm.cterm_of ctxt;
             val thm =
               Proof_Context.get_thm ctxt (T_base_name ^ ".induct")
               |> infer_instantiate' ctxt [SOME inst];
           in
             resolve_tac ctxt [thm] 1
-            THEN REPEAT (asm_full_simp_tac (ctxt addsimps new_ctrs @ abs_rep_simps @ pair_defs) 1)
+            THEN REPEAT
+              (asm_full_simp_tac (ctxt addsimps ctrs_nat_defs @ abs_rep_simps @ pair_defs) 1)
           end
           ) ctxt)
         ) new_lthy;
 
     val cr_nat_equiv_thms =
       map (fn t =>
-        Goal.prove instantiated_lthy [] [] (HOLogic.mk_Trueprop t)
-          (fn {context=ctxt, ...} => asm_full_simp_tac (ctxt addsimps simps) 1)
+        Goal.prove lthy [] [] (mk_Trueprop t)
+          (fn {context=ctxt, ...} =>
+            asm_full_simp_tac (ctxt addsimps (@{thm prod_encode_0}::simps)) 1)
         ) cr_nat_equiv_terms;
 
     val name = "cr_nat_" ^ T_base_name ^ "_equiv";
-  in
-    Local_Theory.note
-      ((Binding.name name, @{attributes [transfer_rule]}), cr_nat_equiv_thms) instantiated_lthy
-    |> snd
-    |> if_exp_of_case_exp T ctrs casex
-  end;
+    val (_, lthy) =
+      Local_Theory.note
+        ((Binding.name name, @{attributes [transfer_rule]}), cr_nat_equiv_thms) lthy;
+
+    (* transform case to if expression *)
+    val (case_eq_if_thm, (lthy, old_lthy)) =
+      snd (Local_Theory.begin_nested lthy)
+      |> if_exp_of_case_exp T ctrs casex
+      ||> `Local_Theory.end_nested
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val (_, lthy) = cr_nat_case_nat_equiv (map (Morphism.thm phi) (case_eq_if_thm @ simps)) T lthy;
+  in lthy end;
 
 fun datatype_lift_nat_cmd T thy =
   let
@@ -356,9 +366,7 @@ fun datatype_lift_nat_cmd T thy =
       subst_atomic_types [(body_type (type_of (#casex sugar)), \<^typ>\<open>pair_repr\<close>)] (#casex sugar)
       |> normalize_type_of_term;
     val ctrs = map normalize_type_of_term (#ctrs sugar);
-  in
-    datatype_lift_nat T ctrs casex thy
-  end;
+  in datatype_lift_nat T ctrs casex thy end;
 
 val _ =
   Outer_Syntax.command

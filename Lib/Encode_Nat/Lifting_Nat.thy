@@ -8,7 +8,7 @@ begin
 
 section \<open>Lifting from \<^typ>\<open>bool\<close>\<close>
 
-
+(* TODO: still necessary? *)
 lemma Domainp_nat_bool_rel[transfer_domain_rule]:
   "Domainp (cr_nat :: _ \<Rightarrow> bool \<Rightarrow> _) = (\<lambda>x. x = False_nat \<or> x = True_nat)"
   unfolding cr_nat_def Abs_nat_bool.simps
@@ -17,23 +17,23 @@ lemma Domainp_nat_bool_rel[transfer_domain_rule]:
 context includes lifting_syntax
 begin
 
-
+(* TODO: still necessary? *)
 lemma nat_bool_rel_conj[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) max (\<and>)"
   unfolding cr_nat_def Abs_nat_bool.simps
-  by (simp add: pair_def False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
+  by (simp add: pair_def True_nat_def prod_encode_0 rel_fun_def split: bool.split)
 
+(* TODO: still necessary? *)
 lemma nat_bool_rel_disj[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) min (\<or>)"
   unfolding cr_nat_def Abs_nat_bool.simps
-  by (simp add: pair_def False_nat_def True_nat_def prod_encode_def rel_fun_def split:bool.splits)
-
-
-end
+  by (simp add: pair_def True_nat_def prod_encode_0 rel_fun_def split: bool.split)
 
 schematic_goal
   shows "cr_nat ?t (a \<and> (b \<or> c))"
   by transfer_prover
+
+end
 
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -49,44 +49,6 @@ definition rev_tr_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> na
 context includes lifting_syntax
 begin
 
-\<comment> \<open>
-  Needs to be provided by the datatype compiler.
-  We probably should introduce definitions for the nat versions of
-  each constructor.
-\<close>
-lemma cr_nat_nat_case_nat[transfer_rule]:
-  "(R ===> (cr_nat ===> R) ===> cr_nat ===> R) case_nat_nat case_nat"
-  unfolding cr_nat_def case_nat_nat_def
-  using case_nat_eq_if
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def zero_nat_def Suc_nat_def Abs_nat_nat.simps
-      split: nat.split)
-
-term "case_bool"
-term "case_list"
-term "case_nat"
-term "case_char"
-term "case_nat_nat"
-term "case_list_nat"
-
-lemma cr_nat_bool_case_bool[transfer_rule]:
-  "(R ===> R ===> cr_nat ===> R) case_bool_nat case_bool"
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def True_nat_def False_nat_def
-      case_nat_eq_if Abs_nat_bool.simps cr_nat_def case_bool_nat_def split: bool.split)
-
-lemma cr_nat_char_case_char:
-  "((cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> cr_nat ===> R)
-    ===> cr_nat ===> R) case_char_nat case_char"
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def Char_nat_def case_nat_eq_if
-      Abs_nat_char.simps cr_nat_def case_char_nat_def split: char.split)
-
-
-\<comment> \<open>Needs to be provided by the datatype compiler\<close>
-lemma cr_nat_list_case_list[transfer_rule]:
-  "(R ===> (cr_nat ===> cr_nat ===> R) ===> cr_nat ===> R) case_list_nat case_list"
-  unfolding cr_nat_def case_list_nat_def
-  using case_list_eq_if
-  by (simp add: rel_fun_def pair_def fstP_def sndP_def Nil_nat_def Cons_nat_def Abs_nat_list.simps
-      split: list.split)
 
 \<comment> \<open>Can be proved with Kevin's transport framework\<close>
 
