@@ -6,16 +6,14 @@ theory Lifting_Nat
     Encode_Nat
 begin
 
-section \<open>Lifting from \<^typ>\<open>bool\<close>\<close>
+unbundle lifting_syntax
+
 
 (* TODO: still necessary? *)
 lemma Domainp_nat_bool_rel[transfer_domain_rule]:
   "Domainp (cr_nat :: _ \<Rightarrow> bool \<Rightarrow> _) = (\<lambda>x. x = False_nat \<or> x = True_nat)"
   unfolding cr_nat_def Abs_nat_bool.simps
   by (auto split:bool.split)
-
-context includes lifting_syntax
-begin
 
 (* TODO: still necessary? *)
 lemma nat_bool_rel_conj[transfer_rule]:
@@ -29,11 +27,13 @@ lemma nat_bool_rel_disj[transfer_rule]:
   unfolding cr_nat_def Abs_nat_bool.simps
   by (simp add: pair_def True_nat_def prod_encode_0 rel_fun_def split: bool.split)
 
+(* Example? *)
 schematic_goal
   shows "cr_nat ?t (a \<and> (b \<or> c))"
   by transfer_prover
 
-end
+
+
 
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
@@ -41,25 +41,20 @@ fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
 case_of_simps rev_tr_case_def: rev_tr.simps
+print_theorems
 
 \<comment> \<open>Can be lifted with Kevin's transport framework\<close>
 definition rev_tr_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "rev_tr_nat _ acc xs \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (rev_tr (Rep_nat acc) (Rep_nat xs))"
 
-context includes lifting_syntax
-begin
 
 
 \<comment> \<open>Can be proved with Kevin's transport framework\<close>
-
 lemma rev_tr_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat) (rev_tr_nat TYPE('a::lift_nat)) (rev_tr :: 'a list \<Rightarrow> _)"
   unfolding rev_tr_nat_def cr_nat_def
   by(simp add: rel_fun_def)
 
-
-end
 
 schematic_goal rev_tr_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
@@ -95,7 +90,6 @@ definition elemof_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> na
   "elemof_nat _ x xs \<equiv> (Abs_nat :: bool \<Rightarrow> nat) (elemof ((Rep_nat::nat => 'a) x) (Rep_nat xs))"
 
 lemma elemof_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat) (elemof_nat TYPE('a::lift_nat)) (elemof :: 'a \<Rightarrow> _)"
   unfolding elemof_nat_def cr_nat_def
   by(simp add: rel_fun_def)
@@ -119,23 +113,24 @@ lemma elemof_nat_synth_def:
 
 thm elemof_nat_synth_def[unfolded case_list_nat_def]
 
+
+
 definition If_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "If_nat _ c t f \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (If (Rep_nat c) (Rep_nat t) (Rep_nat f))"
+  "If_nat _ c t f \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (HOL.If (Rep_nat c) (Rep_nat t) (Rep_nat f))"
 
 
 lemma If_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
-  (If_nat TYPE('a::lift_nat)) (If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
+  (If_nat TYPE('a::lift_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
   by(simp add: If_nat_def rel_fun_def cr_nat_def)
 
-lemma If_case_def: "If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)" by simp
+lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)" by simp
 
 schematic_goal If_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (Rep_nat c)"
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (Rep_nat t)"
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (Rep_nat f)"
-  shows "cr_nat ?t ((If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
+  shows "cr_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
   apply (subst If_case_def)
   by transfer_prover
 
@@ -161,7 +156,6 @@ definition takeWhile_nat :: "'a::lift_nat itself \<Rightarrow> (nat \<Rightarrow
   "takeWhile_nat _ P xs \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (takeWhile (Rep_nat \<circ> P \<circ> Abs_nat) (Rep_nat xs))"
 
 lemma takeWhile_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   assumes "(cr_nat ===> cr_nat) P_nat P"
   shows "(cr_nat ===> cr_nat) (takeWhile_nat TYPE('a::lift_nat) P_nat)
   ((takeWhile :: ('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> 'a list) P)"
@@ -170,7 +164,6 @@ lemma takeWhile_nat_lifting[transfer_rule]:
 
 
 schematic_goal takeWhile_nat_synth:
-  includes lifting_syntax
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   assumes [transfer_rule]:"(cr_nat ===> cr_nat) P_nat P"
   shows "cr_nat ?t ((takeWhile :: ('a::lift_nat \<Rightarrow> bool) \<Rightarrow> _) P (Rep_nat xsn))"
@@ -178,7 +171,6 @@ schematic_goal takeWhile_nat_synth:
   by transfer_prover
 
 lemma takeWhile_nat_synth_def:
-  includes lifting_syntax
   fixes P :: "'a::lift_nat \<Rightarrow> bool" and xs :: "'a list"
   assumes "(cr_nat ===> cr_nat) P_nat P"
   assumes "xsn = Abs_nat xs"
@@ -201,7 +193,6 @@ definition head_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat"
   "head_nat _ xsn \<equiv> (Abs_nat :: 'a \<Rightarrow> nat) (head (Rep_nat xsn))"
 
 lemma head_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat) (head_nat TYPE('a::lift_nat)) (head :: 'a list \<Rightarrow> _)"
   unfolding head_nat_def cr_nat_def
   by(simp add: rel_fun_def)
@@ -233,13 +224,11 @@ definition append_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> na
   "append_nat _ xsn ysn \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (append (Rep_nat xsn) (Rep_nat ysn))"
 
 lemma append_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat) (append_nat TYPE('a::lift_nat))
   (append :: 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list)"
   by(simp add: append_nat_def rel_fun_def comp_def cr_nat_def)
 
 schematic_goal append_nat_synth:
-  includes lifting_syntax
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) ysn (Rep_nat ysn)"
   shows "cr_nat ?t ((append :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn) (Rep_nat ysn))"
@@ -269,7 +258,6 @@ definition plus_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "plus_nat m n \<equiv> Abs_nat (plus (Rep_nat m) (Rep_nat n))"
 
 lemma plus_nat_lifting[transfer_rule]:
-  includes lifting_syntax
   shows "(cr_nat ===> cr_nat ===> cr_nat) plus_nat plus"
   unfolding plus_nat_def cr_nat_def
   by(simp add: rel_fun_def)

@@ -8,12 +8,15 @@ theory Encode_Nat
   imports
     Main
     "HOL-Library.Nat_Bijection"
+    "HOL-Library.Simps_Case_Conv"
     "HOL-Library.Tree"
+    HOL_To_IMP_Minus.Compile_Nat
+    HOL_To_IMP_Minus.HOL_To_IMP_Minus_Fun_Pattern_Setup
     Test
   keywords
-    "test" :: thy_decl and
-    "test2" :: thy_decl and
-    "datatype_lift_nat" :: thy_decl
+    "datatype_lift_nat" :: thy_decl and
+    "function_lift_nat" :: thy_decl and
+    "test" :: thy_decl
 begin
 
 class lift_nat =
@@ -123,6 +126,12 @@ print_theorems
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
 | "reverset (l # ls) r = reverset ls (l # r)"
+
+
+
+function_lift_nat reverset
+print_theorems
+
 
 lemma reverset_rev: "reverset l r = rev l @ r"
   by (induction l r rule: reverset.induct; simp)

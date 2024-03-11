@@ -374,16 +374,33 @@ val _ =
     "Lift datatype to an encoding in natural numbers"
     (Parse.typ >> datatype_lift_nat_cmd >> (Toplevel.begin_main_target false));
 
+fun function_lift_nat_cmd t lthy =
+  let
+    val t = Syntax.read_term lthy t
+    val fun_name = Term.term_name t
+    val case_name = fun_name ^ "_case_def"
+    val fun_simps = if is_Const t
+      then Proof_Context.get_thms lthy (fun_name ^ ".simps")
+      else error ("Undefined function name: " ^ fun_name)
+    val case_thm = Simps_Case_Conv.to_case lthy fun_simps
+
+    val lthy = Local_Theory.note ((Binding.name case_name, []), [case_thm]) lthy |> snd;
+
+    val _ = Compile_Nat.get_compiled_const_def
+  in
+    lthy
+  end;
+
+val _ =
+  Outer_Syntax.local_theory
+    \<^command_keyword>\<open>function_lift_nat\<close>
+    "Test"
+    (Parse.term >> function_lift_nat_cmd);
+
 val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>test\<close>
     "Test"
-    (Parse.typ >> K I);
-
-val _ =
-  Outer_Syntax.local_theory
-    \<^command_keyword>\<open>test2\<close>
-    "Test2"
     (Parse.typ >> K I);
 
 
