@@ -12,7 +12,7 @@ theory Encode_Nat
     "HOL-Library.Tree"
     HOL_To_IMP_Minus.Compile_Nat
     HOL_To_IMP_Minus.HOL_To_IMP_Minus_Fun_Pattern_Setup
-    Test
+    Transport.Transport_Typedef_Base
   keywords
     "datatype_lift_nat" :: thy_decl and
     "function_lift_nat" :: thy_decl and
@@ -28,6 +28,8 @@ begin
 lemma inj_Abs_nat: "inj Abs_nat"
   by(rule inj_on_inverseI[of _ Rep_nat], simp)
 
+(*@Vollert: are you sure you don't want this to be "'a \<Rightarrow> nat \<Rightarrow> bool"? Usually, the type that should
+be transferred from stands on the left (Kevin)*)
 definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
 
@@ -37,9 +39,18 @@ lemma typedef_nat: "type_definition Abs_nat Rep_nat (Abs_nat ` UNIV)"
 lemmas typedef_nat_transfer[OF typedef_nat cr_nat_def, transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
+sublocale lift_nat_type_def :
+  type_definition Abs_nat Rep_nat "(Abs_nat ` UNIV)" by (fact typedef_nat)
+
 lemma cr_nat_Abs_nat[transfer_rule]:
   "cr_nat (Abs_nat x) x"
   unfolding cr_nat_def by simp
+
+lemma Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat:
+  "galois_rel.Galois (=) (=\<^bsub>range Abs_nat\<^esub>) Rep_nat = cr_nat\<inverse>"
+  unfolding cr_nat_def by (intro ext)
+  (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI)
+
 
 end
 

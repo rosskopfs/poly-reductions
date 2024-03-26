@@ -11,6 +11,7 @@ session Poly_Reductions_Lib in Lib = "HOL-Analysis" +
     "HOL-Real_Asymp"
     Landau_Symbols
     Graph_Theory
+    Transport
   directories
     Auxiliaries
     Graph_Extensions
