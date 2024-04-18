@@ -17,6 +17,7 @@ val extract_opt : (unit -> string) -> 'a option -> 'a
 val mk_Trueprop : term -> term
 val dest_Trueprop : term -> term
 val cdest_Trueprop : cterm -> cterm
+val mk_eq : term * term -> term
 val dest_eq : term -> term * term
 val cdest_eq : cterm -> cterm * cterm
 
@@ -53,6 +54,7 @@ val mk_Trueprop = HOLogic.mk_Trueprop
 val dest_Trueprop = HOLogic.dest_Trueprop
 val cdest_Trueprop = Thm.dest_arg
 
+val mk_eq = HOLogic.mk_eq
 val dest_eq = HOLogic.dest_eq
 val cdest_eq = Thm.dest_binop
 

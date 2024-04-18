@@ -84,21 +84,19 @@ val state_eq = curry (op aconv)
 val dest_STATE = \<^Const_fn>\<open>STATE _ for s => s\<close>
 val cdest_STATE = Thm.dest_arg
 
-val dest_STATE_eq_prop = HTIU.dest_Trueprop
-  #> \<^Const_fn>\<open>HOL.eq _ for s1 s2 => \<open>tap (apply2 dest_STATE) (s1, s2)\<close>\<close>
-val dest_STATE_eq_cprop = HTIU.cdest_eq o HTIU.cdest_Trueprop
+val dest_STATE_eq_prop = HTIU.dest_Trueprop #> HTIU.dest_eq #> tap (apply2 dest_STATE)
+val dest_STATE_eq_cprop = HTIU.cdest_Trueprop #> HTIU.cdest_eq
 val find_cstate_eq_prop = GU.find_first_index (can dest_STATE_eq_prop o Thm.term_of)
 
 (* state retrieval utils *)
 fun mk_state_retrieval state key = state $ key
 val dest_state_retrieval = Term.dest_comb
-fun is_state_state_retrieval state s_app = dest_state_retrieval s_app
-  |> fst |> state_eq state
+fun is_state_state_retrieval state s_app = dest_state_retrieval s_app |> fst |> state_eq state
 
 fun is_state_state_retrieval_eq state = GU.try_bool
-  (\<^Const_fn>\<open>HOL.eq _ for s_app _ => \<open>is_state_state_retrieval state s_app\<close>\<close>)
+  (HTIU.dest_eq #> fst #> is_state_state_retrieval state)
 fun is_state_state_retrieval_eq_prop state = GU.try_bool
-  (is_state_state_retrieval_eq state o HTIU.dest_Trueprop)
+  (HTIU.dest_Trueprop #> is_state_state_retrieval_eq state)
 fun find_state_state_retrieval_eq_prop lhs_state =
   GU.find_first_index (is_state_state_retrieval_eq_prop lhs_state o Thm.term_of)
 
@@ -106,10 +104,12 @@ fun find_state_state_retrieval_eq_prop lhs_state =
 
 val interp_reflect_thms = @{thms interp_state_State_eq}
 
+val safe_simp_tac = Simplifier.safe_simp_tac
+
 fun simp_interp_state_tac ctxt =
-  Simplifier.safe_simp_tac ctxt
-  THEN' Simplifier.safe_simp_tac (HTIU.set_simps ctxt interp_reflect_thms)
-  THEN' Simplifier.safe_simp_tac ctxt
+  safe_simp_tac ctxt
+  THEN' safe_simp_tac (HTIU.set_simps ctxt interp_reflect_thms)
+  THEN' safe_simp_tac ctxt
 
 fun interp_state_SIMPS_TO_thm_resultsq ctxt =
   Simps_To.SIMPS_TO_thm_resultsq (simp_interp_state_tac ctxt) ctxt
@@ -132,8 +132,8 @@ fun rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt state_retrieval_eq_th
   THEN' finish_SIMPS_TO_tac ctxt
 
 fun rewrite_state_retrieval_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
-  state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
-  |> Seq.map (rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt)
+  Seq_Monad.bind (state_retrieval_eq_if_SIMPS_TO_thmsq ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm)
+  (rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt #> Seq_Monad.pure)
 
 val rewrite_state_retrieval_tac = Seq_Monad.flat2 oooo rewrite_state_retrieval_tacsq
 
@@ -145,8 +145,8 @@ fun state_retrieval_eq_thmsq finish_eq_tac state_eq_thm
   let
     val goal = mk_state_retrieval state_lhs_state_SIMPS_TO_term key
       |> pair term
-      |> HOLogic.mk_eq
-      |> HOLogic.mk_Trueprop
+      |> HTIU.mk_eq
+      |> HTIU.mk_Trueprop
       |> Thm.cterm_of ctxt
     val rewrite_eq_tac =
       rewrite_all_state_retrieval_tac (HTIU.subst_first_tac ctxt o single) ctxt
@@ -209,7 +209,7 @@ val remove_state_eq_tac =
 
 fun pretty_state_eq ctxt cstate_eq =
   let
-    val simp_tac = Simplifier.safe_simp_tac (ctxt addsimps @{thms STATE_eq})
+    val simp_tac = safe_simp_tac (ctxt addsimps @{thms STATE_eq})
       THEN' simp_interp_state_tac ctxt
     val (_, simp_interp_state_eq) =
       Simps_To.SIMPS_TO_thm_resultsq simp_tac ctxt cstate_eq |> Seq.hd
@@ -228,7 +228,7 @@ val print_state_eq_tac =
 fun update_state_state_eq_updatesq simp_thms ctxt state_eq_thm
   interp_state_lhs_state_eq_SIMPS_TO_thm update_thm =
   let
-    val simp_tac = Simplifier.safe_simp_tac (HTIU.set_simps ctxt simp_thms)
+    val simp_tac = safe_simp_tac (HTIU.set_simps ctxt simp_thms)
       THEN' rewrite_all_state_retrieval_tac (HTIU.subst_first_tac ctxt o single) ctxt
         state_eq_thm interp_state_lhs_state_eq_SIMPS_TO_thm
     val tac =

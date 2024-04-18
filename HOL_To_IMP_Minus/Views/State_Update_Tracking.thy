@@ -5,15 +5,16 @@ theory State_Update_Tracking
     ML_Unification.Simps_To
     HOL_To_IMP_Base
     ML_State_Seq
+    (* ML_Typeclasses.ML_State_Seq *)
 begin
 
 lemma interp_state_State_eq: "interp_state (State s) = s"
   unfolding interp_state_def by simp
 
 paragraph \<open>Summary\<close>
-text \<open>Using @{type view}s to track sequential state updates. More precisely,
-we will keep track of a state equality that relates intermediate states
-to the initial state. This tracking happens in a special premise, which we set up next.\<close>
+text \<open>Using @{type state}s to track sequential state updates. More precisely,
+we will keep track of an equality that relates intermediate states
+to the initial state. This tracking happens in a protected premise, which we set up next.\<close>
 
 definition "STATE s \<equiv> s"
 

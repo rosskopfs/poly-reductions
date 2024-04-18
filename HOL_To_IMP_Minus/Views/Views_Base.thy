@@ -7,17 +7,6 @@ paragraph \<open>Summary\<close>
 text \<open>Views are abstractions of function restrictions. They consist of a
 state and set of keys on which the state is restricted on.\<close>
 
-lemma insert_impE:
-  assumes "\<And>v. v \<in> insert x X \<Longrightarrow> P v"
-  obtains "P x"
-  and "\<And>v. v \<in> X \<Longrightarrow> P v"
-  using assms by blast
-
-lemma insert_single_impE:
-  assumes "\<And>v. v \<in> insert x {} \<Longrightarrow> P v"
-  obtains "P x"
-  using assms by blast
-
 definition "K_undef \<equiv> \<lambda>_. undefined"
 
 datatype ('k, 'v) state = State "'k \<Rightarrow> 'v"
