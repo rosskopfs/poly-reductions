@@ -374,8 +374,76 @@ val _ =
     "Lift datatype to an encoding in natural numbers"
     (Parse.typ >> datatype_lift_nat_cmd >> (Toplevel.begin_main_target false));
 
+fun mk_related_self_thm t lthy =
+  let
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
+
+    val simp_ctxt =
+      lthy delsimps @{thms Fun_Rel_eq_eq_eq}
+      |> Raw_Simplifier.add_simp (@{thm sym} OF @{thms Fun_Rel_eq_eq_eq});
+    val thm =
+      infer_instantiate' lthy [SOME (Thm.cterm_of lthy t)] @{thm refl}
+      |> simplify simp_ctxt;
+
+    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val thm = Morphism.thm phi thm;
+
+    val name = Term.term_name t ^ "_related_self";
+  in
+    Local_Theory.note ((Binding.name name, @{attributes [trp_in_dom]}), [thm]) lthy |> snd
+  end;
+
+fun wrapper_transport_api binding yT cx lthy =
+  let
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
+    val ctxt = Transport_Util.set_proof_mode_schematic lthy;
+
+    val ([L, R, y], maxidx) =
+      let
+        val opts_constraints =
+          [Transport_Util.mk_hom_rel_type (Thm.typ_of_cterm cx), Transport_Util.mk_hom_rel_type yT, yT]
+          |> map Type.constraint;
+        val params_maxidx = ~1;
+        fun create_var n maxidx = Term_Util.fresh_var n dummyT params_maxidx ||> Integer.max maxidx;
+        val (ts, maxidx) =
+          fold_map create_var ["L", "R", "y"] params_maxidx
+          |>> map2 I opts_constraints;
+      in (ts, maxidx) end;
+
+    val goals =
+      Transport.setup_goals_blackbox ctxt (L, R, cx) maxidx
+      |> map fst;
+
+    val thms =
+      Goal.prove_common ctxt NONE [] [] goals
+        (fn {context=ctxt, ...} =>
+          HEADGOAL Goal.conjunction_tac
+          THEN HEADGOAL (Transport.transport_prover ctxt));
+
+    val (lthy, old_lthy) = `Local_Theory.end_nested ctxt;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val thms = map (Morphism.thm phi) thms;
+  in Transport.after_qed_blackbox (binding, NoSyn) [thms] lthy end;
+
+fun mk_trp_term t ctxt =
+  let
+    val binding = Binding.name (Term.term_name t ^ "_nat");
+    val yT = map (K \<^typ>\<open>pair_repr\<close>) (binder_types (fastype_of t)) ---> \<^typ>\<open>pair_repr\<close>;
+    val ct = normalize_type_of_term t |> Thm.cterm_of ctxt;
+  in wrapper_transport_api binding yT ct ctxt end;
+
+
+fun mk_lifting_thm t lthy =
+  let
+
+  in
+    lthy
+  end;
+
 fun function_lift_nat_cmd t lthy =
   let
+
     val t = Syntax.read_term lthy t
     val fun_name = Term.term_name t
     val case_name = fun_name ^ "_case_def"
@@ -384,9 +452,16 @@ fun function_lift_nat_cmd t lthy =
       else error ("Undefined function name: " ^ fun_name)
     val case_thm = Simps_Case_Conv.to_case lthy fun_simps
 
+
     val lthy = Local_Theory.note ((Binding.name case_name, []), [case_thm]) lthy |> snd;
 
-    val _ = Compile_Nat.get_compiled_const_def
+
+
+
+    val lthy = mk_related_self_thm t lthy
+    (* val (lthy, old_lthy) = `Local_Theory.end_nested lthy *);
+
+    val lthy = mk_trp_term t lthy
   in
     lthy
   end;

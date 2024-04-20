@@ -12,12 +12,17 @@ theory Encode_Nat
     "HOL-Library.Tree"
     HOL_To_IMP_Minus.Compile_Nat
     HOL_To_IMP_Minus.HOL_To_IMP_Minus_Fun_Pattern_Setup
+    Transport.HOL_Alignment_Functions
+    Transport.Transport_Prototype
     Transport.Transport_Typedef_Base
   keywords
     "datatype_lift_nat" :: thy_decl and
     "function_lift_nat" :: thy_decl and
     "test" :: thy_decl
 begin
+
+
+section\<open>Encoding of datatypes\<close>
 
 class lift_nat =
   fixes Abs_nat :: "'a \<Rightarrow> nat"
@@ -49,19 +54,12 @@ lemma cr_nat_Abs_nat[transfer_rule]:
 lemma Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat:
   "galois_rel.Galois (=) (=\<^bsub>range Abs_nat\<^esub>) Rep_nat = cr_nat\<inverse>"
   unfolding cr_nat_def by (intro ext)
-  (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI)
-
+    (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI)
 
 end
 
 
 type_synonym pair_repr = nat
-
-
-datatype ('a, 'b) keyed_list_tree =
-  KLeaf |
-  KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
-
 
 definition pair :: "pair_repr \<Rightarrow> pair_repr \<Rightarrow> pair_repr"
   where "pair l r = prod_encode (l, r)"
@@ -98,10 +96,36 @@ corollary prod_decode_less_intro[termination_simp]:
   by (cases "prod_decode v"; fastforce simp add: fstP_def prod_encode_less)+
 
 
+
+section\<open>Translation of functions\<close>
+
+
+(*PER for lift_nat class*)
+lemmas lift_nat_partial_equivalence_rel_equivalence =
+  iffD1[OF
+    transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
+    lift_nat_type_def.partial_equivalence_rel_equivalenceI]
+
+(*register PER*)
+declare lift_nat_partial_equivalence_rel_equivalence[per_intro]
+
+(*nicer relatedness theorem output*)
+declare Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat[trp_relator_rewrite]
+
+
+
+
+
 declare [[ML_print_depth = 50]]
+declare [[show_types = true]]
 ML_file \<open>./Encode_Nat.ML\<close>
 
-declare [[show_types = true]]
+
+
+
+(* Encoding of standard datatypes *)
+
+
 
 datatype_lift_nat nat
 print_theorems
@@ -121,15 +145,97 @@ print_theorems
 datatype_lift_nat tree
 print_theorems
 
-datatype_lift_nat keyed_list_tree
-print_theorems
-
 datatype_lift_nat num
 print_theorems
 
 datatype_lift_nat option
 print_theorems
 
+
+(* Example of more complex datatype *)
+
+datatype ('a, 'b) keyed_list_tree =
+  KLeaf |
+  KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
+
+datatype_lift_nat keyed_list_tree
+print_theorems
+
+
+
+(* Examples of translating functions *)
+
+unbundle lifting_syntax
+
+fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "rev_tr acc [] = acc"
+| "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
+
+function_lift_nat rev_tr
+print_theorems
+
+lemma rev_tr_nat_lifting[transfer_rule]:
+  "(cr_nat ===> cr_nat ===> cr_nat) (rev_tr_nat TYPE('a::lift_nat)) (rev_tr :: 'a list \<Rightarrow> _)"
+  unfolding rel_fun_eq_Fun_Rel_rel
+  by (fact rev_tr_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+
+schematic_goal rev_tr_nat_synth:
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
+  shows "cr_nat ?t ((rev_tr :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat accn) (Rep_nat xsn))"
+  apply (subst rev_tr_case_def)
+  by transfer_prover
+
+
+lemma rev_tr_nat_synth_def:
+  fixes acc :: "'a::lift_nat list" and xs :: "'a list"
+  assumes "accn = Abs_nat acc"
+  assumes "xsn = Abs_nat xs"
+  shows "rev_tr_nat TYPE('a) accn xsn
+    = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (Cons_nat x3a accn)) xsn"
+  apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
+    apply(use assms in \<open>simp_all add: rev_tr_nat_app_eq\<close>)
+  done
+
+
+thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
+
+
+
+
+
+
+
+
+fun swap :: "'a \<times> 'b \<Rightarrow> 'b \<times> 'a" where
+  "swap (a, b) = (b, a)"
+
+function_lift_nat swap
+print_theorems
+
+term swap_nat
+
+lemma swap_nat_lifting[transfer_rule]:
+  "(cr_nat ===> cr_nat) (swap_nat TYPE('a::lift_nat) TYPE('b::lift_nat)) (swap :: 'a \<times> 'b \<Rightarrow> _)"
+  unfolding rel_fun_eq_Fun_Rel_rel
+  by (fact swap_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+
+schematic_goal swap_nat_synth:
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<times> 'b \<Rightarrow> bool) pn (Rep_nat pn)"
+  shows "cr_nat ?t ((swap :: 'a::lift_nat \<times> 'b::lift_nat \<Rightarrow> _) (Rep_nat pn))"
+  apply (subst swap_case_def)
+  by transfer_prover
+
+lemma swap_nat_synth_def:
+  fixes p :: "'a::lift_nat \<times> 'b::lift_nat"
+  assumes "pn = Abs_nat p"
+  shows "swap_nat TYPE('a) TYPE('b) pn
+    = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (pn::nat)"
+  apply(rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
+  using assms apply(simp add: swap_nat_app_eq; subst Rep_nat_Abs_nat_id; simp)+
+  done
+
+thm swap_nat_synth_def[unfolded case_prod_nat_def]
 
 
 (* functions for tesiting later *)
@@ -243,16 +349,6 @@ next
         List.append.append_Cons, simp add: append_nil flip: append.simps del: reverse.simps
         List.append.append_Cons)
 qed
-
-
-
-fun plus where
-  "plus 0 n = n"
-| "plus (Suc m) n = plus m (Suc n)"
-
-lemma plus_equiv: "plus a b = a + b"
-  by(induction a arbitrary: b; simp)
-
 
 
 

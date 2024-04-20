@@ -4,8 +4,6 @@ theory Lifting_Nat
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Simps_Case_Conv"
     Encode_Nat
-    Transport.Transport_Prototype
-    Transport.HOL_Alignment_Functions
 begin
 
 unbundle lifting_syntax
@@ -38,61 +36,7 @@ schematic_goal
 
 (* lift_nat *)
 
-fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
-  "rev_tr acc [] = acc"
-| "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
-case_of_simps rev_tr_case_def: rev_tr.simps
-print_theorems
-
-
-(*PER for lift_nat class*)
-lemmas lift_nat_partial_equivalence_rel_equivalence = iffD1[OF
-  transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
-  lift_nat_type_def.partial_equivalence_rel_equivalenceI]
-
-(*register PER*)
-declare lift_nat_partial_equivalence_rel_equivalence[per_intro]
-(*nicer relatedness theorem output*)
-declare Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat[trp_relator_rewrite]
-
-(*only relation-respecting functions can be transported*)
-lemma rev_tr_related_self [trp_in_dom]:
-  "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) rev_tr rev_tr"
-  by auto
-
-trp_term rev_tr_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where x = "rev_tr :: ('a :: lift_nat) list \<Rightarrow> _"
-  by trp_prover
-
-(*here are the theorems*)
-print_theorems
-
-lemma rev_tr_nat_lifting[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat) (rev_tr_nat TYPE('a::lift_nat)) (rev_tr :: 'a list \<Rightarrow> _)"
-  unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact rev_tr_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
-
-schematic_goal rev_tr_nat_synth:
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
-  shows "cr_nat ?t ((rev_tr :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat accn) (Rep_nat xsn))"
-  apply (subst rev_tr_case_def)
-  by transfer_prover
-
-
-lemma rev_tr_nat_synth_def:
-  fixes acc :: "'a::lift_nat list" and xs :: "'a list"
-  assumes "accn = Abs_nat acc"
-  assumes "xsn = Abs_nat xs"
-  shows "rev_tr_nat TYPE('a) accn xsn
-    = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (Cons_nat x3a accn)) xsn"
-  apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
-    apply(use assms in \<open>simp_all add: rev_tr_nat_app_eq\<close>)
-  done
-
-
-\<comment> \<open>Final theorem that can be passed to the IMP compiler\<close>
-thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 
 
 
