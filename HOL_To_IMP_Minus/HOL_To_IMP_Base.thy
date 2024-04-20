@@ -11,7 +11,7 @@ paragraph \<open>Summary\<close>
 text \<open>Basic setup and general ML utilities.\<close>
 
 setup_result HOL_to_IMP_base_logger =
-  \<open>Logger.new_logger Logger.root_logger "HOL_To_IMP_Base"\<close>
+  \<open>Logger.new_logger Logger.root "HOL_To_IMP_Base"\<close>
 
 ML_file\<open>hol_to_imp_util.ML\<close>
 

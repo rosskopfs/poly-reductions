@@ -69,7 +69,7 @@ end
 structure State_Update_Tracking : STATE_UPDATE_TRACKING =
 struct
 
-val logger = Logger.setup_new_logger Logger.root_logger "State_Update_Tracking"
+val logger = Logger.setup_new_logger Logger.root "State_Update_Tracking"
 
 (*TODO: FIXME: use SIMPS_TO_UNIF instead of SIMPS_TO*)
 fun finish_SIMPS_TO_tac ctxt = resolve_tac ctxt [@{thm SIMPS_TOI}]
