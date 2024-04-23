@@ -1,5 +1,5 @@
 theory GOTO
-  imports Main (*"HOL-IMP.Compiler"*)
+  imports Main "HOL-IMP.Star" (*"HOL-IMP.Compiler"*)
 begin
 
 (* what does this mean? *)
@@ -56,4 +56,21 @@ lemma exec1I [intro, code_pred_intro]:
   "c' = iexec (P !! (p - 1)) (p, s) \<Longrightarrow> 0 < p \<Longrightarrow> p \<le> size P \<Longrightarrow> P \<turnstile> (p, s) \<rightarrow> c'"
   by (simp add: exec1_def of_nat_diff)
 
+abbreviation 
+  exec :: "GOTO_prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>*/ _))" 50)
+where
+  "exec P \<equiv> star (exec1 P)"
+
+lemmas exec_induct = star.induct [of "exec1 P", split_format(complete)]
+
+code_pred exec1 using exec1I exec1_def by auto
+
+(*
+values
+  "{(p, map t [''x'',''y'']) | p t. (
+    [''x'' ::= N 3, ''z'' ::= V ''x'', HALT] \<turnstile>
+    (1, (\<lambda>x. 0)(''x'' := 3)) \<rightarrow>* (p, t))}"
+
+  Warning: do not terminate. Why?
+*)
 end
