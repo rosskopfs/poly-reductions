@@ -2,6 +2,18 @@ theory GOTO
   imports Main "HOL-IMP.Star" (*"HOL-IMP.Compiler"*)
 begin
 
+text \<open>The automatic transform from index of list to index of GOTO prog is done here\<close>
+fun inth :: "'a list \<Rightarrow> nat \<Rightarrow> 'a" (infixl "!!" 100) where
+  "(x # xs) !! i = (if i = 1 then x else xs !! (i - 1))"
+
+text \<open>The only additional lemma we need about this function is indexing over append:\<close>
+lemma inth_append [simp]:
+  "0 < i \<Longrightarrow> i \<le> length xs + length ys \<Longrightarrow> xs \<noteq> [] \<Longrightarrow> ys \<noteq> [] \<Longrightarrow>
+  (xs @ ys) !! i = (if i \<le> size xs then xs !! i else ys !! (i - size xs))" 
+  apply (induction xs arbitrary: i) apply (auto simp: algebra_simps)
+  apply (metis Suc_le_mono Suc_pred diff_is_0_eq list.size(3) neq0_conv trans_le_add1)
+  by (smt (verit, ccfv_threshold) Suc_pred append_Nil diff_Suc_Suc diff_is_0_eq le0 list.size(3) neq0_conv)
+
 type_synonym vname = string
 type_synonym val = int
 type_synonym state = "vname \<Rightarrow> val"
@@ -38,10 +50,10 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
   )"
 
 definition exec1 :: "GOTO_prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>/ _))" [59,0,59] 60) where
-  "P \<turnstile> c \<rightarrow> c' = (\<exists>p s. c = (p, s) \<and> c' = iexec (P ! (p - 1)) c \<and> 0 < p \<and> p \<le> size P)"
+  "P \<turnstile> c \<rightarrow> c' = (\<exists>p s. c = (p, s) \<and> c' = iexec (P !! p) c \<and> 0 < p \<and> p \<le> size P)"
 
 lemma exec1I [intro, code_pred_intro]:
-  "c' = iexec (P ! (p - 1)) (p, s) \<Longrightarrow> 0 < p \<Longrightarrow> p \<le> size P \<Longrightarrow> P \<turnstile> (p, s) \<rightarrow> c'"
+  "c' = iexec (P !! p) (p, s) \<Longrightarrow> 0 < p \<Longrightarrow> p \<le> size P \<Longrightarrow> P \<turnstile> (p, s) \<rightarrow> c'"
   by (simp add: exec1_def of_nat_diff)
 
 abbreviation 
