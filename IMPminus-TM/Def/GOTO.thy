@@ -1,5 +1,5 @@
 theory GOTO
-  imports Main "HOL-IMP.Star" (*"HOL-IMP.Compiler"*)
+  imports Main "HOL-IMP.Star" Global_Defs
 begin
 
 text \<open>The automatic transform from index of list to index of GOTO prog is done here\<close>
@@ -14,9 +14,6 @@ lemma inth_append [simp]:
   apply (metis Suc_le_mono Suc_pred diff_is_0_eq list.size(3) neq0_conv trans_le_add1)
   by (smt (verit, ccfv_threshold) Suc_pred append_Nil diff_Suc_Suc diff_is_0_eq le0 list.size(3) neq0_conv)
 
-type_synonym vname = string
-type_synonym val = int
-type_synonym state = "vname \<Rightarrow> val"
 type_synonym label = nat
 type_synonym pc = nat
 
