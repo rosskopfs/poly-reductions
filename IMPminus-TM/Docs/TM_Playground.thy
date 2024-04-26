@@ -1,7 +1,7 @@
 text \<open>Here are some examples that might help with understanding of the TM from Cook_Levin\<close>
 
 theory TM_Playground
-  imports Cook_Levin.Basics "IMP_Minus.AExp"
+  imports Cook_Levin.Basics Cook_Levin.Combinations
 begin
 
 subsection \<open>Helper functions\<close>
@@ -73,27 +73,68 @@ lemma "turing_machine 2 4 copy_paste_machine"
   unfolding turing_machine_def copy_paste_machine_def
   using cp_tm_cmd_214 by auto
 
+definition start_content :: "symbol list" where
+  "start_content = string_to_symbols [\<bbbI>,\<bbbO>,\<bbbI>,\<bbbO>, \<bbbO>,\<bbbO>,\<bbbI>,\<bbbO>]" \<comment> \<open>42 in little-endian\<close>
+definition start_cfg_eg :: "config" where
+  "start_cfg_eg = start_config 2 start_content"
+value "print_tape start_cfg_eg 0 10"
+value "print_tape start_cfg_eg 1 10"
+
 \<comment> \<open>An example of the executing of the copy-paste machine.
-    Start configuration: the 0-th tape has 5 \<triangleright>'s and then \<box>'s on it;
-    The 1st tape is full of \<box>'s.
-    Showing the first 10 symbols on the 1st tape after each of the first 8 steps.\<close>
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 0) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 1) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 2) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 3) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 4) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 5) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 6) 1 10"
-value "print_tape (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 7) 1 10"
-\<comment> \<open>Same example as above, showing the state after each of the first 8 steps.\<close>
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 0)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 1)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 2)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 3)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 4)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 5)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 6)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 7)"
-value "fst (execute copy_paste_machine (0, [(\<lambda>n. if n \<ge> 5 then \<box> else \<triangleright>, 0), (\<lambda>n. \<box>, 0)]) 8)"
+    Showing the first 10 symbols on the 1st tape after each of the first 12 steps.\<close>
+value "print_tape (execute copy_paste_machine start_cfg_eg 0) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 1) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 2) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 3) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 4) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 5) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 6) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 7) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 8) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 9) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 10) 1 10"
+value "print_tape (execute copy_paste_machine start_cfg_eg 11) 1 10"
+\<comment> \<open>Same example as above, showing the position of head on tape 0 after each of the first 12 steps.\<close>
+value "(execute copy_paste_machine start_cfg_eg 0) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 1) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 2) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 3) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 4) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 5) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 6) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 7) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 8) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 9) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 10) <#> 0"
+value "(execute copy_paste_machine start_cfg_eg 11) <#> 0"
+\<comment> \<open>Same example as above, showing the state after each of the first 12 steps.\<close>
+value "fst (execute copy_paste_machine start_cfg_eg 0)"
+value "fst (execute copy_paste_machine start_cfg_eg 1)"
+value "fst (execute copy_paste_machine start_cfg_eg 2)"
+value "fst (execute copy_paste_machine start_cfg_eg 3)"
+value "fst (execute copy_paste_machine start_cfg_eg 4)"
+value "fst (execute copy_paste_machine start_cfg_eg 5)"
+value "fst (execute copy_paste_machine start_cfg_eg 6)"
+value "fst (execute copy_paste_machine start_cfg_eg 7)"
+value "fst (execute copy_paste_machine start_cfg_eg 8)"
+value "fst (execute copy_paste_machine start_cfg_eg 9)"
+value "fst (execute copy_paste_machine start_cfg_eg 10)"
+value "fst (execute copy_paste_machine start_cfg_eg 11)"
+
+definition end_cfg_eg :: "config" where
+  "end_cfg_eg = (1, [(\<lfloor>start_content\<rfloor>, 10), (\<lfloor>start_content\<rfloor>, 10)])"
+value "print_tape end_cfg_eg 0 10"
+value "print_tape end_cfg_eg 1 10"
+
+lemma "transits copy_paste_machine start_cfg_eg 12 end_cfg_eg"
+  sorry (* TODO: How to prove? *)
+
+
+lemma "transforms copy_paste_machine
+       [(\<lfloor>start_content\<rfloor>, 0), (\<lfloor>[]\<rfloor>, 0)]
+       12
+       [(\<lfloor>start_content\<rfloor>, 0), (\<lfloor>start_content\<rfloor>, 0)]"
+  sorry (* TODO: proof using tform *)
+
 
 end
