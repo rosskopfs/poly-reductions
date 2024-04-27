@@ -31,7 +31,7 @@ The runtime of the reduced program should be in polynomial time with respect to 
 
 #### Idea
 
-1. Length of block M: $\mathcal{O}(|Q| \dot |\Gamma|^k)$
+1. Length of block M: $\mathcal{O}(|Q| \cdot |\Gamma|^k)$
 
    - Important is how many `IF q=_ AND read_chars=_ THEN GOTO _`'s there are
    - That's equal to the number of possible values of `q` times that of `read_chars`
@@ -46,7 +46,7 @@ The runtime of the reduced program should be in polynomial time with respect to 
    - Modification to the head positions of each tape takes k steps as well
    - The length of one such block is in $\mathcal{O}(k)$
 
-3. Total runtime: $\mathcal{O}(t \dot (|Q| \dot |\Gamma|^k + k)) = \mathcal{O}(t)$
+3. Total runtime: $\mathcal{O}(t \cdot (|Q| \cdot |\Gamma|^k + k)) = \mathcal{O}(t)$
 
    - The program is executed sequentially within each blocks labelled above, hence the runtime within each block won't exceed its length
 
