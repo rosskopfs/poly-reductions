@@ -27,7 +27,7 @@ datatype instr =
   RSH vname (\<open>_ \<bind>1\<close>) |
   MOD vname (\<open>_ %=2\<close>) |
   JMP label (\<open>GOTO _\<close>) |
-  CONDJMP vname operi label (\<open>IF _ = _ THEN GOTO _\<close>)
+  CONDJMP vname label (\<open>IF _\<noteq>0 THEN GOTO _\<close>)
 
 type_synonym GOTO_prog = "instr list"
 type_synonym config = "pc \<times> state"
@@ -45,9 +45,7 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
       x \<bind>1 \<Rightarrow> (p + 1, s(x := s x div 2)) |
       x %=2 \<Rightarrow> (p + 1, s(x := s x mod 2)) |
       GOTO i \<Rightarrow> (i, s) | 
-      IF x = t THEN GOTO i \<Rightarrow> (case t of 
-        N c \<Rightarrow> if s x = c then (i, s) else (p, s) | 
-        V y \<Rightarrow> if s x = s y then (i, s) else (p, s))
+      IF x\<noteq>0 THEN GOTO i \<Rightarrow> (if s x \<noteq> 0 then (i, s) else (p + 1, s))
   )"
 
 definition exec1 :: "GOTO_prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>/ _))" [59,0,59] 60) where
