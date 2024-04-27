@@ -137,4 +137,89 @@ lemma "transforms copy_paste_machine
   sorry (* TODO: proof using tform *)
 
 
+subsection \<open>Example 2: XOR machine\<close>
+text \<open>Calculates bitwise XOR of the first two (0-th and 1st) tapes, stores the result on the 2nd tape,
+with tape character \<zero> as 0, \<one> as 1
+state 0: ready (waiting for the start symbol); state 1: calculating; state >=2: end\<close>
+
+fun XOR :: "symbol \<Rightarrow> symbol \<Rightarrow> symbol" where
+  "XOR a b = (if a=b then \<zero> else \<one>)"
+lemma XOR_I[intro]: "XOR a b \<le> 4" by auto
+
+definition XOR_command :: command where
+  "XOR_command = (
+    \<lambda> symbs.
+      (if symbs ! 0 = \<box> then 2 else 1, \<comment> \<open>new state\<close>
+       [(symbs ! 0, Right), \<comment> \<open>0-th tape remains the same\<close>
+        (symbs ! 1, Right), \<comment> \<open>1st tape remains the same\<close>
+        (XOR (symbs ! 0) (symbs ! 1), Right)]) \<comment> \<open>Write XOR result to the 2nd tape\<close>
+   )"
+
+lemma "wf_command 3 2 XOR_command"
+  unfolding XOR_command_def
+  unfolding wf_command_def
+  by simp
+
+lemma XOR_tm_cmd_314: "turing_command 3 2 4 XOR_command"
+  unfolding XOR_command_def
+  unfolding turing_command_def
+  unfolding wf_command_def
+  apply auto
+  apply (metis Suc_lessD add_2_eq_Suc' fst_conv lessI less_2_cases_iff less_SucE nth_Cons_0 nth_Cons_Suc numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0)
+  using less_Suc_eq numeral_3_eq_3 by force
+
+definition start_command :: command where
+  "start_command = (
+    \<lambda> symbs.
+      (if symbs ! 0 = \<triangleright> then 1 else 0,
+       [(symbs ! 0, Right), (symbs ! 1, Right), (symbs ! 2, Right)]))"
+
+lemma start_cmd_tm_cmd_324: "turing_command 3 2 4 start_command"
+  unfolding start_command_def
+  unfolding turing_command_def
+  unfolding wf_command_def
+  apply auto
+  using less_Suc_eq_0_disj numeral_3_eq_3 by fastforce
+
+definition XOR_machine :: machine where
+  "XOR_machine = [start_command, XOR_command]"
+
+lemma "turing_machine 3 4 XOR_machine"
+  unfolding turing_machine_def XOR_machine_def
+  using XOR_tm_cmd_314 start_cmd_tm_cmd_324
+  by (metis One_nat_def Suc_1 Suc_leD le_refl length_Cons list.distinct(1) list.set_cases list.size(3) numeral_3_eq_3 set_ConsD)
+
+definition start_cfg_XOR :: "config" where
+  "start_cfg_XOR = (0,
+  (\<lfloor>string_to_symbols [\<bbbI>,\<bbbO>,\<bbbI>,\<bbbO>, \<bbbO>,\<bbbO>,\<bbbI>,\<bbbO>]\<rfloor>, 0) #
+  (\<lfloor>string_to_symbols [\<bbbO>,\<bbbI>,\<bbbO>,\<bbbI>, \<bbbO>,\<bbbI>,\<bbbI>,\<bbbO>]\<rfloor>, 0) #
+  (\<lfloor>[]\<rfloor>, 0) # []
+)"
+
+value "print_tape start_cfg_XOR 0 10"
+value "print_tape start_cfg_XOR 1 10"
+value "print_tape start_cfg_XOR 2 10"
+
+\<comment> \<open>Showing the first 10 symbols on the 1st tape after each of the first 12 steps.\<close>
+value "print_tape (execute XOR_machine start_cfg_XOR 0) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 1) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 2) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 3) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 4) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 5) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 6) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 7) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 8) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 9) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 10) 2 10"
+value "print_tape (execute XOR_machine start_cfg_XOR 11) 2 10"
+
+\<comment> \<open>Showing the state after each of the first 12 steps.\<close>
+value "fst (execute XOR_machine start_cfg_XOR 0)"
+value "fst (execute XOR_machine start_cfg_XOR 1)"
+value "fst (execute XOR_machine start_cfg_XOR 9)"
+value "fst (execute XOR_machine start_cfg_XOR 10)"
+value "fst (execute XOR_machine start_cfg_XOR 11)"
+
+
 end
