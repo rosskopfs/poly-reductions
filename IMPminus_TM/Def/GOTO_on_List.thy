@@ -6,6 +6,17 @@ theory GOTO_on_List
   imports Global_Defs "HOL-IMP.Star"
 begin
 
+(*TODO: rewrite all documentations using LaTeX syntax *)
+text \<open>The value of variables in GOTO_on_List programs are lists.
+The length of the lists in a GOTO_on_List program, reduced from a multitape-TM, can be one of the following:
+1. length = 1, with the current state of the TM as the only element.
+  Luckly our TM uses type nat for both states and tape characters, so this unification is possible.
+2. length = k, where k is the number of tapes in the TM.
+  Storing the positions of heads on each tape, and the characters at those positions on each tape
+3. length = maximum length of a tape in the TM during execution.
+  Storing the content of tapes. Depending on the implementation of the reducing algorithm from IMP- to TM,
+  this length should be bounded to \<O>(t), where t is the runtime of the original IMP- program.\<close>
+
 datatype GOTO\<^sub>l_operi =
   L "val list" |
   V\<^sub>l vname |
