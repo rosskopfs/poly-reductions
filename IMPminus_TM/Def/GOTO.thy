@@ -1,5 +1,5 @@
 theory GOTO
-  imports Main "HOL-IMP.Star" Global_Defs
+  imports Main Global_Defs "HOL-IMP.Star"
 begin
 
 text \<open>The automatic transform from index of list to index of GOTO prog is done here\<close>
@@ -24,6 +24,8 @@ datatype instr =
   ASSIGN vname operi (\<open>_ ::= _\<close>) |
   ADD vname operi (\<open>_ += _\<close>) |
   SUB vname operi (\<open>_ -= _\<close>) |
+  RSH vname (\<open>_ \<bind>1\<close>) |
+  MOD vname (\<open>_ %=2\<close>) |
   JMP label (\<open>GOTO _\<close>) |
   CONDJMP vname operi label (\<open>IF _ = _ THEN GOTO _\<close>)
 
@@ -40,6 +42,8 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
       x ::= t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := c) | V y \<Rightarrow> s(x := s y)) |
       x += t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := s x + c) | V y \<Rightarrow> s(x := s x + s y)) | 
       x -= t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := s x - c) | V y \<Rightarrow> s(x := s x - s y)) | 
+      x \<bind>1 \<Rightarrow> (p + 1, s(x := s x div 2)) |
+      x %=2 \<Rightarrow> (p + 1, s(x := s x mod 2)) |
       GOTO i \<Rightarrow> (i, s) | 
       IF x = t THEN GOTO i \<Rightarrow> (case t of 
         N c \<Rightarrow> if s x = c then (i, s) else (p, s) | 

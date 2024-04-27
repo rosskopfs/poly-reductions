@@ -75,3 +75,9 @@ session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
     Primitives_IMP_Minus
     IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
     Binary_Arithmetic_IMP
+    
+session "IMPminus_TM-Def" in "IMPminus_TM/Def" = IMP_Minus + 
+  theories
+    Global_Defs
+    GOTO
+
