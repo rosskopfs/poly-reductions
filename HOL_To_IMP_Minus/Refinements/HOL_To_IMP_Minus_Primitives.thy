@@ -29,6 +29,7 @@ declare_compiled_const True
 
 HOL_To_IMP_Minus_func_correct true_nat by cook
 
+
 lemma true_nat_eq_one[simp]: "true_nat = 1" unfolding true_nat_def by simp
 
 lemma is_true_nat_true_nat[iff]: "is_true_nat true_nat" by simp
