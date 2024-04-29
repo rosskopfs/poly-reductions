@@ -24,6 +24,9 @@ begin
 
 section\<open>Encoding of datatypes\<close>
 
+
+(* TODO: Shouldn't the signature (or names) of \<^term>\<open>Abs_nat\<close> and \<^term>\<open>Rep_nat\<close> be swapped?
+  In \<^locale>\<open>type_definition\<close>, the names are the other way around. *)
 class lift_nat =
   fixes Abs_nat :: "'a \<Rightarrow> nat"
   fixes Rep_nat :: "nat \<Rightarrow> 'a"
@@ -33,19 +36,15 @@ begin
 lemma inj_Abs_nat: "inj Abs_nat"
   by(rule inj_on_inverseI[of _ Rep_nat], simp)
 
-(*@Vollert: are you sure you don't want this to be "'a \<Rightarrow> nat \<Rightarrow> bool"? Usually, the type that should
-be transferred from stands on the left (Kevin)*)
 definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
 
-lemma typedef_nat: "type_definition Abs_nat Rep_nat (Abs_nat ` UNIV)"
+sublocale lift_nat_type_def: type_definition Abs_nat Rep_nat "(Abs_nat ` UNIV)"
   by (unfold_locales) auto
 
-lemmas typedef_nat_transfer[OF typedef_nat cr_nat_def, transfer_rule] =
+lemmas
+  typedef_nat_transfer[OF lift_nat_type_def.type_definition_axioms cr_nat_def, transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
-
-sublocale lift_nat_type_def :
-  type_definition Abs_nat Rep_nat "(Abs_nat ` UNIV)" by (fact typedef_nat)
 
 lemma cr_nat_Abs_nat[transfer_rule]:
   "cr_nat (Abs_nat x) x"
@@ -57,7 +56,6 @@ lemma Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat:
     (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI)
 
 end
-
 
 type_synonym pair_repr = nat
 
@@ -113,13 +111,13 @@ declare lift_nat_partial_equivalence_rel_equivalence[per_intro]
 declare Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat[trp_relator_rewrite]
 
 
-
+lemma rel_inv_Fun_Rel_rel_eq[simp]: "(R \<Rrightarrow> S )\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
+  by (intro ext) auto
 
 
 declare [[ML_print_depth = 50]]
-declare [[show_types = true]]
+declare [[show_types = false]]
 ML_file \<open>./Encode_Nat.ML\<close>
-
 
 
 
@@ -171,13 +169,30 @@ fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
+
+lemma "((=) \<Rrightarrow> (=) \<Rrightarrow> (=)) rev_tr rev_tr"
+  unfolding Fun_Rel_rel_def
+  apply auto
+  done
+
+ML \<open>
+  \<^term>\<open>TYPE('a::lift_nat)\<close>
+\<close>
+
 function_lift_nat rev_tr
 print_theorems
+
+thm rel_fun_eq_Fun_Rel_rel
+ML \<open>
+  rewrite_rule @{context} @{thms rel_fun_eq_Fun_Rel_rel}
+\<close>
+
+thm rev_tr_nat_related'
 
 lemma rev_tr_nat_lifting[transfer_rule]:
   "(cr_nat ===> cr_nat ===> cr_nat) (rev_tr_nat TYPE('a::lift_nat)) (rev_tr :: 'a list \<Rightarrow> _)"
   unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact rev_tr_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  by (fact rev_tr_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 schematic_goal rev_tr_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
@@ -218,7 +233,7 @@ term swap_nat
 lemma swap_nat_lifting[transfer_rule]:
   "(cr_nat ===> cr_nat) (swap_nat TYPE('a::lift_nat) TYPE('b::lift_nat)) (swap :: 'a \<times> 'b \<Rightarrow> _)"
   unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact swap_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  by (fact swap_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 schematic_goal swap_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<times> 'b \<Rightarrow> bool) pn (Rep_nat pn)"
@@ -243,7 +258,6 @@ thm swap_nat_synth_def[unfolded case_prod_nat_def]
 fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverset [] r = r"
 | "reverset (l # ls) r = reverset ls (l # r)"
-
 
 
 function_lift_nat reverset

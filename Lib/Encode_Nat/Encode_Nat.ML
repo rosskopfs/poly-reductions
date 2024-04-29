@@ -374,24 +374,33 @@ val _ =
     "Lift datatype to an encoding in natural numbers"
     (Parse.typ >> datatype_lift_nat_cmd >> (Toplevel.begin_main_target false));
 
+fun mk_Fun_Rel R S =
+  let
+    val ((RA, RB), RT) = `BNF_Util.dest_pred2T (fastype_of R);
+    val ((SA, SB), ST) = `BNF_Util.dest_pred2T (fastype_of S);
+  in
+    Const (\<^const_name>\<open>Fun_Rel_rel\<close>, RT --> ST --> (RA --> SA) --> (RB --> SB) --> \<^typ>\<open>bool\<close>) $ R $ S
+  end;
+
 fun mk_related_self_thm t lthy =
   let
     val (_, lthy) = (Local_Theory.begin_nested lthy);
 
-    val simp_ctxt =
-      lthy delsimps @{thms Fun_Rel_eq_eq_eq}
-      |> Raw_Simplifier.add_simp (@{thm sym} OF @{thms Fun_Rel_eq_eq_eq});
-    val thm =
-      infer_instantiate' lthy [SOME (Thm.cterm_of lthy t)] @{thm refl}
-      |> simplify simp_ctxt;
+    val rel_const_name = fst (dest_Const \<^term>\<open>lift_nat_type_def.R\<close>)
+    val rels =
+      strip_type (fastype_of t)
+      |> (op @) o apsnd single
+      |> map (fn T => Const (rel_const_name, T --> T --> HOLogic.boolT))
 
-    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
-    val phi = Proof_Context.export_morphism old_lthy lthy;
-    val thm = Morphism.thm phi thm;
+    val goal = (Library.foldr1 (uncurry mk_Fun_Rel) rels) $ t $ t  |> mk_Trueprop
+
+    val thm = Goal.prove lthy [] [] goal (fn {context=ctxt, ...} => asm_full_simp_tac ctxt 1);
 
     val name = Term.term_name t ^ "_related_self";
+    val lthy = Local_Theory.note ((Binding.name name, @{attributes [trp_in_dom]}), [thm]) lthy |> snd
+
   in
-    Local_Theory.note ((Binding.name name, @{attributes [trp_in_dom]}), [thm]) lthy |> snd
+    Local_Theory.end_nested lthy
   end;
 
 fun wrapper_transport_api binding yT cx lthy =
@@ -421,10 +430,9 @@ fun wrapper_transport_api binding yT cx lthy =
           HEADGOAL Goal.conjunction_tac
           THEN HEADGOAL (Transport.transport_prover ctxt));
 
-    val (lthy, old_lthy) = `Local_Theory.end_nested ctxt;
-    val phi = Proof_Context.export_morphism old_lthy lthy;
-    val thms = map (Morphism.thm phi) thms;
-  in Transport.after_qed_blackbox (binding, NoSyn) [thms] lthy end;
+    val lthy = Transport.after_qed_blackbox (binding, NoSyn) [thms] lthy
+
+  in Local_Theory.end_nested lthy end;
 
 fun mk_trp_term t ctxt =
   let
@@ -436,13 +444,63 @@ fun mk_trp_term t ctxt =
 
 fun mk_lifting_thm t lthy =
   let
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
 
+    val t_nat_name = dest_Const t |> fst |> suffix "_nat"
+
+    val Ts =
+      fold_atyps (insert (op =)) (fastype_of t) []
+      |> rev
+      |> map add_lift_nat_to_sort
+
+    val t_nat =
+    Const (t_nat_name, ((map (Term.itselfT o add_lift_nat_to_sort) Ts) @ (map (K \<^typ>\<open>pair_repr\<close>) (binder_types (fastype_of t)))) ---> \<^typ>\<open>pair_repr\<close>)
+    |> Thm.cterm_of lthy |> @{print} |> Thm.term_of |> @{print}
+
+    val t_nat = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts) |> @{print}
+    |> Thm.cterm_of lthy |> @{print} |> Thm.term_of |> @{print}
+
+    val cr_nat_rel_fun =
+      strip_type (fastype_of t)
+      |> (op @) o apsnd single
+      |> map (fn T => \<^Const>\<open>cr_nat T\<close>)
+      |> Library.foldr1 (uncurry BNF_Util.mk_rel_fun)
+
+    val simps =
+      @{thms rel_inv_iff_rel rel_inv_Fun_Rel_rel_eq[symmetric]}
+
+    val simp_ctxt =
+      lthy delsimps @{thms rel_inv_Fun_Rel_rel_eq}
+      |> Raw_Simplifier.add_simp @{thm rel_inv_iff_rel }
+      |> Raw_Simplifier.add_simp @{thm rel_inv_Fun_Rel_rel_eq[symmetric]};
+
+    val fact =
+      t_nat_name |> Long_Name.base_name |> suffix "_related'"
+      |> Proof_Context.get_thm lthy |> @{print}
+      |> simplify simp_ctxt |> @{print}
+
+    val goal = cr_nat_rel_fun $ t_nat $ t |> mk_Trueprop
+
+(*      val thm =
+      Goal.prove lthy [] [] goal
+        (fn {context=ctxt, ...} =>
+          print_tac ctxt "Start"
+          THEN (REPEAT (EqSubst.eqsubst_tac ctxt [0] @{thms rel_fun_eq_Fun_Rel_rel} 1))
+          THEN print_tac ctxt "1"
+          THEN asm_full_simp_tac (ctxt addsimps [fact]) 1
+          THEN print_tac ctxt "2"
+          );
+    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val thm = Morphism.thm phi thm *)
   in
     lthy
   end;
 
 fun function_lift_nat_cmd t lthy =
   let
+
+
 
     val t = Syntax.read_term lthy t
     val fun_name = Term.term_name t
@@ -459,9 +517,11 @@ fun function_lift_nat_cmd t lthy =
 
 
     val lthy = mk_related_self_thm t lthy
-    (* val (lthy, old_lthy) = `Local_Theory.end_nested lthy *);
 
     val lthy = mk_trp_term t lthy
+
+
+    val _ = mk_lifting_thm t lthy
   in
     lthy
   end;

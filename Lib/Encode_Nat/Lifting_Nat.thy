@@ -45,9 +45,41 @@ fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
 | "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
 
 case_of_simps elemof_case_def: elemof.simps
+term "Fun_Rel_rel"
+
+term "rel_fun"
+term "Fun_Rel_rel"
+term "Fun_Rel lift_nat_type_def.R "
+term "lift_nat_ty"
+
+ML \<open>
+  fun mk_Fun_Rel R S =
+    let
+      val ((RA, RB), RT) = `BNF_Util.dest_pred2T (fastype_of R);
+      val ((SA, SB), ST) = `BNF_Util.dest_pred2T (fastype_of S);
+    in
+      Const (\<^const_name>\<open>Fun_Rel\<close>, RT --> ST --> (RA --> SA) --> (RB --> SB) --> \<^typ>\<open>bool\<close>) $ R $ S
+    end;
+
+  fun bla f =
+    let
+      val rel_const_name = fst (dest_Const \<^term>\<open>lift_nat_type_def.R\<close>)
+      val rels =
+        strip_type (fastype_of f)
+        |> (op @) o apsnd single
+        |> map (fn T => Const (rel_const_name, T --> T --> HOLogic.boolT))
+    in
+      (Library.foldr1 (uncurry mk_Fun_Rel) rels) $ f $ f
+    end;
+
+  \<^term>\<open>(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) elemof elemof\<close>;
+  bla \<^term>\<open>elemof\<close> |> Thm.cterm_of @{context}
+
+\<close>
 
 lemma elemof_related_self [trp_in_dom]:
   "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) elemof elemof"
+  unfolding Fun_Rel_rel_def
   by auto
 
 trp_term elemof_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where x = "elemof :: ('a :: lift_nat) \<Rightarrow> _"
@@ -56,7 +88,7 @@ trp_term elemof_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where x = "elem
 lemma elemof_nat_lifting[transfer_rule]:
   shows "(cr_nat ===> cr_nat ===> cr_nat) (elemof_nat TYPE('a::lift_nat)) (elemof :: 'a \<Rightarrow> _)"
   unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact elemof_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  by (fact elemof_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 schematic_goal elemof_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) xn (Rep_nat xn)"
@@ -88,7 +120,7 @@ trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" w
 lemma If_nat_lifting[transfer_rule]: "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
   (If_nat TYPE('a::lift_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
   unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact If_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  by (fact If_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)" by simp
 
@@ -132,7 +164,7 @@ lemma takeWhile_nat_lifting[transfer_rule]:
   "((cr_nat ===> cr_nat) ===> cr_nat ===> cr_nat)
   (takeWhile_nat TYPE('a::lift_nat)) ((takeWhile :: ('a \<Rightarrow> bool) \<Rightarrow> _))"
   unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact takeWhile_nat_related'[unfolded rel_inv_Dep_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  by (fact takeWhile_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 
 schematic_goal takeWhile_nat_synth:
