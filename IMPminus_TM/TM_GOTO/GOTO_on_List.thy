@@ -3,7 +3,7 @@ Used as intermediate of multitape TM and GOTO program.
 Generally, one list here imitates one tape from the TM.\<close>
 
 theory GOTO_on_List
-  imports Global_Defs "HOL-IMP.Star"
+  imports "IMPminus_TM-Def.Global_Defs" "HOL-IMP.Star"
 begin
 
 (*TODO: rewrite all documentations using LaTeX syntax *)
