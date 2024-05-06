@@ -44,39 +44,10 @@ fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
   "elemof _ [] = False"
 | "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
 
-case_of_simps elemof_case_def: elemof.simps
-term "Fun_Rel_rel"
 
-term "rel_fun"
-term "Fun_Rel_rel"
-term "Fun_Rel lift_nat_type_def.R "
-term "lift_nat_ty"
+function_lift_nat elemof
 
-ML \<open>
-  fun mk_Fun_Rel R S =
-    let
-      val ((RA, RB), RT) = `BNF_Util.dest_pred2T (fastype_of R);
-      val ((SA, SB), ST) = `BNF_Util.dest_pred2T (fastype_of S);
-    in
-      Const (\<^const_name>\<open>Fun_Rel\<close>, RT --> ST --> (RA --> SA) --> (RB --> SB) --> \<^typ>\<open>bool\<close>) $ R $ S
-    end;
-
-  fun bla f =
-    let
-      val rel_const_name = fst (dest_Const \<^term>\<open>lift_nat_type_def.R\<close>)
-      val rels =
-        strip_type (fastype_of f)
-        |> (op @) o apsnd single
-        |> map (fn T => Const (rel_const_name, T --> T --> HOLogic.boolT))
-    in
-      (Library.foldr1 (uncurry mk_Fun_Rel) rels) $ f $ f
-    end;
-
-  \<^term>\<open>(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) elemof elemof\<close>;
-  bla \<^term>\<open>elemof\<close> |> Thm.cterm_of @{context}
-
-\<close>
-
+(*
 lemma elemof_related_self [trp_in_dom]:
   "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) elemof elemof"
   unfolding Fun_Rel_rel_def
@@ -96,6 +67,7 @@ schematic_goal elemof_nat_synth:
   shows "cr_nat ?t ((elemof :: 'a::lift_nat \<Rightarrow> _) (Rep_nat xn) (Rep_nat xsn))"
   apply (subst elemof_case_def)
   by transfer_prover
+ *)
 
 lemma elemof_nat_synth_def:
   fixes x :: "'a::lift_nat " and xs :: "'a list"
@@ -104,49 +76,18 @@ lemma elemof_nat_synth_def:
   shows "elemof_nat TYPE('a) xn xsn
     = case_list_nat False_nat (\<lambda>y ys. if xn = y then True_nat else elemof_nat TYPE('a) xn ys) xsn"
   apply(rule HOL.trans[OF _ elemof_nat_synth[unfolded cr_nat_def, symmetric]])
-    apply(use assms in \<open>simp_all add: elemof_nat_app_eq\<close>)
+    apply(simp add: elemof_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
   done
 
 thm elemof_nat_synth_def[unfolded case_list_nat_def]
-
-lemma if_related_self [trp_in_dom]:
-  "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R)
-  HOL.If HOL.If"
-  by auto
-
-trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> ('a :: lift_nat) \<Rightarrow> _"
-  by trp_prover
-
-lemma If_nat_lifting[transfer_rule]: "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
-  (If_nat TYPE('a::lift_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
-  unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact If_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
-
-lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)" by simp
-
-schematic_goal If_nat_synth:
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (Rep_nat c)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (Rep_nat t)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (Rep_nat f)"
-  shows "cr_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
-  apply (subst If_case_def)
-  by transfer_prover
-
-lemma If_nat_synth_def:
-  fixes c :: "bool" and t :: "'a::lift_nat" and f :: "'a"
-  assumes "cn = Abs_nat c"
-  assumes "tn = Abs_nat t"
-  assumes "fn = Abs_nat f"
-  shows "If_nat TYPE('a) cn tn fn = case_bool_nat tn fn cn"
-  apply(rule HOL.trans[OF _ If_nat_synth[unfolded cr_nat_def, symmetric]])
-  unfolding If_nat_app_eq assms by simp+
-
-thm If_nat_synth_def[unfolded case_bool_nat_def]
 
 
 fun takeWhile :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "takeWhile P [] = []" |
   "takeWhile P (x # xs) = (if P x then x # takeWhile P xs else [])"
+
+(* TODO: Not working yet :( something in mk_trp_term *)
+function_lift_nat takeWhile
 
 case_of_simps takeWhile_case_def: takeWhile.simps
 
@@ -157,22 +98,22 @@ lemma takeWhile_related_self [trp_in_dom]:
   takeWhile takeWhile"
   by auto
 
-trp_term takeWhile_nat :: "(nat \<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat" where x = "takeWhile :: (('a :: lift_nat) \<Rightarrow> bool) \<Rightarrow> _"
+trp_term takeWhile_nat :: "(nat \<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> nat"
+  where x = "takeWhile :: (('a :: lift_nat) \<Rightarrow> bool) \<Rightarrow> _"
   by trp_prover
 
 lemma takeWhile_nat_lifting[transfer_rule]:
   "((cr_nat ===> cr_nat) ===> cr_nat ===> cr_nat)
   (takeWhile_nat TYPE('a::lift_nat)) ((takeWhile :: ('a \<Rightarrow> bool) \<Rightarrow> _))"
-  unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact takeWhile_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
+  using takeWhile_nat_related'
+  by(simp add: takeWhile_nat_related' rel_fun_eq_Fun_Rel_rel flip: rel_inv_Fun_Rel_rel_eq)
 
 
 schematic_goal takeWhile_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
-  assumes [transfer_rule]:"(cr_nat ===> cr_nat) P_nat P"
+  assumes [transfer_rule]: "(cr_nat ===> cr_nat) P_nat P"
   shows "cr_nat ?t ((takeWhile :: ('a::lift_nat \<Rightarrow> bool) \<Rightarrow> _) P (Rep_nat xsn))"
-  apply (subst takeWhile_case_def)
-  by transfer_prover
+  by (subst takeWhile_case_def) transfer_prover
 
 lemma takeWhile_nat_synth_def:
   fixes P :: "'a::lift_nat \<Rightarrow> bool" and xs :: "'a list"
@@ -182,7 +123,7 @@ lemma takeWhile_nat_synth_def:
     = case_list_nat Nil_nat (\<lambda>x3a x2ba. If_nat TYPE('a list) (P_nat x3a)
           (Cons_nat x3a (takeWhile_nat TYPE('a) P_nat x2ba)) Nil_nat) xsn"
   apply(rule HOL.trans[OF _ takeWhile_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: takeWhile_nat_app_eq rel_fun_def cr_nat_def)+
+  using assms apply(simp add: assms takeWhile_nat_app_eq rel_fun_def cr_nat_def)+
   done
 
 thm takeWhile_nat_synth_def[unfolded case_list_nat_def]
@@ -191,6 +132,8 @@ fun head :: "'a list \<Rightarrow> 'a" where
   "head [] = undefined" |
   "head (x # _) = x"
 
+function_lift_nat head
+  (*
 case_of_simps head_case_def: head.simps
 
 definition head_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat" where
@@ -205,7 +148,7 @@ schematic_goal head_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
   shows "cr_nat ?t ((head :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn))"
   apply (subst head_case_def)
-  by transfer_prover
+  by transfer_prover *)
 
 lemma head_nat_synth_def:
   fixes xs :: "'a::lift_nat list"
@@ -213,16 +156,18 @@ lemma head_nat_synth_def:
   shows "head_nat TYPE('a) xsn
     = case_list_nat (Abs_nat (undefined::'a)) (\<lambda>x2a x1a. x2a) xsn"
   apply(rule HOL.trans[OF _ head_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: head_nat_def rel_fun_def cr_nat_def)+
+   apply(simp add: head_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
   done
+
 thm head_nat_synth_def[unfolded case_list_nat_def]
 
 fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "append xs [] = xs" |
   "append xs ys = rev_tr ys (rev_tr [] xs)"
 
+function_lift_nat append
 
-case_of_simps append_case_def: append.simps
+(* case_of_simps append_case_def: append.simps
 
 definition append_nat :: "'a::lift_nat itself \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "append_nat _ xsn ysn \<equiv> (Abs_nat :: 'a list \<Rightarrow> nat) (append (Rep_nat xsn) (Rep_nat ysn))"
@@ -237,7 +182,7 @@ schematic_goal append_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) ysn (Rep_nat ysn)"
   shows "cr_nat ?t ((append :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat xsn) (Rep_nat ysn))"
   apply (subst append_case_def)
-  by transfer_prover
+  by transfer_prover *)
 
 lemma append_nat_synth_def:
   fixes xs :: "'a::lift_nat list" and ys :: "'a list"
@@ -246,9 +191,8 @@ lemma append_nat_synth_def:
   shows "append_nat TYPE('a) xsn ysn = case_list_nat xsn (\<lambda>x3a x2ba. rev_tr_nat TYPE('a)
                 (Cons_nat x3a x2ba) (rev_tr_nat TYPE('a) Nil_nat xsn)) ysn"
   apply(rule HOL.trans[OF _ append_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: append_nat_def rel_fun_def cr_nat_def)+
+    apply(simp add: append_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
   done
-
 
 
 
@@ -256,15 +200,25 @@ fun plus :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "plus m 0 = m" |
   "plus m (Suc n) = Suc (plus m n)"
 
+
+(* TODO: Not working yet :( something in mk_trp_term *)
+function_lift_nat plus
+
 case_of_simps plus_case_def: plus.simps
 
-definition plus_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "plus_nat m n \<equiv> Abs_nat (plus (Rep_nat m) (Rep_nat n))"
+
+lemma plus_related_self [trp_in_dom]:
+  "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R) plus plus"
+  unfolding Fun_Rel_rel_def
+  by auto
+
+trp_term plus_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where x = "plus"
+  by trp_prover
+
 
 lemma plus_nat_lifting[transfer_rule]:
   shows "(cr_nat ===> cr_nat ===> cr_nat) plus_nat plus"
-  unfolding plus_nat_def cr_nat_def
-  by(simp add: rel_fun_def)
+  using plus_nat_app_eq by(simp add: rel_fun_def cr_nat_def)
 
 schematic_goal plus_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> nat \<Rightarrow> bool) mn (Rep_nat mn)"
@@ -280,8 +234,8 @@ lemma plus_nat_synth_def:
   shows "plus_nat mn nn
     = case_nat_nat mn (\<lambda>x2ba. Suc_nat (plus_nat mn x2ba)) nn"
   apply(rule HOL.trans[OF _ plus_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms cr_nat_nat_equiv
-    apply(simp add: plus_nat_def rel_fun_def cr_nat_def)+
+  using assms
+    apply(simp add: plus_nat_app_eq; subst Rep_nat_Abs_nat_id)+
   done
 
 thm plus_nat_synth_def[unfolded case_nat_nat_def]

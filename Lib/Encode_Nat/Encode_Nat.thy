@@ -152,6 +152,44 @@ datatype_lift_nat option
 print_theorems
 
 
+(* HOL.If has to be translated manually atm *)
+
+unbundle lifting_syntax
+
+lemma if_related_self[trp_in_dom]:
+  "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R)
+    HOL.If HOL.If"
+  by simp
+
+trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> ('a :: lift_nat) \<Rightarrow> _"
+  by trp_prover
+
+lemma If_nat_lifting[transfer_rule]:
+  "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
+    (If_nat TYPE('a::lift_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
+  using If_nat_related' by fast
+
+lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)"
+  by simp
+
+schematic_goal If_nat_synth:
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (Rep_nat c)"
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (Rep_nat t)"
+  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (Rep_nat f)"
+  shows "cr_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
+  by (subst If_case_def, transfer_prover)
+
+lemma If_nat_synth_def:
+  fixes c :: "bool" and t :: "'a::lift_nat" and f :: "'a"
+  assumes "cn = Abs_nat c"
+  assumes "tn = Abs_nat t"
+  assumes "fn = Abs_nat f"
+  shows "If_nat TYPE('a) cn tn fn = case_bool_nat tn fn cn"
+  unfolding assms
+  by (rule HOL.trans[OF _ If_nat_synth[unfolded cr_nat_def, symmetric]])
+    (fastforce simp: If_nat_app_eq)+
+
+
 (* Example of more complex datatype *)
 
 datatype ('a, 'b) keyed_list_tree =
@@ -165,25 +203,19 @@ print_theorems
 
 (* Examples of translating functions *)
 
-unbundle lifting_syntax
+
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
 
-
 function_lift_nat rev_tr
 print_theorems
 
 
-schematic_goal rev_tr_nat_synth:
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn (Rep_nat xsn)"
-  shows "cr_nat ?t ((rev_tr :: 'a::lift_nat list \<Rightarrow> _) (Rep_nat accn) (Rep_nat xsn))"
-  apply (subst rev_tr_case_def)
-  by transfer_prover
-
+test rev_tr
+print_theorems
 
 lemma rev_tr_nat_synth_def:
   fixes acc :: "'a::lift_nat list" and xs :: "'a list"
@@ -199,19 +231,14 @@ lemma rev_tr_nat_synth_def:
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 
 
-
 fun swap :: "'a \<times> 'b \<Rightarrow> 'b \<times> 'a" where
   "swap (a, b) = (b, a)"
 
 function_lift_nat swap
 print_theorems
 
-
-schematic_goal swap_nat_synth:
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<times> 'b \<Rightarrow> bool) pn (Rep_nat pn)"
-  shows "cr_nat ?t ((swap :: 'a::lift_nat \<times> 'b::lift_nat \<Rightarrow> _) (Rep_nat pn))"
-  apply (subst swap_case_def)
-  by transfer_prover
+test swap
+print_theorems
 
 lemma swap_nat_synth_def:
   fixes p :: "'a::lift_nat \<times> 'b::lift_nat"
@@ -219,7 +246,7 @@ lemma swap_nat_synth_def:
   shows "swap_nat TYPE('a) TYPE('b) pn
     = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (pn::nat)"
   apply(rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: swap_nat_app_eq; subst Rep_nat_Abs_nat_id; simp)+
+  using assms apply(simp add: swap_nat_app_eq; subst Rep_nat_Abs_nat_id)+
   done
 
 thm swap_nat_synth_def[unfolded case_prod_nat_def]
@@ -286,7 +313,6 @@ function subtreest :: "'a tree \<Rightarrow> 'a tree list \<Rightarrow> 'a tree 
 termination
   by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
                 <*mlex*> {}"; simp add: wf_mlex mlex_less)
-
 
 
 fun reverse_acc where

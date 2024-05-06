@@ -427,8 +427,11 @@ fun wrapper_transport_api binding yT cx lthy =
     val thms =
       Goal.prove_common ctxt NONE [] [] goals
         (fn {context=ctxt, ...} =>
-          HEADGOAL Goal.conjunction_tac
-          THEN HEADGOAL (Transport.transport_prover ctxt));
+          print_tac ctxt "Start"
+          THEN HEADGOAL Goal.conjunction_tac
+          THEN print_tac ctxt "1"
+          THEN HEADGOAL (Transport.transport_prover ctxt)
+          THEN print_tac ctxt "2");
 
     val lthy = Transport.after_qed_blackbox (binding, NoSyn) [thms] lthy
 
@@ -485,6 +488,55 @@ fun mk_case_defs t lthy =
     val case_thm = Simps_Case_Conv.to_case lthy fun_simps
   in Local_Theory.note ((Binding.name case_name, []), [case_thm]) lthy |> snd end;
 
+
+fun mk_nat_synth t lthy =
+  let
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
+
+    val T = fastype_of t;
+    val (binderTs, bodyT) = strip_type T;
+
+    val t_name = dest_Const t |> fst;
+    val t_base_name = Long_Name.base_name t_name;
+
+    val ((rep_vars, vars), lthy) =
+      mk_fresh_names lthy (length binderTs) "v"
+      |>> map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>))
+      |>> `(map2 (fn T => fn t => \<^Const>\<open>Rep_nat T for t\<close>) binderTs);
+
+    val assms =
+      map2 (fn T => fn (arg1, arg2) =>
+        mk_Trueprop \<^Const>\<open>cr_nat T for arg1 arg2\<close>) binderTs (vars ~~ rep_vars);
+
+    val max_idx =
+      fold Variable.declare_term (t :: rep_vars @ vars) lthy
+      |> Variable.maxidx_of;
+
+    val (var, lthy) =
+      mk_fresh_names lthy 1 "t" |>> the_single
+      |>> (fn s => Var ((s, max_idx + 1), \<^typ>\<open>pair_repr\<close>));
+
+    val goal = mk_Trueprop \<^Const>\<open>cr_nat bodyT for var \<open>list_comb (t, rep_vars)\<close>\<close>;
+
+    val case_thm = Proof_Context.get_thms lthy (t_base_name ^ "_case_def");
+
+    (* Is this necessary? Seems to work without *)
+    (* val lthy = Proof_Context.set_mode (Proof_Context.mode_schematic) lthy; *)
+
+    val thm =
+      Goal.prove lthy [] assms goal (fn {prems=prems, context=ctxt, ...} =>
+        let
+          val (_, ctxt) =
+            Proof_Context.note_thms "" (Binding.empty_atts, [(prems, [Transfer.transfer_add])]) ctxt
+        in EqSubst.eqsubst_tac ctxt [0] case_thm 1 THEN Transfer.transfer_prover_tac ctxt 1 end);
+
+    val binding_name = Binding.name (t_base_name ^ "_nat_synth");
+    val (_, lthy) = Local_Theory.note ((binding_name, []), [thm]) lthy;
+
+    val lthy = Local_Theory.end_nested lthy;
+  in lthy end;
+
+
 fun function_lift_nat_cmd t lthy =
   let
     val t = Syntax.read_term lthy t |> normalize_type_of_term;
@@ -495,6 +547,7 @@ fun function_lift_nat_cmd t lthy =
       |> mk_related_self_thm t
       |> mk_trp_term t
       |> mk_lifting_thm t
+      |> mk_nat_synth t
   in
     lthy
   end;
