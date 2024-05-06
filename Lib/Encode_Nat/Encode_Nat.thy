@@ -112,8 +112,10 @@ declare Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat[trp_relator_rewrite]
 
 
 lemma rel_inv_Fun_Rel_rel_eq[simp]: "(R \<Rrightarrow> S )\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
-  by (intro ext) auto
+  by fast
 
+lemma rel_inv_Fun_Rel_swap: "Fun_Rel_rel R\<inverse> S\<inverse> f g = Fun_Rel_rel R S g f"
+  by blast
 
 declare [[ML_print_depth = 50]]
 declare [[show_types = false]]
@@ -170,29 +172,10 @@ fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
 
-lemma "((=) \<Rrightarrow> (=) \<Rrightarrow> (=)) rev_tr rev_tr"
-  unfolding Fun_Rel_rel_def
-  apply auto
-  done
-
-ML \<open>
-  \<^term>\<open>TYPE('a::lift_nat)\<close>
-\<close>
 
 function_lift_nat rev_tr
 print_theorems
 
-thm rel_fun_eq_Fun_Rel_rel
-ML \<open>
-  rewrite_rule @{context} @{thms rel_fun_eq_Fun_Rel_rel}
-\<close>
-
-thm rev_tr_nat_related'
-
-lemma rev_tr_nat_lifting[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat) (rev_tr_nat TYPE('a::lift_nat)) (rev_tr :: 'a list \<Rightarrow> _)"
-  unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact rev_tr_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 schematic_goal rev_tr_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) accn (Rep_nat accn)"
@@ -217,23 +200,12 @@ thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 
 
 
-
-
-
-
-
 fun swap :: "'a \<times> 'b \<Rightarrow> 'b \<times> 'a" where
   "swap (a, b) = (b, a)"
 
 function_lift_nat swap
 print_theorems
 
-term swap_nat
-
-lemma swap_nat_lifting[transfer_rule]:
-  "(cr_nat ===> cr_nat) (swap_nat TYPE('a::lift_nat) TYPE('b::lift_nat)) (swap :: 'a \<times> 'b \<Rightarrow> _)"
-  unfolding rel_fun_eq_Fun_Rel_rel
-  by (fact swap_nat_related'[unfolded rel_inv_Fun_Rel_rel_eq[symmetric] rel_inv_iff_rel])
 
 schematic_goal swap_nat_synth:
   assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<times> 'b \<Rightarrow> bool) pn (Rep_nat pn)"

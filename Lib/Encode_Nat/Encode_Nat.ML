@@ -446,85 +446,63 @@ fun mk_lifting_thm t lthy =
   let
     val (_, lthy) = (Local_Theory.begin_nested lthy);
 
-    val t_nat_name = dest_Const t |> fst |> suffix "_nat"
+    val T = fastype_of t;
+    val (binderTs, bodyT) = strip_type T;
+    val Ts = fold_atyps (insert (op =)) T [] |> rev;
 
-    val Ts =
-      fold_atyps (insert (op =)) (fastype_of t) []
-      |> rev
-      |> map add_lift_nat_to_sort
+    val t_nat_name = dest_Const t |> fst |> suffix "_nat";
+    val nat_base_name = Long_Name.base_name t_nat_name;
 
     val t_nat =
-    Const (t_nat_name, ((map (Term.itselfT o add_lift_nat_to_sort) Ts) @ (map (K \<^typ>\<open>pair_repr\<close>) (binder_types (fastype_of t)))) ---> \<^typ>\<open>pair_repr\<close>)
-    |> Thm.cterm_of lthy |> @{print} |> Thm.term_of |> @{print}
-
-    val t_nat = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts) |> @{print}
-    |> Thm.cterm_of lthy |> @{print} |> Thm.term_of |> @{print}
+      Const (t_nat_name,
+             (map Term.itselfT Ts) @ (map (K \<^typ>\<open>pair_repr\<close>) binderTs) ---> \<^typ>\<open>pair_repr\<close>);
+    val t_nat_app = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts);
 
     val cr_nat_rel_fun =
-      strip_type (fastype_of t)
-      |> (op @) o apsnd single
-      |> map (fn T => \<^Const>\<open>cr_nat T\<close>)
-      |> Library.foldr1 (uncurry BNF_Util.mk_rel_fun)
+      fold_rev (mk_rel_fun o (fn T => \<^Const>\<open>cr_nat T\<close>)) binderTs \<^Const>\<open>cr_nat bodyT\<close>;
 
-    val simps =
-      @{thms rel_inv_iff_rel rel_inv_Fun_Rel_rel_eq[symmetric]}
+    val related_thm = Proof_Context.get_thm lthy (t_nat_name ^ "_related'");
 
-    val simp_ctxt =
-      lthy delsimps @{thms rel_inv_Fun_Rel_rel_eq}
-      |> Raw_Simplifier.add_simp @{thm rel_inv_iff_rel }
-      |> Raw_Simplifier.add_simp @{thm rel_inv_Fun_Rel_rel_eq[symmetric]};
+    val goal = mk_Trueprop (cr_nat_rel_fun $ t_nat_app $ t);
+    val thm =
+      Goal.prove lthy [] [] goal (fn {context=ctxt, ...} =>
+        Method.insert_tac ctxt [related_thm] 1
+        THEN fast_tac ctxt 1
+        );
 
-    val fact =
-      t_nat_name |> Long_Name.base_name |> suffix "_related'"
-      |> Proof_Context.get_thm lthy |> @{print}
-      |> simplify simp_ctxt |> @{print}
+    val binding_name = Binding.name (nat_base_name ^ "_lifting");
+    val (_, lthy) = Local_Theory.note ((binding_name, @{attributes [transfer_rule]}), [thm]) lthy;
+    val lthy = Local_Theory.end_nested lthy;
+  in lthy end;
 
-    val goal = cr_nat_rel_fun $ t_nat $ t |> mk_Trueprop
-
-(*      val thm =
-      Goal.prove lthy [] [] goal
-        (fn {context=ctxt, ...} =>
-          print_tac ctxt "Start"
-          THEN (REPEAT (EqSubst.eqsubst_tac ctxt [0] @{thms rel_fun_eq_Fun_Rel_rel} 1))
-          THEN print_tac ctxt "1"
-          THEN asm_full_simp_tac (ctxt addsimps [fact]) 1
-          THEN print_tac ctxt "2"
-          );
-    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
-    val phi = Proof_Context.export_morphism old_lthy lthy;
-    val thm = Morphism.thm phi thm *)
-  in
-    lthy
-  end;
-
-fun function_lift_nat_cmd t lthy =
+fun mk_case_defs t lthy =
   let
-
-
-
-    val t = Syntax.read_term lthy t
     val fun_name = Term.term_name t
     val case_name = fun_name ^ "_case_def"
     val fun_simps = if is_Const t
       then Proof_Context.get_thms lthy (fun_name ^ ".simps")
       else error ("Undefined function name: " ^ fun_name)
     val case_thm = Simps_Case_Conv.to_case lthy fun_simps
+  in Local_Theory.note ((Binding.name case_name, []), [case_thm]) lthy |> snd end;
 
+fun function_lift_nat_cmd t lthy =
+  let
+    val t = Syntax.read_term lthy t |> normalize_type_of_term;
 
-    val lthy = Local_Theory.note ((Binding.name case_name, []), [case_thm]) lthy |> snd;
-
-
-
-
-    val lthy = mk_related_self_thm t lthy
-
-    val lthy = mk_trp_term t lthy
-
-
-    val _ = mk_lifting_thm t lthy
+    val lthy =
+      lthy
+      |> mk_case_defs t
+      |> mk_related_self_thm t
+      |> mk_trp_term t
+      |> mk_lifting_thm t
   in
     lthy
   end;
+
+fun test_cmd t lthy =
+  let
+    val t = Syntax.read_term lthy t |> normalize_type_of_term;
+  in lthy end;
 
 val _ =
   Outer_Syntax.local_theory
@@ -536,7 +514,7 @@ val _ =
   Outer_Syntax.local_theory
     \<^command_keyword>\<open>test\<close>
     "Test"
-    (Parse.typ >> K I);
+    (Parse.term >> test_cmd);
 
 
 end
