@@ -224,9 +224,7 @@ lemma rev_tr_nat_synth_def:
   shows "rev_tr_nat TYPE('a) accn xsn
     = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (Cons_nat x3a accn)) xsn"
   apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
-    apply(use assms in \<open>simp_all add: rev_tr_nat_app_eq\<close>)
-  done
-
+  using rev_tr_nat_app_eq assms by fastforce+
 
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 
@@ -245,9 +243,9 @@ lemma swap_nat_synth_def:
   assumes "pn = Abs_nat p"
   shows "swap_nat TYPE('a) TYPE('b) pn
     = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (pn::nat)"
-  apply(rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: swap_nat_app_eq; subst Rep_nat_Abs_nat_id)+
-  done
+  unfolding assms
+  apply (rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
+  using swap_nat_app_eq by fastforce+
 
 thm swap_nat_synth_def[unfolded case_prod_nat_def]
 

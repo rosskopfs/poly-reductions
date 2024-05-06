@@ -500,7 +500,7 @@ fun mk_nat_synth t lthy =
     val t_base_name = Long_Name.base_name t_name;
 
     val ((rep_vars, vars), lthy) =
-      mk_fresh_names lthy (length binderTs) "v"
+      mk_fresh_names lthy (length binderTs) "n"
       |>> map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>))
       |>> `(map2 (fn T => fn t => \<^Const>\<open>Rep_nat T for t\<close>) binderTs);
 
@@ -536,6 +536,41 @@ fun mk_nat_synth t lthy =
     val lthy = Local_Theory.end_nested lthy;
   in lthy end;
 
+fun mk_nat_synth_def t lthy =
+  let
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
+
+    val T = fastype_of t;
+    val (binderTs, bodyT) = strip_type T;
+    val Ts = fold_atyps (insert (op =)) T [] |> rev;
+
+    val t_name = dest_Const t |> fst;
+    val t_base_name = Long_Name.base_name t_name;
+
+    val (abs_ts, lthy) =
+      mk_fresh_names lthy (length binderTs) "v"
+      |>> map2 (fn T => fn s => \<^Const>\<open>Abs_nat T for \<open>Free (s, T)\<close>\<close>) binderTs
+
+    val (arg_ts, lthy) =
+      mk_fresh_names lthy (length binderTs) "n"
+      |>> map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>))
+
+    val assms = map mk_Trueprop_eq (arg_ts ~~ abs_ts)
+
+    val t_nat = read_const' lthy (t_base_name ^ "_nat")
+    val nat_Ts = fold_atyps (insert (op =)) (fastype_of t_nat) [] |> rev
+    val tyenv = fold (Sign.typ_match (Proof_Context.theory_of lthy)) (nat_Ts ~~ Ts) Vartab.empty
+    val t_nat = map_types (Envir.subst_type tyenv) t_nat
+
+
+    val lhs = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts @ arg_ts)
+
+    val synth_thm = Proof_Context.get_thms lthy (t_base_name ^ "_nat_synth")
+      |> @{print}
+
+
+    val lthy = Local_Theory.end_nested lthy;
+  in lthy end;
 
 fun function_lift_nat_cmd t lthy =
   let
@@ -555,6 +590,7 @@ fun function_lift_nat_cmd t lthy =
 fun test_cmd t lthy =
   let
     val t = Syntax.read_term lthy t |> normalize_type_of_term;
+    val lthy = mk_nat_synth_def t lthy;
   in lthy end;
 
 val _ =
