@@ -1,4 +1,4 @@
-theory While_Prog_Gen
+theory GOTO_Instr_to_While_Prog
   imports "IMPminus_TM-Def.GOTO" "IMP_Minus.Com" "IMP_Minus.Big_StepT"
 begin
 
@@ -9,32 +9,32 @@ fun well_defined_instr :: "instr \<Rightarrow> bool" where
   "well_defined_instr (x -= t) = (x \<noteq> ''pc'' \<and> (case t of N c \<Rightarrow> True | V y \<Rightarrow> y \<noteq> ''pc''))" |
   "well_defined_instr (x \<bind>1) = (x \<noteq> ''pc'')" |
   "well_defined_instr (x %=2) = (x \<noteq> ''pc'')" |
-  "well_defined_instr (GOTO i) = True" |
+  "well_defined_instr (GOTO i) = (i > 0)" |
   "well_defined_instr (IF x\<noteq>0 THEN GOTO i) = (x \<noteq> ''pc'')"
 
-fun GOTO_instr_to_WHILE :: "instr \<Rightarrow> com" where
-  "GOTO_instr_to_WHILE HALT = ''pc'' ::= A (atomExp.N 0)" | 
-  "GOTO_instr_to_WHILE (x ::= t) = 
+fun GOTO_Instr_to_WHILE :: "instr \<Rightarrow> com" where
+  "GOTO_Instr_to_WHILE HALT = ''pc'' ::= A (atomExp.N 0)" | 
+  "GOTO_Instr_to_WHILE (x ::= t) = 
     (case t of operi.N c \<Rightarrow> x ::= A (atomExp.N c) | operi.V y \<Rightarrow> x ::= A (atomExp.V y)) ;; 
     ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)" | 
-  "GOTO_instr_to_WHILE (x += t) = 
+  "GOTO_Instr_to_WHILE (x += t) = 
     (case t of operi.N c \<Rightarrow> x ::= (atomExp.V x \<oplus> atomExp.N c) | operi.V y \<Rightarrow> x ::= (atomExp.V x \<oplus> atomExp.V y)) ;; 
     ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)" |
-  "GOTO_instr_to_WHILE (x -= t) = 
+  "GOTO_Instr_to_WHILE (x -= t) = 
     (case t of operi.N c \<Rightarrow> x ::= (atomExp.V x \<ominus> atomExp.N c) | operi.V y \<Rightarrow> x ::= (atomExp.V x \<ominus> atomExp.V y)) ;; 
     ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)" | 
-  "GOTO_instr_to_WHILE (x \<bind>1) = 
+  "GOTO_Instr_to_WHILE (x \<bind>1) = 
     x ::= (atomExp.V x \<then>) ;; 
     ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)" | 
-  "GOTO_instr_to_WHILE (x %=2) = 
+  "GOTO_Instr_to_WHILE (x %=2) = 
     x ::= (atomExp.V x \<doteq>1) ;; 
     ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)" | 
-  "GOTO_instr_to_WHILE (GOTO i) = ''pc'' ::= A (atomExp.N i)" | 
-  "GOTO_instr_to_WHILE (IF x\<noteq>0 THEN GOTO i) = IF x\<noteq>0 THEN ''pc'' ::= A (atomExp.N i) ELSE ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)"
+  "GOTO_Instr_to_WHILE (GOTO i) = ''pc'' ::= A (atomExp.N i)" | 
+  "GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i) = IF x\<noteq>0 THEN ''pc'' ::= A (atomExp.N i) ELSE ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)"
 
 lemma pc_consist:
   assumes "well_defined_instr instr"
-    and "(GOTO_instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
+    and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
     and "iexec instr (pc, s') = (pc', t')" 
     and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
   shows "t ''pc'' = pc'"
@@ -222,7 +222,7 @@ lemma aux_lemma1: "\<forall>x \<noteq> t. s x = s' x \<Longrightarrow> y \<noteq
 
 lemma var_consist:
   assumes "well_defined_instr instr"
-    and "(GOTO_instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
+    and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
     and "iexec instr (pc, s') = (pc', t')" 
     and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
   shows "\<forall>z \<noteq> ''pc''. t z = t' z"
@@ -400,7 +400,7 @@ qed
 
 theorem single_instr_consist: 
   assumes "well_defined_instr instr"
-    and "(GOTO_instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
+    and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
     and "iexec instr (pc, s') = (pc', t')" 
     and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
   shows "t ''pc'' = pc'" and "\<forall>x \<noteq> ''pc''. t x = t' x"

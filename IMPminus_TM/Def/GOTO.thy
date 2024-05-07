@@ -29,7 +29,7 @@ datatype instr =
   JMP label (\<open>GOTO _\<close>) |
   CONDJMP vname label (\<open>IF _\<noteq>0 THEN GOTO _\<close>)
 
-type_synonym GOTO_prog = "instr list"
+type_synonym GOTO_Prog = "instr list"
 type_synonym config = "pc \<times> state"
 
 definition is_halt :: "config \<Rightarrow> bool" where
@@ -48,7 +48,7 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
       IF x\<noteq>0 THEN GOTO i \<Rightarrow> (if s x \<noteq> 0 then (i, s) else (p + 1, s))
   )"
 
-definition exec1 :: "GOTO_prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>/ _))" [59,0,59] 60) where
+definition exec1 :: "GOTO_Prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>/ _))" [59,0,59] 60) where
   "P \<turnstile> c \<rightarrow> c' = (\<exists>p s. c = (p, s) \<and> c' = iexec (P !! p) c \<and> 0 < p \<and> p \<le> size P)"
 
 lemma exec1I [intro, code_pred_intro]:
@@ -56,7 +56,7 @@ lemma exec1I [intro, code_pred_intro]:
   by (simp add: exec1_def of_nat_diff)
 
 abbreviation 
-  exec :: "GOTO_prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>*/ _))" 50)
+  exec :: "GOTO_Prog \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>*/ _))" 50)
 where
   "exec P \<equiv> star (exec1 P)"
 
