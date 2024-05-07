@@ -105,50 +105,6 @@ proof -
   thus "(C1, s) \<Rightarrow>\<^bsup> i \<^esup> t" using aux4 by force
 qed
 
-fun GOTO_Prog_to_WHILE_single' :: "GOTO_Prog \<Rightarrow> nat \<Rightarrow> com" where 
-  "GOTO_Prog_to_WHILE_single' prog 0 = SKIP" | 
-  "GOTO_Prog_to_WHILE_single' prog pc = if_neq ''pc'' (length prog + 1 - pc) 
-    (GOTO_Prog_to_WHILE_single' prog (pc - 1)) (GOTO_Instr_to_WHILE (prog !! (length prog + 1 - pc)))"
-
-definition GOTO_Prog_to_WHILE_single :: "GOTO_Prog \<Rightarrow> com" where 
-  "GOTO_Prog_to_WHILE_single prog = GOTO_Prog_to_WHILE_single' prog (length prog)"
-
-value "GOTO_Prog_to_WHILE_single [''x'' ::= N 3, ''y'' ::= N 4, ''z'' ::= V ''x'', ''z'' += V ''y'', HALT]"
-
-lemma 
-  assumes "1 \<le> s ''pc''" and "s ''pc'' \<le> pc" and "pc \<le> length prog" and "length prog + 1 - pc \<le> s ''pc''"
-    and "(GOTO_Instr_to_WHILE (prog !! (s ''pc'')), s) \<Rightarrow>\<^bsup> i \<^esup> t"
-  shows "(GOTO_Prog_to_WHILE_single' prog pc, s) \<Rightarrow>\<^bsup> j \<^esup> t" using assms
-proof (induction pc arbitrary: i j)
-  case 0
-  then show ?case by linarith
-next
-  case (Suc pc)
-  consider (c1) "s ''pc'' = Suc pc" | (c2) "s ''pc'' \<le> pc" using Suc.prems(2) le_SucE by blast
-  then show ?case
-  proof cases
-    case c1
-    have "s ''pc'' \<ge> length prog - pc" using Suc.prems(4) by force
-    show ?thesis using c1 Suc sorry
-  next
-    case c2
-    have simplify: "GOTO_Prog_to_WHILE_single' prog (Suc pc) = if_neq ''pc'' (length prog - pc) 
-    (GOTO_Prog_to_WHILE_single' prog pc) (GOTO_Instr_to_WHILE (prog !! (length prog - pc)))" by simp
-    consider (c21) "s ''pc'' = length prog - pc" | (c22) "s ''pc'' > length prog - pc" using Suc.prems(4) by fastforce
-    then show ?thesis
-    proof cases
-      case c21
-      have "(GOTO_Prog_to_WHILE_single' prog (Suc pc), s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t" using Suc(6) c21 if_neq_trans_ins_2_out_eq by auto
-      show ?thesis using c21 c2 Suc sorry
-    next
-      case c22
-      have "(GOTO_Prog_to_WHILE_single' prog pc, s) \<Rightarrow>\<^bsup> j \<^esup> t" using Suc.IH Suc.prems(3) Suc.prems(5) c2 c22 by force
-      hence "(GOTO_Prog_to_WHILE_single' prog (Suc pc), s) \<Rightarrow>\<^bsup> j + 5 \<^esup> t" by (simp add: c22 if_neq_trans_ins_2_out_gt)
-      show ?thesis using c22 c2 Suc sorry
-    qed
-  qed
-qed
-
 function (sequential) GOTO_Prog_to_WHILE_IF' :: "GOTO_Prog \<Rightarrow> nat \<Rightarrow> com" where 
   "GOTO_Prog_to_WHILE_IF' prog t = (if t > length prog then SKIP else if_neq ''pc'' t 
     (GOTO_Prog_to_WHILE_IF' prog (Suc t)) (GOTO_Instr_to_WHILE (prog !! t)))"
@@ -160,20 +116,43 @@ definition GOTO_Prog_to_WHILE_IF :: "GOTO_Prog \<Rightarrow> com" where
 
 value "GOTO_Prog_to_WHILE_IF [''x'' ::= N 3, ''y'' ::= N 4, ''z'' ::= V ''x'', ''z'' += V ''y'', HALT]"
 
-lemma 
+lemma GOTO_Prog_to_WHILE_IF'_correctness_complexity:
   assumes "1 \<le> min_pc" and "min_pc \<le> pc" and "pc \<le> length prog" and "s ''pc'' = pc"
     and "(GOTO_Instr_to_WHILE (prog !! pc), s) \<Rightarrow>\<^bsup> i \<^esup> t"
-  shows "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> j \<^esup> t" using assms
+  shows "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> i + (pc + 1 - min_pc) * 5 \<^esup> t" using assms
 proof (induction prog min_pc arbitrary: rule: GOTO_Prog_to_WHILE_IF'.induct)
   case (1 prog min_pc)
   consider (c1) "min_pc = pc" | (c2) "min_pc < pc" using "1.prems"(2) by linarith
   then show ?case using 1 
   proof cases
     case c1
-    then show ?thesis sorry
+    have "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t" using if_neq_trans_ins_2_out_eq "1.prems"(3) "1.prems"(5) assms(4) c1 by auto
+    thus ?thesis using c1 by auto
   next
     case c2
-    then show ?thesis sorry
+    thm if_neq_trans_ins_2_out_gt
+    have "(GOTO_Prog_to_WHILE_IF' prog (Suc min_pc), s) \<Rightarrow>\<^bsup> i + (pc + 1 - Suc min_pc) * 5 \<^esup> t" using "1.IH" "1.prems"(3) "1.prems"(5) assms(4) c2 by linarith
+    hence "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> i + (pc - min_pc) * 5 + 5 \<^esup> t" using if_neq_trans_ins_2_out_gt assms(4) c2 by force
+    hence "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> i + (pc + 1 - min_pc) * 5 \<^esup> t" by (metis "1.prems"(2) Suc_diff_le add.commute group_cancel.add1 mult_Suc plus_1_eq_Suc)
+    thus ?thesis by simp
   qed
 qed
+
+lemma GOTO_Prog_to_WHILE_IF_correctness_complexity:
+  assumes "1 \<le> s ''pc''" and "s ''pc'' \<le> length prog"
+    and "(GOTO_Instr_to_WHILE (prog !! s ''pc''), s) \<Rightarrow>\<^bsup> i \<^esup> t"
+  shows "(GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> i + s ''pc'' * 5 \<^esup> t" using assms
+  by (metis GOTO_Prog_to_WHILE_IF'_correctness_complexity GOTO_Prog_to_WHILE_IF_def add.commute diff_Suc_1 less_or_eq_imp_le plus_1_eq_Suc)
+
+definition GOTO_Prog_to_WHILE :: "GOTO_Prog \<Rightarrow> com" where
+  "GOTO_Prog_to_WHILE prog = ''pc'' ::= A (atomExp.N 1) ;; WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog"
+
+definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
+  "well_defined_prog prog = (\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> (well_defined_instr (prog !! i)))"
+
+(*
+definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
+  "well_defined_prog prog = (\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> 
+    (well_defined_instr (prog !! i) \<and> (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)))"
+*)
 end
