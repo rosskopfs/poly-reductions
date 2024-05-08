@@ -87,8 +87,6 @@ fun preprocess_tac get_IMP_def =
     end
   in TU.SUBGOAL_STRIPPED (fst o snd) o tac end
 
-open State_Seq_Abbrevs
-
 fun flip_eq_thm thm = Thm.proof_attributes [Calculation.symmetric] thm #> fst
 
 fun rewrite_eq_state_retrieval_sym_tac state_SIMPS_TO_term =

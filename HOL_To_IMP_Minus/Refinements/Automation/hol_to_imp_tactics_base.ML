@@ -51,6 +51,8 @@ structure TU = Tactic_Util
 structure HTIU = HOL_To_IMP_Util
 structure SUT = State_Update_Tracking
 
+structure Seq = HTIU.Seq
+
 fun if_split_tac ctxt =
   split_tac ctxt @{thms if_split}
   THEN_ALL_NEW
@@ -112,10 +114,9 @@ fun finish_non_induction_tac get_HOL_eqs ctxt =
 
 (* tactics needed for inductions *)
 
-open State_Seq_Abbrevs
-
 fun rewrite_insert_current_keys_eq_tac key_terms =
   let
+    open Seq open Seq.M
     fun key_eq_focused_tac SIMPS_TO_res {prems=[state_eq_thm], context=ctxt,...} =
       let
         fun rewrite_insert_state_key_eq_tac prems =
@@ -127,19 +128,20 @@ fun rewrite_insert_current_keys_eq_tac key_terms =
               THEN' Tactic_Util.insert_tac [eq_thm] ctxt
           in
             uncurry state_retrieval_eq_thmsq
-            #> Seq.map rewrite_insert_tac
-            #> Seq_Monad.flat2
+            #> map rewrite_insert_tac
+            #> flat2
           end
-        fun focus_rewrite prems = map (rewrite_insert_state_key_eq_tac prems) key_terms
+        fun focus_rewrite prems = List.map (rewrite_insert_state_key_eq_tac prems) key_terms
           |> EVERY'
       in TU.FOCUS_PREMS' (focus_rewrite o #prems) ctxt end
-    val current_value_tac =
-      SUT.state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq
-      SS_THEN SS.lift_state_single (fn SIMPS_TO_res => fn ((state_eq_prem_index, _), ctxt) =>
-        TU.focus_prems_tac [state_eq_prem_index + 1] (key_eq_focused_tac SIMPS_TO_res) ctxt)
-      |> SS.eval
-      #> Seq_Monad.flat2
-  in TU.CSUBGOAL_STRIPPED (fst o snd) o (current_value_tac oo SSS.SRS.init) end
+    fun current_value_tac ctxt cprems =
+      SUT.state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq ctxt cprems
+      BIND (fn (simps_to_thm, csimps_to, state_eq_prem_index) =>
+        TU.focus_prems_tac [state_eq_prem_index + 1]
+          (key_eq_focused_tac (simps_to_thm, csimps_to)) ctxt
+        |> pure)
+      |> flat2
+  in TU.CSUBGOAL_STRIPPED (fst o snd) o current_value_tac end
 
 type IMP_keys_retrieval = Proof.context -> term -> term list
 

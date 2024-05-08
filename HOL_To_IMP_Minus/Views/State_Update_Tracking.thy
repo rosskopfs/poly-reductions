@@ -4,8 +4,6 @@ theory State_Update_Tracking
     Views_Base
     ML_Unification.Simps_To
     HOL_To_IMP_Base
-    ML_State_Seq
-    (* ML_Typeclasses.ML_State_Seq *)
 begin
 
 lemma interp_state_State_eq: "interp_state (State s) = s"

@@ -33,10 +33,22 @@ val resolve_all_tac : Proof.context -> thm list -> int -> tactic
 val pretty_prems : Proof.context -> term list -> Pretty.T
 val pretty_cprems : Proof.context -> cterm list -> Pretty.T
 
+(* sequence with monadic operations *)
+structure Seq : sig
+  include SEQ
+  structure M : MONAD where type 'a t = 'a seq
+  (* TODO: can't 'include MONAD': redefinition of 'map' *)
+end
+
 end
 
 structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
 struct
+
+structure Seq = struct
+  open Seq
+  structure M = Monad(Seq_Monad_Trans(Identity_Monad))
+end
 
 val successors = map (curry (op +) 1)
 
