@@ -69,7 +69,7 @@ schematic_goal elemof_nat_synth:
   by transfer_prover
  *)
 
-lemma elemof_nat_synth_def:
+(* lemma elemof_nat_synth_def:
   fixes x :: "'a::lift_nat " and xs :: "'a list"
   assumes "xn = Abs_nat x"
   assumes "xsn = Abs_nat xs"
@@ -77,7 +77,7 @@ lemma elemof_nat_synth_def:
     = case_list_nat False_nat (\<lambda>y ys. if xn = y then True_nat else elemof_nat TYPE('a) xn ys) xsn"
   apply(rule HOL.trans[OF _ elemof_nat_synth[unfolded cr_nat_def, symmetric]])
     apply(simp add: elemof_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
-  done
+  done *)
 
 thm elemof_nat_synth_def[unfolded case_list_nat_def]
 
@@ -123,7 +123,8 @@ lemma takeWhile_nat_synth_def:
     = case_list_nat Nil_nat (\<lambda>x3a x2ba. If_nat TYPE('a list) (P_nat x3a)
           (Cons_nat x3a (takeWhile_nat TYPE('a) P_nat x2ba)) Nil_nat) xsn"
   apply(rule HOL.trans[OF _ takeWhile_nat_synth[unfolded cr_nat_def, symmetric]])
-  using assms apply(simp add: assms takeWhile_nat_app_eq rel_fun_def cr_nat_def)+
+  using assms
+    apply(simp add: assms takeWhile_nat_app_eq rel_fun_def cr_nat_def)+
   done
 
 thm takeWhile_nat_synth_def[unfolded case_list_nat_def]
@@ -150,14 +151,14 @@ schematic_goal head_nat_synth:
   apply (subst head_case_def)
   by transfer_prover *)
 
-lemma head_nat_synth_def:
+(* lemma head_nat_synth_def:
   fixes xs :: "'a::lift_nat list"
   assumes "xsn = Abs_nat xs"
   shows "head_nat TYPE('a) xsn
     = case_list_nat (Abs_nat (undefined::'a)) (\<lambda>x2a x1a. x2a) xsn"
   apply(rule HOL.trans[OF _ head_nat_synth[unfolded cr_nat_def, symmetric]])
    apply(simp add: head_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
-  done
+  done *)
 
 thm head_nat_synth_def[unfolded case_list_nat_def]
 
@@ -184,7 +185,7 @@ schematic_goal append_nat_synth:
   apply (subst append_case_def)
   by transfer_prover *)
 
-lemma append_nat_synth_def:
+(* lemma append_nat_synth_def:
   fixes xs :: "'a::lift_nat list" and ys :: "'a list"
   assumes "xsn = Abs_nat xs"
   assumes "ysn = Abs_nat ys"
@@ -193,7 +194,7 @@ lemma append_nat_synth_def:
   apply(rule HOL.trans[OF _ append_nat_synth[unfolded cr_nat_def, symmetric]])
     apply(simp add: append_nat_app_eq assms; subst Rep_nat_Abs_nat_id)+
   done
-
+ *)
 
 
 fun plus :: "nat \<Rightarrow> nat \<Rightarrow> nat" where

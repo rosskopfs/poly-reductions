@@ -441,9 +441,14 @@ fun mk_trp_term t ctxt =
   let
     val binding = Binding.name (Term.term_name t ^ "_nat");
     val yT = map (K \<^typ>\<open>pair_repr\<close>) (binder_types (fastype_of t)) ---> \<^typ>\<open>pair_repr\<close>;
-    val ct = normalize_type_of_term t |> Thm.cterm_of ctxt;
+    val ct = Thm.cterm_of ctxt t;
   in wrapper_transport_api binding yT ct ctxt end;
 
+fun nat_T_of_T T =
+  let
+    val binder_Ts = binder_types T;
+    val Ts = fold_atyps (insert (op =)) T [] |> rev;
+  in (map Term.itselfT Ts) @ (map (K \<^typ>\<open>pair_repr\<close>) binder_Ts) ---> \<^typ>\<open>pair_repr\<close> end;
 
 fun mk_lifting_thm t lthy =
   let
@@ -454,17 +459,15 @@ fun mk_lifting_thm t lthy =
     val Ts = fold_atyps (insert (op =)) T [] |> rev;
 
     val t_nat_name = dest_Const t |> fst |> suffix "_nat";
-    val nat_base_name = Long_Name.base_name t_nat_name;
+    val nat_base_name = Long_Name.base_name t_nat_name
 
-    val t_nat =
-      Const (t_nat_name,
-             (map Term.itselfT Ts) @ (map (K \<^typ>\<open>pair_repr\<close>) binderTs) ---> \<^typ>\<open>pair_repr\<close>);
+    val t_nat = Const (Local_Theory.full_name lthy (Binding.name nat_base_name), nat_T_of_T T)
     val t_nat_app = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts);
 
     val cr_nat_rel_fun =
       fold_rev (mk_rel_fun o (fn T => \<^Const>\<open>cr_nat T\<close>)) binderTs \<^Const>\<open>cr_nat bodyT\<close>;
 
-    val related_thm = Proof_Context.get_thm lthy (t_nat_name ^ "_related'");
+    val related_thm = Proof_Context.get_thm lthy (nat_base_name ^ "_related'");
 
     val goal = mk_Trueprop (cr_nat_rel_fun $ t_nat_app $ t);
     val thm =
@@ -494,80 +497,96 @@ fun mk_nat_synth t lthy =
     val (_, lthy) = (Local_Theory.begin_nested lthy);
 
     val T = fastype_of t;
-    val (binderTs, bodyT) = strip_type T;
+    val (binder_Ts, body_T) = strip_type T;
+    val free_Ts = fold_atyps (insert (op =)) T [] |> rev;
 
     val t_name = dest_Const t |> fst;
     val t_base_name = Long_Name.base_name t_name;
+    val t_nat_base_name = t_base_name ^ "_nat";
+    val t_nat_name = Local_Theory.full_name lthy (Binding.name t_nat_base_name);
+    val t_nat = Const (t_nat_name, nat_T_of_T T);
 
-    val ((rep_vars, vars), lthy) =
-      mk_fresh_names lthy (length binderTs) "n"
-      |>> map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>))
-      |>> `(map2 (fn T => fn t => \<^Const>\<open>Rep_nat T for t\<close>) binderTs);
 
-    val assms =
+    val (arg_ts, (arg_nat_ts, lthy)) =
+      mk_Frees "x" binder_Ts lthy ||> mk_Frees "n" (map (K \<^typ>\<open>pair_repr\<close>) binder_Ts);
+    val abs_ts = map2 (fn T => fn t => \<^Const>\<open>Abs_nat T for t\<close>) binder_Ts arg_ts;
+    val rep_ts = map2 (fn T => fn t => \<^Const>\<open>Rep_nat T for t\<close>) binder_Ts arg_nat_ts;
+
+    val assms_synth_thm =
       map2 (fn T => fn (arg1, arg2) =>
-        mk_Trueprop \<^Const>\<open>cr_nat T for arg1 arg2\<close>) binderTs (vars ~~ rep_vars);
+        mk_Trueprop \<^Const>\<open>cr_nat T for arg1 arg2\<close>) binder_Ts (arg_nat_ts ~~ rep_ts);
 
     val max_idx =
-      fold Variable.declare_term (t :: rep_vars @ vars) lthy
+      fold Variable.declare_term (t :: rep_ts @ arg_nat_ts) lthy
       |> Variable.maxidx_of;
 
     val (var, lthy) =
       mk_fresh_names lthy 1 "t" |>> the_single
       |>> (fn s => Var ((s, max_idx + 1), \<^typ>\<open>pair_repr\<close>));
 
-    val goal = mk_Trueprop \<^Const>\<open>cr_nat bodyT for var \<open>list_comb (t, rep_vars)\<close>\<close>;
+    val goal = mk_Trueprop \<^Const>\<open>cr_nat body_T for var \<open>list_comb (t, rep_ts)\<close>\<close>;
 
     val case_thm = Proof_Context.get_thms lthy (t_base_name ^ "_case_def");
 
     (* Is this necessary? Seems to work without *)
     (* val lthy = Proof_Context.set_mode (Proof_Context.mode_schematic) lthy; *)
 
-    val thm =
-      Goal.prove lthy [] assms goal (fn {prems=prems, context=ctxt, ...} =>
+    val synth_thm =
+      Goal.prove lthy [] assms_synth_thm goal (fn {prems=prems, context=ctxt, ...} =>
         let
           val (_, ctxt) =
             Proof_Context.note_thms "" (Binding.empty_atts, [(prems, [Transfer.transfer_add])]) ctxt
         in EqSubst.eqsubst_tac ctxt [0] case_thm 1 THEN Transfer.transfer_prover_tac ctxt 1 end);
 
     val binding_name = Binding.name (t_base_name ^ "_nat_synth");
-    val (_, lthy) = Local_Theory.note ((binding_name, []), [thm]) lthy;
+    val ((_, synth_thm), lthy) =
+      Local_Theory.note ((binding_name, []), [synth_thm]) lthy
+      |>> apsnd the_single;
 
-    val lthy = Local_Theory.end_nested lthy;
-  in lthy end;
-
-fun mk_nat_synth_def t lthy =
-  let
+    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val synth_thm = Morphism.thm phi synth_thm;
     val (_, lthy) = (Local_Theory.begin_nested lthy);
 
-    val T = fastype_of t;
-    val (binderTs, bodyT) = strip_type T;
-    val Ts = fold_atyps (insert (op =)) T [] |> rev;
+    val lhs_synth_def = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) free_Ts @ arg_nat_ts);
 
-    val t_name = dest_Const t |> fst;
-    val t_base_name = Long_Name.base_name t_name;
+    val synth_t =
+      Thm.concl_of synth_thm |> dest_Trueprop |> \<^Const_fn>\<open>cr_nat _ for arg _ => arg\<close>;
 
-    val (abs_ts, lthy) =
-      mk_fresh_names lthy (length binderTs) "v"
-      |>> map2 (fn T => fn s => \<^Const>\<open>Abs_nat T for \<open>Free (s, T)\<close>\<close>) binderTs
+    val schem_Ts =
+      fold_types (insert (op =)) synth_t []
+      |> fold (fold_atyps (fn TVar a => insert (op =) (TVar a) | _ => I))
+      |> curry (op |>) [];
 
-    val (arg_ts, lthy) =
-      mk_fresh_names lthy (length binderTs) "n"
-      |>> map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>))
+    val tyenv =
+      if length schem_Ts > 0
+      then
+        fold (Sign.typ_match (Proof_Context.theory_of lthy)) (schem_Ts ~~ free_Ts) Vartab.empty
+      else Vartab.empty;
 
-    val assms = map mk_Trueprop_eq (arg_ts ~~ abs_ts)
+    val rhs_synth_def = map_types (Envir.subst_type tyenv) synth_t;
 
-    val t_nat = read_const' lthy (t_base_name ^ "_nat")
-    val nat_Ts = fold_atyps (insert (op =)) (fastype_of t_nat) [] |> rev
-    val tyenv = fold (Sign.typ_match (Proof_Context.theory_of lthy)) (nat_Ts ~~ Ts) Vartab.empty
-    val t_nat = map_types (Envir.subst_type tyenv) t_nat
+    val goal = mk_Trueprop_eq (lhs_synth_def, rhs_synth_def);
 
+    val assms_synth_def_thm = map mk_Trueprop_eq (arg_nat_ts ~~ abs_ts);
 
-    val lhs = list_comb (t_nat, map (fn T => \<^Const>\<open>Pure.type T\<close>) Ts @ arg_ts)
+    val synth_mod_thm =
+      (Local_Defs.unfold lthy @{thms cr_nat_def} synth_thm RS @{thm sym});
 
-    val synth_thm = Proof_Context.get_thms lthy (t_base_name ^ "_nat_synth")
-      |> @{print}
+    val rule_thm = (@{thm trans} OF [@{thm _}, synth_mod_thm]);
 
+    val app_eq_thm = Proof_Context.get_thms lthy (t_nat_base_name ^ "_app_eq");
+
+    val var_names = map (fst o dest_Free) (arg_ts @ arg_nat_ts);
+
+    val synth_def_thm =
+      Goal.prove lthy var_names assms_synth_def_thm goal (fn {prems=prems, context=ctxt, ...} =>
+        Classical.rule_tac ctxt [rule_thm] [] 1
+        THEN Method.insert_tac ctxt (app_eq_thm @ prems) 1
+        THEN REPEAT (fast_force_tac lthy 1)
+        THEN ALLGOALS (Method.insert_tac ctxt (app_eq_thm @ prems) THEN' fast_force_tac lthy));
+    val binding_name = Binding.name (t_base_name ^ "_nat_synth_def");
+    val (_, lthy) = Local_Theory.note ((binding_name, []), [synth_def_thm]) lthy;
 
     val lthy = Local_Theory.end_nested lthy;
   in lthy end;
@@ -590,7 +609,7 @@ fun function_lift_nat_cmd t lthy =
 fun test_cmd t lthy =
   let
     val t = Syntax.read_term lthy t |> normalize_type_of_term;
-    val lthy = mk_nat_synth_def t lthy;
+    val lthy = lthy;
   in lthy end;
 
 val _ =

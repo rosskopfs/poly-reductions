@@ -23,6 +23,10 @@ begin
 section\<open>Encoding of datatypes\<close>
 
 
+unbundle no_HOL_relation_syntax
+unbundle lifting_syntax
+
+
 (* TODO: Shouldn't the signature (or names) of \<^term>\<open>Abs_nat\<close> and \<^term>\<open>Rep_nat\<close> be swapped?
   In \<^locale>\<open>type_definition\<close>, the names are the other way around. *)
 class lift_nat =
@@ -37,16 +41,19 @@ lemma inj_Abs_nat: "inj Abs_nat"
 definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
 
-sublocale lift_nat_type_def: type_definition Abs_nat Rep_nat "(Abs_nat ` UNIV)"
+sublocale lift_nat_type_def: type_definition Abs_nat Rep_nat "image Abs_nat UNIV"
   by (unfold_locales) auto
 
 lemmas
   typedef_nat_transfer[OF lift_nat_type_def.type_definition_axioms cr_nat_def, transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
-lemma cr_nat_Abs_nat[transfer_rule]:
-  "cr_nat (Abs_nat x) x"
+lemma cr_nat_Abs_nat[transfer_rule]: "cr_nat (Abs_nat x) x"
   unfolding cr_nat_def by simp
+
+term Relation.converse
+term Binary_Relation_Functions.rel_inv
+
 
 lemma Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat:
   "galois_rel.Galois (=) (=\<^bsub>range Abs_nat\<^esub>) Rep_nat = cr_nat\<inverse>"
@@ -123,8 +130,6 @@ ML_file \<open>./Encode_Nat.ML\<close>
 
 (* Encoding of standard datatypes *)
 
-
-
 datatype_lift_nat nat
 print_theorems
 
@@ -150,16 +155,14 @@ datatype_lift_nat option
 print_theorems
 
 
-(* HOL.If has to be translated manually atm *)
-
-unbundle lifting_syntax
+(* HOL.If has to be translated manually *)
 
 lemma if_related_self[trp_in_dom]:
   "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R)
     HOL.If HOL.If"
   by simp
 
-trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> ('a :: lift_nat) \<Rightarrow> _"
+trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> _"
   by trp_prover
 
 lemma If_nat_lifting[transfer_rule]:
@@ -201,20 +204,25 @@ print_theorems
 
 (* Examples of translating functions *)
 
-
+function_lift_nat zip
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
-
 function_lift_nat rev_tr
 print_theorems
 
+thm
+  rev_tr_nat_synth
+  rev_tr_nat_synth[unfolded cr_nat_def, symmetric]
+  rev_tr_nat_synth[unfolded cr_nat_def, THEN sym]
+  HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]]
+  HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]]
 
 test rev_tr
 print_theorems
-
+  (*
 lemma rev_tr_nat_synth_def:
   fixes acc :: "'a::lift_nat list" and xs :: "'a list"
   assumes "accn = Abs_nat acc"
@@ -222,7 +230,7 @@ lemma rev_tr_nat_synth_def:
   shows "rev_tr_nat TYPE('a) accn xsn
     = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (Cons_nat x3a accn)) xsn"
   apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
-  using rev_tr_nat_app_eq assms by fastforce+
+  using rev_tr_nat_app_eq assms by fastforce+ *)
 
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 
@@ -236,16 +244,40 @@ print_theorems
 test swap
 print_theorems
 
-lemma swap_nat_synth_def:
-  fixes p :: "'a::lift_nat \<times> 'b::lift_nat"
-  assumes "pn = Abs_nat p"
-  shows "swap_nat TYPE('a) TYPE('b) pn
-    = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (pn::nat)"
-  unfolding assms
+thm HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]]
+
+(* lemma swap_nat_synth_def:
+  fixes x :: "'a::lift_nat \<times> 'b::lift_nat"
+  assumes "n = Abs_nat x"
+  shows "swap_nat TYPE('a) TYPE('b) n
+    = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (n::nat)"
   apply (rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
-  using swap_nat_app_eq by fastforce+
+  using swap_nat_app_eq assms by fastforce+ *)
 
 thm swap_nat_synth_def[unfolded case_prod_nat_def]
+
+
+
+
+
+(*
+
+Remaining (optional?) TODOs:
+  - Automatically and recursively lift not yet lifted functions during lifting
+  - Make it work with single equation functions/definitions
+  - make it overridable: this doesn't work in the same file atm
+
+    function_lift_nat append
+
+    fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+      "append xs [] = xs" |
+      "append xs ys = rev_tr ys (rev_tr [] xs)"
+
+    function_lift_nat append (* Error here because of duplicate definitions *)
+
+*)
+
+
 
 
 (* functions for tesiting later *)
@@ -280,6 +312,9 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
+function_lift_nat prefixes
+function_lift_nat prefixest
+
 
 lemma reverset_length: "length xs = length (reverset xs [])"
   by(induction xs; simp add: reverset_rev)
@@ -291,14 +326,21 @@ function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   using reverset.cases by blast+
 termination by(relation "measure (length o fst)"; simp add: reverset_correct)
 
+function_lift_nat foo
+
+
+
 fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list" where
   "prefixes2 [] ps = reverset ([] # ps) []"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
 
+function_lift_nat prefixes2
+
 fun subtrees :: "'a tree \<Rightarrow> 'a tree list" where
   "subtrees \<langle>\<rangle> = []"
 | "subtrees \<langle>l, v, r\<rangle> = subtrees l @ subtrees r @ [l] @ [r]"
+
 
 function subtreest :: "'a tree \<Rightarrow> 'a tree list \<Rightarrow> 'a tree list \<Rightarrow> 'a tree list" where
   "subtreest \<langle>\<rangle> [] ts = ts"
@@ -310,14 +352,17 @@ termination
   by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
                 <*mlex*> {}"; simp add: wf_mlex mlex_less)
 
+function_lift_nat subtreest
 
 fun reverse_acc where
   "reverse_acc acc [] = acc"
 | "reverse_acc acc (x#xs) = reverse_acc (x#acc) xs"
 
+function_lift_nat reverse_acc
 
 fun reverse where
   "reverse xs = reverse_acc [] xs"
+
 
 lemma reverse_acc_append_acc: "reverse_acc acc xs = (reverse_acc [] xs) @ acc"
 proof(induction xs arbitrary: acc)
@@ -331,34 +376,10 @@ lemma reverse_equiv: "reverse xs = rev xs"
   by(induction xs; simp)
     (subst reverse_acc_append_acc, simp)
 
-
-fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
-  "append xs ys = reverse_acc ys (reverse xs)"
-
-
-lemma append_nil: "append xs [] = xs"
-proof(induction xs)
-  case Nil show ?case by simp
-next
-  case (Cons a xs)
-  have "reverse_acc [] (reverse_acc acc xs) = (reverse_acc [] acc) @ xs" for acc
-    using reverse_acc_append_acc by(induction xs arbitrary: acc; force)
-  then show ?case by simp
-qed
-
-
-lemma append_equiv:"append xs ys = xs @ ys"
-proof(cases xs)
-  case Nil then show ?thesis by simp
-next
-  case (Cons x xs)
-  then show ?thesis
-    by (simp add: reverse_acc_append_acc[of ys "(reverse (x # xs))"] del: reverse.simps
-        List.append.append_Cons, simp add: append_nil flip: append.simps del: reverse.simps
-        List.append.append_Cons)
-qed
-
-
+function_lift_nat append
+thm append_nat_synth
+test append
+function_lift_nat rev
 
 
 fun fn_test1 :: "nat \<Rightarrow> nat" where
@@ -375,6 +396,7 @@ fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
 | "baz acc [] = acc"
 | "baz acc (xs#xss) = baz (append acc xs) xss"
 
+function_lift_nat baz
 
 fun bazz where
   "bazz acc [[]] = acc"
@@ -382,10 +404,14 @@ fun bazz where
 | "bazz acc ((v # va) # xss) = bazz (append acc (v # va)) xss"
 | "bazz acc (xs # v # va) = bazz (append acc xs) (v # va)"
 
+function_lift_nat bazz
+
 fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
   "baz2 acc [] = acc"
 | "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
 
+
+function_lift_nat baz2
 
 fun test3 where
   "test3 x = (case x of True \<Rightarrow> False | False \<Rightarrow> True)"
