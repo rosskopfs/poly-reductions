@@ -10,8 +10,6 @@ theory Encode_Nat
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Simps_Case_Conv"
     "HOL-Library.Tree"
-    HOL_To_IMP_Minus.Compile_Nat
-    HOL_To_IMP_Minus.HOL_To_IMP_Minus_Fun_Pattern_Setup
     Transport.HOL_Alignment_Functions
     Transport.Transport_Prototype
     Transport.Transport_Typedef_Base
