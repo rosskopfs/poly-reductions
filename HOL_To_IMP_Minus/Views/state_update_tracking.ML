@@ -25,8 +25,9 @@ val is_state_state_retrieval_eq_prop : term -> term -> bool
 val interp_state_SIMPS_TO_thm_resultsq : Proof.context -> cterm ->
   (thm * cterm) Seq.seq
 
-val state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq : (cterm list * Proof.context,
-  (cterm list * Proof.context), thm * cterm * int) State_Seq.t
+(* TODO: rename function *)
+val state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq :
+  Proof.context -> cterm list -> (thm * cterm * int) Seq.seq
 
 (* rewrite state retrieval based on state equality *)
 val rewrite_state_retrieval_tac : (thm -> int -> tactic) -> Proof.context -> thm ->
@@ -77,6 +78,8 @@ fun finish_SIMPS_TO_tac ctxt = resolve_tac ctxt [@{thm SIMPS_TOI}]
 structure HTIU = HOL_To_IMP_Util
 structure GU = General_Util
 structure TU = Tactic_Util
+
+structure Seq = HTIU.Seq
 
 val state_eq = curry (op aconv)
 
@@ -136,16 +139,8 @@ fun rewrite_state_retrieval_if_SIMPS_TO_tac subst_tac ctxt state_retrieval_eq_th
   THEN' Simplifier.simp_tac ctxt
   THEN' finish_SIMPS_TO_tac ctxt
 
-(*
-act on a specific goal
-type indexed_tactic = int -> thm -> thm Seq.seq
-type indexed_tactic = int -> tactic
-*)
-
-structure SeqM = Monad(Seq_Monad)
-
 fun rewrite_state_retrieval_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm =
-  let open SeqM in
+  let open Seq open Seq.M in
     state_retrieval_eq_if_SIMPS_TO_thmsq
       ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
     BIND (fn thm =>
@@ -154,10 +149,10 @@ fun rewrite_state_retrieval_tacsq subst_tac ctxt state_eq_thm state_lhs_state_SI
     |> pure)
   end
 
-val rewrite_state_retrieval_tac = SeqM.flat2 oooo rewrite_state_retrieval_tacsq
+val rewrite_state_retrieval_tac = Seq.M.flat2 oooo rewrite_state_retrieval_tacsq
 
 val rewrite_all_state_retrieval_tac =
-  SeqM.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_retrieval_tacsq
+  Seq.M.flat2 o Seq.map (fn tac => REPEAT o CHANGED_PROP o tac) oooo rewrite_state_retrieval_tacsq
 
 fun state_retrieval_eq_thmsq finish_eq_tac state_eq_thm
   (state_lhs_state_SIMPS_TO_thm, state_lhs_state_SIMPS_TO_term) ctxt key term =
@@ -173,8 +168,6 @@ fun state_retrieval_eq_thmsq finish_eq_tac state_eq_thm
       THEN' finish_eq_tac
   in (rewrite_eq_tac |> SOLVED' |> TU.apply_tac |> TU.HEADGOAL) goal end
 
-open State_Seq_Abbrevs
-
 fun state_eq_not_in_prems_msg ctxt prems = Pretty.block [
     Pretty.str "Could not find STATE equality in premises ",
     HTIU.pretty_prems ctxt prems
@@ -182,90 +175,31 @@ fun state_eq_not_in_prems_msg ctxt prems = Pretty.block [
 
 fun state_eq_not_in_cprems_msg ctxt = state_eq_not_in_prems_msg ctxt o map Thm.term_of
 
-(*
-
-what is the "real" state? is it 'context' ? or cterm list * context ?
-or does it actually change (indexed monad necessary)
-
-input state: (context, cterm list) result = cterm list * context
-output state: (context, (cterm list, int) result) result (push int onto stack) = (int * cterm list) * context
-output: thm * cterm
-*)
-
-(* val state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
-  SS.get ()
-  SS_THEN SS.kleisli_state_monad (K o Seq.single o find_cstate_eq_prop o fst)
-  SS_THEN (fn opt_res => fn sstate as (cprems, ctxt) => case opt_res of
+fun state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq ctxt cprems =
+  let open Seq open Seq.M in
+    case find_cstate_eq_prop cprems of
       SOME (cstate_eq_prem_index, cstate_eq_prem) =>
         state_eq_interp_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt cstate_eq_prem
-        |> Seq.map (SS.SR.result (SSS.SRS.push cstate_eq_prem_index sstate))
-    | NONE => (@{log Logger.WARN} ctxt (fn _ => state_eq_not_in_cprems_msg ctxt cprems); Seq.empty)) *)
-
-
-structure SS_M = IMonad(SS) (* TODO: ugly, see note in itypeclass_base *)
-
-(* 
-TODO: does cterm list need to be part of the current state?
-fun state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq cprems =
-  let open SS open SS_M in
-    get ()
-    BIND (fn ctxt =>
-    find_cstate_eq_prop cprems |> pure (* nb. pure x >>= f === f x *)
-    BIND (fn opt_res =>
-    case opt_res of
-      SOME (cstate_eq_prem_index, cstate_eq_prem) =>
-        state_eq_interp_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt cstate_eq_prem |> lift
         BIND (fn (thm, cterm) =>
-        pure (thm, cterm, cstate_eq_prem_index))
+          pure (thm, cterm, cstate_eq_prem_index))
     | NONE => (
         @{log Logger.WARN} ctxt (fn _ => state_eq_not_in_cprems_msg ctxt cprems);
-        lift Seq.empty)
-    ))
-  end *)
-
-val state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq =
-  let open SS open SS_M in
-    get ()
-    BIND (fn (cprems, ctxt) =>
-    find_cstate_eq_prop cprems |> pure (* nb. pure x >>= f === f x *)
-    BIND (fn opt_res => 
-    case opt_res of
-      SOME (cstate_eq_prem_index, cstate_eq_prem) =>
-        state_eq_interp_lhs_state_eq_SIMPS_TO_thm_resultsq ctxt cstate_eq_prem |> lift
-        BIND (fn (thm, cterm) =>
-        pure (thm, cterm, cstate_eq_prem_index))
-    | NONE => (
-        @{log Logger.WARN} ctxt (fn _ => state_eq_not_in_cprems_msg ctxt cprems);
-        lift Seq.empty)
-    ))
+        Seq.empty)
   end
-
-fun tac_of_cterms_ctxt_state_seq ss (ctxt : Proof.context) (cterms : cterm list) (i : int) (thm : thm) =
-  SS.eval (ss i thm) (cterms, ctxt)
 
 fun rewrite_all_state_retrieval_tac' subst_tac =
   let
-    open SS open SS_M
+    open Seq open Seq.M
     fun rewrite_focused_tac state_lhs_state_SIMPS_TO_thm {prems=[state_eq_thm], context=ctxt,...} =
       rewrite_all_state_retrieval_tac (subst_tac ctxt) ctxt state_eq_thm state_lhs_state_SIMPS_TO_thm
-    fun rewrite_state_seq i thm =
-      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq
+    fun rewrite_tac ctxt cprems =
+      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq ctxt cprems
       BIND (fn (state_lhs_state_SIMPS_TO_thm, _, state_eq_prem_index) =>
-      get ()
-      BIND (fn (_, ctxt) =>
-      TU.focus_prems_tac
-        [state_eq_prem_index + 1]
-        (rewrite_focused_tac state_lhs_state_SIMPS_TO_thm)
-        ctxt i thm
-      |> lift))
-    (* fun rewrite_tac ctxt cterms i thm =
-      SS.eval (rewrite_state_seq i thm) (cterms, ctxt) *)
-  in
-  TU.FOCUS_PARAMS_CTXT' (
-    TU.CSUBGOAL_STRIPPED (fst o snd)
-    o tac_of_cterms_ctxt_state_seq rewrite_state_seq)
-  end
-
+        TU.focus_prems_tac [state_eq_prem_index + 1]
+          (rewrite_focused_tac state_lhs_state_SIMPS_TO_thm) ctxt
+        |> pure)
+      |> flat2
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o rewrite_tac) end
 
 (* initialise state equality premise *)
 
@@ -327,78 +261,34 @@ fun find_cupdate_prem_prop state = GU.try_bool
     (Thm.term_of #> HTIU.dest_Trueprop #> is_state_update_prem state)
   |> GU.find_first_index
 
-
-(* thm list -> context -> int -> (tactic = thm -> thm seq) *)
-(* fun update_state_state_update_tac simp_thms =
+fun update_state_state_update_tac simp_thms =
   let
+    open Seq open Seq.M
     fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
-      {prems=[state_eq_thm, update_thm], context=ctxt,...} =
-      update_state_state_eq_updatesq simp_thms ctxt state_eq_thm interp_state_lhs_state_eq_thm
-        update_thm
-      |> Seq.map (fn thm => TU.insert_tac [thm] ctxt)
-      |> Seq_Monad.flat2
-    val new_state_eq_tac =
-      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq
-      SS_THEN SSS.lift_push_state_monad I (fn (_, cstate_eq_lhs_state) => fn ((_, cprems), _) =>
-        find_cupdate_prem_prop (Thm.term_of cstate_eq_lhs_state) cprems |> Seq.single)
-      SS_THEN SS.kleisli_state (fn opt_res => fn
-        (((interp_state_lhs_state_eq_thm, cstate_eq_lhs_state),
-        (state_eq_prem_index, cprems)), ctxt) => case opt_res of
-          SOME (update_prem_index, _) => TU.focus_delete_prems_tac
-            (HTIU.successors [state_eq_prem_index, update_prem_index])
-            (insert_new_state_eq_tac interp_state_lhs_state_eq_thm) ctxt
-        | NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
+        {prems=[state_eq_thm, update_thm], context=ctxt,...} =
+      update_state_state_eq_updatesq simp_thms ctxt
+        state_eq_thm interp_state_lhs_state_eq_thm update_thm
+      BIND (fn thm =>
+        TU.insert_tac [thm] ctxt |> pure)
+      |> flat2
+    fun new_state_eq_tac ctxt cprems =
+      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq ctxt cprems
+      BIND (fn (interp_state_lhs_state_eq_thm, cstate_eq_lhs_state, state_eq_prem_index) =>
+        find_cupdate_prem_prop (Thm.term_of cstate_eq_lhs_state) cprems
+        |> HTIU.seq_of_opt (fn () => @{log Logger.WARN} ctxt (fn () =>
+            Pretty.block [
               Pretty.str "Could not find update premise for state ",
               Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
               Pretty.str " in premises ",
               HTIU.pretty_cprems ctxt cprems
-            ] |> Pretty.string_of);
-            K no_tac))
-      |> SS.eval
-      #> Seq_Monad.flat2
-  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o (new_state_eq_tac oo SSS.SRS.init)) end *)
-
-
-fun update_state_state_update_tac simp_thms =
-  let
-    open SS open SS_M
-    fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
-        {prems=[state_eq_thm, update_thm], context=ctxt,...} =
-      update_state_state_eq_updatesq simp_thms ctxt state_eq_thm interp_state_lhs_state_eq_thm
-        update_thm
-      |> Seq.map (fn thm => TU.insert_tac [thm] ctxt)
-      |> Seq_Monad.flat2
-    fun warn_premise_not_found ctxt cprems cstate_eq_lhs_state =
-      @{log Logger.WARN} ctxt (fn _ => Pretty.block [
-          Pretty.str "Could not find update premise for state ",
-          Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
-          Pretty.str " in premises ",
-          HTIU.pretty_cprems ctxt cprems
-        ] |> Pretty.string_of)
-    fun new_state_eq_state_seq i thm =
-      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq
-      BIND (fn (interp_state_lhs_state_eq_thm, cstate_eq_lhs_state, state_eq_prem_index) =>
-      get ()
-      BIND (fn (cprems, _) =>
-      find_cupdate_prem_prop (Thm.term_of cstate_eq_lhs_state) cprems |> pure
-      BIND (fn opt_res =>
-      get ()
-      BIND (fn (_, ctxt) =>
-      case opt_res of
-        SOME (update_prem_index, _) =>
-          TU.focus_delete_prems_tac
-            (HTIU.successors [state_eq_prem_index, update_prem_index])
-            (insert_new_state_eq_tac interp_state_lhs_state_eq_thm) ctxt i thm
-          |> lift
-      | NONE => (
-          warn_premise_not_found ctxt cprems cstate_eq_lhs_state;
-          lift Seq.empty)
-      ))))
-  in
-    TU.FOCUS_PARAMS_CTXT' (
-      TU.CSUBGOAL_STRIPPED (fst o snd)
-      o tac_of_cterms_ctxt_state_seq new_state_eq_state_seq)
-  end
+            ] |> Pretty.string_of))
+      BIND (fn (update_prem_index, _) =>
+        TU.focus_delete_prems_tac
+          (HTIU.successors [state_eq_prem_index, update_prem_index])
+          (insert_new_state_eq_tac interp_state_lhs_state_eq_thm) ctxt
+        |> pure))
+      |> flat2
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o new_state_eq_tac) end
 
 (* update state equality according to a retrieval condition *)
 
@@ -413,63 +303,31 @@ fun update_state_state_retrieval_eqsq simp_tac ctxt state_eq_thm interp_state_lh
 
 fun update_state_state_retrieval_eq_tac simp_tac =
   let
-    open SS open SS_M
+    open Seq open Seq.M
     fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
         {prems=[state_eq_thm, state_retrieval_eq_thm], context=ctxt,...} =
-      update_state_state_retrieval_eqsq simp_tac ctxt state_eq_thm interp_state_lhs_state_eq_thm state_retrieval_eq_thm
-      |> Seq.map (fn thm => TU.insert_tac [thm] ctxt)
-      |> Seq_Monad.flat2
-    fun premise_not_found ctxt cprems cstate_eq_lhs_state =
-      @{log Logger.WARN} ctxt (fn _ => Pretty.block [
-          Pretty.str "Could not find state retrieval premise for state ",
-          Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
-          Pretty.str " in premises ",
-          HTIU.pretty_cprems ctxt cprems
-        ] |> Pretty.string_of)
-    fun new_state_eq_state_seq i thm =
-      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq
+      update_state_state_retrieval_eqsq simp_tac ctxt
+        state_eq_thm interp_state_lhs_state_eq_thm state_retrieval_eq_thm
+      BIND (fn thm =>
+        TU.insert_tac [thm] ctxt |> pure)
+      |> flat2
+    fun new_state_eq_tac ctxt cprems =
+      state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq ctxt cprems
       BIND (fn (interp_state_lhs_state_eq_thm, cstate_eq_lhs_state, state_eq_prem_index) =>
-      get ()
-      BIND (fn (cprems, _) =>
-      find_state_state_retrieval_eq_prop (Thm.term_of cstate_eq_lhs_state) cprems |> pure
-      BIND (fn opt_res =>
-      get ()
-      BIND (fn (_, ctxt) =>
-      case opt_res of
-        SOME (state_retrieval_eq_prem_index, _) =>
-          TU.focus_delete_prems_tac
-            (HTIU.successors [state_eq_prem_index, state_retrieval_eq_prem_index])
-            (insert_new_state_eq_tac interp_state_lhs_state_eq_thm)
-            ctxt i thm
-          |> lift
-      | NONE => (
-          premise_not_found ctxt cprems cstate_eq_lhs_state;
-          lift Seq.empty)
-      ))))
-    (*
-    bind (...) (fn ... => ...)  : too many brackets
-    fun new_state_eq_state_seq i thm =
-      bind (state_eq_interp_lhs_state_eq_SIMPS_TO_thm_result_state_seq)
-      (fn (interp_state_lhs_state_eq_thm, cstate_eq_lhs_state, state_eq_prem_index) =>
-      bind (get ()) (fn (cprems, _) =>
-      bind (find_state_state_retrieval_eq_prop (Thm.term_of cstate_eq_lhs_state) cprems |> pure)
-      (fn opt_res =>
-      bind (get ()) (fn (_, ctxt) =>
-      case opt_res of
-        SOME (state_retrieval_eq_prem_index, _) =>
-          TU.focus_delete_prems_tac
-            (HTIU.successors [state_eq_prem_index, state_retrieval_eq_prem_index])
-            (insert_new_state_eq_tac interp_state_lhs_state_eq_thm)
-            ctxt i thm
-          |> lift
-      | NONE => (
-          premise_not_found ctxt cprems cstate_eq_lhs_state;
-          lift Seq.empty)
-      )))) *)
-  in
-    TU.FOCUS_PARAMS_CTXT' (
-      TU.CSUBGOAL_STRIPPED (fst o snd)
-      o tac_of_cterms_ctxt_state_seq new_state_eq_state_seq)
-  end
+        find_state_state_retrieval_eq_prop (Thm.term_of cstate_eq_lhs_state) cprems
+        |> HTIU.seq_of_opt (fn () => @{log Logger.WARN} ctxt (fn () =>
+            Pretty.block [
+              Pretty.str "Could not find state retrieval premise for state ",
+              Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
+              Pretty.str " in premises ",
+              HTIU.pretty_cprems ctxt cprems
+            ] |> Pretty.string_of))
+      BIND (fn (state_retrieval_eq_prem_index, _) =>
+        TU.focus_delete_prems_tac
+          (HTIU.successors [state_eq_prem_index, state_retrieval_eq_prem_index])
+          (insert_new_state_eq_tac interp_state_lhs_state_eq_thm) ctxt
+        |> pure))
+      |> flat2
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o new_state_eq_tac) end
 
 end

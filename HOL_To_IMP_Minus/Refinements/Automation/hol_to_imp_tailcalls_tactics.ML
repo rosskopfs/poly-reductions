@@ -57,6 +57,8 @@ structure HTIU = HOL_To_IMP_Util
 structure SUTIT = State_Update_Tracking_IMP_Tailcalls
 structure SUT = State_Update_Tracking
 
+structure Seq = HTIU.Seq
+
 type IMP_def_retrieval = Proof.context -> term -> thm option
 val get_IMP_def = Compile_Nat.get_compiled_const_def
 
@@ -107,8 +109,6 @@ val dest_Call = \<^Const_fn>\<open>tCall for c k => \<open>(c, k)\<close>\<close
 val dest_Call_IMP_big_step_state =
   SUTIT.dest_IMP_big_step #> (fn ((c, _), _, _) => dest_Call c)
 
-open State_Seq_Abbrevs
-
 fun call_tac get_func_corrects =
   let fun focused_tac ctxt prems =
     case map_filter (try (HTIU.dest_Trueprop #> dest_Call_IMP_big_step_state)) prems of
@@ -130,7 +130,7 @@ fun call_tac get_func_corrects =
       in
         Seq.of_list Calls
         |> Seq.map (fn (c, _) => get_func_corrects ctxt c |> tac c)
-        |> Seq_Monad.flat2
+        |> Seq.M.flat2
       end
   in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (fst o snd) o focused_tac) end
 
