@@ -84,22 +84,15 @@ structure Seq = HTIU.Seq
 val state_eq = curry (op aconv)
 
 (* state equality utils *)
-(* Constr uctor [types...] for [args...] => ... *)
 val dest_STATE = \<^Const_fn>\<open>STATE _ for s => s\<close>
-(* same but for certified terms *)
 val cdest_STATE = Thm.dest_arg
 
-(* dest: destructure *)
-(* destructure state equality *)
 val dest_STATE_eq_prop = HTIU.dest_Trueprop #> HTIU.dest_eq #> tap (apply2 dest_STATE)
-(* same for certified term *)
 val dest_STATE_eq_cprop = HTIU.cdest_Trueprop #> HTIU.cdest_eq
-(* find a state equality in a list by trying to destructure each term as a state equality *)
 val find_cstate_eq_prop = GU.find_first_index (can dest_STATE_eq_prop o Thm.term_of)
 
 (* state retrieval utils *)
 fun mk_state_retrieval state key = state $ key
-(* destructure a <state $ key> *)
 val dest_state_retrieval = Term.dest_comb
 fun is_state_state_retrieval state s_app = dest_state_retrieval s_app |> fst |> state_eq state
 
