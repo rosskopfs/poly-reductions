@@ -115,8 +115,7 @@ fun finish_non_induction_tac get_HOL_eqs ctxt =
 (* tactics needed for inductions *)
 
 fun rewrite_insert_current_keys_eq_tac key_terms =
-  let
-    open Seq open Seq.M
+  let open Seq Seq.M
     fun key_eq_focused_tac SIMPS_TO_res {prems=[state_eq_thm], context=ctxt,...} =
       let
         fun rewrite_insert_state_key_eq_tac prems =

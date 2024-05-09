@@ -60,8 +60,7 @@ fun find_update_state_value_eq_prem cupdate_prem cprems =
   in GU.find_first_index is_lhs_eq cprems end
 
 fun update_state_call_tac update_simps =
-  let
-    open Seq open Seq.M
+  let open Seq Seq.M
     fun insert_new_state_eq_tac interp_state_lhs_state_eq_thm
         {prems=[state_eq_thm, update_thm, update_state_value_eq_thm], context=ctxt,...} =
       SUT.update_state_state_eq_updatesq (update_state_value_eq_thm :: update_simps)
@@ -74,21 +73,21 @@ fun update_state_call_tac update_simps =
       BIND (fn (interp_state_lhs_state_eq_thm, cstate_eq_lhs_state, state_eq_prem_index) =>
         SUT.find_cupdate_prem_prop (Thm.term_of cstate_eq_lhs_state) cprems
         |> HTIU.seq_of_opt (fn () => @{log Logger.WARN} ctxt (fn () =>
-            Pretty.block [
-              Pretty.str "Could not find update premise for state ",
-              Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
-              Pretty.str " in premises ",
-              HTIU.pretty_cprems ctxt cprems
-            ] |> Pretty.string_of))
+          Pretty.block [
+            Pretty.str "Could not find update premise for state ",
+            Syntax.pretty_term ctxt (Thm.term_of cstate_eq_lhs_state),
+            Pretty.str " in premises ",
+            HTIU.pretty_cprems ctxt cprems
+          ] |> Pretty.string_of))
       BIND (fn (update_prem_index, cupdate_prem) =>
         find_update_state_value_eq_prem cupdate_prem cprems
         |> HTIU.seq_of_opt (fn () => @{log Logger.WARN} ctxt (fn () =>
-            Pretty.block [
-              Pretty.str "Could not find equality theorem for value of state update ",
-              Syntax.pretty_term ctxt (Thm.term_of cupdate_prem),
-              Pretty.str " in premises ",
-              HTIU.pretty_cprems ctxt cprems
-            ] |> Pretty.string_of))
+          Pretty.block [
+            Pretty.str "Could not find equality theorem for value of state update ",
+            Syntax.pretty_term ctxt (Thm.term_of cupdate_prem),
+            Pretty.str " in premises ",
+            HTIU.pretty_cprems ctxt cprems
+          ] |> Pretty.string_of))
       BIND (fn (update_state_value_eq_prem_index, _) =>
         TU.focus_delete_prems_tac
           (HTIU.successors

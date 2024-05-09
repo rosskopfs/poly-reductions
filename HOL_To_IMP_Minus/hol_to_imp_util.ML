@@ -37,7 +37,6 @@ val pretty_cprems : Proof.context -> cterm list -> Pretty.T
 structure Seq : sig
   include SEQ
   structure M : MONAD where type 'a t = 'a seq
-  (* TODO: can't 'include MONAD': redefinition of 'map' *)
 end
 
 end
