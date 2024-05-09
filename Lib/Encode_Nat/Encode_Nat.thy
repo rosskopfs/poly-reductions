@@ -1,66 +1,74 @@
-(*  Title:      Encode_Nat.thy
-    Author:     Johannes Neubrand, TU Muenchen
-    Author:     Andreas Vollert, TU Muenchen
-    Copyright   2022, 2023, 2024
-*)
-
+\<^marker>\<open>creator "Johannes Neubrand"\<close>
+\<^marker>\<open>creator "Andreas Vollert"\<close>
+section\<open>Compilation from HOL to Natified HOL\<close>
 theory Encode_Nat
   imports
     Main
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Simps_Case_Conv"
     "HOL-Library.Tree"
+    ML_Unification.Unification_Attributes
     Transport.HOL_Alignment_Functions
     Transport.Transport_Prototype
     Transport.Transport_Typedef_Base
   keywords
-    "datatype_lift_nat" :: thy_decl and
-    "function_lift_nat" :: thy_decl and
+    "datatype_compile_nat" :: thy_decl and
+    "function_compile_nat" :: thy_decl and
     "test" :: thy_decl
 begin
 
 
-section\<open>Encoding of datatypes\<close>
-
+subsection\<open>Datatypes\<close>
 
 unbundle no_HOL_relation_syntax
 unbundle lifting_syntax
 
-
-(* TODO: Shouldn't the signature (or names) of \<^term>\<open>Abs_nat\<close> and \<^term>\<open>Rep_nat\<close> be swapped?
-  In \<^locale>\<open>type_definition\<close>, the names are the other way around. *)
-class lift_nat =
-  fixes Abs_nat :: "'a \<Rightarrow> nat"
-  fixes Rep_nat :: "nat \<Rightarrow> 'a"
-  assumes Rep_nat_Abs_nat_id[simp]: "\<And>x. Rep_nat (Abs_nat x) = x"
+class compile_nat =
+  fixes natify :: "'a \<Rightarrow> nat"
+  fixes denatify :: "nat \<Rightarrow> 'a"
+  assumes denatify_natify_eq_self[simp]: "\<And>x. denatify (natify x) = x"
 begin
 
-lemma inj_Abs_nat: "inj Abs_nat"
-  by(rule inj_on_inverseI[of _ Rep_nat], simp)
+sublocale compile_nat_type_def: type_definition natify denatify "range natify"
+  by unfold_locales auto
 
-definition cr_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
-  "cr_nat \<equiv> (\<lambda>n l. n = Abs_nat l)"
+lemma inj_natify: "inj natify"
+  by (rule inj_on_inverseI[where ?g=denatify]) simp
 
-sublocale lift_nat_type_def: type_definition Abs_nat Rep_nat "image Abs_nat UNIV"
-  by (unfold_locales) auto
+definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
+  "Rel_nat n x \<equiv> n = natify x"
+
+lemma Rel_nat_iff_eq_natify: "Rel_nat n x \<longleftrightarrow> n = natify x"
+  by (simp add: Rel_nat_def)
 
 lemmas
-  typedef_nat_transfer[OF lift_nat_type_def.type_definition_axioms cr_nat_def, transfer_rule] =
+  typedef_nat_transfer[OF compile_nat_type_def.type_definition_axioms,
+    OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify,
+    transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
-lemma cr_nat_Abs_nat[transfer_rule]: "cr_nat (Abs_nat x) x"
-  unfolding cr_nat_def by simp
+lemma Rel_nat_natify_self [transfer_rule]: "Rel_nat (natify x) x"
+  by (simp add: Rel_nat_iff_eq_natify)
 
-term Relation.converse
-term Binary_Relation_Functions.rel_inv
+lemma Galois_eq_eq_range_natify_denatify_eq_inv_Rel_nat:
+  "galois_rel.Galois (=) (=\<^bsub>range natify\<^esub>) denatify = Rel_nat\<inverse>"
+  by (intro ext) (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI
+    iff: Rel_nat_iff_eq_natify)
 
-
-lemma Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat:
-  "galois_rel.Galois (=) (=\<^bsub>range Abs_nat\<^esub>) Rep_nat = cr_nat\<inverse>"
-  unfolding cr_nat_def by (intro ext)
-    (fastforce elim: galois_rel.left_GaloisE intro: galois_rel.left_GaloisI)
+lemmas compile_nat_partial_equivalence_rel_equivalence =
+  iffD1[OF
+    transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
+    compile_nat_type_def.partial_equivalence_rel_equivalenceI]
 
 end
+
+(*register PER*)
+declare compile_nat_partial_equivalence_rel_equivalence[per_intro]
+
+(*nicer relatedness theorem output*)
+declare Galois_eq_eq_range_natify_denatify_eq_inv_Rel_nat[trp_relator_rewrite, trp_uhint]
+lemma eq_eq_Fun_Rel_rel_eq_eq_uhint [trp_uhint]: "P \<equiv> (=) \<Longrightarrow> P \<equiv> (=) \<Rrightarrow> (=)" by simp
+
 
 type_synonym pair_repr = nat
 
@@ -99,95 +107,75 @@ corollary prod_decode_less_intro[termination_simp]:
   by (cases "prod_decode v"; fastforce simp add: fstP_def prod_encode_less)+
 
 
+subsection\<open>Functions\<close>
 
-section\<open>Translation of functions\<close>
-
-
-(*PER for lift_nat class*)
-lemmas lift_nat_partial_equivalence_rel_equivalence =
-  iffD1[OF
-    transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
-    lift_nat_type_def.partial_equivalence_rel_equivalenceI]
-
-(*register PER*)
-declare lift_nat_partial_equivalence_rel_equivalence[per_intro]
-
-(*nicer relatedness theorem output*)
-declare Galois_eq_range_Abs_nat_Rep_nat_eq_inv_cr_nat[trp_relator_rewrite]
-
-
-lemma rel_inv_Fun_Rel_rel_eq[simp]: "(R \<Rrightarrow> S )\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
-  by fast
-
-lemma rel_inv_Fun_Rel_swap: "Fun_Rel_rel R\<inverse> S\<inverse> f g = Fun_Rel_rel R S g f"
-  by blast
+lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
+  by (urule rel_inv_Dep_Fun_Rel_rel_eq)
 
 declare [[ML_print_depth = 50]]
 declare [[show_types = false]]
 ML_file \<open>./Encode_Nat.ML\<close>
 
+subsection \<open>Setup of Basic Datatypes and Functions\<close>
 
-
-(* Encoding of standard datatypes *)
-
-datatype_lift_nat nat
+datatype_compile_nat nat
 print_theorems
 
-datatype_lift_nat list
+datatype_compile_nat list
 print_theorems
 
-datatype_lift_nat bool
+datatype_compile_nat bool
 print_theorems
 
-datatype_lift_nat char
+datatype_compile_nat char
 print_theorems
 
-datatype_lift_nat prod
+datatype_compile_nat prod
 print_theorems
 
-datatype_lift_nat tree
+datatype_compile_nat tree
 print_theorems
 
-datatype_lift_nat num
+datatype_compile_nat num
 print_theorems
 
-datatype_lift_nat option
+datatype_compile_nat option
 print_theorems
 
 
 (* HOL.If has to be translated manually *)
 
 lemma if_related_self[trp_in_dom]:
-  "(lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R \<Rrightarrow> lift_nat_type_def.R)
+  "(compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R)
     HOL.If HOL.If"
   by simp
 
-trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> _"
+trp_term If_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where x = "HOL.If :: bool \<Rightarrow> 'a::compile_nat \<Rightarrow> _"
   by trp_prover
 
 lemma If_nat_lifting[transfer_rule]:
-  "(cr_nat ===> cr_nat ===> cr_nat ===> cr_nat)
-    (If_nat TYPE('a::lift_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
+  "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat)
+    (If_nat TYPE('a::compile_nat)) (HOL.If :: bool \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a)"
   using If_nat_related' by fast
 
 lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rightarrow> f)"
   by simp
 
 schematic_goal If_nat_synth:
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (Rep_nat c)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (Rep_nat t)"
-  assumes [transfer_rule]: "(cr_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (Rep_nat f)"
-  shows "cr_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::lift_nat \<Rightarrow> 'a \<Rightarrow> 'a) (Rep_nat c) (Rep_nat t) (Rep_nat f))"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (denatify c)"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (denatify t)"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (denatify f)"
+  shows "Rel_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::compile_nat \<Rightarrow> 'a \<Rightarrow> 'a) (denatify c) (denatify t) (denatify f))"
   by (subst If_case_def, transfer_prover)
 
 lemma If_nat_synth_def:
-  fixes c :: "bool" and t :: "'a::lift_nat" and f :: "'a"
-  assumes "cn = Abs_nat c"
-  assumes "tn = Abs_nat t"
-  assumes "fn = Abs_nat f"
+  fixes c :: "bool" and t :: "'a::compile_nat" and f :: "'a"
+  assumes "cn = natify c"
+  assumes "tn = natify t"
+  assumes "fn = natify f"
   shows "If_nat TYPE('a) cn tn fn = case_bool_nat tn fn cn"
   unfolding assms
-  by (rule HOL.trans[OF _ If_nat_synth[unfolded cr_nat_def, symmetric]])
+  by (rule HOL.trans[OF _ If_nat_synth[unfolded Rel_nat_def, symmetric]])
     (fastforce simp: If_nat_app_eq)+
 
 
@@ -197,39 +185,39 @@ datatype ('a, 'b) keyed_list_tree =
   KLeaf |
   KNode "(('a, 'b) keyed_list_tree)" 'a "('b list)" "(('a, 'b) keyed_list_tree)"
 
-datatype_lift_nat keyed_list_tree
+datatype_compile_nat keyed_list_tree
 print_theorems
 
 
 
 (* Examples of translating functions *)
 
-function_lift_nat zip
+function_compile_nat zip
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
 | "rev_tr acc (x # xs) = rev_tr (x # acc) xs"
 
-function_lift_nat rev_tr
+function_compile_nat rev_tr
 print_theorems
 
 thm
   rev_tr_nat_synth
-  rev_tr_nat_synth[unfolded cr_nat_def, symmetric]
-  rev_tr_nat_synth[unfolded cr_nat_def, THEN sym]
-  HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]]
-  HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]]
+  rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]
+  rev_tr_nat_synth[unfolded Rel_nat_def, THEN sym]
+  HOL.trans[OF _ rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]]
+  HOL.trans[OF _ rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]]
 
 test rev_tr
 print_theorems
   (*
 lemma rev_tr_nat_synth_def:
-  fixes acc :: "'a::lift_nat list" and xs :: "'a list"
-  assumes "accn = Abs_nat acc"
-  assumes "xsn = Abs_nat xs"
+  fixes acc :: "'a::compile_nat list" and xs :: "'a list"
+  assumes "accn = natify acc"
+  assumes "xsn = natify xs"
   shows "rev_tr_nat TYPE('a) accn xsn
     = case_list_nat accn (\<lambda>x3a. rev_tr_nat TYPE('a) (Cons_nat x3a accn)) xsn"
-  apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded cr_nat_def, symmetric]])
+  apply(rule HOL.trans[OF _ rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]])
   using rev_tr_nat_app_eq assms by fastforce+ *)
 
 thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
@@ -238,20 +226,20 @@ thm rev_tr_nat_synth_def[unfolded case_list_nat_def]
 fun swap :: "'a \<times> 'b \<Rightarrow> 'b \<times> 'a" where
   "swap (a, b) = (b, a)"
 
-function_lift_nat swap
+function_compile_nat swap
 print_theorems
 
 test swap
 print_theorems
 
-thm HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]]
+thm HOL.trans[OF _ swap_nat_synth[unfolded Rel_nat_def, symmetric]]
 
 (* lemma swap_nat_synth_def:
-  fixes x :: "'a::lift_nat \<times> 'b::lift_nat"
-  assumes "n = Abs_nat x"
+  fixes x :: "'a::compile_nat \<times> 'b::compile_nat"
+  assumes "n = natify x"
   shows "swap_nat TYPE('a) TYPE('b) n
     = case_prod_nat (\<lambda>(x2a::nat) x1a::nat. Pair_nat x1a x2a) (n::nat)"
-  apply (rule HOL.trans[OF _ swap_nat_synth[unfolded cr_nat_def, symmetric]])
+  apply (rule HOL.trans[OF _ swap_nat_synth[unfolded Rel_nat_def, symmetric]])
   using swap_nat_app_eq assms by fastforce+ *)
 
 thm swap_nat_synth_def[unfolded case_prod_nat_def]
@@ -267,13 +255,13 @@ Remaining (optional?) TODOs:
   - Make it work with single equation functions/definitions
   - make it overridable: this doesn't work in the same file atm
 
-    function_lift_nat append
+    function_compile_nat append
 
     fun append :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
       "append xs [] = xs" |
       "append xs ys = rev_tr ys (rev_tr [] xs)"
 
-    function_lift_nat append (* Error here because of duplicate definitions *)
+    function_compile_nat append (* Error here because of duplicate definitions *)
 
 *)
 
@@ -287,7 +275,7 @@ fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 | "reverset (l # ls) r = reverset ls (l # r)"
 
 
-function_lift_nat reverset
+function_compile_nat reverset
 print_theorems
 
 
@@ -312,8 +300,8 @@ lemma prefixest_prefixes: "prefixest a l = rev (prefixes a) @ l"
 corollary prefixest_correct: "prefixest a [] = rev (prefixes a)"
   by (simp add: prefixest_prefixes)
 
-function_lift_nat prefixes
-function_lift_nat prefixest
+function_compile_nat prefixes
+function_compile_nat prefixest
 
 
 lemma reverset_length: "length xs = length (reverset xs [])"
@@ -326,7 +314,7 @@ function foo :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   using reverset.cases by blast+
 termination by(relation "measure (length o fst)"; simp add: reverset_correct)
 
-function_lift_nat foo
+function_compile_nat foo
 
 
 
@@ -335,7 +323,7 @@ fun prefixes2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list list"
 | "prefixes2 (a # b) ps = prefixes2 b ((a # b) # ps)"
 
 
-function_lift_nat prefixes2
+function_compile_nat prefixes2
 
 fun subtrees :: "'a tree \<Rightarrow> 'a tree list" where
   "subtrees \<langle>\<rangle> = []"
@@ -352,13 +340,13 @@ termination
   by (relation "(\<lambda>(t, stk, _). size t + size1 t + sum_list (map (\<lambda>t. size t + size1 t) stk))
                 <*mlex*> {}"; simp add: wf_mlex mlex_less)
 
-function_lift_nat subtreest
+function_compile_nat subtreest
 
 fun reverse_acc where
   "reverse_acc acc [] = acc"
 | "reverse_acc acc (x#xs) = reverse_acc (x#acc) xs"
 
-function_lift_nat reverse_acc
+function_compile_nat reverse_acc
 
 fun reverse where
   "reverse xs = reverse_acc [] xs"
@@ -376,10 +364,10 @@ lemma reverse_equiv: "reverse xs = rev xs"
   by(induction xs; simp)
     (subst reverse_acc_append_acc, simp)
 
-function_lift_nat append
+function_compile_nat append
 thm append_nat_synth
 test append
-function_lift_nat rev
+function_compile_nat rev
 
 
 fun fn_test1 :: "nat \<Rightarrow> nat" where
@@ -396,7 +384,7 @@ fun baz :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
 | "baz acc [] = acc"
 | "baz acc (xs#xss) = baz (append acc xs) xss"
 
-function_lift_nat baz
+function_compile_nat baz
 
 fun bazz where
   "bazz acc [[]] = acc"
@@ -404,14 +392,14 @@ fun bazz where
 | "bazz acc ((v # va) # xss) = bazz (append acc (v # va)) xss"
 | "bazz acc (xs # v # va) = bazz (append acc xs) (v # va)"
 
-function_lift_nat bazz
+function_compile_nat bazz
 
 fun baz2 :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list" where
   "baz2 acc [] = acc"
 | "baz2 acc (xs#xss) = baz2 (append acc xs) xss"
 
 
-function_lift_nat baz2
+function_compile_nat baz2
 
 fun test3 where
   "test3 x = (case x of True \<Rightarrow> False | False \<Rightarrow> True)"
