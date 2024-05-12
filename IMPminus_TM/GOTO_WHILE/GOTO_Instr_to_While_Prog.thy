@@ -32,7 +32,7 @@ fun GOTO_Instr_to_WHILE :: "instr \<Rightarrow> com" where
   "GOTO_Instr_to_WHILE (GOTO i) = ''pc'' ::= A (atomExp.N i)" | 
   "GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i) = IF x\<noteq>0 THEN ''pc'' ::= A (atomExp.N i) ELSE ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)"
 
-lemma pc_consist:
+lemma instr_pc_consist:
   assumes "well_defined_instr instr"
     and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
     and "iexec instr (pc, s') = (pc', t')" 
@@ -220,7 +220,7 @@ qed
 
 lemma aux_lemma1: "\<forall>x \<noteq> t. s x = s' x \<Longrightarrow> y \<noteq> t \<Longrightarrow> z \<noteq> t \<Longrightarrow> (s(x := s y)) z = (s'(x := s' y)) z" by simp
 
-lemma var_consist:
+lemma instr_var_consist:
   assumes "well_defined_instr instr"
     and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
     and "iexec instr (pc, s') = (pc', t')" 
@@ -404,7 +404,7 @@ theorem single_instr_consist:
     and "iexec instr (pc, s') = (pc', t')" 
     and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
   shows "t ''pc'' = pc'" and "\<forall>x \<noteq> ''pc''. t x = t' x"
-  using assms(1) assms(2) assms(3) assms(4) assms(5) pc_consist apply auto[1]
-  using assms(1) assms(2) assms(3) assms(4) assms(5) var_consist by presburger
+  using assms(1) assms(2) assms(3) assms(4) assms(5) instr_pc_consist apply auto[1]
+  using assms(1) assms(2) assms(3) assms(4) assms(5) instr_var_consist by presburger
 
 end

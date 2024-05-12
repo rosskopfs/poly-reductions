@@ -155,4 +155,12 @@ definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
   "well_defined_prog prog = (\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> 
     (well_defined_instr (prog !! i) \<and> (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)))"
 *)
+
+lemma prog_pc_consist:
+  assumes "prog \<turnstile> (pc, s') \<rightarrow>* (pc', t')" 
+    and "well_defined_prog prog"
+    and "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> k \<^esup> t"
+    and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
+  shows "t ''pc'' = pc'" using assms 
+proof (induction "exec1 prog" pc s' pc t rule: star_induct) sorry
 end
