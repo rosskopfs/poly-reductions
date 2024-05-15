@@ -162,21 +162,20 @@ lemma If_case_def: "HOL.If c t f = (case c of True \<Rightarrow> t | False \<Rig
   by simp
 
 schematic_goal If_nat_synth:
-  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) c (denatify c)"
-  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) t (denatify t)"
-  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) f (denatify f)"
-  shows "Rel_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::compile_nat \<Rightarrow> 'a \<Rightarrow> 'a) (denatify c) (denatify t) (denatify f))"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> bool \<Rightarrow> bool) cn c"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) tn t"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool) fn f"
+  shows "Rel_nat ?t ((HOL.If :: bool \<Rightarrow> 'a::compile_nat \<Rightarrow> 'a \<Rightarrow> 'a) c t f)"
   by (subst If_case_def, transfer_prover)
 
 lemma If_nat_synth_def:
   fixes c :: "bool" and t :: "'a::compile_nat" and f :: "'a"
-  assumes "cn = natify c"
-  assumes "tn = natify t"
-  assumes "fn = natify f"
+  assumes "Rel_nat cn c"
+  assumes "Rel_nat tn t"
+  assumes "Rel_nat fn f"
   shows "If_nat TYPE('a) cn tn fn = case_bool_nat tn fn cn"
-  unfolding assms
-  by (rule HOL.trans[OF _ If_nat_synth[unfolded Rel_nat_def, symmetric]])
-    (fastforce simp: If_nat_app_eq)+
+  apply (rule HOL.trans[OF _ If_nat_synth[unfolded Rel_nat_def, symmetric]])
+  using assms by (simp add: If_nat_app_eq Rel_nat_def)+
 
 
 (* Example of more complex datatype *)
@@ -193,6 +192,8 @@ print_theorems
 (* Examples of translating functions *)
 
 function_compile_nat zip
+thm HOL.trans[OF _ zip_nat_synth[unfolded Rel_nat_def, symmetric]]
+
 
 fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "rev_tr acc [] = acc"
@@ -200,6 +201,11 @@ fun rev_tr :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 
 function_compile_nat rev_tr
 print_theorems
+
+thm HOL.trans[OF _ rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]]
+  HOL.trans[OF _ rev_tr_nat_synth[unfolded Rel_nat_def, symmetric]]
+  HOL.trans
+  rev_tr_nat_synth
 
 thm
   rev_tr_nat_synth
@@ -277,6 +283,57 @@ fun reverset :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
 
 function_compile_nat reverset
 print_theorems
+
+case_of_simps reverset_case_def: reverset.simps
+
+lemma reverset_related_self [trp_in_dom]:
+  "(compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R) reverset reverset"
+  unfolding Fun_Rel_rel_def
+  by auto
+
+trp_term reverset_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where x = "reverset :: 'a::compile_nat list \<Rightarrow> _"
+  by trp_prover
+
+lemma reverset_nat_lifting[transfer_rule]:
+  shows "(Rel_nat ===> Rel_nat ===> Rel_nat) (reverset_nat TYPE('a::compile_nat))
+  (reverset :: 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list)"
+  using reverset_nat_related' by(simp add: rel_fun_eq_Fun_Rel_rel flip: rel_inv_Fun_Rel_rel_eq)
+
+schematic_goal reverset_nat_synth:
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) xsn xs"
+  assumes [transfer_rule]: "(Rel_nat :: nat \<Rightarrow> 'a list \<Rightarrow> bool) ysn ys"
+  shows "Rel_nat ?t ((reverset :: 'a::compile_nat list \<Rightarrow> _) xs ys)"
+  apply (subst reverset_case_def)
+  by transfer_prover
+
+ lemma reverset_nat_synth_def:
+  fixes xs :: "'a::compile_nat list" and ys :: "'a list"
+  assumes "Rel_nat xsn xs"
+  assumes "Rel_nat ysn ys"
+  shows "reverset_nat TYPE('a) xsn ysn =
+          case_list_nat ysn (\<lambda>x2ba x1ba. reverset_nat TYPE('a) x1ba (Cons_nat x2ba ysn)) xsn"
+  apply (tactic \<open>Classical.rule_tac @{context}
+      @{thms HOL.trans[OF _ reverset_nat_synth[unfolded Rel_nat_def, symmetric]]} [] 1\<close>)
+    defer prefer 2 prefer 3
+    apply(tactic \<open>ALLGOALS (Method.insert_tac @{context} @{thms assms})\<close>)
+    apply(tactic \<open>auto_tac (@{context} addsimps @{thms reverset_nat_app_eq rel_fun_def Rel_nat_def})\<close>)
+
+
+
+  apply(rule HOL.trans[OF _ reverset_nat_synth[unfolded Rel_nat_def, symmetric]])
+    using assms apply(simp add: reverset_nat_app_eq Rel_nat_def)+
+  done
+
+
+
+
+
+
+
+
+
+
+
 
 
 lemma reverset_rev: "reverset l r = rev l @ r"

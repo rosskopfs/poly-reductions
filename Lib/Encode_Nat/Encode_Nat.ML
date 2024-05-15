@@ -503,13 +503,22 @@ fun mk_nat_synth t lthy =
 
 
     val (arg_ts, (arg_nat_ts, lthy)) =
-      mk_Frees "x" binder_Ts lthy ||> mk_Frees "n" (map (K \<^typ>\<open>pair_repr\<close>) binder_Ts);
+      mk_Frees "x" binder_Ts lthy ||> mk_Frees "n" (map mk_natT binder_Ts);
     val abs_ts = map2 (fn T => fn t => \<^Const>\<open>natify T for t\<close>) binder_Ts arg_ts;
     val rep_ts = map2 (fn T => fn t => \<^Const>\<open>denatify T for t\<close>) binder_Ts arg_nat_ts;
 
+    fun mk_rels \<^Type>\<open>fun A B\<close> = mk_rel_fun (mk_rels A) (mk_rels B)
+      | mk_rels T = \<^Const>\<open>Rel_nat T\<close>;
+
     val assms_synth_thm =
       map2 (fn T => fn (arg1, arg2) =>
-        mk_Trueprop \<^Const>\<open>Rel_nat T for arg1 arg2\<close>) binder_Ts (arg_nat_ts ~~ rep_ts);
+        if Lifting_Util.is_fun_type T
+        then mk_Trueprop \<^Const>\<open>Rel_nat T for arg1 arg2\<close>
+        else mk_Trueprop \<^Const>\<open>Rel_nat T for arg1 arg2\<close>) binder_Ts (arg_nat_ts ~~ arg_ts);
+
+    val assms_synth_thm =
+      map2 (fn T => fn (arg1, arg2) =>
+        mk_rels T $ arg1 $ arg2 |> mk_Trueprop) binder_Ts (arg_nat_ts ~~ arg_ts);
 
     val max_idx =
       fold Variable.declare_term (t :: rep_ts @ arg_nat_ts) lthy
@@ -519,7 +528,7 @@ fun mk_nat_synth t lthy =
       mk_fresh_names lthy 1 "t" |>> the_single
       |>> (fn s => Var ((s, max_idx + 1), \<^typ>\<open>pair_repr\<close>));
 
-    val goal = mk_Trueprop \<^Const>\<open>Rel_nat body_T for var \<open>list_comb (t, rep_ts)\<close>\<close>;
+    val goal = mk_Trueprop \<^Const>\<open>Rel_nat body_T for var \<open>list_comb (t, arg_ts)\<close>\<close>;
 
     val case_thm = Proof_Context.get_thms lthy (t_base_name ^ "_case_def");
 
@@ -547,39 +556,115 @@ fun mk_nat_synth t lthy =
 
     val synth_t =
       Thm.concl_of synth_thm |> dest_Trueprop |> \<^Const_fn>\<open>Rel_nat _ for arg _ => arg\<close>;
-
+    val _ = Thm.cterm_of lthy synth_t |> @{print}
     val schem_Ts =
       fold_types (insert (op =)) synth_t []
       |> fold (fold_atyps (fn TVar a => insert (op =) (TVar a) | _ => I))
       |> curry (op |>) [];
 
-    val tyenv =
+    val schem_ts =
+      fold_aterms (fn Var a => insert (op =) (Var a) | _ => I) synth_t [] |> rev
+
+
+     val tyenv =
       if length schem_Ts > 0
       then
         fold (Sign.typ_match (Proof_Context.theory_of lthy)) (schem_Ts ~~ free_Ts) Vartab.empty
       else Vartab.empty;
 
-    val rhs_synth_def = map_types (Envir.subst_type tyenv) synth_t;
+    val a =
+    fold (Pattern.match (Proof_Context.theory_of lthy))
+      (schem_ts ~~ arg_nat_ts) (tyenv, Vartab.empty)
+      |> @{print}
+
+    val rhs_synth_def = Envir.subst_term a synth_t
+    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
+
+(*     val rhs_synth_def = map_types (Envir.subst_type tyenv) synth_t;
+    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
+    val rhs_synth_def' = Envir.subst_term a synth_t
+    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
+    val rhs_synth_def = synth_t *)
 
     val goal = mk_Trueprop_eq (lhs_synth_def, rhs_synth_def);
-
+    val _ = Thm.cterm_of lthy goal |> @{print}
     val assms_synth_def_thm = map mk_Trueprop_eq (arg_nat_ts ~~ abs_ts);
 
-    val synth_mod_thm =
-      (Local_Defs.unfold lthy @{thms Rel_nat_def} synth_thm RS @{thm sym});
 
-    val rule_thm = (@{thm trans} OF [@{thm _}, synth_mod_thm]);
+
+    val _ = synth_thm |> @{print}
+    val synth_mod_thm =
+      (Local_Defs.unfold lthy @{thms Rel_nat_def} synth_thm RS @{thm sym})
+      |> @{print}
+
+
+    val rule_thm = (@{thm trans} OF [@{thm _}, synth_mod_thm])
+      |> @{print}
+
+(*     val b = (map (fst o dest_TVar) schem_Ts) ~~ (map (Thm.cterm_of lthy) arg_nat_ts)
+    val d = Drule.infer_instantiate lthy b rule_thm *)
 
     val app_eq_thm = Proof_Context.get_thms lthy (t_nat_base_name ^ "_app_eq");
+
+    val schem_Ts =
+      fold_types (insert (op =)) (the_single app_eq_thm |> Thm.full_prop_of) []
+      |> fold (fold_atyps (fn TVar a => insert (op =) (TVar a) | _ => I))
+      |> curry (op |>) []
+      |> @{print}
+
+(*     val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val synth_thm = Morphism.thm phi synth_thm;
+    val (_, lthy) = (Local_Theory.begin_nested lthy);
+
+    val foo =
+      synth_thm
+      |> `(Morphism.thm phi)
+      |> apply2 (Thm.cterm_of lthy o Thm.full_prop_of) *)
+
+    val ct =
+      the_single app_eq_thm |> Thm.full_prop_of
+      |> \<^Const_fn>\<open>Pure.eq \<^typ>\<open>pair_repr\<close> for A _ => A\<close>
+      |> Thm.cterm_of lthy
+    val ct' = lhs_synth_def |> Thm.cterm_of lthy
+    val a : ctyp TVars.table * cterm Vars.table = Thm.match (ct, ct') |> @{print}
+    val app_eq_thm =
+      app_eq_thm |> @{print}
+      (* |> map (Drule.instantiate_normalize a) |> @{print} *)
+
+(*     val tyenv =
+      if length schem_Ts > 0
+      then
+        (map (fst o dest_TVar) schem_Ts) ~~ (map (Thm.cterm_of lthy) arg_nat_ts)
+      else [];
+    val _ = tyenv |> @{print} *)
 
     val var_names = map (fst o dest_Free) (arg_ts @ arg_nat_ts);
 
     val synth_def_thm =
-      Goal.prove lthy var_names assms_synth_def_thm goal (fn {prems=prems, context=ctxt, ...} =>
-        Classical.rule_tac ctxt [rule_thm] [] 1
+      Goal.prove lthy var_names assms_synth_thm goal (fn {prems=prems, context=ctxt, ...} =>
+        let
+          val _ = prems |> @{print}
+        in
+        (* print_tac ctxt "Start"
+        THEN Classical.rule_tac ctxt [rule_thm] [] 1
+        THEN print_tac ctxt "1"
         THEN Method.insert_tac ctxt (app_eq_thm @ prems) 1
-        THEN REPEAT (fast_force_tac lthy 1)
-        THEN ALLGOALS (Method.insert_tac ctxt (app_eq_thm @ prems) THEN' fast_force_tac lthy));
+        THEN print_tac ctxt "2"
+        THEN REPEAT (fast_force_tac ctxt 1 THEN print_tac ctxt "applied fastforce")
+        THEN print_tac ctxt "3"
+        THEN ALLGOALS (Method.insert_tac ctxt (app_eq_thm @ prems))
+        THEN print_tac ctxt "4"
+        THEN auto_tac (ctxt addsimps @{thms Rel_nat_def} addsimps app_eq_thm)
+        THEN print_tac ctxt "5" *)
+        print_tac ctxt "Start"
+        THEN Classical.rule_tac ctxt [rule_thm] [] 1
+        THEN print_tac ctxt "1"
+        THEN ALLGOALS (Method.insert_tac ctxt prems)
+        THEN print_tac ctxt "2"
+        THEN auto_tac (ctxt addsimps app_eq_thm addsimps @{thms rel_fun_def Rel_nat_def})
+        THEN print_tac ctxt "3"
+        end);
     val binding_name = Binding.name (t_base_name ^ "_nat_synth_def");
     val (_, lthy) = Local_Theory.note ((binding_name, []), [synth_def_thm]) lthy;
 
