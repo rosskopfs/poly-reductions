@@ -45,6 +45,77 @@ declare_compiled_const "times"
 
 HOL_To_IMP_Minus_func_correct mul_nat by cook
 
+
+lemma
+  "(tailcall_to_IMP_Minus mul_IMP_tailcall, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow>
+    s' ''mul.ret'' = mul_nat (s ''mul.args.x'') (s ''mul.args.y'')"
+  apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
+  apply (subst (asm) (2) mul_IMP_tailcall_def)
+  apply (erule tSeq_E)
+  oops
+
+lemma terminates_compile_sound:
+  assumes "invar c"
+  and "\<exists>t s'. c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  shows "\<exists>t s'.(compile c,s) \<Rightarrow>'\<^bsup>t\<^esup> s'"
+  using assms compile_sound by blast
+
+theorem terminates_inline_sound:
+  assumes "\<exists>t s'. (c, s) \<Rightarrow>'\<^bsup>t\<^esup> s'"
+  shows "terminates (inline c, s)"
+  using assms inline_sound by blast
+
+corollary terminates_tailcall_to_IMP_Minus_sound:
+  assumes "invar c"
+  and "\<exists>t s'. c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  shows "terminates (tailcall_to_IMP_Minus c, s)"
+  unfolding tailcall_to_IMP_Minus_eq
+  using assms terminates_compile_sound terminates_inline_sound
+  by blast
+
+lemma terminates_tSeqI:
+  assumes "\<exists>t s'. (c \<turnstile>(c1, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<and> (\<exists>t' s''. c \<turnstile>(c2, s') \<Rightarrow>\<^bsup>t'\<^esup> s''))"
+  shows "\<exists>t s'. c \<turnstile>(tSeq c1 c2, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  using assms by blast
+
+lemma terminates_mul_acc_IMP:
+  "terminates (tailcall_to_IMP_Minus mul_acc_IMP_tailcall, s)"
+  sorry
+
+lemma terminatesE:
+  assumes "terminates (c, s)"
+  obtains t s' where "(c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  using assms by blast
+
+lemma terminates_mul_IMP_tailcall:
+  "terminates (tailcall_to_IMP_Minus mul_IMP_tailcall, s)"
+  (* thm compile_sound[of mul_IMP_tailcall s] *)
+  apply (rule terminates_tailcall_to_IMP_Minus_sound)
+  apply (subst mul_IMP_tailcall_def)
+  apply simp
+  apply (subst (2) mul_IMP_tailcall_def)
+  apply (rule terminates_tSeqI)
+  apply (rule exI)
+  apply (rule exI)
+  apply (rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule terminatesE[OF terminates_mul_acc_IMP])
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tCall)
+  apply (rule terminatesE[OF terminates_mul_acc_IMP])
+  apply assumption
+  apply (tactic \<open>Tactic_Util.thin_tac 1 1\<close>)
+  apply (rule exI, rule exI)
+  apply (rule tAssign)
+  done
+
 lemma mul_nat_eq_mul[simp]: "mul_nat x y = x * y"
   unfolding mul_nat_def by simp
 
@@ -55,6 +126,60 @@ declare div_acc_nat.simps[simp del]
 compile_nat div_acc_nat.simps basename div_acc
 
 HOL_To_IMP_Minus_func_correct div_acc_nat by (cook mode = tailcall)
+
+lemma terminates_eq_IMP:
+  "terminates (eq_IMP, s)"
+  sorry
+
+lemma terminates_tIfI:
+  assumes "s v \<noteq> 0 \<Longrightarrow> \<exists>t s'. c \<turnstile>(c1, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  and "s v = 0 \<Longrightarrow> \<exists>t s'. c \<turnstile>(c2, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  shows "\<exists>t s'. c \<turnstile> (tIf v c1 c2, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  using assms by (cases "s ''v'' = 0") blast+
+
+lemma terminates_tTailI:
+  assumes "\<exists>t s'. c \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  shows "\<exists>t s'. c \<turnstile> (tTAIL, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  using assms by blast+
+
+lemma terminates_div_acc_nat_tailcall:
+  "terminates (tailcall_to_IMP_Minus div_acc_IMP_tailcall, s)"
+  (* thm compile_sound[of mul_IMP_tailcall s] *)
+  apply (rule terminates_tailcall_to_IMP_Minus_sound)
+  apply (subst div_acc_IMP_tailcall_def)
+  apply simp
+  (* apply (induction "s ''x''" "s ''y''" "s ''z''"
+  arbitrary: s rule: div_acc_nat.induct) *)
+  apply (subst (2) div_acc_IMP_tailcall_def)
+  apply (rule terminates_tSeqI)
+  apply (rule exI)
+  apply (rule exI)
+  apply (rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule terminatesE[OF terminates_eq_IMP])
+  apply (frule eq_nat_IMP_Minus_func_correct)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tCall)
+  apply assumption
+  apply (simp only: eq_nat_def)
+  apply (tactic \<open>Tactic_Util.thin_tac 1 1\<close>)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tIfI)
+  apply (rule exI, rule exI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  apply (rule terminates_tSeqI)
+  apply (rule exI, rule exI, rule conjI)
+  apply (rule tAssign)
+  oops
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
   by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
