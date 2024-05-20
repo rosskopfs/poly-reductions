@@ -74,6 +74,7 @@ fun iexec\<^sub>l :: "GOTO\<^sub>l_instr \<Rightarrow> config\<^sub>l \<Rightarr
 definition exec1\<^sub>l :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>/ _))" [59,0,59] 60) where
   "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' = (\<exists>pc s. cfg = (pc, s) \<and> cfg' = iexec\<^sub>l (P !! pc) cfg \<and> 0 < pc \<and> pc \<le> size P)"
 
+text \<open>pc = 0 is when the program halts\<close>
 lemma exec1\<^sub>l_I [intro, code_pred_intro]:
   "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> size P \<Longrightarrow> P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
   by (simp add: exec1\<^sub>l_def of_nat_diff)
@@ -91,6 +92,9 @@ where
   "exec\<^sub>l_t P cfg t cfg' \<equiv> (exec1\<^sub>l ^^ t) P cfg cfg'"
 
 code_pred exec1\<^sub>l using exec1\<^sub>l_I exec1\<^sub>l_def by auto
+
+definition pc_start :: "nat" where "pc_start = 1"
+definition pc_halt :: "nat" where "pc_halt = 0"
 
 text \<open>An example of list modification\<close>
 values
