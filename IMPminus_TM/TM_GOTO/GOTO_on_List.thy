@@ -43,8 +43,8 @@ datatype GOTO\<^sub>l_instr =
   MoveLeft nat |
   MoveRight nat |
   Jmp label (\<open>GOTO\<^sub>l _\<close>) |
-  CondJmp var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ THEN GOTO\<^sub>l _\<close>) |
-  CondJmp2 var\<^sub>l GOTO\<^sub>l_operi var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ AND _ = _ THEN GOTO\<^sub>l _\<close>)
+  CondJmp var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ THEN GOTO\<^sub>l _\<close> [54] 54) |
+  CondJmp2 var\<^sub>l GOTO\<^sub>l_operi var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ AND _ = _ THEN GOTO\<^sub>l _\<close> [60] 60)
 
 type_synonym GOTO\<^sub>l_prog = "GOTO\<^sub>l_instr list"
 type_synonym state\<^sub>l = "var\<^sub>l \<Rightarrow> val list"
@@ -84,7 +84,7 @@ abbreviation
 where
   "exec\<^sub>l P \<equiv> star (exec1\<^sub>l P)"
 
-lemmas exec\<^sub>l_induct = star.induct [of "exec1\<^sub>l P", split_format(complete)]
+lemmas exec\<^sub>l_induct = star.induct[of "exec1\<^sub>l P", split_format(complete)]
 
 abbreviation 
   exec\<^sub>l_t :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> nat \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>\<^bsub>_\<^esub>/ _))" [60] 50)
