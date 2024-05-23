@@ -43,8 +43,12 @@ datatype GOTO\<^sub>l_instr =
   MoveLeft nat |
   MoveRight nat |
   Jmp label (\<open>GOTO\<^sub>l _\<close>) |
-  CondJmp var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ THEN GOTO\<^sub>l _\<close> [54] 54) |
-  CondJmp2 var\<^sub>l GOTO\<^sub>l_operi var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ AND _ = _ THEN GOTO\<^sub>l _\<close> [60] 60)
+  CondJmp var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ THEN GOTO\<^sub>l _\<close> [59, 0, 59] 60) |
+  CondJmp2 var\<^sub>l GOTO\<^sub>l_operi var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ AND _ = _ THEN GOTO\<^sub>l _\<close> [59, 59, 0, 59] 60)
+
+
+subsection \<open>Semantics of GOTO_on_List programs\<close>
+text \<open>This part draws largely on "HOL-IMP.Compiler"\<close>
 
 type_synonym GOTO\<^sub>l_prog = "GOTO\<^sub>l_instr list"
 type_synonym state\<^sub>l = "var\<^sub>l \<Rightarrow> val list"
@@ -54,9 +58,6 @@ fun eval_GOTO\<^sub>l_operi :: "state\<^sub>l \<Rightarrow> GOTO\<^sub>l_operi \
   "eval_GOTO\<^sub>l_operi s (L l) = l" |
   "eval_GOTO\<^sub>l_operi s (V\<^sub>l x) = s x" |
   "eval_GOTO\<^sub>l_operi s (ReadChs tps) = map (\<lambda>n. (s (TP n)) ! (hd (s (HP n)))) tps"
-
-definition is_halt\<^sub>l :: "config\<^sub>l \<Rightarrow> bool" where
-  "is_halt\<^sub>l c \<longleftrightarrow> fst c = 0"
 
 fun iexec\<^sub>l :: "GOTO\<^sub>l_instr \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l" where
   "iexec\<^sub>l NOP\<^sub>l (pc, s) = (Suc pc, s)" |
@@ -72,29 +73,39 @@ fun iexec\<^sub>l :: "GOTO\<^sub>l_instr \<Rightarrow> config\<^sub>l \<Rightarr
     (if s x = eval_GOTO\<^sub>l_operi s l1 \<and> s y = eval_GOTO\<^sub>l_operi s l2 then label else pc, s)"
 
 definition exec1\<^sub>l :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>/ _))" [59,0,59] 60) where
-  "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' = (\<exists>pc s. cfg = (pc, s) \<and> cfg' = iexec\<^sub>l (P !! pc) cfg \<and> 0 < pc \<and> pc \<le> size P)"
+  "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' \<longleftrightarrow> (\<exists>pc s. cfg = (pc, s) \<and> cfg' = iexec\<^sub>l (P !! pc) cfg \<and>
+                         P \<noteq> [] \<and> 0 < pc \<and> pc \<le> size P)"
 
-text \<open>pc = 0 is when the program halts\<close>
+text \<open>Note that pc = 0 is when the program halts\<close>
 lemma exec1\<^sub>l_I [intro, code_pred_intro]:
-  "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> size P \<Longrightarrow> P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
+  "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> P \<noteq> [] \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> size P \<Longrightarrow> P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
   by (simp add: exec1\<^sub>l_def of_nat_diff)
 
-abbreviation 
+lemma exec1\<^sub>l_pc_range [intro]:
+  "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c' \<Longrightarrow> 0 < pc \<and> pc \<le> length P"
+  unfolding exec1\<^sub>l_def by blast
+
+abbreviation
   exec\<^sub>l :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>*/ _))" [60] 50)
 where
   "exec\<^sub>l P \<equiv> star (exec1\<^sub>l P)"
 
 lemmas exec\<^sub>l_induct = star.induct[of "exec1\<^sub>l P", split_format(complete)]
 
+code_pred exec1\<^sub>l using exec1\<^sub>l_I exec1\<^sub>l_def by auto
+
 abbreviation 
   exec\<^sub>l_t :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> nat \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>\<^bsub>_\<^esub>/ _))" [60] 50)
 where
-  "exec\<^sub>l_t P cfg t cfg' \<equiv> (exec1\<^sub>l ^^ t) P cfg cfg'"
-
-code_pred exec1\<^sub>l using exec1\<^sub>l_I exec1\<^sub>l_def by auto
+  "exec\<^sub>l_t P cfg t cfg' \<equiv> ((exec1\<^sub>l P) ^^ t) cfg cfg'"
 
 definition pc_start :: "nat" where "pc_start = 1"
 definition pc_halt :: "nat" where "pc_halt = 0"
+
+lemma pc_start_eq_1[simp]: "pc_start = 1"
+  unfolding pc_start_def by simp
+lemma pc_halt_eq_0[simp]: "pc_halt = 0"
+  unfolding pc_halt_def by simp
 
 text \<open>An example of list modification\<close>
 values
@@ -113,5 +124,42 @@ values
      HP 0 ::=\<^sub>l L [0],    HP 1 ::=\<^sub>l L [0],      HP 2 ::=\<^sub>l L [1],
      TMP 0 ::=\<^sub>l ReadChs [0, 1, 2], HALT\<^sub>l] \<turnstile>\<^sub>l
     (1, (\<lambda>x. [])) \<rightarrow>* (pc, t))}"
+
+
+subsection \<open>Verification infrastructure\<close>
+text \<open>This part draws largely on "HOL-IMP.Compiler"\<close>
+
+fun ins_no_jump :: "state\<^sub>l \<Rightarrow> GOTO\<^sub>l_instr \<Rightarrow> bool" where
+  "ins_no_jump s ins \<longleftrightarrow> (
+    (\<nexists>n. ins = GOTO\<^sub>l n) \<and>
+    (\<exists>x l n. ins = IF x = l THEN GOTO\<^sub>l n \<longrightarrow> s x \<noteq> eval_GOTO\<^sub>l_operi s l) \<and>
+    (\<exists>x y l\<^sub>1 l\<^sub>2 n. (ins = IF x = l\<^sub>1 AND y = l\<^sub>1 THEN GOTO\<^sub>l n) \<longrightarrow>
+         (s x \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>1 \<or> s y \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>2)))"
+
+lemma iexec\<^sub>l_seq_independent_from_pc[simp]:
+  assumes "ins_no_jump s ins"
+    shows "iexec\<^sub>l ins (pc, s) = (pc', s') \<Longrightarrow> \<forall>pc''. iexec\<^sub>l ins (pc, s) = (pc', s')"
+  using assms
+  by (auto split: GOTO\<^sub>l_instr.split)
+
+lemma exec1\<^sub>l_appendR:
+  assumes "ins_no_jump s (P!!pc)"
+    shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c' \<Longrightarrow> P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
+  by (auto simp: exec1\<^sub>l_def)
+
+lemma exec_appendR:
+  assumes "\<forall>ins \<in> set P. ins_no_jump s ins"
+    shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>* c'' \<Longrightarrow> P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow>* c''"
+proof (induction "(pc, s)" c'' rule: star.induct)
+  case refl
+  then show ?case by blast
+next
+  case (step c' c'')
+  with exec1\<^sub>l_pc_range have "0 < pc \<and> pc \<le> length P" by blast
+  then have "P !! pc \<in> set P" by blast
+  with assms have "ins_no_jump s (P !! pc)" by blast
+  with step exec1\<^sub>l_appendR have "P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'" by blast
+  with step show ?case  sorry
+qed
 
 end

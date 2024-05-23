@@ -9,7 +9,7 @@ locale TM_to_GOTO_on_List =
       and G :: nat \<comment>\<open>G: size of tape character set\<close>
   assumes TM: "turing_machine K G M"
 
-    fixes Q :: nat \<comment>\<open>Q: number of states, halting state excluded\<close>
+    fixes Q :: nat \<comment>\<open>Q: number of states, halting state excluded; also the halting state\<close>
   assumes Q: "Q = length M"
 
     fixes TPS :: "tape list"  \<comment>\<open>TPS: input tapes\<close>
@@ -321,10 +321,15 @@ qed
 subsection \<open>Correctness of the transform function\<close>
 
 lemma from_entrance_jumps_to_the_right_label:
-  assumes "q_chs \<in> set q_chs_enum_list"
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+      and "q < Q"
+      and "s ST = [q]"
+      and "s (TMP 0) = chs"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
-           (pc_start, s) \<rightarrow>\<^bsub>Suc (Suc (index q_chs_enum_list q_chs))\<^esub>
+           (Suc (Suc pc_start), s) \<rightarrow>\<^bsub>Suc (Suc (index q_chs_enum_list q_chs))\<^esub>
            (label_of_block_for_q_chs q_chs, s)"
+  using assms
+  using q_chs_enum_list_distinct
   sorry
 
 lemma block_for_q_chs_correct:
@@ -346,7 +351,21 @@ lemma TM_to_GOTO_on_List_correct_for_single_step:
 lemma GOTO_on_List_correctly_ends:
   "GOTO_on_List_Prog \<turnstile>\<^sub>l
    (pc_start, config_to_state (Q, tps)) \<rightarrow>\<^bsub>1\<^esub> (pc_halt, config_to_state (Q, tps))"
-  sorry
+proof -
+  have "config_to_state (Q, tps) ST = [Q]"
+    by fastforce
+  have "iexec\<^sub>l (IF ST = L [Q] THEN GOTO\<^sub>l pc_halt) (pc, config_to_state (Q, tps)) =
+        (pc_halt, config_to_state (Q, tps))" for pc
+    by simp
+  moreover
+  have "GOTO_on_List_Prog ! pc_start = IF ST = L [Q] THEN GOTO\<^sub>l pc_halt"
+    by fastforce
+  ultimately
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l
+    (pc_start, config_to_state (Q, tps)) \<rightarrow> (pc_halt, config_to_state (Q, tps))"
+    by force
+  then show ?thesis by auto
+qed
 
 theorem TM_to_GOTO_on_List_correct:
   assumes "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>* (pc_halt, s)"
