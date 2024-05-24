@@ -76,7 +76,7 @@ definition exec1\<^sub>l :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Ri
   "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' \<longleftrightarrow> (\<exists>pc s. cfg = (pc, s) \<and> cfg' = iexec\<^sub>l (P !! pc) cfg \<and>
                          P \<noteq> [] \<and> 0 < pc \<and> pc \<le> length P)"
 
-text \<open>Note that pc = 0 is when the program halts\<close>
+text \<open>Note that pc = 0 is when the program halts; programs are indexed with "!!", indices start from 1\<close>
 lemma exec1\<^sub>l_I [intro, code_pred_intro]:
   "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> P \<noteq> [] \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> length P \<Longrightarrow>
    P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
@@ -103,6 +103,15 @@ abbreviation
   exec\<^sub>l_t :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> nat \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>\<^bsub>_\<^esub>/ _))" [60] 50)
 where
   "exec\<^sub>l_t P cfg t cfg' \<equiv> ((exec1\<^sub>l P) ^^ t) cfg cfg'"
+
+lemma exec\<^sub>l_t_add[intro]:
+  assumes "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>t\<^sub>1\<^esub> (pc', s')"
+      and "P \<turnstile>\<^sub>l (pc', s') \<rightarrow>\<^bsub>t\<^sub>2\<^esub> (pc'', s'')"
+    shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>t\<^sub>1 + t\<^sub>2\<^esub> (pc'', s'')"
+  using assms
+  apply (induction t\<^sub>2)
+  apply auto
+  by (metis relcomppI relpowp_add)
 
 definition pc_start :: "nat" where "pc_start = 1"
 definition pc_halt :: "nat" where "pc_halt = 0"
@@ -214,7 +223,7 @@ lemma iexec\<^sub>l_strict_no_jump[intro]:
   by (cases ins) auto
 
 lemma execute_prog_strict_no_jump:
-  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []" \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
       and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i)"
     shows "\<exists>s'. P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')"
   using assms
@@ -233,7 +242,7 @@ next
 qed
 
 lemma execute_prog_strict_no_jump_mid_state:
-  assumes block_P_a_len: "0 < a \<and> a + Suc len \<le> length P \<and> P \<noteq> []"
+  assumes block_P_a_len: "0 < a \<and> a + Suc len \<le> length P \<and> P \<noteq> []" \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
       and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + Suc len \<longrightarrow> strict_no_jump (P !! i)"
       and final_state: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, t)"
     shows "\<exists>t'. (P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')) \<and> (P \<turnstile>\<^sub>l (a + len, t') \<rightarrow> (a + Suc len, t))"
@@ -257,7 +266,7 @@ lemma iexec\<^sub>l_no_jump_and_no_modification[intro]:
   by (cases ins) auto
 
 lemma execute_prog_no_jump_and_no_modification:
-  "0 < a \<and> a + len \<le> length P \<Longrightarrow> P \<noteq> [] \<Longrightarrow>
+  "0 < a \<and> a + len \<le> length P \<Longrightarrow> P \<noteq> [] \<Longrightarrow> \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
    \<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> no_jump s (P !! i) \<and> no_modification (P !! i) \<Longrightarrow>
    P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s)"
 proof (induction len)
@@ -303,7 +312,7 @@ lemma iexec\<^sub>l_no_write[intro]:
   by (cases ins; cases x) auto
 
 lemma execute_no_write_and_strict_no_jump:
-  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []" \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
       and block_strict_no_jump_and_no_write:
           "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
       and final_state: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')"
@@ -363,43 +372,66 @@ lemma iexec\<^sub>l_with_all_dependent_var_same:
   done
 
 lemma execute_with_var_modified_at_most_once:
-  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
-      \<comment>\<open>ins_modify: the only possible point where x is modified\<close>
-      and ins_modify: "0 \<le> j \<and> j < len \<and> (P !! j) = ins_modify"
-      and "strict_no_jump ins_modify"
-      and state_before_ins_modify: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>j\<^esub> (a + j, s')"
-      and state_after_ins_modify: "P \<turnstile>\<^sub>l (a + j, s') \<rightarrow> (a + j', s'')"
-      and value_x: "s'' x = v"
-      and other_cmd_no_write_x: "\<forall>i. a \<le> i \<and> i < a + len \<and> i \<noteq> j \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []" \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
+        \<comment>\<open>ins_modify: the only possible point where x is modified\<close>
+      and ins_modify: "a \<le> j \<and> j < a + len \<and> (P !! j) = ins_modify"
+      and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i)"
+      and other_cmd_no_write_x: "\<forall>i. a \<le> i \<and> i < a + len \<and> i \<noteq> j \<longrightarrow> no_write x (P !! i)"
+      and dependent_vars_no_modify_before_ins:
+          "\<forall>y \<in> vars_read ins_modify. \<forall>i. a \<le> i \<and> i < j \<longrightarrow> no_write y (P !! i)"
       and config_at_end: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t)"
+      and value_x: "\<forall>s'. iexec\<^sub>l ins_modify (j, s) = (Suc j, s') \<longrightarrow> s' x = v"
     shows "t x = v"
-  using assms
-proof (induction len)
-  case 0
-  then show ?case by linarith
-next
-  case (Suc len)
-  then have strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + Suc len \<longrightarrow> strict_no_jump (P !! i)"
-    by blast
-  with \<open>0 < a \<and> a + Suc len \<le> length P \<and> P \<noteq> []\<close> \<open>P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, t)\<close>
-  obtain t' where t': "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')" "P \<turnstile>\<^sub>l (a + len, t') \<rightarrow> (a + Suc len, t)"
-    using execute_prog_strict_no_jump_mid_state by blast
+proof -
+  from block_P_a_len ins_modify block_strict_no_jump
+  obtain s_before_j where s_before_j: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>j - a\<^esub> (j, s_before_j)"
+    using execute_prog_strict_no_jump [where ?len = "j - a" and ?P = P and ?a = a and ?s = s]
+    by auto
+  with block_P_a_len ins_modify block_strict_no_jump dependent_vars_no_modify_before_ins
+  have "\<forall>y \<in> vars_read ins_modify. s y = s_before_j y"
+    using execute_no_write_and_strict_no_jump
+    by (smt (verit, ccfv_SIG) le_add_diff_inverse less_or_eq_imp_le trans_less_add1)
+  moreover
+  from block_P_a_len ins_modify block_strict_no_jump other_cmd_no_write_x s_before_j
+  have "s x = s_before_j x"
+    using execute_no_write_and_strict_no_jump
+    by (smt (verit, ccfv_threshold) le_add_diff_inverse le_add_diff_inverse2 nat_less_le trans_less_add2)
+  moreover
+  from block_strict_no_jump ins_modify have "strict_no_jump ins_modify" by blast
+  then obtain s_after_j where s_after_j: "iexec\<^sub>l ins_modify (j, s_before_j) = (Suc j, s_after_j)" by force
+  moreover
+  from block_strict_no_jump ins_modify have "strict_no_jump ins_modify" by blast
+  then obtain s_after_j' where s_after_j': "iexec\<^sub>l ins_modify (j, s) = (Suc j, s_after_j')" by force
+  ultimately
+  have "s_after_j x = s_after_j' x"
+    using iexec\<^sub>l_with_all_dependent_var_same [where ?pc = j and ?pc' = "Suc j" and ?ins = ins_modify
+                                                and ?s = s and ?s' = s_before_j and ?t = s_after_j'
+                                                and ?t' = s_after_j and ?x = x]
+    by presburger
+  with s_after_j' value_x have "s_after_j x = v" by blast
 
-  show ?case
-  proof (cases "j = a + len")
-    case True \<comment>\<open>variable x can only be modified at (P !! (a + len)), not before\<close>
-    with Suc have "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
-      using dual_order.strict_trans by blast
-    with Suc t' have "t' x = s x"
-      using execute_no_write_and_strict_no_jump
-      by (metis Suc_leD add_Suc_right)
-    from t' True have "P \<turnstile>\<^sub>l (j, t') \<rightarrow> (a + Suc len, t)" by blast
-    then show ?thesis sorry
-  next
-    case False \<comment>\<open>variable x can only be modified at (P !! j), which is before (P !! (a + len))\<close>
-    with Suc
-    show ?thesis sorry
-  qed
+  from s_after_j block_P_a_len ins_modify have "P \<turnstile>\<^sub>l (j, s_before_j) \<rightarrow> (Suc j, s_after_j)"
+    by (simp add: exec1\<^sub>l_I)
+  with s_before_j ins_modify have s_to_s_after_j: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc j - a\<^esub> (Suc j, s_after_j)"
+    using Suc_diff_le by auto
+    
+  from block_P_a_len ins_modify block_strict_no_jump
+  obtain t' where t': "P \<turnstile>\<^sub>l (Suc j, s_after_j) \<rightarrow>\<^bsub>a + len - Suc j\<^esub> (a + len, t')"
+    using execute_prog_strict_no_jump [where ?len = "a + len - Suc j" and ?P = P and ?a = "Suc j" and ?s = s_after_j]
+    by auto
+  with s_to_s_after_j have "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')"
+    using exec\<^sub>l_t_add ins_modify le_imp_less_Suc by fastforce
+  with config_at_end have "t = t'"
+    using exec\<^sub>l_t_determ by blast
+
+  from t' block_P_a_len ins_modify block_strict_no_jump other_cmd_no_write_x
+  have "s_after_j x = t' x"
+    using execute_no_write_and_strict_no_jump [where ?a = "Suc j" and ?len = "a + len - Suc j"
+                                                 and ?P = P and ?x = x and ?s = s_after_j and ?s' = t']
+    by force
+
+  from \<open>s_after_j x = t' x\<close> \<open>t = t'\<close> \<open>s_after_j x = v\<close>
+  show ?thesis by simp
 qed
 
 end
