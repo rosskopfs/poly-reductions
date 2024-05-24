@@ -21,7 +21,7 @@ datatype var\<^sub>l =
   ST      | \<comment> \<open>State\<close>
   TP nat  | \<comment> \<open>Tape\<close>
   HP nat  | \<comment> \<open>Head positions\<close>
-  TMP nat   \<comment> \<open>Other variables, e.g. storing chars at head positions on each tape\<close>
+  CHS       \<comment> \<open>Storing chars at head positions on each tape\<close>
 
 datatype GOTO\<^sub>l_operi =
   L "val list" |
@@ -133,10 +133,10 @@ values
 
 text \<open>An example of ReadChs\<close>
 values
-  "{(pc, map t [TP 0, TP 1, TP 2, HP 0, HP 1, HP 2, TMP 0]) | pc t. (
+  "{(pc, map t [TP 0, TP 1, TP 2, HP 0, HP 1, HP 2, CHS]) | pc t. (
     [TP 0 ::=\<^sub>l L [0, 1], TP 1 ::=\<^sub>l L [10, 11], TP 2 ::=\<^sub>l L [20, 21],
      HP 0 ::=\<^sub>l L [0],    HP 1 ::=\<^sub>l L [0],      HP 2 ::=\<^sub>l L [1],
-     TMP 0 ::=\<^sub>l ReadChs [0, 1, 2], HALT\<^sub>l] \<turnstile>\<^sub>l
+     CHS ::=\<^sub>l ReadChs [0, 1, 2], HALT\<^sub>l] \<turnstile>\<^sub>l
     (1, (\<lambda>x. [])) \<rightarrow>* (pc, t))}"
 
 
@@ -300,9 +300,9 @@ fun no_write :: "var\<^sub>l \<Rightarrow> GOTO\<^sub>l_instr \<Rightarrow> bool
   "no_write (HP n) (MoveLeft m) \<longleftrightarrow> m \<noteq> n" |
   "no_write (HP n) (MoveRight m) \<longleftrightarrow> m \<noteq> n" |
   "no_write (HP n) _ \<longleftrightarrow> True" |
-  \<comment>\<open>TMP n, other variables used in the program\<close>
-  "no_write (TMP n) (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> TMP n" |
-  "no_write (TMP n) _ \<longleftrightarrow> True"
+  \<comment>\<open>CHS, characters at current head position on each tape\<close>
+  "no_write CHS (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> CHS" |
+  "no_write CHS _ \<longleftrightarrow> True"
 
 lemma iexec\<^sub>l_no_write[intro]:
   assumes "no_write x ins"

@@ -30,7 +30,7 @@ fun config_to_state :: "config \<Rightarrow> state\<^sub>l" where
   "config_to_state (q, tps) (TP n) = tape_content_to_list (tps ::: n) MAX_LEN" |
   "config_to_state (q, tps) ST = [q]" |
   "config_to_state (q, tps) (HP n) = [tps :#: n]" |
-  "config_to_state (q, tps) (TMP n) = []"
+  "config_to_state (q, tps) CHS = []"
 
 abbreviation q_chs_enum_list :: "(state \<times> symbol list) list" where
   "q_chs_enum_list \<equiv> List.product [0..<Q] (product_lists (replicate MAX_LEN [0..<G]))"
@@ -89,9 +89,9 @@ fun label_of_block_for_q_chs :: "state \<times> symbol list \<Rightarrow> label"
 abbreviation entrance_block :: "GOTO\<^sub>l_prog" where
   "entrance_block \<equiv> [
      IF ST = L [Q] THEN GOTO\<^sub>l pc_halt,
-     TMP 0 ::=\<^sub>l ReadChs [0..<K]] @
+     CHS ::=\<^sub>l ReadChs [0..<K]] @
      map (\<lambda>(q, chs).
-       IF ST = L [q] AND TMP 0 = L chs
+       IF ST = L [q] AND CHS = L chs
        THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
      q_chs_enum_list"
 
@@ -101,7 +101,7 @@ lemma entrance_block_length: "length entrance_block = entrance_block_len"
 lemma entrance_block_distinct: "distinct entrance_block"
 proof -
   let ?f = "\<lambda>(q, chs).
-    IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+    IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
   have "\<forall>q_chs \<in> set q_chs_enum_list. \<forall>q_chs' \<in> set q_chs_enum_list.
         ?f q_chs = ?f q_chs' \<longrightarrow> q_chs = q_chs'"
     by fast
@@ -115,21 +115,21 @@ qed
 
 lemma q_chs_in_entrance_block_iff:
   "(q, chs) \<in> set q_chs_enum_list \<longleftrightarrow>
-   (IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
+   (IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
     \<in> set (entrance_block)"
 proof
   let ?f = "\<lambda>(q, chs).
-    IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+    IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
   fix q chs assume "(q, chs) \<in> set q_chs_enum_list"
   then have "?f (q, chs) \<in> set (map ?f q_chs_enum_list)" by fastforce
-  then show "(IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
+  then show "(IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
              \<in> set entrance_block"
     by force
 next
   let ?f = "\<lambda>(q, chs).
-    IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+    IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
   fix q chs
-  assume "(IF ST = L [q] AND TMP 0 = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
+  assume "(IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
           \<in> set entrance_block"
   then have "?f (q, chs) \<in> set entrance_block" by fast
   then have "?f (q, chs) \<in> set (map ?f q_chs_enum_list)" by force
@@ -182,143 +182,14 @@ qed
 abbreviation GOTO_on_List_Prog :: "GOTO\<^sub>l_prog" where
   "GOTO_on_List_Prog \<equiv> HALT\<^sub>l # entrance_block @ blocks_for_actions @ [HALT\<^sub>l]"
 
-lemma label_of_block_for_q_chs_correct:
-  assumes "(q, chs) \<in> set q_chs_enum_list"
-  shows "take block_for_q_chs_len (drop (label_of_block_for_q_chs (q, chs)) GOTO_on_List_Prog) =
-         block_for_q_chs ((M!q) chs)"
-proof -
-  let ?idx = "index q_chs_enum_list (q, chs)"
-  let ?f = "\<lambda>(q, chs). block_for_q_chs ((M!q) chs)"
-  let ?q_chs_s_after_q_chs = "drop ?idx q_chs_enum_list"
-  let ?blks_after_label = "drop (block_for_q_chs_len * ?idx) blocks_for_actions"
-
-  from assms have idx_q_chs_lt: "?idx < length q_chs_enum_list"
-    by fastforce
-  then have "hd ?q_chs_s_after_q_chs = q_chs_enum_list ! ?idx"
-    using hd_drop_conv_nth by blast
-  with assms have "hd ?q_chs_s_after_q_chs = (q, chs)"
-    using nth_index by metis
-
-  from idx_q_chs_lt have "?q_chs_s_after_q_chs \<noteq> []"
-    using assms q_chs_enum_list_length
-    by (metis drop_eq_Nil leD)
-
-  from idx_q_chs_lt have label_part_2_not_exceed_prog:
-    "block_for_q_chs_len * ?idx < length blocks_for_actions"
-    using assms blocks_for_actions_length q_chs_enum_list_length
-    using Suc_mult_less_cancel1 by presburger
-  
-  have label_part_1_get_over_entrance_block:
-    "drop (Suc entrance_block_len) GOTO_on_List_Prog = blocks_for_actions @ [HALT\<^sub>l]"
-    using drop_append [where ?xs = "HALT\<^sub>l # entrance_block"
-                         and ?ys = "blocks_for_actions @ [HALT\<^sub>l]"
-                         and ?n = "Suc entrance_block_len"]
-    using entrance_block_length
-    by auto
-
-  from block_for_q_and_chs_length
-  have "\<forall>q_chs \<in> set q_chs_enum_list. length (?f q_chs) = block_for_q_chs_len"
-    by fast
-  then have same_length: "\<forall>xs \<in> set (map ?f q_chs_enum_list). length xs = block_for_q_chs_len"
-    by fastforce
-  with drop_concat_same_length [where ?xss = "map ?f q_chs_enum_list"
-                                  and ?n = "?idx"
-                                  and ?len = block_for_q_chs_len]
-  have "?blks_after_label = concat (drop ?idx (map ?f q_chs_enum_list))"
-    by blast
-  moreover
-  have map_in_out:
-    "drop ?idx (map ?f q_chs_enum_list) = map ?f ?q_chs_s_after_q_chs"
-    using drop_map by fast
-  then have "concat (drop ?idx (map ?f q_chs_enum_list)) =
-             concat (map ?f ?q_chs_s_after_q_chs)"
-    by presburger
-  ultimately
-  have "?blks_after_label = concat (map ?f ?q_chs_s_after_q_chs)"
-    by (simp add: mult.commute)
-  
-  have "length ?blks_after_label \<ge> block_for_q_chs_len"
-  proof -
-    from same_length have "\<forall>xs \<in> set (map ?f ?q_chs_s_after_q_chs). length xs = block_for_q_chs_len"
-      by (metis in_set_dropD map_in_out)
-    then have "length (concat (map ?f ?q_chs_s_after_q_chs)) =
-               block_for_q_chs_len * length ?q_chs_s_after_q_chs"
-      using length_concat_same_length [where ?xss = "map ?f ?q_chs_s_after_q_chs"
-                                         and ?len = block_for_q_chs_len]
-      by (metis length_map)
-    moreover
-    from \<open>?q_chs_s_after_q_chs \<noteq> []\<close> have "length ?q_chs_s_after_q_chs \<ge> 1" by fastforce
-    ultimately
-    have "length (concat (map ?f ?q_chs_s_after_q_chs)) \<ge> block_for_q_chs_len"
-      by (metis mult_le_mono2 nat_mult_1_right)
-    with \<open>?blks_after_label = concat (map ?f ?q_chs_s_after_q_chs)\<close>
-    show ?thesis by argo
-  qed
-
-  from take_concat_same_length [where ?len = block_for_q_chs_len and ?n = 1
-                                  and ?xss = "map ?f ?q_chs_s_after_q_chs"]
-  have "take block_for_q_chs_len (concat (map ?f ?q_chs_s_after_q_chs)) =
-        concat (take 1 (map ?f ?q_chs_s_after_q_chs))"
-    using same_length map_in_out
-    by (metis in_set_dropD nat_mult_1_right)
-  also have "... = hd (map ?f ?q_chs_s_after_q_chs)"
-    using concat_take_1_is_hd \<open>?q_chs_s_after_q_chs \<noteq> []\<close>
-    by blast
-  also have "... = ?f (hd ?q_chs_s_after_q_chs)"
-    using \<open>?q_chs_s_after_q_chs \<noteq> []\<close> hd_map by blast
-  finally have "take block_for_q_chs_len (concat (map ?f ?q_chs_s_after_q_chs)) =
-                ?f (hd ?q_chs_s_after_q_chs)" by blast
-  with \<open>?blks_after_label = concat (map ?f ?q_chs_s_after_q_chs)\<close>
-       \<open>hd ?q_chs_s_after_q_chs = (q, chs)\<close>
-  have "take block_for_q_chs_len ?blks_after_label = ?f (q, chs)"
-    by argo
-
-  from entrance_block_length have entrance_length:
-    "length (HALT\<^sub>l # entrance_block) = Suc entrance_block_len"
-    by auto
-  then have "Suc entrance_block_len + block_for_q_chs_len * ?idx \<ge> length (HALT\<^sub>l # entrance_block)"
-    by linarith
-  then have "drop (Suc entrance_block_len + block_for_q_chs_len * ?idx) (HALT\<^sub>l # entrance_block) = []"
-    by fastforce
-  moreover
-  have "Suc entrance_block_len + block_for_q_chs_len * ?idx - length (HALT\<^sub>l # entrance_block) =
-        block_for_q_chs_len * ?idx"
-    using entrance_length by presburger
-  ultimately
-  have "drop (Suc entrance_block_len + block_for_q_chs_len * ?idx) GOTO_on_List_Prog =
-        drop (block_for_q_chs_len * index q_chs_enum_list (q, chs)) (blocks_for_actions @ [HALT\<^sub>l])"
-    using drop_append [where ?n = "Suc entrance_block_len + block_for_q_chs_len * ?idx"
-                         and ?xs = "HALT\<^sub>l # entrance_block"
-                         and ?ys = "blocks_for_actions @ [HALT\<^sub>l]"]
-    by (smt (verit, del_insts) Cons_eq_appendI self_append_conv2)
-  also have "... = ?blks_after_label @ [HALT\<^sub>l]"
-    using label_part_2_not_exceed_prog
-    using drop_append [where ?n = "block_for_q_chs_len * ?idx"
-                         and ?xs = ?blks_after_label and ?ys = "[HALT\<^sub>l]"]
-    by auto
-  finally have "drop (label_of_block_for_q_chs (q, chs)) GOTO_on_List_Prog = ?blks_after_label @ [HALT\<^sub>l]"
-    by (metis label_of_block_for_q_chs.simps)
-  moreover
-  have "take block_for_q_chs_len (?blks_after_label @ [HALT\<^sub>l]) =
-        take block_for_q_chs_len ?blks_after_label"
-    using take_append [where ?n = block_for_q_chs_len
-                         and ?xs = ?blks_after_label and ?ys = "[HALT\<^sub>l]"]
-    using \<open>length ?blks_after_label \<ge> block_for_q_chs_len\<close>
-    by (metis append_Nil2 diff_is_0_eq take0)
-  ultimately
-  have "take block_for_q_chs_len (drop (label_of_block_for_q_chs (q, chs)) GOTO_on_List_Prog) =
-        take block_for_q_chs_len ?blks_after_label"
-    by presburger
-  moreover
-  have "?f (q, chs) = block_for_q_chs ((M ! q) chs)"
-    by fast
-  ultimately
-  show ?thesis
-    using \<open>take block_for_q_chs_len ?blks_after_label = ?f (q, chs)\<close>
-    by argo
-qed
-
 subsection \<open>Correctness of the transform function\<close>
+
+abbreviation configuration_of_prog_same_to_TM :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" (\<open>_ \<sim> _\<close>)
+where
+  "s \<sim> cfg \<equiv>
+    s ST = [fst cfg] \<and> \<comment>\<open>state\<close>
+    (\<forall>k < K. s (HP k) = [cfg <#> k]) \<and> \<comment>\<open>head positions of each tape\<close>
+    (\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p)" \<comment>\<open>tape content\<close>
 
 lemma from_entrance_jumps_to_the_right_label:
   assumes "(q, chs) \<in> set q_chs_enum_list"
@@ -348,7 +219,7 @@ lemma TM_to_GOTO_on_List_correct_for_single_step:
            (pc_start, config_to_state (q', tps'))"
   sorry
 
-lemma GOTO_on_List_correctly_ends:
+lemma prog_correctly_ends:
   "GOTO_on_List_Prog \<turnstile>\<^sub>l
    (pc_start, config_to_state (Q, tps)) \<rightarrow>\<^bsub>1\<^esub> (pc_halt, config_to_state (Q, tps))"
 proof -
@@ -357,11 +228,7 @@ proof -
   have "iexec\<^sub>l (IF ST = L [Q] THEN GOTO\<^sub>l pc_halt) (pc, config_to_state (Q, tps)) =
         (pc_halt, config_to_state (Q, tps))" for pc
     by simp
-  moreover
-  have "GOTO_on_List_Prog ! pc_start = IF ST = L [Q] THEN GOTO\<^sub>l pc_halt"
-    by fastforce
-  ultimately
-  have "GOTO_on_List_Prog \<turnstile>\<^sub>l
+  then have "GOTO_on_List_Prog \<turnstile>\<^sub>l
     (pc_start, config_to_state (Q, tps)) \<rightarrow> (pc_halt, config_to_state (Q, tps))"
     by force
   then show ?thesis by auto
