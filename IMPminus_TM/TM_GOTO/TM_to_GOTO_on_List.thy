@@ -18,7 +18,7 @@ locale TM_to_GOTO_on_List =
   assumes runtime_M: "transforms M TPS T TPS'"
 
     fixes MAX_LEN :: nat    \<comment>\<open>maximum length of all tapes during the execution of the TM\<close>
-  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (tps ::: k) p < G)"
+  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (tps ::: k) p < G) \<and> (\<forall>k < K. (tps :#: k) < MAX_LEN)"
 begin
 
 subsection \<open>Helper functions\<close>
@@ -198,6 +198,9 @@ abbreviation wf_cfg :: "config \<Rightarrow> bool" where
     (\<forall>k < K. \<forall>p < MAX_LEN. (cfg <:> k) p < G) \<and> \<comment>\<open>tape content consists of characters < G only\<close>
     (\<forall>k < K. cfg <#> k < MAX_LEN)" \<comment>\<open>tape head position not exceeding max used length of tape\<close>
 
+lemma wf_cfg_start_cfg: "wf_cfg (0, TPS)"
+  using wf_TPS by simp
+
 abbreviation read_chars_corresponds_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
   "read_chars_corresponds_to_cfg s cfg \<equiv> \<forall>k < K. s CHS ! k = cfg <.> k"
 
@@ -317,7 +320,7 @@ qed
 
 theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
   assumes "s \<sim> (0, TPS)"
-    shows "\<exists>c. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>(c * T)\<^esub> (pc_halt, t))"
+    shows "\<exists>c. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>(c * T)\<^esub> (pc_halt, t))"
       and "t \<sim> (Q, TPS')"
   sorry
 
