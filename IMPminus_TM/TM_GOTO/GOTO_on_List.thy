@@ -68,21 +68,26 @@ fun iexec\<^sub>l :: "GOTO\<^sub>l_instr \<Rightarrow> config\<^sub>l \<Rightarr
   "iexec\<^sub>l (MoveRight n) (pc, s) = (Suc pc, s(HP n := [Suc (hd (s (HP n)))]))" |
   "iexec\<^sub>l (GOTO\<^sub>l label) (pc, s) = (label, s)" |
   "iexec\<^sub>l (IF x = l THEN GOTO\<^sub>l label) (pc, s) =
-    (if (s x = eval_GOTO\<^sub>l_operi s l) then label else pc, s)" |
-  "iexec\<^sub>l (IF x = l1 AND y = l2 THEN GOTO\<^sub>l label) (pc, s) =
-    (if s x = eval_GOTO\<^sub>l_operi s l1 \<and> s y = eval_GOTO\<^sub>l_operi s l2 then label else pc, s)"
+    (if (s x = eval_GOTO\<^sub>l_operi s l) then label else Suc pc, s)" |
+  "iexec\<^sub>l (IF x = l\<^sub>1 AND y = l\<^sub>2 THEN GOTO\<^sub>l label) (pc, s) =
+    (if s x = eval_GOTO\<^sub>l_operi s l\<^sub>1 \<and> s y = eval_GOTO\<^sub>l_operi s l\<^sub>2 then label else Suc pc, s)"
 
 definition exec1\<^sub>l :: "GOTO\<^sub>l_prog \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l \<Rightarrow> bool" ("(_/ \<turnstile>\<^sub>l (_ \<rightarrow>/ _))" [59,0,59] 60) where
   "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' \<longleftrightarrow> (\<exists>pc s. cfg = (pc, s) \<and> cfg' = iexec\<^sub>l (P !! pc) cfg \<and>
-                         P \<noteq> [] \<and> 0 < pc \<and> pc \<le> size P)"
+                         P \<noteq> [] \<and> 0 < pc \<and> pc \<le> length P)"
 
 text \<open>Note that pc = 0 is when the program halts\<close>
 lemma exec1\<^sub>l_I [intro, code_pred_intro]:
-  "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> P \<noteq> [] \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> size P \<Longrightarrow> P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
+  "c' = iexec\<^sub>l (P !! pc) (pc, s) \<Longrightarrow> P \<noteq> [] \<Longrightarrow> 0 < pc \<Longrightarrow> pc \<le> length P \<Longrightarrow>
+   P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
   by (simp add: exec1\<^sub>l_def of_nat_diff)
 
 lemma exec1\<^sub>l_pc_range [intro]:
   "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c' \<Longrightarrow> 0 < pc \<and> pc \<le> length P"
+  unfolding exec1\<^sub>l_def by blast
+
+lemma exec1\<^sub>l_iexec\<^sub>l [intro]:
+  "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c' \<Longrightarrow> iexec\<^sub>l (P !! pc) (pc, s) = c'"
   unfolding exec1\<^sub>l_def by blast
 
 abbreviation
@@ -127,39 +132,274 @@ values
 
 
 subsection \<open>Verification infrastructure\<close>
-text \<open>This part draws largely on "HOL-IMP.Compiler"\<close>
 
-fun ins_no_jump :: "state\<^sub>l \<Rightarrow> GOTO\<^sub>l_instr \<Rightarrow> bool" where
-  "ins_no_jump s ins \<longleftrightarrow> (
-    (\<nexists>n. ins = GOTO\<^sub>l n) \<and>
-    (\<exists>x l n. ins = IF x = l THEN GOTO\<^sub>l n \<longrightarrow> s x \<noteq> eval_GOTO\<^sub>l_operi s l) \<and>
-    (\<exists>x y l\<^sub>1 l\<^sub>2 n. (ins = IF x = l\<^sub>1 AND y = l\<^sub>1 THEN GOTO\<^sub>l n) \<longrightarrow>
-         (s x \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>1 \<or> s y \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>2)))"
+text \<open>The program is executed deterministically\<close>
+lemma iexec\<^sub>l_determ [intro]:
+  "iexec\<^sub>l ins s = s\<^sub>1 \<Longrightarrow> iexec\<^sub>l ins s = s\<^sub>2 \<Longrightarrow> s\<^sub>1 = s\<^sub>2"
+  by (cases ins) auto
 
-lemma iexec\<^sub>l_seq_independent_from_pc[simp]:
-  assumes "ins_no_jump s ins"
-    shows "iexec\<^sub>l ins (pc, s) = (pc', s') \<Longrightarrow> \<forall>pc''. iexec\<^sub>l ins (pc, s) = (pc', s')"
-  using assms
-  by (auto split: GOTO\<^sub>l_instr.split)
+lemma exec1\<^sub>l_determ [intro]:
+  "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg' \<Longrightarrow> P \<turnstile>\<^sub>l cfg \<rightarrow> cfg'' \<Longrightarrow> cfg' = cfg''"
+  unfolding exec1\<^sub>l_def
+  by blast
 
-lemma exec1\<^sub>l_appendR:
-  assumes "ins_no_jump s (P!!pc)"
-    shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> c' \<Longrightarrow> P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'"
-  by (auto simp: exec1\<^sub>l_def)
-
-lemma exec_appendR:
-  assumes "\<forall>ins \<in> set P. ins_no_jump s ins"
-    shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>* c'' \<Longrightarrow> P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow>* c''"
-proof (induction "(pc, s)" c'' rule: star.induct)
-  case refl
-  then show ?case by blast
+lemma exec\<^sub>l_t_determ [intro]:
+  "P \<turnstile>\<^sub>l cfg \<rightarrow>\<^bsub>t\<^esub> cfg' \<Longrightarrow> P \<turnstile>\<^sub>l cfg \<rightarrow>\<^bsub>t\<^esub> cfg'' \<Longrightarrow> cfg' = cfg''"
+proof (induction t arbitrary: cfg)
+  case 0
+  then show ?case by auto
 next
-  case (step c' c'')
-  with exec1\<^sub>l_pc_range have "0 < pc \<and> pc \<le> length P" by blast
-  then have "P !! pc \<in> set P" by blast
-  with assms have "ins_no_jump s (P !! pc)" by blast
-  with step exec1\<^sub>l_appendR have "P @ P' \<turnstile>\<^sub>l (pc, s) \<rightarrow> c'" by blast
-  with step show ?case  sorry
+  case (Suc t)
+  from Suc obtain cfg\<^sub>1 where cfg\<^sub>1: "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg\<^sub>1" "P \<turnstile>\<^sub>l cfg\<^sub>1 \<rightarrow>\<^bsub>t\<^esub> cfg'"
+    by (metis relpowp_Suc_D2)
+  from Suc obtain cfg\<^sub>2 where cfg\<^sub>2: "P \<turnstile>\<^sub>l cfg \<rightarrow> cfg\<^sub>2" "P \<turnstile>\<^sub>l cfg\<^sub>2 \<rightarrow>\<^bsub>t\<^esub> cfg''"
+    by (metis relpowp_Suc_D2)
+  from \<open>P \<turnstile>\<^sub>l cfg \<rightarrow> cfg\<^sub>1\<close> \<open>P \<turnstile>\<^sub>l cfg \<rightarrow> cfg\<^sub>2\<close> have "cfg\<^sub>1 = cfg\<^sub>2" by fast
+  with Suc.IH \<open>P \<turnstile>\<^sub>l cfg\<^sub>1 \<rightarrow>\<^bsub>t\<^esub> cfg'\<close> \<open>P \<turnstile>\<^sub>l cfg\<^sub>2 \<rightarrow>\<^bsub>t\<^esub> cfg''\<close>
+  show ?case by blast
+qed
+
+text \<open>The verification of GOTO on List programs depends on very specific properties of the program,
+below are some lemmas about the behaviour of the program with certain properties.\<close>
+
+text \<open>First, a large part of the transformed program does not contain modification to any variable.
+This is a very useful information for verification.\<close>
+
+fun no_modification :: "GOTO\<^sub>l_instr \<Rightarrow> bool" where
+  "no_modification (_ ::=\<^sub>l _) \<longleftrightarrow> False" |
+  "no_modification (TapeModify _ _) \<longleftrightarrow> False" |
+  "no_modification (MoveLeft _) \<longleftrightarrow> False" |
+  "no_modification (MoveRight _) \<longleftrightarrow> False" |
+  "no_modification _ \<longleftrightarrow> True"
+
+lemma iexec\<^sub>l_no_modification[intro]:
+  assumes "no_modification ins"
+    shows "\<exists>pc'. iexec\<^sub>l ins (pc, s) = (pc', s)"
+  using assms
+  by (cases ins) auto
+
+text \<open>If a block of program contains no jump command, or only conditional jumps
+with conditions unsatisfied under the given state, the block is then executed sequentially.
+With this information, the runtime can be determined directly.\<close>
+
+fun no_jump :: "state\<^sub>l \<Rightarrow> GOTO\<^sub>l_instr \<Rightarrow> bool" where
+  "no_jump s HALT\<^sub>l \<longleftrightarrow> False" | \<comment>\<open>HALT \<equiv> GOTO 0\<close>
+  "no_jump s (GOTO\<^sub>l _) \<longleftrightarrow> False" |
+  "no_jump s (IF x = l THEN GOTO\<^sub>l _) \<longleftrightarrow> s x \<noteq> eval_GOTO\<^sub>l_operi s l" |
+  "no_jump s (IF x = l\<^sub>1 AND y = l\<^sub>2 THEN GOTO\<^sub>l _) \<longleftrightarrow>
+   s x \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>1 \<or> s y \<noteq> eval_GOTO\<^sub>l_operi s l\<^sub>2" |
+  "no_jump _ _ \<longleftrightarrow> True"
+
+lemma iexec\<^sub>l_no_jump[intro]:
+  assumes "no_jump s ins"
+    shows "\<exists>s'. iexec\<^sub>l ins (pc, s) = (Suc pc, s')"
+  using assms
+  by (cases ins) auto
+
+fun strict_no_jump :: "GOTO\<^sub>l_instr \<Rightarrow> bool" where
+  "strict_no_jump HALT\<^sub>l \<longleftrightarrow> False" | \<comment>\<open>HALT \<equiv> GOTO 0\<close>
+  "strict_no_jump (GOTO\<^sub>l _) \<longleftrightarrow> False" |
+  "strict_no_jump (IF x = l THEN GOTO\<^sub>l _) \<longleftrightarrow> False" |
+  "strict_no_jump (IF x = l\<^sub>1 AND y = l\<^sub>2 THEN GOTO\<^sub>l _) \<longleftrightarrow> False" |
+  "strict_no_jump _ \<longleftrightarrow> True"
+
+lemma strict_no_jump_no_jump[intro]:
+  "strict_no_jump ins \<Longrightarrow> \<forall>s. no_jump s ins"
+  by (cases ins) auto
+
+lemma iexec\<^sub>l_strict_no_jump[intro]:
+  assumes "strict_no_jump ins"
+    shows "\<exists>s'. iexec\<^sub>l ins (pc, s) = (Suc pc, s')"
+  using assms
+  by (cases ins) auto
+
+lemma execute_prog_strict_no_jump:
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
+      and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i)"
+    shows "\<exists>s'. P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')"
+  using assms
+proof (induction len)
+  case 0
+  then show ?case by simp
+next
+  case (Suc len)
+  then obtain s' where "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')" by auto
+  moreover
+  from Suc.prems have "strict_no_jump (P !! (a + len))" by simp
+  then obtain s'' where "iexec\<^sub>l (P !! (a + len)) (a + len, s') = (a + Suc len, s'')" by force
+  then have "P \<turnstile>\<^sub>l (a + len, s') \<rightarrow> (a + Suc len, s'')" using Suc by auto
+  ultimately
+  show ?case by auto
+qed
+
+lemma execute_prog_strict_no_jump_mid_state:
+  assumes block_P_a_len: "0 < a \<and> a + Suc len \<le> length P \<and> P \<noteq> []"
+      and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + Suc len \<longrightarrow> strict_no_jump (P !! i)"
+      and final_state: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, t)"
+    shows "\<exists>t'. (P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')) \<and> (P \<turnstile>\<^sub>l (a + len, t') \<rightarrow> (a + Suc len, t))"
+proof -
+  from block_P_a_len block_strict_no_jump
+  obtain t' where t': "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')"
+    using execute_prog_strict_no_jump by fastforce
+  from block_strict_no_jump have "strict_no_jump (P !! (a + len))" by auto
+  with t' have "P \<turnstile>\<^sub>l (a + len, t') \<rightarrow> (a + Suc len, t)"
+    by (metis exec\<^sub>l_t_determ final_state relpowp_Suc_E)
+  with t' show ?thesis by blast
+qed
+
+text \<open>In the best situation, a block of program runs sequentially and the state remains the same.
+This is luckily the case for the entrance block in the transformed program.\<close>
+lemma iexec\<^sub>l_no_jump_and_no_modification[intro]:
+  assumes "no_jump s ins" 
+      and "no_modification ins"
+    shows "iexec\<^sub>l ins (pc, s) = (Suc pc, s)"
+  using assms
+  by (cases ins) auto
+
+lemma execute_prog_no_jump_and_no_modification:
+  "0 < a \<and> a + len \<le> length P \<Longrightarrow> P \<noteq> [] \<Longrightarrow>
+   \<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> no_jump s (P !! i) \<and> no_modification (P !! i) \<Longrightarrow>
+   P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s)"
+proof (induction len)
+  case 0
+  then show ?case by auto
+next
+  case (Suc len)
+  then have "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s)" by force
+  moreover
+  from Suc.prems have "no_jump s (P !! (a + len))" "no_modification (P !! (a + len))" by simp+
+  then have "iexec\<^sub>l (P !! (a + len)) (a + len, s) = (a + Suc len, s)" by auto
+  then have "P \<turnstile>\<^sub>l (a + len, s) \<rightarrow> (a + Suc len, s)" using Suc by auto
+  ultimately
+  show ?case by auto
+qed
+
+text \<open>Another informative situation is when the program runs sequentially, and some variable
+is modified at most once. In this case the value of variable can be inferred statically
+from the commands in the program block.\<close>
+
+fun no_write :: "var\<^sub>l \<Rightarrow> GOTO\<^sub>l_instr \<Rightarrow> bool" where
+  \<comment>\<open>ST, the state of the Turing Machine\<close>
+  "no_write ST (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> ST" |
+  "no_write ST _ \<longleftrightarrow> True" |
+  \<comment>\<open>TP n, the n-th tape of the Turing Machine\<close>
+  "no_write (TP n) (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> TP n" |
+  "no_write (TP n) (TapeModify m v) \<longleftrightarrow> n \<noteq> m" |
+  "no_write (TP n) _ \<longleftrightarrow> True" |
+  \<comment>\<open>HP n, head position of the n-th tape of the Turing Machine\<close>
+  "no_write (HP n) (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> HP n" |
+  "no_write (HP n) (MoveLeft m) \<longleftrightarrow> m \<noteq> n" |
+  "no_write (HP n) (MoveRight m) \<longleftrightarrow> m \<noteq> n" |
+  "no_write (HP n) _ \<longleftrightarrow> True" |
+  \<comment>\<open>TMP n, other variables used in the program\<close>
+  "no_write (TMP n) (x ::=\<^sub>l l) \<longleftrightarrow> x \<noteq> TMP n" |
+  "no_write (TMP n) _ \<longleftrightarrow> True"
+
+lemma iexec\<^sub>l_no_write[intro]:
+  assumes "no_write x ins"
+      and "iexec\<^sub>l ins (pc, s) = (pc', s')"
+    shows "s' x = s x"
+  using assms
+  by (cases ins; cases x) auto
+
+lemma execute_no_write_and_strict_no_jump:
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
+      and block_strict_no_jump_and_no_write:
+          "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
+      and final_state: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')"
+    shows "s' x = s x"
+  using assms
+proof (induction len arbitrary: s')
+  case 0
+  then show ?case by auto
+next
+  case (Suc len)
+  then have IH_cond: "0 < a \<and> a + len \<le> length P" "P \<noteq> []"
+    "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
+    by simp+
+  with execute_prog_strict_no_jump obtain s_mid where s_mid: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s_mid)"
+    by blast
+  with Suc.IH IH_cond have "s_mid x = s x" by blast
+  moreover
+  from Suc have prop_cur_ins: "strict_no_jump (P !! (a + len)) \<and> no_write x (P !! (a + len))" by auto
+  then obtain s'' where s'': "P \<turnstile>\<^sub>l (a + len, s_mid) \<rightarrow> (a + Suc len, s'')"
+    by (metis Suc.prems(3) exec\<^sub>l_t_determ relpowp_Suc_E s_mid)
+  with prop_cur_ins have "s'' x = s_mid x" by blast
+  moreover
+  from s_mid s'' have "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, s'')"
+    by auto
+  with \<open>P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, s')\<close> have "s' = s''" 
+    using exec\<^sub>l_t_determ [where ?t = "Suc len"] by blast
+  ultimately
+  show ?case by simp
+qed
+
+fun vars_read_in_operi :: "GOTO\<^sub>l_operi \<Rightarrow> var\<^sub>l set" where
+  "vars_read_in_operi (L l) = {}" |
+  "vars_read_in_operi (V\<^sub>l y) = {y}" |
+  "vars_read_in_operi (ReadChs tps) = (TP ` (set tps)) \<union> (HP ` (set tps))"
+
+fun vars_read :: "GOTO\<^sub>l_instr \<Rightarrow> var\<^sub>l set" where
+  "vars_read (x ::=\<^sub>l l) = vars_read_in_operi l" |
+  "vars_read (TapeModify n v) = {TP n, HP n}" |
+  "vars_read (MoveLeft n) = {HP n}" |
+  "vars_read (MoveRight n) = {HP n}" |
+  "vars_read (IF x = l THEN GOTO\<^sub>l label) = vars_read_in_operi l \<union> {x}" |
+  "vars_read (IF x = l\<^sub>1 AND y = l\<^sub>2 THEN GOTO\<^sub>l label) =
+     vars_read_in_operi l\<^sub>1 \<union> {x} \<union> vars_read_in_operi l\<^sub>2 \<union> {y}" |
+  "vars_read _ = {}"
+
+lemma iexec\<^sub>l_with_all_dependent_var_same:
+  assumes "\<forall>y \<in> vars_read ins. s y = s' y"
+      and "s x = s' x"
+      and "iexec\<^sub>l ins (pc, s) = (pc', t)"
+      and "iexec\<^sub>l ins (pc, s') = (pc', t')"
+    shows "t x = t' x"
+  using assms
+  apply (cases ins)
+  apply auto
+  subgoal for operi
+    by (cases operi) auto
+  done
+
+lemma execute_with_var_modified_at_most_once:
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []"
+      \<comment>\<open>ins_modify: the only possible point where x is modified\<close>
+      and ins_modify: "0 \<le> j \<and> j < len \<and> (P !! j) = ins_modify"
+      and "strict_no_jump ins_modify"
+      and state_before_ins_modify: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>j\<^esub> (a + j, s')"
+      and state_after_ins_modify: "P \<turnstile>\<^sub>l (a + j, s') \<rightarrow> (a + j', s'')"
+      and value_x: "s'' x = v"
+      and other_cmd_no_write_x: "\<forall>i. a \<le> i \<and> i < a + len \<and> i \<noteq> j \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
+      and config_at_end: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t)"
+    shows "t x = v"
+  using assms
+proof (induction len)
+  case 0
+  then show ?case by linarith
+next
+  case (Suc len)
+  then have strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + Suc len \<longrightarrow> strict_no_jump (P !! i)"
+    by blast
+  with \<open>0 < a \<and> a + Suc len \<le> length P \<and> P \<noteq> []\<close> \<open>P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, t)\<close>
+  obtain t' where t': "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t')" "P \<turnstile>\<^sub>l (a + len, t') \<rightarrow> (a + Suc len, t)"
+    using execute_prog_strict_no_jump_mid_state by blast
+
+  show ?case
+  proof (cases "j = a + len")
+    case True \<comment>\<open>variable x can only be modified at (P !! (a + len)), not before\<close>
+    with Suc have "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i) \<and> no_write x (P !! i)"
+      using dual_order.strict_trans by blast
+    with Suc t' have "t' x = s x"
+      using execute_no_write_and_strict_no_jump
+      by (metis Suc_leD add_Suc_right)
+    from t' True have "P \<turnstile>\<^sub>l (j, t') \<rightarrow> (a + Suc len, t)" by blast
+    then show ?thesis sorry
+  next
+    case False \<comment>\<open>variable x can only be modified at (P !! j), which is before (P !! (a + len))\<close>
+    with Suc
+    show ?thesis sorry
+  qed
 qed
 
 end
