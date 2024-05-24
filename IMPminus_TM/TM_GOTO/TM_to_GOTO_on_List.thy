@@ -18,6 +18,7 @@ locale TM_to_GOTO_on_List =
   assumes runtime_M: "transforms M TPS T TPS'"
 
     fixes MAX_LEN :: nat    \<comment>\<open>maximum length of all tapes during the execution of the TM\<close>
+  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (tps ::: k) p < G)"
 begin
 
 subsection \<open>Helper functions\<close>
@@ -184,39 +185,119 @@ abbreviation GOTO_on_List_Prog :: "GOTO\<^sub>l_prog" where
 
 subsection \<open>Correctness of the transform function\<close>
 
-abbreviation configuration_of_prog_same_to_TM :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" (\<open>_ \<sim> _\<close>)
-where
+abbreviation configuration_of_prog_same_to_TM :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" (\<open>_ \<sim> _\<close> 50) where
   "s \<sim> cfg \<equiv>
     s ST = [fst cfg] \<and> \<comment>\<open>state\<close>
     (\<forall>k < K. s (HP k) = [cfg <#> k]) \<and> \<comment>\<open>head positions of each tape\<close>
     (\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p)" \<comment>\<open>tape content\<close>
 
-lemma from_entrance_jumps_to_the_right_label:
-  assumes "(q, chs) \<in> set q_chs_enum_list"
-      and "q < Q"
-      and "s ST = [q]"
-      and "s (TMP 0) = chs"
+abbreviation wf_cfg :: "config \<Rightarrow> bool" where
+  "wf_cfg cfg \<equiv>
+    fst cfg \<le> Q \<and> \<comment>\<open>state, = Q means halting state\<close>
+    length (snd cfg) = K \<and> \<comment>\<open>number of tapes\<close>
+    (\<forall>k < K. \<forall>p < MAX_LEN. (cfg <:> k) p < G) \<and> \<comment>\<open>tape content consists of characters < G only\<close>
+    (\<forall>k < K. cfg <#> k < MAX_LEN)" \<comment>\<open>tape head position not exceeding max used length of tape\<close>
+
+abbreviation read_chars_corresponds_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
+  "read_chars_corresponds_to_cfg s cfg \<equiv> \<forall>k < K. s CHS ! k = cfg <.> k"
+
+lemma tape_content_to_list_length:
+  "length (tape_content_to_list tp len) = len"
+  by (induction len) auto
+
+lemma tape_content_to_list_correct[intro]:
+  "p < len \<Longrightarrow> tape_content_to_list tp len ! p = tp p"
+proof (induction len)
+  case 0
+  then show ?case by blast
+next
+  case (Suc len)
+  then show ?case
+  proof (cases "p = len")
+    case True
+    then show ?thesis
+      by auto (metis nth_append_length tape_content_to_list_length)
+  next
+    case False
+    with Suc show ?thesis
+      by (auto simp add: nth_append tape_content_to_list_length) 
+  qed
+qed
+
+lemma config_to_state_correct: "config_to_state cfg \<sim> cfg"
+  by (metis config_to_state.simps(1-3) surjective_pairing tape_content_to_list_correct)
+
+text \<open>Each step in the Turing Machine corresponds to no more than
+(entrance_block_len + block_for_q_chs_len) steps in the transformed GOTO_on_List program,
+starting from pc = 1, ending also at pc = 1.
+This whole round of execution can be divided into 5 parts:
+1. read TM state, say q, and store it into the variable ST;
+   read chars at head positions, say chs, and storing them into the variable CHS
+   (2 steps; pc 1 -> 3)
+2. going through the "searching table" of state and chars, until matched
+   ("index q_chs_enum_list (q, chs)" < q_chs_num steps; pc 3 -> "index q_chs_enum_list (q, chs) + 2")
+3. jump to the label of the block for such q and chs
+   (1 step; pc "index q_chs_enum_list (q, chs) + 2" -> "label_of_block_for_q_chs (q, chs)")
+4. going through the block for q and chs, updating tape content, head positions and state
+   (block_for_q_chs_len steps; pc "label_of_block_for_q_chs (q, chs)" -> "label_of_block_for_q_chs (q, chs) + block_for_q_chs_len")
+5. jump to the beginning of the program
+   (1 step; pc "label_of_block_for_q_chs (q, chs) + block_for_q_chs_len" -> 1)
+Each of these 5 parts are either sequentially executed with no jump, or a single jump.
+Below first shows that each of them are correct, then the correctness of the program for each single TM step.\<close>
+
+lemma read_state_and_chars_correct:
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "fst cfg < Q" \<comment>\<open>not in halting state\<close>
+    shows "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, s')"
+      and "s' \<sim> cfg"
+      and "read_chars_corresponds_to_cfg s' cfg"
+  sorry
+
+lemma search_for_correct_label_for_q_and_chs:
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "read_chars_corresponds_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
-           (Suc (Suc pc_start), s) \<rightarrow>\<^bsub>Suc (Suc (index q_chs_enum_list q_chs))\<^esub>
-           (label_of_block_for_q_chs q_chs, s)"
-  using assms
-  using q_chs_enum_list_distinct
+           (pc_start + 2, s) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s ST), s CHS)\<^esub>
+           (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s)"
+  sorry
+
+lemma jump_to_correct_label:
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "read_chars_corresponds_to_cfg s cfg"
+    shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
+           (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s) \<rightarrow>
+           (label_of_block_for_q_chs (hd (s ST), s CHS), s)"
   sorry
 
 lemma block_for_q_chs_correct:
-  assumes "exe M (q, tps) = (q', tps')"
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "read_chars_corresponds_to_cfg s cfg"
+      and "exe M cfg = cfg'"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
-           (label_of_block_for_q_chs (q, read tps), config_to_state (q, tps))
-           \<rightarrow>\<^bsub>block_for_q_chs_len\<^esub>
-           (pc_start, config_to_state (q', tps'))"
+           (label_of_block_for_q_chs (hd (s ST), s CHS), s) \<rightarrow>\<^bsub>block_for_q_chs_len\<^esub>
+           (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s')"
+      and "s' \<sim> cfg'"
+      and "wf_cfg cfg'"
   sorry
 
-lemma TM_to_GOTO_on_List_correct_for_single_step:
-  assumes "exe M (q, tps) = (q', tps')"
-    shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
-           (pc_start, config_to_state (q, tps))
-           \<rightarrow>\<^bsub>Suc (Suc (index q_chs_enum_list q_chs)) + block_for_q_chs_len\<^esub>
-           (pc_start, config_to_state (q', tps'))"
+lemma jump_back_to_begin:
+  "GOTO_on_List_Prog \<turnstile>\<^sub>l
+   (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s) \<rightarrow>
+   (pc_start, s)"
+  sorry
+
+corollary TM_to_GOTO_on_List_correct_for_single_step:
+  assumes "exe M cfg = cfg'"
+    shows "\<exists>t_entrance < entrance_block_len.
+           GOTO_on_List_Prog \<turnstile>\<^sub>l
+           (pc_start, config_to_state cfg)
+           \<rightarrow>\<^bsub>t_entrance + block_for_q_chs_len + 2\<^esub>
+           (pc_start, s)"
+      and "s \<sim> cfg'"
   sorry
 
 lemma prog_correctly_ends:
@@ -234,15 +315,10 @@ proof -
   then show ?thesis by auto
 qed
 
-theorem TM_to_GOTO_on_List_correct:
-  assumes "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>* (pc_halt, s)"
-    shows "\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (TPS':::k) p"
-  sorry
-
-subsection \<open>Runtime of the transformed program\<close>
-
-theorem TM_to_GOTO_on_List_in_linear_time:
-  "\<exists>c. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>(c * T)\<^esub> (0, s))"
+theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
+  assumes "s \<sim> (0, TPS)"
+    shows "\<exists>c. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>(c * T)\<^esub> (pc_halt, t))"
+      and "t \<sim> (Q, TPS')"
   sorry
 
 end
