@@ -79,13 +79,13 @@ abbreviation s\<^sub>0 :: state\<^sub>l where "s\<^sub>0 \<equiv> config_to_stat
 subsection \<open>Definition of the transform function\<close>
 
 abbreviation entrance_block_len :: nat where
-  "entrance_block_len \<equiv> Suc (Suc q_chs_num)"
+  "entrance_block_len \<equiv> q_chs_num + 2"
 abbreviation block_for_q_chs_len :: nat where
-  "block_for_q_chs_len \<equiv> Suc (3 * K)"
+  "block_for_q_chs_len \<equiv> 3 * K + 1"
 
 fun label_of_block_for_q_chs :: "state \<times> symbol list \<Rightarrow> label" where
   "label_of_block_for_q_chs (q, chs) =
-   Suc entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list (q, chs))"
+   entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list (q, chs))"
 
 abbreviation entrance_block :: "GOTO\<^sub>l_prog" where
   "entrance_block \<equiv> [
@@ -181,8 +181,50 @@ proof -
 qed
 
 abbreviation GOTO_on_List_Prog :: "GOTO\<^sub>l_prog" where
-  "GOTO_on_List_Prog \<equiv> entrance_block @ blocks_for_actions @ [HALT\<^sub>l]"
+  "GOTO_on_List_Prog \<equiv> entrance_block @ blocks_for_actions"
 
+lemma search_table_content_by_index [simp]:
+  assumes "i < q_chs_num"
+    shows "GOTO_on_List_Prog !! (pc_start + 2 + i) =
+           (\<lambda>(q, chs). IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs))
+                      (q_chs_enum_list ! i)"
+proof -
+  let ?f = "\<lambda>(q, chs). IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+  from assms have "pc_start + 2 + i \<le> entrance_block_len" by simp
+  moreover
+  have "entrance_block !! (pc_start + 2 + i) = map ?f q_chs_enum_list !! Suc i"
+    by force
+  with \<open>i < q_chs_num\<close> have "entrance_block !! (pc_start + 2 + i) = map ?f q_chs_enum_list ! i"
+    using inth_nth [where ?i = "Suc i"] q_chs_enum_list_length
+    by (smt (verit) Suc_leI diff_Suc_1 length_map zero_less_Suc)
+  ultimately
+  have "GOTO_on_List_Prog !! (pc_start + 2 + i) = map ?f q_chs_enum_list ! i"
+    using q_chs_enum_list_length entrance_block_length
+    using inth_append_in_fst_list [where ?i = "pc_start + 2 + i" and ?xs = entrance_block and ?ys = blocks_for_actions]
+    by (metis (no_types, lifting) add_is_0 less_2_cases_iff list.size(3) not_gr0)
+  with \<open>i < q_chs_num\<close> q_chs_enum_list_length
+  show "GOTO_on_List_Prog !! (pc_start + 2 + i) = ?f (q_chs_enum_list ! i)"
+    by auto
+qed
+
+lemma search_table_content_by_q_chs [simp]:
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+    shows "GOTO_on_List_Prog !! (pc_start + 2 + index q_chs_enum_list (q, chs)) =
+           IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+proof -
+  let ?f = "\<lambda>(q, chs). IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+  have "\<forall>i < q_chs_num. GOTO_on_List_Prog !! (pc_start + 2 + i) = ?f (q_chs_enum_list ! i)"
+    using search_table_content_by_index by blast
+  moreover
+  from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have "q_chs_enum_list ! index q_chs_enum_list (q, chs) = (q, chs)"
+    by fastforce
+  moreover
+  from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have "index q_chs_enum_list (q, chs) < q_chs_num"
+    by (metis index_less_size_conv q_chs_enum_list_length)
+  ultimately
+  show ?thesis
+    by (metis (no_types, lifting) case_prod_conv)
+qed
 
 subsection \<open>Properties about state and configuration and their preservation\<close>
 text \<open>The verification requires some properties about the state of the GOTO_on_List program,
@@ -313,6 +355,25 @@ lemma config_to_state_correct [simp]: "config_to_state cfg \<sim> cfg"
   using tape_content_to_list_correct configuration_of_prog_same_to_TM_I
   by (metis config_to_state.simps(1-3) surjective_pairing)
 
+lemma proper_state_q_chs_in_enum_list [intro]:
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "fst cfg < Q"
+      and "read_chars_correspond_to_cfg s cfg"
+    shows "(hd (s ST), s CHS) \<in> set q_chs_enum_list"
+proof -
+  from \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close> have "hd (s ST) < Q"
+    by (simp add: configuration_of_prog_same_to_TM_D(1))
+  moreover
+  from \<open>read_chars_correspond_to_cfg s cfg\<close> have "length (s CHS) = K" by blast
+  from \<open>wf_cfg cfg\<close> \<open>read_chars_correspond_to_cfg s cfg\<close> have "\<forall>k < K. s CHS ! k < G"
+    by (simp add: wf_cfg_D(3) wf_cfg_D(4))
+  with \<open>length (s CHS) = K\<close> have "s CHS \<in> set (product_lists (replicate K [0..<G]))"
+    by auto
+  ultimately
+  show ?thesis by force
+qed
+
 subsection \<open>Correctness of the transform function\<close>
 text \<open>Each step in the Turing Machine corresponds to no more than
 (entrance_block_len + block_for_q_chs_len) steps in the transformed GOTO_on_List program,
@@ -375,20 +436,98 @@ qed
 lemma search_for_correct_label_for_q_and_chs:
   assumes "wf_cfg cfg"
       and "s \<sim> cfg"
+      and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start + 2, s) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s ST), s CHS)\<^esub>
            (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s)"
-  sorry
+proof -
+  let ?a = "pc_start + 2"
+  let ?q_chs = "(hd (s ST), s CHS)"
+  let ?len = "index q_chs_enum_list ?q_chs"
+  let ?f = "\<lambda>(q, chs). IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+  from assms have "?q_chs \<in> set q_chs_enum_list"
+    using proper_state_q_chs_in_enum_list by blast
+  then have "?len < q_chs_num"
+    by (metis index_less_size_conv q_chs_enum_list_length)
+  then have "?a + ?len \<le> length GOTO_on_List_Prog"
+    using q_chs_enum_list_length entrance_block_length by force
+  moreover
+  have "\<forall>i. ?a \<le> i \<and> i < ?a + ?len \<longrightarrow>
+    no_jump s (GOTO_on_List_Prog !! i) \<and> no_modification (GOTO_on_List_Prog !! i)"
+  proof (standard; standard)
+    fix i assume "?a \<le> i \<and> i < ?a + ?len"
+    with \<open>?len < q_chs_num\<close> have "GOTO_on_List_Prog !! i = ?f (q_chs_enum_list ! (i - ?a))"
+      using search_table_content_by_index [where ?i = "i - ?a"]
+      by (smt (verit, ccfv_SIG) add_diff_inverse_nat add_lessD1 diff_is_0_eq' length_greater_0_conv
+          less_imp_add_positive list.size(3) nat_add_left_cancel_less zero_less_diff) 
+    moreover
+    have "no_modification (?f (q_chs_enum_list ! (i - ?a)))"
+      by (smt (verit, ccfv_SIG) label_of_block_for_q_chs.cases no_modification.simps(9) old.prod.case)
+    moreover
+    have "no_jump s (?f (q_chs_enum_list ! (i - ?a)))"
+    proof -
+      from \<open>?a \<le> i \<and> i < ?a + ?len\<close> \<open>?q_chs \<in> set q_chs_enum_list\<close>
+      have "q_chs_enum_list ! (i - ?a) \<noteq> q_chs_enum_list ! ?len"
+        using q_chs_enum_list_distinct
+        by (metis diff_add_inverse diff_less_mono index_first nth_index)
+      moreover
+      from \<open>read_chars_correspond_to_cfg s cfg\<close> \<open>?q_chs \<in> set q_chs_enum_list\<close>
+      have "?q_chs = q_chs_enum_list ! ?len" by simp
+      ultimately
+      have "?q_chs \<noteq> q_chs_enum_list ! (i - ?a)" by argo
+      then have "s ST \<noteq> [fst (q_chs_enum_list ! (i - ?a))] \<or> s CHS \<noteq> snd (q_chs_enum_list ! (i - ?a))"
+        by auto
+      then have "s ST \<noteq> eval_GOTO\<^sub>l_operi s (L [fst (q_chs_enum_list ! (i - ?a))]) \<or>
+                 s CHS \<noteq> eval_GOTO\<^sub>l_operi s (L (snd (q_chs_enum_list ! (i - ?a))))"
+        by simp
+      then show ?thesis
+        by (simp add: case_prod_beta)
+    qed
+    ultimately
+    show "no_jump s (GOTO_on_List_Prog !! i) \<and> no_modification (GOTO_on_List_Prog !! i)"
+      by presburger
+  qed
+  then show ?thesis
+    using execute_prog_no_jump_and_no_modification
+    using calculation plus_1_eq_Suc by auto
+qed
 
 lemma jump_to_correct_label:
   assumes "wf_cfg cfg"
       and "s \<sim> cfg"
+      and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s) \<rightarrow>
            (label_of_block_for_q_chs (hd (s ST), s CHS), s)"
-  sorry
+proof -
+  let ?f = "\<lambda>(q, chs). IF ST = L [q] AND CHS = L chs THEN GOTO\<^sub>l label_of_block_for_q_chs (q, chs)"
+  let ?q_chs = "(hd (s ST), s CHS)"
+  let ?pc = "pc_start + 2 + index q_chs_enum_list ?q_chs"
+
+  from assms have "?q_chs \<in> set q_chs_enum_list"
+    using proper_state_q_chs_in_enum_list by blast
+  then have "GOTO_on_List_Prog !! ?pc = ?f ?q_chs"
+    using search_table_content_by_q_chs by fast
+  moreover
+  have "0 < ?pc" by linarith
+  moreover
+  from \<open>?q_chs \<in> set q_chs_enum_list\<close> have "index q_chs_enum_list ?q_chs < q_chs_num"
+    by (metis index_less_size_conv q_chs_enum_list_length)
+  then have "?pc \<le> pc_start + 2 + q_chs_num - 1" by simp
+  then have "?pc \<le> entrance_block_len" by auto
+  then have "?pc \<le> length GOTO_on_List_Prog"
+    using entrance_block_length by fastforce
+  moreover
+  have "s ST = eval_GOTO\<^sub>l_operi s (L [fst ?q_chs]) \<and> s CHS = eval_GOTO\<^sub>l_operi s (L (snd ?q_chs))"
+    using configuration_of_prog_same_to_TM_def TM_to_GOTO_on_List_axioms assms(2) by auto
+  then have "iexec\<^sub>l (?f ?q_chs) (?pc, s) = (label_of_block_for_q_chs ?q_chs, s)"
+    by force
+  ultimately
+  show ?thesis
+    by (metis (no_types, lifting) bot_nat_0.extremum_uniqueI exec1\<^sub>l_I length_0_conv length_greater_0_conv)
+qed
 
 lemma block_for_q_chs_correct:
   assumes "wf_cfg cfg"
@@ -429,8 +568,8 @@ proof -
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (pc_start + 2, s\<^sub>1) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS)\<^esub>
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
-    using search_for_correct_label_for_q_and_chs by presburger
-  from s\<^sub>1 \<open>wf_cfg cfg\<close> have jump_to_correct_label:
+    using search_for_correct_label_for_q_and_chs \<open>fst cfg < Q\<close> by presburger
+  from s\<^sub>1 \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> have jump_to_correct_label:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
@@ -475,7 +614,7 @@ proof -
     "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t_entrance\<^esub>
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
     using entrance_block_length
-    by (metis (no_types, lifting) add_2_eq_Suc less_imp_le_nat nat_add_left_cancel_le)
+    by (metis (no_types, lifting) add_2_eq_Suc add_2_eq_Suc' less_or_eq_imp_le nat_add_left_cancel_le)
   with jump_to_correct_label
   have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t_entrance + 1\<^esub>
         (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"

@@ -29,4 +29,8 @@ lemma inth_append_in_fst_list [simp]:
   apply auto
   by (metis Suc_le_mono Suc_pred diff_is_0_eq length_0_conv not_gr_zero)
 
+lemma inth_nth [intro]:
+  "0 < i \<Longrightarrow> i \<le> length xs \<Longrightarrow> xs !! i = xs ! (i - 1)"
+  by (induction xs arbitrary: i) auto
+
 end
