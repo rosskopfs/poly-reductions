@@ -34,15 +34,15 @@ fun config_to_state :: "config \<Rightarrow> state\<^sub>l" where
   "config_to_state (q, tps) CHS = []"
 
 abbreviation q_chs_enum_list :: "(state \<times> symbol list) list" where
-  "q_chs_enum_list \<equiv> List.product [0..<Q] (product_lists (replicate MAX_LEN [0..<G]))"
+  "q_chs_enum_list \<equiv> List.product [0..<Q] (product_lists (replicate K [0..<G]))"
 
 lemma q_chs_enum_list_distinct: "distinct q_chs_enum_list"
 proof -
   have "distinct [0..<G]"
     by simp
-  then have "\<forall>xs \<in> set (replicate MAX_LEN [0..<G]). distinct xs"
+  then have "\<forall>xs \<in> set (replicate K [0..<G]). distinct xs"
     by fastforce
-  then have "distinct (product_lists (replicate MAX_LEN [0..<G]))"
+  then have "distinct (product_lists (replicate K [0..<G]))"
     using distinct_product_lists by blast
   moreover
   have "distinct [0..<Q]"
@@ -52,25 +52,25 @@ proof -
     using distinct_product by blast
 qed
 
-abbreviation q_chs_num :: nat where "q_chs_num \<equiv> Q * G ^ MAX_LEN"
+abbreviation q_chs_num :: nat where "q_chs_num \<equiv> Q * G ^ K"
 
 lemma q_chs_enum_list_length: "length q_chs_enum_list = q_chs_num"
 proof -
   have "length [0..<G] = G"
     by simp
-  then have "map length (replicate MAX_LEN [0..<G]) = replicate MAX_LEN G"
+  then have "map length (replicate K [0..<G]) = replicate K G"
     by simp
   moreover
-  have "fold (*) (replicate MAX_LEN G) 1 = G ^ MAX_LEN"
-    using fold_replicate [where ?f = "(*)" and ?n = MAX_LEN and ?x = G]
-    using funpow_times_power [where ?x = G and ?f = "\<lambda>x. MAX_LEN"]
+  have "fold (*) (replicate K G) 1 = G ^ K"
+    using fold_replicate [where ?f = "(*)" and ?n = K and ?x = G]
+    using funpow_times_power [where ?x = G and ?f = "\<lambda>x. K"]
     by auto
   moreover
-  have "foldr (*) (replicate MAX_LEN G) 1 = fold (*) (replicate MAX_LEN G) 1"
+  have "foldr (*) (replicate K G) 1 = fold (*) (replicate K G) 1"
     by force
   ultimately
   show ?thesis
-    using length_product_lists [of "replicate MAX_LEN [0..<G]"]
+    using length_product_lists [of "replicate K [0..<G]"]
     by simp
 qed
 
@@ -201,10 +201,10 @@ abbreviation wf_cfg :: "config \<Rightarrow> bool" where
 lemma wf_cfg_start_cfg: "wf_cfg (0, TPS)"
   using wf_TPS by simp
 
-abbreviation read_chars_corresponds_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
-  "read_chars_corresponds_to_cfg s cfg \<equiv> \<forall>k < K. s CHS ! k = cfg <.> k"
+abbreviation read_chars_correspond_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
+  "read_chars_correspond_to_cfg s cfg \<equiv> (\<forall>k < K. s CHS ! k = cfg <.> k) \<and> length (s CHS) = K"
 
-lemma tape_content_to_list_length:
+lemma tape_content_to_list_length [simp]:
   "length (tape_content_to_list tp len) = len"
   by (induction len) auto
 
@@ -223,12 +223,13 @@ next
   next
     case False
     with Suc show ?thesis
-      by (auto simp add: nth_append tape_content_to_list_length) 
+      by (auto simp add: nth_append) 
   qed
 qed
 
-lemma config_to_state_correct: "config_to_state cfg \<sim> cfg"
-  by (metis config_to_state.simps(1-3) surjective_pairing tape_content_to_list_correct)
+lemma config_to_state_correct [simp]: "config_to_state cfg \<sim> cfg"
+  using tape_content_to_list_correct
+  by (metis config_to_state.simps(1-3) surjective_pairing)
 
 text \<open>Each step in the Turing Machine corresponds to no more than
 (entrance_block_len + block_for_q_chs_len) steps in the transformed GOTO_on_List program,
@@ -254,13 +255,13 @@ lemma read_state_and_chars_correct:
       and "fst cfg < Q" \<comment>\<open>not in halting state\<close>
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, s')"
       and "s' \<sim> cfg"
-      and "read_chars_corresponds_to_cfg s' cfg"
+      and "read_chars_correspond_to_cfg s' cfg"
   sorry
 
 lemma search_for_correct_label_for_q_and_chs:
   assumes "wf_cfg cfg"
       and "s \<sim> cfg"
-      and "read_chars_corresponds_to_cfg s cfg"
+      and "read_chars_correspond_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start + 2, s) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s ST), s CHS)\<^esub>
            (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s)"
@@ -269,7 +270,7 @@ lemma search_for_correct_label_for_q_and_chs:
 lemma jump_to_correct_label:
   assumes "wf_cfg cfg"
       and "s \<sim> cfg"
-      and "read_chars_corresponds_to_cfg s cfg"
+      and "read_chars_correspond_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start + 2 + index q_chs_enum_list (hd (s ST), s CHS), s) \<rightarrow>
            (label_of_block_for_q_chs (hd (s ST), s CHS), s)"
@@ -278,7 +279,7 @@ lemma jump_to_correct_label:
 lemma block_for_q_chs_correct:
   assumes "wf_cfg cfg"
       and "s \<sim> cfg"
-      and "read_chars_corresponds_to_cfg s cfg"
+      and "read_chars_correspond_to_cfg s cfg"
       and "exe M cfg = cfg'"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (label_of_block_for_q_chs (hd (s ST), s CHS), s) \<rightarrow>\<^bsub>block_for_q_chs_len\<^esub>
@@ -289,23 +290,101 @@ lemma block_for_q_chs_correct:
 
 lemma jump_back_to_begin:
   "GOTO_on_List_Prog \<turnstile>\<^sub>l
-   (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s) \<rightarrow>
-   (pc_start, s)"
+   (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s') \<rightarrow>
+   (pc_start, s')"
   sorry
 
 corollary TM_to_GOTO_on_List_correct_for_single_step:
   assumes "wf_cfg cfg"
       and "fst cfg < Q"
       and "exe M cfg = cfg'"
-    shows "\<exists>t_entrance < entrance_block_len.
+  obtains s
+    where "\<exists>t_entrance \<le> entrance_block_len.
            GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start, config_to_state cfg)
            \<rightarrow>\<^bsub>t_entrance + block_for_q_chs_len + 2\<^esub>
            (pc_start, s)"
       and "s \<sim> cfg'"
       and "wf_cfg cfg'"
-  sorry
+proof -
+  have "config_to_state cfg \<sim> cfg" by simp
+  with \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> obtain s\<^sub>1 where read_state_and_chars_correct:
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, s\<^sub>1)"
+    and s\<^sub>1: "s\<^sub>1 \<sim> cfg" "read_chars_correspond_to_cfg s\<^sub>1 cfg"
+    using read_state_and_chars_correct [where ?s = "config_to_state cfg"] by presburger
+  with \<open>wf_cfg cfg\<close> have search_for_correct_label_for_q_and_chs:
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l
+     (pc_start + 2, s\<^sub>1) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS)\<^esub>
+     (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
+    using search_for_correct_label_for_q_and_chs by presburger
+  from s\<^sub>1 \<open>wf_cfg cfg\<close> have jump_to_correct_label:
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l
+     (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>
+     (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
+    using jump_to_correct_label by presburger
+  from s\<^sub>1 \<open>wf_cfg cfg\<close> \<open>exe M cfg = cfg'\<close> obtain s\<^sub>2 where block_for_q_chs_correct:
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l
+     (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>\<^bsub>block_for_q_chs_len\<^esub>
+     (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len, s\<^sub>2)"
+    and "s\<^sub>2 \<sim> cfg'" and "wf_cfg cfg'"
+    using block_for_q_chs_correct [where ?s = s\<^sub>1 and ?cfg = cfg and ?cfg' = cfg']
+    by blast
+  have jump_back_to_begin:
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l
+     (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len, s\<^sub>2) \<rightarrow>
+     (pc_start, s\<^sub>2)"
+    using jump_back_to_begin by blast
 
+  from read_state_and_chars_correct search_for_correct_label_for_q_and_chs
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg)
+        \<rightarrow>\<^bsub>2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS)\<^esub>
+        (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
+    by blast
+  moreover
+  have "(hd (s\<^sub>1 ST), s\<^sub>1 CHS) \<in> set q_chs_enum_list"
+  proof -
+    from \<open>s\<^sub>1 \<sim> cfg\<close> \<open>fst cfg < Q\<close> \<open>wf_cfg cfg\<close> have "hd (s\<^sub>1 ST) < Q" by auto
+    
+    from s\<^sub>1 \<open>s\<^sub>1 \<sim> cfg\<close> \<open>wf_cfg cfg\<close> have "\<forall>k<K. s\<^sub>1 CHS ! k < G" by simp
+    then have "\<forall>k<K. s\<^sub>1 CHS ! k \<in> set [0..<G]" by simp
+    moreover
+    from s\<^sub>1 have "length (s\<^sub>1 CHS) = K" by blast
+    ultimately
+    have "s\<^sub>1 CHS \<in> set (product_lists (replicate K [0..<G]))" by blast
+    with \<open>hd (s\<^sub>1 ST) < Q\<close> show ?thesis by auto
+  qed
+  then have "index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS) < q_chs_num"
+    using q_chs_enum_list_length by fastforce
+  ultimately
+  obtain t_entrance where "t_entrance \<le> entrance_block_len" and
+    "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg) \<rightarrow>\<^bsub>t_entrance\<^esub>
+     (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
+    using entrance_block_length
+    by (metis (no_types, lifting) add_2_eq_Suc less_imp_le_nat nat_add_left_cancel_le)
+  with jump_to_correct_label
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg) \<rightarrow>\<^bsub>t_entrance + 1\<^esub>
+        (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
+    by auto        
+  with block_for_q_chs_correct
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg)
+        \<rightarrow>\<^bsub>t_entrance + 1 + block_for_q_chs_len\<^esub>
+        (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len, s\<^sub>2)"
+    by blast
+  with jump_back_to_begin
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, config_to_state cfg)
+        \<rightarrow>\<^bsub>t_entrance + 1 + block_for_q_chs_len + 1\<^esub>
+        (pc_start, s\<^sub>2)"
+    by auto
+
+  with \<open>t_entrance \<le> entrance_block_len\<close>
+  have "\<exists>t_entrance \<le> entrance_block_len.
+         GOTO_on_List_Prog \<turnstile>\<^sub>l  (pc_start, config_to_state cfg)
+         \<rightarrow>\<^bsub>t_entrance + block_for_q_chs_len + 2\<^esub>
+         (pc_start, s\<^sub>2)" by auto
+  with \<open>s\<^sub>2 \<sim> cfg'\<close> \<open>wf_cfg cfg'\<close>
+  show thesis using that by presburger
+qed
+    
 lemma prog_correctly_ends:
   "GOTO_on_List_Prog \<turnstile>\<^sub>l
    (pc_start, config_to_state (Q, tps)) \<rightarrow>\<^bsub>1\<^esub> (pc_halt, config_to_state (Q, tps))"
@@ -328,7 +407,7 @@ lemma TM_to_GOTO_on_List_correct_and_in_linear_time':
           (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s'))"
       and "s' \<sim> cfg'"
   using assms
-  apply (induction t)
+   apply (induction t)
   sorry
 
 theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
@@ -344,7 +423,8 @@ proof -
     "\<exists>t \<le> T. \<exists>c. \<exists>t' \<le> c * t.
      (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s'))"
     using TM_to_GOTO_on_List_correct_and_in_linear_time'
-    by (smt (verit, del_insts) append1_eq_conv append_assoc concat_map_singleton config_to_state.simps(2) list.inject)
+    by (smt (verit, del_insts)
+        append1_eq_conv append_assoc concat_map_singleton config_to_state.simps(2) list.inject)
   
   from assms execute_M
   show "s' \<sim> (Q, TPS')"

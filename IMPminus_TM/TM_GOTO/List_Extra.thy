@@ -76,4 +76,14 @@ qed
 lemma concat_take_1_is_hd: "xss \<noteq> [] \<Longrightarrow> concat (take 1 xss) = hd xss"
   by (induction xss) auto
 
+lemma mem_set_product_lists_replicate':
+  "set ys \<subseteq> set xs \<Longrightarrow> ys \<in> set (product_lists (replicate (length ys) xs))"
+  by (induction ys) auto
+
+lemma mem_set_product_lists_replicate[intro]:
+  "\<forall>i < len. ys ! i \<in> set xs \<Longrightarrow> len = length ys \<Longrightarrow>
+   ys \<in> set (product_lists (replicate len xs))"
+  using mem_set_product_lists_replicate'
+  by (metis in_set_conv_nth subset_code(1)) 
+
 end
