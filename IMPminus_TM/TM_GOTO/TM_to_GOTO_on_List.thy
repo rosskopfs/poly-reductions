@@ -18,7 +18,7 @@ locale TM_to_GOTO_on_List =
   assumes runtime_M: "transforms M TPS T TPS'"
 
     fixes MAX_LEN :: nat    \<comment>\<open>maximum length of all tapes during the execution of the TM\<close>
-  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (tps ::: k) p < G) \<and> (\<forall>k < K. (tps :#: k) < MAX_LEN)"
+  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (TPS ::: k) p < G) \<and> (\<forall>k < K. (TPS :#: k) < MAX_LEN)"
 begin
 
 subsection \<open>Helper functions\<close>
@@ -294,13 +294,16 @@ lemma jump_back_to_begin:
   sorry
 
 corollary TM_to_GOTO_on_List_correct_for_single_step:
-  assumes "exe M cfg = cfg'"
+  assumes "wf_cfg cfg"
+      and "fst cfg < Q"
+      and "exe M cfg = cfg'"
     shows "\<exists>t_entrance < entrance_block_len.
            GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start, config_to_state cfg)
            \<rightarrow>\<^bsub>t_entrance + block_for_q_chs_len + 2\<^esub>
            (pc_start, s)"
       and "s \<sim> cfg'"
+      and "wf_cfg cfg'"
   sorry
 
 lemma prog_correctly_ends:
@@ -318,12 +321,35 @@ proof -
   then show ?thesis by auto
 qed
 
-theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
-  assumes "s \<sim> (0, TPS)"
-    shows "\<exists>c. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>(c * T)\<^esub> (pc_halt, t))"
-      and "t \<sim> (Q, TPS')"
+lemma TM_to_GOTO_on_List_correct_and_in_linear_time':
+  assumes "s \<sim> cfg"
+      and "execute M cfg t = cfg'"
+    shows "\<exists>c. \<exists>t' \<le> c * t.
+          (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s'))"
+      and "s' \<sim> cfg'"
+  using assms
+  apply (induction t)
   sorry
 
-end
+theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
+  assumes "s \<sim> (0, TPS)"
+    shows "\<exists>t \<le> T. \<exists>c. \<exists>t' \<le> c * t.
+          (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s'))"
+      and "s' \<sim> (Q, TPS')"
+proof -
+  from runtime_M have execute_M: "\<exists>t \<le> T. execute M (0, TPS) t = (Q, TPS')"
+    using Q unfolding transforms_def transits_def
+    by simp
+  with assms show
+    "\<exists>t \<le> T. \<exists>c. \<exists>t' \<le> c * t.
+     (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s'))"
+    using TM_to_GOTO_on_List_correct_and_in_linear_time'
+    by (smt (verit, del_insts) append1_eq_conv append_assoc concat_map_singleton config_to_state.simps(2) list.inject)
+  
+  from assms execute_M
+  show "s' \<sim> (Q, TPS')"
+    using TM_to_GOTO_on_List_correct_and_in_linear_time'(2) by blast
+qed
 
+end
 end
