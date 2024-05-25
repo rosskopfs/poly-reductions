@@ -181,7 +181,7 @@ proof -
 qed
 
 abbreviation GOTO_on_List_Prog :: "GOTO\<^sub>l_prog" where
-  "GOTO_on_List_Prog \<equiv> HALT\<^sub>l # entrance_block @ blocks_for_actions @ [HALT\<^sub>l]"
+  "GOTO_on_List_Prog \<equiv> entrance_block @ blocks_for_actions @ [HALT\<^sub>l]"
 
 
 subsection \<open>Properties about state and configuration and their preservation\<close>
@@ -340,7 +340,37 @@ lemma read_state_and_chars_correct:
     where "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, s')"
       and "s' \<sim> cfg"
       and "read_chars_correspond_to_cfg s' cfg"
-  sorry
+proof -
+  from \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close>
+  have "s ST \<noteq> [Q]"
+    by (simp add: configuration_of_prog_same_to_TM_D(1)) 
+  then have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow> (pc_start + 1, s)"
+    by auto
+  then have first_step: "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>1\<^esub> (pc_start + 1, s)"
+    by blast
+  let ?s' = "snd (iexec\<^sub>l (CHS ::=\<^sub>l ReadChs [0..<K]) (pc_start + 1, s))"
+  let ?chs = "map (\<lambda>n. (s (TP n)) ! (hd (s (HP n)))) [0..<K]"
+  have "?s' CHS = ?chs" by auto
+  from \<open>s \<sim> cfg\<close> have "\<forall>k < K. (s (TP k)) ! (hd (s (HP k))) = cfg <.> k"
+    using TM_to_GOTO_on_List.wf_cfg_D(4) TM_to_GOTO_on_List_axioms assms(1) configuration_of_prog_same_to_TM_def
+    by auto
+  with \<open>s \<sim> cfg\<close> \<open>?s' CHS = ?chs\<close> have "read_chars_correspond_to_cfg ?s' cfg"
+    using length_upt by force
+  moreover
+  have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start + 1, s) \<rightarrow> (pc_start + 2, ?s')" by auto
+  then have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start + 1, s) \<rightarrow>\<^bsub>1\<^esub> (pc_start + 2, ?s')" by blast
+  with first_step have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, ?s')"
+    using exec\<^sub>l_t_add [where ?P = GOTO_on_List_Prog and ?s = s and ?s' = s and ?s'' = ?s'
+        and ?pc = pc_start and ?pc' = "pc_start + 1" and ?pc'' = "pc_start + 2" and ?t\<^sub>1 = 1 and ?t\<^sub>2 = 1]
+    by (metis nat_1_add_1)
+  moreover
+  have "?s' = s(CHS := ?chs)" by simp
+  then have "?s' ST = s ST" "\<forall>n. ?s' (TP n) = s (TP n)" "\<forall>n. ?s' (HP n) = s (HP n)" by simp+
+  with \<open>s \<sim> cfg\<close> have "?s' \<sim> cfg"
+    by (simp add: configuration_of_prog_same_to_TM_def)
+  ultimately
+  show thesis using that by blast
+qed
 
 lemma search_for_correct_label_for_q_and_chs:
   assumes "wf_cfg cfg"
@@ -569,7 +599,10 @@ proof -
       using that by blast
   qed
   moreover
-  from \<open>s \<sim> (Q, TPS')\<close> have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow> (pc_halt, s)"
+  value "GOTO_on_List_Prog !! pc_start"
+  from \<open>s \<sim> (Q, TPS')\<close> have "s ST = [Q]"
+    by (simp add: configuration_of_prog_same_to_TM_D(1)) 
+  then have  "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow> (pc_halt, s)"
     by fastforce
   ultimately
   have "\<exists>t' \<le> (entrance_block_len + block_for_q_chs_len + 2) * t + 1.

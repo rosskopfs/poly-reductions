@@ -104,6 +104,11 @@ abbreviation
 where
   "exec\<^sub>l_t P cfg t cfg' \<equiv> ((exec1\<^sub>l P) ^^ t) cfg cfg'"
 
+lemma exec1\<^sub>l_exec\<^sub>l_t_1[intro]:
+  assumes "P \<turnstile>\<^sub>l (pc, s) \<rightarrow> (pc', s')"
+  shows "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>1\<^esub> (pc', s')"
+  using assms by auto
+
 lemma exec\<^sub>l_t_add[intro]:
   assumes "P \<turnstile>\<^sub>l (pc, s) \<rightarrow>\<^bsub>t\<^sub>1\<^esub> (pc', s')"
       and "P \<turnstile>\<^sub>l (pc', s') \<rightarrow>\<^bsub>t\<^sub>2\<^esub> (pc'', s'')"
