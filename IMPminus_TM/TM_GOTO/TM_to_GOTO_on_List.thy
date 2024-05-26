@@ -1,6 +1,5 @@
 theory TM_to_GOTO_on_List
-  imports GOTO_on_List "IMPminus_TM-Def.Global_Defs" Cook_Levin.Basics "List-Index.List_Index"
-          List_Extra
+  imports GOTO_on_List Cook_Levin.Basics "List-Index.List_Index" List_Extra
 begin
 
 locale TM_to_GOTO_on_List =
@@ -81,11 +80,11 @@ subsection \<open>Definition of the transform function\<close>
 abbreviation entrance_block_len :: nat where
   "entrance_block_len \<equiv> q_chs_num + 2"
 abbreviation block_for_q_chs_len :: nat where
-  "block_for_q_chs_len \<equiv> 3 * K + 1"
+  "block_for_q_chs_len \<equiv> 2 * K + 2"
 
 fun label_of_block_for_q_chs :: "state \<times> symbol list \<Rightarrow> label" where
   "label_of_block_for_q_chs (q, chs) =
-   entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list (q, chs))"
+   entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1"
 
 abbreviation entrance_block :: "GOTO\<^sub>l_prog" where
   "entrance_block \<equiv> [
@@ -143,21 +142,20 @@ fun block_for_q_chs :: "state \<times> action list \<Rightarrow> GOTO\<^sub>l_pr
      (concat (map (\<lambda>n. [
         TapeModify n (q_act_s [.] n), \<comment> \<open>tape modification\<close>
         case q_act_s [~] n of
-          Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l, \<comment> \<open>head movement\<close>
-        GOTO\<^sub>l pc_start])
-      [0..<K]))" \<comment> \<open>for each tape\<close>
+          Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l]) \<comment> \<open>head movement\<close>
+      [0..<K])) \<comment> \<open>for each tape\<close>
+   @ [GOTO\<^sub>l pc_start]"
 
-lemma block_for_q_and_chs_length: "length (block_for_q_chs q_act_s) = block_for_q_chs_len"
+lemma block_for_q_chs_length: "length (block_for_q_chs q_act_s) = block_for_q_chs_len"
 proof -
   let ?f = "(\<lambda>n. [
-    TapeModify n (q_act_s [.] n), \<comment> \<open>tape modification\<close>
+    TapeModify n (q_act_s [.] n),
     case q_act_s [~] n of
-      Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l, \<comment> \<open>head movement\<close>
-    GOTO\<^sub>l pc_start])"
-  have "length (?f n) = 3" for n by auto
-  then have "\<forall>xs \<in> set (map ?f [0..<K]). length xs = 3"
+      Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l])"
+  have "length (?f n) = 2" for n by auto
+  then have "\<forall>xs \<in> set (map ?f [0..<K]). length xs = 2"
     by simp
-  then have "length (concat (map ?f [0..<K])) = 3 * K"
+  then have "length (concat (map ?f [0..<K])) = 2 * K"
     using length_concat_same_length [where ?xss = "map ?f [0..<K]"]
     by auto
   then show ?thesis by auto
@@ -170,7 +168,7 @@ abbreviation blocks_for_actions :: "GOTO\<^sub>l_prog" where
 lemma blocks_for_actions_length: "length blocks_for_actions = block_for_q_chs_len * q_chs_num"
 proof -
   let ?f = "\<lambda>(q, chs). block_for_q_chs ((M!q) chs)"  
-  from block_for_q_and_chs_length
+  from block_for_q_chs_length
   have "\<forall>q_chs \<in> set q_chs_enum_list. length (?f q_chs) = block_for_q_chs_len" by fast
   then have "\<forall>blk \<in> set (map ?f q_chs_enum_list). length blk = block_for_q_chs_len" by simp
   then have "length blocks_for_actions = block_for_q_chs_len * (length q_chs_enum_list)"
@@ -225,6 +223,62 @@ proof -
   show ?thesis
     by (metis (no_types, lifting) case_prod_conv)
 qed
+
+lemma state_update_by_index:
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+    shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs)) =
+           ST ::=\<^sub>l L [[*] ((M!q) chs)]"
+proof -
+  let ?blks = "map (\<lambda>(q, chs). block_for_q_chs ((M!q) chs)) q_chs_enum_list"
+  have "\<forall>(q, chs) \<in> set q_chs_enum_list. length (block_for_q_chs ((M!q) chs)) = block_for_q_chs_len"
+    using block_for_q_chs_length by blast
+  then have "\<forall>blk \<in> set (map (\<lambda>(q, chs). block_for_q_chs ((M!q) chs)) q_chs_enum_list).
+             length blk = block_for_q_chs_len"
+    by simp
+  moreover
+  from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have "index q_chs_enum_list (q, chs) < length ?blks"
+    by simp
+  ultimately
+  have "blocks_for_actions !! (block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1) =
+        ?blks ! (index q_chs_enum_list (q, chs)) !! 1"
+    using inth_concat_same_length [where ?xss = ?blks and ?i = 1 and ?n = "index q_chs_enum_list (q, chs)"
+                                    and ?len = block_for_q_chs_len]
+    by (metis mult.commute one_le_numeral trans_le_add2 zero_less_one)
+  also have "... = block_for_q_chs ((M!q) chs) !! 1"
+    using assms by force
+  also have "... = block_for_q_chs ((M!q) chs) ! 0" by simp
+  also have "... = ST ::=\<^sub>l L [[*] ((M!q) chs)]"
+    unfolding block_for_q_chs.simps by auto
+  finally have "blocks_for_actions !! (block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1) = ST ::=\<^sub>l L [[*] ((M ! q) chs)]"
+    by blast    
+  then show ?thesis
+    using inth_append_in_snd_list [where ?i = "block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1"
+                                     and ?xs = entrance_block and ?ys = blocks_for_actions]
+    using entrance_block_length
+    using label_of_block_for_q_chs.simps [where ?q = q and ?chs = chs]
+    by (metis Nat.add_0_right One_nat_def add_Suc_right zero_less_Suc)
+qed
+
+lemma tape_modify_by_index:
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+      and "n < K"
+    shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (hd (s ST), s CHS) + 1 + 2 * n) =
+           TapeModify n (((M!q) chs) [.] n)"
+  sorry
+
+lemma head_move_by_index:
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+      and "n < K"
+    shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (hd (s ST), s CHS) + 2 + 2 * n) =
+           (case ((M!q) chs) [~] n of Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l)"
+  sorry
+
+lemma goto_start_by_index:
+  assumes "(q, chs) \<in> set q_chs_enum_list"
+    shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len) =
+           GOTO\<^sub>l pc_start"
+  sorry
+
 
 subsection \<open>Properties about state and configuration and their preservation\<close>
 text \<open>The verification requires some properties about the state of the GOTO_on_List program,
@@ -542,9 +596,12 @@ lemma block_for_q_chs_correct:
   sorry
 
 lemma jump_back_to_begin:
-  "GOTO_on_List_Prog \<turnstile>\<^sub>l
-   (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s') \<rightarrow>
-   (pc_start, s')"
+  assumes "wf_cfg cfg"
+      and "s \<sim> cfg"
+      and "read_chars_correspond_to_cfg s cfg"
+    shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
+           (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len, s') \<rightarrow>
+           (pc_start, s')"
   sorry
 
 corollary TM_to_GOTO_on_List_correct_for_single_step:
@@ -581,7 +638,7 @@ proof -
     and "s\<^sub>2 \<sim> cfg'"
     using block_for_q_chs_correct [where ?s = s\<^sub>1 and ?cfg = cfg and ?cfg' = cfg']
     by blast
-  have jump_back_to_begin:
+  from \<open>wf_cfg cfg\<close> s\<^sub>1 have jump_back_to_begin:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len, s\<^sub>2) \<rightarrow>
      (pc_start, s\<^sub>2)"
@@ -634,7 +691,8 @@ proof -
   have "\<exists>t_entrance \<le> entrance_block_len.
          GOTO_on_List_Prog \<turnstile>\<^sub>l  (pc_start, s)
          \<rightarrow>\<^bsub>t_entrance + block_for_q_chs_len + 2\<^esub>
-         (pc_start, s\<^sub>2)" by auto
+         (pc_start, s\<^sub>2)"
+    by (smt (verit) Suc_eq_plus1 add_2_eq_Suc' add_Suc_right add_Suc_shift)
   with \<open>s\<^sub>2 \<sim> cfg'\<close>
   show thesis using that by presburger
 qed
