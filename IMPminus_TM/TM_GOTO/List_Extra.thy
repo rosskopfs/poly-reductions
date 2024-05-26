@@ -86,7 +86,6 @@ lemma mem_set_product_lists_replicate[intro]:
   using mem_set_product_lists_replicate'
   by (metis in_set_conv_nth subset_code(1))
 
-
 lemma inth_concat_same_length [simp]:
   assumes same_length: "\<forall>xs \<in> set xss. length xs = len"
       and "0 < i \<and> i \<le> len"
@@ -133,6 +132,50 @@ proof -
   then show ?thesis
     using inth_nth
     by (metis assms(2) assms(3) nth_mem same_length)
+qed
+
+
+lemma nth_concat_same_length [simp]:
+  assumes same_length: "\<forall>xs \<in> set xss. length xs = len"
+      and "i < len"
+      and "n < length xss"
+    shows "concat xss ! (n * len + i) = (xss ! n) ! i"
+  using assms
+proof -
+  from \<open>n < length xss\<close> same_length have "drop (n * len) (concat xss) = concat (drop n xss)"
+    using drop_concat_same_length
+    by (metis mult.commute)
+  also have "take len ... = concat (take 1 (drop n xss))"
+    using same_length take_concat_same_length
+    by (metis in_set_dropD nat_mult_1_right)
+  also have "... = hd (drop n xss)"
+    using concat_take_1_is_hd \<open>n < length xss\<close>
+    by (metis Cons_nth_drop_Suc neq_Nil_conv)
+  also have "... = xss ! n"
+    using \<open>n < length xss\<close> hd_drop_conv_nth by blast
+  finally have "take len (drop (n * len) (concat xss)) = xss ! n"
+    by blast
+  moreover
+  from same_length have "length (concat xss) = length xss * len"
+    using length_concat_same_length
+    by (metis mult.commute)
+  with \<open>n < length xss\<close> have "n * len < length (concat xss)"
+    using \<open>i < len\<close> by auto
+  then have "concat xss ! (n * len + i) = drop (n * len) (concat xss) ! i"
+    using nth_drop [where ?n = "n * len" and ?xs = "concat xss" and ?i = i]
+    by simp
+(*Q:
+Vacuous calculation result: take len (drop (n * len) (concat xss)) = xss ! n
+derived as projection (1) from:
+    take len (drop (n * len) (concat xss)) = xss ! n
+    concat xss ! (n * len + i) = drop (n * len) (concat xss) ! i
+  also have "... = take len (drop (n * len) (concat xss)) ! i"
+    using \<open>i < len\<close> by auto
+*)
+  then have "concat xss ! (n * len + i) = take len (drop (n * len) (concat xss)) ! i"
+    using \<open>i < len\<close> by auto
+  ultimately
+  show ?thesis by argo
 qed
 
 end
