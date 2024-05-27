@@ -108,8 +108,8 @@ abbreviation block_for_q_chs_len :: nat where
   "block_for_q_chs_len \<equiv> 2 * K + 2"
 
 fun label_of_block_for_q_chs :: "state \<times> symbol list \<Rightarrow> label" where
-  "label_of_block_for_q_chs (q, chs) =
-   entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1"
+  "label_of_block_for_q_chs q_chs =
+   entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list q_chs) + 1"
 
 abbreviation entrance_block :: "GOTO\<^sub>l_prog" where
   "entrance_block \<equiv> [
@@ -206,6 +206,37 @@ qed
 abbreviation GOTO_on_List_Prog :: "GOTO\<^sub>l_prog" where
   "GOTO_on_List_Prog \<equiv> entrance_block @ blocks_for_actions"
 
+lemma label_of_block_for_q_chs_range:
+  assumes "q_chs \<in> set q_chs_enum_list"
+    shows "label_of_block_for_q_chs q_chs + block_for_q_chs_len - 1 \<le> length GOTO_on_List_Prog"
+proof -
+  from assms have "index q_chs_enum_list q_chs < q_chs_num"
+    using q_chs_enum_list_length by auto
+  then have "index q_chs_enum_list q_chs \<le> q_chs_num - 1"
+    by linarith
+  then have "block_for_q_chs_len * (index q_chs_enum_list q_chs) \<le>
+             block_for_q_chs_len * q_chs_num - block_for_q_chs_len"
+    by (metis mult.comm_neutral mult_le_mono2 right_diff_distrib')
+  then have "block_for_q_chs_len * (index q_chs_enum_list q_chs) + block_for_q_chs_len \<le>
+             block_for_q_chs_len * q_chs_num - block_for_q_chs_len + block_for_q_chs_len"
+    by linarith
+  moreover
+  from assms have "0 < q_chs_num"
+    using q_chs_enum_list_length
+    by (metis length_pos_if_in_set)
+  then have "block_for_q_chs_len * q_chs_num - block_for_q_chs_len + block_for_q_chs_len =
+             block_for_q_chs_len * q_chs_num"
+    by (metis add.commute add_diff_inverse_nat mult_numeral_1_right nat_mult_less_cancel_disj not_less_eq numeral_1_eq_Suc_0)
+  ultimately
+  have "block_for_q_chs_len * (index q_chs_enum_list q_chs) + block_for_q_chs_len \<le>
+        length blocks_for_actions"
+    using blocks_for_actions_length by argo
+  then have "entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list q_chs) + block_for_q_chs_len
+             \<le> length GOTO_on_List_Prog"
+    using entrance_block_length by force
+  then show ?thesis by simp
+qed
+
 lemma search_table_content_by_index [simp]:
   assumes "i < q_chs_num"
     shows "GOTO_on_List_Prog !! (pc_start + 2 + i) =
@@ -297,7 +328,7 @@ proof -
   have "length entrance_block + (block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i) =
         label_of_block_for_q_chs (q, chs) + i"
     using entrance_block_length
-    using label_of_block_for_q_chs.simps [where ?q = q and ?chs = chs]
+    using label_of_block_for_q_chs.simps [where ?q_chs = "(q, chs)"]
     by presburger
   ultimately
   show ?thesis by argo
@@ -654,7 +685,7 @@ proof -
           less_imp_add_positive list.size(3) nat_add_left_cancel_less zero_less_diff) 
     moreover
     have "no_modification (?f (q_chs_enum_list ! (i - ?a)))"
-      by (smt (verit, ccfv_SIG) label_of_block_for_q_chs.cases no_modification.simps(9) old.prod.case)
+      by (smt (verit) no_modification.simps(9) old.prod.case surj_pair)
     moreover
     have "no_jump s (?f (q_chs_enum_list ! (i - ?a)))"
     proof -
@@ -723,6 +754,7 @@ qed
 lemma block_for_q_chs_correct:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
+      and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
       and "exe M cfg = cfg'"
   obtains s'
@@ -730,7 +762,26 @@ lemma block_for_q_chs_correct:
            (label_of_block_for_q_chs (hd (s ST), s CHS), s) \<rightarrow>\<^bsub>block_for_q_chs_len - 1\<^esub>
            (label_of_block_for_q_chs (hd (s ST), s CHS) + block_for_q_chs_len - 1, s')"
       and "s' \<sim> cfg'"
-  sorry
+proof -
+  let ?q = "hd (s ST)"
+  let ?chs = "s CHS"
+  let ?q_chs = "(hd (s ST), s CHS)"
+  let ?label = "label_of_block_for_q_chs ?q_chs"
+  let ?len = "block_for_q_chs_len - 1"
+
+  from assms have "?q_chs \<in> set q_chs_enum_list"
+    using proper_state_q_chs_in_enum_list by blast
+  then have "?label \<le> length GOTO_on_List_Prog"
+    using label_of_block_for_q_chs_range
+    by (smt (verit) Nat.add_diff_assoc le_add1 le_add2 le_trans nat_1_add_1)
+  moreover
+  have "\<forall>cmd \<in> set (butlast (block_for_q_chs ((M!?q) ?chs))). strict_no_jump cmd"
+    unfolding block_for_q_chs.simps sorry
+  have block_strict_no_jump:
+    "\<forall>i. ?label \<le> i \<and> i < ?label + ?len \<longrightarrow> strict_no_jump (GOTO_on_List_Prog !! i)"
+    sorry
+  show thesis sorry
+qed
 
 lemma jump_back_to_begin:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
@@ -753,34 +804,8 @@ proof -
   moreover
   have "0 < ?pc" by linarith
   moreover
-  have "?pc \<le> length GOTO_on_List_Prog"
-  proof -
-    from \<open>?q_chs \<in> set q_chs_enum_list\<close> have "index q_chs_enum_list ?q_chs < q_chs_num"
-      using q_chs_enum_list_length by auto
-    then have "index q_chs_enum_list ?q_chs \<le> q_chs_num - 1"
-      by linarith
-    then have "block_for_q_chs_len * (index q_chs_enum_list ?q_chs) \<le>
-               block_for_q_chs_len * q_chs_num - block_for_q_chs_len"
-      by (metis mult.comm_neutral mult_le_mono2 right_diff_distrib')
-    then have "block_for_q_chs_len * (index q_chs_enum_list ?q_chs) + block_for_q_chs_len \<le>
-               block_for_q_chs_len * q_chs_num - block_for_q_chs_len + block_for_q_chs_len"
-      by linarith
-    moreover
-    from \<open>?q_chs \<in> set q_chs_enum_list\<close> have "0 < q_chs_num"
-      using q_chs_enum_list_length
-      by (metis length_pos_if_in_set)
-    then have "block_for_q_chs_len * q_chs_num - block_for_q_chs_len + block_for_q_chs_len =
-               block_for_q_chs_len * q_chs_num"
-      by (metis add.commute add_diff_inverse_nat mult_numeral_1_right nat_mult_less_cancel_disj not_less_eq numeral_1_eq_Suc_0)
-    ultimately
-    have "block_for_q_chs_len * (index q_chs_enum_list ?q_chs) + block_for_q_chs_len \<le>
-          length blocks_for_actions"
-      using blocks_for_actions_length by argo
-    then have "entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list ?q_chs) + block_for_q_chs_len
-               \<le> length GOTO_on_List_Prog"
-      using entrance_block_length by force
-    then show ?thesis by simp
-  qed
+  from \<open>?q_chs \<in> set q_chs_enum_list\<close> have "?pc \<le> length GOTO_on_List_Prog"
+    using label_of_block_for_q_chs_range by blast 
   ultimately
   show ?thesis
     by (metis (no_types, lifting) Nil_is_append_conv exec1\<^sub>l_I iexec\<^sub>l.simps(7) list.distinct(1))
@@ -791,7 +816,7 @@ corollary TM_to_GOTO_on_List_correct_for_single_step:
       and "fst cfg < Q"
       and "exe M cfg = cfg'"
       and "s \<sim> cfg"
-  obtains s'
+    obtains s'
     where "\<exists>t_entrance \<le> entrance_block_len.
            GOTO_on_List_Prog \<turnstile>\<^sub>l
            (pc_start, s)
@@ -815,7 +840,7 @@ proof -
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
     using jump_to_correct_label by presburger
-  from s\<^sub>1 assms(1) \<open>exe M cfg = cfg'\<close> obtain s\<^sub>2 where block_for_q_chs_correct:
+  from s\<^sub>1 assms(1-2) \<open>exe M cfg = cfg'\<close> obtain s\<^sub>2 where block_for_q_chs_correct:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>\<^bsub>block_for_q_chs_len - 1\<^esub>
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len - 1, s\<^sub>2)"
