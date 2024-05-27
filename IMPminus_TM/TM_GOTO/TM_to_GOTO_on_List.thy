@@ -1,5 +1,5 @@
 theory TM_to_GOTO_on_List
-  imports GOTO_on_List Cook_Levin.Basics "List-Index.List_Index" List_Extra
+  imports GOTO_on_List Cook_Levin.Basics "List-Index.List_Index" List_Extra TM_Extra
 begin
 
 locale TM_to_GOTO_on_List =
@@ -17,8 +17,33 @@ locale TM_to_GOTO_on_List =
   assumes runtime_M: "transforms M TPS T TPS'"
 
     fixes MAX_LEN :: nat    \<comment>\<open>maximum length of all tapes during the execution of the TM\<close>
-  assumes wf_TPS: "length TPS = K \<and> (\<forall>k < K. \<forall>p < MAX_LEN. (TPS ::: k) p < G) \<and> (\<forall>k < K. (TPS :#: k) < MAX_LEN)"
+  assumes wf_TPS: "length TPS = K \<and>
+                   (\<forall>k < K. \<forall>p < MAX_LEN. (TPS ::: k) p < G) \<and>
+                   (\<forall>k < K. (TPS :#: k) < MAX_LEN)"
+      and head_position_no_exceed_MAX_LEN:
+          "\<forall>t \<le> T. \<forall>k < K. execute M (0, TPS) t <#> k < MAX_LEN"
 begin
+
+lemma head_position_no_exceed_MAX_LEN':
+  "\<forall>k < K. execute M (0, TPS) t <#> k < MAX_LEN"
+proof (cases "t \<le> T")
+  case True
+  then show ?thesis
+    using head_position_no_exceed_MAX_LEN by blast
+next
+  case False
+  from runtime_M obtain T\<^sub>0 where T\<^sub>0: "T\<^sub>0 \<le> T" "execute M (0, TPS) T\<^sub>0 = (Q, TPS')"
+    by (metis Q halting_config_def transforms_halting_config transforms_running_time)
+  then have "\<forall>k < K. (Q, TPS') <#> k < MAX_LEN"
+    using head_position_no_exceed_MAX_LEN by fastforce
+  moreover
+  from T\<^sub>0 have "execute M (Q, TPS') (t - T\<^sub>0) = execute M (0, TPS) t"
+    by (metis False dual_order.trans execute_additive le_add_diff_inverse nle_le)
+  with T\<^sub>0 have "execute M (0, TPS) t = (Q, TPS')"
+    by (metis Q diff_is_0_eq' execute.simps(1) execute_after_halting_ge fst_conv nless_le not_le_imp_less)
+  ultimately
+  show ?thesis by simp
+qed
 
 subsection \<open>Helper functions\<close>
 
@@ -444,49 +469,48 @@ lemma wf_cfg_start_cfg: "wf_cfg (0, TPS)"
   using wf_TPS
   by (simp add: wf_cfg_def)
 
-lemma wf_cfg_preserved_by_exe [intro]:
-  assumes "wf_cfg cfg"
-      and "exe M cfg = cfg'"
-    shows "wf_cfg cfg'"
-proof (cases "fst cfg < Q")
-  case True
-  with TM Q have "turing_command K Q G (M ! fst cfg)"
-    by (simp add: turing_machineD(3))
-  from \<open>exe M cfg = cfg'\<close> True have "cfg' = sem (M ! fst cfg) cfg"
-    by (simp add: Q exe_lt_length)
-    
-  have "fst cfg' \<le> Q" sorry
-  moreover
-  have "||cfg'|| = K" sorry
-  moreover
-  have "\<forall>k<K. \<forall>p<MAX_LEN. (cfg' <:> k) p < G"
-  proof(standard; standard; standard; standard)
-    fix k p assume "k < K" "p < MAX_LEN"
-    then show "(cfg' <:> k) p < G" sorry
-  qed
-  moreover
-  have "\<forall>k<K. cfg' <#> k < MAX_LEN"
-  proof (standard; standard)
-    fix k assume "k < K"
-    then show "cfg' <#> k < MAX_LEN" sorry
-  qed
-  ultimately
-  show ?thesis by (simp add: wf_cfg_I)
-next
-  case False
-  with \<open>wf_cfg cfg\<close> have "fst cfg = Q"
-    using le_neq_implies_less by blast
-  with \<open>exe M cfg = cfg'\<close> have "cfg' = cfg"
-    by (simp add: Q exe_ge_length)
-  with \<open>wf_cfg cfg\<close> show ?thesis by force
-qed
-
 lemma wf_cfg_preserved_by_execute [intro]:
-  assumes "wf_cfg cfg"
-      and "execute M cfg t = cfg'"
+  assumes "execute M (0, TPS) t = cfg'"
     shows "wf_cfg cfg'"
   using assms
-  by (induction t arbitrary: cfg') auto
+proof (induction t arbitrary: cfg')
+  case 0
+  then show ?case
+    using wf_cfg_start_cfg by auto
+next
+  case (Suc t)
+  then obtain cfg where cfg: "execute M (0, TPS) t = cfg" and exe: "exe M cfg = cfg'"
+    by auto
+  with Suc.IH exe have "wf_cfg cfg" by blast
+  then show ?case
+  proof (cases "fst cfg < Q")
+    case True
+    from TM exe \<open>wf_cfg cfg\<close> have "fst cfg' \<le> Q"
+      using Q exe_state_valid wf_cfg_D(1-2) by auto
+    moreover
+    from \<open>wf_cfg cfg\<close> have "||cfg|| = K" by blast
+    with exe TM have "||cfg'|| = K"
+      using exe_num_tapes by metis
+    moreover
+    from Suc.prems have "\<forall>k < K. cfg' <#> k < MAX_LEN"
+      using head_position_no_exceed_MAX_LEN' by blast
+    moreover
+    from cfg have "\<forall>k < K. cfg <#> k < MAX_LEN"
+      using head_position_no_exceed_MAX_LEN' by blast
+    then have "\<forall>k < K. \<forall>p < MAX_LEN. (cfg' <:> k) p < G"
+      using tape_content_valid
+      using TM \<open>wf_cfg cfg\<close> \<open>||cfg|| = K\<close> exe wf_cfg_D(3) by blast
+    ultimately
+    show ?thesis by (simp add: wf_cfg_I)
+  next
+    case False
+    with \<open>wf_cfg cfg\<close> have "fst cfg = Q"
+      using le_neq_implies_less by blast
+    with \<open>exe M cfg = cfg'\<close> have "cfg' = cfg"
+      using exe_ge_length Q by simp
+    with \<open>wf_cfg cfg\<close> show ?thesis by blast
+  qed
+qed
 
 
 abbreviation read_chars_correspond_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
@@ -496,7 +520,7 @@ lemma tape_content_to_list_length [simp]:
   "length (tape_content_to_list tp len) = len"
   by (induction len) auto
 
-lemma tape_content_to_list_correct[intro]:
+lemma tape_content_to_list_correct [intro]:
   "p < len \<Longrightarrow> tape_content_to_list tp len ! p = tp p"
 proof (induction len)
   case 0
@@ -520,12 +544,13 @@ lemma config_to_state_correct [simp]: "config_to_state cfg \<sim> cfg"
   by (metis config_to_state.simps(1-3) surjective_pairing)
 
 lemma proper_state_q_chs_in_enum_list [intro]:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
     shows "(hd (s ST), s CHS) \<in> set q_chs_enum_list"
 proof -
+  from wf_cfg_preserved_by_execute assms(1) have "wf_cfg cfg" by blast
   from \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close> have "hd (s ST) < Q"
     by (simp add: configuration_of_prog_same_to_TM_D(1))
   moreover
@@ -558,7 +583,7 @@ Each of these 5 parts are either sequentially executed with no jump, or a single
 Below first shows that each of them are correct, then the correctness of the program for each single TM step.\<close>
 
 lemma read_state_and_chars_correct:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q" \<comment>\<open>not in halting state\<close>
   obtains s'
@@ -566,6 +591,7 @@ lemma read_state_and_chars_correct:
       and "s' \<sim> cfg"
       and "read_chars_correspond_to_cfg s' cfg"
 proof -
+  from wf_cfg_preserved_by_execute assms(1) have "wf_cfg cfg" by blast
   from \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close>
   have "s ST \<noteq> [Q]"
     by (simp add: configuration_of_prog_same_to_TM_D(1)) 
@@ -577,7 +603,8 @@ proof -
   let ?chs = "map (\<lambda>n. (s (TP n)) ! (hd (s (HP n)))) [0..<K]"
   have "?s' CHS = ?chs" by auto
   from \<open>s \<sim> cfg\<close> have "\<forall>k < K. (s (TP k)) ! (hd (s (HP k))) = cfg <.> k"
-    using TM_to_GOTO_on_List.wf_cfg_D(4) TM_to_GOTO_on_List_axioms assms(1) configuration_of_prog_same_to_TM_def
+    using TM_to_GOTO_on_List.wf_cfg_D(4) TM_to_GOTO_on_List_axioms \<open>wf_cfg cfg\<close>
+          configuration_of_prog_same_to_TM_def
     by auto
   with \<open>s \<sim> cfg\<close> \<open>?s' CHS = ?chs\<close> have "read_chars_correspond_to_cfg ?s' cfg"
     using length_upt by force
@@ -598,7 +625,7 @@ proof -
 qed
 
 lemma search_for_correct_label_for_q_and_chs:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
@@ -658,7 +685,7 @@ proof -
 qed
 
 lemma jump_to_correct_label:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
@@ -694,7 +721,7 @@ proof -
 qed
 
 lemma block_for_q_chs_correct:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "read_chars_correspond_to_cfg s cfg"
       and "exe M cfg = cfg'"
@@ -706,7 +733,7 @@ lemma block_for_q_chs_correct:
   sorry
 
 lemma jump_back_to_begin:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
@@ -760,7 +787,7 @@ proof -
 qed
 
 corollary TM_to_GOTO_on_List_correct_for_single_step:
-  assumes "wf_cfg cfg"
+  assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "fst cfg < Q"
       and "exe M cfg = cfg'"
       and "s \<sim> cfg"
@@ -772,28 +799,30 @@ corollary TM_to_GOTO_on_List_correct_for_single_step:
            (pc_start, s')"
       and "s' \<sim> cfg'"
 proof -
-  from \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close> obtain s\<^sub>1 where read_state_and_chars_correct:
+  from wf_cfg_preserved_by_execute assms(1) have "wf_cfg cfg" by blast
+
+  from assms(1) \<open>fst cfg < Q\<close> \<open>s \<sim> cfg\<close> obtain s\<^sub>1 where read_state_and_chars_correct:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, s\<^sub>1)"
     and s\<^sub>1: "s\<^sub>1 \<sim> cfg" "read_chars_correspond_to_cfg s\<^sub>1 cfg"
     using read_state_and_chars_correct by blast
-  with \<open>wf_cfg cfg\<close> have search_for_correct_label_for_q_and_chs:
+  with assms(1) have search_for_correct_label_for_q_and_chs:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (pc_start + 2, s\<^sub>1) \<rightarrow>\<^bsub>index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS)\<^esub>
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
     using search_for_correct_label_for_q_and_chs \<open>fst cfg < Q\<close> by presburger
-  from s\<^sub>1 \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> have jump_to_correct_label:
+  from s\<^sub>1 assms(1) \<open>fst cfg < Q\<close> have jump_to_correct_label:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
     using jump_to_correct_label by presburger
-  from s\<^sub>1 \<open>wf_cfg cfg\<close> \<open>exe M cfg = cfg'\<close> obtain s\<^sub>2 where block_for_q_chs_correct:
+  from s\<^sub>1 assms(1) \<open>exe M cfg = cfg'\<close> obtain s\<^sub>2 where block_for_q_chs_correct:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1) \<rightarrow>\<^bsub>block_for_q_chs_len - 1\<^esub>
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len - 1, s\<^sub>2)"
     and "s\<^sub>2 \<sim> cfg'"
     using block_for_q_chs_correct [where ?s = s\<^sub>1 and ?cfg = cfg and ?cfg' = cfg']
     by blast
-  from \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> s\<^sub>1 have jump_back_to_begin:
+  from assms(1) \<open>fst cfg < Q\<close> s\<^sub>1 have jump_back_to_begin:
     "GOTO_on_List_Prog \<turnstile>\<^sub>l
      (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS) + block_for_q_chs_len - 1, s\<^sub>2) \<rightarrow>
      (pc_start, s\<^sub>2)"
@@ -861,7 +890,7 @@ qed
 
 lemma TM_to_GOTO_on_List_correct_and_in_linear_time':
   assumes "s = config_to_state cfg"
-      and "wf_cfg cfg"
+      and "\<exists>t. execute M (0, TPS) t = cfg"
       and "fst cfg < Q"
       and "execute M cfg t = cfg'"
     shows "\<exists>s'. (s' \<sim> cfg') \<and>
@@ -873,10 +902,12 @@ proof (induction t arbitrary: cfg')
   then show ?case by auto
 next
   case (Suc t)
+  from wf_cfg_preserved_by_execute assms(2) have "wf_cfg cfg" by blast
   from \<open>execute M cfg (Suc t) = cfg'\<close> obtain cfg_mid where cfg_mid:
     "execute M cfg t = cfg_mid" "exe M cfg_mid = cfg'"
     by auto
-  with \<open>wf_cfg cfg\<close> have "wf_cfg cfg_mid" by blast
+  with assms(2) have cfg_mid_from_0_TPS: "\<exists>t. execute M (0, TPS) t = cfg_mid"
+    using execute_additive by blast
   with cfg_mid Suc.IH assms obtain t' s_mid where
     t': "t' \<le> (entrance_block_len + block_for_q_chs_len + 1) * t" and
     s_mid: "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t'\<^esub> (pc_start, s_mid)" "s_mid \<sim> cfg_mid"
@@ -884,7 +915,7 @@ next
   show ?case
   proof (cases "fst cfg_mid < Q")
     case True
-    with \<open>exe M cfg_mid = cfg'\<close> \<open>wf_cfg cfg_mid\<close> \<open>s_mid \<sim> cfg_mid\<close>
+    with \<open>exe M cfg_mid = cfg'\<close> cfg_mid_from_0_TPS \<open>s_mid \<sim> cfg_mid\<close>
     obtain s' where
       "\<exists>t_entrance\<le>entrance_block_len.
         GOTO_on_List_Prog
@@ -949,7 +980,7 @@ proof -
     let ?cfg = "(0, TPS)"
     from \<open>Q \<noteq> 0\<close> have "fst ?cfg < Q" by simp
     moreover
-    from wf_cfg_start_cfg have "wf_cfg ?cfg" by simp
+    have "execute M (0, TPS) 0 = (0, TPS)" by simp
     ultimately
     show ?thesis
       using execute_M
