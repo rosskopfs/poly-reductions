@@ -36,12 +36,12 @@ datatype GOTO\<^sub>l_operi =
 
 
 datatype GOTO\<^sub>l_instr =
-  NOP\<^sub>l |
   HALT\<^sub>l |
   Assign var\<^sub>l GOTO\<^sub>l_operi (\<open>_ ::=\<^sub>l _\<close> [60]60)|
   TapeModify nat val |
   MoveLeft nat |
   MoveRight nat |
+  Stay\<^sub>l nat |
   Jmp label (\<open>GOTO\<^sub>l _\<close>) |
   CondJmp var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ THEN GOTO\<^sub>l _\<close> [59, 0, 59] 60) |
   CondJmp2 var\<^sub>l GOTO\<^sub>l_operi var\<^sub>l GOTO\<^sub>l_operi label (\<open>IF _ = _ AND _ = _ THEN GOTO\<^sub>l _\<close> [59, 59, 0, 59] 60)
@@ -60,12 +60,12 @@ fun eval_GOTO\<^sub>l_operi :: "state\<^sub>l \<Rightarrow> GOTO\<^sub>l_operi \
   "eval_GOTO\<^sub>l_operi s (ReadChs tps) = map (\<lambda>n. (s (TP n)) ! (hd (s (HP n)))) tps"
 
 fun iexec\<^sub>l :: "GOTO\<^sub>l_instr \<Rightarrow> config\<^sub>l \<Rightarrow> config\<^sub>l" where
-  "iexec\<^sub>l NOP\<^sub>l (pc, s) = (Suc pc, s)" |
   "iexec\<^sub>l HALT\<^sub>l (pc, s) = (0, s)" |
   "iexec\<^sub>l (x ::=\<^sub>l l) (pc, s) = (Suc pc, s(x := eval_GOTO\<^sub>l_operi s l))" |
   "iexec\<^sub>l (TapeModify n v) (pc, s) = (Suc pc, s(TP n := (s (TP n))[hd (s (HP n)) := v]))" |
   "iexec\<^sub>l (MoveLeft n) (pc, s) = (Suc pc, s(HP n := [hd (s (HP n)) - 1]))" |
   "iexec\<^sub>l (MoveRight n) (pc, s) = (Suc pc, s(HP n := [Suc (hd (s (HP n)))]))" |
+  "iexec\<^sub>l (Stay\<^sub>l n) (pc, s) = (Suc pc, s)" |
   "iexec\<^sub>l (GOTO\<^sub>l label) (pc, s) = (label, s)" |
   "iexec\<^sub>l (IF x = l THEN GOTO\<^sub>l label) (pc, s) =
     (if (s x = eval_GOTO\<^sub>l_operi s l) then label else Suc pc, s)" |

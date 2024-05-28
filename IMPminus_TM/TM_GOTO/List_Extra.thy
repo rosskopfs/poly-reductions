@@ -178,4 +178,8 @@ derived as projection (1) from:
   show ?thesis by argo
 qed
 
+lemma nth_last [simp]:
+  "xs \<noteq> [] \<Longrightarrow> xs ! (length xs - 1) = last xs"
+  by (induction xs) auto
+
 end
