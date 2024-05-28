@@ -40,7 +40,8 @@ next
   from T\<^sub>0 have "execute M (Q, TPS') (t - T\<^sub>0) = execute M (0, TPS) t"
     by (metis False dual_order.trans execute_additive le_add_diff_inverse nle_le)
   with T\<^sub>0 have "execute M (0, TPS) t = (Q, TPS')"
-    by (metis Q diff_is_0_eq' execute.simps(1) execute_after_halting_ge fst_conv nless_le not_le_imp_less)
+    using execute_after_halting_ge
+    by (metis Q diff_is_0_eq' execute.simps(1) fst_conv nless_le not_le_imp_less)
   ultimately
   show ?thesis by simp
 qed
@@ -226,13 +227,14 @@ proof -
     by (metis length_pos_if_in_set)
   then have "block_for_q_chs_len * q_chs_num - block_for_q_chs_len + block_for_q_chs_len =
              block_for_q_chs_len * q_chs_num"
-    by (metis add.commute add_diff_inverse_nat mult_numeral_1_right nat_mult_less_cancel_disj not_less_eq numeral_1_eq_Suc_0)
+    by (metis add.commute add_diff_inverse_nat mult_numeral_1_right nat_mult_less_cancel_disj
+              not_less_eq numeral_1_eq_Suc_0)
   ultimately
   have "block_for_q_chs_len * (index q_chs_enum_list q_chs) + block_for_q_chs_len \<le>
         length blocks_for_actions"
     using blocks_for_actions_length by argo
-  then have "entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list q_chs) + block_for_q_chs_len
-             \<le> length GOTO_on_List_Prog"
+  then have "entrance_block_len + block_for_q_chs_len * (index q_chs_enum_list q_chs) +
+             block_for_q_chs_len \<le> length GOTO_on_List_Prog"
     using entrance_block_length by force
   then show ?thesis by simp
 qed
@@ -254,7 +256,8 @@ proof -
   ultimately
   have "GOTO_on_List_Prog !! (pc_start + 2 + i) = map ?f q_chs_enum_list ! i"
     using q_chs_enum_list_length entrance_block_length
-    using inth_append_in_fst_list [where ?i = "pc_start + 2 + i" and ?xs = entrance_block and ?ys = blocks_for_actions]
+    using inth_append_in_fst_list
+          [where ?i = "pc_start + 2 + i" and ?xs = entrance_block and ?ys = blocks_for_actions]
     by (metis (no_types, lifting) add_is_0 less_2_cases_iff list.size(3) not_gr0)
   with \<open>i < q_chs_num\<close> q_chs_enum_list_length
   show "GOTO_on_List_Prog !! (pc_start + 2 + i) = ?f (q_chs_enum_list ! i)"
@@ -270,7 +273,8 @@ proof -
   have "\<forall>i < q_chs_num. GOTO_on_List_Prog !! (pc_start + 2 + i) = ?f (q_chs_enum_list ! i)"
     using search_table_content_by_index by blast
   moreover
-  from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have "q_chs_enum_list ! index q_chs_enum_list (q, chs) = (q, chs)"
+  from \<open>(q, chs) \<in> set q_chs_enum_list\<close>
+  have "q_chs_enum_list ! index q_chs_enum_list (q, chs) = (q, chs)"
     by fastforce
   moreover
   from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have "index q_chs_enum_list (q, chs) < q_chs_num"
@@ -287,23 +291,28 @@ lemma inth_GOTO_on_List_Prog_label_of_block_for_q_chs:
            block_for_q_chs ((M!q) chs) ! i"
 proof -
   let ?blks = "map (\<lambda>(q, chs). block_for_q_chs ((M!q) chs)) q_chs_enum_list"
-  have "\<forall>(q, chs) \<in> set q_chs_enum_list. length (block_for_q_chs ((M!q) chs)) = block_for_q_chs_len"
+  have "\<forall>(q, chs) \<in> set q_chs_enum_list.
+        length (block_for_q_chs ((M!q) chs)) = block_for_q_chs_len"
     using block_for_q_chs_length by blast
-  then have same_length: "\<forall>blk \<in> set (map (\<lambda>(q, chs). block_for_q_chs ((M!q) chs)) q_chs_enum_list).
-                          length blk = block_for_q_chs_len"
+  then have same_length:
+    "\<forall>blk \<in> set (map (\<lambda>(q, chs). block_for_q_chs ((M!q) chs)) q_chs_enum_list).
+     length blk = block_for_q_chs_len"
     by simp
   moreover
-  from \<open>(q, chs) \<in> set q_chs_enum_list\<close> have idx_lt_length: "index q_chs_enum_list (q, chs) < length ?blks"
+  from \<open>(q, chs) \<in> set q_chs_enum_list\<close>
+  have idx_lt_length: "index q_chs_enum_list (q, chs) < length ?blks"
     by simp
   moreover
   from assms(2) have Suc_i_range: "0 < 1 + i \<and> 1 + i \<le> block_for_q_chs_len" by auto
   ultimately
   have "blocks_for_actions !! (block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1 + i) =
         ?blks ! (index q_chs_enum_list (q, chs)) !! (1 + i)"
-    using inth_concat_same_length [where ?xss = ?blks and ?i = "1 + i" and ?n = "index q_chs_enum_list (q, chs)"
-                                    and ?len = block_for_q_chs_len]
+    using inth_concat_same_length [where ?xss = ?blks and ?i = "1 + i"
+                                     and ?n = "index q_chs_enum_list (q, chs)"
+                                     and ?len = block_for_q_chs_len]
     by (metis (no_types, lifting) ab_semigroup_add_class.add_ac(1) mult.commute)
-  then have "blocks_for_actions !! (block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1 + i) =
+  then have "blocks_for_actions !!
+             (block_for_q_chs_len * (index q_chs_enum_list (q, chs)) + 1 + i) =
              ?blks ! (index q_chs_enum_list (q, chs)) ! i"
     using inth_nth [where ?i = "1 + i" and ?xs = "?blks ! (index q_chs_enum_list (q, chs))"]
     using Suc_i_range same_length idx_lt_length
@@ -319,10 +328,12 @@ proof -
   moreover
   from assms(2) have "0 < block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i" by linarith
   ultimately
-  have "GOTO_on_List_Prog !! (length entrance_block + (block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i)) =
+  have "GOTO_on_List_Prog !!
+        (length entrance_block + (block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i)) =
         block_for_q_chs ((M ! q) chs) ! i"
-    using inth_append_in_snd_list [where ?i = "block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i"
-                                     and ?xs = entrance_block and ?ys = blocks_for_actions]
+    using inth_append_in_snd_list
+          [where ?i = "block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i"
+             and ?xs = entrance_block and ?ys = blocks_for_actions]
     by presburger
   moreover
   have "length entrance_block + (block_for_q_chs_len * index q_chs_enum_list (q, chs) + 1 + i) =
@@ -342,7 +353,8 @@ proof -
   from assms
   have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs)) = block_for_q_chs ((M!q) chs) ! 0"
     using inth_GOTO_on_List_Prog_label_of_block_for_q_chs [where ?i = 0 and ?q = q and ?chs = chs]
-    by (metis (no_types, lifting) Nat.add_0_right add_is_0 le_numeral_extra(3) neq0_conv zero_neq_numeral)
+    by (metis (no_types, lifting)
+        Nat.add_0_right add_is_0 le_numeral_extra(3) neq0_conv zero_neq_numeral)
   also have "... = ST ::=\<^sub>l L [[*] ((M!q) chs)]"
     unfolding block_for_q_chs.simps by auto
   finally show ?thesis by blast
@@ -366,7 +378,8 @@ proof -
   with assms(1)
   have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + 1 + 2 * n) =
         block_for_q_chs ((M!q) chs) ! (1 + 2 * n)"
-    using inth_GOTO_on_List_Prog_label_of_block_for_q_chs [where ?i = "1 + 2 * n" and ?q = q and ?chs = chs]
+    using inth_GOTO_on_List_Prog_label_of_block_for_q_chs
+          [where ?i = "1 + 2 * n" and ?q = q and ?chs = chs]
     by (smt (verit) ab_semigroup_add_class.add_ac(1) le0)
   also have "... = (concat (map ?f [0..<K]) @ [GOTO\<^sub>l pc_start]) ! (2 * n)"
     unfolding block_for_q_chs.simps
@@ -406,7 +419,8 @@ proof -
   with assms(1)
   have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + 2 + 2 * n) =
         block_for_q_chs ((M!q) chs) ! (2 + 2 * n)"
-    using inth_GOTO_on_List_Prog_label_of_block_for_q_chs [where ?i = "2 + 2 * n" and ?q = q and ?chs = chs]
+    using inth_GOTO_on_List_Prog_label_of_block_for_q_chs
+          [where ?i = "2 + 2 * n" and ?q = q and ?chs = chs]
     by (smt (verit) ab_semigroup_add_class.add_ac(1) le0)
   also have "... = (concat (map ?f [0..<K]) @ [GOTO\<^sub>l pc_start]) ! (1 + 2 * n)"
     unfolding block_for_q_chs.simps
@@ -423,7 +437,8 @@ proof -
   also have "... = ?f n ! 1"
     using \<open>n < K\<close>
     by (smt (verit) minus_nat.diff_0 nth_map_upt plus_nat.add_0)
-  also have "... = (case ((M!q) chs) [~] n of Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l)"
+  also have "... = (case ((M!q) chs) [~] n of
+                    Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> NOP\<^sub>l)"
     by simp
   finally show ?thesis by fast
 qed
@@ -607,11 +622,13 @@ This whole round of execution can be divided into 5 parts:
 3. jump to the label of the block for such q and chs
    (1 step; pc "index q_chs_enum_list (q, chs) + 2" -> "label_of_block_for_q_chs (q, chs)")
 4. going through the block for q and chs, updating tape content, head positions and state
-   ("block_for_q_chs_len - 1" steps; pc "label_of_block_for_q_chs (q, chs)" -> "label_of_block_for_q_chs (q, chs) + block_for_q_chs_len - 1")
+   ("block_for_q_chs_len - 1" steps; pc "label_of_block_for_q_chs (q, chs)"
+    -> "label_of_block_for_q_chs (q, chs) + block_for_q_chs_len - 1")
 5. jump to the beginning of the program
    (1 step; pc "label_of_block_for_q_chs (q, chs) + block_for_q_chs_len - 1" -> 1)
 Each of these 5 parts are either sequentially executed with no jump, or a single jump.
-Below first shows that each of them are correct, then the correctness of the program for each single TM step.\<close>
+Below first shows that each of them are correct,
+then the correctness of the program for each single TM step.\<close>
 
 lemma read_state_and_chars_correct:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
@@ -644,7 +661,8 @@ proof -
   then have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start + 1, s) \<rightarrow>\<^bsub>1\<^esub> (pc_start + 2, ?s')" by blast
   with first_step have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>2\<^esub> (pc_start + 2, ?s')"
     using exec\<^sub>l_t_add [where ?P = GOTO_on_List_Prog and ?s = s and ?s' = s and ?s'' = ?s'
-        and ?pc = pc_start and ?pc' = "pc_start + 1" and ?pc'' = "pc_start + 2" and ?t\<^sub>1 = 1 and ?t\<^sub>2 = 1]
+                         and ?pc = pc_start and ?pc' = "pc_start + 1" and ?pc'' = "pc_start + 2"
+                         and ?t\<^sub>1 = 1 and ?t\<^sub>2 = 1]
     by (metis nat_1_add_1)
   moreover
   have "?s' = s(CHS := ?chs)" by simp
@@ -698,7 +716,8 @@ proof -
       have "?q_chs = q_chs_enum_list ! ?len" by simp
       ultimately
       have "?q_chs \<noteq> q_chs_enum_list ! (i - ?a)" by argo
-      then have "s ST \<noteq> [fst (q_chs_enum_list ! (i - ?a))] \<or> s CHS \<noteq> snd (q_chs_enum_list ! (i - ?a))"
+      then have "s ST \<noteq> [fst (q_chs_enum_list ! (i - ?a))] \<or>
+                 s CHS \<noteq> snd (q_chs_enum_list ! (i - ?a))"
         by auto
       then have "s ST \<noteq> eval_GOTO\<^sub>l_operi s (L [fst (q_chs_enum_list ! (i - ?a))]) \<or>
                  s CHS \<noteq> eval_GOTO\<^sub>l_operi s (L (snd (q_chs_enum_list ! (i - ?a))))"
@@ -748,7 +767,8 @@ proof -
     by force
   ultimately
   show ?thesis
-    by (metis (no_types, lifting) bot_nat_0.extremum_uniqueI exec1\<^sub>l_I length_0_conv length_greater_0_conv)
+    using exec1\<^sub>l_I
+    by (metis (no_types, lifting) bot_nat_0.extremum_uniqueI length_0_conv length_greater_0_conv)
 qed
 
 lemma block_for_q_chs_correct:
@@ -880,7 +900,8 @@ proof -
     "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t_entrance\<^esub>
      (pc_start + 2 + index q_chs_enum_list (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
     using entrance_block_length
-    by (metis (no_types, lifting) add_2_eq_Suc add_2_eq_Suc' less_or_eq_imp_le nat_add_left_cancel_le)
+    by (metis (no_types, lifting)
+        add_2_eq_Suc add_2_eq_Suc' less_or_eq_imp_le nat_add_left_cancel_le)
   with jump_to_correct_label
   have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t_entrance + 1\<^esub>
         (label_of_block_for_q_chs (hd (s\<^sub>1 ST), s\<^sub>1 CHS), s\<^sub>1)"
@@ -956,7 +977,8 @@ next
     with s_mid have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow>\<^bsub>t' + t_last_step\<^esub> (pc_start, s')"
       by blast
     moreover
-    from t' t_last_step have "t' + t_last_step \<le> (entrance_block_len + block_for_q_chs_len + 1) * (Suc t)"
+    from t' t_last_step
+    have "t' + t_last_step \<le> (entrance_block_len + block_for_q_chs_len + 1) * (Suc t)"
       by force
     ultimately
     show ?thesis using \<open>s' \<sim> cfg'\<close> by blast
