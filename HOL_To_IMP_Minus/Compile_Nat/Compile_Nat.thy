@@ -1,6 +1,6 @@
 theory Compile_Nat
   imports
-    IMP_Minus.IMP_Tailcalls_Dynamic
+    IMP_Terminates_With
     HOL_To_IMP_Base
   keywords
     "compile_nat" :: thy_decl and "basename" and
@@ -100,11 +100,6 @@ next
       unfolding rm_tSKIP.simps by force
   qed
 qed auto
-
-definition "tailcall_to_IMP_Minus \<equiv> inline o compile"
-
-lemma tailcall_to_IMP_Minus_eq: "tailcall_to_IMP_Minus c = inline (compile c)"
-  unfolding tailcall_to_IMP_Minus_def by simp
 
 ML_file\<open>compile_nat.ML\<close>
 

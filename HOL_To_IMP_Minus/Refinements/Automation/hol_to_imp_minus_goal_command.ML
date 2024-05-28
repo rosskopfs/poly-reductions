@@ -22,9 +22,12 @@ struct
 
 structure HTIU = HOL_To_IMP_Util
 
-val compiled_const_from_thm = Thm.prems_of
-  #> map_filter (try (HTIU.dest_Trueprop #> HTIU.dest_IMP_Minus_big_step))
-  #> hd #> (fn ((c, _), _, _) => c)
+fun mk_terminates_with_res_IMP_Minus c s r v = \<^Const>\<open>terminates_with_res_IMP_Minus for c s r v\<close>
+val dest_terminates_with_res_IMP_Minus =
+  \<^Const_fn>\<open>terminates_with_res_IMP_Minus for c s r v => \<open>(c, s, r, v)\<close>\<close>
+
+val compiled_const_from_thm = Thm.concl_of #> HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Minus
+  #> (fn (c, _, _, _) => c)
 
 structure HOL_To_IMP_Minus_Func_Correct_Thms = Generic_Data
 (
@@ -74,20 +77,15 @@ in
             Term.dest_Const const_term |> fst
             |> Compile_Nat.get_compiled_const (Context.Proof lthy)
           val IMP_program = #compiled compiled_const
-          val [s, s', t] = Variable.variant_fixes ["s", "s'", "t"] lthy |> fst
-          val (s, s') = @{apply 2} (fn v => Free (v, stateT)) (s, s')
-          val t = Free (t, \<^typ>\<open>nat\<close>)
-          val big_step_prem = HTIU.mk_IMP_Minus_big_step stateT IMP_program s t s'
+          val s = yield_singleton Variable.variant_fixes "s" lthy |> fst |> (rpair stateT #> Free)
+
+          val ret_reg = HTIU.mk_register (#ret_reg compiled_const)
+          fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
+          val HOLt = Term.list_comb (const_term, map arg_from_reg (#arg_regs compiled_const))
+
+          (*TODO: move terminates_with_res stuff to utility module*)
+          val goal = mk_terminates_with_res_IMP_Minus IMP_program s ret_reg HOLt
             |> HTIU.mk_Trueprop
-          val ret_reg = s' $ HTIU.mk_register (#ret_reg compiled_const)
-          fun arg_reg reg = s $ HTIU.mk_register reg
-          val goal =
-            \<^Const>\<open>HOL.eq \<^typ>\<open>nat\<close> for
-              ret_reg
-              \<open>Term.list_comb (const_term, map arg_reg (#arg_regs compiled_const))\<close>
-            \<close>
-            |> HTIU.mk_Trueprop
-            |> (fn g => Logic.mk_implies (big_step_prem, g))
           val goal_stmt = Element.Shows [(Binding.empty_atts, [(goal, [])])]
 
           val func_correct_attr =
