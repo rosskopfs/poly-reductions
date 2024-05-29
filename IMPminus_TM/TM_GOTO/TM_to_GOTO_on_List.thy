@@ -579,6 +579,25 @@ qed
 abbreviation read_chars_correspond_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
   "read_chars_correspond_to_cfg s cfg \<equiv> (\<forall>k < K. s CHS ! k = cfg <.> k) \<and> length (s CHS) = K"
 
+lemma read_chars_correspond_to_cfg_correct [intro]:
+  assumes "read_chars_correspond_to_cfg s cfg"
+      and "wf_cfg cfg"
+      and "s \<sim> cfg"
+    shows "config_read cfg = s CHS"
+proof -
+  from \<open>read_chars_correspond_to_cfg s cfg\<close> have "length (s CHS) = K"
+    by blast
+  moreover
+  from \<open>wf_cfg cfg\<close> have "||cfg|| = K"
+    by (simp add: wf_cfg_D(2))
+  moreover
+  have "s CHS ! i = config_read cfg ! i" if "i < K" for i
+    by (simp add: assms(1) \<open>||cfg|| = K\<close> tapes_at_read' \<open>i < K\<close>)
+  ultimately
+  show ?thesis
+    by (metis nth_equalityI read_length)
+qed  
+
 lemma tape_content_to_list_length [simp]:
   "length (tape_content_to_list tp len) = len"
   by (induction len) auto
@@ -806,6 +825,8 @@ proof -
   let ?label = "label_of_block_for_q_chs ?q_chs"
   let ?len = "block_for_q_chs_len - 1"
 
+  from wf_cfg_preserved_by_execute assms(1) have "wf_cfg cfg" by blast
+
   from assms have "?q_chs \<in> set q_chs_enum_list"
     using proper_state_q_chs_in_enum_list by blast
   then have block_range: "?label + ?len \<le> length GOTO_on_List_Prog"
@@ -855,7 +876,7 @@ proof -
     using block_range block_strict_no_jump
     by fastforce
 
-  have "s' ST = [fst cfg']"
+  have st: "s' ST = [fst cfg']"
   proof -
     let ?ins_modify = "ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
     from state_update_by_index have ins_modify: "GOTO_on_List_Prog !! ?label = ?ins_modify"
@@ -863,22 +884,71 @@ proof -
       by blast
     have other_ins_no_write: "no_write ST (GOTO_on_List_Prog !! i)"
       if "?label < i" and "i < ?label + ?len" for i
-      sorry
+    proof -
+      consider (tape_modify) "?label < i \<and> i \<le> ?label + K" |
+               (head_movement) "?label + K < i \<and> i \<le> ?label + 2 * K"
+        using \<open>?label < i\<close> \<open>i < ?label + ?len\<close>
+        by arith
+      then show ?thesis
+      proof (cases)
+        case tape_modify
+        then have "GOTO_on_List_Prog !! i =
+                   TapeModify (i - ?label - 1) ((M!?q) ?chs [.] (i - ?label - 1))"
+          using tape_modify_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat diff_is_0_eq less_irrefl_nat less_or_eq_imp_le
+              nat_add_left_cancel_le zero_less_diff)
+        then show ?thesis by simp
+      next
+        case head_movement
+        then have "GOTO_on_List_Prog !! i =
+          head_movement_TM_to_ins ((M!?q) ?chs [~] (i - ?label - 1 - K)) (i - ?label - 1 - K)"
+          using head_movement_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat diff_add_inverse diff_le_mono le_antisym nat_less_le)
+        then have "\<exists>n. GOTO_on_List_Prog !! i \<in> {MoveLeft n, MoveRight n, Stay\<^sub>l n}"
+          using head_movement_by_index' [where ?n = "i - ?label"]
+          using head_movement \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit, best) add_diff_inverse_nat diff_add_0 diff_is_0_eq' less_or_eq_imp_le
+              nat_add_left_cancel_le nat_add_left_cancel_less not_add_less1 zero_less_diff)
+        then show ?thesis by fastforce
+      qed
+    qed
     have vars_read_empty: "vars_read ?ins_modify = {}" by simp
     obtain s_after_ins where s_after_ins: "iexec\<^sub>l ?ins_modify (?label, s) = (Suc ?label, s_after_ins)"
       by fastforce
-    have value_after_ins: "s' ST = [fst cfg']"
-      using s_after_ins cfg' sorry
 
-    from execute_with_var_modified_at_most_once show ?thesis
+    have "eval_GOTO\<^sub>l_operi s (L [[*] ((M!?q) ?chs)]) = [[*] ((M!?q) ?chs)]"
+      by simp
+    then have "s_after_ins ST = [[*] ((M!?q) ?chs)]"
+      using s_after_ins by force
+    moreover
+    from \<open>s \<sim> cfg\<close> have "?q = fst cfg"
+      by (simp add: configuration_of_prog_same_to_TM_D(1))
+    moreover
+    from \<open>s \<sim> cfg\<close> assms(3) \<open>wf_cfg cfg\<close> \<open>read_chars_correspond_to_cfg s cfg\<close> cfg' read_chars_correspond_to_cfg_correct
+    have "[*] ((M!(fst cfg)) ?chs) = fst cfg'"
+      by (metis Q exe_lt_length sem_fst)
+    ultimately
+    have value_after_ins: "s_after_ins ST = [fst cfg']"
+      by auto
+
+    from execute_with_var_modified_at_most_once
+      [where ?a = ?label and ?len = "block_for_q_chs_len - 1" and ?j = ?label
+         and ?ins_modify = ?ins_modify and ?v = "[fst cfg']"]
+    show ?thesis
       using ins_modify other_ins_no_write vars_read_empty s_after_ins value_after_ins
-      by blast
+            config_at_end block_strict_no_jump
+      by (smt (verit) Nat.add_0_right Nil_is_append_conv Suc_1 add_Suc_right block_range diff_Suc_1
+          diff_is_0_eq' label_of_block_for_q_chs.simps le0 less_one linorder_neqE_nat
+          list.distinct(1) nat_add_left_cancel_le neq0_conv zero_less_diff)
   qed
-  moreover
-  have "s' (HP k) = [cfg' <#> k]" if "k < K" for k
+  
+  have hp: "s' (HP k) = [cfg' <#> k]" if "k < K" for k
   proof -
     let ?n = "1 + K + k"
     let ?ins_modify = "head_movement_TM_to_ins ((M!?q) ?chs [~] k) k"
+    have "?label + ?n < ?label + ?len" by (simp add: \<open>k < K\<close>)
     have n_k: "?n - 1 - K = k" by auto
     have n_le_prog_len: "?n \<le> length GOTO_on_List_Prog"
       using block_range \<open>k < K\<close> by linarith
@@ -886,17 +956,41 @@ proof -
     have ins_modify: "GOTO_on_List_Prog !! (?label + ?n) = ?ins_modify"
       using \<open>?q_chs \<in> set q_chs_enum_list\<close> \<open>k < K\<close> n_k
       by fastforce
-    from execute_with_var_modified_at_most_once show ?thesis
+    have other_cmd_no_write_HP_k: "no_write (HP k) (GOTO_on_List_Prog !! i)"
+      if "?label \<le> i \<and> i < ?label + ?len" for i
       sorry
+    have dependent_vars: "vars_read ?ins_modify \<subseteq> {HP k}"
+      by (cases "((M!?q) ?chs [~] k)") auto
+    then have "y \<in> vars_read ?ins_modify \<Longrightarrow> y = HP k" for y
+      by blast
+    with other_cmd_no_write_HP_k have dependent_vars_no_modify_before_ins:
+      "no_write y (GOTO_on_List_Prog !! i)"
+      if "y \<in> vars_read ?ins_modify" and "?label \<le> i \<and> i < ?label + ?n" for y i
+      using \<open>?label + ?n < ?label + ?len\<close> that by simp
+    obtain s_after_ins where
+      s_after_ins: "iexec\<^sub>l ?ins_modify (?label + ?n, s) = (Suc (?label + ?n), s_after_ins)"
+      using ins_modify by (cases "((M!?q) ?chs [~] k)") auto
+    have value_HP_k: "s_after_ins (HP k) = [snd cfg' :#: k]"
+      sorry
+    from execute_with_var_modified_at_most_once
+      [where ?a = ?label and ?len = "block_for_q_chs_len - 1" and ?j = "?label + ?n"
+         and ?ins_modify = ?ins_modify and ?v = "[snd cfg' :#: k]" and ?x = "HP k"
+         and ?P = GOTO_on_List_Prog and ?s = s and ?s' = s_after_ins and ?t = s']
+    show ?thesis
+      using n_k ins_modify other_cmd_no_write_HP_k dependent_vars s_after_ins value_HP_k
+            dependent_vars_no_modify_before_ins config_at_end block_strict_no_jump
+      using \<open>?label + ?n < ?label + ?len\<close> label_of_block_for_q_chs.simps
+      by (smt (z3) Nil_is_append_conv add_is_0 block_range gr0I le_add1
+          list.distinct(1) n_not_Suc_n plus_1_eq_Suc)
   qed
-  moreover
-  have "(s' (TP k)) ! p = (cfg' <:> k) p" if "k < K" and "p < MAX_LEN" for k p
+  
+  have tp: "(s' (TP k)) ! p = (cfg' <:> k) p" if "k < K" and "p < MAX_LEN" for k p
   proof -
     show ?thesis sorry
   qed
-  ultimately
-  have "s' \<sim> cfg'"
-    by (simp add: configuration_of_prog_same_to_TM_I)
+
+  from configuration_of_prog_same_to_TM_I have "s' \<sim> cfg'"
+    using st hp tp by blast
 
   from \<open>s' \<sim> cfg'\<close> config_at_end
   show thesis using that by simp
