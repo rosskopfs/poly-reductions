@@ -162,12 +162,16 @@ next
   then show "(q, chs) \<in> set q_chs_enum_list" by force
 qed
 
+fun head_movement_TM_to_ins :: "direction \<Rightarrow> nat \<Rightarrow> GOTO\<^sub>l_instr" where
+  "head_movement_TM_to_ins Left n = MoveLeft n" |
+  "head_movement_TM_to_ins Right n = MoveRight n" |
+  "head_movement_TM_to_ins Stay n = Stay\<^sub>l n"
+
 fun block_for_q_chs :: "state \<times> action list \<Rightarrow> GOTO\<^sub>l_prog" where
   "block_for_q_chs q_act_s =
    (ST ::=\<^sub>l L [[*] q_act_s]) # \<comment> \<open>update state\<close>
    map (\<lambda>n. TapeModify n (q_act_s [.] n)) [0..<K] @ \<comment> \<open>tape modification\<close>
-   map (\<lambda>n. case q_act_s [~] n of
-        Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> Stay\<^sub>l n) [0..<K] @ \<comment> \<open>head movement\<close>
+   map (\<lambda>n. head_movement_TM_to_ins (q_act_s [~] n) n) [0..<K] @ \<comment> \<open>head movement\<close>
    [GOTO\<^sub>l pc_start]"
 
 lemma block_for_q_chs_length: "length (block_for_q_chs q_act_s) = block_for_q_chs_len"
@@ -176,13 +180,12 @@ lemma block_for_q_chs_length: "length (block_for_q_chs q_act_s) = block_for_q_ch
 lemma block_for_q_chs_distinct: "distinct (block_for_q_chs q_act_s)"
 proof -
   let ?f = "\<lambda>n. TapeModify n (q_act_s [.] n)"
-  let ?g = "\<lambda>n. case q_act_s [~] n of
-                Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> Stay\<^sub>l n"
+  let ?g = "\<lambda>n. head_movement_TM_to_ins (q_act_s [~] n) n"
   have "distinct (map ?f [0..<K])"
     by (simp add: distinct_conv_nth)
   moreover
   have map_g_content: "?g n = MoveLeft n \<or> ?g n = MoveRight n \<or> ?g n = Stay\<^sub>l n" for n
-    by (metis (mono_tags, lifting) direction.exhaust direction.simps(7-9))
+    by (metis head_movement_TM_to_ins.elims)
   then have "inj ?g"
     by (smt (verit, del_insts) GOTO\<^sub>l_instr.distinct(43,45,53) GOTO\<^sub>l_instr.inject(3-5) injI)
   then have "distinct (map ?g [0..<K])"
@@ -386,8 +389,7 @@ lemma tape_modify_by_index:
            TapeModify (n - 1) (((M!q) chs) [.] (n - 1))"
 proof -
   let ?f = "\<lambda>n. TapeModify n ((M!q) chs [.] n)"
-  let ?g = "\<lambda>n. case ((M!q) chs) [~] n of
-                Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> Stay\<^sub>l n"
+  let ?g = "\<lambda>n. head_movement_TM_to_ins ((M!q) chs [~] n) n"
   from n have "n < block_for_q_chs_len" by simp
   with assms
   have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + n) =
@@ -411,12 +413,10 @@ lemma head_movement_by_index:
   assumes "(q, chs) \<in> set q_chs_enum_list"
       and n: "K < n \<and> n \<le> 2 * K"
     shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + n) =
-           (case ((M!q) chs) [~] (n - 1 - K) of
-            Left \<Rightarrow> MoveLeft (n - 1 - K) | Right \<Rightarrow> MoveRight (n - 1 - K) | Stay \<Rightarrow> Stay\<^sub>l (n - 1 - K))"
+           head_movement_TM_to_ins ((M!q) chs [~] (n - 1 - K)) (n - 1 - K)"
 proof -
   let ?f = "\<lambda>n. TapeModify n ((M!q) chs [.] n)"
-  let ?g = "\<lambda>n. case ((M!q) chs) [~] n of
-                Left \<Rightarrow> MoveLeft n | Right \<Rightarrow> MoveRight n | Stay \<Rightarrow> Stay\<^sub>l n"
+  let ?g = "\<lambda>n. head_movement_TM_to_ins ((M!q) chs [~] n) n"
 
   have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + n) =
         block_for_q_chs ((M!q) chs) ! n"
@@ -437,8 +437,7 @@ proof -
                         and ?n = "n - 1 - K"]
     using n by fastforce
   also have "... = ?g (n - 1 - K)"
-    using n
-    by (cases "(M ! q) chs [~] (n - 1 - K)") auto
+    using n by force
   finally show ?thesis by blast
 qed
 
@@ -448,10 +447,9 @@ lemma head_movement_by_index':
     shows "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + n) \<in>
            {MoveLeft (n - 1 - K), MoveRight (n - 1 - K), Stay\<^sub>l (n - 1 - K)}"
 proof -
-  let ?g = "\<lambda>i. case ((M!q) chs) [~] i of
-                Left \<Rightarrow> MoveLeft i | Right \<Rightarrow> MoveRight i | Stay \<Rightarrow> Stay\<^sub>l i"
+  let ?g = "\<lambda>i. head_movement_TM_to_ins ((M!q) chs [~] i) i"
   have map_g_content: "?g i = MoveLeft i \<or> ?g i = MoveRight i \<or> ?g i = Stay\<^sub>l i" for i
-    by (metis (mono_tags, lifting) direction.exhaust direction.simps(7-9))
+    by (meson head_movement_TM_to_ins.elims)
   then have "?g i \<in> {MoveLeft i, MoveRight i, Stay\<^sub>l i}" for i by blast
   moreover
   from assms have "GOTO_on_List_Prog !! (label_of_block_for_q_chs (q, chs) + n) = ?g (n - 1 - K)"
@@ -459,7 +457,6 @@ proof -
   ultimately
   show ?thesis by presburger
 qed
-
 
 lemma goto_start_by_index:
   assumes "(q, chs) \<in> set q_chs_enum_list"
@@ -796,7 +793,7 @@ lemma block_for_q_chs_correct:
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
-      and "exe M cfg = cfg'"
+      and cfg': "exe M cfg = cfg'"
   obtains s'
     where "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (label_of_block_for_q_chs (hd (s ST), s CHS), s) \<rightarrow>\<^bsub>block_for_q_chs_len - 1\<^esub>
@@ -811,10 +808,9 @@ proof -
 
   from assms have "?q_chs \<in> set q_chs_enum_list"
     using proper_state_q_chs_in_enum_list by blast
-  then have "?label + ?len \<le> length GOTO_on_List_Prog"
+  then have block_range: "?label + ?len \<le> length GOTO_on_List_Prog"
     using label_of_block_for_q_chs_range
     by (smt (verit) Nat.add_diff_assoc le_add1 le_add2 le_trans nat_1_add_1)
-  moreover
   have block_strict_no_jump:
     "strict_no_jump (GOTO_on_List_Prog !! i)" if "?label \<le> i \<and> i < ?label + ?len" for i
   proof -
@@ -843,10 +839,7 @@ proof -
     next
       case head_movement
       then have "GOTO_on_List_Prog !! i =
-        (case ((M!?q) ?chs) [~] (i - ?label - 1 - K) of
-           Left \<Rightarrow> MoveLeft (i - ?label - 1 - K) |
-           Right \<Rightarrow> MoveRight (i - ?label - 1 - K) |
-           Stay \<Rightarrow> Stay\<^sub>l (i - ?label - 1 - K))"
+        head_movement_TM_to_ins ((M!?q) ?chs [~] (i - ?label - 1 - K)) (i - ?label - 1 - K)"
         using head_movement_by_index
         using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
         by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
@@ -857,12 +850,56 @@ proof -
       then show ?thesis by fastforce
     qed
   qed
-  ultimately
+  from execute_prog_strict_no_jump [where ?a = ?label and ?len = ?len and ?P = GOTO_on_List_Prog]
   obtain s' where config_at_end: "GOTO_on_List_Prog \<turnstile>\<^sub>l (?label, s) \<rightarrow>\<^bsub>?len\<^esub> (?label + ?len, s')"
-  using execute_prog_strict_no_jump [where ?a = ?label and ?len = ?len and ?P = GOTO_on_List_Prog]
+    using block_range block_strict_no_jump
     by fastforce
 
-  show thesis sorry
+  have "s' ST = [fst cfg']"
+  proof -
+    let ?ins_modify = "ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
+    from state_update_by_index have ins_modify: "GOTO_on_List_Prog !! ?label = ?ins_modify"
+      using \<open>?q_chs \<in> set q_chs_enum_list\<close>
+      by blast
+    have other_ins_no_write: "no_write ST (GOTO_on_List_Prog !! i)"
+      if "?label < i" and "i < ?label + ?len" for i
+      sorry
+    have vars_read_empty: "vars_read ?ins_modify = {}" by simp
+    obtain s_after_ins where s_after_ins: "iexec\<^sub>l ?ins_modify (?label, s) = (Suc ?label, s_after_ins)"
+      by fastforce
+    have value_after_ins: "s' ST = [fst cfg']"
+      using s_after_ins cfg' sorry
+
+    from execute_with_var_modified_at_most_once show ?thesis
+      using ins_modify other_ins_no_write vars_read_empty s_after_ins value_after_ins
+      by blast
+  qed
+  moreover
+  have "s' (HP k) = [cfg' <#> k]" if "k < K" for k
+  proof -
+    let ?n = "1 + K + k"
+    let ?ins_modify = "head_movement_TM_to_ins ((M!?q) ?chs [~] k) k"
+    have n_k: "?n - 1 - K = k" by auto
+    have n_le_prog_len: "?n \<le> length GOTO_on_List_Prog"
+      using block_range \<open>k < K\<close> by linarith
+    from head_movement_by_index [where ?n = ?n and ?q = ?q and ?chs = ?chs]
+    have ins_modify: "GOTO_on_List_Prog !! (?label + ?n) = ?ins_modify"
+      using \<open>?q_chs \<in> set q_chs_enum_list\<close> \<open>k < K\<close> n_k
+      by fastforce
+    from execute_with_var_modified_at_most_once show ?thesis
+      sorry
+  qed
+  moreover
+  have "(s' (TP k)) ! p = (cfg' <:> k) p" if "k < K" and "p < MAX_LEN" for k p
+  proof -
+    show ?thesis sorry
+  qed
+  ultimately
+  have "s' \<sim> cfg'"
+    by (simp add: configuration_of_prog_same_to_TM_I)
+
+  from \<open>s' \<sim> cfg'\<close> config_at_end
+  show thesis using that by simp
 qed
 
 lemma jump_back_to_begin:

@@ -385,7 +385,8 @@ lemma execute_with_var_modified_at_most_once:
       and dependent_vars_no_modify_before_ins:
           "\<forall>y \<in> vars_read ins_modify. \<forall>i. a \<le> i \<and> i < j \<longrightarrow> no_write y (P !! i)"
       and config_at_end: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, t)"
-      and value_x: "\<forall>s'. iexec\<^sub>l ins_modify (j, s) = (Suc j, s') \<longrightarrow> s' x = v"
+      and state_after_ins_modify: "iexec\<^sub>l ins_modify (j, s) = (Suc j, s')"
+      and value_x: "s' x = v"
     shows "t x = v"
 proof -
   from block_P_a_len ins_modify block_strict_no_jump
@@ -413,7 +414,9 @@ proof -
                                                 and ?s = s and ?s' = s_before_j and ?t = s_after_j'
                                                 and ?t' = s_after_j and ?x = x]
     by presburger
-  with s_after_j' value_x have "s_after_j x = v" by blast
+
+  from s_after_j' state_after_ins_modify have "s_after_j' = s'" by simp
+  with value_x \<open>s_after_j x = s_after_j' x\<close> have "s_after_j x = v" by simp
 
   from s_after_j block_P_a_len ins_modify have "P \<turnstile>\<^sub>l (j, s_before_j) \<rightarrow> (Suc j, s_after_j)"
     by (simp add: exec1\<^sub>l_I)
