@@ -33,10 +33,9 @@ case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.s
 compile_nat mul_acc_nat_eq basename mul_acc
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply (terminates_with_res_IMP_Minus_start_base tailcall_def: mul_acc_IMP_tailcall_def)
-  apply (induction "(s ''mul_acc.args.x1a'')" "(s ''mul_acc.args.x2a'')" "(s ''mul_acc.args.x3ba'')"
-    arbitrary: s
-    rule: mul_acc_nat.induct)
+  apply (tactic \<open>HA.preprocess_tac @{thm mul_acc_IMP_tailcall_def} @{context} 1\<close>)
+  apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
+
   apply (simp only:)
   apply (subst (2) mul_acc_IMP_tailcall_def)
   apply (rule terminates_with_res_IMP_Tailcall_start)
@@ -143,7 +142,7 @@ declare sqrt_aux_nat.simps[simp del]
 
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
-HOL_To_IMP_Minus_func_correct sqrt_aux_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_func_correct sqrt_aux_nat sorry
 (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
 (*
 apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
