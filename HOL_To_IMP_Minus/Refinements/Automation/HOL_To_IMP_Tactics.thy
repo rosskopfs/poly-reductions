@@ -79,7 +79,7 @@ end
 
 ML_file \<open>hol_to_imp_tactics_base.ML\<close>
 ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
-ML_file \<open>hol_to_imp_tactics.ML\<close>
+ML_file \<open>hol_to_imp_tactics-new.ML\<close>
 ML\<open>
   @{functor_instance struct_name = Standard_HOL_To_IMP_Tactics
     and functor_name = HOL_To_IMP_Tactics
