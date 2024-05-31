@@ -29,6 +29,7 @@ next
   with assms show ?thesis by argo
 qed
 
+
 lemma tape_content_valid [intro]:
   assumes tm: "turing_machine K G M"
       and exe: "exe M cfg = cfg'"
@@ -86,6 +87,101 @@ next
   with exe have "cfg' = cfg"
     using exe_ge_length by auto
   with assms show ?thesis by presburger
+qed
+
+lemma sem_tape:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and q: "fst cfg < length M"
+      and "k < K"
+    shows "cfg' <!> k = act ((M ! fst cfg) (config_read cfg) [!] k) (cfg <!> k)"
+proof -
+  from exe have "||cfg'|| = K"
+    using tm exe_num_tapes \<open>||cfg|| = K\<close> by metis
+  from exe sem'
+  have "snd cfg' = map2 act ([!!] (M ! fst cfg) (config_read cfg)) (snd cfg)"
+    using q exe_lt_length by auto
+  moreover
+  have "length ([!!] (M ! fst cfg) (config_read cfg)) = K"
+    by (metis assms(3) q read_length tm turing_commandD(1) turing_machineD(3))
+  ultimately
+  have "snd cfg' ! k = act (([!!] (M ! fst cfg) (config_read cfg)) ! k) (snd cfg ! k)"
+    using \<open>||cfg|| = K\<close> \<open>k < K\<close>
+    by simp
+  then show ?thesis by blast
+qed
+
+lemma head_moves_left:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and q: "fst cfg < length M"
+      and "(M ! fst cfg) (config_read cfg) [~] k = Left"
+      and "k < K"
+    shows "snd cfg' :#: k = snd cfg :#: k - 1"
+proof -
+  have "snd (act (w, Left) (cfg <!> k)) = snd cfg :#: k - 1" for w
+    by simp
+  moreover
+  obtain w where "(M ! fst cfg) (config_read cfg) [!] k =
+                  (w, (M ! fst cfg) (config_read cfg) [~] k)"
+    by (meson prod.exhaust_sel)
+  moreover
+  from assms(5) have "(M ! fst cfg) (config_read cfg) [~] k = Left" by blast
+  ultimately
+  have "snd (act ((M ! fst cfg) (config_read cfg) [!] k) (cfg <!> k)) = snd cfg :#: k - 1"
+    by fastforce
+  with sem_tape show ?thesis
+    using assms by auto
+qed
+
+lemma head_moves_right:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and q: "fst cfg < length M"
+      and "(M ! fst cfg) (config_read cfg) [~] k = Right"
+      and "k < K"
+    shows "snd cfg' :#: k = snd cfg :#: k + 1"
+proof -
+  have "snd (act (w, Right) (cfg <!> k)) = snd cfg :#: k + 1" for w
+    by simp
+  moreover
+  obtain w where "(M ! fst cfg) (config_read cfg) [!] k =
+                  (w, (M ! fst cfg) (config_read cfg) [~] k)"
+    by (meson prod.exhaust_sel)
+  moreover
+  from assms(5) have "(M ! fst cfg) (config_read cfg) [~] k = Right" by blast
+  ultimately
+  have "snd (act ((M ! fst cfg) (config_read cfg) [!] k) (cfg <!> k)) = snd cfg :#: k + 1"
+    by fastforce
+  with sem_tape show ?thesis
+    using assms by auto
+qed
+
+lemma head_stay:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and q: "fst cfg < length M"
+      and "(M ! fst cfg) (config_read cfg) [~] k = Stay"
+      and "k < K"
+    shows "snd cfg' :#: k = snd cfg :#: k"
+proof -
+  have "snd (act (w, Stay) (cfg <!> k)) = snd cfg :#: k" for w
+    by simp
+  moreover
+  obtain w where "(M ! fst cfg) (config_read cfg) [!] k =
+                  (w, (M ! fst cfg) (config_read cfg) [~] k)"
+    by (meson prod.exhaust_sel)
+  moreover
+  from assms(5) have "(M ! fst cfg) (config_read cfg) [~] k = Stay" by blast
+  ultimately
+  have "snd (act ((M ! fst cfg) (config_read cfg) [!] k) (cfg <!> k)) = snd cfg :#: k"
+    by fastforce
+  with sem_tape show ?thesis
+    using assms by auto
 qed
 
 end

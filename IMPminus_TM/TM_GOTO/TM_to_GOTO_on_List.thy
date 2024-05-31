@@ -807,12 +807,41 @@ proof -
     by (metis (no_types, lifting) bot_nat_0.extremum_uniqueI length_0_conv length_greater_0_conv)
 qed
 
+text \<open>This is the most important part of proving that the behaviour of the transformed program is
+correct. @{term "block_for_q_chs (q, chs)"} simulates the transition of the turing machine at state
+@{term q} and with tape characters at current position of tape heads being @{term chs}.
+The key idea is @{prf execute_with_var_modified_at_most_once}.
+The required assumptions of this lemma concern mostly syntactical property of the instructions
+within a given range of program counter:
+1. all instructions in the block are not "jump" instructions (@{const strict_no_jump}})
+2. all instructions in the block, except for one that's being considered, don't modify the variable
+that's being considered (@{const no_write}})
+3. all instructions before the one that's being considered (say @{term ins_modify}}) don't modify
+any dependent variable (@{const vars_read}}) of @{term ins_modify}
+All of the three assumptions are proven by inferring the specific instruction at each index,
+with help of @{prf state_update_by_index}, @{prf tape_modify_by_index}, @{prf head_movement_by_index}
+and @{prf head_movement_by_index'}, and show that the specific instructions all meet the requirement.
+
+Terms used in the following:
+@{term s} refers to the state before execution of @{term "block_for_q_chs (q, chs)"};
+@{term s'} refers to the state after execution of @{term "block_for_q_chs (q, chs)"};
+@{term cfg} refers to the turing machine configuration before the transition
+that's simulated by @{term "block_for_q_chs (q, chs)"};
+@{term cfg'} refers to the turing machine configuration after the transition
+that's simulated by @{term "block_for_q_chs (q, chs)"}.
+
+Most importantly, we need to show @{prop "s' \<sim> cfg'"}, i.e. the turing machine state, position
+of heads of all tapes and tape contents of all tapes in @{term s'} correspond to that in @{term cfg'}.
+These proofs concern the semantics defined by @{const iexec\<^sub>l} and @{const exe}. It needs to be shown
+separately that the value of some term in @{term s'} and @{term cfg'} both equals to some
+specific value.\<close>
+
 lemma block_for_q_chs_correct:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
       and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
-      and cfg': "exe M cfg = cfg'"
+      and exe: "exe M cfg = cfg'"
   obtains s'
     where "GOTO_on_List_Prog \<turnstile>\<^sub>l
            (label_of_block_for_q_chs (hd (s ST), s CHS), s) \<rightarrow>\<^bsub>block_for_q_chs_len - 1\<^esub>
@@ -926,7 +955,7 @@ proof -
     from \<open>s \<sim> cfg\<close> have "?q = fst cfg"
       by (simp add: configuration_of_prog_same_to_TM_D(1))
     moreover
-    from \<open>s \<sim> cfg\<close> assms(3) \<open>wf_cfg cfg\<close> \<open>read_chars_correspond_to_cfg s cfg\<close> cfg' read_chars_correspond_to_cfg_correct
+    from assms \<open>wf_cfg cfg\<close> read_chars_correspond_to_cfg_correct
     have "[*] ((M!(fst cfg)) ?chs) = fst cfg'"
       by (metis Q exe_lt_length sem_fst)
     ultimately
@@ -957,8 +986,50 @@ proof -
       using \<open>?q_chs \<in> set q_chs_enum_list\<close> \<open>k < K\<close> n_k
       by fastforce
     have other_cmd_no_write_HP_k: "no_write (HP k) (GOTO_on_List_Prog !! i)"
-      if "?label \<le> i \<and> i < ?label + ?len" for i
-      sorry
+      if "?label \<le> i \<and> i < ?label + ?len" and "i \<noteq> ?label + ?n" for i
+    proof -
+      consider (state_update) "i = ?label" |
+               (tape_modify) "?label < i \<and> i \<le> ?label + K" |
+               (head_movement) "?label + K < i \<and> i \<le> ?label + 2 * K"
+        using \<open>?label \<le> i \<and> i < ?label + ?len\<close>
+        by arith
+      then show ?thesis
+      proof (cases)
+        case state_update
+        then have "GOTO_on_List_Prog !! i = ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
+          using state_update_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close>
+          by blast
+        then show ?thesis by simp
+      next
+        case tape_modify
+        then have "GOTO_on_List_Prog !! i =
+                   TapeModify (i - ?label - 1) ((M!?q) ?chs [.] (i - ?label - 1))"
+          using tape_modify_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (metis (no_types, lifting)
+              diff_add_inverse diff_le_mono le_add_diff_inverse zero_less_diff)
+        then show ?thesis by simp
+      next
+        case head_movement
+        then have "GOTO_on_List_Prog !! i =
+          head_movement_TM_to_ins ((M!?q) ?chs [~] (i - ?label - 1 - K)) (i - ?label - 1 - K)"
+          using head_movement_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        then have "GOTO_on_List_Prog !! i \<in> {MoveLeft (i - ?label - 1 - K),
+          MoveRight (i - ?label - 1 - K), Stay\<^sub>l (i - ?label - 1 - K)}"
+          using head_movement_by_index'
+          using head_movement \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        moreover
+        from head_movement have "?label + 1 + K \<le> i" by linarith
+        from \<open>i \<noteq> ?label + ?n\<close> have "i \<noteq> (?label + 1 + K) + k" by algebra
+        with \<open>?label + 1 + K \<le> i\<close> have "i - ?label - 1 - K \<noteq> k" by linarith
+        ultimately
+        show ?thesis by fastforce
+      qed
+    qed
     have dependent_vars: "vars_read ?ins_modify \<subseteq> {HP k}"
       by (cases "((M!?q) ?chs [~] k)") auto
     then have "y \<in> vars_read ?ins_modify \<Longrightarrow> y = HP k" for y
@@ -970,8 +1041,59 @@ proof -
     obtain s_after_ins where
       s_after_ins: "iexec\<^sub>l ?ins_modify (?label + ?n, s) = (Suc (?label + ?n), s_after_ins)"
       using ins_modify by (cases "((M!?q) ?chs [~] k)") auto
+
+    have dir_in_s_and_cfg_eq: "(M!(fst cfg)) (config_read cfg) [~] k = (M!?q) ?chs [~] k"
+      using assms \<open>wf_cfg cfg\<close> read_chars_correspond_to_cfg_correct
+      by (simp add: configuration_of_prog_same_to_TM_D(1))
     have value_HP_k: "s_after_ins (HP k) = [snd cfg' :#: k]"
-      sorry
+    proof (cases "(M!?q) ?chs [~] k")
+      case Left
+      with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Left" by simp
+      with head_moves_left have "snd cfg' :#: k = snd cfg :#: k - 1"
+        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+      moreover
+      from Left have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = MoveLeft k"
+        by simp
+      with s_after_ins have 1: "s_after_ins (HP k) = [hd (s (HP k)) - 1]"
+        by force
+      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = snd cfg :#: k"
+        using \<open>k < K\<close>
+        by (simp add: configuration_of_prog_same_to_TM_D(2))
+      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k - 1]" by presburger
+      ultimately
+      show ?thesis by argo
+    next
+      case Stay
+      with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Stay" by simp
+      with head_stay have "snd cfg' :#: k = snd cfg :#: k"
+        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+      moreover
+      from Stay have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = Stay\<^sub>l k"
+        by simp
+      with s_after_ins have 1: "s_after_ins (HP k) = s (HP k)" by auto
+      from \<open>s \<sim> cfg\<close> have 2: "s (HP k) = [snd cfg :#: k]"
+        using \<open>k < K\<close>
+        by (simp add: configuration_of_prog_same_to_TM_D(2))
+      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k]" by presburger
+      ultimately
+      show ?thesis by argo
+    next
+      case Right
+      with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Right" by simp
+      with head_moves_right have "snd cfg' :#: k = snd cfg :#: k + 1"
+        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+      moreover
+      from Right have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = MoveRight k"
+        by simp
+      with s_after_ins have 1: "s_after_ins (HP k) = [hd (s (HP k)) + 1]"
+        by force
+      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = snd cfg :#: k"
+        using \<open>k < K\<close>
+        by (simp add: configuration_of_prog_same_to_TM_D(2))
+      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k + 1]" by presburger
+      ultimately
+      show ?thesis by argo
+    qed
     from execute_with_var_modified_at_most_once
       [where ?a = ?label and ?len = "block_for_q_chs_len - 1" and ?j = "?label + ?n"
          and ?ins_modify = ?ins_modify and ?v = "[snd cfg' :#: k]" and ?x = "HP k"
