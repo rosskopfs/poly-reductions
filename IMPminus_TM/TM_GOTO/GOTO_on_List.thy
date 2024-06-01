@@ -149,7 +149,7 @@ subsection \<open>Verification infrastructure\<close>
 
 text \<open>The program is executed deterministically\<close>
 lemma iexec\<^sub>l_determ [intro]:
-  "iexec\<^sub>l ins s = s\<^sub>1 \<Longrightarrow> iexec\<^sub>l ins s = s\<^sub>2 \<Longrightarrow> s\<^sub>1 = s\<^sub>2"
+  "iexec\<^sub>l ins cfg = cfg\<^sub>1 \<Longrightarrow> iexec\<^sub>l ins cfg = cfg\<^sub>2 \<Longrightarrow> cfg\<^sub>1 = cfg\<^sub>2"
   by (cases ins) auto
 
 lemma exec1\<^sub>l_determ [intro]:
@@ -440,6 +440,55 @@ proof -
 
   from \<open>s_after_j x = t' x\<close> \<open>t = t'\<close> \<open>s_after_j x = v\<close>
   show ?thesis by simp
+qed
+
+text \<open>It also needs to be proven that for a certain block, the length of the value of variables
+simulating turing machine tapes don't change\<close>
+
+lemma iexec\<^sub>l_TP_length:
+  "\<nexists>k l. ins = (TP k ::=\<^sub>l l) \<Longrightarrow> iexec\<^sub>l ins (pc, s) = (pc', s') \<Longrightarrow>
+   \<forall>k. length (s (TP k)) = length (s' (TP k))"
+  by (cases ins) auto
+
+lemma exec1\<^sub>l_TP_length:
+  "\<nexists>k l. P !! pc = (TP k ::=\<^sub>l l) \<Longrightarrow> P \<turnstile>\<^sub>l (pc, s) \<rightarrow> (pc', s') \<Longrightarrow>
+   \<forall>k. length (s (TP k)) = length (s' (TP k))"
+  unfolding exec1\<^sub>l_def
+  using iexec\<^sub>l_TP_length by blast
+
+lemma execute_length_TP:
+  assumes block_P_a_len: "0 < a \<and> a + len \<le> length P \<and> P \<noteq> []" \<comment>\<open>Please note that indices start from 1 instead of 0\<close>
+      and block_strict_no_jump: "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i)"
+      and block_no_assign: "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> (\<nexists>k l. P !! i = TP k ::=\<^sub>l l)"
+      and config_at_end: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s')"
+    shows "\<forall>k. length (s' (TP k)) = length (s (TP k))"
+  using assms
+proof (induction len arbitrary: s')
+  case 0
+  then show ?case by auto
+next
+  case (Suc len)
+  then have IH_cond: "0 < a \<and> a + len \<le> length P" "P \<noteq> []"
+    "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> strict_no_jump (P !! i)"
+    "\<forall>i. a \<le> i \<and> i < a + len \<longrightarrow> (\<nexists>k l. P !! i = TP k ::=\<^sub>l l)"
+    by simp+
+  with execute_prog_strict_no_jump obtain s_mid where s_mid: "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>len\<^esub> (a + len, s_mid)"
+    by blast
+  with Suc.IH IH_cond have "\<forall>k. length (s_mid (TP k)) = length (s (TP k))" by blast
+  moreover
+  from Suc have prop_cur_ins: "strict_no_jump (P !! (a + len))" "\<nexists>k l. P !! (a + len) = TP k ::=\<^sub>l l"
+    by auto
+  with s_mid obtain s'' where s'': "P \<turnstile>\<^sub>l (a + len, s_mid) \<rightarrow> (a + Suc len, s'')"
+    by (metis Suc.prems(4) exec\<^sub>l_t_determ relpowp_Suc_E)
+  with exec1\<^sub>l_TP_length prop_cur_ins have "\<forall>k. length (s'' (TP k)) = length (s_mid (TP k))"
+    by presburger
+  moreover
+  from s_mid s'' have "P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, s'')"
+    by auto
+  with \<open>P \<turnstile>\<^sub>l (a, s) \<rightarrow>\<^bsub>Suc len\<^esub> (a + Suc len, s')\<close> have "s' = s''" 
+    using exec\<^sub>l_t_determ [where ?t = "Suc len"] by blast
+  ultimately
+  show ?case by simp
 qed
 
 end

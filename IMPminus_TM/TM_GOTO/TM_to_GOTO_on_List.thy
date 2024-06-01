@@ -487,19 +487,22 @@ definition configuration_of_prog_same_to_TM :: "state\<^sub>l \<Rightarrow> conf
   "s \<sim> cfg \<equiv>
     s ST = [fst cfg] \<and> \<comment>\<open>state\<close>
     (\<forall>k < K. s (HP k) = [cfg <#> k]) \<and> \<comment>\<open>head positions of each tape\<close>
-    (\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p)" \<comment>\<open>tape content\<close>
+    (\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p) \<and> \<comment>\<open>tape content\<close>
+    (\<forall>k < K. length (s (TP k)) = MAX_LEN)"
 
 lemma configuration_of_prog_same_to_TM_D [intro]:
   assumes "s \<sim> cfg"
     shows "s ST = [fst cfg]"
       and "\<forall>k < K. s (HP k) = [cfg <#> k]"
       and "\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p"
+      and "(\<forall>k < K. length (s (TP k)) = MAX_LEN)"
   using assms configuration_of_prog_same_to_TM_def by simp_all
 
 lemma configuration_of_prog_same_to_TM_I:
   assumes "s ST = [fst cfg]"
       and "\<forall>k < K. s (HP k) = [cfg <#> k]"
       and "\<forall>k < K. \<forall>p < MAX_LEN. (s (TP k)) ! p = (cfg <:> k) p"
+      and "\<forall>k < K. length (s (TP k)) = MAX_LEN"
     shows "s \<sim> cfg"
   unfolding configuration_of_prog_same_to_TM_def
   using assms by blast
@@ -622,8 +625,8 @@ next
 qed
 
 lemma config_to_state_correct [simp]: "config_to_state cfg \<sim> cfg"
-  using tape_content_to_list_correct configuration_of_prog_same_to_TM_I
-  by (metis config_to_state.simps(1-3) surjective_pairing)
+  using tape_content_to_list_correct configuration_of_prog_same_to_TM_I tape_content_to_list_length
+  by (metis (no_types, lifting) config_to_state.simps(1-3) prod.collapse)
 
 lemma proper_state_q_chs_in_enum_list [intro]:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
@@ -896,7 +899,7 @@ proof -
       then have "\<exists>n. GOTO_on_List_Prog !! i \<in> {MoveLeft n, MoveRight n, Stay\<^sub>l n}"
         using head_movement_by_index'
         using head_movement \<open>?q_chs \<in> set q_chs_enum_list\<close> that
-        by (smt (verit) add_diff_inverse_nat  nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
       then show ?thesis by fastforce
     qed
   qed
@@ -1108,11 +1111,205 @@ proof -
   
   have tp: "(s' (TP k)) ! p = (cfg' <:> k) p" if "k < K" and "p < MAX_LEN" for k p
   proof -
-    show ?thesis sorry
+    let ?n = "1 + k"
+    let ?ins_modify = "TapeModify k (((M!?q) ?chs) [.] k)"
+    have "?label + ?n < ?label + ?len" using \<open>k < K\<close> by linarith
+    have n_k: "?n - 1 = k" by auto
+    have n_le_prog_len: "?n \<le> length GOTO_on_List_Prog"
+      using block_range \<open>k < K\<close> by linarith
+    from tape_modify_by_index [where ?n = ?n and ?q = ?q and ?chs = ?chs]
+    have ins_modify: "GOTO_on_List_Prog !! (?label + ?n) = ?ins_modify"
+      using \<open>?q_chs \<in> set q_chs_enum_list\<close> \<open>k < K\<close> n_k
+      by fastforce
+    have other_cmd_no_write_TP_k: "no_write (TP k) (GOTO_on_List_Prog !! i)"
+      if "?label \<le> i \<and> i < ?label + ?len" and "i \<noteq> ?label + ?n" for i
+    proof -
+      consider (state_update) "i = ?label" |
+               (tape_modify) "?label < i \<and> i \<le> ?label + K" |
+               (head_movement) "?label + K < i \<and> i \<le> ?label + 2 * K"
+        using \<open>?label \<le> i \<and> i < ?label + ?len\<close>
+        by arith
+      then show ?thesis
+      proof (cases)
+        case state_update
+        then have "GOTO_on_List_Prog !! i = ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
+          using state_update_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close>
+          by blast
+        then show ?thesis by simp
+      next
+        case tape_modify
+        then have "GOTO_on_List_Prog !! i =
+                   TapeModify (i - ?label - 1) ((M!?q) ?chs [.] (i - ?label - 1))"
+          using tape_modify_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (metis (no_types, lifting)
+              diff_add_inverse diff_le_mono le_add_diff_inverse zero_less_diff)
+        moreover
+        from tape_modify have "?label + 1 \<le> i" by linarith
+        with \<open>i \<noteq> ?label + ?n\<close> have "i - ?label - 1 \<noteq> k" by linarith
+        ultimately
+        show ?thesis by fastforce
+      next
+        case head_movement
+        then have "GOTO_on_List_Prog !! i =
+          head_movement_TM_to_ins ((M!?q) ?chs [~] (i - ?label - 1 - K)) (i - ?label - 1 - K)"
+          using head_movement_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        then have "GOTO_on_List_Prog !! i \<in> {MoveLeft (i - ?label - 1 - K),
+          MoveRight (i - ?label - 1 - K), Stay\<^sub>l (i - ?label - 1 - K)}"
+          using head_movement_by_index'
+          using head_movement \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        then show ?thesis by fastforce
+      qed
+    qed
+
+    have "vars_read ?ins_modify = {HP k, TP k}" by auto
+    then have dependent_vars: "x \<in> vars_read ?ins_modify \<Longrightarrow> x = HP k \<or> x = TP k" for x
+      by blast
+    moreover
+    have "no_write (HP k) (GOTO_on_List_Prog !! i) \<and> no_write (TP k) (GOTO_on_List_Prog !! i)"
+      if "?label \<le> i" and "i < ?label + ?n" for i
+    proof -
+      consider (state_update) "i = ?label" |
+               (tape_modify) "?label < i \<and> i < ?label + ?n"
+        using \<open>?label \<le> i\<close> \<open>i < ?label + ?n\<close>
+        by arith
+      then show ?thesis
+      proof (cases)
+        case state_update
+        then have "GOTO_on_List_Prog !! i = ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
+          using state_update_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close>
+          by blast
+        then show ?thesis by simp
+      next
+        case tape_modify
+        with \<open>k < K\<close> have "i - ?label \<le> K" by linarith
+        then have "GOTO_on_List_Prog !! i =
+                   TapeModify (i - ?label - 1) ((M!?q) ?chs [.] (i - ?label - 1))"
+          using tape_modify_by_index [where ?n = "i - ?label"]
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that tape_modify
+          by (metis (no_types, lifting) add_diff_inverse_nat less_Suc_eq_le not_less_eq zero_less_diff)
+        moreover
+        from tape_modify have "?label + 1 \<le> i" by linarith
+        with \<open>i < ?label + ?n\<close> have "i - ?label - 1 \<noteq> k" by linarith
+        ultimately
+        show ?thesis by fastforce
+      qed
+    qed
+    ultimately
+    have ins_before_no_write_dependent_vars:
+      "no_write x (GOTO_on_List_Prog !! i)"
+      if "?label \<le> i" and "i < ?label + ?n" and "x \<in> vars_read ?ins_modify" for i x
+      using that by blast
+
+    obtain s_after_ins where
+      s_after_ins: "iexec\<^sub>l ?ins_modify (?label + ?n, s) = (Suc (?label + ?n), s_after_ins)"
+      using ins_modify by simp
+    then have tp_k: "s_after_ins (TP k) = (s (TP k))[hd (s (HP k)) := (((M!?q) ?chs) [.] k)]"
+      by fastforce
+    then have value_TP_k_p: "s_after_ins (TP k) ! p = (cfg' <:> k) p"
+    proof (cases "p = hd (s (HP k))")
+      case True
+      from s_after_ins have "s_after_ins (TP k) = (s (TP k))[hd (s (HP k)) := ((M!?q) ?chs [.] k)]"
+        by force
+      moreover
+      from \<open>s \<sim> cfg\<close> have "s (HP k) = [cfg <#> k]"
+        by (simp add: \<open>k < K\<close> configuration_of_prog_same_to_TM_D(2))
+      with True have "p = cfg <#> k" by simp
+      moreover
+      from \<open>wf_cfg cfg\<close> have "cfg <#> k < MAX_LEN"
+        by (simp add: \<open>k < K\<close> wf_cfg_D(4))
+      moreover
+      from \<open>s \<sim> cfg\<close> have "length (s (TP k)) = MAX_LEN"
+        by (simp add: \<open>k < K\<close> configuration_of_prog_same_to_TM_D(4))
+      ultimately
+      have "s_after_ins (TP k) ! p = ((M!?q) ?chs) [.] k"
+        by (simp add: True)
+      then show ?thesis sorry
+    next
+      case False
+      with tp_k have "s_after_ins (TP k) ! p = s (TP k) ! p" by simp
+      moreover
+      from \<open>s \<sim> cfg\<close> have "s (TP k) ! p = (cfg <:> k) p"
+        by (simp add: configuration_of_prog_same_to_TM_D(3) \<open>k < K\<close> \<open>p < MAX_LEN\<close>)
+      moreover
+      from exe ins_modify have "(cfg' <:> k) p = (cfg <:> k) p"
+        sorry
+      ultimately
+      show ?thesis by argo
+    qed
+
+    from execute_with_var_modified_at_most_once
+      [where ?a = ?label and ?len = ?len and ?P = GOTO_on_List_Prog and ?j = "?label + ?n"
+         and ?ins_modify = ?ins_modify and ?s = s and ?s' = s_after_ins and ?t = s'
+         and ?x = "TP k" and ?v = "s_after_ins (TP k)"]
+    have "s' (TP k) = s_after_ins (TP k)"
+      using n_k ins_modify other_cmd_no_write_TP_k dependent_vars s_after_ins value_TP_k_p
+            ins_before_no_write_dependent_vars config_at_end block_strict_no_jump
+      using \<open>?label + ?n < ?label + ?len\<close> label_of_block_for_q_chs.simps
+      by (smt (z3) add_is_0 block_range bot_nat_0.not_eq_extremum diff_is_0_eq' le_add1
+          length_0_conv less_one minus_nat.diff_0)
+    with value_TP_k_p show ?thesis by argo
+  qed
+
+  have tp_length: "length (s' (TP k)) = length (s (TP k))" if "k < K" for k
+  proof -
+    have block_no_assign_TP: "\<nexists>k l. GOTO_on_List_Prog !! i = TP k ::=\<^sub>l l"
+      if "?label \<le> i \<and> i < ?label + ?len" for i
+    proof -
+      consider (state_update) "i = ?label" |
+               (tape_modify) "?label < i \<and> i \<le> ?label + K" |
+               (head_movement) "?label + K < i \<and> i \<le> ?label + 2 * K"
+        using \<open>?label \<le> i \<and> i < ?label + ?len\<close>
+        by arith
+      then show ?thesis
+      proof (cases)
+        case state_update
+        then have "GOTO_on_List_Prog !! i = ST ::=\<^sub>l L [[*] ((M!?q) ?chs)]"
+          using state_update_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close>
+          by blast
+        then show ?thesis by simp
+      next
+        case tape_modify
+        then have "GOTO_on_List_Prog !! i =
+                   TapeModify (i - ?label - 1) ((M!?q) ?chs [.] (i - ?label - 1))"
+          using tape_modify_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (metis (no_types, lifting)
+              diff_add_inverse diff_le_mono le_add_diff_inverse zero_less_diff)
+        then show ?thesis by simp
+      next
+        case head_movement
+        then have "GOTO_on_List_Prog !! i =
+          head_movement_TM_to_ins ((M!?q) ?chs [~] (i - ?label - 1 - K)) (i - ?label - 1 - K)"
+          using head_movement_by_index
+          using \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        then have "\<exists>n. GOTO_on_List_Prog !! i \<in> {MoveLeft n, MoveRight n, Stay\<^sub>l n}"
+          using head_movement_by_index'
+          using head_movement \<open>?q_chs \<in> set q_chs_enum_list\<close> that
+          by (smt (verit) add_diff_inverse_nat  nat_add_left_cancel_less nat_le_iff_add not_add_less1)
+        then show ?thesis by fastforce
+      qed
+    qed
+
+    from execute_length_TP [where ?a = ?label and ?len = ?len and ?P = GOTO_on_List_Prog
+                              and ?s = s and ?s' = s']
+    show ?thesis
+      using  block_range config_at_end block_strict_no_jump block_no_assign_TP
+            \<open>?q_chs \<in> set q_chs_enum_list\<close>
+      by (smt (z3) q_chs_enum_list_length entrance_block_length label_of_block_for_q_chs.simps
+          add_gr_0 append_is_Nil_conv length_greater_0_conv length_pos_if_in_set)
   qed
 
   from configuration_of_prog_same_to_TM_I have "s' \<sim> cfg'"
-    using st hp tp by blast
+    using st hp tp tp_length
+    using \<open>s \<sim> cfg\<close> configuration_of_prog_same_to_TM_def by auto
 
   from \<open>s' \<sim> cfg'\<close> config_at_end
   show thesis using that by simp
@@ -1120,7 +1317,7 @@ qed
 
 lemma jump_back_to_begin:
   assumes "\<exists>t. execute M (0, TPS) t = cfg"
-      and "s \<sim> cfg"
+    and "s \<sim> cfg"
       and "fst cfg < Q"
       and "read_chars_correspond_to_cfg s cfg"
     shows "GOTO_on_List_Prog \<turnstile>\<^sub>l
