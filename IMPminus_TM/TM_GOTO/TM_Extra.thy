@@ -184,4 +184,29 @@ proof -
     using assms by auto
 qed
 
+lemma exe_tape_modify:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and q: "fst cfg < length M"
+      and "k < K"
+    shows "cfg' <:> k = (cfg <:> k)(cfg <#> k := ((M ! (fst cfg)) (config_read cfg)) [.] k)"
+proof -
+  from exe q have "cfg' = sem (M ! (fst cfg)) cfg"
+    by (simp add: exe_lt_length)
+  also have "... = (
+    let (newstate, actions) = (M ! (fst cfg)) (config_read cfg)
+    in (newstate, map (\<lambda>(a, tp). act a tp) (zip actions (snd cfg))))"
+    by (simp add: sem_def)
+  also have "snd ... = map (\<lambda>(a, tp). act a tp)
+    (zip (snd ((M ! (fst cfg)) (config_read cfg))) (snd cfg))"
+    by (simp add: case_prod_beta)
+  also have "... ! k = act ((snd ((M ! (fst cfg)) (config_read cfg))) ! k) (snd cfg ! k)"
+    using assms by (metis calculation sem_tape)
+  also have "fst ... = (cfg <:> k)(cfg <#> k := ((M ! (fst cfg)) (config_read cfg)) [.] k)"
+    by (simp add: act)
+  finally show ?thesis
+    by blast
+qed
+
 end

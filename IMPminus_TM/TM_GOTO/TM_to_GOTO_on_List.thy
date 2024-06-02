@@ -582,7 +582,7 @@ qed
 abbreviation read_chars_correspond_to_cfg :: "state\<^sub>l \<Rightarrow> config \<Rightarrow> bool" where
   "read_chars_correspond_to_cfg s cfg \<equiv> (\<forall>k < K. s CHS ! k = cfg <.> k) \<and> length (s CHS) = K"
 
-lemma read_chars_correspond_to_cfg_correct [intro]:
+lemma read_chars_correspond_to_cfg_correct [simp]:
   assumes "read_chars_correspond_to_cfg s cfg"
       and "wf_cfg cfg"
       and "s \<sim> cfg"
@@ -1059,10 +1059,10 @@ proof -
         by simp
       with s_after_ins have 1: "s_after_ins (HP k) = [hd (s (HP k)) - 1]"
         by force
-      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = snd cfg :#: k"
+      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = cfg <#> k"
         using \<open>k < K\<close>
         by (simp add: configuration_of_prog_same_to_TM_D(2))
-      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k - 1]" by presburger
+      from 1 2 have "s_after_ins (HP k) = [cfg <#> k - 1]" by presburger
       ultimately
       show ?thesis by argo
     next
@@ -1074,32 +1074,32 @@ proof -
       from Stay have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = Stay\<^sub>l k"
         by simp
       with s_after_ins have 1: "s_after_ins (HP k) = s (HP k)" by auto
-      from \<open>s \<sim> cfg\<close> have 2: "s (HP k) = [snd cfg :#: k]"
+      from \<open>s \<sim> cfg\<close> have 2: "s (HP k) = [cfg <#> k]"
         using \<open>k < K\<close>
         by (simp add: configuration_of_prog_same_to_TM_D(2))
-      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k]" by presburger
+      from 1 2 have "s_after_ins (HP k) = [cfg <#> k]" by presburger
       ultimately
       show ?thesis by argo
     next
       case Right
       with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Right" by simp
-      with head_moves_right have "snd cfg' :#: k = snd cfg :#: k + 1"
+      with head_moves_right have "cfg' <#> k = cfg <#> k + 1"
         using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
       moreover
       from Right have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = MoveRight k"
         by simp
       with s_after_ins have 1: "s_after_ins (HP k) = [hd (s (HP k)) + 1]"
         by force
-      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = snd cfg :#: k"
+      from \<open>s \<sim> cfg\<close> have 2: "hd (s (HP k)) = cfg <#> k"
         using \<open>k < K\<close>
         by (simp add: configuration_of_prog_same_to_TM_D(2))
-      from 1 2 have "s_after_ins (HP k) = [snd cfg :#: k + 1]" by presburger
+      from 1 2 have "s_after_ins (HP k) = [cfg <#> k + 1]" by presburger
       ultimately
       show ?thesis by argo
     qed
     from execute_with_var_modified_at_most_once
       [where ?a = ?label and ?len = "block_for_q_chs_len - 1" and ?j = "?label + ?n"
-         and ?ins_modify = ?ins_modify and ?v = "[snd cfg' :#: k]" and ?x = "HP k"
+         and ?ins_modify = ?ins_modify and ?v = "[cfg' <#> k]" and ?x = "HP k"
          and ?P = GOTO_on_List_Prog and ?s = s and ?s' = s_after_ins and ?t = s']
     show ?thesis
       using n_k ins_modify other_cmd_no_write_HP_k dependent_vars s_after_ins value_HP_k
@@ -1209,39 +1209,29 @@ proof -
     obtain s_after_ins where
       s_after_ins: "iexec\<^sub>l ?ins_modify (?label + ?n, s) = (Suc (?label + ?n), s_after_ins)"
       using ins_modify by simp
-    then have tp_k: "s_after_ins (TP k) = (s (TP k))[hd (s (HP k)) := (((M!?q) ?chs) [.] k)]"
+    then have s_after_ins_tp_k:
+      "s_after_ins (TP k) = (s (TP k))[hd (s (HP k)) := (((M!?q) ?chs) [.] k)]"
       by fastforce
-    then have value_TP_k_p: "s_after_ins (TP k) ! p = (cfg' <:> k) p"
-    proof (cases "p = hd (s (HP k))")
-      case True
-      from s_after_ins have "s_after_ins (TP k) = (s (TP k))[hd (s (HP k)) := ((M!?q) ?chs [.] k)]"
-        by force
-      moreover
-      from \<open>s \<sim> cfg\<close> have "s (HP k) = [cfg <#> k]"
-        by (simp add: \<open>k < K\<close> configuration_of_prog_same_to_TM_D(2))
-      with True have "p = cfg <#> k" by simp
-      moreover
-      from \<open>wf_cfg cfg\<close> have "cfg <#> k < MAX_LEN"
-        by (simp add: \<open>k < K\<close> wf_cfg_D(4))
-      moreover
-      from \<open>s \<sim> cfg\<close> have "length (s (TP k)) = MAX_LEN"
-        by (simp add: \<open>k < K\<close> configuration_of_prog_same_to_TM_D(4))
-      ultimately
-      have "s_after_ins (TP k) ! p = ((M!?q) ?chs) [.] k"
-        by (simp add: True)
-      then show ?thesis sorry
-    next
-      case False
-      with tp_k have "s_after_ins (TP k) ! p = s (TP k) ! p" by simp
-      moreover
-      from \<open>s \<sim> cfg\<close> have "s (TP k) ! p = (cfg <:> k) p"
-        by (simp add: configuration_of_prog_same_to_TM_D(3) \<open>k < K\<close> \<open>p < MAX_LEN\<close>)
-      moreover
-      from exe ins_modify have "(cfg' <:> k) p = (cfg <:> k) p"
-        sorry
-      ultimately
-      show ?thesis by argo
-    qed
+
+    from exe exe_tape_modify
+    have "cfg' <:> k = (cfg <:> k)(cfg <#> k := ((M ! (fst cfg)) (config_read cfg)) [.] k)"
+      using Q TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> \<open>k < K\<close> wf_cfg_D(2) by blast
+    moreover
+    from \<open>s \<sim> cfg\<close> have "cfg <#> k = hd (s (HP k))"
+      by (simp add: configuration_of_prog_same_to_TM_D(2) \<open>k < K\<close>)
+    moreover
+    from \<open>read_chars_correspond_to_cfg s cfg\<close> have "?chs = config_read cfg"
+      using \<open>wf_cfg cfg\<close> \<open>s \<sim> cfg\<close> by simp
+    ultimately
+    have cfg'_tp_k: "cfg' <:> k = (cfg <:> k)(hd (s (HP k)) := ((M!?q) ?chs) [.] k)"
+      by (metis (no_types, lifting)
+          \<open>s \<sim> cfg\<close> configuration_of_prog_same_to_TM_D(1) hd_conv_nth list.distinct(1) nth_Cons_0)
+
+    from s_after_ins_tp_k cfg'_tp_k
+    have value_TP_k_p: "s_after_ins (TP k) ! p = (cfg' <:> k) p"
+      apply (cases "p = hd (s (HP k))")
+      using \<open>s \<sim> cfg\<close> configuration_of_prog_same_to_TM_D(3-4) \<open>k < K\<close> \<open>p < MAX_LEN\<close>
+      by auto
 
     from execute_with_var_modified_at_most_once
       [where ?a = ?label and ?len = ?len and ?P = GOTO_on_List_Prog and ?j = "?label + ?n"
