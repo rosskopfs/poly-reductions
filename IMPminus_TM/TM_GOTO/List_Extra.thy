@@ -164,14 +164,6 @@ proof -
   then have "concat xss ! (n * len + i) = drop (n * len) (concat xss) ! i"
     using nth_drop [where ?n = "n * len" and ?xs = "concat xss" and ?i = i]
     by simp
-(*Q:
-Vacuous calculation result: take len (drop (n * len) (concat xss)) = xss ! n
-derived as projection (1) from:
-    take len (drop (n * len) (concat xss)) = xss ! n
-    concat xss ! (n * len + i) = drop (n * len) (concat xss) ! i
-  also have "... = take len (drop (n * len) (concat xss)) ! i"
-    using \<open>i < len\<close> by auto
-*)
   then have "concat xss ! (n * len + i) = take len (drop (n * len) (concat xss)) ! i"
     using \<open>i < len\<close> by auto
   ultimately

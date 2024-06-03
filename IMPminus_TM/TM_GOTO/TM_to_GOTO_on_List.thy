@@ -1502,7 +1502,7 @@ qed
 
 theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
   obtains s
-    where "\<exists>t \<le> T. \<exists>c. \<exists>t' \<le> c * t + 1.
+    where "\<exists>t \<le> T. \<exists>t' \<le> (Q * G ^ K + 2 * K + 5) * t + 1.
           (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s))"
       and "s \<sim> (Q, TPS')"
 proof -
@@ -1547,10 +1547,13 @@ proof -
   have "\<exists>t' \<le> (entrance_block_len + block_for_q_chs_len + 1) * t + 1.
         GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
     by fastforce
-  then have "\<exists>c. \<exists>t' \<le> c * t + 1. GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
-    by fast
-  with t have "\<exists>t \<le> T. \<exists>c. \<exists>t' \<le> c * t + 1. GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
-    by blast
+  moreover
+  have "(entrance_block_len + block_for_q_chs_len + 1) * t + 1 = (Q * G ^ K + 2 * K + 5) * t + 1"
+    by (simp add: numeral_Bit1)
+  ultimately
+  have "\<exists>t \<le> T. \<exists>t' \<le> (Q * G ^ K + 2 * K + 5) * t + 1.
+        GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
+    using t by auto
   with \<open>s \<sim> (Q, TPS')\<close> show thesis
     using that by blast
 qed
