@@ -222,7 +222,7 @@ proof -
       using \<open>Q \<ge> 4\<close> by simp
     (* Combine the results *)
     show "length (snd (write_end_tape k gs)) = K \<and> fst (write_end_tape k gs) \<le> Q"
-      sorry
+    using \<open>[*] write_end_tape k gs \<le> Q\<close> \<open>length ([!!] write_end_tape k gs) = K\<close> by blast
       (*by (simp add: \<open>length (snd (write_end_tape k gs)) = K\<close> \<open>fst (write_end_tape k gs) \<le> Q\<close>)*)
   qed
 qed
