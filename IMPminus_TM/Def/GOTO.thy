@@ -21,13 +21,13 @@ datatype operi = N val | V vname
 
 datatype instr = 
   HALT |
-  ASSIGN vname operi (\<open>_ ::= _\<close>) |
-  ADD vname operi (\<open>_ += _\<close>) |
-  SUB vname operi (\<open>_ -= _\<close>) |
-  RSH vname (\<open>_ \<bind>1\<close>) |
-  MOD vname (\<open>_ %=2\<close>) |
-  JMP label (\<open>GOTO _\<close>) |
-  CONDJMP vname label (\<open>IF _\<noteq>0 THEN GOTO _\<close>)
+  ASSIGN vname operi (\<open>_ ;;= _\<close> [0] 100) |
+  ADD vname operi (\<open>_ += _\<close>  [0] 100) |
+  SUB vname operi (\<open>_ -= _\<close>  [0] 100) |
+  RSH vname (\<open>_ \<bind>1\<close>  [0] 100) |
+  MOD vname (\<open>_ %=2\<close>  [0] 100) |
+  JMP label (\<open>GOTO _\<close>  [0] 100) |
+  CONDJMP vname label (\<open>IF _\<noteq>0 THEN GOTO _\<close> [0] 100)
 
 type_synonym GOTO_Prog = "instr list"
 type_synonym config = "pc \<times> state"
@@ -39,7 +39,7 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
   "iexec instr (p, s) = (
     case instr of
       HALT \<Rightarrow> (0, s) |
-      x ::= t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := c) | V y \<Rightarrow> s(x := s y)) |
+      x ;;= t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := c) | V y \<Rightarrow> s(x := s y)) |
       x += t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := s x + c) | V y \<Rightarrow> s(x := s x + s y)) | 
       x -= t \<Rightarrow> (p + 1, case t of N c \<Rightarrow> s(x := s x - c) | V y \<Rightarrow> s(x := s x - s y)) | 
       x \<bind>1 \<Rightarrow> (p + 1, s(x := s x div 2)) |
@@ -64,10 +64,17 @@ lemmas exec_induct = star.induct [of "exec1 P", split_format(complete)]
 
 code_pred exec1 using exec1I exec1_def by auto
 
+inductive exec_t :: "GOTO_Prog \<Rightarrow> pc \<times> state \<Rightarrow> nat \<Rightarrow> pc \<times> state \<Rightarrow> bool" ("_ \<turnstile> _ \<rightarrow>\<^bsup> _ \<^esup> _" 55) where
+step0:  "P \<turnstile> (pc, s) \<rightarrow>\<^bsup> 0 \<^esup> (pc, s)" | 
+step1:  "P \<turnstile> (pc\<^sub>1, s\<^sub>1) \<rightarrow> (pc\<^sub>2, s\<^sub>2) \<Longrightarrow> pc\<^sub>2 \<noteq> 0 \<Longrightarrow> P \<turnstile> (pc\<^sub>2, s\<^sub>2) \<rightarrow>\<^bsup> x \<^esup> (pc\<^sub>3, s\<^sub>3) \<Longrightarrow> P \<turnstile> (pc\<^sub>1, s\<^sub>1) \<rightarrow>\<^bsup> 1 + x \<^esup> (pc\<^sub>3, s\<^sub>3)"
+
+thm exec_t.induct
+lemmas exec_t_induct = exec_t.induct[split_format(complete)]
+
 text \<open>A small example for z = x + y\<close>
 values
   "{(p, map t [''x'', ''y'', ''z'']) | p t. (
-    [''x'' ::= N 3, ''y'' ::= N 4, ''z'' ::= V ''x'', ''z'' += V ''y'', HALT] \<turnstile>
+    [''x'' ;;= N 3, ''y'' ;;= N 4, ''z'' ;;= V ''x'', ''z'' += V ''y'', HALT] \<turnstile>
     (1, (\<lambda>x. 0)) \<rightarrow>* (p, t))}"
 
 end
