@@ -32,42 +32,269 @@ lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
 case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
+
+ML\<open>
+
+structure GU = General_Util
+structure HTIB = HOL_To_IMP_Tactics_Base
+structure HTIU = HOL_To_IMP_Util
+structure HTIT = HOL_To_IMP_Tailcalls_Tactics
+structure TU = Tactic_Util
+structure SUT = State_Update_Tracking
+structure SUTIT = State_Update_Tracking_IMP_Tailcalls
+structure PU = Parse_Util
+
+val foo = H.get_IMP_def
+val m = SOLVED'
+
+val t = @{thm mul_acc_IMP_tailcall_def}
+
+structure HA = struct
+open HA
+
+val dest_terminates_with_res_IMP_Tailcall =
+  \<^Const_fn>\<open>terminates_with_res_IMP_Tailcall for tc c s r v => \<open>(tc, c, s, r, v)\<close>\<close>
+val dest_terminates_with_res_IMP_Tailcall_prop =
+  HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Tailcall
+
+val dest_terminates_with_res_IMP_Minus =
+  \<^Const_fn>\<open>terminates_with_res_IMP_Minus for c s r v => \<open>(c, s, r, v)\<close>\<close>
+
+val dest_tailcall_to_IMP_Minus =
+  \<^Const_fn>\<open>tailcall_to_IMP_Minus for c => c\<close>
+
+val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus =
+  dest_terminates_with_res_IMP_Minus #> (fn (c, _, _, _) => c) #> dest_tailcall_to_IMP_Minus
+
+val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop =
+  HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus
+
+fun preprocess_tac get_IMP_def =
+  let fun tac ctxt conclusion =
+    case try dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop conclusion of
+      NONE =>
+        (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
+          Pretty.str "Could not find ",
+          Syntax.pretty_term ctxt @{term tailcall_to_IMP_Minus},
+          Pretty.str " big step in conclusion ",
+          Syntax.pretty_term ctxt conclusion
+        ] |> Pretty.string_of);
+        K no_tac)
+      | SOME c =>
+        let val solve_simple_goal_tac =
+          (EqSubst.eqsubst_tac ctxt [0] (get_IMP_def ctxt c |> the_list)
+          THEN' Simplifier.simp_tac ctxt)
+          |> SOLVED'
+        in
+          resolve_tac ctxt [@{thm terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI}]
+          (* solve the invariant: invar f_IMP_tailcall *)
+          THEN' solve_simple_goal_tac
+          (* solve the assumption: ''f.ret'' in vars f_IMP_tailcall *)
+          THEN' solve_simple_goal_tac
+        end
+  in TU.SUBGOAL_STRIPPED (snd o snd) o tac end
+
+fun flip_eq_thm thm = Thm.proof_attributes [Calculation.symmetric] thm #> fst
+
+val rewrite_eq_state_retrieval_sym_tac =
+  let
+    fun rewrite_focused_tac {prems, context=ctxt, ...} =
+      let
+        val prems_flipped = map (fn thm => flip_eq_thm thm ctxt) prems
+      in
+        REPEAT_ALL_NEW (HTIU.subst_first_tac ctxt prems_flipped)
+        THEN' TU.insert_tac prems_flipped ctxt
+      end
+    fun rewrite_tac ctxt ((* binders,  *)(cprems, cconcl)) =
+      case try dest_terminates_with_res_IMP_Tailcall_prop (Thm.term_of cconcl) of
+        NONE => K no_tac (* TODO: error message *)
+      | SOME (_, _, state, _, _) =>
+        let
+          (* val _ = writeln ("cprems: " ^ @{make_string} cprems)
+          val _ = writeln ("binders: " ^ @{make_string} binders)
+          val _ = writeln ("cconcl: " ^ @{make_string} cconcl) *)
+          val is_eq_state_retrieval_prem = GU.try_bool
+            (Thm.term_of #> HTIU.dest_Trueprop
+              #> \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SUT.is_state_state_retrieval state s_app\<close>\<close>)
+          (* val is_eq_state_retrieval_prem = GU.try_bool (Thm.term_of #> HTIU.dest_Trueprop #>
+            \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>
+              let
+                val _ = Pretty.block [Syntax.pretty_term ctxt state, Pretty.str " / ", Syntax.pretty_term ctxt s_app] |> Pretty.string_of |> writeln
+              in SUT.is_state_state_retrieval state s_app end\<close>\<close>) *)
+          val eq_state_retrieval_prems = GU.find_indices is_eq_state_retrieval_prem cprems
+          (* val _ = writeln ("eq_state_retrieval_prems: " ^ @{make_string} eq_state_retrieval_prems) *)
+        in
+          TU.focus_delete_prems_tac (HTIU.successors eq_state_retrieval_prems)
+            rewrite_focused_tac ctxt
+        end
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED ((* fst o *) snd) o rewrite_tac) end
+
+fun setup_induction_tac get_inducts =
+  let fun focused_tac ctxt (_, concl) =
+    case try dest_terminates_with_res_IMP_Tailcall_prop concl of
+      (* state s, result value v *)
+      SOME (_, _, s, _, v) =>
+        let
+          (* v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after *)
+          val head = head_of v
+          val instantiations =
+            head |> dest_Const |> fst
+            |> Compile_Nat.get_compiled_const (Context.Proof ctxt) |> #arg_regs
+            |> map (HOL_To_IMP_Util.mk_state_register_retrieval s)
+            |> map (fn t => SOME (NONE, (t, false)))
+          val arbitrary = [dest_Free s]
+          val inducts = get_inducts ctxt head
+        in
+          Induction.induction_tac ctxt true [instantiations] [arbitrary] [] inducts []
+          (* needed for inductions of functions defined on pattern matching; they create equalities of the
+             form "t = s ''<register>''", which have to be rewritten in the goal's conclusion" *)
+          THEN_ALL_NEW (TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt))
+        end
+   | NONE => (writeln "Could not find IMP terminates_with_res in conclusion"; K no_tac)
+  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac) end
+
+fun start_induction_case_tac get_IMP_def =
+  let
+    fun rewrite_tac ctxt cconcl =
+      case try dest_terminates_with_res_IMP_Tailcall_prop (Thm.term_of cconcl) of
+        NONE => K no_tac (* TODO: error message *)
+      | SOME (_, c, _, _, _) =>
+          EqSubst.eqsubst_tac ctxt [2] (get_IMP_def ctxt c |> the_list)
+          THEN' resolve_tac ctxt [@{thm terminates_with_res_IMP_Tailcall_start}]
+  in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (snd o snd) o rewrite_tac) end
+
+(* methods as tactics *)
+
+fun SIMPS_TO_tac simps ctxt =
+  TU.TRY' (simp_tac (ctxt addsimps simps))
+  THEN' resolve_tac ctxt [@{thm SIMPS_TOI}]
+
+fun SIMPS_TO_UNIF_tac simps ctxt = (* @{thms STATE_eq interp_state_State_eq} *)
+  resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}]
+  THEN' TU.TRY' (SIMPS_TO_tac simps ctxt)
+  THEN' resolve_tac ctxt [@{thm reflexive}] (* TODO: does \<open>reflexive\<close> apply generally to SIMPS_TO_UNIF? -> yes, to solve s === t premise *)
+
+val STATE_interp_state_State_thms = @{thms STATE_eq interp_state_State_eq}
+
+fun SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt =
+  SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt
+  (* THEN' resolve_tac ctxt [@{thm reflexive}] *)
+
+fun STATE_interp_update_eq_STATE_interp_fun_upd ctxt =
+  resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI}]
+  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+
+fun STATE_interp_retrieve_key_eq_tac ctxt =
+  resolve_tac ctxt [@{thm STATE_interp_retrieve_key_eqI}]
+  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+  THEN' simp_tac (ctxt addsimps STATE_interp_state_State_thms)
+
+fun terminates_with_res_step_tac correctness ctxt =
+  let
+    val terminates_with_res_tSeq_tac =
+      resolve_tac ctxt [@{thm terminates_with_res_tSeqI}]
+    val terminates_with_tAssign_tac =
+      resolve_tac ctxt [@{thm terminates_with_tAssignI}]
+      THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
+    val terminates_with_tCall_tac =
+      resolve_tac ctxt [@{thm terminates_with_tCallI}]
+      (* solve correctness assumption *)
+      THEN' resolve_tac ctxt correctness
+      (* solve state update assumption: s' = s(r := val) *)
+      THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
+    val terminates_with_res_tAssign_tac =
+      resolve_tac ctxt [@{thm terminates_with_res_tAssignI}]
+      THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
+    val terminates_with_res_tIf_tac =
+      resolve_tac ctxt [@{thm terminates_with_res_tIf_processedI}]
+      THEN' STATE_interp_retrieve_key_eq_tac ctxt
+      THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+      THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+  in
+    (terminates_with_res_tSeq_tac
+      THEN' (terminates_with_tAssign_tac ORELSE' terminates_with_tCall_tac))
+    ORELSE' terminates_with_res_tAssign_tac
+    ORELSE' terminates_with_res_tIf_tac
+  end
+
+fun terminates_with_res_steps_tac correctness ctxt = K no_tac
+
+end
+\<close>
+
+(* left-nested sequences? e.g. (x = 5; y = 7); z = 12 instead of x = 5; (y = 7; z = 12) *)
+
 HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply (tactic \<open>HA.preprocess_tac @{thm mul_acc_IMP_tailcall_def} @{context} 1\<close>)
+  (* apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI) *)
+  apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
 
-  apply (simp only:)
-  apply (subst (2) mul_acc_IMP_tailcall_def)
-  apply (rule terminates_with_res_IMP_Tailcall_start)
+  (* apply (subst (2) mul_acc_IMP_tailcall_def)
+  apply (rule terminates_with_res_IMP_Tailcall_start) *)
+  apply (tactic \<open>HA.start_induction_case_tac H.get_IMP_def @{context} 1\<close>)
 
-  apply (terminates_with_res_step correctness:
+  (* apply (terminates_with_res_tSeq) (* why do we get (?s'11 s) instead of just ?s'11  ? *)
+  apply (rule terminates_with_tAssignI)
+  apply (rule STATE_interp_update_eq_STATE_interp_fun_updI)
+  apply (rule SIMPS_TO_UNIFI)
+  apply (simp add: STATE_eq interp_state_State_eq)
+  apply (rule SIMPS_TOI)
+  apply (rule reflexive) *)
+
+  (* apply (terminates_with_res_step correctness:
     eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct
-  )+
-  apply STATE_interp_retrieve_key_eq
+  )+ *)
+  apply (tactic \<open>
+    HA.terminates_with_res_step_tac
+      (* TODO: look up correctness in context: scan the command? *)
+      @{thms eq_nat_IMP_Minus_func_correct}
+      @{context} 1
+  \<close>)+
+  apply STATE_interp_retrieve_key_eq (* end of branch after assign *)
 
-  apply (terminates_with_res_step correctness:
+  (* apply (terminates_with_res_step correctness:
     eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
-  apply terminates_with_res_tTail
+  )+ *)
+  apply (tactic \<open>
+    HA.terminates_with_res_step_tac
+      @{thms add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct}
+      @{context} 1
+  \<close>)+
+  apply terminates_with_res_tTail (* end of branch after tail-call *)
   apply metis
 
-  apply (simp only:)
-  apply (subst (2) mul_acc_IMP_tailcall_def)
-  apply (rule terminates_with_res_IMP_Tailcall_start)
-  apply (terminates_with_res_step correctness:
+  (* apply (subst (2) mul_acc_IMP_tailcall_def)
+  apply (rule terminates_with_res_IMP_Tailcall_start) *)
+  apply (tactic \<open>HA.start_induction_case_tac H.get_IMP_def @{context} 1\<close>)
+  
+  (* apply (terminates_with_res_step correctness:
     eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
+  )+ *)
+  apply (tactic \<open>
+    HA.terminates_with_res_step_tac
+      @{thms eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct}
+      @{context} 1
+  \<close>)+
   apply STATE_interp_retrieve_key_eq
 
-  apply (terminates_with_res_step correctness:
+  (* apply (terminates_with_res_step correctness:
     eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
+  )+ *)
+  apply (tactic \<open>
+    HA.terminates_with_res_step_tac
+      @{thms eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct}
+      @{context} 1
+  \<close>)+
   apply terminates_with_res_tTail
   apply (simp only: STATE_eq interp_update_state_eq interp_state_State_eq)
   subgoal premises p for _ s
   (*instantiate with current state, prove that arguments are equal to arguments of HOL recursive
   call, then apply*)
-  thm p(1)
+    apply (subst p(2)[symmetric])+
+    apply (simp only: mul_acc_nat.simps)
+      (* TODO: *)
+    thm p
+    thm mul_acc_nat.simps
   sorry
   sorry
 (* by (cook mode = tailcall) *)
@@ -189,3 +416,37 @@ corollary sqrt_nat_sqrt[simp]: "sqrt_nat y = Discrete.sqrt y"
 end
 
 end
+
+
+
+(* lemma foo:
+  assumes "PROP SIMPS_TO_UNIF val val'"
+  shows "STATE (interp_state (update_state s k val')) = (STATE (interp_state s))(k := val)"
+  using assms unfolding STATE_eq SIMPS_TO_UNIF_eq by (simp add: interp_state_State_eq) *)
+
+(* find_theorems "_ \<turnstile> (tCall _ _, _) \<Rightarrow>\<^bsup>_\<^esup> _" *)
+
+(* thm tCall *)
+
+
+(* context
+  notes
+    terminates_with_IMP_MinusE[elim] terminates_with_res_IMP_MinusE[elim]
+    (* terminates_with_IMP_TailcallE[elim] terminates_with_res_IMP_TailcallE[elim] *)
+(*     terminates_with_res_IMP_MinusI[intro] terminates_with_IMP_MinusI[intro]
+    terminates_with_res_IMP_TailcallI[intro] *) terminates_with_IMP_TailcallI[intro]
+begin *)
+(* 
+lemma bar:
+  assumes "terminates_with_res_IMP_Minus c s r v"
+  and "s' = s(r := v)"
+  shows "terminates_with_IMP_Tailcall tc (tCall c r) s s'"
+
+using assms proof-
+  obtain s'' where "terminates_with_IMP_Minus c s s''" "s'' r = v" using terminates_with_res_IMP_MinusE[OF assms(1)] by blast
+  have "\<exists>t. (c, s) \<Rightarrow>\<^bsup>t\<^esup> s''" using terminates_with_IMP_MinusE[OF \<open>terminates_with_IMP_Minus c s s''\<close>] by blast
+  then have "\<exists>t. tc \<turnstile> (tCall c r, s) \<Rightarrow>\<^bsup>t\<^esup> s(r := v)" using \<open>s'' r = v\<close> by auto
+  then have "\<exists>t. tc \<turnstile> (tCall c r, s) \<Rightarrow>\<^bsup>t\<^esup> s'" using assms by simp
+  then show "terminates_with_IMP_Tailcall tc (tCall c r) s s'" using terminates_with_IMP_TailcallI by blast
+qed
+ *)

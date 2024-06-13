@@ -66,7 +66,9 @@ val dest_tailcall_to_IMP_Minus_big_step =
 
 fun preprocess_tac tailcall_def ctxt =
   resolve_tac ctxt [@{thm terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI}]
+  (* solve the invariant: invar hol_func *)
   THEN' (EqSubst.eqsubst_tac ctxt [0] [tailcall_def] THEN' Simplifier.simp_tac ctxt)
+  (* solve the assumption: ''ret'' in vars hol_func *)
   THEN' (EqSubst.eqsubst_tac ctxt [0] [tailcall_def] THEN' Simplifier.simp_tac ctxt)
 
 
@@ -77,9 +79,10 @@ val dest_terminates_with_res_IMP_Tailcall_prop = HTIU.dest_Trueprop #> dest_term
 
 fun flip_eq_thm thm = Thm.proof_attributes [Calculation.symmetric] thm #> fst
 
-fun rewrite_eq_state_retrieval_sym_tac state_SIMPS_TO_term =
+(* TODO: fix *)
+fun rewrite_eq_state_retrieval_sym_tac state =
   let
-    fun rewrite_focused_tac {prems, context=ctxt,...} =
+    fun rewrite_focused_tac {prems, context=ctxt, ...} =
       let val prems_flipped = map (fn thm => flip_eq_thm thm ctxt) prems
       in
         REPEAT_ALL_NEW (HTIU.subst_first_tac ctxt prems_flipped)
@@ -88,7 +91,7 @@ fun rewrite_eq_state_retrieval_sym_tac state_SIMPS_TO_term =
     fun rewrite_tac ctxt cprems =
       let
         val is_eq_state_retrieval_prem = GU.try_bool (Thm.term_of #> HTIU.dest_Trueprop #>
-          \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SUT.is_state_state_retrieval state_SIMPS_TO_term s_app\<close>\<close>)
+          \<^Const_fn>\<open>HOL.eq _ for _ s_app => \<open>SUT.is_state_state_retrieval state s_app\<close>\<close>)
         val eq_state_retrieval_prems = GU.find_indices is_eq_state_retrieval_prem cprems
       in
         TU.focus_delete_prems_tac (HTIU.successors eq_state_retrieval_prems) rewrite_focused_tac
@@ -133,7 +136,7 @@ fun setup_induction_tac get_inducts =
         let
           (* v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after *)
           val head = head_of v
-          val cconst = head  |> dest_Const |> fst |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
+          val cconst = head |> dest_Const |> fst |> Compile_Nat.get_compiled_const (Context.Proof ctxt)
           val instantiations =
             #arg_regs cconst
             |> map (HOL_To_IMP_Util.mk_state_register_retrieval s)
