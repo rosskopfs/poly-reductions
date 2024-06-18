@@ -44,11 +44,6 @@ structure SUT = State_Update_Tracking
 structure SUTIT = State_Update_Tracking_IMP_Tailcalls
 structure PU = Parse_Util
 
-val foo = H.get_IMP_def
-val m = SOLVED'
-
-val t = @{thm mul_acc_IMP_tailcall_def}
-
 structure HA = struct
 open HA
 
@@ -130,7 +125,7 @@ val rewrite_eq_state_retrieval_sym_tac =
   in TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED ((* fst o *) snd) o rewrite_tac) end
 
 fun setup_induction_tac get_inducts =
-  let fun focused_tac ctxt (_, concl) =
+  let fun focused_tac ctxt concl =
     case try dest_terminates_with_res_IMP_Tailcall_prop concl of
       (* state s, result value v *)
       SOME (_, _, s, _, v) =>
@@ -151,9 +146,9 @@ fun setup_induction_tac get_inducts =
           THEN_ALL_NEW (TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt))
         end
    | NONE => (writeln "Could not find IMP terminates_with_res in conclusion"; K no_tac)
-  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED snd o focused_tac) end
+  in TU.FOCUS_PARAMS_CTXT' (TU.SUBGOAL_STRIPPED (snd o snd) o focused_tac) end
 
-fun start_induction_case_tac get_IMP_def =
+fun start_case_tac get_IMP_def =
   let
     fun rewrite_tac ctxt cconcl =
       case try dest_terminates_with_res_IMP_Tailcall_prop (Thm.term_of cconcl) of
@@ -219,8 +214,135 @@ fun terminates_with_res_step_tac correctness ctxt =
 
 fun terminates_with_res_steps_tac correctness ctxt = K no_tac
 
+(* finish in the inductive case *)
+
+val foo = Subgoal.FOCUS_PARAMS
+
+fun pretty_focus ({ asms, concl, context, params, prems, schematics=_ } : Subgoal.focus) =
+  let
+    open Pretty
+    val blbr = block o breaks
+    val pretty_cterm = Syntax.pretty_term context o Thm.term_of
+    fun pretty_param (name, cterm) = block [str name, str " as ", pretty_cterm cterm]
+    fun label_len lbl xs = block [str lbl, str " (", str (List.length xs |> string_of_int), str "):"]
+  in
+    (block o fbreaks) [
+      str "focus:",
+      blbr (label_len "asms" asms :: List.map (cartouche o pretty_cterm) asms),
+      blbr [str "concl:", cartouche (Syntax.pretty_term context (Thm.term_of concl))],
+      blbr (str "context:" :: Proof.pretty_state (Proof.init context)),
+      blbr (label_len "params" params :: List.map (cartouche o pretty_param) params),
+      blbr (label_len "prems" prems :: List.map (cartouche o pretty_cterm o Thm.cprop_of) prems),
+      blbr [str "schematics:", str "(...)"]
+    ]
+  end
+
 end
 \<close>
+
+lemma add_assumption: assumes P and "P ==> Q" shows "Q" using assms by blast
+
+lemma rewrite_terminates_with_res_IMP_Tailcall_value:
+  assumes "v = v'" and "terminates_with_res_IMP_Tailcall tc c s r v'"
+  shows "terminates_with_res_IMP_Tailcall tc c s r v"
+  using assms by blast
+
+ML\<open>
+
+structure HA = struct
+open HA
+
+fun pretty_cterm ctxt = Syntax.pretty_term ctxt o Thm.term_of
+
+(* TODO: nicer destructor *)
+(* destructure s from terminates_with_res_IMP_Tailcall tc c s r v *)
+val cdest_terminates_with_res_IMP_Tailcall_state =
+  Thm.dest_arg o Thm.dest_fun o Thm.dest_fun o HTIU.cdest_Trueprop
+
+(* val _ = let open Pretty in
+    (block o breaks) [
+      str "in finish_tail_tac:",
+      (block o breaks) (str "cprems:" :: List.map (cartouche o pretty_cterm ctxt) cprems),
+      (block o breaks) [str "cconcl:", cartouche (pretty_cterm ctxt cconcl)],
+    ] |> writeln end *)
+
+val finish_tail_tac =
+  let fun main_tac ctxt =
+    let fun extract_state_tac cconcl =
+      case try cdest_terminates_with_res_IMP_Tailcall_state cconcl of
+        NONE => (writeln "couldn't find updated state in conclusion"; K no_tac (* TODO: error case *))
+      | SOME s =>
+          let fun instantiate_ih_tac { prems, context = ctxt, ... } =
+            let val ih = List.hd prems
+            in TU.insert_tac [Drule.infer_instantiate' ctxt [SOME s] ih] ctxt end
+          fun reg_eq_tac ctxt cprems =
+            (* TODO: does the ctxt ever change, or can we always use the same one?? *)
+            let
+              val ih = hd cprems (* TODO: IH pos. *)
+              (* fetch the assumptions of the IH of the form t_i = s ''r_i'' *)
+              val (_, (reg_eqs, _)) = Term_Util.strip_csubgoal ih
+              val reg_eq_count = length reg_eqs
+              (* val _ = let open Pretty in (block o breaks) (str "reg_eqs:" :: List.map (cartouche o pretty_cterm ctxt) reg_eqs) |> writeln end *)
+              val add_reg_eq_prems = List.map (fn reg_eq => Drule.infer_instantiate' ctxt [SOME (HTIU.cdest_Trueprop reg_eq)] @{thm add_assumption}) reg_eqs
+              (* val _ = let open Pretty in (block o breaks) (str "add_reg_eq_prems:" :: List.map (cartouche o pretty_cterm ctxt o Thm.cprop_of) add_reg_eq_prems) |> writeln end *)
+              fun simp_reg_eq_tac ctxt =
+                (* Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
+                THEN' *) Simplifier.simp_tac ctxt (* TODO: narrow down the simpset here... *)
+              val prove_reg_eq_prems =
+                List.map (fn add_reg_eq_prem =>
+                  resolve_tac ctxt [add_reg_eq_prem]
+                  THEN' TU.thin_tac 1 (* drop the IH *)
+                  THEN' SOLVED' (simp_reg_eq_tac ctxt)
+                ) add_reg_eq_prems
+              fun prove_ih_prems_tac ({ context = ctxt, prems, ... } : Subgoal.focus) =
+                let
+                  val (ih :: eqs) = prems
+                  val reg_eq_prems = drop (length eqs - reg_eq_count) eqs
+                  val ih_concl = ih OF reg_eq_prems
+                in
+                  TU.insert_tac [ih_concl] ctxt
+                end
+              fun rewrite_concl_tac { context = ctxt, prems, ... } =
+                let
+                  val reg_eq_prems = drop (length prems - reg_eq_count) prems
+                  (* val _ = let open Pretty in (block o breaks) (str "reg_eq_prems:" :: List.map (cartouche o pretty_cterm ctxt o Thm.cprop_of) reg_eq_prems) |> writeln end *)
+                  (* val subst_tacs =
+                    reg_eq_prems
+                    |> map (fn reg_eq_prem => (* resolve_tac ctxt *) [@{thm rewrite_terminates_with} RS reg_eq_prem]) *)
+                  val subst_tacs =
+                    (rev reg_eq_prems) |> map (fn re => HTIU.subst_first_tac ctxt [re])
+                in (* EVERY' subst_tacs *) (* K all_tac *) 
+                  (* TODO: better way to do this! (?) *)
+                  resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
+                  THEN' EVERY' subst_tacs
+                  THEN' resolve_tac ctxt [@{thm refl}]
+                end
+            in
+              EVERY' prove_reg_eq_prems
+              THEN' TU.FOCUS' prove_ih_prems_tac ctxt THEN' TU.thin_tac 1 THEN' rotate_tac (~1)
+              THEN' TU.FOCUS' rewrite_concl_tac ctxt
+              THEN' assume_tac ctxt
+            end
+          
+          in
+            TU.focus_delete_prems_tac [1 (* TODO: determine IH position dynamically *)] instantiate_ih_tac ctxt THEN' rotate_tac (~1)
+            THEN' TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o reg_eq_tac) ctxt
+          end
+    in
+      Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms mul_acc_nat.simps})
+      THEN' TU.CSUBGOAL_STRIPPED (snd o snd) extract_state_tac
+    end
+  in
+  TU.FOCUS_PARAMS_CTXT' main_tac (* (TU.CSUBGOAL_STRIPPED (snd o snd) o tac1) *)
+  end
+
+end
+\<close>
+
+(* what is the difference between FOCUS/FOCUS_PREMS/FOCUS_PARAMS/FOCUS_PARAMS_FIXED ???
+-> the latter two don't strip assumptions
+-> FOCUS_PREMS is to FOCUS as FOCUS_PARAMS_FIXED is to FOCUS_PARAMS
+    --> but what's the difference?????? *)
 
 (* left-nested sequences? e.g. (x = 5; y = 7); z = 12 instead of x = 5; (y = 7; z = 12) *)
 
@@ -231,9 +353,9 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
 
   (* apply (subst (2) mul_acc_IMP_tailcall_def)
   apply (rule terminates_with_res_IMP_Tailcall_start) *)
-  apply (tactic \<open>HA.start_induction_case_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HA.start_case_tac H.get_IMP_def @{context} 1\<close>)
 
-  (* apply (terminates_with_res_tSeq) (* why do we get (?s'11 s) instead of just ?s'11  ? *)
+(*   apply (terminates_with_res_tSeq)
   apply (rule terminates_with_tAssignI)
   apply (rule STATE_interp_update_eq_STATE_interp_fun_updI)
   apply (rule SIMPS_TO_UNIFI)
@@ -250,6 +372,7 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
       @{thms eq_nat_IMP_Minus_func_correct}
       @{context} 1
   \<close>)+
+  (* supply mul_acc_nat.simps[simp del] mul_acc_nat_eq_mul_add[simp del] *)
   apply STATE_interp_retrieve_key_eq (* end of branch after assign *)
 
   (* apply (terminates_with_res_step correctness:
@@ -260,12 +383,12 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
       @{thms add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct}
       @{context} 1
   \<close>)+
-  apply terminates_with_res_tTail (* end of branch after tail-call *)
-  apply metis
+  (* apply terminates_with_res_tTail *) (* end of branch after tail-call *)
+  apply metis (*  *)
 
   (* apply (subst (2) mul_acc_IMP_tailcall_def)
   apply (rule terminates_with_res_IMP_Tailcall_start) *)
-  apply (tactic \<open>HA.start_induction_case_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HA.start_case_tac H.get_IMP_def @{context} 1\<close>)
   
   (* apply (terminates_with_res_step correctness:
     eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
@@ -286,18 +409,60 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
       @{context} 1
   \<close>)+
   apply terminates_with_res_tTail
-  apply (simp only: STATE_eq interp_update_state_eq interp_state_State_eq)
-  subgoal premises p for _ s
-  (*instantiate with current state, prove that arguments are equal to arguments of HOL recursive
-  call, then apply*)
-    apply (subst p(2)[symmetric])+
-    apply (simp only: mul_acc_nat.simps)
-      (* TODO: *)
-    thm p
-    thm mul_acc_nat.simps
-  sorry
-  sorry
-(* by (cook mode = tailcall) *)
+  apply (simp (no_asm) only: STATE_eq interp_update_state_eq interp_state_State_eq) (* ? *)
+  apply (tactic \<open>HA.finish_tail_tac @{context} 1\<close>)
+done
+
+  (* proof-
+    fix x s
+
+    let ?s' = "
+      (STATE (interp_state
+        (update_state (update_state (update_state (update_state (update_state
+        (update_state (update_state (update_state (update_state (update_state
+        (update_state (update_state (update_state
+        (State s)
+        ''eq.args.x'' (s ''mul_acc.args.x1a''))
+        ''eq.args.y'' 0)
+        ''eq.ret'' (nat_of_bool (s ''mul_acc.args.x1a'' = 0)))
+        ''.If.3'' (nat_of_bool (s ''mul_acc.args.x1a'' = 0)))
+        ''sub.args.x'' (s ''mul_acc.args.x1a''))
+        ''sub.args.y'' 1)
+        ''sub.ret'' (s ''mul_acc.args.x1a'' - 1))
+        ''mul_acc.args.x1a'' (s ''mul_acc.args.x1a'' - 1))
+        ''mul_acc.args.x2a'' (s ''mul_acc.args.x2a''))
+        ''add.args.x'' (s ''mul_acc.args.x2a''))
+        ''add.args.y'' (s ''mul_acc.args.x3ba''))
+        ''add.ret'' (s ''mul_acc.args.x2a'' + s ''mul_acc.args.x3ba''))
+        ''mul_acc.args.x3ba'' (s ''mul_acc.args.x2a'' + s ''mul_acc.args.x3ba''))))"
+
+    assume ih: "
+      x = sa ''mul_acc.args.x1a'' \<Longrightarrow>
+      s ''mul_acc.args.x2a'' = sa ''mul_acc.args.x2a'' \<Longrightarrow>
+      s ''mul_acc.args.x2a'' + s ''mul_acc.args.x3ba'' = sa ''mul_acc.args.x3ba'' \<Longrightarrow>
+      terminates_with_res_IMP_Tailcall mul_acc_IMP_tailcall mul_acc_IMP_tailcall sa ''mul_acc.ret''
+        (mul_acc_nat (sa ''mul_acc.args.x1a'') (sa ''mul_acc.args.x2a'') (sa ''mul_acc.args.x3ba''))"
+      for sa
+    then have ih': "
+      x = sa ''mul_acc.args.x1a'' \<Longrightarrow>
+      s ''mul_acc.args.x2a'' = sa ''mul_acc.args.x2a'' \<Longrightarrow>
+      s ''mul_acc.args.x2a'' + s ''mul_acc.args.x3ba'' = sa ''mul_acc.args.x3ba'' \<Longrightarrow>
+      terminates_with_res_IMP_Tailcall mul_acc_IMP_tailcall mul_acc_IMP_tailcall sa ''mul_acc.ret''
+        (mul_acc_nat x (s ''mul_acc.args.x2a'') (s ''mul_acc.args.x2a'' + s ''mul_acc.args.x3ba''))"
+      for sa
+      by simp
+
+    assume case_d: "s ''mul_acc.args.x1a'' = Suc x" "s ''mul_acc.args.x1a'' \<noteq> 0"
+
+    show "terminates_with_res_IMP_Tailcall mul_acc_IMP_tailcall mul_acc_IMP_tailcall ?s' ''mul_acc.ret'' (mul_acc_nat (Suc x) (s ''mul_acc.args.x2a'') (s ''mul_acc.args.x3ba''))"
+      apply (simp (no_asm) only: mul_acc_nat.simps)
+      apply (rule ih'[where sa = ?s'])
+      apply (simp_all only: case_d)
+      apply (simp_all only: STATE_eq interp_update_state_eq interp_state_State_eq)
+      apply simp_all
+    done
+
+  qed *)
 
 definition mul_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "mul_nat x y = mul_acc_nat x y 0"
