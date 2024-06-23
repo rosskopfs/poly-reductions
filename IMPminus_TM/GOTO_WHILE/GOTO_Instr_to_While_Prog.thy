@@ -569,4 +569,40 @@ qed
 lemma instr_complexity_cond_jump':
   "(GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 3" by (meson bigstep_det instr_cond_jump_complexity)
 
+theorem instr_existence: 
+  assumes "well_defined_instr instr"
+  and "iexec instr (pc, s') = (pc', t')"
+  and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
+  shows "\<exists>t k. ((GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using assms
+proof (cases instr)
+  case HALT
+  then show ?thesis using assms by force
+next
+  case (ASSIGN x21 x22)
+  then show ?thesis using assms instr_assign by (smt (verit, del_insts))
+next
+  case (ADD x31 x32)
+  then show ?thesis using assms instr_add by (smt (verit, del_insts))
+next
+  case (SUB x41 x42)
+  then show ?thesis using assms instr_sub by (smt (verit, del_insts))
+next
+  case (RSH x)
+  have pre1: "well_defined_instr (x \<bind>1)" using RSH assms(1) by auto
+  have pre2: "iexec (x \<bind>1) (pc, s') = (pc', t')" using RSH assms(2) by fastforce
+  have pre3: "s ''pc'' = pc" using assms(3) by blast
+  have pre4: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s x = s' x" using assms(4) by auto
+  thm instr_right_shift[OF pre1 pre2 _ pre4]
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" sorry
+  show ?thesis using assms instr_right_shift RSH sorry
+next
+  case (MOD x6)
+  then show ?thesis using assms instr_right_shift sorry
+next
+  case (JMP x7)
+  then show ?thesis using assms instr_jump sorry
+next
+  case (CONDJMP x81 x82)
+  then show ?thesis using assms instr_cond_jump sorry
+qed
 end

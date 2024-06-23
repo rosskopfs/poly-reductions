@@ -65,7 +65,7 @@ lemmas exec_induct = star.induct [of "exec1 P", split_format(complete)]
 code_pred exec1 using exec1I exec1_def by auto
 
 inductive exec_t :: "GOTO_Prog \<Rightarrow> pc \<times> state \<Rightarrow> nat \<Rightarrow> pc \<times> state \<Rightarrow> bool" ("_ \<turnstile> _ \<rightarrow>\<^bsup> _ \<^esup> _" 55) where
-step0:  "P \<turnstile> (pc, s) \<rightarrow>\<^bsup> 0 \<^esup> (pc, s)" | 
+step0:  "P \<turnstile> (0, s) \<rightarrow>\<^bsup> 0 \<^esup> (0, s)" | 
 step1:  "P \<turnstile> (pc\<^sub>1, s\<^sub>1) \<rightarrow> (pc\<^sub>2, s\<^sub>2) \<Longrightarrow> pc\<^sub>2 \<noteq> 0 \<Longrightarrow> P \<turnstile> (pc\<^sub>2, s\<^sub>2) \<rightarrow>\<^bsup> x \<^esup> (pc\<^sub>3, s\<^sub>3) \<Longrightarrow> P \<turnstile> (pc\<^sub>1, s\<^sub>1) \<rightarrow>\<^bsup> 1 + x \<^esup> (pc\<^sub>3, s\<^sub>3)"
 
 thm exec_t.induct

@@ -194,7 +194,7 @@ lemma well_defined_prog_pc_range:
     and "1 \<le> pc \<and> pc \<le> length prog"
   shows "0 \<le> pc' \<and> pc' \<le> length prog" using assms
 proof (induct prog pc s k pc' t rule: exec_t_induct)
-  case (step0 P pc s)
+  case (step0 P s)
   then show ?case by simp
 next
   case (step1 P pc\<^sub>1 s\<^sub>1 pc\<^sub>2 s\<^sub>2 x pc\<^sub>3 s\<^sub>3)
@@ -262,8 +262,7 @@ lemma well_defined_prog_pc_range_single:
   assumes "prog \<turnstile> (pc, s) \<rightarrow> (pc', t)"
     and "well_defined_prog prog"
     and "1 \<le> pc \<and> pc \<le> length prog"
-  shows "0 \<le> pc' \<and> pc' \<le> length prog" using assms
-  by (metis exec_t.intros(1) exec_t.intros(2) well_defined_prog_pc_range zero_le)
+  shows "0 \<le> pc' \<and> pc' \<le> length prog" using assms sorry
 
 lemma prog_if_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow> (pc', t')"
@@ -496,52 +495,46 @@ lemma prog_complexity:
     and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
   shows "\<exists>t. (WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t" using assms
 proof (induction prog pc s' k pc' t' arbitrary: s rule: exec_t_induct)
-  case (step0 P pc s1)
-  (*not provable because no bit step matches with complexity 0*)
-  then show ?case sorry
+  case (step0 P s1)
+  then show ?case by simp
 next
-  case (step1 P pc\<^sub>1 s\<^sub>1 pc\<^sub>2 s\<^sub>2 k pc\<^sub>3 s\<^sub>3)
-  then show ?case sorry
+  case (step1 P pc\<^sub>1 s\<^sub>1 pc\<^sub>2 s\<^sub>2 step pc\<^sub>3 s\<^sub>3)
+  have aux1: "1 \<le> pc\<^sub>2 \<and> pc\<^sub>2 \<le> length P" using step1.hyps step1.prems well_defined_prog_pc_range_single by auto
+  have aux2: "iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using step1.hyps(1) exec1_def by auto
+  let ?var = "(case (P !! pc\<^sub>1) of HALT \<Rightarrow> 2 | x ;;= t \<Rightarrow> 4 | x += t \<Rightarrow> 4 | x -= t \<Rightarrow> 4 | 
+      x \<bind>1 \<Rightarrow> 4 | x %=2 \<Rightarrow> 4 | GOTO i \<Rightarrow> 2 | IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3)"
+  show ?case using step1
+  proof (cases "P !! pc\<^sub>1")
+    case HALT
+    then show ?thesis using aux2 step1.hyps(2) by auto
+  next
+    case (ASSIGN x v)
+    have pre1: "well_defined_instr (x ;;= v)" by (metis ASSIGN step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre2: "iexec (x ;;= v) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using ASSIGN aux2 by fastforce
+    have pre3: "s ''pc'' = pc\<^sub>1" using step1.prems(4) by blast
+    thm instr_assign[OF pre1 pre2]
+    have "\<exists>s'. ((GOTO_Instr_to_WHILE (x ;;= v), s) \<Rightarrow>\<^bsup> 4 \<^esup> s') \<and> (s' ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. s' x = t' x)" sorry
+    show ?thesis using step1 ASSIGN sorry
+  next
+    case (ADD x31 x32)
+    then show ?thesis sorry
+  next
+    case (SUB x41 x42)
+    then show ?thesis sorry
+  next
+    case (RSH x5)
+    then show ?thesis sorry
+  next
+    case (MOD x6)
+    then show ?thesis sorry
+  next
+    case (JMP x7)
+    then show ?thesis sorry
+  next
+    case (CONDJMP x81 x82)
+    then show ?thesis sorry
+  qed
 qed
-
-lemma prog_complexity':
-  assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
-    and "1 \<le> pc" and "pc \<le> length prog" and "k > 0"
-    and "well_defined_prog prog"
-    and "s ''pc'' = pc" and "\<forall>x \<noteq> ''pc''. s x = s' x"
-  shows "\<exists>t. (WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t" using assms
-proof (induction prog pc s' k pc' t' arbitrary: s rule: exec_t_induct)
-  case (step0 P pc s1)
-  then show ?case by blast
-next
-  case (step1 P pc\<^sub>1 s\<^sub>1 pc\<^sub>2 s\<^sub>2 k pc\<^sub>3 s\<^sub>3)
-  (* not provable because this step relies on the big step with complexity 0 *)
-  then show ?case sorry
-qed
-
-(*
-  GOTO Program can have 0 step, but big step cannot \<Longrightarrow> prog_complexity problem above
-*)
-
-(*
-  Since SKIP is the only big step which has complexity 1
-  \<Longrightarrow>
-  If a big step has complexity 1, then it must be SKIP
-*)
-lemma "(c, s) \<Rightarrow>\<^bsup> 1 \<^esup> t \<Longrightarrow> c = SKIP"
-  apply (cases c)
-  apply simp
-  apply (metis Assign_tE One_nat_def n_not_Suc_n)
-  apply (metis One_nat_def Seq_tE add_is_1 bigstep_progress less_numeral_extra(3))
-  using bigstep_progress apply fastforce
-  by auto
-
-(*
-  A solution to solve prog_complexity problem is to add another big step rule which is:
-  NotRun: (Empty, s) \<Rightarrow>\<^bsup> 0 \<^esup> t
-
-  And then using the above lemma to reversely get the big step runs 0 step.
-*)
 
 lemma 
 assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
