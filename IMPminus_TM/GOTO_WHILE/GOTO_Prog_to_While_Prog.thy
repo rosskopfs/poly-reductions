@@ -184,9 +184,154 @@ lemma GOTO_Prog_to_WHILE_IF_correctness_complexity_reversed:
 definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
   "well_defined_prog prog = (length prog \<ge> 1 \<and> (\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> (
     well_defined_instr (prog !! i) \<and> 
-    (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True) \<and> 
-    prog !! (length prog) = HALT)
-  ))"
+    (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True))) \<and> 
+    (case (prog !! (length prog)) of 
+      HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False))"
+
+lemma well_defined_prog_pc_range_single:
+  assumes "prog \<turnstile> (pc, s) \<rightarrow> (pc', t)"
+    and "well_defined_prog prog"
+    and "1 \<le> pc \<and> pc \<le> length prog"
+  shows "0 \<le> pc' \<and> pc' \<le> length prog" using assms
+proof (cases "prog !! pc")
+  case HALT
+  have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+  hence "pc' = 0" using HALT by auto
+  thus ?thesis using step1 HALT by blast
+next
+  case (ASSIGN x c)
+  consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+  thus ?thesis
+    proof cases
+      case c1
+      let ?case = "case (prog !! (length prog)) of 
+        HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+      have ?case using assms(2) well_defined_prog_def by auto
+      then show ?thesis using ASSIGN c1 by simp
+    next
+      case c2
+      have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+      hence "pc' = pc + 1" using ASSIGN by auto
+      then show ?thesis using c2 by auto
+    qed
+next
+  case (ADD x c)
+  consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+  thus ?thesis
+    proof cases
+      case c1
+      let ?case = "case (prog !! (length prog)) of 
+        HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+      have ?case using assms(2) well_defined_prog_def by auto
+      then show ?thesis using ADD c1 by simp
+    next
+      case c2
+      have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+      hence "pc' = pc + 1" using ADD by auto
+      then show ?thesis using c2 by auto
+    qed
+next
+  case (SUB x c)
+  consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+  thus ?thesis
+    proof cases
+      case c1
+      let ?case = "case (prog !! (length prog)) of 
+        HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+      have ?case using assms(2) well_defined_prog_def by auto
+      then show ?thesis using SUB c1 by simp
+    next
+      case c2
+      have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+      hence "pc' = pc + 1" using SUB by auto
+      then show ?thesis using c2 by auto
+    qed
+next
+  case (RSH x5)
+  consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+  thus ?thesis
+    proof cases
+      case c1
+      let ?case = "case (prog !! (length prog)) of 
+        HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+      have ?case using assms(2) well_defined_prog_def by auto
+      then show ?thesis using RSH c1 by simp
+    next
+      case c2
+      have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+      hence "pc' = pc + 1" using RSH by auto
+      then show ?thesis using c2 by auto
+    qed
+next
+  case (MOD x6)
+  consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+  thus ?thesis
+    proof cases
+      case c1
+      let ?case = "case (prog !! (length prog)) of 
+        HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+      have ?case using assms(2) well_defined_prog_def by auto
+      then show ?thesis using MOD c1 by simp
+    next
+      case c2
+      have "iexec (prog !! pc) (pc, s) = (pc', t)" using assms(1) exec1_def by auto
+      hence "pc' = pc + 1" using MOD by auto
+      then show ?thesis using c2 by auto
+    qed
+next
+  case (JMP i)
+  have "(\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> (
+    well_defined_instr (prog !! i) \<and> 
+    (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)))" using assms(2) well_defined_prog_def by auto
+  hence tmp: "well_defined_instr (prog !! pc) \<and> 
+    (case prog !! pc of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)" using assms(3) by simp
+  hence "well_defined_instr (prog !! pc)" by simp
+  hence goal1: "i > 0" using JMP by simp
+
+  have "case prog !! pc of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True" using tmp by simp
+  hence goal2: "i \<le> length prog" using JMP by simp
+
+  have "iexec (GOTO i) (pc, s) = (i, s)" using assms(1) exec1_def JMP by auto
+  hence "pc' = i" using JMP assms(1) exec1_def by auto
+  thus ?thesis using goal1 goal2 by blast
+next
+  case (CONDJMP x i)
+  consider (x1) "s x = 0" | (x2) "s x \<noteq> 0" by blast
+  then show ?thesis
+  proof cases
+    case x1
+    consider (c1) "pc = length prog" | (c2) "pc < length prog" using assms(3) le_neq_implies_less by blast
+    thus ?thesis
+      proof cases
+        case c1
+        let ?case = "case (prog !! (length prog)) of 
+          HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False"
+        have ?case using assms(2) well_defined_prog_def by auto
+        then show ?thesis using CONDJMP c1 by simp
+      next
+        case c2
+        have "iexec (IF x\<noteq>0 THEN GOTO i) (pc, s) = (pc + 1, s)" using assms(1) exec1_def CONDJMP x1 by auto
+        hence "pc' = pc + 1" using CONDJMP using assms(1) exec1_def by auto
+        then show ?thesis using c2 by auto
+      qed
+  next
+    case x2
+    have "(\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> (
+      well_defined_instr (prog !! i) \<and> 
+      (case prog !! i of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)))" using assms(2) well_defined_prog_def by auto
+    hence tmp: "well_defined_instr (prog !! pc) \<and> 
+      (case prog !! pc of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True)" using assms(3) by simp
+    hence "well_defined_instr (prog !! pc)" by simp
+    hence goal1: "i > 0" using CONDJMP by simp
+  
+    have "case prog !! pc of GOTO j \<Rightarrow> j \<le> length prog | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length prog | _ \<Rightarrow> True" using tmp by simp
+    hence goal2: "i \<le> length prog" using CONDJMP by simp
+  
+    have "iexec (IF x\<noteq>0 THEN GOTO i) (pc, s) = (i, s)" using assms(1) exec1_def CONDJMP x2 by auto
+    hence "pc' = i" using CONDJMP assms(1) exec1_def by simp
+    thus ?thesis using goal1 goal2 by blast
+  qed
+qed
 
 lemma well_defined_prog_pc_range:
   assumes "prog \<turnstile> (pc, s) \<rightarrow>\<^bsup> k \<^esup> (pc', t)"
@@ -198,71 +343,9 @@ proof (induct prog pc s k pc' t rule: exec_t_induct)
   then show ?case by simp
 next
   case (step1 P pc\<^sub>1 s\<^sub>1 pc\<^sub>2 s\<^sub>2 x pc\<^sub>3 s\<^sub>3)
-  have expand: "iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using step1.hyps(1) exec1_def by auto
-  show ?case
-  proof (cases "P !! pc\<^sub>1")
-    case HALT
-    have "pc\<^sub>2 = 0" using HALT expand by auto
-    thus ?thesis using step1 HALT by blast
-  next
-    case (ASSIGN v op)
-    have "pc\<^sub>2 = pc\<^sub>1 + 1" using ASSIGN expand by auto
-    thus ?thesis using step1 ASSIGN
-      by (metis Suc_eq_plus1 instr.distinct(2) le_neq_implies_less less_eq_Suc_le trans_le_add1 well_defined_prog_def)
-  next
-    case (ADD v op)
-    have "pc\<^sub>2 = pc\<^sub>1 + 1" using ADD expand by auto
-    thus ?thesis using step1 ADD
-      by (metis Suc_eq_plus1 instr.distinct(4) le_neq_implies_less less_eq_Suc_le trans_le_add1 well_defined_prog_def)
-  next
-    case (SUB v op)
-    have "pc\<^sub>2 = pc\<^sub>1 + 1" using SUB expand by auto
-    thus ?thesis using step1 SUB
-      by (metis Suc_eq_plus1 instr.distinct(6) le_neq_implies_less less_eq_Suc_le trans_le_add1 well_defined_prog_def)
-  next
-    case (RSH v)
-    have "pc\<^sub>2 = pc\<^sub>1 + 1" using RSH expand by auto
-    thus ?thesis using step1 RSH
-      using less_eq_Suc_le well_defined_prog_def by fastforce
-  next
-    case (MOD v)
-    have "pc\<^sub>2 = pc\<^sub>1 + 1" using MOD expand by auto
-    thus ?thesis using step1 MOD
-      using less_eq_Suc_le well_defined_prog_def by fastforce
-  next
-    case (JMP i)
-    have "pc\<^sub>2 = i" using JMP expand by auto
-    have "i > 0" using step1.hyps(2) \<open>pc\<^sub>2 = i\<close> by fastforce
-    have "case P !! i of GOTO j \<Rightarrow> j \<le> length P | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length P | _ \<Rightarrow> True"
-      by (metis step1.prems(1) step1.prems(2) JMP One_nat_def \<open>0 < i\<close> instr.simps(70) less_eq_Suc_le well_defined_prog_def)
-    hence "i \<le> length P" using step1.prems(1) step1.prems(2) JMP well_defined_prog_def by auto
-    thus ?thesis using step1.hyps(2) step1.hyps(4) step1.prems(1) \<open>pc\<^sub>2 = i\<close> by force
-  next
-    case (CONDJMP v i)
-    consider (c1) "s\<^sub>1 v = 0" | (c2) "s\<^sub>1 v > 0" by blast
-    then show ?thesis
-    proof cases
-      case c1
-      have "pc\<^sub>2 = pc\<^sub>1 + 1" using CONDJMP expand c1 by auto
-      thus ?thesis using CONDJMP step1 c1
-        by (smt (verit) Suc_eq_plus1 instr.case(1) instr.case(8) less_Suc_eq_le less_or_eq_imp_le linorder_le_less_linear order_antisym well_defined_prog_def)
-    next
-      case c2
-      have "pc\<^sub>2 = i" using CONDJMP expand c2 by auto
-      have "i > 0" using step1.hyps(2) \<open>pc\<^sub>2 = i\<close> by fastforce
-      have "case P !! i of GOTO j \<Rightarrow> j \<le> length P | IF x\<noteq>0 THEN GOTO j \<Rightarrow> j \<le> length P | _ \<Rightarrow> True"
-        by (metis step1.prems(1) step1.prems(2) CONDJMP One_nat_def \<open>0 < i\<close> instr.simps(71) less_eq_Suc_le well_defined_prog_def)
-      hence "i \<le> length P" using step1.prems(1) step1.prems(2) CONDJMP well_defined_prog_def by auto
-      thus ?thesis using step1.hyps(4) step1.prems(1) \<open>0 < i\<close> \<open>pc\<^sub>2 = i\<close> by fastforce
-    qed
-  qed
+  have "1 \<le> pc\<^sub>2 \<and> pc\<^sub>2 \<le> length P" using well_defined_prog_pc_range_single step1.hyps step1.prems by auto
+  thus ?case using step1 by blast
 qed
-
-lemma well_defined_prog_pc_range_single:
-  assumes "prog \<turnstile> (pc, s) \<rightarrow> (pc', t)"
-    and "well_defined_prog prog"
-    and "1 \<le> pc \<and> pc \<le> length prog"
-  shows "0 \<le> pc' \<and> pc' \<le> length prog" using assms sorry
 
 lemma prog_if_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow> (pc', t')"
