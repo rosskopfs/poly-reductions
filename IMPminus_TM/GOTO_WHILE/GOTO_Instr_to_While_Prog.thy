@@ -578,31 +578,32 @@ proof (cases instr)
   case HALT
   then show ?thesis using assms by force
 next
-  case (ASSIGN x21 x22)
-  then show ?thesis using assms instr_assign by (smt (verit, del_insts))
+  case (ASSIGN x c)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x ;;= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using ASSIGN assms instr_assign by presburger
+  then show ?thesis using assms instr_assign ASSIGN by (smt (verit, del_insts))
 next
-  case (ADD x31 x32)
-  then show ?thesis using assms instr_add by (smt (verit, del_insts))
+  case (ADD x c)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x += c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using ADD assms instr_add by presburger
+  then show ?thesis using assms instr_add ADD by blast
 next
-  case (SUB x41 x42)
-  then show ?thesis using assms instr_sub by (smt (verit, del_insts))
+  case (SUB x c)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x -= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using SUB assms instr_sub by presburger
+  then show ?thesis using assms instr_sub SUB by blast
 next
   case (RSH x)
-  have pre1: "well_defined_instr (x \<bind>1)" using RSH assms(1) by auto
-  have pre2: "iexec (x \<bind>1) (pc, s') = (pc', t')" using RSH assms(2) by fastforce
-  have pre3: "s ''pc'' = pc" using assms(3) by blast
-  have pre4: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s x = s' x" using assms(4) by auto
-  thm instr_right_shift[OF pre1 pre2 _ pre4]
-  have "\<exists>t. ((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" sorry
-  show ?thesis using assms instr_right_shift RSH sorry
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using RSH assms instr_right_shift by presburger
+  thus ?thesis using assms instr_right_shift RSH by blast
 next
-  case (MOD x6)
-  then show ?thesis using assms instr_right_shift sorry
+  case (MOD x)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> 4 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using MOD assms instr_left_shift by presburger
+  then show ?thesis using assms instr_left_shift MOD by blast
 next
-  case (JMP x7)
-  then show ?thesis using assms instr_jump sorry
+  case (JMP i)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> 2 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using JMP assms instr_jump by presburger
+  then show ?thesis using assms instr_jump JMP by blast
 next
-  case (CONDJMP x81 x82)
-  then show ?thesis using assms instr_cond_jump sorry
+  case (CONDJMP x i)
+  have "\<exists>t. ((GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> 3 \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> t x = t' x))" using CONDJMP assms instr_cond_jump by presburger
+  then show ?thesis using assms instr_cond_jump CONDJMP by blast
 qed
 end

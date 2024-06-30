@@ -296,8 +296,7 @@ qed
 
 fun WHILE_complexity :: "GOTO_Prog \<Rightarrow> config \<Rightarrow> nat \<Rightarrow> nat" where
   "WHILE_complexity _ _ 0 = 0" | 
-  "WHILE_complexity prog (pc, s) (Suc step) = WHILE_complexity prog (iexec (prog !! pc) (pc, s)) step + 5 * pc + 1 + 
-    (case (prog !! pc) of 
+  "WHILE_complexity prog (pc, s) (Suc step) = 1 + (case (prog !! pc) of 
       HALT \<Rightarrow> 2 |
       x ;;= t \<Rightarrow> 4 |
       x += t \<Rightarrow> 4 | 
@@ -306,7 +305,8 @@ fun WHILE_complexity :: "GOTO_Prog \<Rightarrow> config \<Rightarrow> nat \<Righ
       x %=2 \<Rightarrow> 4 |
       GOTO i \<Rightarrow> 2 | 
       IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3
-    )"
+    ) + 5 * pc + WHILE_complexity prog (iexec (prog !! pc) (pc, s)) step 
+    "
 
 lemma "(com1;;com2, s1) \<Rightarrow>\<^bsup> c \<^esup> s3 \<Longrightarrow> (com1, s1) \<Rightarrow>\<^bsup> c1 \<^esup> s2 \<Longrightarrow> (com2, s2) \<Rightarrow>\<^bsup> c - c1 \<^esup> s3"
   using bigstep_det by fastforce
@@ -314,7 +314,7 @@ lemma "(com1;;com2, s1) \<Rightarrow>\<^bsup> c \<^esup> s3 \<Longrightarrow> (c
 lemma "(WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3 \<Longrightarrow> s1 b \<noteq> 0 \<Longrightarrow> (c,s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> z - x - 1 \<^esup> s3"
   by (smt (verit) One_nat_def While_tE_time add.commute add_0 add_diff_cancel_left' bigstep_det diff_Suc_Suc diff_diff_eq)
 
-lemma prog_pc_consist:
+lemma prog_while_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t"
     and "1 \<le> pc" and "pc \<le> length prog"
@@ -330,7 +330,7 @@ next
   have aux2: "iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using step1.hyps(1) exec1_def by auto
   let ?var = "(case (P !! pc\<^sub>1) of HALT \<Rightarrow> 2 | x ;;= t \<Rightarrow> 4 | x += t \<Rightarrow> 4 | x -= t \<Rightarrow> 4 | 
       x \<bind>1 \<Rightarrow> 4 | x %=2 \<Rightarrow> 4 | GOTO i \<Rightarrow> 2 | IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3)"
-  have aux3: "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step + 5 * pc\<^sub>1 + ?var + 1 \<^esup> t" 
+  have aux3: "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + ?var + 5 * pc\<^sub>1 + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
     using aux2 step1.prems(1) by auto
   show ?case using step1
   proof (cases "P !! pc\<^sub>1")
@@ -401,7 +401,7 @@ next
   qed
 qed
 
-lemma prog_var_consist:
+lemma prog_while_var_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t"
     and "1 \<le> pc" and "pc \<le> length prog"
@@ -417,7 +417,7 @@ next
   have aux2: "iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using step1.hyps(1) exec1_def by auto
   let ?var = "(case (P !! pc\<^sub>1) of HALT \<Rightarrow> 2 | x ;;= t \<Rightarrow> 4 | x += t \<Rightarrow> 4 | x -= t \<Rightarrow> 4 | 
       x \<bind>1 \<Rightarrow> 4 | x %=2 \<Rightarrow> 4 | GOTO i \<Rightarrow> 2 | IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3)"
-  have aux3: "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step + 5 * pc\<^sub>1 + ?var + 1 \<^esup> t" 
+  have aux3: "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + ?var + 5 * pc\<^sub>1 + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
     using aux2 step1.prems(1) by auto
   show ?case using step1
   proof (cases "P !! pc\<^sub>1")
@@ -488,7 +488,7 @@ next
   qed
 qed
 
-lemma prog_complexity:
+lemma prog_while_complexity_existence:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "1 \<le> pc" and "pc \<le> length prog"
     and "well_defined_prog prog"
@@ -503,41 +503,212 @@ next
   have aux2: "iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using step1.hyps(1) exec1_def by auto
   let ?var = "(case (P !! pc\<^sub>1) of HALT \<Rightarrow> 2 | x ;;= t \<Rightarrow> 4 | x += t \<Rightarrow> 4 | x -= t \<Rightarrow> 4 | 
       x \<bind>1 \<Rightarrow> 4 | x %=2 \<Rightarrow> 4 | GOTO i \<Rightarrow> 2 | IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3)"
+  have pre1: "s ''pc'' = pc\<^sub>1" using step1.prems(4) by blast
+  have pre2: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s x = s\<^sub>1 x" using step1.prems(5) by auto
+  have aux3: "1 \<le> pc\<^sub>1 \<and> pc\<^sub>1 \<le> length P" using step1 by blast
+  have aux4: "0 \<le> pc\<^sub>2 \<and> pc\<^sub>2 \<le> length P" using well_defined_prog_pc_range_single[OF step1(1) step1(7) aux3] by blast
+  have aux5: "1 \<le> pc\<^sub>2" using aux2 step1(2) by simp
+  have aux6: "pc\<^sub>2 \<le> length P" using aux4 by blast
+  have aux7: "1 \<le> s ''pc''" using assms pre1 step1.prems by auto
+  have aux8: "s ''pc'' \<le> length P" using assms pre1 step1.prems by auto
   show ?case using step1
   proof (cases "P !! pc\<^sub>1")
     case HALT
     then show ?thesis using aux2 step1.hyps(2) by auto
   next
     case (ASSIGN x v)
-    have pre1: "well_defined_instr (x ;;= v)" by (metis ASSIGN step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
-    have pre2: "iexec (x ;;= v) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using ASSIGN aux2 by fastforce
-    have pre3: "s ''pc'' = pc\<^sub>1" using step1.prems(4) by blast
-    thm instr_assign[OF pre1 pre2]
-    have "\<exists>s'. ((GOTO_Instr_to_WHILE (x ;;= v), s) \<Rightarrow>\<^bsup> 4 \<^esup> s') \<and> (s' ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. s' x = t' x)" sorry
-    show ?thesis using step1 ASSIGN sorry
+    let ?single_rt = 4
+    have pre3: "well_defined_instr (x ;;= v)" by (metis ASSIGN step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (x ;;= v) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using ASSIGN aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (x ;;= v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_assign[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (x ;;= v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' ASSIGN pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: ASSIGN)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis 
+      by (smt (verit) \<open>WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + (case P !! pc\<^sub>1 of HALT \<Rightarrow> 2 | GOTO i \<Rightarrow> 2 | IF x\<noteq>0 THEN GOTO i \<Rightarrow> 3 | _ \<Rightarrow> 4) + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step\<close> add.assoc add.commute aux2 mult.commute pre1 tmp3)
   next
-    case (ADD x31 x32)
-    then show ?thesis sorry
+    case (ADD x v)
+    let ?single_rt = 4
+    have pre3: "well_defined_instr (x += v)" by (metis ADD step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (x += v) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using ADD aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (x += v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_add[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (x += v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' ADD pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: ADD)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) ADD tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   next
-    case (SUB x41 x42)
-    then show ?thesis sorry
+    case (SUB x v)
+    let ?single_rt = 4
+    have pre3: "well_defined_instr (x -= v)" by (metis SUB step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (x -= v) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using SUB aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (x -= v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_sub[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (x -= v), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' SUB pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: SUB)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) SUB tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   next
-    case (RSH x5)
-    then show ?thesis sorry
+    case (RSH x)
+    let ?single_rt = 4
+    have pre3: "well_defined_instr (x \<bind>1)" by (metis RSH step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (x \<bind>1) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using RSH aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_right_shift[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' RSH pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: RSH)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) RSH tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   next
-    case (MOD x6)
-    then show ?thesis sorry
+    case (MOD x)
+    let ?single_rt = 4
+    have pre3: "well_defined_instr (x %=2)" by (metis MOD step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (x %=2) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using MOD aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_left_shift[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' MOD pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: MOD)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) MOD tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   next
-    case (JMP x7)
-    then show ?thesis sorry
+    case (JMP i)
+    let ?single_rt = 2
+    have pre3: "well_defined_instr (GOTO i)" by (metis JMP step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (GOTO i) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using JMP aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_jump[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' JMP pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: JMP)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) JMP tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   next
-    case (CONDJMP x81 x82)
-    then show ?thesis sorry
+    case (CONDJMP x i)
+    let ?single_rt = 3
+    have pre3: "well_defined_instr (IF x\<noteq>0 THEN GOTO i)" by (metis CONDJMP step1.prems(1) step1.prems(2) step1.prems(3) well_defined_prog_def)
+    have pre4: "iexec (IF x\<noteq>0 THEN GOTO i) (pc\<^sub>1, s\<^sub>1) = (pc\<^sub>2, s\<^sub>2)" using CONDJMP aux2 by fastforce
+    have "\<exists>s\<^sub>1'. ((GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" 
+      using instr_cond_jump[OF pre3 pre4, of s, OF pre1 pre2] by blast
+    then obtain s\<^sub>1' where def_s\<^sub>1': "((GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1' \<and> s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x))" by blast
+
+    have tmp1: "((GOTO_Instr_to_WHILE (P !! s ''pc''), s) \<Rightarrow>\<^bsup> ?single_rt \<^esup> s\<^sub>1')" using def_s\<^sub>1' CONDJMP pre1 by auto
+    have tmp2: "s\<^sub>1' ''pc'' = pc\<^sub>2 \<and> (\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x)" using def_s\<^sub>1' by blast
+    have pre5: "s\<^sub>1' ''pc'' = pc\<^sub>2" using tmp2 by blast
+    have pre6: "\<forall>x. x \<noteq> ''pc'' \<longrightarrow> s\<^sub>1' x = s\<^sub>2 x" using tmp2 by blast
+    have "\<exists>t. ((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" 
+      using step1(4)[OF aux5 aux6 step1(7), of s\<^sub>1', OF pre5 pre6] by blast
+    then obtain t where def_t: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" by blast
+
+    have tmp3: "?var = ?single_rt" by (simp add: CONDJMP)
+    have "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + 5 * pc\<^sub>1 + ?var + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" by simp
+    hence tmp4: "WHILE_complexity P (pc\<^sub>1, s\<^sub>1) (1 + step) = 1 + ?single_rt + 5 * pc\<^sub>1  + WHILE_complexity P (iexec (P !! pc\<^sub>1) (pc\<^sub>1, s\<^sub>1)) step" using tmp3 by auto
+    have pre7: "s ''pc'' \<noteq> 0" using pre1 step1.prems(1) by auto
+    have pre8: "(GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> ?single_rt + s ''pc'' * 5 \<^esup> s\<^sub>1'" using GOTO_Prog_to_WHILE_IF_correctness_complexity[of s P ?single_rt, OF aux7 aux8 tmp1] by blast
+    have pre9: "((WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s\<^sub>1') \<Rightarrow>\<^bsup> WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t)" using def_t by blast
+    have "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF P, s) \<Rightarrow>\<^bsup> 1 + (?single_rt + s ''pc'' * 5) + WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step \<^esup> t" 
+      using WhileTrue[of s "''pc''" "GOTO_Prog_to_WHILE_IF P" "?single_rt + s ''pc'' * 5" s\<^sub>1' "WHILE_complexity P (pc\<^sub>2, s\<^sub>2) step" t, OF pre7 pre8 pre9] by simp
+    thus ?thesis
+      by (smt (verit) CONDJMP tmp4 add.commute group_cancel.add2 mult.commute pre1 pre4 tmp3)
   qed
 qed
 
-lemma 
-assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
+lemma prog_var_consist:
+  assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t"
     and "well_defined_prog prog" and "pc = 1"
     and "\<forall>x \<noteq> ''pc''. s x = s' x"
@@ -552,11 +723,11 @@ proof -
   have aux4: "?s ''pc'' = pc" by (simp add: assms(4))
   have aux5: "\<forall>x \<noteq> ''pc''. ?s x = s' x" by (simp add: assms(5))
   show "\<forall>x \<noteq> ''pc''. t x = t' x" 
-    using prog_var_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
+    using prog_while_var_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
 qed
 
-lemma 
-assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
+lemma prog_pc_consist:
+  assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t"
     and "well_defined_prog prog" and "pc = 1"
     and "\<forall>x \<noteq> ''pc''. s x = s' x"
@@ -571,13 +742,38 @@ proof -
   have aux4: "?s ''pc'' = pc" by (simp add: assms(4))
   have aux5: "\<forall>x \<noteq> ''pc''. ?s x = s' x" by (simp add: assms(5))
   show "t ''pc'' = pc'" 
-    using prog_pc_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
+    using prog_while_pc_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
 qed
 
-(*
+lemma prog_complexity_existence:
+  assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
+    and "well_defined_prog prog" and "pc = 1"
+    and "\<forall>x \<noteq> ''pc''. s x = s' x"
+  shows "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" using assms
+proof -
+  have aux1: "(''pc'' ::= A (atomExp.N 1), s) \<Rightarrow>\<^bsup> 2 \<^esup> s(''pc'' := 1)" by (simp add: assign_t_simp numeral_2_eq_2)
+  let ?s = "s(''pc'' := 1)"
+  have aux2: "1 \<le> pc" by (simp add: assms(3))
+  have aux3: "pc \<le> length prog" using assms(2) assms(3) well_defined_prog_def by blast
+  have aux4: "?s ''pc'' = pc" by (simp add: assms(3))
+  have aux5: "\<forall>x \<noteq> ''pc''. ?s x = s' x" by (simp add: assms(4))
+  have "\<exists>t. (WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, ?s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t" 
+    using prog_while_complexity_existence[of prog pc s' k pc' t' ?s, OF assms(1) aux2 aux3 assms(2) aux4 aux5] by blast
+  then obtain t where def_t: "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, ?s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t" by blast
+  hence "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" using aux1 by (metis GOTO_Prog_to_WHILE_def Seq_tE_While_init)
+  thus "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" by blast
+qed
 
-complexity problem is the same as prog_complexity, need big_step to be fixed.
-
-*)
-
+theorem while_prog_valid:
+  assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
+    and "well_defined_prog prog" and "pc = 1"
+    and "\<forall>x \<noteq> ''pc''. s x = s' x"
+  shows "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using assms
+proof -
+  have goal1: "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" using prog_complexity_existence assms by blast
+  then obtain t where def_t: "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" by blast
+  have goal2: "t ''pc'' = pc'" using prog_pc_consist[of prog pc s' k pc' t' s t, OF assms(1) def_t assms(2) assms(3) assms(4)] by blast
+  have goal3: "\<forall>x \<noteq> ''pc''. t x = t' x" using prog_var_consist[of prog pc s' k pc' t' s t, OF assms(1) def_t assms(2) assms(3) assms(4)] by blast
+  show "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t \<and> t ''pc'' = pc' \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using def_t goal2 goal3 by blast
+qed
 end
