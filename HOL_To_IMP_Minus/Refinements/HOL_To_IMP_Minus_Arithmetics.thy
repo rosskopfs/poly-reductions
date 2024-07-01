@@ -242,6 +242,7 @@ end
 
 lemma add_assumption: assumes P and "P ==> Q" shows "Q" using assms by blast
 
+(* technical lemma that lets us isolate the return value in its own subgoal *)
 lemma rewrite_terminates_with_res_IMP_Tailcall_value:
   assumes "v = v'" and "terminates_with_res_IMP_Tailcall tc c s r v'"
   shows "terminates_with_res_IMP_Tailcall tc c s r v"
@@ -266,6 +267,7 @@ val cdest_terminates_with_res_IMP_Tailcall_state =
       (block o breaks) [str "cconcl:", cartouche (pretty_cterm ctxt cconcl)],
     ] |> writeln end *)
 
+    structure A = Tactic_Util
 val finish_tail_tac =
   let fun main_tac ctxt =
     let fun extract_state_tac cconcl =
@@ -276,8 +278,12 @@ val finish_tail_tac =
             let val ih = List.hd prems
             in TU.insert_tac [Drule.infer_instantiate' ctxt [SOME s] ih] ctxt end
           fun reg_eq_tac ctxt cprems =
-            (* TODO: does the ctxt ever change, or can we always use the same one?? *)
+            (* TODO: does the ctxt ever change, or can we always use the same one?? -> yes, fixing bound variables *)
             let
+              (* apply_tac *)
+              val _ = Seq.pull
+              val _ = Tactic_Util.apply_tac (@{undefined} (* existing tactic to solve retrieval  *)) 1 (@{undefined} (* t = s ''...'' *)) 
+              (* val goal = Goal.init (Thm.cterm_of ctxt @{undefined} (* t = s ''...'' *)) |> resolve_tac ctxt @{undefined} 1 |> Goal.finish ctxt (* existing tactic to solve retrieval *) *)
               val ih = hd cprems (* TODO: IH pos. *)
               (* fetch the assumptions of the IH of the form t_i = s ''r_i'' *)
               val (_, (reg_eqs, _)) = Term_Util.strip_csubgoal ih
@@ -286,8 +292,8 @@ val finish_tail_tac =
               val add_reg_eq_prems = List.map (fn reg_eq => Drule.infer_instantiate' ctxt [SOME (HTIU.cdest_Trueprop reg_eq)] @{thm add_assumption}) reg_eqs
               (* val _ = let open Pretty in (block o breaks) (str "add_reg_eq_prems:" :: List.map (cartouche o pretty_cterm ctxt o Thm.cprop_of) add_reg_eq_prems) |> writeln end *)
               fun simp_reg_eq_tac ctxt =
-                (* Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
-                THEN' *) Simplifier.simp_tac ctxt (* TODO: narrow down the simpset here... *)
+                Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
+                THEN' Simplifier.simp_tac ctxt (* TODO: narrow down the simpset here... *)
               val prove_reg_eq_prems =
                 List.map (fn add_reg_eq_prem =>
                   resolve_tac ctxt [add_reg_eq_prem]
@@ -321,7 +327,7 @@ val finish_tail_tac =
               EVERY' prove_reg_eq_prems
               THEN' TU.FOCUS' prove_ih_prems_tac ctxt THEN' TU.thin_tac 1 THEN' rotate_tac (~1)
               THEN' TU.FOCUS' rewrite_concl_tac ctxt
-              THEN' assume_tac ctxt
+              THEN' assume_tac ctxt (* resolve_tac, apply equalities, simplify *)
             end
           
           in
@@ -342,7 +348,7 @@ end
 (* what is the difference between FOCUS/FOCUS_PREMS/FOCUS_PARAMS/FOCUS_PARAMS_FIXED ???
 -> the latter two don't strip assumptions
 -> FOCUS_PREMS is to FOCUS as FOCUS_PARAMS_FIXED is to FOCUS_PARAMS
-    --> but what's the difference?????? *)
+    --> but what's the difference?????? --> fixing ?schematic variables *)
 
 (* left-nested sequences? e.g. (x = 5; y = 7); z = 12 instead of x = 5; (y = 7; z = 12) *)
 
@@ -409,7 +415,7 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
       @{context} 1
   \<close>)+
   apply terminates_with_res_tTail
-  apply (simp (no_asm) only: STATE_eq interp_update_state_eq interp_state_State_eq) (* ? *)
+  (* apply (simp (no_asm) only: STATE_eq interp_update_state_eq interp_state_State_eq) *) (* ? *)
   apply (tactic \<open>HA.finish_tail_tac @{context} 1\<close>)
 done
 
