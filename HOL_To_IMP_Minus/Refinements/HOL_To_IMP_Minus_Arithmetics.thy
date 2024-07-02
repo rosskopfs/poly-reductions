@@ -257,8 +257,21 @@ fun pretty_cterm ctxt = Syntax.pretty_term ctxt o Thm.term_of
 
 (* TODO: nicer destructor *)
 (* destructure s from terminates_with_res_IMP_Tailcall tc c s r v *)
-val cdest_terminates_with_res_IMP_Tailcall_state =
-  Thm.dest_arg o Thm.dest_fun o Thm.dest_fun o HTIU.cdest_Trueprop
+(* val cdest_terminates_with_res_IMP_Tailcall_state =
+  Thm.dest_arg o Thm.dest_fun o Thm.dest_fun o HTIU.cdest_Trueprop *)
+
+fun cstrip_comb ctm =
+  let
+    fun strip f args =
+      case Thm.term_of f of
+        (_ $ _) => let val (f', arg) = Thm.dest_comb f in strip f' (arg :: args) end
+      | _ => (f, args)
+  in strip ctm [] end
+
+fun cdest_terminates_with_res_IMP_Tailcall ct =
+  case HTIU.cdest_Trueprop ct |> cstrip_comb |>> Thm.term_of of
+    (Const (@{const_name terminates_with_res_IMP_Tailcall}, _), [tc, c, s, r, v]) => (tc, c, s, r, v)
+  | _ => raise CTERM ("cdest_terminates_with_res_IMP_Tailcall", [ct])
 
 (* val _ = let open Pretty in
     (block o breaks) [
@@ -267,79 +280,84 @@ val cdest_terminates_with_res_IMP_Tailcall_state =
       (block o breaks) [str "cconcl:", cartouche (pretty_cterm ctxt cconcl)],
     ] |> writeln end *)
 
-    structure A = Tactic_Util
+
 val finish_tail_tac =
   let fun main_tac ctxt =
-    let fun extract_state_tac cconcl =
-      case try cdest_terminates_with_res_IMP_Tailcall_state cconcl of
-        NONE => (writeln "couldn't find updated state in conclusion"; K no_tac (* TODO: error case *))
-      | SOME s =>
-          let fun instantiate_ih_tac { prems, context = ctxt, ... } =
-            let val ih = List.hd prems
-            in TU.insert_tac [Drule.infer_instantiate' ctxt [SOME s] ih] ctxt end
-          fun reg_eq_tac ctxt cprems =
-            (* TODO: does the ctxt ever change, or can we always use the same one?? -> yes, fixing bound variables *)
-            let
-              (* apply_tac *)
-              val _ = Seq.pull
-              val _ = Tactic_Util.apply_tac (@{undefined} (* existing tactic to solve retrieval  *)) 1 (@{undefined} (* t = s ''...'' *)) 
-              (* val goal = Goal.init (Thm.cterm_of ctxt @{undefined} (* t = s ''...'' *)) |> resolve_tac ctxt @{undefined} 1 |> Goal.finish ctxt (* existing tactic to solve retrieval *) *)
-              val ih = hd cprems (* TODO: IH pos. *)
-              (* fetch the assumptions of the IH of the form t_i = s ''r_i'' *)
-              val (_, (reg_eqs, _)) = Term_Util.strip_csubgoal ih
-              val reg_eq_count = length reg_eqs
-              (* val _ = let open Pretty in (block o breaks) (str "reg_eqs:" :: List.map (cartouche o pretty_cterm ctxt) reg_eqs) |> writeln end *)
-              val add_reg_eq_prems = List.map (fn reg_eq => Drule.infer_instantiate' ctxt [SOME (HTIU.cdest_Trueprop reg_eq)] @{thm add_assumption}) reg_eqs
-              (* val _ = let open Pretty in (block o breaks) (str "add_reg_eq_prems:" :: List.map (cartouche o pretty_cterm ctxt o Thm.cprop_of) add_reg_eq_prems) |> writeln end *)
-              fun simp_reg_eq_tac ctxt =
-                Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
-                THEN' Simplifier.simp_tac ctxt (* TODO: narrow down the simpset here... *)
-              val prove_reg_eq_prems =
-                List.map (fn add_reg_eq_prem =>
-                  resolve_tac ctxt [add_reg_eq_prem]
-                  THEN' TU.thin_tac 1 (* drop the IH *)
-                  THEN' SOLVED' (simp_reg_eq_tac ctxt)
-                ) add_reg_eq_prems
-              fun prove_ih_prems_tac ({ context = ctxt, prems, ... } : Subgoal.focus) =
-                let
-                  val (ih :: eqs) = prems
-                  val reg_eq_prems = drop (length eqs - reg_eq_count) eqs
-                  val ih_concl = ih OF reg_eq_prems
-                in
-                  TU.insert_tac [ih_concl] ctxt
-                end
-              fun rewrite_concl_tac { context = ctxt, prems, ... } =
-                let
-                  val reg_eq_prems = drop (length prems - reg_eq_count) prems
-                  (* val _ = let open Pretty in (block o breaks) (str "reg_eq_prems:" :: List.map (cartouche o pretty_cterm ctxt o Thm.cprop_of) reg_eq_prems) |> writeln end *)
-                  (* val subst_tacs =
-                    reg_eq_prems
-                    |> map (fn reg_eq_prem => (* resolve_tac ctxt *) [@{thm rewrite_terminates_with} RS reg_eq_prem]) *)
-                  val subst_tacs =
-                    (rev reg_eq_prems) |> map (fn re => HTIU.subst_first_tac ctxt [re])
-                in (* EVERY' subst_tacs *) (* K all_tac *) 
-                  (* TODO: better way to do this! (?) *)
-                  resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
-                  THEN' EVERY' subst_tacs
-                  THEN' resolve_tac ctxt [@{thm refl}]
-                end
-            in
-              EVERY' prove_reg_eq_prems
-              THEN' TU.FOCUS' prove_ih_prems_tac ctxt THEN' TU.thin_tac 1 THEN' rotate_tac (~1)
-              THEN' TU.FOCUS' rewrite_concl_tac ctxt
-              THEN' assume_tac ctxt (* resolve_tac, apply equalities, simplify *)
-            end
-          
+    let fun extract_state_tac (focus as { context = ctxt, prems, concl, ... } : Subgoal.focus) =
+      case try cdest_terminates_with_res_IMP_Tailcall concl of
+        NONE => (writeln "couldn't find ... in conclusion"; K no_tac (* TODO: error case *))
+      | SOME (_, _, s, _, v) =>
+          let
+
+            (* val _ = pretty_focus focus |> Pretty.writeln *)
+
+            val ih =
+              let val is_ih = Thm.cconcl_of #> can cdest_terminates_with_res_IMP_Tailcall
+              in find_first is_ih prems |> the (* TODO *) end
+
+            (* v is of the form f t1 t2 ..., where f is the relevant HOL function;
+               extract the list of argument registers of f, and the terms t1, t2, ... *)
+            val ({ arg_regs, ... }, arg_terms) =
+              v |> Thm.term_of |> Term.strip_comb
+              |>> (dest_Const #> fst #> Compile_Nat.get_compiled_const (Context.Proof ctxt))
+
+            (* construct equalities of the form t_i = s ''reg_i'' *)
+            val arg_reg_eqs =
+              map2
+                (fn t => fn reg =>
+                  HTIU.mk_eq (t, HTIU.mk_state_register_retrieval (Thm.term_of s) reg)
+                  |> HTIU.mk_Trueprop |> Thm.cterm_of ctxt)
+                arg_terms arg_regs
+
+            (* val _ =
+              (Pretty.writeln o Pretty.block o Pretty.breaks)
+              (Pretty.str "eqs:" :: map (Pretty.cartouche o Syntax.pretty_term ctxt o Thm.term_of) arg_reg_eqs) *)
+
+            (* tactic for proving the equalities: add existing premises, then simp *)
+            val arg_reg_eq_tac =
+              Tactic.cut_facts_tac prems
+              THEN'
+              (* TODO: narrow down the simpset here... or come up with a better tactic *)
+              Simplifier.simp_tac (
+                Simplifier.clear_simpset ctxt
+                addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
+              THEN' Simplifier.simp_tac ctxt
+
+            (* prove the equalities *)
+            val arg_reg_eq_thms =
+              arg_reg_eqs |> map (Tactic_Util.apply_tac arg_reg_eq_tac 1 #> Seq.hd)
+              (* TODO: Seq.hd OK ?? Or does one really need to consider all combinations... *)
+
+            val _ =
+              (Pretty.writeln o Pretty.block o Pretty.breaks)
+              (Pretty.str "eq_thms:" :: map (Pretty.cartouche o Syntax.pretty_term ctxt o Thm.prop_of) arg_reg_eq_thms)
+
+            val rewrite_concl_tac =
+              resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
+              THEN' EVERY' (rev arg_reg_eq_thms |> map (single #> HTIU.subst_first_tac ctxt))
+              THEN' resolve_tac ctxt [@{thm refl}]
+
+            val instantiate_ih_tac =
+              (* TU.insert_tac, Tactic.cut_tac or resolve_tac ??? *)
+              resolve_tac ctxt [Drule.infer_instantiate' ctxt [SOME s] ih]
+
+            val solve_ih_prem_tac =
+              Tactic.cut_facts_tac prems
+              THEN' (HTIU.subst_first_tac ctxt (map (fn thm => flip_eq_thm thm ctxt) arg_reg_eq_thms))
+              THEN' Simplifier.simp_tac ctxt (* TODO: narrow simp set *)
+
           in
-            TU.focus_delete_prems_tac [1 (* TODO: determine IH position dynamically *)] instantiate_ih_tac ctxt THEN' rotate_tac (~1)
-            THEN' TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o reg_eq_tac) ctxt
+            (* TU.focus_delete_prems_tac [1 (* TODO: determine IH position dynamically *)] instantiate_ih_tac ctxt THEN' rotate_tac (~1)
+            THEN' *) (* TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o reg_eq_tac) ctxt *)
+            rewrite_concl_tac
+            THEN' instantiate_ih_tac THEN_ALL_NEW solve_ih_prem_tac
           end
     in
       Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms mul_acc_nat.simps})
-      THEN' TU.CSUBGOAL_STRIPPED (snd o snd) extract_state_tac
+      THEN' TU.FOCUS_PREMS' extract_state_tac ctxt
     end
   in
-  TU.FOCUS_PARAMS_CTXT' main_tac (* (TU.CSUBGOAL_STRIPPED (snd o snd) o tac1) *)
+    TU.FOCUS_PARAMS_CTXT' main_tac
   end
 
 end
@@ -349,8 +367,6 @@ end
 -> the latter two don't strip assumptions
 -> FOCUS_PREMS is to FOCUS as FOCUS_PARAMS_FIXED is to FOCUS_PARAMS
     --> but what's the difference?????? --> fixing ?schematic variables *)
-
-(* left-nested sequences? e.g. (x = 5; y = 7); z = 12 instead of x = 5; (y = 7; z = 12) *)
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
   (* apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI) *)
