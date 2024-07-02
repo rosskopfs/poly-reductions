@@ -283,14 +283,11 @@ fun cdest_terminates_with_res_IMP_Tailcall ct =
 
 val finish_tail_tac =
   let fun main_tac ctxt =
-    let fun extract_state_tac (focus as { context = ctxt, prems, concl, ... } : Subgoal.focus) =
+    let fun extract_state_tac ({ context = ctxt, prems, concl, ... } : Subgoal.focus) =
       case try cdest_terminates_with_res_IMP_Tailcall concl of
         NONE => (writeln "couldn't find ... in conclusion"; K no_tac (* TODO: error case *))
       | SOME (_, _, s, _, v) =>
           let
-
-            (* val _ = pretty_focus focus |> Pretty.writeln *)
-
             val ih =
               let val is_ih = Thm.cconcl_of #> can cdest_terminates_with_res_IMP_Tailcall
               in find_first is_ih prems |> the (* TODO *) end
@@ -309,10 +306,6 @@ val finish_tail_tac =
                   |> HTIU.mk_Trueprop |> Thm.cterm_of ctxt)
                 arg_terms arg_regs
 
-            (* val _ =
-              (Pretty.writeln o Pretty.block o Pretty.breaks)
-              (Pretty.str "eqs:" :: map (Pretty.cartouche o Syntax.pretty_term ctxt o Thm.term_of) arg_reg_eqs) *)
-
             (* tactic for proving the equalities: add existing premises, then simp *)
             val arg_reg_eq_tac =
               Tactic.cut_facts_tac prems
@@ -327,10 +320,6 @@ val finish_tail_tac =
             val arg_reg_eq_thms =
               arg_reg_eqs |> map (Tactic_Util.apply_tac arg_reg_eq_tac 1 #> Seq.hd)
               (* TODO: Seq.hd OK ?? Or does one really need to consider all combinations... *)
-
-            val _ =
-              (Pretty.writeln o Pretty.block o Pretty.breaks)
-              (Pretty.str "eq_thms:" :: map (Pretty.cartouche o Syntax.pretty_term ctxt o Thm.prop_of) arg_reg_eq_thms)
 
             val rewrite_concl_tac =
               resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
@@ -347,10 +336,8 @@ val finish_tail_tac =
               THEN' Simplifier.simp_tac ctxt (* TODO: narrow simp set *)
 
           in
-            (* TU.focus_delete_prems_tac [1 (* TODO: determine IH position dynamically *)] instantiate_ih_tac ctxt THEN' rotate_tac (~1)
-            THEN' *) (* TU.FOCUS_PARAMS_CTXT' (TU.CSUBGOAL_STRIPPED (fst o snd) o reg_eq_tac) ctxt *)
             rewrite_concl_tac
-            THEN' instantiate_ih_tac THEN_ALL_NEW solve_ih_prem_tac
+            THEN' (instantiate_ih_tac THEN_ALL_NEW solve_ih_prem_tac)
           end
     in
       Simplifier.simp_tac (Simplifier.clear_simpset ctxt addsimps @{thms mul_acc_nat.simps})
@@ -362,11 +349,6 @@ val finish_tail_tac =
 
 end
 \<close>
-
-(* what is the difference between FOCUS/FOCUS_PREMS/FOCUS_PARAMS/FOCUS_PARAMS_FIXED ???
--> the latter two don't strip assumptions
--> FOCUS_PREMS is to FOCUS as FOCUS_PARAMS_FIXED is to FOCUS_PARAMS
-    --> but what's the difference?????? --> fixing ?schematic variables *)
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
   (* apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI) *)
