@@ -162,26 +162,30 @@ fun SIMPS_TO_tac simps ctxt =
   TU.TRY' (simp_tac (ctxt addsimps simps))
   THEN' resolve_tac ctxt [@{thm SIMPS_TOI}]
 
-fun SIMPS_TO_UNIF_tac simps ctxt = (* @{thms STATE_eq interp_state_State_eq} *)
+fun SIMPS_TO_UNIF_tac simps ctxt =
   resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}]
   THEN' TU.TRY' (SIMPS_TO_tac simps ctxt)
-  THEN' resolve_tac ctxt [@{thm reflexive}] (* TODO: does \<open>reflexive\<close> apply generally to SIMPS_TO_UNIF? -> yes, to solve s === t premise *)
+  THEN' resolve_tac ctxt [@{thm reflexive}]
+
 
 val STATE_interp_state_State_thms = @{thms STATE_eq interp_state_State_eq}
 
 fun SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt =
   SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt
-  (* THEN' resolve_tac ctxt [@{thm reflexive}] *)
 
 fun STATE_interp_update_eq_STATE_interp_fun_upd ctxt =
   resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI}]
   THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
 
-fun STATE_interp_retrieve_key_eq_tac finish_eq_tac ctxt =
+fun STATE_interp_retrieve_key_eq_tac finish_eq_tac ctxt = (* TODO: kind of ugly *)
   resolve_tac ctxt [@{thm STATE_interp_retrieve_key_eqI}]
   THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac (ctxt addsimps STATE_interp_state_State_thms)
   THEN' finish_eq_tac
   (* THEN' simp_tac (ctxt addsimps STATE_interp_state_State_thms) *)
+
+fun terminates_with_res_tAssign_tac ctxt =
+  resolve_tac ctxt [@{thm terminates_with_res_tAssignI}]
+  THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
 
 fun terminates_with_res_step_tac correctness ctxt =
   let
@@ -196,9 +200,6 @@ fun terminates_with_res_step_tac correctness ctxt =
       THEN' resolve_tac ctxt correctness
       (* solve state update assumption: s' = s(r := val) *)
       THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
-    val terminates_with_res_tAssign_tac =
-      resolve_tac ctxt [@{thm terminates_with_res_tAssignI}]
-      THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
     val terminates_with_res_tIf_tac =
       resolve_tac ctxt [@{thm terminates_with_res_tIf_processedI}]
       THEN' STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
@@ -207,13 +208,11 @@ fun terminates_with_res_step_tac correctness ctxt =
   in
     (terminates_with_res_tSeq_tac
       THEN' (terminates_with_tAssign_tac ORELSE' terminates_with_tCall_tac))
-    ORELSE' terminates_with_res_tAssign_tac
+    (* ORELSE' terminates_with_res_tAssign_tac *)
     ORELSE' terminates_with_res_tIf_tac
   end
 
 (* finish in the inductive case *)
-
-val foo = Subgoal.FOCUS_PARAMS
 
 fun pretty_focus ({ asms, concl, context, params, prems, schematics=_ } : Subgoal.focus) =
   let
@@ -236,8 +235,6 @@ fun pretty_focus ({ asms, concl, context, params, prems, schematics=_ } : Subgoa
 
 end
 \<close>
-
-(* lemma add_assumption: assumes P and "P ==> Q" shows "Q" using assms by blast *)
 
 (* isolates the return value in its own subgoal *)
 lemma rewrite_terminates_with_res_IMP_Tailcall_value:
@@ -268,6 +265,11 @@ fun cdest_terminates_with_res_IMP_Tailcall ct =
     (Const (@{const_name terminates_with_res_IMP_Tailcall}, _), [tc, c, s, r, v]) => (tc, c, s, r, v)
   | _ => raise CTERM ("cdest_terminates_with_res_IMP_Tailcall", [ct])
 
+fun dest_terminates_with_res_IMP_Tailcall t =
+  case HTIU.dest_Trueprop t |> Term.strip_comb of
+    (Const (@{const_name terminates_with_res_IMP_Tailcall}, _), [tc, c, s, r, v]) => (tc, c, s, r, v)
+  | _ => raise TERM ("dest_terminates_with_res_IMP_Tailcall", [t])
+
 (* val _ = let open Pretty in
     (block o breaks) [
       str "in finish_tail_tac:",
@@ -275,16 +277,13 @@ fun cdest_terminates_with_res_IMP_Tailcall ct =
       (block o breaks) [str "cconcl:", cartouche (pretty_cterm ctxt cconcl)],
     ] |> writeln end *)
 
-fun finish_tail_tac simps =
+val finish_tail_tac =
   let fun main_tac ctxt =
     let fun extract_state_tac ({ context = ctxt, prems, concl, ... } : Subgoal.focus) =
       case try cdest_terminates_with_res_IMP_Tailcall concl of
         NONE => (writeln "couldn't find ... in conclusion"; K no_tac (* TODO: error case *))
       | SOME (_, _, s, _, v) =>
           let
-            val ih =
-              let val is_ih = Thm.cconcl_of #> can cdest_terminates_with_res_IMP_Tailcall
-              in find_first is_ih prems |> the (* TODO *) end
 
             (* v is of the form f t1 t2 ..., where f is the relevant HOL function;
                extract the list of argument registers of f, and the terms t1, t2, ... *)
@@ -312,7 +311,7 @@ fun finish_tail_tac simps =
 
             (* prove the equalities *)
             val arg_reg_eq_thms =
-              arg_reg_eqs |> map (Tactic_Util.apply_tac arg_reg_eq_tac 1 #> Seq.hd)
+              arg_reg_eqs |> map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac) #> Seq.hd)
               (* TODO: Seq.hd OK ?? Or does one really need to consider all combinations... *)
 
             val _ = @{print } arg_reg_eq_thms
@@ -334,9 +333,13 @@ fun finish_tail_tac simps =
               resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
               THEN' rewrite_args_tac (rev arg_reg_eq_thms)
 
-            val instantiate_ih_tac (* TODO rename *) =
+            val is_ih = Thm.cconcl_of #> can cdest_terminates_with_res_IMP_Tailcall
+
+            val instantiate_apply_ih_tac =
               (* TU.insert_tac, Tactic.cut_tac or resolve_tac ??? *)
-              resolve_tac ctxt [Drule.infer_instantiate' ctxt [SOME s] ih]
+              filter is_ih prems
+              |> map_filter (try (Drule.infer_instantiate' ctxt [SOME s]))
+              |> resolve_tac ctxt
 
             val solve_ih_prem_tac =
               Tactic.cut_facts_tac prems
@@ -345,15 +348,11 @@ fun finish_tail_tac simps =
 
           in
             rewrite_concl_tac
-            THEN' instantiate_ih_tac
-            THEN_ALL_NEW solve_ih_prem_tac
+            THEN' instantiate_apply_ih_tac
+            THEN_ALL_NEW SOLVED' solve_ih_prem_tac
           end
     in
       resolve_tac ctxt [@{thm terminates_with_res_tTailI}]
-      (* replace the HOL function call with its body, then simplify *)
-      (* TODO: the simplification step is fragile if there is any other theorem about the HOL function in the simpset *)
-      (* TODO: target the relevant assumptions only *)
-      THEN' HTIU.subst_first_tac ctxt simps THEN' Simplifier.asm_simp_tac ctxt
       THEN' TU.FOCUS_PREMS' extract_state_tac ctxt
     end
   in
@@ -365,19 +364,51 @@ val f =
     open Pretty
     val x = Compile_Nat.get_compiled_const (Context.Proof @{context}) @{const_name HOL.eq}
     val fcs_opt = H.get_func_corrects @{context} (#compiled x)
+    val _ = @{print} fcs_opt
     val keys = H.get_IMP_keys @{context} @{term HOL.eq}
     val _ = (block o breaks) (map (Syntax.pretty_term @{context}) keys) |> writeln
+    val eqs = HTIB.get_HOL_eqs @{context} @{term mul_acc_nat} |> @{print}
+  in () end
+
+fun finish_non_tail_tac ctxt =
+  terminates_with_res_tAssign_tac ctxt
+  THEN' STATE_interp_retrieve_key_eq_tac (asm_simp_tac (ctxt addsimps ((* simps @ *) @{thms Let_def}))) ctxt
+
+fun with_dest_terminates_with_res_IMP_Tailcall_args tac =
+  let
+    fun wrap_tac concl =
+      case try dest_terminates_with_res_IMP_Tailcall concl of
+        NONE => (writeln "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"; K no_tac (* TODO: error case *))
+      | SOME args => tac args
   in
-    (@{print} fcs_opt)
+    TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac
   end
 
-fun finish_non_tail_tac simps ctxt =
-  STATE_interp_retrieve_key_eq_tac (asm_full_simp_tac (ctxt addsimps (simps @ @{thms Let_def}))) ctxt
+fun finish_tac get_HOL_eqs =
+  let
+    (* replace the HOL function call with its body *)
+    fun subst_hol_fun_tac ctxt (_, _, _, _, v) =
+      case get_HOL_eqs ctxt (head_of v) of
+        NONE => (writeln "Could not find HOL equality for HOL term in conclusion"; (* TODO *) K no_tac)
+      | SOME thms => HTIU.subst_first_tac ctxt thms
+    fun decide_finish_tac ctxt (_, c, _, _, _) =
+      case c of
+        Const (@{const_name tTAIL}, _) => finish_tail_tac ctxt
+      | Const (@{const_name tAssign}, _) $ _ $ _ => (writeln "tAssign"; finish_non_tail_tac ctxt)
+      | _ => (writeln "finish_tac: expected tTAIL or tAssign"; K no_tac (* TODO: nicer error *))
+    fun tac ctxt =
+      with_dest_terminates_with_res_IMP_Tailcall_args (subst_hol_fun_tac ctxt)
+      (* TODO: the simplification step is fragile if there is any
+          other theorem about the HOL function in the simpset *)
+      (* TODO: target the relevant assumptions only (?) *)
+      THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
+      THEN' with_dest_terminates_with_res_IMP_Tailcall_args (decide_finish_tac ctxt)
+  in
+    TU.FOCUS_PARAMS_CTXT' tac
+  end
 
-fun finish_tac ctxt = 1 (* decide based on whether the command is tTAIL or not *)
-
-(* TODO: correctness and simps from context !!! *)
-fun tac correctness simps =
+(* TODO: correctness from context !!! *)
+fun tac correctness =
   let
     fun metis ctxt = Metis_Tactic.metis_tac [] ATP_Problem_Generate.combsN ctxt []
     fun ftac ctxt =
@@ -387,11 +418,8 @@ fun tac correctness simps =
         HA.start_case_tac H.get_IMP_def ctxt
         THEN' REPEAT_ALL_NEW (HA.terminates_with_res_step_tac correctness ctxt)
         THEN_ALL_NEW (
-          (* TODO: in both cases, apply the HOL definition once (by subst) *)
-          (finish_non_tail_tac simps ctxt)
-          (* TODO: move resolve_tac into finish_tail *)
-          ORELSE' (finish_tail_tac simps ctxt) (* TODO: terminates_with_res_tTailI to own tac *)
-          (* ORELSE' metis ctxt *)
+          finish_tac HTIB.get_HOL_eqs ctxt
+          ORELSE' Simplifier.asm_simp_tac ctxt
           ORELSE' K all_tac))
   in
     TU.FOCUS_PARAMS_CTXT' ftac
@@ -407,10 +435,7 @@ HOL_To_IMP_Minus_func_correct mul_acc_nat
         eq_nat_IMP_Minus_func_correct
         add_nat_IMP_Minus_func_correct
         sub_nat_IMP_Minus_func_correct}
-      @{thms mul_acc_nat.simps} @{context} 1\<close>
-    )
-   apply metis
-
+      @{context} 1\<close>)
   done
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
@@ -451,16 +476,9 @@ HOL_To_IMP_Minus_func_correct div_acc_nat
         lt_nat_IMP_Minus_func_correct
         sub_nat_IMP_Minus_func_correct
         add_nat_IMP_Minus_func_correct}
-      @{thms div_acc_nat.simps} @{context} 1\<close>
+      @{context} 1\<close>
     )
-  apply (rule rewrite_terminates_with_res_IMP_Tailcall_value)
-  apply (urule rewrite_comb)
-  apply (rule refl)
-  apply (rule refl)
-  apply (rule refl)
-  apply (rule refl)
-    (* something goes wrong at the end... *)
-  sorry
+  done
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
   by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
@@ -513,9 +531,13 @@ HOL_To_IMP_Minus_func_correct sqrt_aux_nat
       lt_nat_IMP_Minus_func_correct
       le_nat_IMP_Minus_func_correct
       add_nat_IMP_Minus_func_correct
+      div_nat_IMP_Minus_func_correct
+      square_nat_IMP_Minus_func_correct
+      Suc_IMP_Minus_func_correct
       }
-    @{thms div_acc_nat.simps} @{context} 1\<close>
+    @{context} 1\<close>
   )
+  done
 
 (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
 (*
