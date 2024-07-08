@@ -53,10 +53,23 @@ structure PU = Parse_Util
 structure HA = struct
 open HA
 
+type terminates_with_res_IMP_Tailcall_args = {tc: term, c: term, s: term, r: term, v: term}
+
 val dest_terminates_with_res_IMP_Tailcall =
-  \<^Const_fn>\<open>terminates_with_res_IMP_Tailcall for tc c s r v => \<open>(tc, c, s, r, v)\<close>\<close>
+  \<^Const_fn>\<open>terminates_with_res_IMP_Tailcall for tc c s r v => \<open>{tc = tc, c = c, s = s, r = r, v = v}\<close>\<close>
 val dest_terminates_with_res_IMP_Tailcall_prop =
   HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Tailcall
+
+fun with_dest_terminates_with_res_IMP_Tailcall_prop tac =
+  let
+    fun wrap_tac concl =
+      case try dest_terminates_with_res_IMP_Tailcall_prop concl of
+        NONE => (writeln "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"; K no_tac (* TODO: error case *))
+      | SOME args => tac args
+  in
+    TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac
+  end
+
 
 val dest_terminates_with_res_IMP_Minus =
   \<^Const_fn>\<open>terminates_with_res_IMP_Minus for c s r v => \<open>(c, s, r, v)\<close>\<close>
@@ -69,21 +82,6 @@ val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus =
 
 val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop =
   HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus
-
-fun dest_terminates_with_res_IMP_Tailcall(* _prop *) t =
-  case HTIU.dest_Trueprop t |> Term.strip_comb of
-    (Const (@{const_name terminates_with_res_IMP_Tailcall}, _), [tc, c, s, r, v]) => (tc, c, s, r, v)
-  | _ => raise TERM ("dest_terminates_with_res_IMP_Tailcall", [t])
-
-fun with_dest_terminates_with_res_IMP_Tailcall(* _prop *) tac =
-  let
-    fun wrap_tac concl =
-      case try dest_terminates_with_res_IMP_Tailcall concl of
-        NONE => (writeln "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"; K no_tac (* TODO: error case *))
-      | SOME args => tac args
-  in
-    TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac
-  end
 
 fun preprocess_tac get_IMP_def =
   let fun tac ctxt conclusion =
@@ -120,7 +118,7 @@ val rewrite_eq_state_retrieval_sym_tac =
         REPEAT_ALL_NEW (HTIU.subst_first_tac ctxt prems_flipped)
         THEN' TU.insert_tac prems_flipped ctxt
       end
-    fun rewrite_tac ctxt prems (_, _, s, _, _)  =
+    fun rewrite_tac ctxt prems {s, ...}  =
       let
         val is_eq_state_retrieval_prem =
           GU.try_bool
@@ -134,11 +132,11 @@ val rewrite_eq_state_retrieval_sym_tac =
   in
     TU.FOCUS_PARAMS_CTXT' (
       TU.SUBGOAL_STRIPPED (fst o snd) o (
-        with_dest_terminates_with_res_IMP_Tailcall oo rewrite_tac))
+        with_dest_terminates_with_res_IMP_Tailcall_prop oo rewrite_tac))
   end
 
 fun setup_induction_tac get_inducts =
-  let fun focused_tac ctxt (_, _, s, _, v) =
+  let fun focused_tac ctxt {s, v, ...} =
     let
       (* v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after *)
       val head = head_of v
@@ -155,13 +153,13 @@ fun setup_induction_tac get_inducts =
          form "t = s ''<register>''", which have to be rewritten in the goal's conclusion" *)
       THEN_ALL_NEW (TU.TRY' (rewrite_eq_state_retrieval_sym_tac ctxt))
     end
-  in TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall o focused_tac) end
+  in TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall_prop o focused_tac) end
 
 fun start_case_tac get_IMP_def =
-  let fun focused_tac ctxt (_, c, _, _, _) =
+  let fun focused_tac ctxt {c, ...} =
     EqSubst.eqsubst_tac ctxt [2] (get_IMP_def ctxt c |> the_list)
     THEN' resolve_tac ctxt [@{thm terminates_with_res_IMP_Tailcall_start}]
-  in TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall o focused_tac) end
+  in TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall_prop o focused_tac) end
 
 
 (* SIMPS_TO helper tactics *)
@@ -234,7 +232,7 @@ fun get_func_corrects ctxt t =
 (* run one tSeq or tIf step of a tailcall program, preserves the terminates_with_res ... structure *)
 fun terminates_with_res_step_tac get_func_corrects =
   let
-    fun tac ctxt (_, c, _, _, _) =
+    fun tac ctxt {c, ...} =
       case c of
         Const (@{const_name tSeq}, _) $ (Const (@{const_name tAssign}, _) $ _ $ _) $ _ =>
           terminates_with_res_tSeq_tac ctxt THEN' terminates_with_tAssign_tac ctxt
@@ -245,14 +243,14 @@ fun terminates_with_res_step_tac get_func_corrects =
       | Const (@{const_name tIf}, _) $ _ $ _ $ _ => terminates_with_res_tIf_tac ctxt
       | _ => K no_tac
   in
-    TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall o tac)
+    TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall_prop o tac)
   end
 
 (* finishing tactics *)
 
 val finish_tail_tac =
   let fun tac ctxt =
-    let fun extract_state_tac ({ context = ctxt, prems, ... } : Subgoal.focus) (_, _, s, _, v) =
+    let fun extract_state_tac ({ context = ctxt, prems, ... } : Subgoal.focus) {s, v, ...} =
       let
 
         (* v is of the form f t1 t2 ..., where f is the relevant HOL function;
@@ -284,8 +282,6 @@ val finish_tail_tac =
           arg_reg_eqs |> map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac) #> Seq.hd)
           (* TODO: Seq.hd OK ?? Or does one really need to consider all combinations... *)
 
-        val _ = @{print } arg_reg_eq_thms
-
         fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
 
         fun unify_resolve_tac thm =
@@ -303,7 +299,7 @@ val finish_tail_tac =
           resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
           THEN' rewrite_args_tac (rev arg_reg_eq_thms)
 
-        val is_ih = Thm.concl_of #> can dest_terminates_with_res_IMP_Tailcall
+        val is_ih = Thm.concl_of #> can dest_terminates_with_res_IMP_Tailcall_prop
 
         val instantiate_apply_ih_tac =
           (* TU.insert_tac, Tactic.cut_tac or resolve_tac ??? *)
@@ -323,7 +319,7 @@ val finish_tail_tac =
       end
     in
       resolve_tac ctxt [@{thm terminates_with_res_tTailI}]
-      THEN' TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall o extract_state_tac) ctxt
+      THEN' TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o extract_state_tac) ctxt
     end
   in
     TU.FOCUS_PARAMS_CTXT' tac
@@ -336,32 +332,32 @@ fun finish_non_tail_tac ctxt =
 fun finish_tac get_HOL_eqs =
   let
     (* replace the HOL function call with its body *)
-    fun subst_hol_fun_tac ctxt (_, _, _, _, v) =
+    fun subst_hol_fun_tac ctxt {v, ...} =
       case get_HOL_eqs ctxt (head_of v) of
         NONE => (writeln "Could not find HOL equality for HOL term in conclusion"; (* TODO *) K no_tac)
       | SOME thms => HTIU.subst_first_tac ctxt thms
-    fun decide_finish_tac ctxt (_, c, _, _, _) =
+    fun decide_finish_tac ctxt {c, ...} =
       case c of
         Const (@{const_name tTAIL}, _) => finish_tail_tac ctxt
-      | Const (@{const_name tAssign}, _) $ _ $ _ => (writeln "tAssign"; finish_non_tail_tac ctxt)
+      | Const (@{const_name tAssign}, _) $ _ $ _ => finish_non_tail_tac ctxt
       | _ => (writeln "finish_tac: expected tTAIL or tAssign"; K no_tac (* TODO: nicer error *))
     fun tac ctxt =
-      with_dest_terminates_with_res_IMP_Tailcall (subst_hol_fun_tac ctxt)
+      with_dest_terminates_with_res_IMP_Tailcall_prop (subst_hol_fun_tac ctxt)
       (* TODO: the simplification step is fragile if there is any
           other theorem about the HOL function in the simpset *)
       (* TODO: target the relevant assumptions only (?) *)
       THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
-      THEN' with_dest_terminates_with_res_IMP_Tailcall (decide_finish_tac ctxt)
+      THEN' with_dest_terminates_with_res_IMP_Tailcall_prop (decide_finish_tac ctxt)
   in
     TU.FOCUS_PARAMS_CTXT' tac
   end
 
-val cook =
+fun cook tailcall =
   let
     (* fun metis ctxt = Metis_Tactic.metis_tac [] ATP_Problem_Generate.combsN ctxt [] *)
     fun tac ctxt =
       preprocess_tac H.get_IMP_def ctxt
-      THEN' HA.setup_induction_tac HA.get_HOL_inducts ctxt
+      THEN' (if tailcall then HA.setup_induction_tac HA.get_HOL_inducts ctxt else K all_tac)
       THEN_ALL_NEW (
         start_case_tac H.get_IMP_def ctxt
         THEN' REPEAT_ALL_NEW (terminates_with_res_step_tac get_func_corrects ctxt)
@@ -377,7 +373,8 @@ end
 \<close>
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply (tactic \<open>HA.cook @{context} 1\<close>) done
+  apply (tactic \<open>HA.cook true @{context} 1\<close>)
+  done
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
   by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
@@ -410,8 +407,7 @@ compile_nat div_acc_nat.simps basename div_acc
 thm div_acc_nat.induct
 
 HOL_To_IMP_Minus_func_correct div_acc_nat
-  apply (tactic \<open>HA.cook @{context} 1\<close>)
-  done
+  apply (tactic \<open>HA.cook true @{context} 1\<close>) done
 
 lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
   by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
@@ -429,14 +425,16 @@ declare_compiled_const "divide"
   argument_registers "div.args.x" "div.args.y"
   compiled "tailcall_to_IMP_Minus div_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct div_nat (* by cook *) sorry
+HOL_To_IMP_Minus_func_correct div_nat
+  apply (tactic \<open>HA.cook false @{context} 1\<close>) done
 
 definition square_nat :: "nat \<Rightarrow> nat" where
   "square_nat x \<equiv> mul_nat x x"
 
 compile_nat square_nat_def basename square
 
-HOL_To_IMP_Minus_func_correct square_nat (* by cook *) sorry
+HOL_To_IMP_Minus_func_correct square_nat
+  apply (tactic \<open>HA.cook false @{context} 1\<close>) done
 
 lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
   unfolding square_nat_def by (simp add: power2_eq_square)
@@ -458,8 +456,7 @@ declare sqrt_aux_nat.simps[simp del]
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat
-  apply (tactic \<open>HA.cook @{context} 1\<close>)
-  done
+  apply (tactic \<open>HA.cook true @{context} 1\<close>) done
 
 (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
 (*
@@ -492,7 +489,8 @@ definition sqrt_nat :: "nat \<Rightarrow> nat" where
 
 compile_nat sqrt_nat_def basename sqrt
 
-HOL_To_IMP_Minus_func_correct sqrt_nat by cook
+HOL_To_IMP_Minus_func_correct sqrt_nat
+  apply (tactic \<open>HA.cook false @{context} 1 \<close>) done
 
 lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"
   using square_sqrt_aux_nat_le unfolding sqrt_nat_def by (simp add: power2_eq_square)
@@ -507,37 +505,3 @@ corollary sqrt_nat_sqrt[simp]: "sqrt_nat y = Discrete.sqrt y"
 end
 
 end
-
-
-
-(* lemma foo:
-  assumes "PROP SIMPS_TO_UNIF val val'"
-  shows "STATE (interp_state (update_state s k val')) = (STATE (interp_state s))(k := val)"
-  using assms unfolding STATE_eq SIMPS_TO_UNIF_eq by (simp add: interp_state_State_eq) *)
-
-(* find_theorems "_ \<turnstile> (tCall _ _, _) \<Rightarrow>\<^bsup>_\<^esup> _" *)
-
-(* thm tCall *)
-
-
-(* context
-  notes
-    terminates_with_IMP_MinusE[elim] terminates_with_res_IMP_MinusE[elim]
-    (* terminates_with_IMP_TailcallE[elim] terminates_with_res_IMP_TailcallE[elim] *)
-(*     terminates_with_res_IMP_MinusI[intro] terminates_with_IMP_MinusI[intro]
-    terminates_with_res_IMP_TailcallI[intro] *) terminates_with_IMP_TailcallI[intro]
-begin *)
-(* 
-lemma bar:
-  assumes "terminates_with_res_IMP_Minus c s r v"
-  and "s' = s(r := v)"
-  shows "terminates_with_IMP_Tailcall tc (tCall c r) s s'"
-
-using assms proof-
-  obtain s'' where "terminates_with_IMP_Minus c s s''" "s'' r = v" using terminates_with_res_IMP_MinusE[OF assms(1)] by blast
-  have "\<exists>t. (c, s) \<Rightarrow>\<^bsup>t\<^esup> s''" using terminates_with_IMP_MinusE[OF \<open>terminates_with_IMP_Minus c s s''\<close>] by blast
-  then have "\<exists>t. tc \<turnstile> (tCall c r, s) \<Rightarrow>\<^bsup>t\<^esup> s(r := v)" using \<open>s'' r = v\<close> by auto
-  then have "\<exists>t. tc \<turnstile> (tCall c r, s) \<Rightarrow>\<^bsup>t\<^esup> s'" using assms by simp
-  then show "terminates_with_IMP_Tailcall tc (tCall c r) s s'" using terminates_with_IMP_TailcallI by blast
-qed
- *)
