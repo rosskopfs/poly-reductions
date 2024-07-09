@@ -50,8 +50,29 @@ structure SUT = State_Update_Tracking
 structure SUTIT = State_Update_Tracking_IMP_Tailcalls
 structure PU = Parse_Util
 
+structure Seq = HTIU.Seq
+
 structure HA = struct
 open HA
+
+fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
+
+fun uresolve_tac ctxt thms =
+  Standard_Unify_Resolve.unify_resolve_tac (Unify_Resolve_Args.PRM.r ()) thms [] ctxt
+
+
+(* evaluates the first element, offers it (or NONE) to f, then returns a new sequence where the
+    evaluation of the first element has been memoized *)
+fun seq_peek1 f s =
+  case Seq.pull s of
+    SOME (x, xs) => (f (SOME x); Seq.cons x xs)
+  | NONE => (f NONE; Seq.empty)
+
+fun seq_peek_empty f = seq_peek1 (fn NONE => f () | SOME _ => ())
+
+infix 1 LET
+fun x LET f = f x
+
 
 type terminates_with_res_IMP_Tailcall_args = {tc: term, c: term, s: term, r: term, v: term}
 
@@ -246,111 +267,127 @@ fun terminates_with_res_step_tac get_func_corrects =
     TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall_prop o tac)
   end
 
+
 (* finishing tactics *)
 
 val finish_tail_tac =
-  let fun tac ctxt =
-    let fun extract_state_tac ({ context = ctxt, prems, ... } : Subgoal.focus) {s, v, ...} =
-      let
+  let
+    open Seq.M
 
-        (* v is of the form f t1 t2 ..., where f is the relevant HOL function;
-           extract the list of argument registers of f, and the terms t1, t2, ... *)
-        val ({ arg_regs, ... }, arg_terms) =
-          v |> Term.strip_comb
-          |>> (dest_Const #> fst #> Compile_Nat.get_compiled_const (Context.Proof ctxt))
-
+    (* get a list of theorems of the form t_i = s ''reg_i'',
+       one for each argument in the function application term v *)
+    fun get_reg_eq_thms ctxt arg_reg_eq_tac s v =
+      (* v is of the form f t1 t2 ..., where f is the relevant HOL function;
+         extract the head f, and the terms t1, t2, ... *)
+      Term.strip_comb v
+      LET (fn (head, arg_terms) =>
+        (* fetch the compiled constant *)
+        Basics.try (dest_Const #> fst #> Compile_Nat.get_compiled_const (Context.Proof ctxt)) head
+        |> HTIU.seq_of_opt (fn () => writeln "could not load compiled constant" (* todo msg *))
+      BIND (fn {arg_regs, ...} =>
         (* construct equalities of the form t_i = s ''reg_i'' *)
-        val arg_reg_eqs =
-          map2
-            (fn t => fn reg =>
-              HTIU.mk_eq (t, HTIU.mk_state_register_retrieval s reg)
-              |> HTIU.mk_Trueprop |> Thm.cterm_of ctxt)
-            arg_terms arg_regs
-
-        (* tactic for proving the equalities: add existing premises, then simp *)
-        val arg_reg_eq_tac =
-          Tactic.cut_facts_tac prems
-          THEN'
-          (* TODO: narrow down the simpset here... or come up with a better tactic *)
-          Simplifier.asm_simp_tac (
-            Simplifier.clear_simpset ctxt
-            addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
-          THEN' Simplifier.asm_simp_tac ctxt
-
+        map2
+          (fn t => fn reg =>
+            HTIU.mk_eq (t, HTIU.mk_state_register_retrieval s reg)
+            |> HTIU.mk_Trueprop |> Thm.cterm_of ctxt)
+          arg_terms arg_regs
+      LET (fn arg_reg_eqs =>
         (* prove the equalities *)
-        val arg_reg_eq_thms =
-          arg_reg_eqs |> map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac) #> Seq.hd)
-          (* TODO: Seq.hd OK ?? Or does one really need to consider all combinations... *)
+        arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac)) |> Seq.A.sequence
+        (* this might not be an actual warning: if we simplify the HOL call incorrectly, a backtrack would be ok *)
+        |> seq_peek_empty (fn () => writeln "could not prove one or more register equalities")
+      )))
 
-        fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
+    (* tactic for proving the equalities: add existing premises, then simp *)
+    fun arg_reg_eq_tac ctxt prems =
+      Tactic.cut_facts_tac prems
+      THEN'
+      (* TODO: narrow down the simpset here... or come up with a better tactic *)
+      Simplifier.asm_simp_tac (
+        Simplifier.clear_simpset ctxt
+        addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
+      THEN' Simplifier.asm_simp_tac ctxt
 
-        fun unify_resolve_tac thm =
-          Standard_Unify_Resolve.unify_resolve_tac (Unify_Resolve_Args.PRM.r ()) [thm] [] ctxt
-
-        (* rewrite each argument t_i to s ''reg_i''; each argument is first drawn out
-           into a separate subgoal t_i = ?v s to prevent substitution from occurring inside s *)
+    (* rewrite each argument t_i to s ''reg_i'' *)
+    fun rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms =
+      let
+        (* each argument is first drawn out into a separate subgoal t_i = ?v s
+           to prevent substitution from occurring inside s *)
         fun rewrite_args_tac [] = refl_tac ctxt
           | rewrite_args_tac (thm :: thms) =
-              unify_resolve_tac @{thm rewrite_comb}
+              uresolve_tac ctxt [@{thm rewrite_comb}]
               THEN' rewrite_args_tac thms
               THEN' HTIU.subst_first_tac ctxt [thm] THEN' refl_tac ctxt
+      in
+        resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
+        THEN' rewrite_args_tac (rev arg_reg_eq_thms)
+      end
 
-        val rewrite_concl_tac =
-          resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
-          THEN' rewrite_args_tac (rev arg_reg_eq_thms)
-
+    fun solve_with_ih_tac ctxt prems s arg_reg_eq_thms =
+      let
         val is_ih = Thm.concl_of #> can dest_terminates_with_res_IMP_Tailcall_prop
 
         val instantiate_apply_ih_tac =
-          (* TU.insert_tac, Tactic.cut_tac or resolve_tac ??? *)
           filter is_ih prems
           |> map_filter (try (Drule.infer_instantiate' ctxt [SOME (Thm.cterm_of ctxt s)]))
           |> resolve_tac ctxt
 
         val solve_ih_prem_tac =
           Tactic.cut_facts_tac prems
-          THEN' TU.TRY' (HTIU.subst_first_tac ctxt (map (flip_eq_thm ctxt) arg_reg_eq_thms))
+          THEN' TU.TRY' (HTIU.subst_first_tac ctxt (List.map (flip_eq_thm ctxt) arg_reg_eq_thms))
           THEN' Simplifier.asm_simp_tac ctxt (* TODO: narrow simp set *)
-
       in
-        rewrite_concl_tac
-        THEN' instantiate_apply_ih_tac
-        THEN_ALL_NEW SOLVED' solve_ih_prem_tac
+        instantiate_apply_ih_tac THEN_ALL_NEW SOLVED' solve_ih_prem_tac
       end
-    in
+
+    fun prems_tac {context = ctxt, prems, ...} {s, v, ...} =
+      get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
+      BIND (fn arg_reg_eq_thms =>
+        rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms
+        THEN' solve_with_ih_tac ctxt prems s arg_reg_eq_thms
+        |> pure)
+      |> flat2
+
+    fun focused_tac ctxt =
       resolve_tac ctxt [@{thm terminates_with_res_tTailI}]
-      THEN' TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o extract_state_tac) ctxt
-    end
+      THEN' TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o prems_tac) ctxt
   in
-    TU.FOCUS_PARAMS_CTXT' tac
+    TU.FOCUS_PARAMS_CTXT' focused_tac
   end
+
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
   THEN' STATE_interp_retrieve_key_eq_tac (asm_simp_tac (ctxt addsimps (@{thms Let_def}))) ctxt
 
-fun finish_tac get_HOL_eqs =
-  let
-    (* replace the HOL function call with its body *)
-    fun subst_hol_fun_tac ctxt {v, ...} =
-      case get_HOL_eqs ctxt (head_of v) of
-        NONE => (writeln "Could not find HOL equality for HOL term in conclusion"; (* TODO *) K no_tac)
-      | SOME thms => HTIU.subst_first_tac ctxt thms
-    fun decide_finish_tac ctxt {c, ...} =
-      case c of
-        Const (@{const_name tTAIL}, _) => finish_tail_tac ctxt
-      | Const (@{const_name tAssign}, _) $ _ $ _ => finish_non_tail_tac ctxt
-      | _ => (writeln "finish_tac: expected tTAIL or tAssign"; K no_tac (* TODO: nicer error *))
-    fun tac ctxt =
-      with_dest_terminates_with_res_IMP_Tailcall_prop (subst_hol_fun_tac ctxt)
+
+(* common tail/non-tail finish tactics *)
+
+(* run the HOL function to its return value or to a recursive call *)
+fun run_hol_fun_tac ctxt get_HOL_eqs v =
+  case get_HOL_eqs ctxt (head_of v) of
+    NONE => (writeln "Could not find HOL equality for HOL term in conclusion"; (* TODO *) K no_tac)
+  | SOME thms =>
+      HTIU.subst_first_tac ctxt thms
       (* TODO: the simplification step is fragile if there is any
-          other theorem about the HOL function in the simpset *)
+        other theorem about the HOL function in the simpset *)
       (* TODO: target the relevant assumptions only (?) *)
       THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
-      THEN' with_dest_terminates_with_res_IMP_Tailcall_prop (decide_finish_tac ctxt)
-  in
-    TU.FOCUS_PARAMS_CTXT' tac
-  end
+
+(* decide between a tail or a non-tail finish *)
+fun decide_finish_tac ctxt = fn
+    Const (@{const_name tTAIL}, _) => finish_tail_tac ctxt
+  | Const (@{const_name tAssign}, _) $ _ $ _ => finish_non_tail_tac ctxt
+  | _ => (writeln "finish_tac: expected tTAIL or tAssign"; K no_tac (* TODO: nicer error *))
+
+fun finish_tac get_HOL_eqs =
+  let fun tac ctxt =
+    with_dest_terminates_with_res_IMP_Tailcall_prop (run_hol_fun_tac ctxt get_HOL_eqs o #v)
+    THEN' with_dest_terminates_with_res_IMP_Tailcall_prop (decide_finish_tac ctxt o #c)
+  in TU.FOCUS_PARAMS_CTXT' tac end
+
+
+(* chef special *)
 
 fun cook tailcall =
   let
@@ -363,7 +400,7 @@ fun cook tailcall =
         THEN' REPEAT_ALL_NEW (terminates_with_res_step_tac get_func_corrects ctxt)
         THEN_ALL_NEW (
           finish_tac HTIB.get_HOL_eqs ctxt
-          ORELSE' Simplifier.asm_simp_tac ctxt
+          ORELSE' SOLVED' (Simplifier.asm_simp_tac ctxt)
           ORELSE' K all_tac))
   in
     TU.FOCUS_PARAMS_CTXT' tac
@@ -373,8 +410,7 @@ end
 \<close>
 
 HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply (tactic \<open>HA.cook true @{context} 1\<close>)
-  done
+  apply (tactic \<open>HA.cook true @{context} 1\<close>) done
 
 lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
   by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
@@ -458,17 +494,16 @@ compile_nat sqrt_aux_nat.simps basename sqrt_aux
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat
   apply (tactic \<open>HA.cook true @{context} 1\<close>) done
 
-(*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
-(*
-apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
-apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
-apply (tactic \<open>H.start_tac H.get_IMP_def @{context} 1\<close>)
-apply (tactic \<open>H.run_tac H.get_func_corrects @{context} 1\<close>)
-apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-apply (tactic \<open>H.finish_non_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-done
-*)
+(* Example step-by-step tactic invocation. Do not remove for debugging purposes *)
+HOL_To_IMP_Minus_func_correct sqrt_aux_nat
+  apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
+  apply (tactic \<open>HA.start_case_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>REPEAT_ALL_NEW (HA.terminates_with_res_step_tac HA.get_func_corrects @{context}) 1\<close>)
+  apply (tactic \<open>HA.finish_tac HTIB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HA.finish_tac HTIB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HA.finish_tac HTIB.get_HOL_eqs @{context} 1\<close>)
+  oops
 
 lemma square_sqrt_aux_nat_le:
   assumes "L\<^sup>2 \<le> x" "x < R\<^sup>2"
