@@ -12,8 +12,6 @@ locale TM_to_GOTO_on_List =
       and T :: nat            \<comment>\<open>T: runtime\<close>
       and TPS' :: "tape list" \<comment>\<open>TPS': output tapes\<close>
   assumes running_time_M: "transforms M TPS T TPS'"
-      and Q_le_running_time: "length M \<le> T" \<comment>\<open>The states are numbered nicely such that it won't exceed the running time;
-          Or to say that we don't have too much unused commands in the machine\<close>
 
     fixes MAX_POS :: nat    \<comment>\<open>upper bound of all tape heads at the beginning\<close>
   assumes wf_TPS: "length TPS = K \<and>
@@ -1528,7 +1526,7 @@ qed
 
 theorem TM_to_GOTO_on_List_correct_and_in_polynomial_time:
   obtains s
-    where "\<exists>t \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1.
+    where "\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1.
           (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s))"
       and "s \<sim> (Q, TPS')"
 proof -
@@ -1579,15 +1577,8 @@ proof -
     by (simp add: numeral_Bit1)
   with \<open>t \<le> T\<close> have "?run_len * t + 1 \<le> (Q * G ^ K + 2 * K + 5) * T + 1"
     by simp
-  then have "?run_len * t + 1 \<le> G ^ K * Q * T + (2 * K + 5) * T + 1"
-    by (simp add: add_mult_distrib2 mult.commute)
-  with Q_le_running_time Q_eq_length_M
-  have "?run_len * t + 1 \<le> G ^ K * T * T + (2 * K + 5) * T + 1"
-    using le_trans mult_le_mono2 by fastforce
-  then have "?run_len * t + 1 \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1"
-    by (simp add: power2_eq_square)    
   ultimately
-  have "\<exists>t \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1.
+  have "\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1.
         GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s)"
     by (meson le_trans)
   with \<open>s \<sim> (Q, TPS')\<close> show thesis

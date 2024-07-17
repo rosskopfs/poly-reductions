@@ -6,7 +6,6 @@ theory GOTO_on_List
   imports "IMPminus_TM-Def.Global_Defs" "HOL-IMP.Star"
 begin
 
-(*TODO: rewrite all documentations using LaTeX syntax *)
 text \<open>The value of variables in GOTO_on_List programs are lists.
 The length of the lists in a GOTO_on_List program, reduced from a multitape-TM, can be one of the following:
 1. length = 1, with the current state of the TM as the only element.
