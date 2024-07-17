@@ -8,19 +8,22 @@ locale TM_to_GOTO_on_List =
       and G :: nat \<comment>\<open>G: size of tape character set\<close>
   assumes TM: "turing_machine K G M"
 
-    fixes Q :: nat \<comment>\<open>Q: number of states, halting state excluded; also the halting state\<close>
-  assumes Q: "Q = length M"
-
     fixes TPS :: "tape list"  \<comment>\<open>TPS: input tapes\<close>
       and T :: nat            \<comment>\<open>T: runtime\<close>
       and TPS' :: "tape list" \<comment>\<open>TPS': output tapes\<close>
   assumes running_time_M: "transforms M TPS T TPS'"
+      and Q_le_running_time: "length M \<le> T" \<comment>\<open>The states are numbered nicely such that it won't exceed the running time;
+          Or to say that we don't have too much unused commands in the machine\<close>
 
     fixes MAX_POS :: nat    \<comment>\<open>upper bound of all tape heads at the beginning\<close>
   assumes wf_TPS: "length TPS = K \<and>
                    (\<forall>k < K. \<forall>p. (TPS ::: k) p < G) \<and>
                    (\<forall>k < K. (TPS :#: k) < MAX_POS)"
 begin
+
+definition "Q = length M" \<comment>\<open>Q: number of states, halting state excluded; also the halting state\<close>
+lemma Q_eq_length_M[simp]: "Q = length M"
+  unfolding Q_def ..
 
 lemma head_position_no_exceed_MAX_POS_plus_t:
   "\<forall>k < K. execute M (0, TPS) t <#> k < MAX_POS + t"
@@ -575,7 +578,7 @@ next
   proof (cases "fst cfg < Q")
     case True
     from TM exe \<open>wf_cfg cfg\<close> have "fst cfg' \<le> Q"
-      using Q exe_state_valid wf_cfg_D(1-2) by auto
+      using exe_state_valid wf_cfg_D(1-2) by auto
     moreover
     from \<open>wf_cfg cfg\<close> have "||cfg|| = K" by blast
     with exe TM have "||cfg'|| = K"
@@ -596,7 +599,7 @@ next
     with \<open>wf_cfg cfg\<close> have "fst cfg = Q"
       using le_neq_implies_less by blast
     with \<open>exe M cfg = cfg'\<close> have "cfg' = cfg"
-      using exe_ge_length Q by simp
+      using exe_ge_length by simp
     with \<open>wf_cfg cfg\<close> show ?thesis by blast
   qed
 qed
@@ -983,7 +986,7 @@ proof -
     moreover
     from assms \<open>wf_cfg cfg\<close> read_chars_correspond_to_cfg_correct
     have "[*] ((M!(fst cfg)) ?chs) = fst cfg'"
-      by (metis Q exe_lt_length sem_fst)
+      by (metis Q_eq_length_M exe_def sem_fst)
     ultimately
     have value_after_ins: "s_after_ins ST = [fst cfg']"
       by auto
@@ -1076,7 +1079,7 @@ proof -
       case Left
       with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Left" by simp
       with head_moves_left have "snd cfg' :#: k = snd cfg :#: k - 1"
-        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+        using TM \<open>wf_cfg cfg\<close> assms(3) exe \<open>k < K\<close> wf_cfg_D(2) by auto
       moreover
       from Left have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = MoveLeft k"
         by simp
@@ -1092,7 +1095,7 @@ proof -
       case Stay
       with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Stay" by simp
       with head_stay have "snd cfg' :#: k = snd cfg :#: k"
-        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+        using Q_eq_length_M TM \<open>wf_cfg cfg\<close> assms(3) exe \<open>k < K\<close> wf_cfg_D(2) by auto
       moreover
       from Stay have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = Stay\<^sub>l k"
         by simp
@@ -1107,7 +1110,7 @@ proof -
       case Right
       with dir_in_s_and_cfg_eq have "(M!(fst cfg)) (config_read cfg) [~] k = Right" by simp
       with head_moves_right have "cfg' <#> k = cfg <#> k + 1"
-        using exe TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> Q \<open>k < K\<close> by fast
+        using TM \<open>wf_cfg cfg\<close> assms(3) exe \<open>k < K\<close> wf_cfg_D(2) by auto
       moreover
       from Right have "head_movement_TM_to_ins ((M ! hd (s ST)) (s CHS) [~] k) k = MoveRight k"
         by simp
@@ -1238,7 +1241,7 @@ proof -
 
     from exe exe_tape_modify
     have "cfg' <:> k = (cfg <:> k)(cfg <#> k := ((M ! (fst cfg)) (config_read cfg)) [.] k)"
-      using Q TM \<open>wf_cfg cfg\<close> \<open>fst cfg < Q\<close> \<open>k < K\<close> wf_cfg_D(2) by blast
+      using TM \<open>wf_cfg cfg\<close> assms(3) \<open>k < K\<close> wf_cfg_D(2) by auto
     moreover
     from \<open>s \<sim> cfg\<close> have "cfg <#> k = hd (s (HP k))"
       by (simp add: configuration_of_prog_same_to_TM_D(2) \<open>k < K\<close>)
@@ -1459,7 +1462,7 @@ proof -
   show thesis using that by presburger
 qed
 
-lemma TM_to_GOTO_on_List_correct_and_in_linear_time':
+lemma TM_to_GOTO_on_List_correct_and_in_polynomial_time':
   assumes "s = config_to_state cfg"
       and "\<exists>t. execute M (0, TPS) t = cfg"
       and "fst cfg < Q"
@@ -1509,7 +1512,7 @@ next
     show ?thesis using \<open>s' \<sim> cfg'\<close> by blast
   next
     case False
-    with \<open>exe M cfg_mid = cfg'\<close> Q have "cfg_mid = cfg'"
+    with \<open>exe M cfg_mid = cfg'\<close> have "cfg_mid = cfg'"
       by (simp add: exe_ge_length)
     moreover
     from t' s_mid
@@ -1523,27 +1526,28 @@ next
 qed
 
 
-theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
+theorem TM_to_GOTO_on_List_correct_and_in_polynomial_time:
   obtains s
-    where "\<exists>t \<le> T. \<exists>t' \<le> (Q * G ^ K + 2 * K + 5) * t + 1.
-          (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s))"
+    where "\<exists>t \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1.
+          (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s))"
       and "s \<sim> (Q, TPS')"
 proof -
+  let ?run_len = "entrance_block_len + block_for_q_chs_len + 1"
   from running_time_M obtain t where execute_M: "execute M (0, TPS) t = (Q, TPS')" and t: "t \<le> T"
-    using Q unfolding transforms_def transits_def
-    by blast
+    unfolding transforms_def transits_def
+    by auto
   then obtain s t' where
     "s \<sim> (Q, TPS')"
-    "t' \<le> (entrance_block_len + block_for_q_chs_len + 1) * t"
+    "t' \<le> ?run_len * t"
     "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_start, s)"
   proof (cases "Q = 0")
     case True
-    with execute_M Q have "TPS' = TPS"
+    with execute_M Q_eq_length_M have "TPS' = TPS"
       by (metis execute.simps(1) fst_conv halting_config_execute old.prod.inject) 
-    with \<open>Q = 0\<close> have "s\<^sub>0 \<sim> (Q, TPS')" by auto
+    with \<open>Q = 0\<close> have "s\<^sub>0 \<sim> (Q, TPS')"
+      using config_to_state_correct by presburger
     moreover
-    have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>0\<^esub> (pc_start, s\<^sub>0)"
-         "0 \<le> (entrance_block_len + block_for_q_chs_len + 1) * t"
+    have "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>0\<^esub> (pc_start, s\<^sub>0)" "0 \<le> ?run_len * t"
       by auto
     ultimately
     show ?thesis using that by blast 
@@ -1556,7 +1560,7 @@ proof -
     ultimately
     show ?thesis
       using execute_M
-      using TM_to_GOTO_on_List_correct_and_in_linear_time'
+      using TM_to_GOTO_on_List_correct_and_in_polynomial_time'
             [where ?cfg = ?cfg and ?s = s\<^sub>0 and ?t = t and ?cfg' = "(Q, TPS')"]
       using that by blast
   qed
@@ -1567,16 +1571,25 @@ proof -
   then have  "GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s) \<rightarrow> (pc_halt, s)"
     by fastforce
   ultimately
-  have "\<exists>t' \<le> (entrance_block_len + block_for_q_chs_len + 1) * t + 1.
+  have "\<exists>t' \<le> ?run_len * t + 1.
         GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
     by fastforce
   moreover
-  have "(entrance_block_len + block_for_q_chs_len + 1) * t + 1 = (Q * G ^ K + 2 * K + 5) * t + 1"
+  have "?run_len * t + 1 = (Q * G ^ K + 2 * K + 5) * t + 1"
     by (simp add: numeral_Bit1)
+  with \<open>t \<le> T\<close> have "?run_len * t + 1 \<le> (Q * G ^ K + 2 * K + 5) * T + 1"
+    by simp
+  then have "?run_len * t + 1 \<le> G ^ K * Q * T + (2 * K + 5) * T + 1"
+    by (simp add: add_mult_distrib2 mult.commute)
+  with Q_le_running_time Q_eq_length_M
+  have "?run_len * t + 1 \<le> G ^ K * T * T + (2 * K + 5) * T + 1"
+    using le_trans mult_le_mono2 by fastforce
+  then have "?run_len * t + 1 \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1"
+    by (simp add: power2_eq_square)    
   ultimately
-  have "\<exists>t \<le> T. \<exists>t' \<le> (Q * G ^ K + 2 * K + 5) * t + 1.
-        GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s)"
-    using t by auto
+  have "\<exists>t \<le> G ^ K * T\<^sup>2 + (2 * K + 5) * T + 1.
+        GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s)"
+    by (meson le_trans)
   with \<open>s \<sim> (Q, TPS')\<close> show thesis
     using that by blast
 qed
