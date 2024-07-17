@@ -209,4 +209,42 @@ proof -
     by blast
 qed
 
+lemma exe_head_position:
+  assumes exe: "exe M cfg = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and "k < K"
+    shows "snd cfg' :#: k \<le> snd cfg :#: k + 1"
+  apply (cases "fst cfg < length M")
+  apply (cases "(M ! fst cfg) (config_read cfg) [~] k")
+  using head_moves_left assms apply simp
+  using head_stay assms apply simp
+  using head_moves_right assms apply simp
+  using exe exe_ge_length apply auto
+  done
+
+lemma execute_head_position_bounded_by_running_time:
+  assumes execute: "execute M cfg t = cfg'"
+      and tm: "turing_machine K G M"
+      and "||cfg|| = K"
+      and "k < K"
+    shows "snd cfg' :#: k \<le> snd cfg :#: k + t"
+  using assms
+  apply (induction t arbitrary: cfg')
+  apply simp
+  apply simp
+  using exe_head_position execute_num_tapes
+  by (smt (verit) add.commute le_trans nat_add_left_cancel_le plus_1_eq_Suc)
+
+lemma exe_gt_running_time:
+  assumes "transforms m tps T tps'"
+      and "t \<ge> T"
+    shows "exe m (execute m (0, tps) t) = (execute m (0, tps) t)"
+  using assms
+  apply (induction t)
+  apply (metis (mono_tags, opaque_lifting) exe_ge_length execute.simps(1) fst_conv
+         halting_config_def le_zero_eq transforms_halting_config transforms_running_time)
+  by (smt (verit) exe_ge_length execute_after_halting_ge fst_conv halting_config_def
+      order.order_iff_strict transforms_halting_config transforms_running_time)
+  
 end

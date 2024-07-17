@@ -14,36 +14,59 @@ locale TM_to_GOTO_on_List =
     fixes TPS :: "tape list"  \<comment>\<open>TPS: input tapes\<close>
       and T :: nat            \<comment>\<open>T: runtime\<close>
       and TPS' :: "tape list" \<comment>\<open>TPS': output tapes\<close>
-  assumes runtime_M: "transforms M TPS T TPS'"
+  assumes running_time_M: "transforms M TPS T TPS'"
 
-    fixes MAX_LEN :: nat    \<comment>\<open>maximum length of all tapes during the execution of the TM\<close>
+    fixes MAX_POS :: nat    \<comment>\<open>upper bound of all tape heads at the beginning\<close>
   assumes wf_TPS: "length TPS = K \<and>
-                   (\<forall>k < K. \<forall>p < MAX_LEN. (TPS ::: k) p < G) \<and>
-                   (\<forall>k < K. (TPS :#: k) < MAX_LEN)"
-      and head_position_no_exceed_MAX_LEN:
-          "\<forall>t \<le> T. \<forall>k < K. execute M (0, TPS) t <#> k < MAX_LEN"
+                   (\<forall>k < K. \<forall>p. (TPS ::: k) p < G) \<and>
+                   (\<forall>k < K. (TPS :#: k) < MAX_POS)"
 begin
 
-lemma head_position_no_exceed_MAX_LEN':
-  "\<forall>k < K. execute M (0, TPS) t <#> k < MAX_LEN"
-proof (cases "t \<le> T")
-  case True
-  then show ?thesis
-    using head_position_no_exceed_MAX_LEN by blast
-next
-  case False
-  from runtime_M obtain T\<^sub>0 where T\<^sub>0: "T\<^sub>0 \<le> T" "execute M (0, TPS) T\<^sub>0 = (Q, TPS')"
-    by (metis Q halting_config_def transforms_halting_config transforms_running_time)
-  then have "\<forall>k < K. (Q, TPS') <#> k < MAX_LEN"
-    using head_position_no_exceed_MAX_LEN by fastforce
+lemma head_position_no_exceed_MAX_POS_plus_t:
+  "\<forall>k < K. execute M (0, TPS) t <#> k < MAX_POS + t"
+proof(standard, standard)
+  fix k assume "k < K"
   moreover
-  from T\<^sub>0 have "execute M (Q, TPS') (t - T\<^sub>0) = execute M (0, TPS) t"
-    by (metis False dual_order.trans execute_additive le_add_diff_inverse nle_le)
-  with T\<^sub>0 have "execute M (0, TPS) t = (Q, TPS')"
-    using execute_after_halting_ge
-    by (metis Q diff_is_0_eq' execute.simps(1) fst_conv nless_le not_le_imp_less)
+  from wf_TPS have "||(0, TPS)|| = K" by simp
+  moreover
+  from wf_TPS \<open>k < K\<close> have "snd (0, TPS) :#: k < MAX_POS" by simp
   ultimately
-  show ?thesis by simp
+  show "snd (execute M (0, TPS) t) :#: k < MAX_POS + t"
+    using execute_head_position_bounded_by_running_time [where ?cfg = "(0, TPS)"]
+    using TM
+    using add_mono_thms_linordered_field(1) dual_order.strict_trans2 by blast
+qed
+
+definition "MAX_LEN = MAX_POS + Suc T"
+
+lemma MAX_LEN_eq_MAX_POS_plus_T[simp]: "MAX_LEN = MAX_POS + Suc T"
+  unfolding MAX_LEN_def by blast
+
+lemma MAX_POS_le_MAX_LEN[simp]: "MAX_POS \<le> MAX_LEN"
+  unfolding MAX_LEN_def by simp
+
+lemma head_position_no_exceed_MAX_LEN:
+  "\<forall>k < K. execute M (0, TPS) t <#> k < MAX_LEN"
+proof (induction t)
+  case 0
+  then show ?case
+    using head_position_no_exceed_MAX_POS_plus_t wf_TPS by auto
+next
+  case (Suc t)
+  then show ?case
+  proof (cases "t < T")
+    case True
+    then show ?thesis
+      using head_position_no_exceed_MAX_POS_plus_t
+      by (smt (verit) MAX_LEN_eq_MAX_POS_plus_T ab_semigroup_add_class.add_ac(1) add_Suc_shift
+          canonically_ordered_monoid_add_class.lessE trans_less_add1)
+  next
+    case False
+    with running_time_M have "execute M (0, TPS) (Suc t) = execute M (0, TPS) t"
+      using exe_gt_running_time by auto
+    then show ?thesis
+      using Suc.IH by presburger
+  qed
 qed
 
 subsection \<open>Helper functions\<close>
@@ -53,7 +76,7 @@ fun tape_content_to_list :: "(nat \<Rightarrow> symbol) \<Rightarrow> nat \<Righ
   "tape_content_to_list tp (Suc n) = (tape_content_to_list tp n) @ [tp n]"
 
 fun config_to_state :: "config \<Rightarrow> state\<^sub>l" where
-  "config_to_state (q, tps) (TP n) = tape_content_to_list (tps ::: n) MAX_LEN" |
+  "config_to_state (q, tps) (TP n) = tape_content_to_list (tps ::: n) (MAX_LEN)" |
   "config_to_state (q, tps) ST = [q]" |
   "config_to_state (q, tps) (HP n) = [tps :#: n]" |
   "config_to_state (q, tps) CHS = []"
@@ -533,7 +556,7 @@ lemma wf_cfg_I:
 
 lemma wf_cfg_start_cfg: "wf_cfg (0, TPS)"
   using wf_TPS
-  by (simp add: wf_cfg_def)
+  by (auto simp add: wf_cfg_def)
 
 lemma wf_cfg_preserved_by_execute [intro]:
   assumes "execute M (0, TPS) t = cfg'"
@@ -559,10 +582,10 @@ next
       using exe_num_tapes by metis
     moreover
     from Suc.prems have "\<forall>k < K. cfg' <#> k < MAX_LEN"
-      using head_position_no_exceed_MAX_LEN' by blast
+      using head_position_no_exceed_MAX_LEN by blast
     moreover
     from cfg have "\<forall>k < K. cfg <#> k < MAX_LEN"
-      using head_position_no_exceed_MAX_LEN' by blast
+      using head_position_no_exceed_MAX_LEN by blast
     then have "\<forall>k < K. \<forall>p < MAX_LEN. (cfg' <:> k) p < G"
       using tape_content_valid
       using TM \<open>wf_cfg cfg\<close> \<open>||cfg|| = K\<close> exe wf_cfg_D(3) by blast
@@ -641,7 +664,7 @@ proof -
   moreover
   from \<open>read_chars_correspond_to_cfg s cfg\<close> have "length (s CHS) = K" by blast
   from \<open>wf_cfg cfg\<close> \<open>read_chars_correspond_to_cfg s cfg\<close> have "\<forall>k < K. s CHS ! k < G"
-    by (simp add: wf_cfg_D(3) wf_cfg_D(4))
+    using wf_cfg_D(3) wf_cfg_D(4) by auto
   with \<open>length (s CHS) = K\<close> have "s CHS \<in> set (product_lists (replicate K [0..<G]))"
     by auto
   ultimately
@@ -692,7 +715,7 @@ proof -
   from \<open>s \<sim> cfg\<close> have "\<forall>k < K. (s (TP k)) ! (hd (s (HP k))) = cfg <.> k"
     using TM_to_GOTO_on_List.wf_cfg_D(4) TM_to_GOTO_on_List_axioms \<open>wf_cfg cfg\<close>
           configuration_of_prog_same_to_TM_def
-    by auto
+    by (metis list.sel(1))
   with \<open>s \<sim> cfg\<close> \<open>?s' CHS = ?chs\<close> have "read_chars_correspond_to_cfg ?s' cfg"
     using length_upt by force
   moreover
@@ -1387,7 +1410,7 @@ proof -
       by (simp add: configuration_of_prog_same_to_TM_D(1))
     
     from s\<^sub>1 \<open>s\<^sub>1 \<sim> cfg\<close> \<open>wf_cfg cfg\<close> have "\<forall>k<K. s\<^sub>1 CHS ! k < G"
-      by (simp add: wf_cfg_D(3) wf_cfg_D(4))
+      using wf_cfg_D(3) wf_cfg_D(4) by auto
     then have "\<forall>k<K. s\<^sub>1 CHS ! k \<in> set [0..<G]" by simp
     moreover
     from s\<^sub>1 have "length (s\<^sub>1 CHS) = K" by blast
@@ -1506,7 +1529,7 @@ theorem TM_to_GOTO_on_List_correct_and_in_linear_time:
           (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t'\<^esub> (pc_halt, s))"
       and "s \<sim> (Q, TPS')"
 proof -
-  from runtime_M obtain t where execute_M: "execute M (0, TPS) t = (Q, TPS')" and t: "t \<le> T"
+  from running_time_M obtain t where execute_M: "execute M (0, TPS) t = (Q, TPS')" and t: "t \<le> T"
     using Q unfolding transforms_def transits_def
     by blast
   then obtain s t' where
