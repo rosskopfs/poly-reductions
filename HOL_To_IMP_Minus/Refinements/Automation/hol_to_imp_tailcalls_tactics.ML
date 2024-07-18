@@ -59,6 +59,7 @@ structure HTIU = HOL_To_IMP_Util
 structure SUT = State_Update_Tracking
 
 structure Seq = HTIU.Seq
+structure List = HTIU.List
 
 type IMP_def_retrieval = Proof.context -> term -> thm option
 val get_IMP_def = Compile_Nat.get_compiled_const_def
@@ -259,7 +260,7 @@ val finish_tail_tac =
           arg_terms arg_regs
       LET (fn arg_reg_eqs =>
         (* prove the equalities *)
-        arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac)) |> Seq.A.sequence
+        arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac)) |> List.T_Seq.sequence
         (* this might not be an actual warning: if we simplify the HOL call incorrectly, a backtrack would be ok *)
         |> HTIU.seq_peek_empty (fn () => writeln "could not prove one or more register equalities")
       )))

@@ -40,6 +40,11 @@ structure Seq : sig
   structure M : MONAD where type 'a t = 'a seq
 end
 
+structure List : sig
+  include LIST
+  structure T_Seq : TRAVERSABLE where type 'a f = 'a list
+end
+
 end
 
 structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
@@ -49,6 +54,11 @@ structure Seq = struct
   open Seq
   structure M = Monad(Seq_Monad_Trans(Identity_Monad))
   structure A = Applicative(M)
+end
+
+structure List = struct
+  open List
+  structure T_Seq = Traversable(List_Traversable_Trans(Identity_Traversable(Seq.A)))
 end
 
 val successors = map (curry (op +) 1)
