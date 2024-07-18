@@ -73,24 +73,37 @@ fun seq_peek_empty f = seq_peek1 (fn NONE => f () | SOME _ => ())
 infix 1 LET
 fun x LET f = f x
 
+(* destructors for IMP-Tailcalls *)
 
 type terminates_with_res_IMP_Tailcall_args = {tc: term, c: term, s: term, r: term, v: term}
+type terminates_with_IMP_Tailcall_args = {tc: term, c: term, s: term, s': term}
 
 val dest_terminates_with_res_IMP_Tailcall =
   \<^Const_fn>\<open>terminates_with_res_IMP_Tailcall for tc c s r v => \<open>{tc = tc, c = c, s = s, r = r, v = v}\<close>\<close>
 val dest_terminates_with_res_IMP_Tailcall_prop =
   HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Tailcall
 
-fun with_dest_terminates_with_res_IMP_Tailcall_prop tac =
-  let
-    fun wrap_tac concl =
-      case try dest_terminates_with_res_IMP_Tailcall_prop concl of
-        NONE => (writeln "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"; K no_tac (* TODO: error case *))
-      | SOME args => tac args
-  in
-    TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac
-  end
+val dest_terminates_with_IMP_Tailcall =
+  \<^Const_fn>\<open>terminates_with_IMP_Tailcall for tc c s s' => \<open>{tc = tc, c = c, s = s, s' = s'}\<close>\<close>
+val dest_terminates_with_IMP_Tailcall_prop =
+  HTIU.dest_Trueprop #> dest_terminates_with_IMP_Tailcall
 
+fun with_dest_tac msg dest tac =
+  let fun wrap_tac concl =
+    case try dest concl of
+      NONE => (writeln msg; K no_tac)
+    | SOME x => tac x
+  in TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac end
+
+val with_dest_terminates_with_res_IMP_Tailcall_prop =
+  with_dest_tac "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"
+    dest_terminates_with_res_IMP_Tailcall_prop
+
+val with_dest_terminates_with_IMP_Tailcall_prop =
+  with_dest_tac "couldn't find dest_terminates_with_IMP_Tailcall in conclusion"
+    dest_terminates_with_IMP_Tailcall_prop
+
+(* destructors for IMP-Minus *)
 
 val dest_terminates_with_res_IMP_Minus =
   \<^Const_fn>\<open>terminates_with_res_IMP_Minus for c s r v => \<open>(c, s, r, v)\<close>\<close>
@@ -219,7 +232,7 @@ fun terminates_with_res_tAssign_tac ctxt =
 fun terminates_with_res_tSeq_tac ctxt =
   resolve_tac ctxt [@{thm terminates_with_res_tSeqI}]
 
-fun terminates_with_res_tIf_tac ctxt =
+fun terminates_with_res_tIf_tac (* take thm as argument *) ctxt =
   resolve_tac ctxt [@{thm terminates_with_res_tIf_processedI}]
   THEN' STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
   THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
@@ -238,6 +251,16 @@ fun terminates_with_tCall_tac ctxt correctness =
   (* solve state update assumption: s' = s(r := val) *)
   THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
 
+fun terminates_with_tCall_IMP_Minus get_func_corrects =
+  let fun tac ctxt {c, ...} =
+    case c of
+      Const (@{const_name tCall}, _) $ com $ _ =>
+        (case get_func_corrects ctxt com of
+            NONE => (writeln "no correctness found"; K no_tac (* TODO *))
+          | SOME cs => (@{print} cs; terminates_with_tCall_tac ctxt cs))
+    | _ => K no_tac
+  in with_dest_terminates_with_IMP_Tailcall_prop o tac end
+
 (* given a constant term like eq_IMP, returns a list of potentially suitable IMP- correctness theorems *)
 fun get_func_corrects ctxt t =
   let
@@ -252,21 +275,13 @@ fun get_func_corrects ctxt t =
 
 (* run one tSeq or tIf step of a tailcall program, preserves the terminates_with_res ... structure *)
 fun terminates_with_res_step_tac get_func_corrects =
-  let
-    fun tac ctxt {c, ...} =
-      case c of
-        Const (@{const_name tSeq}, _) $ (Const (@{const_name tAssign}, _) $ _ $ _) $ _ =>
-          terminates_with_res_tSeq_tac ctxt THEN' terminates_with_tAssign_tac ctxt
-      | Const (@{const_name tSeq}, _) $ (Const (@{const_name tCall}, _) $ com $ _) $ _ =>
-          (case get_func_corrects ctxt com of
-            NONE => (writeln "no correctness found"; K no_tac (* TODO *))
-          | SOME cs => terminates_with_res_tSeq_tac ctxt THEN' terminates_with_tCall_tac ctxt cs)
-      | Const (@{const_name tIf}, _) $ _ $ _ $ _ => terminates_with_res_tIf_tac ctxt
-      | _ => K no_tac
-  in
-    TU.FOCUS_PARAMS_CTXT' (with_dest_terminates_with_res_IMP_Tailcall_prop o tac)
-  end
-
+  let fun tac ctxt =
+    (terminates_with_res_tSeq_tac ctxt
+      THEN' (
+        terminates_with_tAssign_tac ctxt
+        ORELSE' terminates_with_tCall_IMP_Minus get_func_corrects ctxt))
+    ORELSE' terminates_with_res_tIf_tac ctxt
+  in TU.FOCUS_PARAMS_CTXT' tac end
 
 (* finishing tactics *)
 
@@ -374,16 +389,10 @@ fun run_hol_fun_tac ctxt get_HOL_eqs v =
       (* TODO: target the relevant assumptions only (?) *)
       THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
 
-(* decide between a tail or a non-tail finish *)
-fun decide_finish_tac ctxt = fn
-    Const (@{const_name tTAIL}, _) => finish_tail_tac ctxt
-  | Const (@{const_name tAssign}, _) $ _ $ _ => finish_non_tail_tac ctxt
-  | _ => (writeln "finish_tac: expected tTAIL or tAssign"; K no_tac (* TODO: nicer error *))
-
 fun finish_tac get_HOL_eqs =
   let fun tac ctxt =
     with_dest_terminates_with_res_IMP_Tailcall_prop (run_hol_fun_tac ctxt get_HOL_eqs o #v)
-    THEN' with_dest_terminates_with_res_IMP_Tailcall_prop (decide_finish_tac ctxt o #c)
+    THEN' (finish_tail_tac ctxt ORELSE' finish_non_tail_tac ctxt)
   in TU.FOCUS_PARAMS_CTXT' tac end
 
 
@@ -391,7 +400,6 @@ fun finish_tac get_HOL_eqs =
 
 fun cook tailcall =
   let
-    (* fun metis ctxt = Metis_Tactic.metis_tac [] ATP_Problem_Generate.combsN ctxt [] *)
     fun tac ctxt =
       preprocess_tac H.get_IMP_def ctxt
       THEN' (if tailcall then HA.setup_induction_tac HA.get_HOL_inducts ctxt else K all_tac)
