@@ -4,6 +4,7 @@ theory HOL_To_IMP_Tactics
     HOL_To_IMP_Utils
     HOL_To_IMP_Minus_Goal_Commands
     State_Update_Tracking_IMP_Tailcalls
+    HOL_To_IMP_Terminates_With_Res
     ML_Unification.ML_Functor_Instances
     ML_Unification.ML_Method_Utils
     ML_Unification.ML_Parsing_Utils
@@ -77,9 +78,18 @@ lemma tTail_E:
 
 end
 
+(* isolates the return value in its own subgoal *)
+lemma rewrite_terminates_with_res_IMP_Tailcall_value:
+  assumes "v = v'" and "terminates_with_res_IMP_Tailcall tc c s r v'"
+  shows "terminates_with_res_IMP_Tailcall tc c s r v"
+  using assms by blast
+
+(* isolates the function and its argument from a function application *)
+lemma rewrite_comb: assumes "f = g" "x = y" shows "f x = g y" using assms by blast
+
 ML_file \<open>hol_to_imp_tactics_base.ML\<close>
 ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
-ML_file \<open>hol_to_imp_tactics-new.ML\<close>
+ML_file \<open>hol_to_imp_tactics.ML\<close>
 ML\<open>
   @{functor_instance struct_name = Standard_HOL_To_IMP_Tactics
     and functor_name = HOL_To_IMP_Tactics
