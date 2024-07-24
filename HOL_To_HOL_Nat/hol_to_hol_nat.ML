@@ -1,21 +1,35 @@
-(*  Title:      Encode_Nat.ML
-    Author:     Johannes Neubrand, TU Muenchen
+(*  Title:      hol_to_hol_nat.ML
+    Author:     Jay Neubrand, TU Muenchen
     Author:     Andreas Vollert, TU Muenchen
-    Copyright   2022, 2023, 2024
+    Author:     Kevin Kappelmann, TU Muenchen
 *)
-
-
-signature ENCODE_NAT =
+signature HOL_TO_HOL_NAT =
 sig
 end
 
-structure Encode_Nat : ENCODE_NAT =
+structure HOL_To_HOL_Nat : HOL_TO_HOL_NAT =
 struct
 
 open BNF_Util
 open HOLogic
+structure TranspUtil = Transport_Util
+structure TacUtil = Tactic_Util
 
-val read_const' = Proof_Context.read_const {proper = false, strict = false};
+val print_term = @{print} oo Thm.cterm_of
+
+fun cat_options opts = fold (fn NONE => I | SOME x => cons x) opts []
+
+fun del_simps simps = Local_Theory.note ((Binding.empty, @{attributes [simp del]}), simps) #> snd
+
+fun get_fun_simps ctxt = Function_Common.retrieve_function_data ctxt #> map (snd #> #simps)
+(* fun get_datatype_induct ctxt = Function_Common.retrieve_function_data ctxt #> map (snd #> #inducts) *)
+
+val read_const = Proof_Context.read_const {proper = false, strict = false};
+fun const_from_binding ctxt = Binding.name_of #> read_const ctxt
+
+val app = curry (op $)
+
+val term_binder_types = fastype_of #> binder_types
 
 val lhs_of_term = dest_Trueprop #> dest_eq #> fst;
 
@@ -31,24 +45,60 @@ fun funname i = "f" ^ subscript (string_of_int (i + 1));
 
 val argnames = map_range argname;
 
-fun denatify T = \<^Const>\<open>denatify T\<close>;
+val binding_from_long_name = Long_Name.base_name #> Binding.name
+val type_binding = dest_Type #> fst #> binding_from_long_name
+val const_binding = binding_from_long_name
+val term_binding = Term.term_name #> Binding.name
 
-fun natify T = \<^Const>\<open>natify T\<close>;
+fun type_suffix_binding base_binding = type_binding #> TranspUtil.add_suffix base_binding
 
-fun add_compile_nat_to_sort (Type (s, Ts)) = Type (s, map add_compile_nat_to_sort Ts)
-  | add_compile_nat_to_sort T =
-      dest_TFree_or_TVar T
-      ||> (fn \<^sort>\<open>type\<close> => \<^sort>\<open>compile_nat\<close> | s => insert (op =) \<^class>\<open>compile_nat\<close> s)
-      |> TFree;
+fun mk_denatify T = \<^Const>\<open>denatify T\<close>
+val mk_denatify_binding  = type_suffix_binding (const_binding @{const_name denatify})
 
-val normalize_type_of_term =
-  map_aterms (fn Var ((s, _), T) => Free (s, T) | x => x) #> map_types add_compile_nat_to_sort;
+fun mk_natify T = \<^Const>\<open>natify T\<close>
+val mk_natify_binding = type_suffix_binding (const_binding @{const_name natify})
 
-fun add_fun binding_name lhs rhs ctxt =
+val fstP = \<^Const>\<open>fstP\<close>
+val sndP = \<^Const>\<open>sndP\<close>
+val pair_const = \<^Const>\<open>pair\<close>
+
+val natT = \<^typ>\<open>nat\<close>
+val pair_reprT = natT
+val compile_natS = \<^sort>\<open>compile_nat\<close>
+val compile_natC = \<^class>\<open>compile_nat\<close>
+
+val nat_suffix = @{binding nat}
+
+fun mk_ctr_binding ctr = TranspUtil.add_suffix (term_binding ctr) nat_suffix
+
+fun mk_Rel_nat T = \<^Const>\<open>Rel_nat T\<close>
+val Rel_nat_binding  = const_binding @{const_name Rel_nat}
+val mk_Rel_nat_type_binding  = type_suffix_binding Rel_nat_binding
+
+fun mk_Rel_fun base T = case T of
+    \<^Type>\<open>fun A B\<close> => mk_rel_fun (mk_Rel_fun base A) (mk_Rel_fun base B)
+  | T => base T
+
+val fun_RelD = @{thms rel_funD}
+
+val mk_Rel_nat_Rel = mk_Rel_fun mk_Rel_nat
+
+(*TODO: not stable; may clash a TVar name with an existing TFree*)
+val mk_tfrees_add_sort = map_atyps
+  (dest_TFree_or_TVar
+  ##> (fn \<^sort>\<open>type\<close> => compile_natS | s => insert (op =) compile_natC s)
+  #> TFree)
+
+(*TODO: not stable; may clash a Var name with an existing Free*)
+val mk_frees_add_sort =
+  map_aterms (fn Var ((s, _), T) => Free (s, T) | x => x)
+  #> map_types mk_tfrees_add_sort
+
+fun register_fun binding_name lhs rhs lthy =
   let
-    val fixes = [(binding_name, NONE, NoSyn)];
-    val specs = [((Binding.empty_atts, mk_Trueprop_eq (lhs, rhs)), [], [])];
-  in Function_Fun.add_fun fixes specs Function_Fun.fun_config ctxt end;
+    val fixes = [(binding_name, NONE, NoSyn)]
+    val specs = [((Binding.empty_atts, mk_Trueprop_eq (lhs, rhs)), [], [])]
+  in Function_Fun.add_fun fixes specs Function_Fun.fun_config lthy end
 
 datatype pairing_path =
   DONE |
@@ -65,21 +115,24 @@ datatype pairing_tree =
   NODE of (pairing_tree * pairing_tree);
 
 fun mk_unpairing t DONE = t
-  | mk_unpairing t (FST x) = \<^Const>\<open>fstP for \<open>mk_unpairing t x\<close>\<close>
-  | mk_unpairing t (SND x) = \<^Const>\<open>sndP for \<open>mk_unpairing t x\<close>\<close>;
+  | mk_unpairing t (FST x) = fstP $ mk_unpairing t x
+  | mk_unpairing t (SND x) = sndP $ mk_unpairing t x
 
-fun mk_unpairing_from_idx t idx length =
-  let
-    val snd_t = fold_range (fn _ => fn t => \<^Const>\<open>sndP for t\<close>) (idx + 1) t;
-  in if idx = length - 1 then snd_t else \<^Const>\<open>fstP for snd_t\<close> end;
+fun mk_unpairing_from_idx t i nargs =
+  funpow (i + 1) (app sndP) t |> (i <> nargs - 1 ? app fstP)
 
-fun mk_constructor_tag ctrs ctxt t =
-  find_index (can (Ctr_Sugar_Util.fo_match ctxt t)) ctrs |> mk_number \<^typ>\<open>nat\<close>;
+val mk_nat = mk_number natT
+val mk_constructor_tag = mk_nat
 
-fun mk_constructor_pairing [] = error "Emtpy argument list"
-  | mk_constructor_pairing [t] = \<^Const>\<open>pair for t \<^term>\<open>0::nat\<close>\<close>
-  | mk_constructor_pairing [t, t'] = \<^Const>\<open>pair for t t'\<close>
-  | mk_constructor_pairing (t::ts) = \<^Const>\<open>pair for t \<open>mk_constructor_pairing ts\<close>\<close>;
+fun find_constructor_tag ctrs ctxt t = find_index (can (Ctr_Sugar_Util.fo_match ctxt t)) ctrs
+val find_mk_constructor_tag = mk_constructor_tag ooo find_constructor_tag
+
+fun mk_ctr_rhs ctr_tag [] = mk_ctr_rhs ctr_tag [mk_nat 0] (*arbitrary number for empty argument list*)
+  | mk_ctr_rhs ctr_tag args =
+    let fun mk_arg [] = error "oops, this should not happen - unreachable code."
+          | mk_arg [t] = t
+          | mk_arg (t::ts) = pair_const $ t $ mk_arg ts
+    in pair_const $ ctr_tag $ mk_arg args end
 
 fun mk_patmatch_term t =
   if is_Free t orelse is_Var t then VARIABLE t
@@ -105,85 +158,72 @@ fun mk_variable_paths (VARIABLE n) = [(n, DONE)]
 fun mk_condition_paths (CONSTRUCTOR (c, args)) = (c, FST DONE) :: (maps (mk_condition_paths) args)
   | mk_condition_paths (VARIABLE _) = [];
 
-fun mk_Rel_nat_equiv ctxt ctr_t =
+fun register_ctr ctrs ctr ctxt =
   let
-    fun mk_rel_funs (T as Type (\<^type_name>\<open>fun\<close>, _)) =
-          dest_funT T |> apply2 mk_rel_funs |-> mk_rel_fun
-      | mk_rel_funs T =  \<^Const>\<open>Rel_nat T\<close>;
-    val (ctr_nat_name, T) = dest_Const (head_of ctr_t) |>> suffix "_nat" o Long_Name.base_name;
-  in list_comb (mk_rel_funs T, [read_const' ctxt ctr_nat_name, ctr_t]) end;
+    val (binders, _) = Binders.fix_binders (map (K ("x", natT)) (term_binder_types ctr)) ctxt
+    val ctr_nat_args = map snd binders
+    val ctr_nat_rhs = mk_ctr_rhs (find_mk_constructor_tag ctrs ctxt ctr) ctr_nat_args
+    val ctr_nat_head =
+      Free (mk_ctr_binding ctr |> Binding.name_of, map (snd o fst) binders ---> natT)
+    val ctr_nat_equ = mk_Trueprop_eq (list_comb (ctr_nat_head, ctr_nat_args), ctr_nat_rhs)
+  in Specification.definition NONE [] [] (Binding.empty_atts, ctr_nat_equ) ctxt |>> snd o snd end
 
-fun lift_ctr ctrs ctr_t ctxt =
+fun register_ctrs ctrs lthy =
+  Local_Theory.begin_nested lthy
+  |> snd
+  |> fold_map (register_ctr ctrs) ctrs
+  ||> `Local_Theory.end_nested
+  ||> (fn (lthy, old_lthy) => (Proof_Context.export_morphism old_lthy lthy, lthy))
+  |> (fn (ctrs_nat_defs, (phi, lthy)) => (map (Morphism.thm phi) ctrs_nat_defs, lthy))
+
+fun mk_ctr_Rel ctxt ctr =
+  let val ctr_nat = mk_ctr_binding ctr |> const_from_binding ctxt
+  in mk_Rel_nat_Rel (fastype_of ctr) $ ctr_nat $ ctr end
+
+fun register_natify_fun T casex ctrs lthy =
   let
-    val n = length (binder_types (type_of ctr_t));
-    val ctr_nat_args = map (fn name => Free (name, \<^typ>\<open>pair_repr\<close>)) (mk_names n "v");
-    val ctr_nat_rhs =
-      mk_constructor_pairing ((mk_constructor_tag ctrs ctxt ctr_t) :: ctr_nat_args);
-    val ctr_nat_t =
-      Free (Term.term_name ctr_t ^ "_nat", (replicate n \<^typ>\<open>pair_repr\<close>) ---> \<^typ>\<open>pair_repr\<close>);
-    val ctr_nat_equ = mk_Trueprop_eq (list_comb (ctr_nat_t, ctr_nat_args), ctr_nat_rhs);
-  in
-    Specification.definition NONE [] [] (Binding.empty_atts, ctr_nat_equ) ctxt |>> snd o snd
-  end;
-
-fun lift_ctrs ctrs ctxt =
-  let
-    val (ctrs_nat_defs, (phi, ctxt)) =
-    snd (Local_Theory.begin_nested ctxt)
-    |> fold_map (lift_ctr ctrs) ctrs
-    ||> `Local_Theory.end_nested
-    ||> (fn (ctxt, old_ctxt) => (Proof_Context.export_morphism old_ctxt ctxt, ctxt));
-    val Rel_nat_equiv_terms = map (mk_Rel_nat_equiv ctxt) ctrs;
-  in ((Rel_nat_equiv_terms, map (Morphism.thm phi) ctrs_nat_defs), ctxt) end;
-
-fun add_abs_rep_fun T casex ctrs ctxt =
-  let
-    val (T_name, _) = dest_Type T;
-    val T_base_name = Long_Name.base_name T_name;
-    val natify_binding = Binding.name ("natify_" ^ T_base_name);
-    val denatify_binding = Binding.name ("denatify_" ^ T_base_name);
-
-    fun mk_abs_case ctr_t =
+    val binding = mk_natify_binding T
+    fun mk_case ctr =
       let
-        val ctr_args_Ts = (binder_types o type_of) ctr_t;
-        val ctr_nat_name = (Term.term_name ctr_t) ^ "_nat";
-        val n = length ctr_args_Ts;
-        val encoded_args = map2 (curry op $) (map natify ctr_args_Ts) (rev (map_range Bound n));
+        val ctr_args_Ts = term_binder_types ctr
+        val ctr_nat = mk_ctr_binding ctr |> const_from_binding lthy
+        val (binders, _) = Binders.fix_binders (map (pair "x") ctr_args_Ts) lthy
+        val natified_args =
+          map2 (fn T => app (mk_natify T) o Bound) ctr_args_Ts (length ctr_args_Ts - 1 downto 0)
       in
-        fold (fn (s, T) => fn t => Abs (s, T, t))
-          (rev ((mk_names n "v") ~~ ctr_args_Ts))
-          (list_comb (read_const' ctxt ctr_nat_name, encoded_args))
-      end;
+        list_comb (ctr_nat, natified_args)
+        |> fold_rev (fn ((n, T), _) => fn t => Abs (n, T, t)) binders
+      end
+    val (free, _) = Binders.fix_binder ("x", T) lthy |>> snd
+    val lhs = mk_natify T $ free
+    val cases = map mk_case ctrs
+    val rhs = list_comb (casex, cases @ [free])
+  in register_fun binding lhs rhs lthy end
 
-    fun mk_rep_case ctr_t =
+fun register_denatify_fun T ctrs lthy =
+  let
+    val binding = mk_denatify_binding T
+    val (free, _) = Binders.fix_binder ("x", natT) lthy |>> snd
+    fun mk_case ctr =
       let
-        val ctr_args_Ts = (Term.binder_types o Term.type_of) ctr_t;
+        val ctr_args_Ts = term_binder_types ctr
+        val nargs = length ctr_args_Ts
         val args_decoded =
-          map_index (fn (i, e) =>
-            denatify e $ mk_unpairing_from_idx \<^term>\<open>v::pair_repr\<close> i (length ctr_args_Ts))
-          ctr_args_Ts;
-      in list_comb (ctr_t, args_decoded) end;
-
-    val abs_lhs = \<^Const>\<open>natify T\<close> $ Free ("v", T);
-    val abs_cases = map mk_abs_case ctrs;
-    val abs_rhs = list_comb (casex, abs_cases @ [Free ("v", T)]);
-
-    val rep_lhs = \<^Const>\<open>denatify T\<close> $ \<^term>\<open>v::pair_repr\<close>;
-    val rep_conditions =
-      map (mk_constructor_tag ctrs ctxt #> curry mk_eq (\<^term>\<open>fstP v::pair_repr\<close>)) ctrs;
-    val rep_cases = map mk_rep_case ctrs;
-    val rep_rhs = Ctr_Sugar_Util.mk_IfN T rep_conditions rep_cases;
-  in
-    add_fun natify_binding abs_lhs abs_rhs ctxt |> add_fun denatify_binding rep_lhs rep_rhs
-  end;
+          map_index (fn (i, T) => mk_denatify T $ mk_unpairing_from_idx free i nargs) ctr_args_Ts
+      in list_comb (ctr, args_decoded) end;
+    val lhs = mk_denatify T $ free
+    val conditions = map_index (fst #> mk_constructor_tag #> curry mk_eq (fstP $ free)) ctrs
+    val cases = map mk_case ctrs
+    val rhs = Ctr_Sugar_Util.mk_IfN T conditions cases
+  in register_fun binding lhs rhs lthy end
 
 fun build_nat_condition ctrs ctxt t =
   let
     fun mk_condition arg (match, path) =
-      mk_eq (mk_unpairing arg path, mk_constructor_tag ctrs ctxt match);
+      mk_eq (mk_unpairing arg path, find_mk_constructor_tag ctrs ctxt match);
     fun mk_conditions (arg, paths) = map (mk_condition arg) paths;
     val args_t = Term.args_of (lhs_of_term t);
-    val new_args_t = map (fn s => Free (s, \<^typ>\<open>pair_repr\<close>)) (argnames (length args_t));
+    val new_args_t = map (fn s => Free (s, pair_reprT)) (argnames (length args_t));
   in
     map (mk_condition_paths o mk_patmatch_term) args_t
     |> (curry op ~~) new_args_t
@@ -194,22 +234,22 @@ fun build_nat_condition ctrs ctxt t =
 fun if_exp_of_case_exp T ctrs casex ctxt =
   let
     val args =
-      map (binder_types o fastype_of) ctrs
+      map term_binder_types ctrs
       |> map (map_index (fn (i, T) => Free (argname i,  T)));
     val end_T = body_type (fastype_of casex);
     val T_base_name = Long_Name.base_name (fst (dest_Type T));
     val case_nat_binding_name = Binding.name ("case_" ^ T_base_name ^ "_nat");
 
     val fun_ts =
-      binder_types (fastype_of casex)
+      term_binder_types casex
       |> fst o split_last
       |> map_index (fn (i, T) => Free (funname i, T));
 
     val fun_ts2 =
-      binder_types (fastype_of casex)
+      term_binder_types casex
       |> fst o split_last
       |> map (length o fst o strip_type)
-      |> map (fn i => (replicate i \<^typ>\<open>pair_repr\<close>) ---> \<^typ>\<open>pair_repr\<close>)
+      |> map (fn i => (replicate i pair_reprT) ---> pair_reprT)
       |> map_index (fn (i, T) => Free (funname i, T));
 
     fun arguments_and_paths t =
@@ -219,8 +259,8 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
 
     fun nat_encode_term with_rep t =
       let
-        fun maybe_abs t' = with_rep ? ((curry op $) (denatify (fastype_of t')));
-        fun mk_arg name path = mk_unpairing (Free (name, \<^typ>\<open>pair_repr\<close>)) path;
+        fun maybe_abs t' = with_rep ? ((curry op $) (mk_denatify (fastype_of t')));
+        fun mk_arg name path = mk_unpairing (Free (name, pair_reprT)) path;
         val wrappers =
           map (fn (name, (t', path)) => fn term =>
             term $ maybe_abs t' (mk_arg name path))
@@ -228,7 +268,7 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
       in fold (fn f => fn x => f x) wrappers (rhs_of_term t) end;
 
     val case_exp =
-      (list_comb (casex, fun_ts)) $ (\<^Const>\<open>denatify T\<close> $ Free (argname 0, \<^typ>\<open>pair_repr\<close>));
+      (list_comb (casex, fun_ts)) $ (\<^Const>\<open>denatify T\<close> $ Free (argname 0, pair_reprT));
 
     val if_exp =
       map list_comb (ctrs ~~ args) ~~ fun_ts
@@ -239,10 +279,10 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
     val if_exp_2 =
       map list_comb (ctrs ~~ args) ~~ fun_ts2
       |> map (fn (t, rhs) =>
-        mk_Trueprop_eq (Term.dummy_pattern (fastype_of t --> \<^typ>\<open>pair_repr\<close>) $ t, rhs))
+        mk_Trueprop_eq (Term.dummy_pattern (fastype_of t --> pair_reprT) $ t, rhs))
       |> (fn ts => (map (build_nat_condition ctrs ctxt) ts, map (nat_encode_term false) ts))
-      |-> mk_IfN \<^typ>\<open>pair_repr\<close>
-      |> fold lambda ((Free (argname 0, \<^typ>\<open>pair_repr\<close>))::(rev fun_ts2));
+      |-> mk_IfN pair_reprT
+      |> fold lambda ((Free (argname 0, pair_reprT))::(rev fun_ts2));
 
     val ((_, (_, case_nat_def_thm)), ctxt) =
       Local_Theory.define
@@ -261,6 +301,7 @@ fun if_exp_of_case_exp T ctrs casex ctxt =
         (fn {context=ctxt, ...} => asm_full_simp_tac (ctxt addsimps decoder_simps) 1);
 
     val name = "case_" ^ T_base_name ^ "_eq_if";
+    val _ = @{print} thm
   in
     Local_Theory.note ((Binding.name name, []), [thm]) ctxt |>> snd |>> cons case_nat_def_thm
   end;
@@ -270,12 +311,12 @@ fun Rel_nat_case_nat_equiv thms T ctxt =
     fun mk_Rel_nat_case_nat_equiv free_T (T as Type (\<^type_name>\<open>fun\<close>, _)) =
           dest_funT T |> apply2 (mk_Rel_nat_case_nat_equiv free_T) |-> mk_rel_fun
       | mk_Rel_nat_case_nat_equiv free_T T =
-          if T = free_T then Free ("R", [\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>) else \<^Const>\<open>Rel_nat T\<close>;
+          if T = free_T then Free ("R", [\<^typ>\<open>nat\<close>, T] ---> \<^typ>\<open>bool\<close>) else mk_Rel_nat T;
 
     val T_base_name = Long_Name.base_name (fst (dest_Type T));
-    val case_t = read_const' ctxt ("case_" ^ T_base_name) |> normalize_type_of_term;
+    val case_t = read_const ctxt ("case_" ^ T_base_name) |> mk_frees_add_sort;
     val case_t_T = fastype_of case_t;
-    val case_nat_t = read_const' ctxt ("case_" ^ T_base_name ^ "_nat");
+    val case_nat_t = read_const ctxt ("case_" ^ T_base_name ^ "_nat");
     val body_T = body_type case_t_T;
 
     val goal =
@@ -288,91 +329,99 @@ fun Rel_nat_case_nat_equiv thms T ctxt =
     val name = "Rel_nat_" ^ T_base_name ^ "_case_" ^ T_base_name;
   in Local_Theory.note ((Binding.name name, @{attributes [transfer_rule]}), [thm]) ctxt end;
 
-fun datatype_compile_nat T ctrs casex (thy : theory) =
+
+fun prove_instantiation solve_tac =
+  let fun tac ctxt concl =
+    let val var = dest_comb concl |> snd |> dest_comb |> snd
+    in
+      Induction.induction_tac ctxt false [[SOME (NONE, (var, false))]] [] [] NONE []
+      THEN_ALL_NEW (solve_tac ctxt)
+    end
+  in
+    Class.prove_instantiation_instance (fn ctxt =>
+      Class.intro_classes_tac ctxt []
+      THEN HEADGOAL (TacUtil.FOCUS_PARAMS_CTXT' (TacUtil.SUBGOAL_STRIPPED (snd o snd) o tac) ctxt))
+  end
+
+fun mk_ctrl_Rel_thm ctr simps ctxt =
   let
-    val (T_name, T_typ_args) = dest_Type T;
-    val T_base_name = Long_Name.base_name T_name;
+    fun solve_Rel_nat_equiv ctxt = auto_tac (ctxt addsimps simps addDs fun_RelD)
+    fun prove_goal t = Goal.prove ctxt [] [] (mk_Trueprop t) (#context #> solve_Rel_nat_equiv)
+  in mk_ctr_Rel ctxt ctr |> prove_goal end
+
+fun register_ctrl_Rel_thm ctr simps lthy =
+  let
+    val ctrl_Rel_thm = mk_ctrl_Rel_thm ctr simps lthy
+    val binding = TranspUtil.add_suffix Rel_nat_binding (mk_ctr_binding ctr)
+  in Local_Theory.note ((binding, @{attributes [transfer_rule]}), [ctrl_Rel_thm]) lthy end
+
+fun register_ctrl_Rel_thms T ctrs simps =
+  fold_map (fn ctr => register_ctrl_Rel_thm ctr simps #>> snd) ctrs
+  #> (fn (thms, lthy) => Local_Theory.note ((mk_Rel_nat_type_binding T, []), flat thms) lthy)
+
+fun datatype_compile_nat T ctrs casex thy =
+  let
+    val (T_name, T_typ_args) = dest_Type T
+    val T_base_name = Long_Name.base_name (fst (dest_Type T));
 
     (* Add nat version of constructors and start instantiation of compile_nat class*)
-    val ((Rel_nat_equiv_terms, ctrs_nat_defs), lthy) =
-      Class.instantiation ([T_name], map dest_TFree T_typ_args, \<^sort>\<open>compile_nat\<close>) thy
-      |> snd o Local_Theory.begin_nested
-      |> lift_ctrs ctrs
-      ||> add_abs_rep_fun T casex ctrs;
-    val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
-    val phi = Proof_Context.export_morphism old_lthy lthy;
-    val ctrs_nat_defs = map (Morphism.thm phi) ctrs_nat_defs;
+    val (ctrs_nat_defs, lthy) =
+      Class.instantiation ([T_name], map dest_TFree T_typ_args, compile_natS) thy
+      |> Local_Theory.begin_nested
+      |> snd
+      |> register_ctrs ctrs
+      ||> register_natify_fun T casex ctrs
+      ||> register_denatify_fun T ctrs
 
-    (* Remove abs/rep nat simps from simp set as they would make problems later *)
-    val abs_rep_simps =
-      [Proof_Context.get_thm lthy ("denatify_" ^ T_base_name ^ ".simps"),
-        Proof_Context.get_thm lthy ("natify_" ^ T_base_name ^ ".simps")];
-    val (_, new_lthy) =
-      Local_Theory.note ((Binding.empty, @{attributes [simp del]}), abs_rep_simps) lthy;
+    val (natify_simps, denatify_simps) = (mk_natify_binding, mk_denatify_binding)
+      |> apply2 (fn f => f T |> const_from_binding lthy |> get_fun_simps lthy |> cat_options |> flat)
+    (* Remove simps from simp set as they would make problems later *)
+    val natify_denatify_simps = natify_simps @ denatify_simps
+    val lthy = del_simps natify_denatify_simps lthy
+
+    val (lthy, old_lthy) = `Local_Theory.end_nested lthy
+    val phi = Proof_Context.export_morphism old_lthy lthy
+    val (ctrs_nat_defs, natify_denatify_simps) = (ctrs_nat_defs, natify_denatify_simps)
+      |> apply2 (map (Morphism.thm phi))
 
     val simps =
-      @{thms rel_fun_def Rel_nat_def} @ abs_rep_simps @ ctrs_nat_defs @ pair_defs;
+      @{thms rel_fun_def Rel_nat_iff_eq_natify} @ natify_denatify_simps @ ctrs_nat_defs @ pair_defs
 
-    val lthy =
-      Class.prove_instantiation_instance (fn ctxt =>
-        Class.intro_classes_tac ctxt []
-        THEN HEADGOAL (Subgoal.FOCUS_PARAMS_FIXED (fn {context = ctxt, ...} =>
-          let
-            val var = Free ("x", T);
-            val inst =
-              lambda var (mk_eq (\<^Const>\<open>denatify T for \<^Const>\<open>natify T for var\<close>\<close>, var))
-              |> Thm.cterm_of ctxt;
-            val thm =
-              Proof_Context.get_thm ctxt (T_base_name ^ ".induct")
-              |> infer_instantiate' ctxt [SOME inst];
-          in
-            resolve_tac ctxt [thm] 1
-            THEN REPEAT
-              (asm_full_simp_tac (ctxt addsimps ctrs_nat_defs @ abs_rep_simps @ pair_defs) 1)
-          end
-          ) ctxt)
-        ) new_lthy;
-
-    val Rel_nat_equiv_thms =
-      map (fn t =>
-        Goal.prove lthy [] [] (mk_Trueprop t)
-          (fn {context=ctxt, ...} =>
-            asm_full_simp_tac (ctxt addsimps (@{thm prod_encode_0}::simps)) 1)
-        ) Rel_nat_equiv_terms;
-
-    val name = "Rel_nat_" ^ T_base_name ^ "_equiv";
-    val (_, lthy) =
-      Local_Theory.note
-        ((Binding.name name, @{attributes [transfer_rule]}), Rel_nat_equiv_thms) lthy;
+    fun solve_instantiation_tac ctxt =
+      asm_full_simp_tac (ctxt addsimps ctrs_nat_defs @ natify_denatify_simps @ pair_defs)
+    val lthy = prove_instantiation solve_instantiation_tac lthy
+    val (_, lthy) = register_ctrl_Rel_thms T ctrs simps lthy
 
     (* transform case to if expression *)
     val (case_eq_if_thm, (lthy, old_lthy)) =
-      snd (Local_Theory.begin_nested lthy)
+      Local_Theory.begin_nested lthy
+      |> snd
       |> if_exp_of_case_exp T ctrs casex
       ||> `Local_Theory.end_nested
-    val phi = Proof_Context.export_morphism old_lthy lthy;
+    val phi = Proof_Context.export_morphism old_lthy lthy
     val (_, lthy) = Rel_nat_case_nat_equiv (map (Morphism.thm phi) (case_eq_if_thm @ simps)) T lthy;
   in lthy end;
 
 fun datatype_compile_nat_cmd T thy =
   let
-    val ctxt = Proof_Context.init_global thy;
-    val sugar =
-      fst (dest_Type (Syntax.parse_typ ctxt T))
-      |> Ctr_Sugar.ctr_sugar_of ctxt
-      |> the;
-    val T = add_compile_nat_to_sort (#T sugar);
-    val casex =
-      subst_atomic_types [(body_type (type_of (#casex sugar)), \<^typ>\<open>pair_repr\<close>)] (#casex sugar)
-      |> normalize_type_of_term;
-    val ctrs = map normalize_type_of_term (#ctrs sugar);
-  in datatype_compile_nat T ctrs casex thy end;
+    val ctxt = Proof_Context.init_global thy
+    val Tname = T |> Syntax.parse_typ ctxt |> dest_Type |> fst
+  in case Ctr_Sugar.ctr_sugar_of ctxt Tname of
+      NONE => error ("Unknown datatype " ^ Tname)
+    | SOME sugar =>
+      let
+        val T = #T sugar |> mk_tfrees_add_sort
+        val ctrs = #ctrs sugar |> map mk_frees_add_sort
+        val casex = #casex sugar
+          |> (fn casex => subst_atomic_types [(body_type (fastype_of casex), natT)] casex)
+          |> mk_frees_add_sort
+      in datatype_compile_nat T ctrs casex thy end
+  end
 
 val _ =
-  Outer_Syntax.command
-    \<^command_keyword>\<open>datatype_compile_nat\<close>
-    "Lift datatype to an encoding in natural numbers"
-    (Parse.typ >> datatype_compile_nat_cmd >> (Toplevel.begin_main_target false));
+  Outer_Syntax.command \<^command_keyword>\<open>datatype_compile_nat\<close>
+    "Create datatype encoding of datatype"
+    (Parse.typ >> datatype_compile_nat_cmd >> Toplevel.begin_main_target false)
 
 fun mk_Fun_Rel R S =
   let
@@ -433,7 +482,7 @@ fun wrapper_transport_api binding yT cx lthy =
   in Local_Theory.end_nested lthy end;
 
 fun mk_natT T = let val (Ts, T) = strip_type T
-  in (map mk_natT Ts) ---> \<^typ>\<open>pair_repr\<close> end
+  in (map mk_natT Ts) ---> pair_reprT end
 
 fun mk_trp_term t ctxt =
   let
@@ -460,7 +509,7 @@ fun mk_lifting_thm t lthy =
     fun mk_rel T =
       let
         val (Ts, T) = strip_type T
-        val t = \<^Const>\<open>Rel_nat T\<close>
+        val t = mk_Rel_nat T
       in fold_rev mk_rel_fun (map mk_rel Ts) t end
     val goal = mk_Trueprop (mk_rel T $ t_nat_app $ t);
 
@@ -508,7 +557,7 @@ fun mk_nat_synth t lthy =
     val rep_ts = map2 (fn T => fn t => \<^Const>\<open>denatify T for t\<close>) binder_Ts arg_nat_ts;
 
     fun mk_rels \<^Type>\<open>fun A B\<close> = mk_rel_fun (mk_rels A) (mk_rels B)
-      | mk_rels T = \<^Const>\<open>Rel_nat T\<close>;
+      | mk_rels T = mk_Rel_nat T;
 
     val assms_synth_thm =
       map2 (fn T => fn (arg1, arg2) =>
@@ -526,7 +575,7 @@ fun mk_nat_synth t lthy =
 
     val (var, lthy) =
       mk_fresh_names lthy 1 "t" |>> the_single
-      |>> (fn s => Var ((s, max_idx + 1), \<^typ>\<open>pair_repr\<close>));
+      |>> (fn s => Var ((s, max_idx + 1), pair_reprT));
 
     val goal = mk_Trueprop \<^Const>\<open>Rel_nat body_T for var \<open>list_comb (t, arg_ts)\<close>\<close>;
 
@@ -556,7 +605,6 @@ fun mk_nat_synth t lthy =
 
     val synth_t =
       Thm.concl_of synth_thm |> dest_Trueprop |> \<^Const_fn>\<open>Rel_nat _ for arg _ => arg\<close>;
-    val _ = Thm.cterm_of lthy synth_t |> @{print}
     val schem_Ts =
       fold_types (insert (op =)) synth_t []
       |> fold (fold_atyps (fn TVar a => insert (op =) (TVar a) | _ => I))
@@ -575,31 +623,17 @@ fun mk_nat_synth t lthy =
     val a =
     fold (Pattern.match (Proof_Context.theory_of lthy))
       (schem_ts ~~ arg_nat_ts) (tyenv, Vartab.empty)
-      |> @{print}
 
     val rhs_synth_def = Envir.subst_term a synth_t
-    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
-
-(*     val rhs_synth_def = map_types (Envir.subst_type tyenv) synth_t;
-    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
-    val rhs_synth_def' = Envir.subst_term a synth_t
-    val _ = Thm.cterm_of lthy rhs_synth_def |> @{print}
-    val rhs_synth_def = synth_t *)
 
     val goal = mk_Trueprop_eq (lhs_synth_def, rhs_synth_def);
-    val _ = Thm.cterm_of lthy goal |> @{print}
     val assms_synth_def_thm = map mk_Trueprop_eq (arg_nat_ts ~~ abs_ts);
 
-
-
-    val _ = synth_thm |> @{print}
     val synth_mod_thm =
       (Local_Defs.unfold lthy @{thms Rel_nat_def} synth_thm RS @{thm sym})
-      |> @{print}
 
 
     val rule_thm = (@{thm trans} OF [@{thm _}, synth_mod_thm])
-      |> @{print}
 
 (*     val b = (map (fst o dest_TVar) schem_Ts) ~~ (map (Thm.cterm_of lthy) arg_nat_ts)
     val d = Drule.infer_instantiate lthy b rule_thm *)
@@ -610,7 +644,6 @@ fun mk_nat_synth t lthy =
       fold_types (insert (op =)) (the_single app_eq_thm |> Thm.full_prop_of) []
       |> fold (fold_atyps (fn TVar a => insert (op =) (TVar a) | _ => I))
       |> curry (op |>) []
-      |> @{print}
 
 (*     val (lthy, old_lthy) = `Local_Theory.end_nested lthy;
     val phi = Proof_Context.export_morphism old_lthy lthy;
@@ -624,28 +657,15 @@ fun mk_nat_synth t lthy =
 
     val ct =
       the_single app_eq_thm |> Thm.full_prop_of
-      |> \<^Const_fn>\<open>Pure.eq \<^typ>\<open>pair_repr\<close> for A _ => A\<close>
+      |> \<^Const_fn>\<open>Pure.eq pair_reprT for A _ => A\<close>
       |> Thm.cterm_of lthy
     val ct' = lhs_synth_def |> Thm.cterm_of lthy
-    val a : ctyp TVars.table * cterm Vars.table = Thm.match (ct, ct') |> @{print}
-    val app_eq_thm =
-      app_eq_thm |> @{print}
-      (* |> map (Drule.instantiate_normalize a) |> @{print} *)
-
-(*     val tyenv =
-      if length schem_Ts > 0
-      then
-        (map (fst o dest_TVar) schem_Ts) ~~ (map (Thm.cterm_of lthy) arg_nat_ts)
-      else [];
-    val _ = tyenv |> @{print} *)
+    val a : ctyp TVars.table * cterm Vars.table = Thm.match (ct, ct')
 
     val var_names = map (fst o dest_Free) (arg_ts @ arg_nat_ts);
 
     val synth_def_thm =
       Goal.prove lthy var_names assms_synth_thm goal (fn {prems=prems, context=ctxt, ...} =>
-        let
-          val _ = prems |> @{print}
-        in
         (* print_tac ctxt "Start"
         THEN Classical.rule_tac ctxt [rule_thm] [] 1
         THEN print_tac ctxt "1"
@@ -664,7 +684,7 @@ fun mk_nat_synth t lthy =
         THEN print_tac ctxt "2"
         THEN auto_tac (ctxt addsimps app_eq_thm addsimps @{thms rel_fun_def Rel_nat_def})
         THEN print_tac ctxt "3"
-        end);
+        );
     val binding_name = Binding.name (t_base_name ^ "_nat_synth_def");
     val (_, lthy) = Local_Theory.note ((binding_name, []), [synth_def_thm]) lthy;
 
@@ -673,36 +693,18 @@ fun mk_nat_synth t lthy =
 
 fun function_compile_nat_cmd t lthy =
   let
-    val t = Syntax.read_term lthy t |> normalize_type_of_term;
-
-    val lthy =
-      lthy
+    val t = Syntax.read_term lthy t |> mk_frees_add_sort
+    val lthy = lthy
       |> mk_case_defs t
       |> mk_related_self_thm t
       |> mk_trp_term t
       |> mk_lifting_thm t
       |> mk_nat_synth t
-  in
-    lthy
-  end;
-
-fun test_cmd t lthy =
-  let
-    val t = Syntax.read_term lthy t |> normalize_type_of_term;
-    val lthy = lthy;
-  in lthy end;
+  in lthy end
 
 val _ =
-  Outer_Syntax.local_theory
-    \<^command_keyword>\<open>function_compile_nat\<close>
-    "Test"
-    (Parse.term >> function_compile_nat_cmd);
-
-val _ =
-  Outer_Syntax.local_theory
-    \<^command_keyword>\<open>test\<close>
-    "Test"
-    (Parse.term >> test_cmd);
-
+  Outer_Syntax.local_theory \<^command_keyword>\<open>function_compile_nat\<close>
+    "Compile HOL function to HOL function on natural numbers"
+    (Parse.term >> function_compile_nat_cmd)
 
 end

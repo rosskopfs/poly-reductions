@@ -1,8 +1,14 @@
 chapter Poly_Reductions
 
+session HOL_To_HOL_Nat in HOL_To_HOL_Nat = Transport +
+  sessions
+    "HOL-Library"
+    "ML_Unification"
+  theories
+    HOL_To_HOL_Nat_Setup
+
 session Poly_Reductions_Base = HOL +
   sessions
-    NREST
     "HOL-Real_Asymp"
     Landau_Symbols
 
