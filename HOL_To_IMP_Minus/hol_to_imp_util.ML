@@ -45,6 +45,11 @@ structure List : sig
   structure T_Seq : TRAVERSABLE where type 'a f = 'a list
 end
 
+structure Option : sig
+  include OPTION
+  val to_seq : 'a option -> 'a Seq.seq
+end
+
 end
 
 structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
@@ -59,6 +64,12 @@ end
 structure List = struct
   open List
   structure T_Seq = Traversable(List_Traversable_Trans(Identity_Traversable(Seq.A)))
+end
+
+structure Option = struct
+  open Option
+  fun to_seq NONE = Seq.empty
+    | to_seq (SOME x) = Seq.single x
 end
 
 val successors = map (curry (op +) 1)

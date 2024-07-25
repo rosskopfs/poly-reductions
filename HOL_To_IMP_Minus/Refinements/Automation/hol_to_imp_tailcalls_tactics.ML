@@ -60,6 +60,7 @@ structure SUT = State_Update_Tracking
 
 structure Seq = HTIU.Seq
 structure List = HTIU.List
+structure Option = HTIU.Option
 
 type IMP_def_retrieval = Proof.context -> term -> thm option
 val get_IMP_def = Compile_Nat.get_compiled_const_def
@@ -262,9 +263,10 @@ val finish_tail_tac =
           arg_terms arg_regs
       LET (fn arg_reg_eqs =>
         (* prove the equalities *)
-        arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac arg_reg_eq_tac)) |> List.T_Seq.sequence
+        arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac (SOLVED' arg_reg_eq_tac))) |> List.T_Seq.sequence
         (* this might not be an actual warning: if we simplify the HOL call incorrectly, a backtrack would be ok *)
         |> HTIU.seq_peek_empty (fn () => writeln "could not prove one or more register equalities")
+        (* TODO: show the user which could not be proven? this would be pretty helpful if cooking fails *)
       )))
 
     (* tactic for proving the equalities: add existing premises, then simp *)
@@ -296,10 +298,27 @@ val finish_tail_tac =
       let
         val is_ih = Thm.concl_of #> can dest_terminates_with_res_IMP_Tailcall_prop
 
+        val s_ct = Thm.cterm_of ctxt s
+        val s_typ = Term.fastype_of s
+
+        (* induction hypotheses can have multiple free variables, find them all *)
+        val insts =
+          Thm.full_prop_of
+          #> fold_aterms (fn Var v => insert (op =) v | _ => I) #> build_rev
+          #> List.filter (fn (_, typ) => typ = s_typ) (* TODO: OK to compare types by = ? *)
+          #> List.map (fn (name, _) => (name, s_ct))
+
         val instantiate_apply_ih_tac =
-          filter is_ih prems
-          |> map_filter (try (Drule.infer_instantiate' ctxt [SOME (Thm.cterm_of ctxt s)]))
-          |> resolve_tac ctxt
+          Seq.of_list prems
+          |> Seq.filter is_ih
+          BIND (fn ih =>
+            insts ih |> Seq.of_list
+          BIND (fn inst =>
+            try (Drule.infer_instantiate ctxt [inst]) ih |> Option.to_seq
+          BIND (fn ih_inst =>
+            resolve_tac ctxt [ih_inst] |> Seq.A.pure
+          )))
+          |> flat2
 
         val solve_ih_prem_tac =
           Tactic.cut_facts_tac prems
@@ -341,7 +360,8 @@ fun run_hol_fun_tac get_HOL_eqs =
         (* TODO: the simplification step is fragile if there is any
           other theorem about the HOL function in the simpset *)
         (* TODO: target the relevant assumptions only (?) *)
-        THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
+        (* TODO: anything beyond Let_def? Should simplification be consolidated somewhere? *)
+        THEN' TU.TRY' (Simplifier.asm_simp_tac (ctxt addsimps (@{thms Let_def})))
   in with_dest_terminates_with_res_IMP_Tailcall_prop o tac end
 
 fun finish_tac get_HOL_eqs =
