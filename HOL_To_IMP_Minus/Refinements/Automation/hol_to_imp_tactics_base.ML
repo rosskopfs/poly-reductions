@@ -124,6 +124,7 @@ fun run_step_tac seq_tac assign_tac call_tac if_tac =
   (seq_tac THEN' (assign_tac ORELSE' call_tac))
   ORELSE' if_tac
 
-val run_tac = TU.TRY' o REPEAT_ALL_NEW oooo run_step_tac
+(* usage: run_tac (run_step_tac ...) *)
+val run_tac = TU.TRY' o REPEAT_ALL_NEW
 
 end

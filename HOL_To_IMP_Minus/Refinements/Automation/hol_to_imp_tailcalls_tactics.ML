@@ -224,14 +224,16 @@ fun get_func_corrects ctxt t =
     ] |> snd |> map snd
   in if null thms then NONE else SOME thms end
 
-(* run a tailcall program to completion,
-   ends with terminates_with_res _ c _ _ _, where c is either an assignment, or tTAIL *)
-fun run_tac get_func_corrects ctxt =
-  HTITB.run_tac
+fun run_step_tac get_func_corrects ctxt =
+  HTITB.run_step_tac
     (terminates_with_res_tSeq_tac ctxt)
     (terminates_with_tAssign_tac ctxt)
     (terminates_with_tCall_tac get_func_corrects ctxt)
     (terminates_with_res_tIf_tac ctxt)
+
+(* run a tailcall program to completion,
+   ends with terminates_with_res _ c _ _ _, where c is either an assignment, or tTAIL *)
+fun run_tac get_func_corrects = HTITB.run_tac o run_step_tac get_func_corrects
 
 
 (* finishing tactics *)
