@@ -3,24 +3,10 @@ theory HOL_To_IMP_Minus_Arithmetics
   imports
     HOL_To_IMP_Minus_Fun_Pattern_Setup
     "HOL-Library.Discrete"
-    "ML_Unification.ML_Unification_HOL_Setup"
-    "ML_Unification.Unify_Resolve_Tactics"
 begin
 
 context HOL_To_IMP_Minus
 begin
-
-definition [compiled_IMP_Minus_const_def]:
-  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
-
-declare_compiled_const Suc
-  return_register "suc.ret"
-  argument_registers "suc.args.x"
-  compiled suc_IMP
-
-HOL_To_IMP_Minus_func_correct Suc
-  unfolding suc_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
 
 fun mul_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
 "mul_acc_nat 0 _ z = z" |

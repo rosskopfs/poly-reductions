@@ -260,6 +260,18 @@ declare_compiled_const "ord_class.less"
 
 HOL_To_IMP_Minus_func_correct lt_nat by cook
 
+definition [compiled_IMP_Minus_const_def]:
+  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
+
+declare_compiled_const Suc
+  return_register "suc.ret"
+  argument_registers "suc.args.x"
+  compiled suc_IMP
+
+HOL_To_IMP_Minus_func_correct Suc
+  unfolding suc_IMP_def
+  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+
 end
 
 end
