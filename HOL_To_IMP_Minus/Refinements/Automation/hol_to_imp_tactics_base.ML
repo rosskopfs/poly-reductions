@@ -49,6 +49,7 @@ struct
 
 val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Tactics_Base"
 
+structure HTIU = HOL_To_IMP_Util
 structure TU = Tactic_Util
 
 (* find theorems of the form "f x = ...", given f possibly applied to some arguments *)
@@ -71,9 +72,9 @@ fun SIMPS_TO_tac simps ctxt =
   THEN' resolve_tac ctxt [@{thm SIMPS_TOI}]
 
 fun SIMPS_TO_UNIF_tac simps ctxt =
-  resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}]
-  THEN' TU.TRY' (SIMPS_TO_tac simps ctxt)
-  THEN' resolve_tac ctxt [@{thm reflexive}]
+  resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}] #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(1)"
+  THEN' (TU.TRY' (SIMPS_TO_tac simps ctxt) #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/SIMPS_TO")
+  THEN' (resolve_tac ctxt [@{thm reflexive}] #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(2)")
 
 (* helpers for updating and retrieving protected STATEs *)
 
@@ -81,6 +82,7 @@ val STATE_interp_state_State_thms = @{thms STATE_eq interp_state_State_eq}
 
 fun SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt =
   SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt
+  #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF"
 
 fun STATE_interp_update_eq_STATE_interp_fun_upd ctxt =
   resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI}]
@@ -100,17 +102,20 @@ fun STATE_interp_retrieve_key_eq_tac finish_eq_tac ctxt = (* TODO: kind of ugly 
 fun assign_tac thms ctxt =
   resolve_tac ctxt thms
   THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
+  #> HTIU.time_tac Pretty.writeln "assign_tac"
 
 (* applies a theorem of the form:
    assumes "?P1 c1" and "?P2 c2" shows "?P (?seq c1 c2)" *)
 (* TODO: are these comments helpful?? *)
 fun seq_tac thms ctxt = resolve_tac ctxt thms
+  #> HTIU.time_tac Pretty.writeln "seq_tac"
 
 fun if_tac thms ctxt =
   resolve_tac ctxt thms
   THEN' STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
   THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
   THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+  #> HTIU.time_tac Pretty.writeln "if_tac"
 
 fun call_tac thms ctxt correctness =
   resolve_tac ctxt thms
@@ -118,11 +123,13 @@ fun call_tac thms ctxt correctness =
   THEN' resolve_tac ctxt correctness
   (* solve state update assumption: s' = s(r := val) *)
   THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
+  #> HTIU.time_tac Pretty.writeln "call_tac"
 
 (* run one (seq assign ...), (seq call ...), or if step of a program *)
 fun run_step_tac seq_tac assign_tac call_tac if_tac =
-  (seq_tac THEN' (assign_tac ORELSE' call_tac))
-  ORELSE' if_tac
+  ((seq_tac THEN' (assign_tac ORELSE' call_tac))
+    ORELSE' if_tac)
+   #> HTIU.time_tac Pretty.writeln "run_step_tac"
 
 (* usage: run_tac (run_step_tac ...) *)
 val run_tac = TU.TRY' o REPEAT_ALL_NEW

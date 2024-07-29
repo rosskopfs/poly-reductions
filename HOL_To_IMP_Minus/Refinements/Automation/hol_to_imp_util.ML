@@ -24,6 +24,8 @@ val seq_peek_empty : (unit -> unit) -> 'a Seq.seq -> 'a Seq.seq
 
 structure Let : sig val LET : ('a * ('a -> 'b)) -> 'b end
 
+val time_tac : (Pretty.T -> unit) -> string -> ('a -> 'b Seq.seq) -> 'a -> 'b Seq.seq
+
 end
 
 structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
@@ -60,4 +62,37 @@ structure Let = struct
   fun x LET f = f x
 end
 
+
+val bblock = Pretty.block o Pretty.breaks
+
+fun pretty_timing { elapsed, cpu, gc } =
+  let fun item l t = bblock [Pretty.str l, Value.print_time t |> Pretty.str]
+  in bblock [item "elapsed:" elapsed, item "cpu:" cpu, item "gc:" gc] end
+
+fun time_tac printer label tac st =
+  let
+    fun log t s : unit =
+      bblock [
+        Pretty.str label,
+        Pretty.str ("[" ^ s ^ "]"),
+        pretty_timing t]
+      |> printer
+    
+    fun time_seq0 i s =
+      Seq.make (fn () =>
+        let
+          val (t, cell) = Timing.timing Seq.pull s
+          val _ = log t (Int.toString i)
+        in
+      case cell of
+          NONE => NONE
+        | SOME (x, s') => SOME (x, time_seq0 (i + 1) s')
+    end)
+    val (t, seq) = Timing.timing tac st
+    val _ = log t "init"
+  in time_seq0 0 seq end
+
+(* fun lbld lbl p = Pretty.writeln (bblock [Pretty.str lbl, p]) *)
+
 end
+
