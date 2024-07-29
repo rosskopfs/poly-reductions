@@ -86,7 +86,9 @@ fun whatever :: "'a \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> bool" 
 | "whatever y [] n = (if False then True else True)"
 | "whatever y (x#xs) n = (if (y = x) then True else True)"
 
+(*does not work
 function_compile_nat whatever
 print_theorems
+*)
 
 end
