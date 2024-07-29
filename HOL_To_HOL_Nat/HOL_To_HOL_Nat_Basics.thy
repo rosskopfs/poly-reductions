@@ -1,6 +1,6 @@
 \<^marker>\<open>creator "Jay Neubrand"\<close>
 \<^marker>\<open>creator "Andreas Vollert"\<close>
-\<^marker>\<open>contributor "Kevin Kappelmann"\<close>
+\<^marker>\<open>creator "Kevin Kappelmann"\<close>
 subsection \<open>Basic Datatypes and Functions\<close>
 theory HOL_To_HOL_Nat_Basics
   imports
@@ -9,26 +9,24 @@ begin
 
 unbundle no_HOL_ascii_syntax
 
-datatype_compile_nat nat
-print_theorems
-
-datatype_compile_nat list
-print_theorems
+instantiation nat :: compile_nat
+begin
+  definition "natify_nat \<equiv> (id :: nat \<Rightarrow> nat)"
+  definition "denatify_nat \<equiv> (id :: nat \<Rightarrow> nat)"
+  instance by standard (simp add: natify_nat_def denatify_nat_def)
+end
 
 datatype_compile_nat bool
-print_theorems
+
+datatype_compile_nat list
 
 datatype_compile_nat char
-print_theorems
 
 datatype_compile_nat prod
-print_theorems
 
 datatype_compile_nat num
-print_theorems
 
 datatype_compile_nat option
-print_theorems
 
 lemma If_related_self [trp_in_dom]:
   "(compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R \<Rrightarrow> compile_nat_type_def.R)
@@ -83,6 +81,12 @@ function_compile_nat elemof
 print_theorems
 print_statement elemof_nat_synth_def[unfolded case_list_nat_def]
 
+fun whatever :: "'a \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> bool" where
+  "whatever _ xs 0 = True"
+| "whatever y [] n = (if False then True else True)"
+| "whatever y (x#xs) n = (if (y = x) then True else True)"
 
+function_compile_nat whatever
+print_theorems
 
 end

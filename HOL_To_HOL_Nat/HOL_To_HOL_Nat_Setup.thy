@@ -20,11 +20,12 @@ text \<open>Types with encodings as natural numbers.\<close>
 class compile_nat =
   fixes natify :: "'a \<Rightarrow> nat"
   and denatify :: "nat \<Rightarrow> 'a"
-  assumes denatify_natify_eq_self[simp]: "\<And>x. denatify (natify x) = x"
+  assumes denatify_natify_eq_self [simp]: "\<And>x. denatify (natify x) = x"
 begin
 
 sublocale compile_nat_type_def: type_definition natify denatify "range natify"
   by unfold_locales auto
+declare compile_nat_type_def.Rep_induct[induct del] compile_nat_type_def.Abs_induct[induct del]
 
 lemma inj_natify: "inj natify"
   by (rule inj_on_inverseI[where ?g=denatify]) simp
@@ -42,6 +43,9 @@ lemmas
 
 lemma Rel_nat_natify_self [transfer_rule]: "Rel_nat (natify x) x"
   by (simp add: Rel_nat_iff_eq_natify)
+
+lemma Rel_nat_denatify_natify [transfer_rule]: "rel_fun Rel_nat Rel_nat\<inverse> denatify natify"
+  by (intro rel_funI) (auto iff: Rel_nat_iff_eq_natify)
 
 interpretation flip : transport compile_nat_type_def.R compile_nat_type_def.L natify denatify .
 
@@ -63,47 +67,93 @@ declare compile_nat_flip_partial_equivalence_rel_equivalence[per_intro]
 declare Galois_eq_inv_Rel_nat[trp_relator_rewrite, trp_uhint]
 lemma eq_eq_Fun_Rel_eq_eq_uhint [trp_uhint]: "P \<equiv> (=) \<Longrightarrow> P \<equiv> (=) \<Rrightarrow> (=)" by simp
 
-definition pair :: "nat \<Rightarrow> nat \<Rightarrow> nat"
-  where "pair l r = prod_encode (l, r)"
+definition pair_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat"
+  where "pair_nat a b = prod_encode (a, b)"
 
-definition fstP :: "nat \<Rightarrow> nat" where
-  "fstP v = fst (prod_decode v)"
+lemma pair_nat_eq: "pair_nat a b = prod_encode (a, b)"
+  unfolding pair_nat_def by simp
 
-definition sndP :: "nat \<Rightarrow> nat" where
-  "sndP v = snd (prod_decode v)"
+lemma pair_nat_zero_zero_eq_zero [simp]: "pair_nat 0 0 = 0"
+  by (simp add: pair_nat_def prod_encode_def)
 
-lemmas [termination_simp] = fstP_def sndP_def
+definition "unpair_nat \<equiv> prod_decode"
 
-lemma prod_encode_zero_eq_zero [simp]: "prod_encode (0, 0) = 0"
-  by (simp add: prod_encode_def)
+lemma unpair_nat_eq: "unpair_nat p = prod_decode p"
+  unfolding unpair_nat_def by simp
+
+lemma unpair_nat_pair_nat_eq [simp]: "unpair_nat (pair_nat a b) = (a, b)"
+  unfolding unpair_nat_eq pair_nat_eq by simp
+
+lemma pair_nat_unpair_nat_eq [simp]: "(\<lambda>(a, b). pair_nat a b) (unpair_nat p) = p"
+  unfolding unpair_nat_eq pair_nat_eq by simp
+
+lemma unpair_nat_zero_eq_zero_zero [simp]: "unpair_nat 0 = (0, 0)"
+  by (subst pair_nat_zero_zero_eq_zero[symmetric], subst unpair_nat_pair_nat_eq) simp
+
+definition fst_nat :: "nat \<Rightarrow> nat" where
+  "fst_nat p = fst (unpair_nat p)"
+
+lemma fst_nat_eq: "fst_nat p = fst (unpair_nat p)"
+  unfolding fst_nat_def by simp
+
+lemma fst_nat_pair_eq [simp]: "fst_nat (pair_nat a b) = a"
+  unfolding fst_nat_eq by simp
+
+lemma fst_nat_zero_eq [simp]: "fst_nat 0 = 0"
+  unfolding fst_nat_eq by simp
+
+definition snd_nat :: "nat \<Rightarrow> nat" where
+  "snd_nat p = snd (unpair_nat p)"
+
+lemma snd_nat_eq: "snd_nat p = snd (unpair_nat p)"
+  unfolding snd_nat_def by simp
+
+lemma snd_nat_pair_eq [simp]: "snd_nat (pair_nat a b) = b"
+  unfolding snd_nat_eq by simp
+
+lemma snd_nat_zero_eq [simp]: "snd_nat 0 = 0"
+  unfolding snd_nat_eq by simp
+
+lemma fst_nat_le_if_le [termination_simp]: "p \<le> p' \<Longrightarrow> fst_nat p \<le> p'"
+  unfolding fst_nat_eq unpair_nat_eq
+  by (cases "prod_decode p") (metis fst_conv le_prod_encode_1 order.trans prod_decode_inverse)
+
+lemma snd_nat_le_if_le [termination_simp]: "p \<le> p' \<Longrightarrow> snd_nat p \<le> p'"
+  unfolding snd_nat_eq unpair_nat_eq
+  by (cases "prod_decode p") (metis le_prod_encode_2 order.trans prod_decode_inverse split_pairs)
 
 lemma [termination_simp]:
-  assumes "v < v'"
-  shows fst_prod_decode_le: "fst (prod_decode v) < v'"
-    and snd_prod_decode_le: "snd (prod_decode v) < v'"
-  using assms le_prod_encode_1[of "fstP v" "sndP v"] le_prod_encode_2[of "sndP v" "fstP v"]
-  by (simp_all add: fstP_def sndP_def)
+  assumes "p < p'"
+  shows fst_nat_lt_if_lt: "fst_nat p < p'"
+  and snd_nat_lt_if_lt: "snd_nat p < p'"
+  using assms le_prod_encode_1[of "fst_nat p" "snd_nat p"] le_prod_encode_2[of "snd_nat p" "fst_nat p"]
+  by (simp_all add: fst_nat_eq snd_nat_eq pair_nat_eq unpair_nat_eq)
 
 lemma
   assumes "0 < a"
-  shows fst_le_prod_encode: "a < prod_encode (a, b)"
-    and snd_le_prod_encode: "b < prod_encode (a, b)"
-  using assms by (induction a; simp add: prod_encode_def)+
+  shows fst_lt_pair_nat_if_zero_lt: "a < pair_nat a b"
+  and snd_lt_pair_nat_if_zero_lt: "b < pair_nat a b"
+  using assms by (cases a; simp add: pair_nat_eq prod_encode_def)+
 
 corollary [termination_simp]:
-  assumes "0 < fstP v"
-  shows fst_prod_decode_le_self: "fst (prod_decode v) < v"
-    and snd_prod_decode_le_self: "snd (prod_decode v) < v"
-  using assms prod_decode_inverse[of v]
-  by (cases "prod_decode v"; fastforce simp add: fstP_def fst_le_prod_encode snd_le_prod_encode)+
-
-lemma fst_prod_decode_zero_eq [simp]: "fst (prod_decode 0) = 0" using fst_prod_decode_le by auto
-lemma snd_prod_decode_zero_eq [simp]: "snd (prod_decode 0) = 0" using snd_prod_decode_le by auto
+  assumes "0 < fst_nat p"
+  shows fst_nat_lt_self_if_lt_fst_nat: "fst_nat p < p"
+  and snd_nat_lt_self_if_lt_fst_nat: "snd_nat p < p"
+  using assms pair_nat_unpair_nat_eq[of p]
+  by (cases "unpair_nat p"; auto simp: fst_lt_pair_nat_if_zero_lt snd_lt_pair_nat_if_zero_lt)+
 
 lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
   by (urule rel_inv_Dep_Fun_Rel_rel_eq)
 
-ML_file \<open>hol_to_hol_nat.ML\<close>
+ML_file \<open>hol_to_hol_nat_util.ML\<close>
+
+text \<open>Encoding of datatypes as natural numbers.
+Restrictions: (1) Recursive datatypes may not be nested inside of another datatype (2) recursive constructors must not be the first constructor (due to termination proofs).\<close>
+
+ML_file \<open>datatype_to_nat.ML\<close>
+
+(*TODO: synthesisation of functions very unstable*)
+ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>
 
 
 end
