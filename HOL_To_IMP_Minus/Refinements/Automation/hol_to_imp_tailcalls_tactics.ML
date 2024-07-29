@@ -303,9 +303,9 @@ val finish_tail_tac =
 
         (* induction hypotheses can have multiple free variables, find them all *)
         val insts =
-          Thm.full_prop_of
+          Thm.prop_of
           #> fold_aterms (fn Var v => insert (op =) v | _ => I) #> build_rev
-          #> List.filter (fn (_, typ) => typ = s_typ) (* TODO: OK to compare types by = ? *)
+          #> List.filter (fn (_, typ) => typ = s_typ)
           #> List.map (fn (name, _) => (name, s_ct))
 
         val instantiate_apply_ih_tac =
