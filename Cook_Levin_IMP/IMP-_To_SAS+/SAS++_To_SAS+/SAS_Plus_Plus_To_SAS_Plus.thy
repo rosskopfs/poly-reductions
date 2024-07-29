@@ -15,6 +15,67 @@ text \<open> We give a reduction from SAS++ to SAS+. The challenge here is to re
 
 datatype 'v variable =  Var 'v | Stage
 datatype 'd domain_element = DE 'd | Init | NonInit
+
+instantiation variable :: (order_bot) order_bot
+begin
+
+fun less_eq_variable :: "'a variable \<Rightarrow> 'a variable \<Rightarrow> bool" where
+  "less_eq_variable (Var v1) (Var v2) \<longleftrightarrow> v1 \<le> v2"
+| "less_eq_variable Stage _ \<longleftrightarrow> True"
+| "less_eq_variable _ Stage \<longleftrightarrow> False"
+
+definition less_variable :: "'a variable \<Rightarrow> 'a variable \<Rightarrow> bool" where
+  "less_variable c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
+
+definition bot_variable :: "'a variable" where
+  "bot_variable = Stage"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case by (simp add: less_variable_def)
+next
+  case 2 show ?case
+    using less_eq_variable.elims(3) by fastforce
+next
+  case 3 thus ?case by (fastforce elim: less_eq_variable.elims)
+next
+  case 4 thus ?case by (fastforce elim: less_eq_variable.elims)
+next
+  case 5 show ?case unfolding bot_variable_def by simp
+qed
+end
+
+instantiation domain_element :: (order_bot) order_bot
+begin
+
+fun less_eq_domain_element :: "'a domain_element \<Rightarrow> 'a domain_element \<Rightarrow> bool" where
+  "less_eq_domain_element (DE v1) (DE v2) \<longleftrightarrow> v1 \<le> v2"
+| "less_eq_domain_element Init _ \<longleftrightarrow> True"
+| "less_eq_domain_element _ Init \<longleftrightarrow> False"
+| "less_eq_domain_element NonInit _ \<longleftrightarrow> True"
+| "less_eq_domain_element _ NonInit \<longleftrightarrow> False"
+
+definition less_domain_element :: "'a domain_element \<Rightarrow> 'a domain_element \<Rightarrow> bool" where
+  "less_domain_element c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"
+
+definition bot_domain_element :: "'a domain_element" where
+  "bot_domain_element = Init"
+
+instance
+proof(standard, goal_cases)
+  case 1 show ?case by (simp add: less_domain_element_def)
+next
+  case 2 show ?case
+    using less_eq_domain_element.elims(3) by fastforce
+next
+  case 3 thus ?case by (fastforce elim: less_eq_domain_element.elims)
+next
+  case 4 thus ?case by (fastforce elim: less_eq_domain_element.elims)
+next
+  case 5 show ?case unfolding bot_domain_element_def by simp
+qed
+end
+
                                                                
 type_synonym ('v, 'd) state = "('v, 'd) State_Variable_Representation.state"
 type_synonym ('v, 'd) operator = "('v variable, 'd domain_element) sas_plus_operator"
@@ -165,21 +226,24 @@ definition SAS_Plus_Plus_To_SAS_Plus:: "('v, 'd) sas_plus_problem \<Rightarrow> 
       range_of = ((\<lambda>x. Some (map DE x)) \<circ>\<^sub>m (range_of P) 
         \<circ>\<^sub>m (\<lambda>x. (case x of Var x \<Rightarrow> Some x | Stage \<Rightarrow> None)))(Stage \<mapsto> [Init, NonInit])\<rparr>"
 
-lemma SAS_Plus_Plus_To_SAS_Plus_valid: 
+
+lemma SAS_Plus_Plus_To_SAS_Plus_valid:
   assumes "is_valid_problem_sas_plus_plus P"
-  shows "is_valid_problem_sas_plus (SAS_Plus_Plus_To_SAS_Plus P)" 
-  using assms apply(auto simp: is_valid_problem_sas_plus_plus_def is_valid_problem_sas_plus_def 
+  shows "is_valid_problem_sas_plus (SAS_Plus_Plus_To_SAS_Plus P)"
+  using assms
+  apply(auto simp: is_valid_problem_sas_plus_plus_def is_valid_problem_sas_plus_def
       SAS_Plus_Plus_To_SAS_Plus_def list_all_def is_valid_operator_sas_plus_def Let_def
       initialization_operators_def SAS_Plus_Plus_Operator_To_SAS_Plus_Operator_def ListMem_iff)
-               apply auto
+                apply fastforce
+               apply fastforce
               apply fastforce
              apply fastforce
             apply fastforce
            apply fastforce
           apply blast
          apply blast
-         apply(auto simp: initial_state_def map_comp_def SAS_Plus_Plus_State_To_SAS_Plus_def 
-        split: variable.splits if_splits option.splits)
+        apply(auto simp: initial_state_def map_comp_def SAS_Plus_Plus_State_To_SAS_Plus_def
+      split: variable.splits if_splits option.splits)
   by (meson assms is_valid_problem_sas_plus_plus_then(1) range_of_not_empty)+
 
 lemma stage_of_initial_state[simp]: "((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) Stage = Some Init" 
@@ -412,17 +476,18 @@ lemma SAS_Plus_To_SAS_Plus_Plus:
   shows "\<exists>plan'. length plan' \<le> length plan
     \<and> is_serial_solution_for_problem_sas_plus_plus P plan'"
 proof-
-  let ?plan = "chain_applicable_prefix ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) plan" 
-  obtain k where k_def: "k < length ?plan 
+  let ?plan = "chain_applicable_prefix ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) plan"
+  obtain k where k_def: "k < length ?plan
     \<and> list_all (\<lambda>op. op \<in> set (initialization_operators P)) (take k ?plan)
     \<and> ?plan ! k = \<lparr> precondition_of = [(Stage, Init)], effect_of = [(Stage, NonInit)]\<rparr>
-    \<and> list_all (\<lambda>op. op \<in> set (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator ((P)\<^sub>\<O>\<^sub>+))) 
+    \<and> list_all (\<lambda>op. op \<in> set (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator ((P)\<^sub>\<O>\<^sub>+)))
       (drop (k + 1) ?plan)"
-    using exE[OF SAS_plus_plan_structure[where ?s ="((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)" 
-            and ?P = P and ?plan = ?plan]] assms set_of_chain_applicable_prefix 
-    by(force simp: is_serial_solution_for_problem_def list_all_def map_le_def Let_def 
-        execute_chain_applicable_prefix SAS_Plus_Plus_To_SAS_Plus_def initial_state_def ListMem_iff 
-        SAS_Plus_Plus_State_To_SAS_Plus_def)+
+    using exE[OF SAS_plus_plan_structure[where ?s ="((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)"
+          and ?P = P and ?plan = ?plan]] assms
+      set_of_chain_applicable_prefix[of "((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+)" "plan"]
+    by(force simp: is_serial_solution_for_problem_def list_all_def map_le_def Let_def
+        execute_chain_applicable_prefix SAS_Plus_Plus_To_SAS_Plus_def initial_state_def
+        SAS_Plus_Plus_State_To_SAS_Plus_def)
 
   let ?prefix = "take k ?plan" 
   obtain I' where I'_def: "execute_serial_plan_sas_plus ((SAS_Plus_Plus_To_SAS_Plus P)\<^sub>I\<^sub>+) ?prefix 

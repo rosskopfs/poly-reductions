@@ -1,8 +1,14 @@
 chapter Poly_Reductions
 
+session HOL_To_HOL_Nat in HOL_To_HOL_Nat = Transport +
+  sessions
+    "HOL-Library"
+    "ML_Unification"
+  theories
+    HOL_To_HOL_Nat_Setup
+
 session Poly_Reductions_Base = HOL +
   sessions
-    NREST
     "HOL-Real_Asymp"
     Landau_Symbols
 
@@ -11,14 +17,17 @@ session Poly_Reductions_Lib in Lib = "HOL-Analysis" +
     "HOL-Real_Asymp"
     Landau_Symbols
     Graph_Theory
+    Transport
   directories
     Auxiliaries
     Graph_Extensions
+    Encode_Nat
   theories
     "Auxiliaries/Graph_Auxiliaries"
     "Graph_Extensions/Vwalk_Cycle"
     Polynomial_Growth_Functions
     SAT_Definition
+    "Encode_Nat/Encode_Nat"
 
 session IMP_Minus in "IMP-" = "HOL-Eisbach" +
   theories
