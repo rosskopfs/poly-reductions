@@ -3,6 +3,7 @@ theory HOL_To_IMP_Utils
   imports
     State_Update_Tracking
     IMP_Minus.Big_StepT
+    ML_Unification.Unify_Resolve_Tactics
 begin
 
 paragraph \<open>Summary\<close>

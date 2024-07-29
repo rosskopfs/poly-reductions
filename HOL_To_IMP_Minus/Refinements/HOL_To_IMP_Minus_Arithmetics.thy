@@ -8,70 +8,19 @@ begin
 context HOL_To_IMP_Minus
 begin
 
-definition [compiled_IMP_Minus_const_def]:
-  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
-
-declare_compiled_const Suc
-  return_register "suc.ret"
-  argument_registers "suc.args.x"
-  compiled suc_IMP
-
-HOL_To_IMP_Minus_func_correct Suc
-  unfolding suc_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
-
 fun mul_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
 "mul_acc_nat 0 _ z = z" |
 "mul_acc_nat (Suc x) y z = mul_acc_nat x y (y + z)"
 declare mul_acc_nat.simps[simp del]
 
-lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
-  by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
-  (auto simp: mul_acc_nat.simps mult_eq_if)
-
 case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
-HOL_To_IMP_Minus_func_correct mul_acc_nat
-  apply (terminates_with_res_IMP_Minus_start_base tailcall_def: mul_acc_IMP_tailcall_def)
-  apply (induction "(s ''mul_acc.args.x1a'')" "(s ''mul_acc.args.x2a'')" "(s ''mul_acc.args.x3ba'')"
-    arbitrary: s
-    rule: mul_acc_nat.induct)
-  apply (simp only:)
-  apply (subst (2) mul_acc_IMP_tailcall_def)
-  apply (rule terminates_with_res_IMP_Tailcall_start)
+HOL_To_IMP_Minus_func_correct mul_acc_nat by (cook mode = tailcall)
 
-  apply (terminates_with_res_step correctness:
-    eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct
-  )+
-  apply STATE_interp_retrieve_key_eq
-
-  apply (terminates_with_res_step correctness:
-    eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
-  apply terminates_with_res_tTail
-  apply metis
-
-  apply (simp only:)
-  apply (subst (2) mul_acc_IMP_tailcall_def)
-  apply (rule terminates_with_res_IMP_Tailcall_start)
-  apply (terminates_with_res_step correctness:
-    eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
-  apply STATE_interp_retrieve_key_eq
-
-  apply (terminates_with_res_step correctness:
-    eq_nat_IMP_Minus_func_correct add_nat_IMP_Minus_func_correct sub_nat_IMP_Minus_func_correct
-  )+
-  apply terminates_with_res_tTail
-  apply (simp only: STATE_eq interp_update_state_eq interp_state_State_eq)
-  subgoal premises p for _ s
-  (*instantiate with current state, prove that arguments are equal to arguments of HOL recursive
-  call, then apply*)
-  thm p(1)
-  sorry
-  sorry
-(* by (cook mode = tailcall) *)
+lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
+  by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
+  (auto simp: mul_acc_nat.simps mult_eq_if)
 
 definition mul_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "mul_nat x y = mul_acc_nat x y 0"
@@ -95,12 +44,14 @@ fun div_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" w
   "div_acc_nat x y z = (if y = 0 then z else if x < y then z else div_acc_nat (x - y) y (z + 1))"
 declare div_acc_nat.simps[simp del]
 
-lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
-  by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
-
 compile_nat div_acc_nat.simps basename div_acc
 
+thm div_acc_nat.induct
+
 HOL_To_IMP_Minus_func_correct div_acc_nat by (cook mode = tailcall)
+
+lemma div_acc_nat_eq_div[simp]: "div_acc_nat x y z = x div y + z"
+  by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
 
 definition div_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "div_nat x y = div_acc_nat x y 0"
@@ -144,17 +95,18 @@ declare sqrt_aux_nat.simps[simp del]
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
 HOL_To_IMP_Minus_func_correct sqrt_aux_nat by (cook mode = tailcall)
-(*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
-(*
-apply (tactic \<open>HA.preprocess_tac H.get_IMP_def @{context} 1\<close>)
-apply (tactic \<open>HA.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
-apply (tactic \<open>H.start_tac H.get_IMP_def @{context} 1\<close>)
-apply (tactic \<open>H.run_tac H.get_func_corrects @{context} 1\<close>)
-apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-apply (tactic \<open>H.finish_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-apply (tactic \<open>H.finish_non_tailcall_tac HOL_To_IMP_Tactics_Base.get_HOL_eqs @{context} 1\<close>)
-done
-*)
+(* TODO: ignoring duplicate rewrite rule *)
+
+(* Example step-by-step tactic invocation. Do not remove for debugging purposes *)
+HOL_To_IMP_Minus_func_correct sqrt_aux_nat
+  apply (tactic \<open>H.preprocess_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>H.setup_induction_tac HA.get_HOL_inducts @{context} 1\<close>)
+  apply (tactic \<open>H.start_case_tac H.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>H.run_tac H.get_func_corrects @{context} 1\<close>)
+  apply (tactic \<open>H.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>H.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>H.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  oops
 
 lemma square_sqrt_aux_nat_le:
   assumes "L\<^sup>2 \<le> x" "x < R\<^sup>2"

@@ -26,6 +26,7 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Big_StepT
     Small_StepT
     Big_Step_Small_Step_Equivalence
+    IMP_Tailcalls_Dynamic
 
 session Expressions in "Expressions" = HOL +
   directories

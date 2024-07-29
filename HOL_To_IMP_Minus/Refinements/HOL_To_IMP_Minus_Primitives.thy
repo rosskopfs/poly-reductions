@@ -32,8 +32,7 @@ declare_compiled_const True
   argument_registers
   compiled "tailcall_to_IMP_Minus true_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct true_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: true_IMP_tailcall_def)
+HOL_To_IMP_Minus_func_correct true_nat by cook
 
 definition "false_nat \<equiv> (0 :: nat)"
 
@@ -49,8 +48,7 @@ declare_compiled_const False
   argument_registers
   compiled "tailcall_to_IMP_Minus false_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct false_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: false_IMP_tailcall_def)
+HOL_To_IMP_Minus_func_correct false_nat by cook
 
 definition "id_nat x \<equiv> (x :: nat)"
 
@@ -59,8 +57,7 @@ lemma id_nat_eq_id [simp]: "id_nat = id"
 
 compile_nat id_nat_def basename id
 
-HOL_To_IMP_Minus_func_correct id_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: id_IMP_tailcall_def)
+HOL_To_IMP_Minus_func_correct id_nat by cook
 
 definition "nat_of_bool b \<equiv> if b then true_nat else false_nat"
 
@@ -126,12 +123,7 @@ declare_compiled_const HOL.Not
   argument_registers "not.args.n"
   compiled "tailcall_to_IMP_Minus not_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct not_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: not_IMP_tailcall_def correctness:
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct not_nat by cook
 
 definition "add_nat (x :: nat) y \<equiv> x + y"
 definition "sub_nat (x :: nat) y \<equiv> x - y"
@@ -187,14 +179,7 @@ declare_compiled_const max
   argument_registers "max.args.x" "max.args.y"
   compiled "tailcall_to_IMP_Minus max_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct max_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: max_IMP_tailcall_def correctness:
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct max_nat by cook
 
 definition min_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "min_nat x y \<equiv> if x - y \<noteq> 0 then y else x"
@@ -209,14 +194,7 @@ declare_compiled_const min
   argument_registers "min.args.x" "min.args.y"
   compiled "tailcall_to_IMP_Minus min_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct min_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: min_IMP_tailcall_def correctness:
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct min_nat by cook
 
 definition "and_nat (x :: nat) y \<equiv> min (min x y) true_nat"
 
@@ -233,16 +211,7 @@ declare_compiled_const conj
 lemma min_min_one_eq_nat_of_bool_neq_and_neq [simp]: "min (min x y) 1 = nat_of_bool (x \<noteq> 0 \<and> y \<noteq> 0)"
   by (cases x; cases y; simp)
 
-HOL_To_IMP_Minus_func_correct and_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: and_IMP_tailcall_def correctness:
-    true_nat_IMP_Minus_func_correct
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-    min_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct and_nat by cook
 
 definition "or_nat (x :: nat) y \<equiv> min (max x y) true_nat"
 
@@ -260,17 +229,7 @@ lemma min_max_one_eq_nat_of_bool_neq_or_neq [simp]:
   "min (max x y) 1 = nat_of_bool (x \<noteq> 0 \<or> y \<noteq> 0)"
   by (cases x; cases y; simp)
 
-HOL_To_IMP_Minus_func_correct or_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: or_IMP_tailcall_def correctness:
-    true_nat_IMP_Minus_func_correct
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-    min_nat_IMP_Minus_func_correct
-    max_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct or_nat by cook
 
 definition "le_nat (x :: nat) y \<equiv> nat_of_bool (x - y = 0)"
 
@@ -284,17 +243,7 @@ declare_compiled_const "ord_class.less_eq"
   argument_registers "le.args.x" "le.args.y"
   compiled "tailcall_to_IMP_Minus le_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct le_nat
-  by (terminates_with_res_IMP_Minus tailcall_def: le_IMP_tailcall_def correctness:
-    true_nat_IMP_Minus_func_correct
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-    min_nat_IMP_Minus_func_correct
-    max_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct le_nat by cook
 
 definition "lt_nat (x :: nat) y \<equiv> nat_of_bool (x \<le> y \<and> x \<noteq> y)"
 
@@ -309,20 +258,19 @@ declare_compiled_const "ord_class.less"
   argument_registers "lt.args.x" "lt.args.y"
   compiled "tailcall_to_IMP_Minus lt_IMP_tailcall"
 
-HOL_To_IMP_Minus_func_correct lt_nat
-  supply nat_less_le[simp]
-  by (terminates_with_res_IMP_Minus tailcall_def: lt_IMP_tailcall_def correctness:
-    true_nat_IMP_Minus_func_correct
-    false_nat_IMP_Minus_func_correct
-    eq_nat_IMP_Minus_func_correct
-    id_nat_IMP_Minus_func_correct
-    sub_nat_IMP_Minus_func_correct
-    not_nat_IMP_Minus_func_correct
-    and_nat_IMP_Minus_func_correct
-    min_nat_IMP_Minus_func_correct
-    max_nat_IMP_Minus_func_correct
-    le_nat_IMP_Minus_func_correct
-  )
+HOL_To_IMP_Minus_func_correct lt_nat by cook
+
+definition [compiled_IMP_Minus_const_def]:
+  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
+
+declare_compiled_const Suc
+  return_register "suc.ret"
+  argument_registers "suc.args.x"
+  compiled suc_IMP
+
+HOL_To_IMP_Minus_func_correct Suc
+  unfolding suc_IMP_def
+  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
 
 end
 

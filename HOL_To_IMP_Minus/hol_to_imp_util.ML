@@ -33,10 +33,21 @@ val resolve_all_tac : Proof.context -> thm list -> int -> tactic
 val pretty_prems : Proof.context -> term list -> Pretty.T
 val pretty_cprems : Proof.context -> cterm list -> Pretty.T
 
-(* sequence with monadic operations *)
+(* sequence with monadic and applicative operations *)
 structure Seq : sig
   include SEQ
+  structure A : APPLICATIVE where type 'a t = 'a seq
   structure M : MONAD where type 'a t = 'a seq
+end
+
+structure List : sig
+  include LIST
+  structure T_Seq : TRAVERSABLE where type 'a f = 'a list
+end
+
+structure Option : sig
+  include OPTION
+  val to_seq : 'a option -> 'a Seq.seq
 end
 
 end
@@ -47,6 +58,18 @@ struct
 structure Seq = struct
   open Seq
   structure M = Monad(Seq_Monad_Trans(Identity_Monad))
+  structure A = Applicative(M)
+end
+
+structure List = struct
+  open List
+  structure T_Seq = Traversable(List_Traversable_Trans(Identity_Traversable(Seq.A)))
+end
+
+structure Option = struct
+  open Option
+  fun to_seq NONE = Seq.empty
+    | to_seq (SOME x) = Seq.single x
 end
 
 val successors = map (curry (op +) 1)

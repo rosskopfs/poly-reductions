@@ -90,7 +90,7 @@ method terminates_with_tCall uses correctness =
 method terminates_with_res_step uses correctness =
   (terminates_with_res_tSeq,
     (terminates_with_tAssign
-    | terminates_with_tCall correctness: correctness))
+    | terminates_with_tCall correctness: correctness)(* ? *))
   | terminates_with_res_tAssign
   | terminates_with_res_tIf
 
