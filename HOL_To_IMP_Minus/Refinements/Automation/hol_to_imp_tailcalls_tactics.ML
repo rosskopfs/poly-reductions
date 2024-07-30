@@ -88,11 +88,11 @@ fun with_dest_tac msg dest tac =
   in TU.SUBGOAL_STRIPPED (snd o snd) wrap_tac end
 
 val with_dest_terminates_with_res_IMP_Tailcall_prop =
-  with_dest_tac "couldn't find dest_terminates_with_res_IMP_Tailcall in conclusion"
+  with_dest_tac "couldn't find terminates_with_res_IMP_Tailcall in conclusion"
     dest_terminates_with_res_IMP_Tailcall_prop
 
 val with_dest_terminates_with_IMP_Tailcall_prop =
-  with_dest_tac "couldn't find dest_terminates_with_IMP_Tailcall in conclusion"
+  with_dest_tac "couldn't find terminates_with_IMP_Tailcall in conclusion"
     dest_terminates_with_IMP_Tailcall_prop
 
 
@@ -193,14 +193,19 @@ fun start_case_tac get_IMP_def =
 
 (* tactics for tAssign, tSeq, and tIf that run one step of the tailcall program *)
 
-val terminates_with_res_tAssign_tac = HTITB.assign_tac [@{thm terminates_with_res_tAssignI}]
-val terminates_with_res_tSeq_tac = HTITB.seq_tac [@{thm terminates_with_res_tSeqI}]
-val terminates_with_res_tIf_tac = HTITB.if_tac [@{thm terminates_with_res_tIf_processedI}]
+val aval_simps = @{thms aval.simps atomVal.simps}
+
+val terminates_with_res_tAssign_tac =
+  HTITB.assign_tac [@{thm terminates_with_res_tAssignI_2}] aval_simps
+val terminates_with_res_tSeq_tac =
+  HTITB.seq_tac [@{thm terminates_with_res_tSeqI}]
+val terminates_with_res_tIf_tac =
+  HTITB.if_tac [@{thm terminates_with_res_tIf_processedI_2}]
 
 
 (* tactics for tAssign and tCall that handle terminates_with (instead of terminates_with_res) *)
 
-val terminates_with_tAssign_tac = HTITB.assign_tac [@{thm terminates_with_tAssignI}]
+val terminates_with_tAssign_tac = HTITB.assign_tac [@{thm terminates_with_tAssignI_2}] aval_simps
 
 fun terminates_with_tCall_tac get_func_corrects =
   let fun tac ctxt {c, ...} =
@@ -208,7 +213,7 @@ fun terminates_with_tCall_tac get_func_corrects =
       Const (@{const_name tCall}, _) $ com $ _ =>
         (case get_func_corrects ctxt com of
             NONE => (writeln "no correctness found"; K no_tac (* TODO: error message *))
-          | SOME cs => HTITB.call_tac [@{thm terminates_with_tCallI}] ctxt cs)
+          | SOME cs => HTITB.call_tac [@{thm terminates_with_tCallI_2}] aval_simps ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop o tac end
 
@@ -259,8 +264,8 @@ val finish_tail_tac =
         map2
           (fn t => fn reg =>
             HTIU.mk_eq (t, HTIU.mk_state_register_retrieval s reg)
-            |> HTIU.mk_Trueprop |> Thm.cterm_of ctxt)
-          arg_terms arg_regs
+            |> HTIU.mk_Trueprop(**) |> Thm.cterm_of ctxt)
+          arg_terms arg_regs (* |> pure *)
       LET (fn arg_reg_eqs =>
         (* prove the equalities *)
         arg_reg_eqs |> List.map (TU.HEADGOAL (TU.apply_tac (SOLVED' arg_reg_eq_tac))) |> List.T_Seq.sequence
@@ -271,13 +276,16 @@ val finish_tail_tac =
 
     (* tactic for proving the equalities: add existing premises, then simp *)
     fun arg_reg_eq_tac ctxt prems =
-      Tactic.cut_facts_tac prems
+      K (print_tac ctxt "arg_reg_eq [1]")
+      THEN' Simplifier.asm_simp_tac (HTITB.simpset_only ctxt @{thms retrieval_simps})
+      THEN' K (print_tac ctxt "arg_reg_eq [2]")
+      (*THEN' Tactic.cut_facts_tac prems
       THEN'
       (* TODO: narrow down the simpset here... or come up with a better tactic *)
       Simplifier.asm_simp_tac (
         Simplifier.clear_simpset ctxt
         addsimps @{thms STATE_eq interp_update_state_eq interp_state_State_eq})
-      THEN' Simplifier.asm_simp_tac ctxt
+      THEN' Simplifier.asm_simp_tac ctxt*)
 
     (* rewrite each argument t_i to s ''reg_i'' *)
     fun rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms =
@@ -331,6 +339,11 @@ val finish_tail_tac =
     fun prems_tac {context = ctxt, prems, ...} {s, v, ...} =
       get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
       BIND (fn arg_reg_eq_thms =>
+       (*EVERY' (
+          List.map (fn eq_thm =>
+            Drule.infer_instantiate' ctxt [SOME eq_thm] @{thm add_subgoal}
+            |> single |> resolve_tac ctxt)
+          arg_reg_eq_thms) *)
         rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms
         THEN' solve_with_ih_tac ctxt prems s arg_reg_eq_thms
         |> pure)
@@ -338,15 +351,16 @@ val finish_tail_tac =
 
     fun focused_tac ctxt =
       resolve_tac ctxt [@{thm terminates_with_res_tTailI}]
-      THEN' TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o prems_tac) ctxt
+      THEN' TU.TRY' (TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o prems_tac) ctxt)
   in
     TU.FOCUS_PARAMS_CTXT' focused_tac
   end
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
-  THEN' HTITB.STATE_interp_retrieve_key_eq_tac (asm_simp_tac (ctxt addsimps (@{thms Let_def}))) ctxt
+  THEN' HTITB.STATE_interp_retrieve_key_tac aval_simps ctxt
 
+(* (asm_simp_tac (ctxt addsimps (@{thms Let_def}))) *)
 
 (* common tail/non-tail finish tactics *)
 

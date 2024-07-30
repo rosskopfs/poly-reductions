@@ -52,6 +52,10 @@ val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Tactics_
 structure HTIU = HOL_To_IMP_Util
 structure TU = Tactic_Util
 
+
+fun simpset_only ctxt thms = Simplifier.put_simpset HOL_basic_ss ctxt addsimps thms
+
+
 (* find theorems of the form "f x = ...", given f possibly applied to some arguments *)
 type HOL_eqs_retrieval = Proof.context -> term -> thm list option
 (* FIXME: create a more robust filter *)
@@ -64,72 +68,80 @@ fun get_HOL_eqs ctxt t =
     ] |> snd |> map snd
   in if null thms then NONE else SOME thms end
 
-(* SIMPS_TO helper tactics *)
-(* TODO: move into Util ? *)
-
 fun SIMPS_TO_tac simps ctxt =
   TU.TRY' (simp_tac (ctxt addsimps simps))
   THEN' resolve_tac ctxt [@{thm SIMPS_TOI}]
 
-fun SIMPS_TO_UNIF_tac simps ctxt =
-  resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}] #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(1)"
-  THEN' (TU.TRY' (SIMPS_TO_tac simps ctxt) #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/SIMPS_TO")
-  THEN' (resolve_tac ctxt [@{thm reflexive}] #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(2)")
+fun SIMPS_TO_UNIF_tac' simp_tac ctxt =
+  resolve_tac ctxt [@{thm SIMPS_TO_UNIFI}]
+    (* #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(1)" *)
+  THEN' ((* TU.TRY' *) simp_tac
+    (* #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/SIMPS_TO" *) )
+  THEN' resolve_tac ctxt [@{thm SIMPS_TOI}]
+  THEN' (resolve_tac ctxt [@{thm reflexive}] (* ? *)
+    (* #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF/resolve_tac(2)" *) )
 
 (* helpers for updating and retrieving protected STATEs *)
 
 val STATE_interp_state_State_thms = @{thms STATE_eq interp_state_State_eq}
 
-fun SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt =
-  SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt
-  #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF"
+(* fun SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt = *)
+  (* SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt *)
+  (* #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF" *)
 
-fun STATE_interp_update_eq_STATE_interp_fun_upd ctxt =
-  resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI}]
-  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
+fun simp_lookups_tac ctxt =
+  TU.TRY' (Simplifier.simp_tac (simpset_only ctxt @{thms retrieval_simps}))
 
-fun STATE_interp_retrieve_key_eq_tac finish_eq_tac ctxt = (* TODO: kind of ugly *)
-  resolve_tac ctxt [@{thm STATE_interp_retrieve_key_eqI}]
-  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac (ctxt addsimps STATE_interp_state_State_thms)
-  THEN' finish_eq_tac
+fun STATE_interp_lookup_tac ctxt simp_thms =
+  SIMPS_TO_UNIF_tac' (
+      TU.TRY' (Simplifier.simp_tac (simpset_only ctxt simp_thms))
+      THEN' simp_lookups_tac ctxt
+      (* unconstrained simplification: probably unavoidable here *)
+      THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
+    ) ctxt
+
+fun STATE_interp_update_fun_upd ctxt simp_thms =
+  resolve_tac ctxt [@{thm trans}] (* for norm_state *)
+  THEN' resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI_2}]
+  THEN' STATE_interp_lookup_tac ctxt simp_thms
+  THEN' resolve_tac ctxt @{thms refl} (* alternatively: norm_state *)
+
+(* TODO: what to do before/after simp_lookups_tac in STATE_interp_lookup_tac *)
+fun STATE_interp_retrieve_key_tac simp_thms ctxt =
+  resolve_tac ctxt [@{thm STATE_interp_retrieve_key_eqI_2}]
+  THEN' STATE_interp_lookup_tac ctxt simp_thms
+  (* THEN' finish_eq_tac *)
 
 (* tactics for assign, seq, and if that run one step of the program, given the appropriate theorems *)
 
-(* applies a theorem of the form, solving the first premise:
-   assumes "s' = s(k := ?val aexp s)"
-   and "s' r = val"
-   shows "?P (?assign k aexp) s r val" *)
-fun assign_tac thms ctxt =
+fun assign_tac thms simp_thms ctxt =
   resolve_tac ctxt thms
-  THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
-  #> HTIU.time_tac Pretty.writeln "assign_tac"
+  THEN' STATE_interp_update_fun_upd ctxt simp_thms
+  (* #> HTIU.time_tac Pretty.writeln "assign_tac" *)
 
-(* applies a theorem of the form:
-   assumes "?P1 c1" and "?P2 c2" shows "?P (?seq c1 c2)" *)
-(* TODO: are these comments helpful?? *)
 fun seq_tac thms ctxt = resolve_tac ctxt thms
-  #> HTIU.time_tac Pretty.writeln "seq_tac"
+  (* #> HTIU.time_tac Pretty.writeln "seq_tac" *)
 
 fun if_tac thms ctxt =
   resolve_tac ctxt thms
-  THEN' STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
-  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
-  THEN' SIMPS_TO_UNIF_STATE_interp_state_State_tac ctxt
-  #> HTIU.time_tac Pretty.writeln "if_tac"
+  THEN' SIMPS_TO_UNIF_tac' (simp_lookups_tac ctxt) ctxt
+  THEN' SIMPS_TO_UNIF_tac' (TU.TRY' (Simplifier.asm_simp_tac ctxt)) ctxt
+  THEN' SIMPS_TO_UNIF_tac' (TU.TRY' (Simplifier.asm_simp_tac ctxt)) ctxt
+  (* #> HTIU.time_tac Pretty.writeln "if_tac" *)
 
-fun call_tac thms ctxt correctness =
+fun call_tac thms simp_thms ctxt correctness =
   resolve_tac ctxt thms
   (* solve correctness assumption *)
   THEN' resolve_tac ctxt correctness
   (* solve state update assumption: s' = s(r := val) *)
-  THEN' STATE_interp_update_eq_STATE_interp_fun_upd ctxt
-  #> HTIU.time_tac Pretty.writeln "call_tac"
+  THEN' STATE_interp_update_fun_upd ctxt simp_thms
+  (* #> HTIU.time_tac Pretty.writeln "call_tac" *)
 
 (* run one (seq assign ...), (seq call ...), or if step of a program *)
 fun run_step_tac seq_tac assign_tac call_tac if_tac =
   ((seq_tac THEN' (assign_tac ORELSE' call_tac))
     ORELSE' if_tac)
-   #> HTIU.time_tac Pretty.writeln "run_step_tac"
+   (* #> HTIU.time_tac Pretty.writeln "run_step_tac" *)
 
 (* usage: run_tac (run_step_tac ...) *)
 val run_tac = TU.TRY' o REPEAT_ALL_NEW
