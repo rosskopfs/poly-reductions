@@ -89,13 +89,13 @@ val STATE_interp_state_State_thms = @{thms STATE_eq interp_state_State_eq}
   (* SIMPS_TO_UNIF_tac STATE_interp_state_State_thms ctxt *)
   (* #> HTIU.time_tac Pretty.writeln "SIMPS_TO_UNIF" *)
 
-fun simp_lookups_tac ctxt =
+fun simp_retrievals_tac ctxt =
   TU.TRY' (Simplifier.simp_tac (simpset_only ctxt @{thms retrieval_simps}))
 
 fun STATE_interp_lookup_tac ctxt simp_thms =
   SIMPS_TO_UNIF_tac' (
       TU.TRY' (Simplifier.simp_tac (simpset_only ctxt simp_thms))
-      THEN' simp_lookups_tac ctxt
+      THEN' simp_retrievals_tac ctxt
       (* unconstrained simplification: probably unavoidable here *)
       THEN' TU.TRY' (Simplifier.asm_simp_tac ctxt)
     ) ctxt
@@ -124,7 +124,7 @@ fun seq_tac thms ctxt = resolve_tac ctxt thms
 
 fun if_tac thms ctxt =
   resolve_tac ctxt thms
-  THEN' SIMPS_TO_UNIF_tac' (simp_lookups_tac ctxt) ctxt
+  THEN' SIMPS_TO_UNIF_tac' (simp_retrievals_tac ctxt) ctxt
   THEN' SIMPS_TO_UNIF_tac' (TU.TRY' (Simplifier.asm_simp_tac ctxt)) ctxt
   THEN' SIMPS_TO_UNIF_tac' (TU.TRY' (Simplifier.asm_simp_tac ctxt)) ctxt
   (* #> HTIU.time_tac Pretty.writeln "if_tac" *)

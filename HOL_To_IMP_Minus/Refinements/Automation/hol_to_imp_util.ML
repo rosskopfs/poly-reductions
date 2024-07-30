@@ -25,6 +25,7 @@ val seq_peek_empty : (unit -> unit) -> 'a Seq.seq -> 'a Seq.seq
 structure Let : sig val LET : ('a * ('a -> 'b)) -> 'b end
 
 val time_tac : (Pretty.T -> unit) -> string -> ('a -> 'b Seq.seq) -> 'a -> 'b Seq.seq
+val time_tac_jsonc : (string -> unit) -> string -> ('a -> 'b Seq.seq) -> 'a -> 'b Seq.seq
 
 end
 
@@ -69,6 +70,36 @@ fun pretty_timing { elapsed, cpu, gc } =
   let fun item l t = bblock [Pretty.str l, Value.print_time t |> Pretty.str]
   in bblock [item "elapsed:" elapsed, item "cpu:" cpu, item "gc:" gc] end
 
+(*
+fun timing_jsonc t =
+  "{ \"elapsed\": " ^ (#elapsed t |> Value.print_time)
+  ^ ", \"cpu\": " ^ (#cpu t |> Value.print_time) ^ ", \"gc\": "
+  ^ (#gc t |> Value.print_time) ^ " }"*)
+
+fun timing_jsonc t = "\"" ^ Timing.message t ^ "\""
+
+(* obviously breaks if label contains JSON special characters *)
+fun timeit_jsonc write label extra trail f x =
+  let
+    val () = write ("{ \"label\": \"" ^ label ^ "\", " ^ extra ^ "\"children\": [")
+    val (t, fx) = Timing.timing f x
+    val () = write (
+      "], \"timing\": " ^ timing_jsonc t
+      ^ ", \"relevant\": " ^ (Timing.is_relevant t |> Bool.toString)
+      ^ "}" ^ trail)
+  in fx end
+
+fun time_tac_jsonc write label tac st =
+  let
+    fun timeit stage = timeit_jsonc write label ("\"stage\": " ^ stage ^ ", ") ","
+    fun time_seq0 i s =
+      Seq.make (fn () =>
+        case timeit (Int.toString i) Seq.pull s of
+            NONE => NONE
+          | SOME (x, s') => SOME (x, time_seq0 (i + 1) s'))
+    val seq = timeit "\"init\"" tac st
+  in time_seq0 0 seq end
+
 fun time_tac printer label tac st =
   let
     fun log t s : unit =
@@ -92,7 +123,4 @@ fun time_tac printer label tac st =
     val _ = log t "init"
   in time_seq0 0 seq end
 
-(* fun lbld lbl p = Pretty.writeln (bblock [Pretty.str lbl, p]) *)
-
 end
-

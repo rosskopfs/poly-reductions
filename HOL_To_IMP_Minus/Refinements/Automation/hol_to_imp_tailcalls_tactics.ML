@@ -244,6 +244,8 @@ fun run_tac get_func_corrects = HTITB.run_tac o run_step_tac get_func_corrects
 
 (* finishing tactics *)
 
+fun t_ tac = HTIU.time_tac_jsonc writeln tac
+
 val finish_tail_tac =
   let
     open Seq.M
@@ -276,9 +278,8 @@ val finish_tail_tac =
 
     (* tactic for proving the equalities: add existing premises, then simp *)
     fun arg_reg_eq_tac ctxt prems =
-      K (print_tac ctxt "arg_reg_eq [1]")
-      THEN' Simplifier.asm_simp_tac (HTITB.simpset_only ctxt @{thms retrieval_simps})
-      THEN' K (print_tac ctxt "arg_reg_eq [2]")
+      (* TODO: this is probably *too* simple *)
+      HTITB.simp_retrievals_tac ctxt
       (*THEN' Tactic.cut_facts_tac prems
       THEN'
       (* TODO: narrow down the simpset here... or come up with a better tactic *)
@@ -329,29 +330,46 @@ val finish_tail_tac =
           |> flat2
 
         val solve_ih_prem_tac =
-          Tactic.cut_facts_tac prems
-          THEN' TU.TRY' (HTIU.subst_first_tac ctxt (List.map (flip_eq_thm ctxt) arg_reg_eq_thms))
-          THEN' Simplifier.asm_simp_tac ctxt (* TODO: narrow simp set *)
+          TU.TRY' (
+            (* this is what's taking forever (!) *)
+            HTIU.subst_first_tac ctxt (List.map (flip_eq_thm ctxt) arg_reg_eq_thms)
+            #> t_ "finish_tail_tac.solve_with_ih_tac: subst_first_tac")
+          THEN' (
+            Tactic.cut_facts_tac prems #> t_ "finish_tail_tac.solve_with_ih_tac: cut_facts_tac")
+          THEN' (
+            Simplifier.asm_simp_tac ctxt (* TODO: narrow simp set *)
+            #> t_ "finish_tail_tac.solve_with_ih_tac: simp")
       in
-        instantiate_apply_ih_tac THEN_ALL_NEW SOLVED' solve_ih_prem_tac
+        (instantiate_apply_ih_tac
+        #> t_ "finish_tail_tac.solve_with_ih_tac: instantiate_apply_ih_tac")
+        THEN_ALL_NEW
+          SOLVED' (fn i =>
+            solve_ih_prem_tac i
+            |> t_ ("finish_tail_tac.solve_with_ih_tac: solve_ih_prem_tac(" ^ Int.toString i ^ ")"))
       end
 
     fun prems_tac {context = ctxt, prems, ...} {s, v, ...} =
-      get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
+      t_ "finish_tail_tac.prems_tac: get_reg_eq_thms"
+        (get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s) v
       BIND (fn arg_reg_eq_thms =>
        (*EVERY' (
           List.map (fn eq_thm =>
             Drule.infer_instantiate' ctxt [SOME eq_thm] @{thm add_subgoal}
             |> single |> resolve_tac ctxt)
           arg_reg_eq_thms) *)
-        rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms
-        THEN' solve_with_ih_tac ctxt prems s arg_reg_eq_thms
+        (rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms
+          #> t_ "finish_tail_tac.prems_tac: rewrite_conclusion_arguments_tac")
+        THEN'
+        (solve_with_ih_tac ctxt prems s arg_reg_eq_thms
+          #> t_ "finish_tail_tac.prems_tac: solve_with_ih_tac")
         |> pure)
       |> flat2
 
     fun focused_tac ctxt =
       resolve_tac ctxt [@{thm terminates_with_res_tTailI}]
-      THEN' TU.TRY' (TU.FOCUS_PREMS' (with_dest_terminates_with_res_IMP_Tailcall_prop o prems_tac) ctxt)
+      THEN' TU.TRY' (TU.FOCUS_PREMS' (
+          t_ "finish_tail_tac.focused_tac: prems_tac"
+          oo with_dest_terminates_with_res_IMP_Tailcall_prop o prems_tac) ctxt)
   in
     TU.FOCUS_PARAMS_CTXT' focused_tac
   end
@@ -394,7 +412,7 @@ fun correct_tac is_tailcall get_HOL_inducts get_IMP_def get_func_corrects get_HO
       THEN_ALL_NEW (
         finish_tac get_HOL_eqs ctxt
         ORELSE' SOLVED' (Simplifier.asm_simp_tac ctxt)
-        ORELSE' K all_tac))
+        (* ORELSE' K all_tac *)))
   in TU.FOCUS_PARAMS_CTXT' tac end
 
 end
