@@ -1,7 +1,6 @@
 theory HOL_To_IMP_Minus_Stress_Test
   imports
-    HOL_To_IMP_Minus_Fun_Pattern_Setup
-    "HOL-Library.Discrete"
+    HOL_To_IMP_Minus_Primitives
 begin
 
 context HOL_To_IMP_Minus
