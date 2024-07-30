@@ -87,6 +87,42 @@ lemma rewrite_terminates_with_res_IMP_Tailcall_value:
 (* isolates the function and its argument from a function application *)
 lemma rewrite_comb: assumes "f = g" "x = y" shows "f x = g y" using assms by blast
 
+(* lemmas for targeted retrieval from states *)
+lemma retrieve_udpate_eq:
+  "STATE (interp_state (update_state s k v)) k = v"
+  unfolding STATE_def by simp
+lemma retrieve_udpate_neq:
+  assumes "k \<noteq> k'"
+  shows "STATE (interp_state (update_state s k' v)) k = STATE (interp_state s) k"
+  unfolding STATE_def using assms by simp
+lemma retrieve_State:
+  "STATE (interp_state (State s)) k = s k"
+  unfolding STATE_def interp_state_def by simp
+
+(* lemmas for state simplification/normalization *)
+lemma state_simp_eq:
+  "STATE (interp_state (update_state (update_state s k v1) k v2))
+    = STATE (interp_state (update_state s k v2))"
+  unfolding STATE_def by simp
+lemma state_simp_neq:
+  assumes "k \<noteq> k'"
+    and "STATE (interp_state (update_state s k v)) = STATE (interp_state s')"
+  shows
+    "STATE (interp_state (update_state (update_state s k' v') k v))
+      = STATE (interp_state (update_state s' k' v'))"
+  using assms unfolding STATE_def by (simp add: fun_upd_twist)
+(* lemma state_simp_update:
+  assumes "STATE (interp_state s1) = STATE (interp_state s2)"
+  shows
+    "STATE (interp_state (update_state s1 k v)) = STATE (interp_state (update_state s2 k v))"
+  using assms unfolding STATE_def by simp *)
+
+(* for solving (in)equalities between strings *)
+lemmas string_equality_simps = list.inject list.distinct (* bool.distinct *) char.inject bool_simps
+lemmas retrieval_simps = retrieve_udpate_eq retrieve_udpate_neq retrieve_State string_equality_simps
+
+(* lemma add_subgoal: assumes P and Q shows Q using assms(2) . *)
+
 ML_file \<open>hol_to_imp_tactics_base.ML\<close>
 ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
 ML_file \<open>hol_to_imp_tactics.ML\<close>

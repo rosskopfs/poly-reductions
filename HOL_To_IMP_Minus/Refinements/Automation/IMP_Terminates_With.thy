@@ -92,14 +92,27 @@ lemma terminates_with_res_IMP_Tailcall_init_state_tracking:
   shows "terminates_with_res_IMP_Tailcall tc c s r val"
   using assms unfolding STATE_eq by (rule pred_if_pred_app_if_eq_if_surj[OF surj_interp_state]) *)
 
+(* TODO: flipped, remove *)
 lemma terminates_with_tAssignI:
   assumes "s' = s(k := aval aexp s)"
   shows "terminates_with_IMP_Tailcall c (tAssign k aexp) s s'"
   using assms by blast
 
+lemma terminates_with_tAssignI_2:
+  assumes "s(k := aval aexp s) = s'"
+  shows "terminates_with_IMP_Tailcall c (tAssign k aexp) s s'"
+  using assms by blast
+
+(* TODO: flipped, remove *)
 lemma terminates_with_tCallI:
   assumes "terminates_with_res_IMP_Minus c s r val"
   and "s' = s(r := val)"
+  shows "terminates_with_IMP_Tailcall tc (tCall c r) s s'"
+  using assms by blast
+
+lemma terminates_with_tCallI_2:
+  assumes "terminates_with_res_IMP_Minus c s r val"
+  and "s(r := val) = s'"
   shows "terminates_with_IMP_Tailcall tc (tCall c r) s s'"
   using assms by blast
 
@@ -111,6 +124,12 @@ lemma terminates_with_res_tSeqI:
 
 lemma terminates_with_res_tAssignI:
   assumes "s' = s(k := aval aexp s)"
+  and "s' r = val"
+  shows "terminates_with_res_IMP_Tailcall c (tAssign k aexp) s r val"
+  using assms by blast
+
+lemma terminates_with_res_tAssignI_2:
+  assumes "s(k := aval aexp s) = s'"
   and "s' r = val"
   shows "terminates_with_res_IMP_Tailcall c (tAssign k aexp) s r val"
   using assms by blast

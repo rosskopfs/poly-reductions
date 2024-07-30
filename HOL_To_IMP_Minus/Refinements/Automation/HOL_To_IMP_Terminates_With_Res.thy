@@ -11,8 +11,18 @@ lemma terminates_with_res_IMP_Tailcall_start:
   shows "terminates_with_res_IMP_Tailcall tc c s r val"
   using assms unfolding STATE_eq interp_state_State_eq by simp
 
+(* todo: no simps_to_unif, remove *)
 lemma terminates_with_res_tIf_processedI:
   assumes "s vb = v"
+  and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b1"
+  and "PROP SIMPS_TO_UNIF (v = 0) b2"
+  and "b1 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c1 s r val"
+  and "b2 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c2 s r val"
+  shows "terminates_with_res_IMP_Tailcall c (tIf vb c1 c2) s r val"
+  using assms terminates_with_res_tIfI unfolding SIMPS_TO_UNIF_eq atomize_eq by auto
+
+lemma terminates_with_res_tIf_processedI_2:
+  assumes "PROP SIMPS_TO_UNIF (s vb) v"
   and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b1"
   and "PROP SIMPS_TO_UNIF (v = 0) b2"
   and "b1 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c1 s r val"
@@ -28,6 +38,11 @@ lemma STATE_interp_update_eq_STATE_interp_fun_updI:
 lemma STATE_interp_retrieve_key_eqI:
   assumes "PROP SIMPS_TO_UNIF (interp_state st) s"
   and "s k = val"
+  shows "(STATE (interp_state st)) k = val"
+  using assms unfolding STATE_eq SIMPS_TO_UNIF_eq SIMPS_TO_eq by simp
+
+lemma STATE_interp_retrieve_key_eqI_2:
+  assumes "PROP SIMPS_TO_UNIF ((STATE (interp_state st)) k) val"
   shows "(STATE (interp_state st)) k = val"
   using assms unfolding STATE_eq SIMPS_TO_UNIF_eq SIMPS_TO_eq by simp
 

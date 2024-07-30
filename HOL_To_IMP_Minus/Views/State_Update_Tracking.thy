@@ -101,6 +101,11 @@ lemma STATE_interp_update_eq_STATE_interp_fun_updI:
   shows "STATE (interp_state (update_state st k val')) = (STATE (interp_state st))(k := val)"
   using assms unfolding STATE_eq SIMPS_TO_UNIF_eq by (simp add: interp_state_State_eq)
 
+lemma STATE_interp_update_eq_STATE_interp_fun_updI_2:
+  assumes "PROP SIMPS_TO_UNIF val val'"
+  shows "(STATE (interp_state st))(k := val) = STATE (interp_state (update_state st k val'))"
+  using assms unfolding STATE_eq SIMPS_TO_UNIF_eq by (simp add: interp_state_State_eq)
+
 lemma STATE_interp_retrieve_key_eqI:
   assumes "PROP SIMPS_TO_UNIF (interp_state st) s"
   and "s k = val"
