@@ -35,6 +35,7 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Big_StepT
     Small_StepT
     Big_Step_Small_Step_Equivalence
+    IMP_Tailcalls_Dynamic
 
 session Expressions in "Expressions" = HOL +
   directories
@@ -51,16 +52,14 @@ session Expressions in "Expressions" = HOL +
 session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
   sessions
     "HOL-Library"
+    ML_Typeclasses
     ML_Unification
     "SpecCheck"
   directories
-    "Compile_Nat"
-    "ML_Typeclasses"
-    "ML_Typeclasses/State"
+    "Automation"
+    "Compile_HOL_Nat_To_IMP"
     "Refinements"
-    "Refinements/Automation"
-    "Views"
-    "Views/IMP"
+    "States"
   theories
     HOL_To_IMP_Minus_Arithmetics
 

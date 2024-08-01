@@ -5,6 +5,7 @@ theory HOL_To_IMP_Base
     ML_Unification.ML_Tactic_Utils
     ML_Unification.Setup_Result_Commands
     SpecCheck.SpecCheck_Show
+    ML_Typeclasses.ML_Typeclasses
 begin
 
 paragraph \<open>Summary\<close>

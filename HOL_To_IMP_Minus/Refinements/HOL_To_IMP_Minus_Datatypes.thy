@@ -10,7 +10,7 @@ begin
 
 compile_nat triangle_def basename triangle
 
-HOL_To_IMP_Minus_func_correct triangle by cook
+HOL_To_IMP_Minus_imp_minus_correct triangle by cook
 
 text \<open>up next: encoding of products, sums, etc. See @{term prod_encode}\<close>
 

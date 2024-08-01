@@ -29,7 +29,7 @@ unbundle no_com'_syntax
 unbundle tcom_syntax
 
 inductive
-  tbig_step_t :: "tcom \<Rightarrow> tcom \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool" ("_ \<turnstile>_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
+  tbig_step_t :: "tcom \<Rightarrow> tcom \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool" ("_ \<turnstile> _ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
 where
 tSkip: "c \<turnstile> (tSKIP,s) \<Rightarrow>\<^bsup>Suc (0::nat) \<^esup> s" |
 tAssign: "c \<turnstile>(x ::= a,s) \<Rightarrow>\<^bsup>Suc (Suc 0) \<^esup> s(x := aval a s)" |

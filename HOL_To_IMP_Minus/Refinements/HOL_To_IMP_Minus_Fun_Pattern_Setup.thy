@@ -26,10 +26,12 @@ fun add_nat_pat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" w
 "add_nat_pat (Suc x) y z = add_nat_pat x y (z + 1)"
 declare add_nat_pat.simps[simp del]
 
+print_statement add_nat_pat.induct
+
 case_of_simps add_nat_pat_eq[unfolded case_nat_eq_if] : add_nat_pat.simps
 compile_nat add_nat_pat_eq basename add_pat
 
-HOL_To_IMP_Minus_func_correct add_nat_pat by (cook mode = tailcall)
+HOL_To_IMP_Minus_imp_minus_correct add_nat_pat by (cook mode = tailcall)
 
 end
 

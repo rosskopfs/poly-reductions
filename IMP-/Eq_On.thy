@@ -3,12 +3,12 @@ theory Eq_On
   imports Main
 begin
 
-definition eq_on :: "('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a set \<Rightarrow> bool" 
+definition eq_on :: "('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a set \<Rightarrow> bool"
   ("(_ =/ _/ on _)" [50,0,50] 50) where
 "f = g on S \<equiv> \<forall>x\<in>S. f x = g x"
 
 lemma eq_onI[intro,simp]:
-  assumes "\<forall>x\<in>S. f x = g x"
+  assumes "\<And>x. x \<in> S \<Longrightarrow> f x = g x"
   shows "f = g on S"
   unfolding eq_on_def using assms by simp
 
@@ -18,7 +18,7 @@ lemma eq_onD[dest]:
   shows "f x = g x"
   using assms unfolding eq_on_def by simp
 
-lemma eq_onE[elim]:
+lemma eq_onE:
   assumes "f = g on S"
       and "x\<in>S"
   obtains "f x = g x"
@@ -26,7 +26,7 @@ lemma eq_onE[elim]:
 
 lemma eq_on_subset[intro]:
   assumes "f = g on S"
-      and "S' \<subseteq> S" 
+      and "S' \<subseteq> S"
     shows "f = g on S'"
   using assms by blast
 

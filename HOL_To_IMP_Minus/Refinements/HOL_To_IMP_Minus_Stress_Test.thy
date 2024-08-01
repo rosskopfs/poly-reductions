@@ -15,7 +15,7 @@ fun prod_decode_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat"
 declare prod_decode_aux1.simps[simp del]  (* NOTE: prevents simplifier loop *)
 
 compile_nat prod_decode_aux1.simps
-HOL_To_IMP_Minus_func_correct prod_decode_aux1 by (cook mode = tailcall)
+HOL_To_IMP_Minus_imp_minus_correct prod_decode_aux1 by (cook mode = tailcall)
 
 (* right-nested calls to same function *)
 
@@ -23,7 +23,7 @@ fun right_nest :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" wh
   "right_nest x y z = x - (y - z)"
 
 compile_nat right_nest.simps
-HOL_To_IMP_Minus_func_correct right_nest by cook
+HOL_To_IMP_Minus_imp_minus_correct right_nest by cook
 
 end
 
