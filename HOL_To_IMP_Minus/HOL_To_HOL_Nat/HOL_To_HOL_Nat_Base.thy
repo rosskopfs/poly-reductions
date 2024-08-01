@@ -34,12 +34,15 @@ definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "Rel_nat n x \<equiv> n = natify x"
 
 lemma Rel_nat_iff_eq_natify: "Rel_nat n x \<longleftrightarrow> n = natify x"
-  by (simp add: Rel_nat_def)
+  unfolding Rel_nat_def by simp
 
 lemmas
   typedef_nat_transfer[OF compile_nat_type_def.type_definition_axioms,
     OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify, transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
+
+lemma left_unique_Rel_nat: "left_unique Rel_nat"
+  by (fact typedef_nat_transfer)
 
 lemma Rel_nat_natify_self [transfer_rule]: "Rel_nat (natify x) x"
   by (simp add: Rel_nat_iff_eq_natify)
@@ -148,12 +151,11 @@ lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<R
 ML_file \<open>hol_to_hol_nat_util.ML\<close>
 
 text \<open>Encoding of datatypes as natural numbers.
-Restrictions: (1) Recursive datatypes may not be nested inside of another datatype (2) recursive constructors must not be the first constructor (due to termination proofs).\<close>
+Restrictions:
+(1) Recursive datatypes may not be nested inside of another datatype
+(2) recursive constructors must not be the first constructor (due to termination proofs).\<close>
 
 ML_file \<open>datatype_to_nat.ML\<close>
-
-(*TODO: synthesisation of functions very unstable*)
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>
-
 
 end

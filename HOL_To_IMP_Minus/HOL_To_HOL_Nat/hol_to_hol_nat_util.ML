@@ -6,7 +6,9 @@ sig
   val cat_options: 'a option list -> 'a list
 
   val map_sort: (sort -> sort) -> typ -> typ
+  val map_fun_types : (typ -> typ) -> typ -> typ
 
+  val dest_eq_equals_thm : thm -> term * term
   val app: term -> term -> term
   val term_binder_types: term -> typ list
   val fun_nargs: term -> int
@@ -19,6 +21,7 @@ sig
 
   val prove_goal_schematics: string list -> (Proof.context -> tactic) -> Proof.context -> term -> thm
   val prove_goal: (Proof.context -> tactic) -> Proof.context -> term -> thm
+  val prove_goals : (Proof.context -> tactic) -> Proof.context -> term list -> thm list
 
   val register_def: term -> local_theory -> (term * (string * thm)) * local_theory
   val register_fun: binding -> term -> term -> local_theory -> Proof.context
@@ -46,15 +49,24 @@ sig
   val mk_Rel_nat: typ -> term
   val Rel_nat_binding: binding
   val mk_Rel_nat_type_binding: typ -> binding
-  val solve_Rel_nat_tac : Proof.context -> int -> tactic
 
-  val fun_RelI: thm list
-  val fun_RelD: thm list
-  val fun_rel_intro_tac: Proof.context -> int -> tactic
   val mk_transfer_rel_fun: term -> term -> term
   val mk_transfer_rel_fun_types: typ -> typ -> typ -> typ -> term
   val mk_transfer_rel_fun_dummyT: term
-  val mk_Rel_fun_from_type: ('a -> 'a -> 'a) -> (typ -> 'a) -> typ -> 'a
+  val transfer_fun_RelI: thm
+  val transfer_fun_RelD: thm
+
+  val mk_transport_rel_fun_types: typ -> typ -> typ -> typ -> term
+  val mk_transport_rel_fun_dummyT: term
+  val transport_fun_RelI: thm
+  val transport_fun_RelD: thm
+
+  val fun_rel_intro_tac: thm -> Proof.context -> int -> tactic
+  val solve_fun_rel_tac : thm -> Proof.context -> int -> tactic
+  val solve_Rel_nat_tac : thm -> Proof.context -> int -> tactic
+
+  val mk_Rel_fun_from_type : ('a -> 'a -> 'a) -> (typ -> 'a) -> typ -> 'a
+
 end
 
 structure HOL_To_HOL_Nat_Util : HOL_TO_HOL_NAT_UTIL =
@@ -70,6 +82,15 @@ fun cat_options opts = fold (fn NONE => I | SOME x => cons x) opts []
 fun map_sort f (TVar (n, s)) = TVar (n, f s)
   | map_sort f (TFree (n, s)) = TFree (n, f s)
   | map_sort f (Type (n, Ts)) = Type (n, map (map_sort f) Ts)
+
+fun map_fun_types f T = let val (Ts, T) = strip_type T
+  in (map (map_fun_types f) Ts) ---> f T end
+
+fun dest_eq_equals_thm thm =
+  case Thm.concl_of thm of
+    \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for lhs rhs\<close>\<close> => (lhs, rhs)
+  | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
+  | t => raise TERM ("Unknown equality head:", [Term.head_of t])
 
 val app = curry (op $)
 
@@ -87,6 +108,8 @@ fun induction_var_tac ctxt var =
 fun prove_goal_schematics schematics tac ctxt t =
   Goal.prove ctxt schematics [] (HU.mk_Trueprop t) (#context #> tac)
 val prove_goal = prove_goal_schematics []
+
+fun prove_goals tac ctxt ts = Goal.prove_common ctxt NONE [] [] ts (#context #> tac)
 
 (*registrations*)
 fun register_def eq = Specification.definition NONE [] [] (Binding.empty_atts, eq)
@@ -128,15 +151,20 @@ val Rel_nat_binding  = const_binding @{const_name Rel_nat}
 val mk_Rel_nat_type_binding  = type_suffix_binding Rel_nat_binding
 
 (*function relator*)
-val fun_RelI = @{thms rel_funI}
-val fun_RelD = @{thms rel_funD}
-
-fun fun_rel_intro_tac ctxt = REPEAT_ALL_NEW (resolve_tac ctxt fun_RelI)
-fun solve_Rel_nat_tac ctxt = force_tac (ctxt addDs fun_RelD addsimps [Rel_nat_iff_thm])
-
 val mk_transfer_rel_fun = BU.mk_rel_fun
 fun mk_transfer_rel_fun_types A B C D = \<^Const>\<open>rel_fun A B C D\<close>
 val mk_transfer_rel_fun_dummyT = mk_transfer_rel_fun_types dummyT dummyT dummyT dummyT
+val transfer_fun_RelI = @{thm rel_funI}
+val transfer_fun_RelD = @{thm rel_funD}
+
+fun mk_transport_rel_fun_types A B C D = \<^Const>\<open>Fun_Rel_rel A B C D\<close>
+val mk_transport_rel_fun_dummyT = mk_transport_rel_fun_types dummyT dummyT dummyT dummyT
+val transport_fun_RelI = @{thm Fun_Rel_relI}
+val transport_fun_RelD = @{thm Fun_Rel_relD}
+
+fun fun_rel_intro_tac fun_RelI ctxt = REPEAT_ALL_NEW (resolve_tac ctxt [fun_RelI])
+fun solve_fun_rel_tac fun_RelD ctxt = force_tac (ctxt addDs [fun_RelD] addsimps [@{thm rel_fun_eq}])
+fun solve_Rel_nat_tac fun_RelD ctxt = solve_fun_rel_tac fun_RelD (ctxt addsimps [Rel_nat_iff_thm])
 
 fun mk_Rel_fun_from_type mk_rel_fun base T = case T of
     \<^Type>\<open>fun A B\<close> =>

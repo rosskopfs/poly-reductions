@@ -208,7 +208,7 @@ declare_compiled_const conj
   compiled "tailcall_to_IMP_Minus and_IMP_tailcall"
 
 lemma min_min_one_eq_nat_of_bool_neq_and_neq [simp]: "min (min x y) 1 = nat_of_bool (x \<noteq> 0 \<and> y \<noteq> 0)"
-  by (cases x; cases y; simp)
+  by (cases x type: nat; cases y type: nat; simp)
 
 HOL_To_IMP_Minus_correct and_nat by cook
 
@@ -226,7 +226,7 @@ declare_compiled_const disj
 
 lemma min_max_one_eq_nat_of_bool_neq_or_neq [simp]:
   "min (max x y) 1 = nat_of_bool (x \<noteq> 0 \<or> y \<noteq> 0)"
-  by (cases x; cases y; simp)
+  by (cases x type: nat; cases y type: nat; simp)
 
 HOL_To_IMP_Minus_correct or_nat by cook
 

@@ -9,7 +9,7 @@ context HOL_To_IMP_Minus
 begin
 
 lemma case_nat_eq_if: "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) = (if n = 0 then x else f (n - 1))"
-  unfolding Nitpick.case_nat_unfold by simp
+  by (cases n type: nat) auto
 
 end
 

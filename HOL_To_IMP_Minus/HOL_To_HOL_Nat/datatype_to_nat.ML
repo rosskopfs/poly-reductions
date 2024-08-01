@@ -103,7 +103,7 @@ fun mk_ctr_Rel ctxt ctr =
 
 fun mk_ctrl_Rel_thm ctr ctxt = mk_ctr_Rel ctxt ctr
   |> prove_goal (fn ctxt => HEADGOAL
-    (TacU.TRY' (fun_rel_intro_tac ctxt) THEN' solve_Rel_nat_tac ctxt))
+    (TacU.TRY' (fun_rel_intro_tac transfer_fun_RelI ctxt) THEN' solve_Rel_nat_tac transfer_fun_RelD ctxt))
     ctxt
 
 fun register_ctr_Rel_thm ctr lthy =
@@ -155,9 +155,9 @@ fun mk_case_Rel_thm casex case_nat case_nat_def ctxt =
       in induction_var_tac ctxt var end
     fun tac ctxt =
       EqSubst.eqsubst_tac ctxt [1] [case_nat_def]
-      THEN' fun_rel_intro_tac ctxt
+      THEN' fun_rel_intro_tac transfer_fun_RelI ctxt
       THEN_ALL_NEW TacU.FOCUS_PARAMS_CTXT' (TacU.SUBGOAL_STRIPPED (snd o snd) o induction_tac) ctxt
-      THEN_ALL_NEW solve_Rel_nat_tac ctxt
+      THEN_ALL_NEW solve_Rel_nat_tac transfer_fun_RelD ctxt
   in
     mk_case_Rel casex case_nat ctxt
     |> (fn (t, binder) => prove_goal_schematics [fst (fst binder)] (HEADGOAL o tac) ctxt t)

@@ -74,7 +74,7 @@ fun set_simps ctxt thms = (clear_simpset ctxt) addsimps thms
 fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
 
 fun subst_first_tac ctxt = EqSubst.eqsubst_tac ctxt [1]
-fun simp_only_tac ctxt thms = safe_simp_tac (clear_simpset ctxt addsimps thms)
+fun simp_only_tac ctxt thms = safe_simp_tac (set_simps ctxt thms)
 
 (* pretty printing *)
 fun pretty_prems ctxt = SpecCheck_Show.list (Syntax.pretty_term ctxt)
