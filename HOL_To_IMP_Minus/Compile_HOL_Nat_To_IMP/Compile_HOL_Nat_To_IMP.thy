@@ -1,4 +1,4 @@
-theory Compile_Nat
+theory Compile_HOL_Nat_To_IMP
   imports
     IMP_Terminates_With
     HOL_To_IMP_Base
@@ -101,7 +101,7 @@ next
   qed
 qed auto
 
-ML_file\<open>compile_nat.ML\<close>
+ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 
 
 end

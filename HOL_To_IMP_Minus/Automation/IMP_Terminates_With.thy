@@ -77,21 +77,6 @@ lemma terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI:
     compile_sound inline_sound[where ?s=s and ?s'=s for s])
   (force simp: set_vars_compile tailcall_to_IMP_Minus_eq)+
 
-(* lemma pred_if_pred_app_if_eq_if_surj:
-  assumes "surj f"
-  assumes "\<And>y. f y = x \<Longrightarrow> P (f y)"
-  shows "P x"
-  using assms by (elim surjE[where ?y=x]) auto
-
-lemma surj_interp_state: "surj interp_state"
-  by (rule surjI[where ?f=State]) (simp add: interp_state_State_eq)
-
-lemma terminates_with_res_IMP_Tailcall_init_state_tracking:
-  assumes "\<And>st. STATE (interp_state st) = STATE s \<Longrightarrow>
-    terminates_with_res_IMP_Tailcall tc c (interp_state st) r val"
-  shows "terminates_with_res_IMP_Tailcall tc c s r val"
-  using assms unfolding STATE_eq by (rule pred_if_pred_app_if_eq_if_surj[OF surj_interp_state]) *)
-
 lemma terminates_with_tAssignI:
   assumes "s' = s(k := aval aexp s)"
   shows "terminates_with_IMP_Tailcall c (tAssign k aexp) s s'"

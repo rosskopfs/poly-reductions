@@ -47,13 +47,10 @@ session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = IMP_Minus +
     ML_Unification
     "SpecCheck"
   directories
-    "Compile_Nat"
-    "ML_Typeclasses"
-    "ML_Typeclasses/State"
+    "Automation"
+    "Compile_HOL_Nat_To_IMP"
     "Refinements"
-    "Refinements/Automation"
-    "Views"
-    "Views/IMP"
+    "States"
   theories
     HOL_To_IMP_Minus_Arithmetics
 

@@ -3,18 +3,17 @@
 
 Setup goal for HOL to IMP- refinement.
 *)
-
 signature HOL_TO_IMP_MINUS_GOAL_COMMAND =
 sig
-val get_func_corrects : Proof.context -> Termtab.key -> thm option
+val get_imp_minus_correct : Proof.context -> Termtab.key -> thm option
 
-val update_func_correct : thm -> Context.generic -> Context.generic
-val update_func_correct_attr : attribute
+val update_imp_minus_correct : thm -> Context.generic -> Context.generic
+val update_imp_minus_correct_attr : attribute
 
-val delete_func_correct : thm -> Context.generic -> Context.generic
-val delete_func_correct_attr : attribute
+val delete_imp_minus_correct : thm -> Context.generic -> Context.generic
+val delete_imp_minus_correct_attr : attribute
 
-val setup_func_correct_attr : attribute context_parser
+val setup_imp_minus_correct_attr : attribute context_parser
 end
 
 structure HOL_To_IMP_Minus_Goal_Command : HOL_TO_IMP_MINUS_GOAL_COMMAND =
@@ -29,35 +28,35 @@ val dest_terminates_with_res_IMP_Minus =
 val compiled_const_from_thm = Thm.concl_of #> HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Minus
   #> (fn (c, _, _, _) => c)
 
-structure HOL_To_IMP_Minus_Func_Correct_Thms = Generic_Data
+structure HOL_To_IMP_Minus_IMP_Minus_Correct_Thms = Generic_Data
 (
   type T = thm Termtab.table
   val empty = Termtab.empty
   val merge = Termtab.join (K fst)
 )
 
-val get_func_corrects =
-  Termtab.lookup o HOL_To_IMP_Minus_Func_Correct_Thms.get o Context.Proof
+val get_imp_minus_correct =
+  Termtab.lookup o HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.get o Context.Proof
 
-fun update_func_correct thm =
+fun update_imp_minus_correct thm =
   compiled_const_from_thm thm
   |> rpair thm
   |> Termtab.update_new
-  |> HOL_To_IMP_Minus_Func_Correct_Thms.map
-val update_func_correct_attr = Thm.declaration_attribute update_func_correct
+  |> HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.map
+val update_imp_minus_correct_attr = Thm.declaration_attribute update_imp_minus_correct
 
-fun delete_func_correct thm = compiled_const_from_thm thm
+fun delete_imp_minus_correct thm = compiled_const_from_thm thm
   |> Termtab.delete
-  |> HOL_To_IMP_Minus_Func_Correct_Thms.map
-val delete_func_correct_attr = Thm.declaration_attribute delete_func_correct
+  |> HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.map
+val delete_imp_minus_correct_attr = Thm.declaration_attribute delete_imp_minus_correct
 
-val func_correct_binding = \<^binding>\<open>IMP_Minus_func_correct\<close>
+val imp_minus_correct_binding = \<^binding>\<open>IMP_Minus_imp_minus_correct\<close>
 
-val setup_func_correct_attr = Attrib.add_del
-  update_func_correct_attr delete_func_correct_attr
+val setup_imp_minus_correct_attr = Attrib.add_del
+  update_imp_minus_correct_attr delete_imp_minus_correct_attr
 
 val _ = Theory.setup (
-  Attrib.setup func_correct_binding setup_func_correct_attr
+  Attrib.setup imp_minus_correct_binding setup_imp_minus_correct_attr
     "add/del IMP- functional correctness theorem")
 
 local
@@ -67,7 +66,7 @@ local
 in
   val _ =
     Outer_Syntax.local_theory_to_proof'
-      \<^command_keyword>\<open>HOL_To_IMP_Minus_func_correct\<close>
+      \<^command_keyword>\<open>HOL_To_IMP_Minus_imp_minus_correct\<close>
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let
@@ -75,7 +74,7 @@ in
           val const_term = Proof_Context.read_const {proper = false, strict = false} lthy const
           val compiled_const =
             Term.dest_Const const_term |> fst
-            |> Compile_Nat.get_compiled_const (Context.Proof lthy)
+            |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof lthy)
           val IMP_program = #compiled compiled_const
           val s = yield_singleton Variable.variant_fixes "s" lthy |> fst |> (rpair stateT #> Free)
 
@@ -88,17 +87,17 @@ in
             |> HTIU.mk_Trueprop
           val goal_stmt = Element.Shows [(Binding.empty_atts, [(goal, [])])]
 
-          val func_correct_attr =
-            Attrib.internal pos (K update_func_correct_attr)
+          val imp_minus_correct_attr =
+            Attrib.internal pos (K update_imp_minus_correct_attr)
           val binding = binding |> Binding.is_empty (fst binding) ?
-            apfst (fn _ => [Term.term_name const_term, "IMP_Minus_func_correct"]
+            apfst (fn _ => [Term.term_name const_term, "IMP_Minus_imp_minus_correct"]
               |> map Binding.name
               |> Binding.conglomerate
               |> Binding.set_pos pos)
         in
           lthy
           |> Specification.theorem false Thm.theoremK NONE (K I)
-              (binding ||> (fn atts => func_correct_attr :: atts)) [] [] goal_stmt b
+              (binding ||> (fn atts => imp_minus_correct_attr :: atts)) [] [] goal_stmt b
         end
       ))
 end

@@ -1,28 +1,30 @@
-(*  Title:      HOL_To_IMP_Minus/compile_nat.ML
+(*  Title:      HOL_To_IMP_Minus/compile_hol_nat_to_imp.ML
     Author:     Lukas Stevens, TU Muenchen
 
 Compiler from HOL-tailrecursive functions on natural numbers to IMP with tailcalls.
 *)
-signature COMPILE_NAT = sig
-include HAS_LOGGER
+signature COMPILE_HOL_NAT_TO_IMP =
+sig
+  include HAS_LOGGER
 
-val get_compiled_const_def : Proof.context -> term -> thm option
+  val get_compiled_const_def : Proof.context -> term -> thm option
 
-val update_compiled_const_def_attr : attribute
-val delete_compiled_const_def_attr : attribute
+  val update_compiled_const_def_attr : attribute
+  val delete_compiled_const_def_attr : attribute
 
-type compiled_const = {arg_regs: string list, compiled: term, ret_reg: string}
-val get_compiled_const : Context.generic -> string -> compiled_const
+  type compiled_const = {arg_regs: string list, compiled: term, ret_reg: string}
+  val get_compiled_const : Context.generic -> string -> compiled_const
 
-val compiled_const_suffix_cfg : string Config.T
-val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_theory
+  val compiled_const_suffix_cfg : string Config.T
+  val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_theory
 
-val register_sep_cfg : string Config.T
+  val register_sep_cfg : string Config.T
 end
 
-structure Compile_Nat : COMPILE_NAT = struct
+structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
+struct
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_Nat"
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_HOL_Nat_To_IMP"
 
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Termtab.table;

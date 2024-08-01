@@ -5,83 +5,58 @@ General utilities when refining HOL to IMP programs.
 *)
 signature HOL_TO_IMP_UTIL =
 sig
-val successors : int list -> int list
+  include HAS_LOGGER
+  val successors : int list -> int list
 
-(*turns option into a sequence; calls given function if option is NONE*)
-val seq_of_opt : (unit -> unit) -> 'a option -> 'a Seq.seq
+  (*turns option into a sequence; calls given function if option is NONE*)
+  val seq_of_opt : (unit -> unit) -> 'a option -> 'a Seq.seq
 
-exception EXTRACT_NONE of unit -> string
-val extract_opt : (unit -> string) -> 'a option -> 'a
+  (* HOL-specific *)
+  val mk_Trueprop : term -> term
+  val dest_Trueprop : term -> term
+  val cdest_Trueprop : cterm -> cterm
+  val mk_eq : term * term -> term
+  val dest_eq : term -> term * term
+  val cdest_eq : cterm -> cterm * cterm
 
-(* HOL-specific *)
-val mk_Trueprop : term -> term
-val dest_Trueprop : term -> term
-val cdest_Trueprop : cterm -> cterm
-val mk_eq : term * term -> term
-val dest_eq : term -> term * term
-val cdest_eq : cterm -> cterm * cterm
+  (* simplifier *)
+  val set_simps : Proof.context -> thm list -> Proof.context
 
-(* simplifier *)
-val set_simps : Proof.context -> thm list -> Proof.context
+  (* tactics *)
+  val refl_tac : Proof.context -> int -> tactic
+  val subst_first_tac : Proof.context -> thm list -> int -> tactic
+  val simp_only_tac : Proof.context -> thm list -> int -> tactic
 
-(* tactics *)
-val subst_first_tac : Proof.context -> thm list -> int -> tactic
-val subst_first_asm_tac : Proof.context -> thm list -> int -> tactic
-val resolve_all_tac : Proof.context -> thm list -> int -> tactic
+  (* pretty printing *)
+  val pretty_prems : Proof.context -> term list -> Pretty.T
+  val pretty_cprems : Proof.context -> cterm list -> Pretty.T
 
-(* pretty printing *)
-val pretty_prems : Proof.context -> term list -> Pretty.T
-val pretty_cprems : Proof.context -> cterm list -> Pretty.T
+  (* sequence with monadic and applicative operations *)
+  structure Seq :
+  sig
+    include SEQ
+    structure A : APPLICATIVE where type 'a t = 'a seq
+    structure M : MONAD where type 'a t = 'a seq
+  end
 
-(* sequence with monadic and applicative operations *)
-structure Seq : sig
-  include SEQ
-  structure A : APPLICATIVE where type 'a t = 'a seq
-  structure M : MONAD where type 'a t = 'a seq
-end
-
-structure List : sig
-  include LIST
-  structure T_Seq : TRAVERSABLE where type 'a f = 'a list
-end
-
-structure Option : sig
-  include OPTION
-  val to_seq : 'a option -> 'a Seq.seq
-end
-
+  structure List :
+  sig
+    include LIST
+    structure T_Seq : TRAVERSABLE
+    where type 'a f = 'a list
+    where type 'a A.t = 'a Seq.A.t
+  end
 end
 
 structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
 struct
 
-structure Seq = struct
-  open Seq
-  structure M = Monad(Seq_Monad_Trans(Identity_Monad))
-  structure A = Applicative(M)
-end
-
-structure List = struct
-  open List
-  structure T_Seq = Traversable(List_Traversable_Trans(Identity_Traversable(Seq.A)))
-end
-
-structure Option = struct
-  open Option
-  fun to_seq NONE = Seq.empty
-    | to_seq (SOME x) = Seq.single x
-end
+val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Util"
 
 val successors = map (curry (op +) 1)
 
 fun seq_of_opt _ (SOME x) = Seq.single x
   | seq_of_opt f_none NONE = (f_none (); Seq.empty)
-
-exception EXTRACT_NONE of unit -> string
-fun extract_opt error_msg opt =
-  if is_none opt
-  then raise EXTRACT_NONE error_msg
-  else the opt
 
 (* HOL-specific *)
 val mk_Trueprop = HOLogic.mk_Trueprop
@@ -96,14 +71,25 @@ val cdest_eq = Thm.dest_binop
 fun set_simps ctxt thms = (clear_simpset ctxt) addsimps thms
 
 (* tactics *)
+fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
 
 fun subst_first_tac ctxt = EqSubst.eqsubst_tac ctxt [1]
-fun subst_first_asm_tac ctxt = EqSubst.eqsubst_asm_tac ctxt [1]
-
-fun resolve_all_tac ctxt = Tactic_Util.EVERY_ARG' (resolve_tac ctxt o single)
+fun simp_only_tac ctxt thms = safe_simp_tac (clear_simpset ctxt addsimps thms)
 
 (* pretty printing *)
 fun pretty_prems ctxt = SpecCheck_Show.list (Syntax.pretty_term ctxt)
 fun pretty_cprems ctxt = SpecCheck_Show.list (Syntax.pretty_term ctxt) o map Thm.term_of
+
+structure Seq = struct
+  open Seq
+  structure M = Monad(Seq_Monad_Trans(Identity_Monad))
+  structure A = Applicative(M)
+end
+
+structure List = struct
+  open List
+  structure T_Seq = Traversable(List_Traversable_Trans(Identity_Traversable(Seq.A)))
+end
+
 
 end
