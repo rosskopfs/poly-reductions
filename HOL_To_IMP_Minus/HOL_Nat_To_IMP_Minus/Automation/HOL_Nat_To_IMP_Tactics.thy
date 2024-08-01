@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory HOL_To_IMP_Tactics
+theory HOL_Nat_To_IMP_Tactics
   imports
-    HOL_To_IMP_Minus_Goal_Commands
+    HOL_Nat_To_IMP_Minus_Goal_Commands
 begin
 
 paragraph \<open>Summary\<close>
@@ -48,27 +48,27 @@ ML\<open>
 \<close>
 local_setup \<open>HOL_To_IMP_Unification_Combine.setup_attribute NONE\<close>
 
-ML_file \<open>hol_to_imp_tactics_base.ML\<close>
-ML_file \<open>hol_to_imp_tailcalls_tactics.ML\<close>
-ML_file \<open>hol_to_imp_minus_tactics.ML\<close>
+ML_file \<open>hol_nat_to_imp_tactics_base.ML\<close>
+ML_file \<open>hol_nat_to_imp_tailcalls_tactics.ML\<close>
+ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
 
 ML\<open>
-  @{functor_instance struct_name = Standard_HOL_To_IMP_Tactics
-    and functor_name = HOL_To_IMP_Tactics
+  @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Minus_Tactics
+    and functor_name = HOL_Nat_To_IMP_Minus_Tactics
     and id = \<open>""\<close>
     and more_args = \<open>val init_args = {
-      get_IMP_def = SOME HOL_To_IMP_Tailcalls_Tactics.get_IMP_def,
-      get_imp_minus_correct = SOME HOL_To_IMP_Tailcalls_Tactics.get_imp_minus_correct,
-      get_HOL_eqs = SOME HOL_To_IMP_Tactics_Base.get_HOL_eqs,
-      get_fun_inducts = SOME HOL_To_IMP_Tailcalls_Tactics.get_fun_inducts
+      get_IMP_def = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_IMP_def,
+      get_imp_minus_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_minus_correct,
+      get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Base.get_HOL_eqs,
+      get_fun_inducts = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_fun_inducts
     }\<close>}
 \<close>
-local_setup \<open>Standard_HOL_To_IMP_Tactics.setup_attribute NONE\<close>
-local_setup \<open>Standard_HOL_To_IMP_Tactics.setup_method NONE\<close>
+local_setup \<open>Standard_HOL_Nat_To_IMP_Minus_Tactics.setup_attribute NONE\<close>
+local_setup \<open>Standard_HOL_Nat_To_IMP_Minus_Tactics.setup_method NONE\<close>
 ML \<open>
-  structure HB = HOL_To_IMP_Tactics_Base
-  structure HT = HOL_To_IMP_Tailcalls_Tactics
-  structure HM = HOL_To_IMP_Minus_Tactics_Base
+  structure HB = HOL_Nat_To_IMP_Tactics_Base
+  structure HT = HOL_Nat_To_IMP_Tailcalls_Tactics
+  structure HM = HOL_Nat_To_IMP_Minus_Tactics_Base
   structure SUT = State_Update_Tracking
 \<close>
 

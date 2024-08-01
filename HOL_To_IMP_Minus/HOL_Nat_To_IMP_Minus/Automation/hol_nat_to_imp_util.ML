@@ -1,13 +1,13 @@
-(*  Title: Refinements/hol_to_imp_util.ML
+(*  Title:  Automation/hol_nat_to_imp_util.ML
     Author: Kevin Kappelmann
 
 More utilities when refining HOL to IMP programs.
 *)
 infix 1 LET
 
-signature HOL_TO_IMP_UTIL =
+signature HOL_NAT_TO_IMP_UTIL =
 sig
-  include HOL_TO_IMP_UTIL
+  include HOL_NAT_TO_IMP_UTIL
 
   val mk_register : string -> term
   val mk_state_register_retrieval : term -> string -> term
@@ -23,10 +23,10 @@ sig
   structure Let : sig val LET : ('a * ('a -> 'b)) -> 'b end
 end
 
-structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
+structure HOL_Nat_To_IMP_Util : HOL_NAT_TO_IMP_UTIL =
 struct
 
-open HOL_To_IMP_Util
+open HOL_Nat_To_IMP_Util
 structure SUT = State_Update_Tracking
 
 val mk_register = HOLogic.mk_string

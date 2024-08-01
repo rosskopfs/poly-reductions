@@ -1,11 +1,11 @@
-(*  Title:  Refinements/hol_to_imp_tailcalls_tactics.ML
+(*  Title:  Automation/hol_nat_to_imp_tailcalls_tactics.ML
     Author: Kevin Kappelmann
     Author: Max Lang
 
 Tactics to run IMP-Tailcall programs, track their states changes, and prove their
 correspondence with HOL programs.
 *)
-signature HOL_TO_IMP_TAILCALLS_TACTICS =
+signature HOL_NAT_TO_IMP_TAILCALLS_TACTICS =
 sig
   include HAS_LOGGER
   type IMP_def_retrieval = Proof.context -> term -> thm option
@@ -43,23 +43,24 @@ sig
   val finish_non_tail_tac: Proof.context -> int -> tactic
   val finish_tail_tac: Proof.context -> int -> tactic
 
-  val run_hol_fun_tac: HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
-  val finish_tac: HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val run_hol_fun_tac: HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val finish_tac: HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
 
   val start_run_finish_tac: bool -> fun_inducts_retrieval -> IMP_def_retrieval ->
-    imp_minus_correct_retrieval -> HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context ->
+    imp_minus_correct_retrieval -> HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context ->
     int -> tactic
 end
 
-structure HOL_To_IMP_Tailcalls_Tactics : HOL_TO_IMP_TAILCALLS_TACTICS =
+structure HOL_Nat_To_IMP_Tailcalls_Tactics : HOL_NAT_TO_IMP_TAILCALLS_TACTICS =
 struct
 
-val logger = Logger.setup_new_logger HOL_To_IMP_Tactics_Base.logger "HOL_To_IMP_Tailcalls_Tactics"
+val logger =
+  Logger.setup_new_logger HOL_Nat_To_IMP_Tactics_Base.logger "HOL_Nat_To_IMP_Tailcalls_Tactics"
 
-structure HTITB = HOL_To_IMP_Tactics_Base
+structure HTITB = HOL_Nat_To_IMP_Tactics_Base
 structure GU = General_Util
 structure TU = Tactic_Util
-structure HTIU = HOL_To_IMP_Util
+structure HTIU = HOL_Nat_To_IMP_Util
 structure SUT = State_Update_Tracking
 
 structure Seq = HTIU.Seq
@@ -70,7 +71,7 @@ val get_IMP_def = Compile_HOL_Nat_To_IMP.get_compiled_const_def
 
 type imp_minus_correct_retrieval = Proof.context -> term -> thm list option
 val get_imp_minus_correct =
-  Option.map single oo HOL_To_IMP_Minus_Goal_Command.get_imp_minus_correct
+  Option.map single oo HOL_Nat_To_IMP_Minus_Goal_Command.get_imp_minus_correct
 
 (*retrieve induction rule for HOL function*)
 type fun_inducts_retrieval = Proof.context -> term -> (thm list) option
@@ -136,7 +137,7 @@ fun setup_induction_tac get_fun_inducts =
       val instantiations =
         head |> dest_Const |> fst
         |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof ctxt) |> #arg_regs
-        |> map (HOL_To_IMP_Util.mk_state_register_retrieval s)
+        |> map (HOL_Nat_To_IMP_Util.mk_state_register_retrieval s)
         |> map (fn t => SOME (NONE, (t, false)))
       val arbitrary = [dest_Free s]
       val inducts = get_fun_inducts ctxt head

@@ -1,36 +1,37 @@
-(*  Title:  Refinements/hol_to_imp_minus_tactics.ML
+(*  Title:  Automation/hol_nat_to_imp_minus_tactics.ML
     Author: Kevin Kappelmann
     Author: Max Lang
 
 HOL to IMP tactics with arguments from context.
 *)
-@{parse_entries (sig) PARSE_HOL_TO_IMP_MINUS_TACTICS_CONTEXT_ARGS
+@{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_CONTEXT_ARGS
   [get_IMP_def, get_imp_minus_correct, get_HOL_eqs, get_fun_inducts]}
 
-@{parse_entries (sig) PARSE_HOL_TO_IMP_MINUS_TACTICS_ARGS
+@{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_ARGS
   [IMP_def, imp_minus_correct, HOL_eqs, fun_inducts, mode]}
 
-@{parse_entries (sig) PARSE_HOL_TO_IMP_TAILCALLS_MODES
+@{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_TAILCALLS_MODES
   [tailcall, nontailcall]}
 
-signature HOL_TO_IMP_MINUS_TACTICS_BASE =
+signature HOL_NAT_TO_IMP_MINUS_TACTICS_BASE =
 sig
 include HAS_LOGGER
 
-structure PA : PARSE_HOL_TO_IMP_MINUS_TACTICS_ARGS
-structure PCA : PARSE_HOL_TO_IMP_MINUS_TACTICS_CONTEXT_ARGS
+structure PA : PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_ARGS
+structure PCA : PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_CONTEXT_ARGS
 
-structure PM : PARSE_HOL_TO_IMP_TAILCALLS_MODES
+structure PM : PARSE_HOL_NAT_TO_IMP_TAILCALLS_MODES
 type mode = PM.key
 val parse_mode : mode parser
 
-type context_args = (HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval,
-  HOL_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval,
-  HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval, HOL_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval)
+type context_args = (HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval,
+  HOL_Nat_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval,
+  HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval,
+  HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval)
   PCA.entries
 type args = (thm, thm list, thm list, thm list, mode) PA.entries
 
-val correct_if_IMP_tailcall_correct_tac : HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
+val correct_if_IMP_tailcall_correct_tac : HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
   Proof.context -> int -> tactic
 
 val cook_tac : context_args -> mode -> Proof.context -> int -> tactic
@@ -42,12 +43,12 @@ val arg_parsers : (thm context_parser, thm list context_parser, thm list context
 
 end
 
-structure HOL_To_IMP_Minus_Tactics_Base : HOL_TO_IMP_MINUS_TACTICS_BASE =
+structure HOL_Nat_To_IMP_Minus_Tactics_Base : HOL_NAT_TO_IMP_MINUS_TACTICS_BASE =
 struct
 
-val logger = Logger.setup_new_logger HOL_To_IMP_Tactics_Base.logger "HOL_To_IMP_Minus_Tactics_Base"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Tactics_Base.logger "HOL_Nat_To_IMP_Minus_Tactics_Base"
 
-structure HTIT = HOL_To_IMP_Tailcalls_Tactics
+structure HTIT = HOL_Nat_To_IMP_Tailcalls_Tactics
 structure TU = Tactic_Util
 structure SUT = State_Update_Tracking
 structure PU = Parse_Util
@@ -63,7 +64,7 @@ type mode = PM.key
 val parse_mode = PM.parse_key
 
 type context_args = (HTIT.IMP_def_retrieval, HTIT.imp_minus_correct_retrieval,
-  HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval, HTIT.fun_inducts_retrieval)
+  HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval, HTIT.fun_inducts_retrieval)
   PCA.entries
 type args = (thm, thm list, thm list, thm list, mode) PA.entries
 
@@ -79,7 +80,7 @@ val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus =
   dest_terminates_with_res_IMP_Minus #> (fn {c,...} => c) #> dest_tailcall_to_IMP_Minus
 
 val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop =
-  HOL_To_IMP_Util.dest_Trueprop #> dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus
+  HOL_Nat_To_IMP_Util.dest_Trueprop #> dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus
 
 fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
   let fun tac c =
@@ -94,7 +95,7 @@ fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
       THEN' solve_side_condition_tac
     end
   in
-    HOL_To_IMP_Util.with_dest_concl_tac (fn _ => Pretty.block [
+    HOL_Nat_To_IMP_Util.with_dest_concl_tac (fn _ => Pretty.block [
         Pretty.str "Could not find ",
         Syntax.pretty_term ctxt @{term terminates_with_res_IMP_Minus},
         Pretty.str " or ",
@@ -140,36 +141,39 @@ val context_arg_parsers = {
 
 end
 
-signature HOL_TO_IMP_TACTICS =
+signature HOL_NAT_TO_IMP_MINUS_TACTICS =
 sig
   structure Data : GENERIC_DATA
 
-  val get_args : Context.generic -> HOL_To_IMP_Minus_Tactics_Base.context_args
-  val map_args : (HOL_To_IMP_Minus_Tactics_Base.context_args -> HOL_To_IMP_Minus_Tactics_Base.context_args) ->
+  val get_args : Context.generic -> HOL_Nat_To_IMP_Minus_Tactics_Base.context_args
+  val map_args : (HOL_Nat_To_IMP_Minus_Tactics_Base.context_args ->
+    HOL_Nat_To_IMP_Minus_Tactics_Base.context_args) ->
     Context.generic -> Context.generic
 
-  val get_get_IMP_def : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval
-  val map_get_IMP_def : (HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
-    HOL_To_IMP_Tailcalls_Tactics.IMP_def_retrieval) -> Context.generic -> Context.generic
+  val get_get_IMP_def : Context.generic -> HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval
+  val map_get_IMP_def : (HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
+    HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval) -> Context.generic -> Context.generic
 
-  val get_get_imp_minus_correct : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval
-  val map_get_imp_minus_correct : (HOL_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval ->
-    HOL_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval) -> Context.generic -> Context.generic
+  val get_get_imp_minus_correct : Context.generic ->
+    HOL_Nat_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval
+  val map_get_imp_minus_correct : (HOL_Nat_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval ->
+    HOL_Nat_To_IMP_Tailcalls_Tactics.imp_minus_correct_retrieval) -> Context.generic ->
+    Context.generic
 
-  val get_get_HOL_eqs : Context.generic -> HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval
-  val map_get_HOL_eqs : (HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval ->
-    HOL_To_IMP_Tactics_Base.HOL_eqs_retrieval) -> Context.generic -> Context.generic
+  val get_get_HOL_eqs : Context.generic -> HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval
+  val map_get_HOL_eqs : (HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval ->
+    HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval) -> Context.generic -> Context.generic
 
-  val get_get_fun_inducts : Context.generic -> HOL_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval
-  val map_get_fun_inducts : (HOL_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval ->
-    HOL_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval) -> Context.generic -> Context.generic
+  val get_get_fun_inducts : Context.generic -> HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval
+  val map_get_fun_inducts : (HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval ->
+    HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval) -> Context.generic -> Context.generic
 
-  val cook_tac : HOL_To_IMP_Minus_Tactics_Base.mode -> Proof.context -> int -> tactic
+  val cook_tac : HOL_Nat_To_IMP_Minus_Tactics_Base.mode -> Proof.context -> int -> tactic
 
   val binding : binding
 
   val attribute : (ML_Code_Util.code, ML_Code_Util.code, ML_Code_Util.code, ML_Code_Util.code)
-    HOL_To_IMP_Minus_Tactics_Base.PCA.entries * Position.T -> attribute
+    HOL_Nat_To_IMP_Minus_Tactics_Base.PCA.entries * Position.T -> attribute
   val parse_attribute : attribute parser
   val setup_attribute : string option -> local_theory -> local_theory
 
@@ -177,13 +181,13 @@ sig
   val setup_method : string option -> local_theory -> local_theory
 end
 
-functor HOL_To_IMP_Tactics(A : sig
+functor HOL_Nat_To_IMP_Minus_Tactics(A : sig
     structure FIA : FUNCTOR_INSTANCE_ARGS
-    val init_args : HOL_To_IMP_Minus_Tactics_Base.context_args
-  end) : HOL_TO_IMP_TACTICS =
+    val init_args : HOL_Nat_To_IMP_Minus_Tactics_Base.context_args
+  end) : HOL_NAT_TO_IMP_MINUS_TACTICS =
 struct
 
-structure HITA = HOL_To_IMP_Minus_Tactics_Base
+structure HITA = HOL_Nat_To_IMP_Minus_Tactics_Base
 structure PA = HITA.PA
 structure PCA = HITA.PCA
 structure PM = HITA.PM
@@ -227,7 +231,7 @@ val parse_attribute_arg_entries =
 
 fun attribute (entries, pos) =
   let
-    fun code_PCA_op operation = MCU.flat_read ["HOL_To_IMP_Minus_Tactics_Base.PCA", ".", operation]
+    fun code_PCA_op operation = MCU.flat_read ["HOL_Nat_To_IMP_Minus_Tactics_Base.PCA", ".", operation]
     val code_from_key = code_PCA_op o PCA.key_to_string
     fun code_from_entry (PCA.get_IMP_def c) = c
       | code_from_entry (PCA.get_imp_minus_correct c) = c

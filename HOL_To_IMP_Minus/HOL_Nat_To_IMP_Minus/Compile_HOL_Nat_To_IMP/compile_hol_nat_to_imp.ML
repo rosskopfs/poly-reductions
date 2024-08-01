@@ -24,7 +24,7 @@ end
 structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
 struct
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "Compile_HOL_Nat_To_IMP"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Termtab.table;

@@ -1,4 +1,4 @@
-(*  Title:  Views/state_update_tracking.ML
+(*  Title:  States/state_update_tracking.ML
     Author: Kevin Kappelmann
 
 Tracking of STATE equalities.
@@ -25,7 +25,7 @@ end
 
 structure State_Update_Tracking : STATE_UPDATE_TRACKING =
 struct
-structure HTIU = HOL_To_IMP_Util
+structure HTIU = HOL_Nat_To_IMP_Util
 val logger = Logger.setup_new_logger Logger.root "State_Update_Tracking"
 
 val state_eq = curry (op aconv)

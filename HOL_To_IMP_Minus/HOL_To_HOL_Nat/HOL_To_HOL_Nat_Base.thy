@@ -2,7 +2,7 @@
 \<^marker>\<open>creator "Andreas Vollert"\<close>
 \<^marker>\<open>contributor "Kevin Kappelmann"\<close>
 section\<open>HOL with Datatypes to HOL on Natural Numbers\<close>
-theory HOL_To_HOL_Nat_Setup
+theory HOL_To_HOL_Nat_Base
   imports
     "HOL-Library.Nat_Bijection"
     "HOL-Library.Simps_Case_Conv"

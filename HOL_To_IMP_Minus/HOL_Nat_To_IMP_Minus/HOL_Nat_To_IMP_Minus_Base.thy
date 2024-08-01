@@ -1,5 +1,5 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory HOL_To_IMP_Base
+theory HOL_Nat_To_IMP_Minus_Base
   imports
     HOL.HOL
     ML_Unification.ML_Tactic_Utils
@@ -11,8 +11,9 @@ begin
 paragraph \<open>Summary\<close>
 text \<open>Basic setup and general ML utilities.\<close>
 
-setup_result HOL_to_IMP_base_logger = \<open>Logger.new_logger Logger.root "HOL_To_IMP_Base"\<close>
+setup_result HOL_Nat_To_IMP_Minus_base_logger =
+  \<open>Logger.new_logger Logger.root "HOL_Nat_To_IMP_Minus_Base"\<close>
 
-ML_file\<open>hol_to_imp_util.ML\<close>
+ML_file\<open>hol_nat_to_imp_util.ML\<close>
 
 end

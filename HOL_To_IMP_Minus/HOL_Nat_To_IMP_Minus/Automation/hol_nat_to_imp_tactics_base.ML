@@ -1,11 +1,11 @@
-(*  Title:  Refinements/hol_to_imp_tactics_base.ML
+(*  Title:  Automation/hol_nat_to_imp_tactics_base.ML
     Author: Kevin Kappelmann
     Author: Max Lang
 
 Basics to run IMP programs, track their states changes, and prove their
 correspondence with HOL programs.
 *)
-signature HOL_TO_IMP_TACTICS_BASE =
+signature HOL_NAT_TO_IMP_TACTICS_BASE =
 sig
   include HAS_LOGGER
 
@@ -20,10 +20,11 @@ sig
   val run_tac: (int -> tactic) -> int -> tactic
 end
 
-structure HOL_To_IMP_Tactics_Base : HOL_TO_IMP_TACTICS_BASE =
+structure HOL_Nat_To_IMP_Tactics_Base : HOL_NAT_TO_IMP_TACTICS_BASE =
 struct
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Tactics_Base"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger
+  "HOL_Nat_To_IMP_Tactics_Base"
 
 structure TU = Tactic_Util
 structure SUT = State_Update_Tracking
@@ -84,7 +85,7 @@ fun if_tac if_thmI ctxt =
     val finish_contradictory_branch = SOLVED' (safe_asm_full_simp_tac ctxt)
   in
     resolve_tac ctxt [if_thmI]
-    THEN' SUT.STATE_interp_retrieve_key_eq_tac (HOL_To_IMP_Util.refl_tac ctxt) ctxt
+    THEN' SUT.STATE_interp_retrieve_key_eq_tac (HOL_Nat_To_IMP_Util.refl_tac ctxt) ctxt
     THEN' SIMP_TO_UNIF_condition_tac ctxt
     THEN' SIMP_TO_UNIF_condition_tac ctxt
     (*close possibly contradictory branches*)

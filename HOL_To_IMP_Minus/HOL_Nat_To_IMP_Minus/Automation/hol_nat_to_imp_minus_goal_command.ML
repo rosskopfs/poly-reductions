@@ -1,9 +1,9 @@
-(*  Title:  Refinements/hol_to_imp_minus_goal_command.ML
+(*  Title:  Automation/hol_nat_to_imp_minus_goal_command.ML
     Author: Kevin Kappelmann
 
 Setup goal for HOL to IMP- refinement.
 *)
-signature HOL_TO_IMP_MINUS_GOAL_COMMAND =
+signature HOL_NAT_TO_IMP_MINUS_GOAL_COMMAND =
 sig
 val get_imp_minus_correct : Proof.context -> Termtab.key -> thm option
 
@@ -16,10 +16,10 @@ val delete_imp_minus_correct_attr : attribute
 val setup_imp_minus_correct_attr : attribute context_parser
 end
 
-structure HOL_To_IMP_Minus_Goal_Command : HOL_TO_IMP_MINUS_GOAL_COMMAND =
+structure HOL_Nat_To_IMP_Minus_Goal_Command : HOL_NAT_TO_IMP_MINUS_GOAL_COMMAND =
 struct
 
-structure HTIU = HOL_To_IMP_Util
+structure HTIU = HOL_Nat_To_IMP_Util
 
 fun mk_terminates_with_res_IMP_Minus c s r v = \<^Const>\<open>terminates_with_res_IMP_Minus for c s r v\<close>
 val dest_terminates_with_res_IMP_Minus =

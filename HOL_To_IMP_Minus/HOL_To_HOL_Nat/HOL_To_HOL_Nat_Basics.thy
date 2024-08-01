@@ -4,7 +4,7 @@
 subsection \<open>Basic Datatypes and Functions\<close>
 theory HOL_To_HOL_Nat_Basics
   imports
-    HOL_To_HOL_Nat_Setup
+    HOL_To_HOL_Nat_Base
 begin
 
 unbundle no_HOL_ascii_syntax

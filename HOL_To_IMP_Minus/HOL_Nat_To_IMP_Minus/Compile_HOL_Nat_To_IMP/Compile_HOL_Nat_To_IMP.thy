@@ -1,7 +1,7 @@
 theory Compile_HOL_Nat_To_IMP
   imports
     IMP_Terminates_With
-    HOL_To_IMP_Base
+    HOL_Nat_To_IMP_Minus_Base
   keywords
     "compile_nat" :: thy_decl and "basename" and
     "declare_compiled_const" :: thy_decl and

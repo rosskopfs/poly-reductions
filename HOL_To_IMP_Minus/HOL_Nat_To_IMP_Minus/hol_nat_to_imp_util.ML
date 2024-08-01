@@ -1,9 +1,9 @@
-(*  Title:  HOL_To_IMP_Minus/hol_to_imp_util.ML
+(*  Title:  HOL_To_IMP_Minus/hol_nat_to_imp_util.ML
     Author: Kevin Kappelmann
 
 General utilities when refining HOL to IMP programs.
 *)
-signature HOL_TO_IMP_UTIL =
+signature HOL_NAT_TO_IMP_UTIL =
 sig
   include HAS_LOGGER
   val successors : int list -> int list
@@ -48,10 +48,10 @@ sig
   end
 end
 
-structure HOL_To_IMP_Util : HOL_TO_IMP_UTIL =
+structure HOL_Nat_To_IMP_Util : HOL_NAT_TO_IMP_UTIL =
 struct
 
-val logger = Logger.setup_new_logger HOL_to_IMP_base_logger "HOL_To_IMP_Util"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "HOL_Nat_To_IMP_Util"
 
 val successors = map (curry (op +) 1)
 
