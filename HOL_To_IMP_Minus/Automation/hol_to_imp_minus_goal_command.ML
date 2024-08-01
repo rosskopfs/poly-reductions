@@ -66,7 +66,7 @@ local
 in
   val _ =
     Outer_Syntax.local_theory_to_proof'
-      \<^command_keyword>\<open>HOL_To_IMP_Minus_imp_minus_correct\<close>
+      \<^command_keyword>\<open>HOL_To_IMP_Minus_correct\<close>
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let

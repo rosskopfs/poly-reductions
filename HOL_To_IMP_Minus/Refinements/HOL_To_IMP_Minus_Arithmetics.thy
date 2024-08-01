@@ -19,7 +19,7 @@ lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
 case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
-HOL_To_IMP_Minus_imp_minus_correct mul_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct mul_acc_nat by (cook mode = tailcall)
 
 definition mul_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "mul_nat x y = mul_acc_nat x y 0"
@@ -34,7 +34,7 @@ declare_compiled_const "times"
   argument_registers "mul.args.x" "mul.args.y"
   compiled "tailcall_to_IMP_Minus mul_IMP_tailcall"
 
-HOL_To_IMP_Minus_imp_minus_correct mul_nat by cook
+HOL_To_IMP_Minus_correct mul_nat by cook
 
 
 fun div_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -46,7 +46,7 @@ lemma div_acc_nat_eq_div [simp]: "div_acc_nat x y z = x div y + z"
 
 compile_nat div_acc_nat.simps basename div_acc
 
-HOL_To_IMP_Minus_imp_minus_correct div_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct div_acc_nat by (cook mode = tailcall)
 
 definition div_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "div_nat x y = div_acc_nat x y 0"
@@ -61,7 +61,7 @@ declare_compiled_const "divide"
   argument_registers "div.args.x" "div.args.y"
   compiled "tailcall_to_IMP_Minus div_IMP_tailcall"
 
-HOL_To_IMP_Minus_imp_minus_correct div_nat by cook
+HOL_To_IMP_Minus_correct div_nat by cook
 
 definition square_nat :: "nat \<Rightarrow> nat" where
   "square_nat x \<equiv> mul_nat x x"
@@ -71,7 +71,7 @@ lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
 
 compile_nat square_nat_def basename square
 
-HOL_To_IMP_Minus_imp_minus_correct square_nat by cook
+HOL_To_IMP_Minus_correct square_nat by cook
 
 (*takes lower and upper bound for root*)
 function sqrt_aux_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -89,7 +89,7 @@ declare sqrt_aux_nat.simps[simp del]
 
 compile_nat sqrt_aux_nat.simps basename sqrt_aux
 
-HOL_To_IMP_Minus_imp_minus_correct sqrt_aux_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct sqrt_aux_nat by (cook mode = tailcall)
   (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
   (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
@@ -129,7 +129,7 @@ corollary sqrt_nat_sqrt[simp]: "sqrt_nat y = Discrete.sqrt y"
 
 compile_nat sqrt_nat_def basename sqrt
 
-HOL_To_IMP_Minus_imp_minus_correct sqrt_nat by cook
+HOL_To_IMP_Minus_correct sqrt_nat by cook
 
 end
 
