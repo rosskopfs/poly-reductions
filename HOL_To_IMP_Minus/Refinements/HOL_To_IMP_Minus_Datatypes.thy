@@ -50,8 +50,13 @@ context
 begin
 
 lemmas test = HOL_To_HOL_Nat.append_nat_eq_unfolded[OF rels, unfolded case_list_nat_def]
-(*ooops*)
-(* compile_nat test  *)
+definition "blub x y \<equiv> HOL_To_HOL_Nat.append_nat TYPE('a) x y"
+
+lemma blub_rec: "blub x y =
+  (if fst_nat x = 0 then y else Cons_nat (fst_nat (snd_nat x)) (blub (snd_nat (snd_nat x)) y))"
+  unfolding blub_def by (subst test) (rule refl)
+
+compile_nat blub_rec
 
 end
 
