@@ -207,7 +207,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
             orelse raise PARTIAL ("Call must occur fully applied", g_name)
           val g_ret = #ret_reg g_compiled
 
-          fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, Int.toString i] (* g_name, problem(?): can contain register_sep *)
+          fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, Int.toString i]
           fun g_arg_cont reg rhs = \<^Const>\<open>tAssign for reg rhs\<close>
           fun g_go_reg reg = go bounds (g_arg_cont reg)
 
