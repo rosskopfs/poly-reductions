@@ -26,6 +26,8 @@ struct
 
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
+fun foldr_index f z = map_index I #> List.foldr (uncurry f) z
+
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Termtab.table;
   val empty = Termtab.empty
@@ -95,6 +97,13 @@ datatype tc_ast = If of int * (tc_ast * tc_ast * tc_ast) |
   LetBound of int |
   Call of int * ((string * typ) * tc_ast list) |
   TailCall of tc_ast list
+
+(* is the given function called? *)
+fun has_call to (Call (_, ((f, _), es))) = (f = to) orelse exists (has_call to) es
+  | has_call to (If (_, (_, e1, e2))) = has_call to e1 orelse has_call to e2
+  | has_call to (Let (_, (_, (e1, e2)))) = has_call to e1 orelse has_call to e2
+  | has_call to (TailCall es) = exists (has_call to) es
+  | has_call _ _ = false
 
 fun tc_ast_of_term (f_name, f_typ) f_args t =
   let
@@ -197,15 +206,28 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
           val _ = List.length (#arg_regs g_compiled) = List.length es
             orelse raise PARTIAL ("Call must occur fully applied", g_name)
           val g_ret = #ret_reg g_compiled
-          fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, (* g_name, problem(?): can contain register_sep *) Int.toString i]
-          fun g_arg_pair (i, arg_reg) = (g_local_arg_reg i, HOLogic.mk_string arg_reg)
-          val g_arg_pairs = map_index g_arg_pair (#arg_regs g_compiled)
+
+          fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, Int.toString i]
           fun g_arg_cont reg rhs = \<^Const>\<open>tAssign for reg rhs\<close>
-          val g_args_IMP = map2 (fn (reg, _) => go bounds (g_arg_cont reg)) g_arg_pairs es
-          val g_arg_copies = mk_copies g_arg_pairs
+          fun g_go_reg reg = go bounds (g_arg_cont reg)
+
+          (* if g is called in e_j, then for i < j,
+             the computation of e_i needs to be saved in a temporary variable *)
+          fun g_do_arg (i, (arg_reg, e)) { calls, copies, needs_tmp } =
+            if needs_tmp then
+              { calls = g_go_reg (g_local_arg_reg i) e :: calls,
+                copies = (g_local_arg_reg i, HOLogic.mk_string arg_reg) :: copies,
+                needs_tmp = true }
+            else
+              { calls = g_go_reg (HOLogic.mk_string arg_reg) e :: calls,
+                copies = copies,
+                needs_tmp = has_call g_name e }
+          val g_args =
+            #arg_regs g_compiled ~~ es
+            |> foldr_index g_do_arg { calls = [], copies = [], needs_tmp = false }
         in
-          g_args_IMP @
-          g_arg_copies @
+          #calls g_args @
+          mk_copies (#copies g_args) @
             [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
             , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
             ]
