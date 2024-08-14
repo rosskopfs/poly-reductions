@@ -1,4 +1,4 @@
-theory TM_to_GOTO_on_List
+theory TM_to_GOTO_on_List_transform
   imports GOTO_on_List Cook_Levin.Basics "List-Index.List_Index" List_Extra TM_Extra
 begin
 
@@ -1525,11 +1525,12 @@ qed
 
 
 theorem TM_to_GOTO_on_List_correct_and_in_polynomial_time:
-  obtains s
-    where "\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1.
-          (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s))"
-      and "s \<sim> (Q, TPS')"
+  "\<exists>s. (
+   (\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s))) \<and>
+   (s\<^sub>0 \<sim> (0, TPS)) \<and> (s \<sim> (Q, TPS')))"
 proof -
+  have "s\<^sub>0 \<sim> (0, TPS)" by simp
+
   let ?run_len = "entrance_block_len + block_for_q_chs_len + 1"
   from running_time_M obtain t where execute_M: "execute M (0, TPS) t = (Q, TPS')" and t: "t \<le> T"
     unfolding transforms_def transits_def
@@ -1581,8 +1582,11 @@ proof -
   have "\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1.
         GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s)"
     by (meson le_trans)
-  with \<open>s \<sim> (Q, TPS')\<close> show thesis
-    using that by blast
+  with \<open>s \<sim> (Q, TPS')\<close> \<open>s\<^sub>0 \<sim> (0, TPS)\<close>
+  show "\<exists>s. (
+    (\<exists>t \<le> (Q * G ^ K + 2 * K + 5) * T + 1. (GOTO_on_List_Prog \<turnstile>\<^sub>l (pc_start, s\<^sub>0) \<rightarrow>\<^bsub>t\<^esub> (pc_halt, s))) \<and>
+    (s\<^sub>0 \<sim> (0, TPS)) \<and> (s \<sim> (Q, TPS')))"
+    by blast
 qed
 
 end
