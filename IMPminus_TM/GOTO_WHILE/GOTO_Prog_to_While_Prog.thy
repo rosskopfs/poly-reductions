@@ -2,6 +2,7 @@ theory GOTO_Prog_to_While_Prog
   imports GOTO_Instr_to_While_Prog
 begin
 
+text \<open>This is the basic block of the transformed WHILE program\<close>
 definition if_neq :: "char list \<Rightarrow> nat \<Rightarrow> com \<Rightarrow> com \<Rightarrow> com" where
   "if_neq y k C1 C2 = 
     y ::= (atomExp.V y \<ominus> atomExp.N k) ;; 
@@ -10,6 +11,7 @@ definition if_neq :: "char list \<Rightarrow> nat \<Rightarrow> com \<Rightarrow
     ELSE
       (y ::= (atomExp.V y \<oplus> atomExp.N k) ;; C2)"
 
+text \<open>This lemma shows that the if_neq only adds 5 on complexity for the equal branch\<close>
 lemma if_neq_trans_ins_2_out_eq:
   assumes "s y = k"
     and "(C2, s) \<Rightarrow>\<^bsup> i \<^esup> t"
@@ -33,6 +35,7 @@ proof -
   thus "(if_neq y k C1 C2, s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t" using aux1 aux2 if_neq_def by fastforce
 qed
 
+text \<open>This lemma shows that the if_neq only adds 5 on complexity for the inequal branch\<close>
 lemma if_neq_trans_ins_2_out_gt:
   assumes "s y > k"
     and "(C1, s) \<Rightarrow>\<^bsup> i \<^esup> t"
@@ -58,6 +61,7 @@ proof -
   thus "(if_neq y k C1 C2, s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t" using aux1 aux2 if_neq_def by fastforce
 qed
 
+text \<open>The reversed lemma of the above lemma\<close>
 lemma if_neq_trans_out_2_ins_eq:
   assumes "s y = k"
     and "(if_neq y k C1 C2, s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t"
@@ -82,6 +86,7 @@ proof -
   thus "(C2, s) \<Rightarrow>\<^bsup> i \<^esup> t" using aux4 by force
 qed
 
+text \<open>The reversed lemma of the above lemma\<close>
 lemma if_neq_trans_out_2_ins_gt:
   assumes "s y > k"
     and "(if_neq y k C1 C2, s) \<Rightarrow>\<^bsup> i + 5 \<^esup> t"
@@ -105,6 +110,7 @@ proof -
   thus "(C1, s) \<Rightarrow>\<^bsup> i \<^esup> t" using aux4 by force
 qed
 
+text \<open>define the IF part in the WHILE loop of the transformed WHILE program\<close>
 function (sequential) GOTO_Prog_to_WHILE_IF' :: "GOTO_Prog \<Rightarrow> nat \<Rightarrow> com" where 
   "GOTO_Prog_to_WHILE_IF' prog t = (if t > length prog then SKIP else if_neq ''pc'' t 
     (GOTO_Prog_to_WHILE_IF' prog (Suc t)) (GOTO_Instr_to_WHILE (prog !! t)))"
@@ -114,6 +120,7 @@ termination apply (relation "measure (\<lambda>(prog, t) . length prog + 1 - t)"
 definition GOTO_Prog_to_WHILE_IF :: "GOTO_Prog \<Rightarrow> com" where 
   "GOTO_Prog_to_WHILE_IF prog = GOTO_Prog_to_WHILE_IF' prog 1"
 
+text \<open>An example of GOTO_Prog_to_WHILE_IF\<close>
 value "GOTO_Prog_to_WHILE_IF [''x'' ;;= N 3, ''y'' ;;= N 4, ''z'' ;;= V ''x'', ''z'' += V ''y'', HALT]"
 
 lemma GOTO_Prog_to_WHILE_IF'_correctness_complexity:
@@ -138,6 +145,7 @@ proof (induction prog min_pc arbitrary: rule: GOTO_Prog_to_WHILE_IF'.induct)
   qed
 qed
 
+text \<open>Prove that the GOTO_Prog_to_WHILE_IF's complexity is linear to the complexity of GOTO program\<close>
 lemma GOTO_Prog_to_WHILE_IF_correctness_complexity:
   assumes "1 \<le> s ''pc''" and "s ''pc'' \<le> length prog"
     and "(GOTO_Instr_to_WHILE (prog !! s ''pc''), s) \<Rightarrow>\<^bsup> i \<^esup> t"
@@ -150,10 +158,11 @@ lemma GOTO_Prog_to_WHILE_IF_correctness_complexity':
   shows "\<exists>t. (GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> i + s ''pc'' * 5 \<^esup> t" using assms
   using GOTO_Prog_to_WHILE_IF_correctness_complexity by blast
 
+text \<open>The definition of the WHILE program to a GOTO program\<close>
 definition GOTO_Prog_to_WHILE :: "GOTO_Prog \<Rightarrow> com" where
   "GOTO_Prog_to_WHILE prog = ''pc'' ::= A (atomExp.N 1) ;; WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog"
 
-(*reversed version necessary !!! *)
+text \<open>reversed version is also necessary\<close>
 lemma GOTO_Prog_to_WHILE_IF'_correctness_complexity_reversed:
   assumes "1 \<le> min_pc" and "min_pc \<le> pc" and "pc \<le> length prog" and "s ''pc'' = pc"
     and "(GOTO_Prog_to_WHILE_IF' prog min_pc, s) \<Rightarrow>\<^bsup> i + (pc + 1 - min_pc) * 5 \<^esup> t"
@@ -181,6 +190,7 @@ lemma GOTO_Prog_to_WHILE_IF_correctness_complexity_reversed:
   shows "(GOTO_Instr_to_WHILE (prog !! s ''pc''), s) \<Rightarrow>\<^bsup> i \<^esup> t" using assms
   by (metis GOTO_Prog_to_WHILE_IF'_correctness_complexity_reversed GOTO_Prog_to_WHILE_IF_def add.commute add_diff_cancel_left' le_refl)
 
+text \<open>Here defines which GOTO program is well defined\<close>
 definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
   "well_defined_prog prog = (length prog \<ge> 1 \<and> (\<forall>i. (1 \<le> i \<and> i \<le> length prog) \<longrightarrow> (
     well_defined_instr (prog !! i) \<and> 
@@ -188,6 +198,7 @@ definition well_defined_prog :: "GOTO_Prog \<Rightarrow> bool" where
     (case (prog !! (length prog)) of 
       HALT \<Rightarrow> True | x ;;= c \<Rightarrow> False | x += c \<Rightarrow> False | x -= c \<Rightarrow> False | x \<bind>1 \<Rightarrow> False | x %=2 \<Rightarrow> False | GOTO i \<Rightarrow> True | IF x\<noteq>0 THEN GOTO i \<Rightarrow> False))"
 
+text \<open>This lemma proves that is the GOTO program is well defined, the program counter will be within a fixed range during the execution of a single GOTO instruction\<close>
 lemma well_defined_prog_pc_range_single:
   assumes "prog \<turnstile> (pc, s) \<rightarrow> (pc', t)"
     and "well_defined_prog prog"
@@ -333,6 +344,7 @@ next
   qed
 qed
 
+text \<open>This lemma proves that is the GOTO program is well defined, the program counter will be within a fixed range during the execution of a GOTO program\<close>
 lemma well_defined_prog_pc_range:
   assumes "prog \<turnstile> (pc, s) \<rightarrow>\<^bsup> k \<^esup> (pc', t)"
     and "well_defined_prog prog"
@@ -347,6 +359,11 @@ next
   thus ?case using step1 by blast
 qed
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a IF part of the WHILE program ends with program counter pc and state t\<close>
+text \<open>The two program counter should be the same\<close>
 lemma prog_if_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow> (pc', t')"
     and "1 \<le> pc" and "pc \<le> length prog"
@@ -362,6 +379,11 @@ proof -
   thus "t ''pc'' = pc'" using pre1 pre2 pre3 assms by (simp add: instr_pc_consist)
 qed
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a IF part of the WHILE program ends with program counter pc and state t\<close>
+text \<open>All the variable in state t and t' should have the same value\<close>
 lemma prog_if_var_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow> (pc', t')"
     and "1 \<le> pc" and "pc \<le> length prog"
@@ -377,6 +399,7 @@ proof -
   thus "\<forall>z \<noteq> ''pc''. t z = t' z" using pre1 pre2 pre3 assms by (simp add: instr_var_consist)
 qed
 
+text \<open>Here the exact complexity of the WHILE loop part is calculated\<close>
 fun WHILE_complexity :: "GOTO_Prog \<Rightarrow> config \<Rightarrow> nat \<Rightarrow> nat" where
   "WHILE_complexity _ _ 0 = 0" | 
   "WHILE_complexity prog (pc, s) (Suc step) = 1 + (case (prog !! pc) of 
@@ -397,6 +420,11 @@ lemma "(com1;;com2, s1) \<Rightarrow>\<^bsup> c \<^esup> s3 \<Longrightarrow> (c
 lemma "(WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3 \<Longrightarrow> s1 b \<noteq> 0 \<Longrightarrow> (c,s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> z - x - 1 \<^esup> s3"
   by (smt (verit) One_nat_def While_tE_time add.commute add_0 add_diff_cancel_left' bigstep_det diff_Suc_Suc diff_diff_eq)
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a WHILE loop part of the WHILE program ends with program counter pc and state t\<close>
+text \<open>The two program counter should be the same\<close>
 lemma prog_while_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t"
@@ -484,6 +512,11 @@ next
   qed
 qed
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a WHILE loop part of the WHILE program ends with program counter pc and state t\<close>
+text \<open>All the variable in state t and t' should have the same value\<close>
 lemma prog_while_var_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(WHILE ''pc''\<noteq>0 DO GOTO_Prog_to_WHILE_IF prog, s) \<Rightarrow>\<^bsup> (WHILE_complexity prog (pc, s') k) \<^esup> t"
@@ -571,6 +604,7 @@ next
   qed
 qed
 
+text \<open>This theorem proves the existence of the WHILE part of the GOTO program\<close>
 lemma prog_while_complexity_existence:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "1 \<le> pc" and "pc \<le> length prog"
@@ -790,6 +824,11 @@ next
   qed
 qed
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If the transformed WHILE program ends with program counter pc and state t\<close>
+text \<open>All the variable in state t and t' should have the same value\<close>
 lemma prog_var_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t"
@@ -809,6 +848,11 @@ proof -
     using prog_while_var_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
 qed
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If the transformed WHILE program ends with program counter pc and state t\<close>
+text \<open>The two program counter should be the same\<close>
 lemma prog_pc_consist:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "(GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t"
@@ -828,6 +872,7 @@ proof -
     using prog_while_pc_consist[of prog pc s' k pc' t' ?s t, OF assms(1) aux1 aux2 aux3 assms(3) aux4 aux5] by blast
 qed
 
+text \<open>This theorem proves the existence of the transformed WHILE program\<close>
 lemma prog_complexity_existence:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "well_defined_prog prog" and "pc = 1"
@@ -847,6 +892,7 @@ proof -
   thus "\<exists>t. (GOTO_Prog_to_WHILE prog, s) \<Rightarrow>\<^bsup> 2 + (WHILE_complexity prog (pc, s') k) \<^esup> t" by blast
 qed
 
+text \<open>The final goal of this submodule\<close>
 theorem while_prog_valid:
   assumes "prog \<turnstile> (pc, s') \<rightarrow>\<^bsup> k \<^esup> (pc', t')"
     and "well_defined_prog prog" and "pc = 1"

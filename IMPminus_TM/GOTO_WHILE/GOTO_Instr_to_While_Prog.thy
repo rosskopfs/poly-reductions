@@ -2,6 +2,10 @@ theory GOTO_Instr_to_While_Prog
   imports "IMPminus_TM-Def.GOTO" "IMP_Minus.Com" "IMP_Minus.Big_StepT"
 begin
 
+text \<open>Here the rules are defined which the instructions of a GOTO Program should follow\<close>
+text \<open>HALT: no regularization\<close>
+text \<open>ASSIGN, ADD, SUB, LSH, RSH: the operands should not have the name "pc" because "pc" is specially allocated for the program counter\<close>
+text \<open>GOTO, CONDGOTO: the target position should not be 0. The upper bound is defined later in well_defined_program\<close>
 fun well_defined_instr :: "instr \<Rightarrow> bool" where
   "well_defined_instr HALT = True" | 
   "well_defined_instr (x ;;= t) = (x \<noteq> ''pc''\<and> (case t of N c \<Rightarrow> True | V y \<Rightarrow> y \<noteq> ''pc''))" |
@@ -12,6 +16,8 @@ fun well_defined_instr :: "instr \<Rightarrow> bool" where
   "well_defined_instr (GOTO i) = (i > 0)" |
   "well_defined_instr (IF x\<noteq>0 THEN GOTO i) = (x \<noteq> ''pc'' \<and> i > 0)"
 
+text \<open>The transformation of a single GOTO instruction into a WHILE program\<close>
+text \<open>which is simple and straight-forward\<close>
 fun GOTO_Instr_to_WHILE :: "instr \<Rightarrow> com" where
   "GOTO_Instr_to_WHILE HALT = ''pc'' ::= A (atomExp.N 0)" | 
   "GOTO_Instr_to_WHILE (x ;;= t) = 
@@ -32,46 +38,59 @@ fun GOTO_Instr_to_WHILE :: "instr \<Rightarrow> com" where
   "GOTO_Instr_to_WHILE (GOTO i) = ''pc'' ::= A (atomExp.N i)" | 
   "GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i) = IF x\<noteq>0 THEN ''pc'' ::= A (atomExp.N i) ELSE ''pc'' ::= (atomExp.V ''pc'' \<oplus> atomExp.N 1)"
 
+text \<open>The actual running time of a WHILE program which corresponding to a HALT instruction in GOTO program\<close>
 lemma instr_halt_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE HALT, s) \<Rightarrow>\<^bsup> 2 \<^esup> t"
   by (metis AssignI' GOTO_Instr_to_WHILE.simps(1))
 
+text \<open>The actual running time of a WHILE program which corresponding to a HALT instruction in GOTO program\<close>
 lemma instr_assign_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (x ;;= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t"
   apply (cases c)
   apply fastforce
   by fastforce
 
+text \<open>The actual running time of a WHILE program which corresponding to a ADD instruction in GOTO program\<close>
 lemma instr_add_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (x += c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t"
   apply (cases c)
   apply fastforce
   by fastforce
 
+text \<open>The actual running time of a WHILE program which corresponding to a SUB instruction in GOTO program\<close>
 lemma instr_sub_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (x -= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t"
   apply (cases c)
   apply fastforce
   by fastforce
 
+text \<open>The actual running time of a WHILE program which corresponding to a RSH instruction in GOTO program\<close>
 lemma instr_right_shift_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> 4 \<^esup> t"
   by fastforce
 
+text \<open>The actual running time of a WHILE program which corresponding to a LSH instruction in GOTO program\<close>
 lemma instr_left_shift_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> 4 \<^esup> t"
   by fastforce
 
+text \<open>The actual running time of a WHILE program which corresponding to a GOTO instruction in GOTO program\<close>
 lemma instr_jump_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> 2 \<^esup> t"
   by (metis AssignI'' GOTO_Instr_to_WHILE.simps(7))
 
+text \<open>The actual running time of a WHILE program which corresponding to a CONDGOTO instruction in GOTO program\<close>
 lemma instr_cond_jump_complexity:
   "\<exists>t. (GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> 3 \<^esup> t"
   apply (cases "s x")
   apply fastforce
   by fastforce
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a WHILE program corresponding to this GOTO instruction ends with program counter pc and state t\<close>
+text \<open>The two program counter should be the same\<close>
 lemma instr_pc_consist:
   assumes "well_defined_instr instr"
     and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
@@ -260,6 +279,11 @@ qed
 
 lemma aux_lemma1: "\<forall>x \<noteq> t. s x = s' x \<Longrightarrow> y \<noteq> t \<Longrightarrow> z \<noteq> t \<Longrightarrow> (s(x := s y)) z = (s'(x := s' y)) z" by simp
 
+text \<open>This lemma proves that: \<close>
+text \<open>Under the assumption that GOTO program and WHILE program starts from the same program counter and state,\<close>
+text \<open>If a GOTO instruction ends with program counter pc' and state t'\<close>
+text \<open>If a WHILE program corresponding to this GOTO instruction ends with program counter pc and state t\<close>
+text \<open>All the variable in state t and t' should have the same value\<close>
 lemma instr_var_consist:
   assumes "well_defined_instr instr"
     and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
@@ -438,6 +462,7 @@ next
   qed
 qed
 
+text \<open>The combination of the above 2 lemma.\<close>
 theorem single_instr_consist: 
   assumes "well_defined_instr instr"
     and "(GOTO_Instr_to_WHILE instr, s) \<Rightarrow>\<^bsup> k \<^esup> t"
@@ -447,8 +472,8 @@ theorem single_instr_consist:
   using assms(1) assms(2) assms(3) assms(4) assms(5) instr_pc_consist apply auto[1]
   using assms(1) assms(2) assms(3) assms(4) assms(5) instr_var_consist by presburger
 
-lemma "(GOTO_Instr_to_WHILE HALT, s) \<Rightarrow>\<^bsup> 2 \<^esup> t" using instr_halt_complexity sorry
-
+text \<open>This lemma proves that the WHILE program of the GOTO instuction HALT will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 2\<close>
 theorem instr_halt:
   assumes "well_defined_instr HALT"
   and "iexec HALT (pc, s') = (pc', t')"
@@ -461,9 +486,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE HALT, s) \<Rightarrow>\<^bsup> 2 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction HALT in WHILE program\<close>
 lemma instr_complexity_halt':
   "(GOTO_Instr_to_WHILE HALT, s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 2" by (meson bigstep_det instr_halt_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction ASSIGN will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 4\<close>
 theorem instr_assign:
   assumes "well_defined_instr (x ;;= c)"
   and "iexec (x ;;= c) (pc, s') = (pc', t')"
@@ -476,9 +504,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (x ;;= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction ASSIGN in WHILE program\<close>
 lemma instr_complexity_assign':
   "(GOTO_Instr_to_WHILE (x ;;= c), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 4" by (meson bigstep_det instr_assign_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction ADD will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 4\<close>
 theorem instr_add:
   assumes "well_defined_instr (x += c)"
   and "iexec (x += c) (pc, s') = (pc', t')"
@@ -491,9 +522,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (x += c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction ADD in WHILE program\<close>
 lemma instr_complexity_add':
   "(GOTO_Instr_to_WHILE (x += c), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 4" by (meson bigstep_det instr_add_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction SUB will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 4\<close>
 theorem instr_sub:
   assumes "well_defined_instr (x -= c)"
   and "iexec (x -= c) (pc, s') = (pc', t')"
@@ -506,9 +540,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (x -= c), s) \<Rightarrow>\<^bsup> 4 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction SUB in WHILE program\<close>
 lemma instr_complexity_sub':
   "(GOTO_Instr_to_WHILE (x -= c), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 4" by (meson bigstep_det instr_sub_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction RSH will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 4\<close>
 theorem instr_right_shift:
   assumes "well_defined_instr (x \<bind>1)"
   and "iexec (x \<bind>1) (pc, s') = (pc', t')"
@@ -521,9 +558,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> 4 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction RSH in WHILE program\<close>
 lemma instr_complexity_right_shift':
   "(GOTO_Instr_to_WHILE (x \<bind>1), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 4" by (meson bigstep_det instr_right_shift_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction LSH will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 4\<close>
 theorem instr_left_shift:
   assumes "well_defined_instr (x %=2)"
   and "iexec (x %=2) (pc, s') = (pc', t')"
@@ -536,9 +576,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> 4 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction LSH in WHILE program\<close>
 lemma instr_complexity_left_shift':
   "(GOTO_Instr_to_WHILE (x %=2), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 4" by (meson bigstep_det instr_left_shift_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction JUMP will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 2\<close>
 theorem instr_jump:
   assumes "well_defined_instr (GOTO i)"
   and "iexec (GOTO i) (pc, s') = (pc', t')"
@@ -551,9 +594,12 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> 2 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction JUMP in WHILE program\<close>
 lemma instr_complexity_jump':
   "(GOTO_Instr_to_WHILE (GOTO i), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 2" by (meson bigstep_det instr_jump_complexity)
 
+text \<open>This lemma proves that the WHILE program of the GOTO instuction COND_JUMP will end with the same program counter\<close>
+text \<open>and the same value in the state with the GOTO instruction itself with the complexity of the WHILE program is 3\<close>
 theorem instr_cond_jump:
   assumes "well_defined_instr (IF x\<noteq>0 THEN GOTO i)"
   and "iexec (IF x\<noteq>0 THEN GOTO i) (pc, s') = (pc', t')"
@@ -566,9 +612,11 @@ proof -
   thus "\<exists>t. ((GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> 3 \<^esup> t) \<and> (t ''pc'' = pc') \<and> (\<forall>x \<noteq> ''pc''. t x = t' x)" using aux by blast
 qed
 
+text \<open>This lemma proves the uniqueness of the complexity of the GOTO instruction COND_JUMP in WHILE program\<close>
 lemma instr_complexity_cond_jump':
   "(GOTO_Instr_to_WHILE (IF x\<noteq>0 THEN GOTO i), s) \<Rightarrow>\<^bsup> k \<^esup> t \<Longrightarrow> k = 3" by (meson bigstep_det instr_cond_jump_complexity)
 
+text \<open>This theorem combines the existence of final state of all the GOTO instructions\<close>
 theorem instr_existence: 
   assumes "well_defined_instr instr"
   and "iexec instr (pc, s') = (pc', t')"
