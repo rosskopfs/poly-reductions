@@ -1,5 +1,5 @@
 theory IMPminus_State_TM_Tape_List
-  imports IMP_Minus.Com Cook_Levin.Basics Cook_Levin.Arithmetic "List-Index.List_Index"
+  imports IMP_Minus.Com Cook_Levin.Basics Cook_Levin.Arithmetic "List-Index.List_Index" 
 begin
 
 subsection \<open>Collect all variables in an IMP_Minus program\<close>
@@ -63,7 +63,7 @@ lemma vars_aux_set [simp]:
 
 subsection \<open>Translation between variables and tape numbers\<close>
 
-fun var_to_tape_number :: "com \<Rightarrow> vname \<Rightarrow> nat" where
+fun var_to_tape_number :: "com \<Rightarrow> (vname \<Rightarrow> tapeidx)" where
   "var_to_tape_number prog x = index (vars prog) x + 3" \<comment>\<open>The first 3 tapes are for special usages\<close>
 
 fun tape_number_to_var :: "com \<Rightarrow> nat \<Rightarrow> vname" where
@@ -98,9 +98,20 @@ subsection \<open>Equivalence checking of IMP- state and TM tape list\<close>
 fun tape_content_to_num :: "tape \<Rightarrow> nat" where
   "tape_content_to_num tp = (THE n. \<lfloor>n\<rfloor>\<^sub>N = fst tp)"
 
-fun tape_list_equiv_IMPminus_state :: "com \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_ \<turnstile> _ \<sim> _\<close> 55)
-where
-  "prog \<turnstile> tps \<sim> s \<longleftrightarrow> Max (var_to_tape_number prog ` var_set prog) < length tps \<and>
-     (\<forall>x \<in> var_set prog. tape_content_to_num (tps ! var_to_tape_number prog x) = s x)"
+fun tape_list_equiv_IMPminus_state :: "com \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_(_) \<turnstile> _ \<sim> _\<close> 55)
+where  
+  "prog (idd) \<turnstile> tps \<sim> s \<longleftrightarrow> Max (idd ` var_set prog)+1 < length tps \<and>
+     (\<forall>x \<in> var_set prog. tape_content_to_num (tps ! idd x) = s x)"
 
+theorem tape_list_equiv_IMPminus_state_for_Seq:
+  assumes "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" 
+  shows"prog1 (idd) \<turnstile> tps \<sim> s " 
+proof -
+  have r1:" Max (idd ` var_set (prog1;;prog2))+1 < length tps" using assms by force
+  have "idd ` var_set prog1 \<subseteq> idd ` var_set (prog1;;prog2)"  by (simp add: image_mono)
+  then have " Max (idd ` var_set prog1) \<le> Max (idd ` var_set (prog1;;prog2))" sorry
+  then have r2:" Max (idd ` var_set prog1)+1 < length tps" using r1 by linarith
+  have "(\<forall>x \<in> var_set prog1. tape_content_to_num (tps ! idd x) = s x)"  using assms by auto
+  then show "prog1 (idd) \<turnstile> tps \<sim> s " using r2  by auto
+qed
 end
