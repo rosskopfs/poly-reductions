@@ -3,6 +3,7 @@ theory WHILE_TM
    Cook_Levin.Basics Cook_Levin.Combinations  Cook_Levin.Elementary   Cook_Levin.Arithmetic 
 begin
 
+
 fun carry_minus :: "symbol list \<Rightarrow> symbol list \<Rightarrow> nat \<Rightarrow> symbol" where
   "carry_minus xs ys 0 = \<triangleright>" |
   "carry_minus xs ys (Suc i) = (if (todigit (digit xs i) < todigit (digit ys i) + todigit (carry_minus xs ys i)) then \<one> else \<zero>)"
@@ -267,16 +268,23 @@ fun num_variable::" com \<Rightarrow> (vname \<Rightarrow> nat)" where
 "num_variable com  =(\<lambda>s. 1)"
 
 *)
-(* TODO *)    
+
+(* TODO *)
+fun aexpVal :: "aexp\<Rightarrow> AExp.state \<Rightarrow> val" where
+"aexpVal (A a) s= (atomVal a s)"|
+"aexpVal (Plus a1 a2) s= (atomVal a1 s)+(atomVal a2 s)"|
+"aexpVal (Sub a1 a2) s= (atomVal a1 s)-(atomVal a2 s)"|
+"aexpVal (Parity a) s = (atomVal a s) mod 2 "|
+"aexpVal (RightShift a) s=(atomVal a s) div 2"
 
 fun atomExp_TM::"(vname\<Rightarrow>nat) \<Rightarrow>atomExp \<Rightarrow> nat \<Rightarrow>machine" where
-"atomExp_TM idd (N a) tp =[]"|
-"atomExp_TM idd (V v) tp =tm_cp_until (idd v) tp {\<box>}"
+"atomExp_TM idd (N a) tp =tm_set tp (canrepr a)"|
+"atomExp_TM idd (V v) tp =tm_cp_until (idd v) tp {\<box>};;tm_cr tp"
 
 fun Aexp_TM::"(vname\<Rightarrow>nat)\<Rightarrow>aexp \<Rightarrow> machine " where
-"Aexp_TM idd (A a ) = ( atomExp_TM idd a 2)"|
-"Aexp_TM idd (Plus a1 a2) = (atomExp_TM idd a1 1) ;; ( atomExp_TM idd a2 2);;tm_plus 1 2"|
-"Aexp_TM idd (Sub a1 a2) = (atomExp_TM idd a1 1);;(atomExp_TM idd a2 2);;tm_minus 1 2"|
+"Aexp_TM idd (A a) = (atomExp_TM idd a 2)"|
+"Aexp_TM idd (Plus a1 a2) = (atomExp_TM idd a1 1) ;; ( atomExp_TM idd a2 2);;tm_cr 1;;tm_cr 2;; tm_plus 1 2"|
+"Aexp_TM idd (Sub a1 a2) = (atomExp_TM idd a1 1);;(atomExp_TM idd a2 2);;tm_cr 1;;tm_cr 2;;tm_minus 1 2"|
 "Aexp_TM idd (Parity a) = (atomExp_TM idd a 2);;(tm_mod2 2 2)"|
 "Aexp_TM idd (RightShift a) =(atomExp_TM idd a 2);;(tm_div2 2)"
 
@@ -297,25 +305,29 @@ fun while_TM_aux::" com\<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow>nat \<R
 
 fun while_TM_aux::" com\<Rightarrow> (vname\<Rightarrow>nat) \<Rightarrow> machine" where
 "while_TM_aux   SKIP idd   = []"|
-"while_TM_aux  (Assign v a) idd  =  ((Aexp_TM idd a);;(tm_cp_until 2 (idd v) {\<box>}))"|
+"while_TM_aux  (Assign v a) idd  =  (Aexp_TM idd a);;tm_cp_until 2 (idd v)  {\<box>};;(tm_erase 2)"|
 "while_TM_aux  (Seq c1 c2) idd = ((while_TM_aux c1 idd);;(while_TM_aux c2 idd))"|
 "while_TM_aux  (If v c1 c2) idd =((tm_cmp 0 (idd v) 2);; IF (\<lambda>x. x!2=0) THEN (while_TM_aux c1 idd) ELSE (while_TM_aux c1 idd) ENDIF)"|
 "while_TM_aux  (While  v c) idd =(WHILE (tm_cmp 0 (idd v) 2) ; (\<lambda>x. x!2=0) DO while_TM_aux c idd DONE)"
 
+fun aexp_time::"aexp\<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow>nat" where
+"aexp_time (A a) s = atomVal a s "|
+"aexp_time (Plus a1 a2) s = max (atomVal a1 s) (atomVal a2 s)"|
+"aexp_time (Sub a1 a2) s = max (atomVal a1 s) (atomVal  a2 s)"|
+"aexp_time (Parity a)  s= atomVal a s"|
+"aexp_time (RightShift a) s =  atomVal a s"
 
 inductive
   big_step_Logt :: "com \<times> AExp.state \<Rightarrow> nat \<Rightarrow> AExp.state \<Rightarrow> bool"  ("_ \<Rightarrow>\<^bsup> _ \<^esup>\<^esup> _" 55)
 where
 Skip: "(SKIP,s) \<Rightarrow>\<^bsup> Suc (0::nat) \<^esup>\<^esup> s"|
-Assign_vname: "(x ::= a, s) \<Rightarrow>\<^bsup> Suc (nlength (aval a s)) \<^esup>\<^esup> s(x := aval a s)" |
+Assign_vname: "(x ::= a, s) \<Rightarrow>\<^bsup> Suc (aexp_time a s) \<^esup>\<^esup> s(x := aval a s)" |
 Seq: "\<lbrakk> (c1,s1) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> s2;  (c2,s2) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> s3 ;z=x+y\<rbrakk> \<Longrightarrow> (c1;;c2, s1) \<Rightarrow>\<^bsup>z \<^esup>\<^esup> s3" |
 IfTrue: "\<lbrakk> s b \<noteq> 0;  (c1,s) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> t; y=x+1 \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> t" |
 IfFalse: "\<lbrakk> s b = 0; (c2,s) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> t; y=x+1  \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> t" |
 WhileFalse: "\<lbrakk> s b = 0 \<rbrakk> \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<Rightarrow>\<^bsup> Suc (Suc 0)\<^esup>\<^esup> s" |
 WhileTrue: "\<lbrakk> s1 b \<noteq> 0;  (c,s1) \<Rightarrow>\<^bsup> x\<^esup>\<^esup> s2;  (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> s3; 1+x+y=z  \<rbrakk> 
     \<Longrightarrow> (WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup>\<^esup> s3" 
-
-
 
 declare big_step_Logt.intros [intro]
 
@@ -338,7 +350,7 @@ lemma "(IF b \<noteq>0 THEN SKIP ELSE SKIP, s) \<Rightarrow>\<^bsup> x  \<^esup>
 lemma assumes "(IF b \<noteq>0 THEN SKIP ELSE SKIP, s) \<Rightarrow>\<^bsup> x  \<^esup>\<^esup>  t"
   shows "t = s"
   using assms apply cases by auto
-
+(*
 lemma assign_t_simp:
   "((x ::= a,s) \<Rightarrow>\<^bsup>Suc (nlength (aval a s))\<^esup>\<^esup>   s') \<longleftrightarrow> (s' = s(x := aval a s))"
   by (auto)
@@ -374,8 +386,6 @@ subsection "Progress property"
 text "every command costs time"
 lemma bigstep_progress: "(c, s) \<Rightarrow>\<^bsup> p \<^esup>\<^esup> t \<Longrightarrow> p > 0"
   apply(induct rule: big_step_Logt.induct, auto) done
-
-
 
 lemma terminates_in_state_intro: "(c, s) \<Rightarrow>\<^bsup>t \<^esup>\<^esup> s' \<Longrightarrow> s' = s'' \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t \<^esup>\<^esup> s''"
   by simp
@@ -494,7 +504,7 @@ lemma Seq_tE_While_init:
 
 abbreviation TP0::"com\<Rightarrow>tape list" where
 "TP0 prog\<equiv> IMPminus_state_to_TM_tape_list prog (\<lambda>x.(0::nat))"
-
+*)
 
 (*
 An appropriate idd must satisfies the following condition:
@@ -510,20 +520,39 @@ lemma length_tps_stable:
 lemma ineq4:" (a+b::nat)^4\<ge>a^4+b^4"
   sorry
 
-lemma 
+lemma l0:
+  fixes t::"nat"
+  and t2::"nat"
+  and prog::"com"
+  and M::"machine"
+  and idd::"vname\<Rightarrow>nat"
+  and s::"AExp.state"
+  and s'::"AExp.state"
+  and tps'::"tape list"
+  and v::"vname"
+ assumes asm1:"M = while_TM_aux prog idd"
+ and asm2:"(prog, s)\<Rightarrow>\<^bsup>t\<^esup>\<^esup>s'"                
+ and asm3:"inj idd \<and> (\<forall>x\<in>(var_set prog). (idd x) \<ge>3) "
+ and asm5:"transforms M tps t2 tps'"
+shows"x-(idd) \<turnstile> tps' \<sim> s'"
+  sorry
+
+lemma l1:
   fixes t::"nat"
   and prog::"com"
   and M::"machine"
   and idd::"vname\<Rightarrow>nat"
   and s::"AExp.state"
   and s'::"AExp.state"
-  and tps::"tape list"
+  and tps'::"tape list"
+  and v::"vname"
  assumes asm1:"M = while_TM_aux prog idd"
  and asm2:"(prog, s)\<Rightarrow>\<^bsup>t\<^esup>\<^esup>s'"                
  and asm3:"inj idd \<and> (\<forall>x\<in>(var_set prog). (idd x) \<ge>3) "
- and asm4:"prog (idd) \<turnstile> tps \<sim> s "
-shows "\<exists>tps'. transforms M tps ((100::nat) * t ^ 4) tps'\<and>
+ and asm5:"transforms M tps ((100::nat) * t ^ 4) tps'\<and>
        prog (idd) \<turnstile> tps' \<sim> s'"
+shows" x-(idd) \<turnstile> tps' \<sim> s'"
+sorry
 
 (*
 proof-
@@ -547,25 +576,72 @@ theorem lemma_IMPminus_to_TM_correct:
  and asm4:"prog (idd) \<turnstile> tps \<sim> s "
 shows "\<exists>tps'. transforms M tps ((100::nat) * t ^ 4) tps'\<and>
        prog (idd) \<turnstile> tps' \<sim> s'"
-using assms
-proof(induction prog arbitrary:s s' t M tps)
+  using assms(2,1,3-)
+proof(induction arbitrary:s s' t M tps rule:big_step_Logt.induct)
+  case (Skip s)
+  then show ?case sorry
+next
+  case (Assign_vname x a s)
+  then show ?case sorry
+next
+  case (Seq c1 s1 x s2 c2 y s3 z)
+  then show ?case sorry
+next
+  case (IfTrue s b c1 x t y c2)
+  then show ?case sorry
+next
+  case (IfFalse s b c2 x t y c1)
+  then show ?case sorry
+next
+  case (WhileFalse s b c)
+  then show ?case sorry
+next
+  case (WhileTrue s1 b c x s2 y s3 z)
+  then show ?case sorry
+qed
+
+
+
+
+(*
   case SKIP
   have "s=s'\<and> t=1" using bigstep_det using SKIP.prems(2) by auto
-  have "M = []" using while_TM_aux.simps(1) by (simp add: SKIP.prems(1))
+  have "M = []"using SKIP.prems(1) while_TM_aux.simps(1) by blast
   then have "transforms M tps 0 tps" using transforms_Nil by auto
   then have "transforms M tps ((100::nat) * t ^ 4) tps" using transforms_monotone by blast
   moreover have " SKIP (idd) \<turnstile> tps \<sim> s" using SKIP.prems(4) by auto
   ultimately show ?case using \<open>s = s' \<and> t = 1\<close> by blast
 next
   case (Assign v a)
-  then have "M =((Aexp_TM idd a);;(tm_cp_until 2 (idd v) {\<box>}))" using while_TM_aux.simps(2) by presburger
+  then have "M =((Aexp_TM idd a);;tm_cp_until 2 (idd v) {\<box>};;(tm_erase 2))" using while_TM_aux.simps(2) by presburger
   let ?M1="(Aexp_TM idd a)"
-  let ?M2="(tm_cp_until 2 (idd v) {\<box>})"
-  let ?tps="(IMPminus_state_to_TM_tape_list prog s)"
-  then show ?case proof (cases a)
+  let ?M2="tm_cp_until 2 (idd v) {\<box>};;(tm_erase 2)"
+  let ?tps = "tps[2:= (\<lfloor>canrepr (aexpVal a s) \<rfloor>, 1)]"
+  have "transforms ?M1 tps ?t ?tps" 
+  show ?case proof (cases a)
     case (A x)
-    then have "?M1= ( atomExp_TM idd x 2)"by simp
-    then show ?thesis sorry
+    then have "?M1= (atomExp_TM idd x 2)"by simp
+    then show ?thesis proof (cases x)
+      case (N x1)
+      have l_1:" s'=s(v:= x1)" sorry
+      have l0:"?M1=tm_set 2 (canrepr x1)"
+        by (simp add: A N)
+      have l1:"clean_tape (tps!2)" sorry
+      have l2:"proper_symbols (canrepr 0)" by (simp add: proper_symbols_canrepr)
+      have l3:"proper_symbols (canrepr x1)" by (simp add: proper_symbols_canrepr)
+      have l4:"2<length tps" sorry
+      have l5:"tps ::: 2 = \<lfloor>canrepr 0\<rfloor>" sorry
+      let ?tps = "tps[2:= (\<lfloor>canrepr x1\<rfloor>, 1)]"
+      let ?t="8 + tps :#: 2 + Suc (2 * length  (canrepr x1))" 
+      have "transforms ?M1 tps ?t ?tps"using  transforms_tm_setI l1 l2 l3 l4 l5 
+        by (metis Nat.add_0_right l0  mult_0_right nlength_0_simp)
+       let ?tps = "tps[2:= (\<lfloor>canrepr x1\<rfloor>, 1)]"
+      have "prog (idd) \<turnstile> ?tps \<sim> s'" sorry
+      then show ?thesis sorry
+    next
+      case (V x2)
+      then show ?thesis sorry
+    qed
   next
     case (Plus x21 x22)
     then show ?thesis sorry
@@ -584,6 +660,7 @@ next
   obtain t1 t2 s'' where "(prog1, s)\<Rightarrow>\<^bsup>t1\<^esup>\<^esup>s''" and  "(prog2, s'')\<Rightarrow>\<^bsup>t-t1\<^esup>\<^esup>s'" and "t1\<le>t" using Seq.prems(2) by auto
   let ?M1 = "while_TM_aux prog1 idd"
   let ?M2 = "while_TM_aux prog2 idd"
+  
   have "(prog1, s)\<Rightarrow>\<^bsup>t1\<^esup>\<^esup>s''" by (simp add: \<open>(prog1, s) \<Rightarrow>\<^bsup> t1 \<^esup>\<^esup> s''\<close>)
   have r1:"var_set prog1 \<subseteq>var_set (prog1;;prog2)" by fastforce
   have "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" using Seq.prems(4) by blast
@@ -592,7 +669,8 @@ next
      prog1 (idd) \<turnstile> tps' \<sim> s'' "  using Seq.IH(1) using Seq.prems(3) \<open>(prog1, s) \<Rightarrow>\<^bsup> t1 \<^esup>\<^esup> s''\<close> by fastforce
   have r2:"var_set prog2 \<subseteq>var_set (prog1;;prog2)" by fastforce
   have r3: "inj idd \<and> (\<forall>x\<in>(var_set prog2). (idd x) \<ge>3) " by (simp add: Seq.prems(3))
-  have " prog2 (idd) \<turnstile> tps' \<sim> s''" sorry
+  have "\<forall>x\<in>(var_set prog2). x-(idd) \<turnstile> tps' \<sim> s''" using l1  r1 sorry
+  then have " prog2 (idd) \<turnstile> tps' \<sim> s''" using tape_list_equiv_IMPminus_state_lem by blast
   then obtain tps'' where r2:" transforms ?M2 tps' ((100::nat) * (t-t1) ^ 4) tps''\<and>
      prog2 (idd) \<turnstile> tps'' \<sim> s' "using  \<open>(prog2, s'')\<Rightarrow>\<^bsup>t-t1\<^esup>\<^esup>s'\<close> using Seq.IH(2) r3 by presburger
   let ?M = "while_TM_aux (prog1;;prog2) idd"
@@ -619,7 +697,7 @@ next
   case (While x1 prog)
   then show ?case sorry
 qed
-
+*)
 
 
 

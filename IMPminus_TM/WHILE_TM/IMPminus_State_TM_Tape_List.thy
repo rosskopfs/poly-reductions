@@ -98,10 +98,14 @@ subsection \<open>Equivalence checking of IMP- state and TM tape list\<close>
 fun tape_content_to_num :: "tape \<Rightarrow> nat" where
   "tape_content_to_num tp = (THE n. \<lfloor>n\<rfloor>\<^sub>N = fst tp)"
 
+fun variable_tape_list_equiv_IMPminus_state :: "vname \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_-(_) \<turnstile> _ \<sim> _\<close> 55)
+where  
+  "v-(idd) \<turnstile> tps \<sim> s \<longleftrightarrow>(tape_content_to_num (tps ! idd v) = s v)"
+
 fun tape_list_equiv_IMPminus_state :: "com \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_(_) \<turnstile> _ \<sim> _\<close> 55)
 where  
   "prog (idd) \<turnstile> tps \<sim> s \<longleftrightarrow> Max (idd ` var_set prog)+1 < length tps \<and>
-     (\<forall>x \<in> var_set prog. tape_content_to_num (tps ! idd x) = s x)"
+     (\<forall>v \<in> var_set prog. v-(idd) \<turnstile> tps \<sim> s)"
 
 theorem tape_list_equiv_IMPminus_state_for_Seq:
   assumes "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" 
