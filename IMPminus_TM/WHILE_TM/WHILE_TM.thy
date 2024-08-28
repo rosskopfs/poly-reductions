@@ -343,6 +343,7 @@ inductive_cases While_tE[elim]: "(WHILE b \<noteq>0 DO c,s) \<Rightarrow>\<^bsup
 lemma Seq': "\<lbrakk> (c1,s1) \<Rightarrow>\<^bsup> x  \<^esup>\<^esup>  s2;  (c2,s2) \<Rightarrow>\<^bsup> y  \<^esup>\<^esup>  s3  \<rbrakk> \<Longrightarrow> (c1;;c2, s1) \<Rightarrow>\<^bsup> x + y  \<^esup>\<^esup>  s3"
   by auto
 
+
 text "Rule inversion use examples:"
 lemma "(IF b \<noteq>0 THEN SKIP ELSE SKIP, s) \<Rightarrow>\<^bsup> x  \<^esup>\<^esup>  t \<Longrightarrow> t = s"
   by blast
@@ -554,119 +555,43 @@ lemma l1:
 shows" x-(idd) \<turnstile> tps' \<sim> s'"
 sorry
 
-(*
-proof-
-  have "(a + b :: nat)^4 = (\<Sum>k\<le>4. (of_nat (4 choose k)) * a^k * b^(4 - k))"  using binomial by blast
-  have "...= a^4+((\<Sum>k\<le>3. (of_nat (4 choose k)) * a^k * b^(4 - k)))"  
-    by (simp add: add.commute binomial_n_n numeral_1_eq_Suc_0 numeral_Bit0 numeral_Bit1 numeral_One of_nat_Suc of_nat_id sum.atMost_Suc)
-  have "k\<le>3\<longrightarrow>a^k*b^(4-k)\<ge>0"by simp
-  then have "(\<Sum>k\<le>3. (of_nat (4 choose k)) * a^k * b^(4 - k))\<ge>(\<Sum>k\<le>1. (of_nat (4 choose k)) * a^k * b^(4 - k))" by sledgehammer
-*)
 theorem lemma_IMPminus_to_TM_correct:
   fixes t::"nat"
   and prog::"com"
   and M::"machine"
-  and idd::"vname\<Rightarrow>nat"
+  and idd::"vname\<Rightarrow>nat"    
   and s::"AExp.state"
   and s'::"AExp.state"
   and tps::"tape list"
- assumes asm1:"M = while_TM_aux prog idd"
- and asm2:"(prog, s)\<Rightarrow>\<^bsup>t\<^esup>\<^esup>s'"                
+ assumes asm1:"(prog, s)\<Rightarrow>\<^bsup>t\<^esup>\<^esup>s'"
+ and asm2:"M = while_TM_aux prog idd"     
  and asm3:"inj idd \<and> (\<forall>x\<in>(var_set prog). (idd x) \<ge>3) "
  and asm4:"prog (idd) \<turnstile> tps \<sim> s "
 shows "\<exists>tps'. transforms M tps ((100::nat) * t ^ 4) tps'\<and>
        prog (idd) \<turnstile> tps' \<sim> s'"
-  using assms(2,1,3-)
-proof(induction arbitrary:s s' t M tps rule:big_step_Logt.induct)
+  using assms(1,2,3,4)
+proof(induction "(prog, s)" t s' arbitrary: M tps s s' idd rule:big_step_Logt.induct)
   case (Skip s)
-  then show ?case sorry
+  have "M = []" using Skip.hyps asm2 by (simp add: Skip.prems(1))
+  then have "transforms M tps 0 tps" using transforms_Nil by auto
+  then have "transforms M tps ((100::nat) * t ^ 4) tps" using transforms_monotone by blast
+  have "prog (idd) \<turnstile> tps \<sim> s" using Skip.prems(3) by blast
+  then show ?case using Skip.hyps Skip.prems(1) Skip.prems(3) asm1 asm2 sorry
 next
   case (Assign_vname x a s)
   then show ?case sorry
 next
-  case (Seq c1 s1 x s2 c2 y s3 z)
-  then show ?case sorry
-next
-  case (IfTrue s b c1 x t y c2)
-  then show ?case sorry
-next
-  case (IfFalse s b c2 x t y c1)
-  then show ?case sorry
-next
-  case (WhileFalse s b c)
-  then show ?case sorry
-next
-  case (WhileTrue s1 b c x s2 y s3 z)
-  then show ?case sorry
-qed
 
-
-
-
+  case (Seq c1 t1 s1 c2 t2 s2 t3 M)
 (*
-  case SKIP
-  have "s=s'\<and> t=1" using bigstep_det using SKIP.prems(2) by auto
-  have "M = []"using SKIP.prems(1) while_TM_aux.simps(1) by blast
-  then have "transforms M tps 0 tps" using transforms_Nil by auto
-  then have "transforms M tps ((100::nat) * t ^ 4) tps" using transforms_monotone by blast
-  moreover have " SKIP (idd) \<turnstile> tps \<sim> s" using SKIP.prems(4) by auto
-  ultimately show ?case using \<open>s = s' \<and> t = 1\<close> by blast
-next
-  case (Assign v a)
-  then have "M =((Aexp_TM idd a);;tm_cp_until 2 (idd v) {\<box>};;(tm_erase 2))" using while_TM_aux.simps(2) by presburger
-  let ?M1="(Aexp_TM idd a)"
-  let ?M2="tm_cp_until 2 (idd v) {\<box>};;(tm_erase 2)"
-  let ?tps = "tps[2:= (\<lfloor>canrepr (aexpVal a s) \<rfloor>, 1)]"
-  have "transforms ?M1 tps ?t ?tps" 
-  show ?case proof (cases a)
-    case (A x)
-    then have "?M1= (atomExp_TM idd x 2)"by simp
-    then show ?thesis proof (cases x)
-      case (N x1)
-      have l_1:" s'=s(v:= x1)" sorry
-      have l0:"?M1=tm_set 2 (canrepr x1)"
-        by (simp add: A N)
-      have l1:"clean_tape (tps!2)" sorry
-      have l2:"proper_symbols (canrepr 0)" by (simp add: proper_symbols_canrepr)
-      have l3:"proper_symbols (canrepr x1)" by (simp add: proper_symbols_canrepr)
-      have l4:"2<length tps" sorry
-      have l5:"tps ::: 2 = \<lfloor>canrepr 0\<rfloor>" sorry
-      let ?tps = "tps[2:= (\<lfloor>canrepr x1\<rfloor>, 1)]"
-      let ?t="8 + tps :#: 2 + Suc (2 * length  (canrepr x1))" 
-      have "transforms ?M1 tps ?t ?tps"using  transforms_tm_setI l1 l2 l3 l4 l5 
-        by (metis Nat.add_0_right l0  mult_0_right nlength_0_simp)
-       let ?tps = "tps[2:= (\<lfloor>canrepr x1\<rfloor>, 1)]"
-      have "prog (idd) \<turnstile> ?tps \<sim> s'" sorry
-      then show ?thesis sorry
-    next
-      case (V x2)
-      then show ?thesis sorry
-    qed
-  next
-    case (Plus x21 x22)
-    then show ?thesis sorry
-  next
-    case (Sub x31 x32)
-    then show ?thesis sorry
-  next
-    case (Parity x4)
-    then show ?thesis sorry
-  next
-    case (RightShift x5)
-    then show ?thesis sorry
-  qed
-next
-  case (Seq prog1 prog2)
-  obtain t1 t2 s'' where "(prog1, s)\<Rightarrow>\<^bsup>t1\<^esup>\<^esup>s''" and  "(prog2, s'')\<Rightarrow>\<^bsup>t-t1\<^esup>\<^esup>s'" and "t1\<le>t" using Seq.prems(2) by auto
-  let ?M1 = "while_TM_aux prog1 idd"
-  let ?M2 = "while_TM_aux prog2 idd"
+  let ?M1 = "while_TM_aux c1 idd"
+  let ?M2 = "while_TM_aux c2 idd"
   
-  have "(prog1, s)\<Rightarrow>\<^bsup>t1\<^esup>\<^esup>s''" by (simp add: \<open>(prog1, s) \<Rightarrow>\<^bsup> t1 \<^esup>\<^esup> s''\<close>)
-  have r1:"var_set prog1 \<subseteq>var_set (prog1;;prog2)" by fastforce
-  have "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" using Seq.prems(4) by blast
-  then have "prog1 (idd) \<turnstile> tps \<sim> s " using r1 tape_list_equiv_IMPminus_state_for_Seq  by blast
-  then obtain tps' where r1:" transforms ?M1 tps ((100::nat) * t1 ^ 4) tps'\<and>
-     prog1 (idd) \<turnstile> tps' \<sim> s'' "  using Seq.IH(1) using Seq.prems(3) \<open>(prog1, s) \<Rightarrow>\<^bsup> t1 \<^esup>\<^esup> s''\<close> by fastforce
+  have r1:"var_set c1 \<subseteq>var_set (c1;;c2)" by fastforce
+  have "(c1;;c2)  (idd) \<turnstile> tps \<sim> s" using Seq.hyps(6) Seq.prems(3) by blast
+  then have "c1 (idd) \<turnstile> tps \<sim> s " using r1 tape_list_equiv_IMPminus_state_for_Seq  by blast
+  then obtain tps1 where r1:" transforms ?M1 tps ((100::nat) * t1 ^ 4) tps1\<and>
+     c1 (idd) \<turnstile> tps1 \<sim> s1 " by sledgehammer
   have r2:"var_set prog2 \<subseteq>var_set (prog1;;prog2)" by fastforce
   have r3: "inj idd \<and> (\<forall>x\<in>(var_set prog2). (idd x) \<ge>3) " by (simp add: Seq.prems(3))
   have "\<forall>x\<in>(var_set prog2). x-(idd) \<turnstile> tps' \<sim> s''" using l1  r1 sorry
@@ -690,15 +615,21 @@ lemma transforms_turing_machine_sequential:
   using r4 transforms_monotone by blast
   have r7:"(prog1;;prog2)  (idd) \<turnstile> tps'' \<sim> s'" sorry
   show ?case using r7 r6 using Seq.prems(1) by auto
-next
-  case (If x1 prog1 prog2)
+*)
   then show ?case sorry
 next
-  case (While x1 prog)
+  case (IfTrue s b c1 x t y c2)
+  then show ?case sorry
+next
+  case (IfFalse s b c2 x t y c1)
+  then show ?case sorry
+next
+  case (WhileFalse s b c)
+  then show ?case sorry
+next
+  case (WhileTrue s1 b c x s2 y s3 z)
   then show ?case sorry
 qed
-*)
-
 
 
 end
