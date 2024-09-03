@@ -12,6 +12,8 @@ theory HOL_To_HOL_Nat_Base
     Transport.Transport_Typedef_Base
   keywords "datatype_compile_nat" :: thy_decl
   and "function_compile_nat" :: thy_decl
+  and "unconditional_nat" :: thy_decl
+  and "basename"
 begin
 
 unbundle no_HOL_relation_syntax

@@ -8,6 +8,7 @@ sig
   val map_sort: (sort -> sort) -> typ -> typ
   val map_fun_types : (typ -> typ) -> typ -> typ
 
+  val dest_eq_equals_prop : term -> term * term
   val dest_eq_equals_thm : thm -> term * term
   val app: term -> term -> term
   val term_binder_types: term -> typ list
@@ -86,11 +87,12 @@ fun map_sort f (TVar (n, s)) = TVar (n, f s)
 fun map_fun_types f T = let val (Ts, T) = strip_type T
   in (map (map_fun_types f) Ts) ---> f T end
 
-fun dest_eq_equals_thm thm =
-  case Thm.concl_of thm of
+fun dest_eq_equals_prop t = case t of
     \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for lhs rhs\<close>\<close> => (lhs, rhs)
   | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
-  | t => raise TERM ("Unknown equality head:", [Term.head_of t])
+  | t => raise TERM ("Unknown equality:", [t])
+
+val dest_eq_equals_thm = Thm.concl_of #> dest_eq_equals_prop
 
 val app = curry (op $)
 
