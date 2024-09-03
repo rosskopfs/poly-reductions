@@ -300,14 +300,6 @@ lemmas fst_nat_aux_eq_prod_decode_aux =
 lemmas snd_nat_aux_eq_prod_decode_aux =
   f_eq_sel_prod_decode_aux[where g = snd, simplified snd_conv, OF snd_nat_aux.simps]
 
-(*
-lemma fst_nat_aux: "fst_nat_aux k m = fst (prod_decode_aux k m)"
-  using fst_conv prod_decode_aux_sel[where g = fst] fst_nat_aux.simps by metis
-
-lemma snd_nat_aux: "snd_nat_aux k m = snd (prod_decode_aux k m)"
-  using snd_conv prod_decode_aux_sel[where g = snd] snd_nat_aux.simps by metis
-*)
-
 
 lemma fst_nat_eq_fst_nat_aux: "fst_nat m = fst_nat_aux 0 m"
   unfolding fst_nat_def unpair_nat_def prod_decode_def
@@ -329,12 +321,6 @@ HOL_To_IMP_Minus_correct snd_nat_aux by (cook mode = tailcall)
 
 compile_nat snd_nat_eq_snd_nat_aux
 HOL_To_IMP_Minus_correct snd_nat by cook
-
-
-(* meow *)
-
-(* compile_nat case_list_nat_def
-HOL_To_IMP_Minus_correct "(case_list_nat :: nat \<Rightarrow> _)" by cook *)
 
 
 end
