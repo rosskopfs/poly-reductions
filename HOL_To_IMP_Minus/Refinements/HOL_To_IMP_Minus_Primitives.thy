@@ -3,11 +3,10 @@ theory HOL_To_IMP_Minus_Primitives
   imports
     HOL_Nat_To_IMP_Minus.HOL_Nat_To_IMP_Tactics
     HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
-    "HOL-Library.Nat_Bijection"
 begin
 
 locale HOL_To_IMP_Minus =
-  notes neq0_conv[iff del, symmetric, iff] One_nat_def[simp del]
+  notes neq0_conv[iff del, symmetric, iff] Nat.One_nat_def[simp del]
 begin
 
 definition "is_true_nat n \<equiv> n \<noteq> 0"
@@ -216,7 +215,7 @@ HOL_To_IMP_Minus_correct and_nat by cook
 
 definition "or_nat (x :: nat) y \<equiv> min (max x y) true_nat"
 
-lemma or_nat_eq[simp]: "or_nat x y = nat_of_bool (is_true_nat x \<or> is_true_nat y)"
+lemma or_nat_eq [simp]: "or_nat x y = nat_of_bool (is_true_nat x \<or> is_true_nat y)"
   unfolding or_nat_def nat_of_bool_def by auto
 
 compile_nat or_nat_def basename "or"
@@ -274,41 +273,39 @@ HOL_To_IMP_Minus_correct Suc
   by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
 
 
-(* fst_nat/snd_nat *)
+paragraph \<open>Pairing Functions\<close>
 
-fun fst_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat"
-  where "fst_nat_aux k m =
-    (if m \<le> k then m else fst_nat_aux (Suc k) (m - Suc k))"
+fun fst_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "fst_nat_aux k m = (if m \<le> k then m else fst_nat_aux (Suc k) (m - Suc k))"
 
-fun snd_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat"
-  where "snd_nat_aux k m =
-    (if m \<le> k then k - m else snd_nat_aux (Suc k) (m - Suc k))"
+fun snd_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
+  "snd_nat_aux k m = (if m \<le> k then k - m else snd_nat_aux (Suc k) (m - Suc k))"
 
 declare fst_nat_aux.simps[simp del] snd_nat_aux.simps[simp del]
 
-
-lemma f_eq_sel_prod_decode_aux:
+lemma app_eq_app_prod_decode_aux_if_eq_if:
   assumes "\<And>k m. f k m = (if m \<le> k then g (m, k - m) else f (Suc k) (m - Suc k))"
   shows "f k m = g (prod_decode_aux k m)"
 proof (induction k m rule: prod_decode_aux.induct)
   case (1 k m)
-  then show ?case by (cases "m \<le> k") (simp_all add: assms prod_decode_aux.simps)
+  then show ?case by (cases "m \<le> k") (simp add: assms prod_decode_aux.simps)
 qed
 
-lemmas fst_nat_aux_eq_prod_decode_aux =
-  f_eq_sel_prod_decode_aux[where g = fst, simplified fst_conv, OF fst_nat_aux.simps]
-lemmas snd_nat_aux_eq_prod_decode_aux =
-  f_eq_sel_prod_decode_aux[where g = snd, simplified snd_conv, OF snd_nat_aux.simps]
+lemma fst_nat_aux_eq_fst_prod_decode_aux: "fst_nat_aux k m = fst (prod_decode_aux k m)"
+  by (fact
+    app_eq_app_prod_decode_aux_if_eq_if[where g = fst, simplified fst_conv, OF fst_nat_aux.simps])
 
+lemma snd_nat_aux_eq_snd_prod_decode_aux: "snd_nat_aux k m = snd (prod_decode_aux k m)"
+  by (fact
+    app_eq_app_prod_decode_aux_if_eq_if[where g = snd, simplified snd_conv, OF snd_nat_aux.simps])
 
 lemma fst_nat_eq_fst_nat_aux: "fst_nat m = fst_nat_aux 0 m"
-  unfolding fst_nat_def unpair_nat_def prod_decode_def
-  by (subst fst_nat_aux_eq_prod_decode_aux) simp
+  unfolding fst_nat_eq unpair_nat_eq prod_decode_def
+  by (subst fst_nat_aux_eq_fst_prod_decode_aux) simp
 
 lemma snd_nat_eq_snd_nat_aux: "snd_nat m = snd_nat_aux 0 m"
-  unfolding snd_nat_def unpair_nat_def prod_decode_def
-  by (subst snd_nat_aux_eq_prod_decode_aux) simp
-
+  unfolding snd_nat_eq unpair_nat_eq prod_decode_def
+  by (subst snd_nat_aux_eq_snd_prod_decode_aux) simp
 
 compile_nat fst_nat_aux.simps
 HOL_To_IMP_Minus_correct fst_nat_aux by (cook mode = tailcall)
@@ -321,7 +318,6 @@ HOL_To_IMP_Minus_correct snd_nat_aux by (cook mode = tailcall)
 
 compile_nat snd_nat_eq_snd_nat_aux
 HOL_To_IMP_Minus_correct snd_nat by cook
-
 
 end
 
