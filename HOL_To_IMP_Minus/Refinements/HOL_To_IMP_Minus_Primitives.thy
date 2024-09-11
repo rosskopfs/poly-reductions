@@ -2,6 +2,8 @@
 theory HOL_To_IMP_Minus_Primitives
   imports
     HOL_Nat_To_IMP_Minus.HOL_Nat_To_IMP_Tactics
+    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
+    "HOL-Library.Nat_Bijection"
 begin
 
 locale HOL_To_IMP_Minus =
@@ -270,6 +272,56 @@ declare_compiled_const Suc
 HOL_To_IMP_Minus_correct Suc
   unfolding suc_IMP_def
   by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+
+
+(* fst_nat/snd_nat *)
+
+fun fst_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat"
+  where "fst_nat_aux k m =
+    (if m \<le> k then m else fst_nat_aux (Suc k) (m - Suc k))"
+
+fun snd_nat_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat"
+  where "snd_nat_aux k m =
+    (if m \<le> k then k - m else snd_nat_aux (Suc k) (m - Suc k))"
+
+declare fst_nat_aux.simps[simp del] snd_nat_aux.simps[simp del]
+
+
+lemma f_eq_sel_prod_decode_aux:
+  assumes "\<And>k m. f k m = (if m \<le> k then g (m, k - m) else f (Suc k) (m - Suc k))"
+  shows "f k m = g (prod_decode_aux k m)"
+proof (induction k m rule: prod_decode_aux.induct)
+  case (1 k m)
+  then show ?case by (cases "m \<le> k") (simp_all add: assms prod_decode_aux.simps)
+qed
+
+lemmas fst_nat_aux_eq_prod_decode_aux =
+  f_eq_sel_prod_decode_aux[where g = fst, simplified fst_conv, OF fst_nat_aux.simps]
+lemmas snd_nat_aux_eq_prod_decode_aux =
+  f_eq_sel_prod_decode_aux[where g = snd, simplified snd_conv, OF snd_nat_aux.simps]
+
+
+lemma fst_nat_eq_fst_nat_aux: "fst_nat m = fst_nat_aux 0 m"
+  unfolding fst_nat_def unpair_nat_def prod_decode_def
+  by (subst fst_nat_aux_eq_prod_decode_aux) simp
+
+lemma snd_nat_eq_snd_nat_aux: "snd_nat m = snd_nat_aux 0 m"
+  unfolding snd_nat_def unpair_nat_def prod_decode_def
+  by (subst snd_nat_aux_eq_prod_decode_aux) simp
+
+
+compile_nat fst_nat_aux.simps
+HOL_To_IMP_Minus_correct fst_nat_aux by (cook mode = tailcall)
+
+compile_nat fst_nat_eq_fst_nat_aux
+HOL_To_IMP_Minus_correct fst_nat by cook
+
+compile_nat snd_nat_aux.simps
+HOL_To_IMP_Minus_correct snd_nat_aux by (cook mode = tailcall)
+
+compile_nat snd_nat_eq_snd_nat_aux
+HOL_To_IMP_Minus_correct snd_nat by cook
+
 
 end
 
