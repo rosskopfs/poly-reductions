@@ -125,6 +125,9 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
         in (index', TailCall (rev rev_args')) end
       | index_tc_ast index t = (index, t)
 
+    fun is_comb (_ $ _) = true
+      | is_comb _ = false
+
     fun build_tc_ast t =
       if can HOLogic.dest_number t then Number (HOLogic.dest_number t |> snd)
       else
@@ -138,7 +141,10 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
               [e1, Abs (x, _, e2)] => Let (~1, (x, @{apply 2} build_tc_ast (e1, e2)))
             | _ => raise TERM ("Only Let with a lambda is allowed, got:", [t]))
         | Bound i => LetBound i
-        | Var ((n, _), t) => Arg (Library.find_index (fn v' => (n, t) = v') f_args)
+        | Var ((n, _), typ) =>
+            if is_comb t then
+              raise TERM ("Call to function given as argument is not allowed, got:", [t])
+            else Arg (Library.find_index (fn v' => (n, typ) = v') f_args)
         | Const (g_name, g_typ) =>
           if (g_name, g_typ) = (f_name, f_typ)
             then TailCall (map build_tc_ast (Term.args_of t))
@@ -149,6 +155,7 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
   end
 
 exception PARTIAL of string * string
+exception NONTAIL of string
 
 fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
   let
@@ -173,34 +180,35 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
     (* compile the expression, then pass an aexp that evaluates to
         the value of the expression to the continuation *)
 
-    fun go _ cont (Number i) = cont \<^Const>\<open>A for \<open>mk_N i\<close>\<close>
-      | go _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_local_arg_reg i\<close>\<close>\<close>
-      | go bounds cont (If (idx, (cond, e1, e2))) =
+    fun go _ _ cont (Number i) = cont \<^Const>\<open>A for \<open>mk_N i\<close>\<close>
+      | go _ _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_local_arg_reg i\<close>\<close>\<close>
+      | go is_tail bounds cont (If (idx, (cond, e1, e2))) =
         let
           val cond_reg = mk_local_reg ["If", Int.toString idx]
-          val cond_IMP = go bounds (fn rhs => \<^Const>\<open>tAssign for cond_reg rhs\<close>) cond
-          val (e1_IMP, e2_IMP) = @{apply 2} (go bounds cont) (e1, e2)
+          val cond_IMP = go false bounds (fn rhs => \<^Const>\<open>tAssign for cond_reg rhs\<close>) cond
+          val (e1_IMP, e2_IMP) = @{apply 2} (go is_tail bounds cont) (e1, e2)
           val if_IMP = \<^Const>\<open>tIf for cond_reg e1_IMP e2_IMP\<close>
         in
           mk_Seq [cond_IMP, if_IMP]
         end
-      | go bounds cont (Let (idx, (x, (e1, e2)))) =
+      | go is_tail bounds cont (Let (idx, (x, (e1, e2)))) =
         let
           val x_reg = mk_local_reg ["Let", Int.toString idx, x]
-          val e1_IMP = go bounds (fn rhs => \<^Const>\<open>tAssign for x_reg rhs\<close>) e1
-          val e2_IMP = go (x_reg :: bounds) cont e2
+          val e1_IMP = go false bounds (fn rhs => \<^Const>\<open>tAssign for x_reg rhs\<close>) e1
+          val e2_IMP = go is_tail (x_reg :: bounds) cont e2
         in
           mk_Seq [e1_IMP, e2_IMP]
         end
-      | go bounds cont (LetBound i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>nth bounds i\<close>\<close>\<close>
-      | go bounds _ (TailCall es) =
+      | go _ bounds cont (LetBound i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>nth bounds i\<close>\<close>\<close>
+      | go is_tail bounds _ (TailCall es) =
         let
+          val _ = is_tail orelse raise NONTAIL "Recursive call must be in tail position"
           val es_IMP =
-            map_index (fn (i, e) => go bounds (fn rhs => \<^Const>\<open>tAssign for \<open>f_arg_reg i\<close> rhs\<close>) e) es
+            map_index (fn (i, e) => go false bounds (fn rhs => \<^Const>\<open>tAssign for \<open>f_arg_reg i\<close> rhs\<close>) e) es
         in
           mk_Seq (es_IMP @ [\<^Const>\<open>tTAIL\<close>])
         end
-      | go bounds cont (Call (idx, ((g_name, _), es))) =
+      | go _ bounds cont (Call (idx, ((g_name, _), es))) =
         let
           val g_compiled = lookup_fn g_name
           val _ = List.length (#arg_regs g_compiled) = List.length es
@@ -209,7 +217,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
 
           fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, Int.toString i]
           fun g_arg_cont reg rhs = \<^Const>\<open>tAssign for reg rhs\<close>
-          fun g_go_reg reg = go bounds (g_arg_cont reg)
+          fun g_go_reg reg = go false bounds (g_arg_cont reg)
 
           (* if g is called in e_j, then for i < j,
              the computation of e_i needs to be saved in a temporary variable *)
@@ -234,7 +242,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
           |> mk_Seq
         end
 
-    val body = go [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
+    val body = go true [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
   in
     mk_Seq [copy_f_args, body]
   end
