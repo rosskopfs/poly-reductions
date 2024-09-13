@@ -88,34 +88,56 @@ An example: 10 in decimal equals 1010 in binary, so the tape content would be:
 
 fun IMPminus_state_to_TM_tape_list :: "com \<Rightarrow> AExp.state \<Rightarrow> tape list" where
   "IMPminus_state_to_TM_tape_list prog s =
-   (\<lfloor>0\<rfloor>\<^sub>N, 0) # \<comment>\<open>read only tape, unused\<close>
-   (\<lfloor>0\<rfloor>\<^sub>N, 0) # \<comment>\<open>1. operand\<close>
-   (\<lfloor>0\<rfloor>\<^sub>N, 0) # \<comment>\<open>2. operand\<close>
-   map (\<lambda>x. (\<lfloor>(s x)\<rfloor>\<^sub>N, 0)) (vars prog) @ \<comment>\<open>tapes for each variable\<close>
-   [(\<lfloor>0\<rfloor>\<^sub>N, 0)]" \<comment>\<open>last tape for carry, see Memorizing.thy in afp entry Cook_Levin\<close>
-
+   (\<lfloor>0\<rfloor>\<^sub>N, 1) # \<comment>\<open>read only tape, unused\<close>
+   (\<lfloor>0\<rfloor>\<^sub>N, 1) # \<comment>\<open>1. operand\<close>
+   (\<lfloor>0\<rfloor>\<^sub>N, 1) # \<comment>\<open>2. operand\<close>
+   map (\<lambda>x. (\<lfloor>(s x)\<rfloor>\<^sub>N, 1)) (vars prog) @ \<comment>\<open>tapes for each variable\<close>
+   [(\<lfloor>0\<rfloor>\<^sub>N, 1)]" \<comment>\<open>last tape for carry, see Memorizing.thy in afp entry Cook_Levin\<close>
+                                     
 subsection \<open>Equivalence checking of IMP- state and TM tape list\<close>
 fun tape_content_to_num :: "tape \<Rightarrow> nat" where
   "tape_content_to_num tp = (THE n. \<lfloor>n\<rfloor>\<^sub>N = fst tp)"
 
+fun initial_tape :: "tape list  \<Rightarrow> bool"
+where  
+" initial_tape tps \<longleftrightarrow> (tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)"
+
+fun proper_tape ::"tape list \<Rightarrow>bool "
+  where
+"proper_tape tps \<longleftrightarrow> length tps\<ge>4 \<and> (\<forall>i<(length tps). clean_tape (tps!i))"
+
+(*
 fun variable_tape_list_equiv_IMPminus_state :: "vname \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_-(_) \<turnstile> _ \<sim> _\<close> 55)
 where  
-  "v-(idd) \<turnstile> tps \<sim> s \<longleftrightarrow>(tape_content_to_num (tps ! idd v) = s v)"
+  "v-(idd) \<turnstile> tps \<sim> s \<longleftrightarrow>((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))"
+*)
+fun variable_tape_list_equiv_IMPminus_state :: "vname \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_-_ \<turnstile> _ \<sim> _\<close> 55)
+where  
+  "v-idd \<turnstile> tps \<sim> s \<longleftrightarrow>((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))"
 
+(*
 fun tape_list_equiv_IMPminus_state :: "com \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_(_) \<turnstile> _ \<sim> _\<close> 55)
 where  
-  "prog (idd) \<turnstile> tps \<sim> s \<longleftrightarrow> Max (idd ` var_set prog)+1 < length tps \<and>
-     (\<forall>v \<in> var_set prog. v-(idd) \<turnstile> tps \<sim> s)"
+  "prog (idd) \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall> v\<in>( var_set prog). idd v\<ge>3 \<and>idd v+1 < length tps\<and> v-(idd) \<turnstile> tps \<sim> s) \<and>
+     inj idd
+"
+*)
+fun tape_list_equiv_IMPminus_state_on_a_set :: "(vname set) \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_ @ _ \<turnstile> _ \<sim> _\<close> 55)
+where  
+  "S@idd \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and>
+     inj idd
+"
+
+
+lemma var_prog_finite :"finite (var_set prog)"
+  by (metis List.finite_set vars_aux_set)
+
 
 theorem tape_list_equiv_IMPminus_state_for_Seq:
   assumes "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" 
   shows"prog1 (idd) \<turnstile> tps \<sim> s " 
 proof -
-  have r1:" Max (idd ` var_set (prog1;;prog2))+1 < length tps" using assms by force
   have "idd ` var_set prog1 \<subseteq> idd ` var_set (prog1;;prog2)"  by (simp add: image_mono)
-  then have " Max (idd ` var_set prog1) \<le> Max (idd ` var_set (prog1;;prog2))" sorry
-  then have r2:" Max (idd ` var_set prog1)+1 < length tps" using r1 by linarith
-  have "(\<forall>x \<in> var_set prog1. tape_content_to_num (tps ! idd x) = s x)"  using assms by auto
-  then show "prog1 (idd) \<turnstile> tps \<sim> s " using r2  by auto
+  then show "prog1 (idd) \<turnstile> tps \<sim> s " using assms by auto
 qed
 end
