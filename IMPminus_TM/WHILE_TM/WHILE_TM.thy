@@ -12,6 +12,13 @@ fun aexpVal :: "aexp\<Rightarrow> AExp.state \<Rightarrow> val" where
 "aexpVal (Parity a) s = (atomVal a s) mod 2 "|
 "aexpVal (RightShift a) s=(atomVal a s) div 2"
 
+lemma aexpVal_aexp_time:"nlength(aexpVal a s) +1\<le> aexp_time a s"
+  apply (cases a) unfolding aexp_time.simps aexpVal.simps
+      apply auto   using max_nlength nlength_sum apply presburger
+    apply (simp add: add.commute le_SucI le_add2 nat_minus_add_max nlength_mono)
+    using le_SucI mod_less_eq_dividend nlength_mono apply presburger
+  by (simp add: le_Suc_eq nlength_mono)
+
 \<comment> \<open>This Turing machine is used to write the operand to the tpth paper strip, 
 so in use tp is generally equal to 1 or 2. when the operand is N a, which is 
 a constant, tm_set can be called directly, otherwise if it is V v, we need to 
@@ -21,7 +28,8 @@ left.
 idd is a function that corresponds the variable name to the corresponding paper tape 
 number.
 \<close>
-
+   
+  
 fun atomExp_TM::"(vname\<Rightarrow>nat) \<Rightarrow>atomExp \<Rightarrow> nat \<Rightarrow>machine" where
 "atomExp_TM idd (N a) tp =tm_set tp (canrepr a)"|
 "atomExp_TM idd (V v) tp =tm_cp_until (idd v) tp {\<box>};;tm_cr (idd v);;tm_cr tp"
@@ -218,11 +226,6 @@ proof(induction "(prog, s)" t s' arbitrary: S s  idd  prog M tps rule:big_step_L
  then show ?case by (metis mult_is_0)
 next
   case (Assign_vname v a s)
-
-(*
-  have q1:"M= (Aexp_TM idd a);;tm_cp_until 2 (idd v) {\<box>};;tm_cr (idd v);; (tm_erase_cr 2)" by (simp add: Assign_vname.prems(1))
-*) 
-
   let ?tps'="(tps[2:=  (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)])"
   let ?M1="(Aexp_TM idd a)"
   have var_set_of_aexp_in_S:"var_set_of_aexp a \<subseteq> S" using Assign_vname.prems(5) by auto
@@ -232,7 +235,7 @@ next
   have tps_2:"tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)"using Assign_vname.prems(4)  initial_tape.simps  by blast
 
   have tps_length :"length tps\<ge>4" using Assign_vname.prems(3) proper_tape.simps by blast
-  have proper_tps:"proper_tape tps"using Assign_vname.prems(3) by auto
+  have proper_tps :"proper_tape tps"using Assign_vname.prems(3) by auto
   have M1:"transforms ?M1 tps (37*(aexp_time a s)) ?tps'"  using assms x var_set_of_aexp_in_S tps_length tps_1 tps_2
   proof (cases a)
     case (A x)
@@ -257,99 +260,77 @@ next
     let ?tps1="(tps[1:=  (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)])"
     let ?ttt1="3*(nlength (atomVal x1 s))+10"
 
-    have "var_set_of_aexp a =var_set_of_atomExp x1\<union> var_set_of_atomExp x2" sorry
-    have var_set_of_atomExp_x1:"var_set_of_atomExp x1 \<subseteq> S" using var_set_of_aexp_in_S sorry
-    then have p1:" var_set_of_atomExp x1 @ idd  \<turnstile> tps \<sim> s" using Assign_vname.prems(2)  b2 by auto
-
-    have "initial_tape tps"  using Assign_vname.prems(4) by auto
-    then have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" by simp
-    then have p2:"tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
-
-    have e1:"transforms ?M11 tps ?ttt1 ?tps1" using p1 p2 transforms_tm_atomI 
-    using Assign_vname.prems(3) by auto
+    have "var_set_of_aexp a = \<Union> (var_set_of_atomExp ` atomExp_set_of_aexp a)" by simp
+    then have "var_set_of_aexp a =var_set_of_atomExp x1 \<union> var_set_of_atomExp x2" by (simp add: Plus image_empty sup_bot.right_neutral)
+    then have "var_set_of_atomExp x1 \<subseteq> S\<and>var_set_of_atomExp x2 \<subseteq> S" using var_set_of_aexp_in_S by simp
+    then have  var_set_of_atomExp:" var_set_of_atomExp x1 @ idd  \<turnstile> tps \<sim> s \<and> var_set_of_atomExp x2 @ idd  \<turnstile> tps \<sim> s" by (meson Assign_vname.prems(2) equiv_monoton)
+    then have "var_set_of_atomExp x1 @ idd  \<turnstile> tps \<sim> s" by blast
+    then have M11:"transforms ?M11 tps ?ttt1 ?tps1" using tps_1 transforms_tm_atomI  using one_less_numeral_iff proper_tps semiring_norm(77) zero_less_one by blast
 
     let ?tps2="(?tps1[2:=  (\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1)])"
    
-    have "var_set_of_atomExp x2\<subseteq> S"  using Plus b by auto
-    then have p1':"var_set_of_atomExp x2 @idd  \<turnstile> tps \<sim> s" using Assign_vname.prems(2)  b2 by auto
-    then have "\<forall>v \<in>(var_set_of_atomExp x2).  idd v\<ge>3 \<and>(idd v+1 < length tps)\<and> v-(idd) \<turnstile> tps \<sim> s" 
-      using b2 by simp
-    then have "\<forall>v \<in>(var_set_of_atomExp x2).  idd v\<ge>3 \<and>(idd v+1 < length ?tps1)\<and> v-(idd) \<turnstile> tps \<sim> s" 
-      using b2 by simp
-    then have "\<forall>v \<in>(var_set_of_atomExp x2). idd v\<ge>3\<and>((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))" by simp
-    then have "\<forall>v \<in>(var_set_of_atomExp x2). idd v\<ge>3\<and>((?tps1 ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))" by fastforce
-    then have p1:"var_set_of_atomExp x2 @idd  \<turnstile> tps \<sim> s" using p1' by blast
-     then have p1':"\<forall>v \<in>(var_set_of_atomExp x2).  idd v\<ge>3 \<and>(idd v+1 < length ?tps1)\<and> v-(idd) \<turnstile> ?tps1 \<sim> s"  by auto
-       then have  p1'':"var_set_of_atomExp x2 @idd  \<turnstile> ?tps1 \<sim> s" by (simp add: b2)
-  
-    have "clean_tape (?tps1!1)"
-      by (metis clean_tape_ncontents leI list_update_beyond nth_list_update_eq p2)
-    have "proper_tape tps"  using Assign_vname.prems(3) by auto
-    
-    then have "length ?tps1\<ge>4 \<and> (\<forall>i<(length ?tps1). clean_tape (?tps1!i))" 
-    by (metis (mono_tags, lifting) \<open>clean_tape (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)] ! 1)\<close> length_list_update nth_list_update_neq proper_tape.elims(2))
-    then have p0':"proper_tape ?tps1" by auto
-      
-    have "initial_tape tps" using Assign_vname.prems(4) by auto
-    then have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" by simp
-    then have "tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
-    then have p2':"?tps1!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by auto
+    have "clean_tape (?tps1!1)" using tps_1 using clean_tape_ncontents tps_length by force
+    then have proper_tps1:"proper_tape ?tps1" by (metis length_list_update nth_list_update_neq proper_tape.simps proper_tps)
+
+
+    have tps1_2:"?tps1!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by (simp add: tps_2)
     let ?ttt2="3 *(nlength (atomVal x2 s)) + 10"
-
-    have k1:"3>(2::nat)\<and> (0<(2::nat))" by simp
-    then have e2:"transforms ?M12 ?tps1 ?ttt2 (?tps1[2:=(\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1)])" using p0' p1' p2' transforms_tm_atomI 
-    using p1'' by blast
+    have "(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and> inj idd " using  var_set_of_atomExp
+      using Assign_vname.prems(2) tape_list_equiv_IMPminus_state_on_a_set.simps by blast
+    then have "(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length ?tps1\<and> v-idd \<turnstile> ?tps1 \<sim> s) \<and> inj idd " 
+    using numeral_le_one_iff semiring_norm(70) variable_tape_list_equiv_IMPminus_state.elims(2) variable_tape_list_equiv_IMPminus_state.elims(3) by auto
+    then have "var_set_of_atomExp x2 @idd  \<turnstile> ?tps1 \<sim> s" using  var_set_of_atomExp 
+    by (meson \<open>var_set_of_atomExp x1 \<subseteq> S \<and> var_set_of_atomExp x2 \<subseteq> S\<close> in_mono tape_list_equiv_IMPminus_state_on_a_set.elims(3))
+     then have M12:"transforms ?M12 ?tps1 ?ttt2 (?tps1[2:=(\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1)])" using tps1_2  transforms_tm_atomI 
+    by (metis less_add_one nat_1_add_1 numeral_Bit1 numerals(1) proper_tps1 zero_less_two)
     
-
-    then have p6:"?tps2!1=(\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)"
-     using \<open>4 \<le> length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]) \<and> (\<forall>i<length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]). clean_tape (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)] ! i))\<close> by auto
-   then have p7:"?tps2!2=(\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1)" 
-    by (meson \<open>4 \<le> length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]) \<and> (\<forall>i<length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]). clean_tape (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)] ! i))\<close> le_trans nth_list_update_eq numeral_less_iff semiring_norm(76) semiring_norm(78) verit_comp_simplify1(3))
-    let ?ttt3="3 * max (nlength (atomVal x1 s)) (nlength (atomVal x2 s)) + 10"
-
+  have tps2_length:"length tps =length ?tps2" by simp
+  then have tps2_length_ineq:"length ?tps2\<ge>4" by (simp add: tps_length)
+  then have tps2_1:"?tps2!1=(\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)" using less_one by auto
+   then have tps2_2:"?tps2!2=(\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1)" using tps2_length_ineq by force
+  
+   let ?ttt3="3 * max (nlength (atomVal x1 s)) (nlength (atomVal x2 s)) + 10"
     let ?tps3="?tps2[2:=(\<lfloor>atomVal x1 s + atomVal x2 s\<rfloor>\<^sub>N, 1)]"
-    have k2:"length ?tps2\<ge> 4"
-    using \<open>4 \<le> length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]) \<and> (\<forall>i<length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]). clean_tape (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)] ! i))\<close> by auto
     
+    have M13:"transforms (?M13) ?tps2 ?ttt3 ?tps3" using  tps2_1 tps2_2 tps2_length_ineq transforms_tm_addI 
+    by (smt (z3) add_eq_self_zero add_lessD1 add_less_mono le_eq_less_or_eq less_numeral_extra(1) less_numeral_extra(3) nat_1_add_1 numeral_Bit0 numeral_less_iff semiring_norm(76))
+
+  have tps3_length:"length ?tps3= length tps" by simp
+  then have tps3_length_ineq:"length ?tps3\<ge>4" by (simp add: tps_length)
+  then have tps3_length_1:"1 < length ?tps3" by linarith 
+  let ?tps4="?tps3[1 := (\<lfloor>[]\<rfloor>, 1)]"
+  let ?ttt4="?tps3:#:1 + 2 * length (canrepr(atomVal x1 s)) + 6"
+  
+  have "?tps3:#:1 =1" using tps2_1 by auto
+  then have ttt4:"?ttt4= 2 * nlength (atomVal x1 s) + 7" by presburger
+
+  have tps4_tps':"?tps4 =?tps'"
+  by (metis Plus Suc_eq_plus1 aexpVal.simps(2) canrepr_0 list_update_id list_update_overwrite list_update_swap n_not_Suc_n one_add_one tps_1)
+
+
+  have proper_symbols_x1:"proper_symbols (canrepr (atomVal x1 s)) " by (simp add: proper_symbols_canrepr)
+  have tps3_1:"?tps3 ::: 1 = \<lfloor>canrepr (atomVal x1 s)\<rfloor> " using tps2_1 by auto
+  then have M14:"transforms ?M14 ?tps3 ?ttt4 ?tps4" using transforms_tm_erase_crI proper_symbols_x1 tps3_length tps3_length_ineq
+  proper_symbols_x1 tps3_1 tps3_length_1 by blast
+  have "transforms ?M1 tps (?ttt1+?ttt2+?ttt3+?ttt4) ?tps4"using  transforms_turing_machine_sequential M11 M12 M13 M14
+    by (smt (verit, ccfv_SIG) M1_Plus)
+  then have M1:"transforms ?M1 tps ((?ttt1+?ttt2+?ttt3+?ttt4)) ?tps'" by (metis tps4_tps')
+
+  have u1:"?ttt1\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
+  moreover have u2:"?ttt2\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
+  moreover  have u3:"?ttt3\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
+  moreover  have u4:"?ttt4\<le>2*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +7" 
+    using max_nlength nlength_mono ordered_comm_semiring_class.comm_mult_left_mono semiring_norm(3) sup_ge1 sup_nat_def ttt4 zero_le_numeral by linarith
     
-    then have e3:"transforms (?M13) ?tps2 ?ttt3 ?tps3" using k1 p6 p7  transforms_tm_addI 
-    by (smt (verit) add_lessD1 le_eq_less_or_eq less_numeral_extra(4) mult_2 nat_1_add_1 nat_mult_less_cancel_disj numeral_Bit0 numeral_less_iff semiring_norm(76))
-   let ?tps4="?tps3[1 := (\<lfloor>[]\<rfloor>, 1)]"
-  let ?ttt4="?tps3:#: 1 + 2 * nlength (atomVal x1 s) + 6"
-  have "?tps3:#: 1=1"using nat_1_add_1 p6 by fastforce
-  then have u0:"?ttt4= 2 * nlength (atomVal x1 s) + 7" 
-  using \<open>tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1), 2 := (\<lfloor>atomVal x2 s\<rfloor>\<^sub>N, 1), 2 := (\<lfloor>atomVal x1 s + atomVal x2 s\<rfloor>\<^sub>N, 1)] :#: 1 = 1\<close> by presburger
+  moreover ultimately have u5:"?ttt1+?ttt2+?ttt3 +?ttt4\<le> 11* max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))+37" by linarith
 
-  have p7:"1<length ?tps3" 
-  using \<open>4 \<le> length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]) \<and> (\<forall>i<length (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)]). clean_tape (tps[1 := (\<lfloor>atomVal x1 s\<rfloor>\<^sub>N, 1)] ! i))\<close> one_less_numeral_iff by auto
-  have p8:"proper_symbols (canrepr (atomVal x1 s)) " by (simp add: proper_symbols_canrepr)
-  then have e4:"transforms ?M14 ?tps3 ?ttt4 ?tps4" using  transforms_tm_erase_crI p7 p8 
-  by (smt (verit) fst_conv less_2_cases_iff less_numeral_extra(4) nth_list_update_neq numeral_1_eq_Suc_0 numerals(1) p6)
-
-  have e:"transforms ?M1 tps (?ttt1+?ttt2+?ttt3+?ttt4) ?tps4"using  transforms_turing_machine_sequential e1 e2 e3 e4
-  by (smt (z3) \<open>Aexp_TM idd a = atomExp_TM idd x1 1 ;; atomExp_TM idd x2 2 ;; tm_add 1 2 ;; tm_erase_cr 1\<close>)
-
-  have e2:"?tps4 =?tps'"
-  by (metis Plus Suc_1 aexpVal.simps(2) list_update_id list_update_overwrite list_update_swap n_not_Suc_n ncontents_0 p2)
-    have u1:"?ttt1\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
-    have u2:"?ttt2\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
-    have u3:"?ttt3\<le>3*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +10" by simp
-    have u4:"?ttt4\<le>2*(max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +7" 
-      using ordered_comm_semiring_class.comm_mult_left_mono u0 by linarith
-    then have u5:"?ttt1+?ttt2+?ttt3 +?ttt4\<le> 11* (max (nlength (atomVal x1 s))  (nlength (atomVal x2 s))) +37" using u1 u2 u3 u4
-      by linarith
-    then have "...\<le> 11* nlength  (max (atomVal x1 s) (atomVal x2 s)) +37"
+                         
+    then have "?ttt1+?ttt2+?ttt3 +?ttt4\<le> 11* nlength  (max (atomVal x1 s) (atomVal x2 s)) +37"
       by (metis max_nlength nat_le_linear)
-    then have "...\<le> 37* nlength  (max (atomVal x1 s) (atomVal x2 s)) +37"
+    then have "?ttt1+?ttt2+?ttt3 +?ttt4\<le> 37* nlength  (max (atomVal x1 s) (atomVal x2 s)) +37"
       by fastforce
-    then have "...\<le>37* Suc( nlength (max (atomVal x1 s) (atomVal x2 s)))" 
-    using mult_Suc_right by fastforce
-  then have e3:"...\<le>37* (aexp_time a s)"by (simp add: Plus)
-  then have "transforms ?M1 tps ((?ttt1+?ttt2+?ttt3+?ttt4)) ?tps'" using e e2 
-  by metis
-  then have "transforms ?M1 tps (37* (aexp_time a s)) ?tps'" 
-  by (smt (verit, ccfv_threshold) Plus Suc_eq_plus1 \<open>11 * nlength (max (atomVal x1 s) (atomVal x2 s)) + 37 \<le> 37 * nlength (max (atomVal x1 s) (atomVal x2 s)) + 37\<close> aexp_time.simps(2) distrib_left_numeral max_nlength mult_numeral_1_right numerals(1) transforms_monotone u5)
-    then show ?thesis by blast
+    then moreover have "?ttt1+?ttt2+?ttt3 +?ttt4\<le>37* (aexp_time a s)"by (simp add: Plus)
+    ultimately show ?thesis using M1 using transforms_monotone by blast
   next
     case (Sub x31 x32)
     then show ?thesis sorry
@@ -359,52 +340,49 @@ next
     let ?M11="(atomExp_TM idd x 1)"
     let ?M12="(tm_mod2 1 2)"
     let ?M13="tm_erase_cr 1"
-    have p1:"(var_set_of_atomExp x)@idd\<turnstile> tps \<sim> s"using Parity b b2 by auto
 
-    have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" using Assign_vname.prems(5)
-    by (meson Assign_vname.prems(4) initial_tape.elims(2))
-    then have p2:"tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
+    have "(var_set_of_atomExp x)\<subseteq> (var_set_of_aexp a)"  using Assign_vname.prems(5) x  by (simp add: Parity) 
+    then have var_set_of_atomExp:"(var_set_of_atomExp x) @idd \<turnstile> tps \<sim> s" using equiv_monoton x by blast
+
     let ?ttt1="3 *(nlength (atomVal x s)) + 10"
     let ?tps1="(tps[1:=  (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)])"
     have tps1_length:"length ?tps1= length tps" by simp
     then have tps1_length':" length ?tps1\<ge>4" by (simp add: tps_length)
-    then have p9:"?tps1 !1 =(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" by simp
+    then have tps1_1:"?tps1 !1 =(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" by simp
 
-    have e1:"transforms ?M11 tps ?ttt1 ?tps1" using p0 p2 transforms_tm_atomI 
-    using Assign_vname.prems(4) one_less_numeral_iff p1 semiring_norm(77) zero_less_one 
-    by (metis Assign_vname.prems(3))
-
+    have M11:"transforms ?M11 tps ?ttt1 ?tps1" using var_set_of_atomExp transforms_tm_atomI
+    using one_less_numeral_iff proper_tps semiring_norm(77) tps_1 zero_less_one by blast
     let ?tps2="(?tps1[2:= (\<lfloor>(atomVal x s) mod 2\<rfloor>\<^sub>N, 1)])"
 
-    have p10:"?tps1 !2 =(\<lfloor>0\<rfloor>\<^sub>N, 1)" by (simp add: \<open>tps ! 0 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 1 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 2 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> last tps = \<lceil>1\<rceil>\<close>)
-   
-    have "length tps\<ge>4 \<and> (\<forall>i<(length tps). clean_tape (tps!i))" using Assign_vname.prems(3) by auto
-    then have "length tps \<ge>4" by simp
+    have tps1_2:"?tps1 !2 =(\<lfloor>0\<rfloor>\<^sub>N, 1)" by (simp add: tps_2)
+    have length_tps:"length ?tps1=length tps" using Assign_vname.prems(3) by auto
+    then have length_tps_ineq:"length tps \<ge>4" by (simp add: tps_length)
     then have "length ?tps1 \<ge>4" by simp
-    then have e2:"transforms ?M12 ?tps1 1 ?tps2" 
-    by (smt (verit, ccfv_threshold) add_le_same_cancel1 le_neq_implies_less linorder_le_less_linear linordered_nonzero_semiring_class.zero_le_one numeral_Bit0 one_less_numeral_iff order_less_trans p10 p9 semiring_norm(76) transforms_tm_mod2I)
-     let ?tps3="?tps2[1 := (\<lfloor>[]\<rfloor>, 1)]"
+    then have M12:"transforms ?M12 ?tps1 1 ?tps2"  using tps1_1 tps1_2
+    by (metis (no_types, lifting) add_lessD1 le_eq_less_or_eq less_add_same_cancel1 linordered_nonzero_semiring_class.zero_le_one nat_1_add_1 numeral_Bit0 transforms_tm_mod2I zero_less_two)
+    
+  let ?tps3="?tps2[1 := (\<lfloor>[]\<rfloor>, 1)]"
      let ?ttt3="?tps2:#: 1 + 2 * nlength (atomVal x s) + 6"
-     have "?tps2!1=(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" using p9 by auto
+     have tps2_1:"?tps2!1=(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" using bits_mod_by_1 nth_list_update_neq one_mod_two_eq_one tps1_1 zero_neq_one by auto
      then  have "?tps2:#:1=1" by simp
-     have u0:"?ttt3= 2 * nlength (atomVal x s) + 7" 
-     using \<open>tps[1 := (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1), 2 := (\<lfloor>atomVal x s mod 2\<rfloor>\<^sub>N, 1)] :#: 1 = 1\<close> by presburger
-     have p7:"1<length ?tps2"
-     using \<open>4 \<le> length (tps[1 := (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)])\<close> by auto
-     have p8:"proper_symbols (canrepr (atomVal x s)) " by (simp add: proper_symbols_canrepr)
-     then have e3:"transforms ?M13 ?tps2 ?ttt3 ?tps3" using  transforms_tm_erase_crI p7 p8 
-     by (metis \<open>tps[1 := (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1), 2 := (\<lfloor>atomVal x s mod 2\<rfloor>\<^sub>N, 1)] ! 1 = (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)\<close> fst_conv)
-     have e:"transforms ?M1 tps (?ttt1+1+?ttt3) ?tps3"using  transforms_turing_machine_sequential e1 e2 e3 by (smt (verit, ccfv_SIG) p0)
-     then have u5:"?ttt1+1+?ttt3 \<le> 5* (nlength (atomVal x s)) +18" using u0 by linarith
-     then have u6:"?ttt1+1+?ttt3 \<le> 37*(nlength (atomVal x s))+37" by linarith
-     then have u7:" ?ttt1+1+?ttt3 \<le> 37*(Suc (nlength (atomVal x s)))" by force
+     then have  ttt3:"?ttt3= 2 * nlength (atomVal x s) + 7"
+       using \<open>tps[1 := (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1), 2 := (\<lfloor>atomVal x s mod 2\<rfloor>\<^sub>N, 1)] :#: 1 = 1\<close> by presburger
+     have tps2_content_1:"?tps2 ::: 1 = \<lfloor>canrepr (atomVal x s)\<rfloor>"  using tps2_1 by fastforce
+    have tps2_length:"length ?tps2=length tps" by simp
+    then have tps2_length_1:"length ?tps2 >1" using tps_length by presburger
+   
+     have proper_symbols_x:"proper_symbols (canrepr (atomVal x s)) " by (simp add: proper_symbols_canrepr)
+     then have M13:"transforms ?M13 ?tps2 ?ttt3 ?tps3" using  transforms_tm_erase_crI tps2_1 tps2_length_1  tps2_content_1 by blast
+     have M1:"transforms ?M1 tps (?ttt1+1+?ttt3) ?tps3"using  transforms_turing_machine_sequential M11 M12 M13 
+     by (smt (verit, ccfv_SIG) p0)
+     then have "?ttt1+1+?ttt3 \<le> 5* (nlength (atomVal x s)) +18" using ttt3 by linarith
      then have u8:" ?ttt1+1+?ttt3 \<le> 37*(aexp_time a s)" by (simp add:Parity) 
       
-     have "?tps3=?tps'"
-     by (metis Parity aexpVal.simps(4) canrepr_0 list_update_id list_update_overwrite list_update_swap numeral_eq_one_iff p2 semiring_norm(85))
+     have "?tps3=?tps'" 
+     by (metis Parity aexpVal.simps(4) canrepr_0 list_update_id list_update_overwrite list_update_swap numeral_eq_one_iff semiring_norm(85) tps_1)
    then have "transforms ?M1 tps (?ttt1+1+?ttt3) ?tps'" 
-     using e by presburger
-    then show ?thesis using u8 transforms_monotone by blast
+     using M1  by presburger
+    then show ?thesis using  transforms_monotone u8 by blast
   next
     case (RightShift x)
      let ?ttt="3*(nlength (atomVal x s))+10"
@@ -413,72 +391,192 @@ next
     let ?M11="(atomExp_TM idd x 2)"
     let ?M12="(tm_div2 2)"
  
-    have "S @idd \<turnstile> tps \<sim> s " using Assign_vname.prems(2) by blast
-    then have p1:"var_set_of_atomExp x @idd  \<turnstile> tps \<sim> s"
-    using RightShift b b2 tape_list_equiv_IMPminus_state_on_a_set.elims(3) vars_of_aexp.simps(5) vars_of_aexp_set vars_of_atomExp_set by auto
-    
-    have "proper_tape tps" 
-    using Assign_vname.prems(3) by auto
-      
-    have "initial_tape tps"
-    using Assign_vname.prems(4) by auto
-    then have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" by simp
-    then have tps_2:"tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
+    have p1:"var_set_of_atomExp x @idd  \<turnstile> tps \<sim> s" using RightShift x by fastforce
+
+   
+    then have tps_2:"tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)"  using tps_2 by blast
     let ?ttt1="3 *(nlength (atomVal x s)) + 10"
     
     let ?tps1="(tps[2:=  (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)])"
-    have p8:"transforms ?M11 tps ?ttt1 ?tps1" using p0 p1 tps_2  transforms_tm_atomI 
+    have M11:"transforms ?M11 tps ?ttt1 ?tps1" using p0 p1 tps_2  transforms_tm_atomI 
     using Assign_vname.prems(3) nat_1_add_1 nat_add_left_cancel_less numeral_Bit1 numerals(1) one_less_numeral_iff one_plus_numeral_commute semiring_norm(76) zero_less_two by force
     let ?tps2="(?tps1[2:=  (\<lfloor>(atomVal x s) div 2\<rfloor>\<^sub>N, 1)])"
     let ?ttt2= "2 * nlength (atomVal x s) + 3" 
-    have p9:"?tps1 !2 =(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" sorry
-    have "length ?tps1\<ge>4" using Assign_vname.prems(2) asm6 sorry
-    then have p10:"transforms ?M12 ?tps1 ?ttt2 ?tps2" 
-    by (metis add_lessD1 le_eq_less_or_eq less_add_same_cancel1 nat_1_add_1 numeral_Bit0 p9 transforms_tm_div2I zero_less_two)
-    then have e:"transforms ?M1 tps (?ttt1+?ttt2) ?tps2" using p8 p10  transforms_turing_machine_sequential p0 by presburger
+    have tps1_2:"?tps1 !2 =(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" using tps_length by force
+    have tps1_length:"length ?tps1=length tps" by simp
+    then have tps1_length_ineq:"length ?tps1\<ge>4" by (simp add: tps_length)
+    then have M12:"transforms ?M12 ?tps1 ?ttt2 ?tps2"
+    by (metis (no_types, lifting) le_iff_add less_add_same_cancel2 numeral_Bit0 tps1_2 trans_less_add1 transforms_tm_div2I zero_less_numeral)
+    then have M1:"transforms ?M1 tps (?ttt1+?ttt2) ?tps2" using M11 M12  transforms_turing_machine_sequential p0 by presburger
 
     have "?ttt1+?ttt2\<le>37*nlength (atomVal x s) + 37"  using Suc_leD eval_nat_numeral(3) linorder_linear mult_le_mono1 numeral_le_iff semiring_norm(69) semiring_norm(73) by auto
       then have u10:"?ttt1+?ttt2\<le>37*(Suc (aexp_time  a s))" 
       using RightShift by force 
-    have "?tps2=?tps'"
-    by (simp add: RightShift)
-  then have "transforms ?M1 tps (?ttt1+?ttt2) ?tps'" using e by auto
+    have "?tps2=?tps'" by (simp add: RightShift)
+  then have "transforms ?M1 tps (?ttt1+?ttt2) ?tps'" using M1 by auto
   then show ?thesis using  u10
   using RightShift add.commute aexp_time.simps(5) mult_Suc_right transforms_monotone by auto
 qed
-  let ?n= "length (canrepr (aexpVal a s))"
-  have q3:"rneigh (?tps1!2) {\<box>} ?n" sorry
-  have q4:"v\<in>var_set prog" using Assign_vname.hyps by auto
-  then have q5:"k>2\<and>k>idd v" using Assign_vname.prems(3) by fastforce
-  have q6:"k=length ?tps1" by (simp add: Assign_vname.prems(2))
-  let ?tps2="?tps1[2:=(?tps1!2)|+|?n, idd v:=implant (?tps1!2) (?tps1!(idd v))?n]"
+(*
+;;tm_cp_until 2 (idd v)  {\<box>};;tm_cr (idd v);; (tm_erase_cr 2)
+*)
   let ?M2="tm_cp_until 2 (idd v)  {\<box>}"
-  have q14:"transforms ?M2 ?tps1 (Suc ?n) ?tps2" using transforms_tm_cp_untilI q3 q6 q5  by blast
-
-  let ?tps3="?tps2[(idd v):=?tps2 ! (idd v) |#=| 1]"
   let ?M3="tm_cr (idd v)"
-  have q9:"k= length ?tps2" using q6 by auto
-  then have q10:"(idd v)<length ?tps2" 
-  using q5 by linarith
-  have "\<forall>i<k. clean_tape (?tps1!i)"
-  by (metis Assign_vname.prems(2) Assign_vname.prems(6) clean_tape_ncontents nth_list_update_eq nth_list_update_neq)
-  then have q7:"\<forall>i<k. clean_tape (?tps2!i)" sorry
-  have q11:"clean_tape (?tps2!(idd v))" using q5 q7 by blast
-  let ?t2="?tps2 :#: (idd v) + 2" 
-  have q15:"transforms ?M3 ?tps2 ?t2 ?tps3" using transforms_tm_crI q5 q7 q9 by blast
+  let ?M4=" (tm_erase_cr 2)"
+  let ?n= "length (canrepr (aexpVal a s))  "
+  let ?n2= "max (length (canrepr (aexpVal a s))) (length (canrepr (s v))) "
+
+(*
+lemma transforms_tm_cp_untilI [transforms_intros]:
+  assumes "j1 < k" and "j2 < k" and "length tps = k"
+    and "rneigh (tps ! j1) H n"
+    and "t = Suc n"
+    and "tps' = tps[j1 := tps ! j1 |+| n, j2 := implant (tps ! j1) (tps ! j2) n]"
+  shows "transforms (tm_cp_until j1 j2 H) tps t tps'"
+  unfolding tm_cp_until_def using transforms_tm_trans_untilI[OF assms(1-6)] by simp
+*)
+  
+  have tps'_rneigh:"rneigh (?tps'!2) {\<box>} ?n" using linorder_le_less_linear rneigh_nat tps_length by force
+  have tps'_length:"length tps=length ?tps'" by (simp add: Assign_vname.prems(2)) 
+  then have  tps'_length_ineq:"length ?tps'\<ge>4" by (simp add: tps_length)
+  
+  let ?tps''="?tps'[2:=(?tps'!2)|+|?n, idd v:=implant (?tps'!2) (?tps'!(idd v)) ?n]"
+  have tps2:"?tps''=?tps'[2:=(\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)|+|?n, idd v:=implant (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1) (tps!(idd v)) ?n]" 
+  by (smt (verit) add_le_same_cancel2 fst_conv implant_cp implant_self le_antisym list_update_beyond not_numeral_le_zero nth_list_update_eq nth_list_update_neq numeral_Bit0 snd_conv tps'_length_ineq tps_2 trans_le_add1 verit_comp_simplify1(3))
+  let ?M2="tm_cp_until 2 (idd v)  {\<box>}"
+  have "v\<in>S" using Assign_vname.prems(5) by auto
+  then have "idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s" using Assign_vname.prems(2) by auto
+  then have "idd v+1 <length ?tps'" by force
+  have M2:"transforms ?M2 ?tps' (Suc ?n) ?tps''" using transforms_tm_cp_untilI  tps'_length_ineq
+  by (smt (verit) Suc_1 \<open>idd v + 1 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)])\<close> add_lessD1 add_less_mono le_neq_implies_less nat_1_add_1 not_less_eq numeral_Bit0 tps'_rneigh)
+
+  let ?tps'''="?tps''[(idd v):=?tps'' ! (idd v) |#=| 1]"
+  have "implant (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1) (\<lfloor>s v\<rfloor>\<^sub>N ,1) ?n = (\<lambda>i. if 1\<le> i \<and> i < snd tp2 + n then fst tp1 (snd tp1 + i - snd tp2) else fst tp2 i,
+      snd tp2 + n)"
+  have "implant (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1) (\<lfloor>s v\<rfloor>\<^sub>N ,1) ?n= (\<lfloor>aexpVal a s\<rfloor>\<^sub>N ,1+?n)" unfolding transplant_def by sledgehammer
+  have tps3:"?tps''=?tps'[2:=(\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)|+|?n, idd v:=implant (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1) (tps!(idd v)) ?n]"  
+  let ?M3="tm_cr (idd v)"
+  have tps''_length:"length ?tps'= length ?tps''" by simp
+  then have tps''_length:"(idd v)<length ?tps''" using \<open>idd v + 1 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)])\<close> by linarith
+  
+  have clean_tape_tps1:"\<forall>i<length ?tps'. clean_tape (?tps'!i)" 
+  by (metis clean_tape_ncontents nth_list_update_neq o proper_tape.simps proper_tps tps'_length)
+  then have clean_tape_iddv:"clean_tape (?tps''!(idd v))" using  tps''_length 
+  by (smt (verit) \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> add_lessD1 add_strict_mono clean_implant le_eq_less_or_eq length_list_update nat_1_add_1 nth_list_update_neq numeral_Bit0 o one_less_numeral_iff semiring_norm(76) snd_conv tps'_length_ineq variable_tape_list_equiv_IMPminus_state.elims(2))
+  let ?t2="?tps'' :#: (idd v) + 2" 
+ 
+  have "?tps'':#:(idd v) =snd (?tps''!(idd v))" by blast
+  then have "?tps'':#:(idd v) =snd (implant (?tps'!2) (?tps'!(idd v)) ?n)" using length_list_update nth_list_update_eq tps''_length by fastforce
+  then have "?tps'':#:(idd v) =snd (transplant (?tps'!2) (?tps'!(idd v)) id ?n )" by blast
+  then have "?tps'':#:(idd v) =snd (?tps'!(idd v))+?n" unfolding  transplant_def by simp
+  then have "?tps'':#:(idd v) =1+?n"
+  by (metis \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> add_le_same_cancel1 nat_1_add_1 not_one_le_zero nth_list_update_neq numeral_Bit1 numerals(1) old.prod.inject prod.collapse variable_tape_list_equiv_IMPminus_state.elims(2))
+  then have t2:"?t2 =?n+3" by linarith
+  have M3:"transforms ?M3 ?tps'' ?t2 ?tps'''" using transforms_tm_crI  using clean_tape_iddv tps''_length by blast
+
   let ?M4="(tm_erase_cr 2)"
-  let ?tps4 ="?tps3[2 := (\<lfloor>[]\<rfloor>, 1)]"
-  let ?t3= "?tps3 :#: 2 + 2 * (?n) + 6"
-  have q13:"proper_symbols (canrepr (aexpVal a s))" 
-    using proper_symbols_canrepr by auto
-  have q12:"2<length ?tps4" using length_list_update q5 q9 by auto
-  have q16:"transforms ?M4 ?tps3 ?t3 ?tps4"using transforms_tm_erase_crI q12 q13 
-    by (simp add: fst_conv implant_self list_update_swap nth_list_update) 
-  have "M =?M1 ;;?M2;;?M3;;?M4 " by (simp add: q1)
-  let ?t= "((50::nat) * t ^ 4 +(Suc ?n)+ ?t2+ ?t3)"
-  have q17:"transforms M tps ?t ?tps4" using q2 q14 q15 q16 transforms_turing_machine_sequential using q1 by blast
-  have "?t< (50::nat) * t ^ 4" sorry
-  then show ?case using q17 sorry
+  let ?tps''''="?tps'''[2 := (\<lfloor>[]\<rfloor>, 1)]"
+  let ?t3= "?tps''' :#: 2 + 2 * (?n) + 6"
+  have "length ?tps'''>2" 
+  using add_lessD1 length_list_update less_add_same_cancel1 nat_less_le numeral_Bit0 tps'_length tps_length zero_less_numeral by auto
+  then have "?tps''' :#: 2 =1+?n"
+proof -
+  have f1: "2 < length tps"
+    using \<open>2 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s)), idd v := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s))] ! idd v |#=| 1])\<close> length_list_update by auto
+  have f2: "\<not> (3::nat) \<le> 2"
+    by auto
+  have "\<forall>p n pa. tps[n := pa, 2 := p] ! 2 = p"
+    using f1 by (simp add: length_list_update o)
+  then show ?thesis
+    using f2 f1 \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq o snd_conv by fastforce
+qed
+  then have t3:"?t3=3*(?n)+7"
+  using add.commute add_mult_distrib nat_mult_1 one_plus_numeral semiring_norm(3) by linarith
+  have proper_symbol_x:"proper_symbols (canrepr (aexpVal a s))" using proper_symbols_canrepr by auto
+  have tps4_length_ineq:"2<length ?tps''''" using length_list_update nat_le_linear not_less_eq_eq plus_1_eq_Suc tps'_length_ineq by auto
+  have M4:"transforms ?M4 ?tps''' ?t3 ?tps''''"using transforms_tm_erase_crI proper_symbol_x tps4_length_ineq
+  by (smt (verit) fst_conv implant_self length_list_update nth_list_update_neq o)
+
+ 
+  let ?t= "(37* (aexp_time a s)+(Suc ?n)+ ?t2+ ?t3)"
+  have "M =?M1 ;;?M2;;?M3;;?M4 " by (simp add: Assign_vname.prems(1))
+  then moreover have M:"transforms M tps ?t ?tps''''" using transforms_turing_machine_sequential M1 M2 M3 M4 by meson
+
+  have "?t=(37* (aexp_time a s)+(Suc ?n)+ ?n +3 + 3*?n +7)" using t2 t3 by linarith
+  then have "?t =(37* (aexp_time a s)+ 5*?n + 11)" by linarith
+  then have "?t \<le>(37* (aexp_time a s)+ 11*(?n+1))" by auto
+  then have xx:"?t \<le>(37* (aexp_time a s)+ 11*(nlength(aexpVal a s)+1))" by simp
+  have "nlength(aexpVal a s)+1 \<le>aexp_time a s" using aexpVal_aexp_time by auto
+  then have "(37* (aexp_time a s)+ 11*(nlength(aexpVal a s)+1))\<le>(37* (aexp_time a s)+ 11*(aexp_time a s))" by simp
+  then moreover have "?t\<le>(37* (aexp_time a s)+ 11*(aexp_time a s))" using xx using le_trans by blast
+  have "proper_tape ?tps'"by (meson clean_tape_tps1 proper_tape.elims(3) tps'_length_ineq)
+  then  have proper_tape2:"proper_tape ?tps''" 
+  by (smt (verit) clean_tape_iddv clean_tape_ncontents fst_conv length_list_update nth_list_update_neq o proper_tape.elims(1))
+  have  tps2_tps3:" ?tps'''= ?tps''[(idd v):=?tps'' ! (idd v) |#=| 1]" by fastforce
+  then have "clean_tape (?tps''!(idd v))" using clean_tape_iddv by fastforce
+  then have "clean_tape ( ?tps'' ! (idd v) |#=| 1) " unfolding clean_tape_def by force
+  then have "clean_tape (?tps'''!(idd v))" using clean_tape_iddv tps2_tps3 by (metis o tps''_length)
+  then have "proper_tape ?tps''' " using proper_tape2
+  by (smt (verit) length_list_update nth_list_update_neq proper_tape.elims(1))
+  then moreover have "proper_tape ?tps''''"
+  by (smt (verit) add_lessD1 canrepr_0 clean_tape_tps1 length_list_update nat_1_add_1 nth_list_update_neq o one_eq_numeral_iff proper_tape.elims(1) semiring_norm(85) tps_1)
+
+  moreover have tps4_2:"( ?tps'''')!2 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>2 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s)), idd v := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s))] ! idd v |#=| 1])\<close> canrepr_0 nth_list_update_eq by auto
+
+  have tps1_1:"( ?tps')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)"  using tps_1 by auto
+  then have tps2_1:"(?tps'')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq numeral_le_one_iff one_eq_numeral_iff semiring_norm(70) semiring_norm(85) by auto
+  then have tps3_1:"(?tps''')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nlength_1_simp nlength_less_n nth_list_update_neq by auto
+  moreover then have tps4_1:"( ?tps'''')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" by simp
+
+  have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!(length tps-1)= \<lceil>\<triangleright>\<rceil>)" using Assign_vname.prems(4) by simp
+  then have tps_0:"(tps)!0= (\<lfloor>0\<rfloor>\<^sub>N, 1)"  by blast
+  then have tps1_0:"( ?tps')!0= (\<lfloor>0\<rfloor>\<^sub>N, 1)"  by simp
+  then have tps2_0:"(?tps'')!0 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq numeral_le_one_iff one_eq_numeral_iff semiring_norm(70) semiring_norm(85) by auto
+  then have tps3_0:"(?tps''')!0 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nlength_1_simp nlength_less_n nth_list_update_neq by auto
+  then  have tps4_0:"( ?tps'''')!0 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" by simp
+
+  have tps1_1:"( ?tps')!1= (\<lfloor>0\<rfloor>\<^sub>N, 1)"  using tps1_1 by auto
+  then have tps2_1:"(?tps'')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq numeral_le_one_iff one_eq_numeral_iff semiring_norm(70) semiring_norm(85) by auto
+  then have tps3_1:"(?tps''')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nlength_1_simp nlength_less_n nth_list_update_neq by auto
+  then have tps4_1:"( ?tps'''')!1 = (\<lfloor>0\<rfloor>\<^sub>N, 1)" by simp
+
+  have "(tps!(length tps-1)= \<lceil>\<triangleright>\<rceil>)"  using Assign_vname.prems(4) by simp
+  then have tps1_last:"(?tps'!(length ?tps'-1))=\<lceil>\<triangleright>\<rceil>" 
+  by (metis Suc3_eq_add_3 Suc_diff_le Suc_eq_plus1 add_2_eq_Suc add_eq_if cancel_comm_monoid_add_class.diff_cancel length_list_update less_2_cases_iff nat.discI not_one_less_zero nth_list_update_neq numeral_plus_one read_length semiring_norm(2) semiring_norm(8) tps'_length_ineq zero_less_diff)
+  then have tps2_last:"(?tps''!(length ?tps''-1))=\<lceil>\<triangleright>\<rceil>" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq numeral_le_one_iff one_eq_numeral_iff semiring_norm(70) semiring_norm(85)
+  by (smt (verit) Nat.diff_diff_right \<open>2 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s)), idd v := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s))] ! idd v |#=| 1])\<close> add_lessD1 diff_diff_cancel diff_diff_left diff_is_0_eq' le_numeral_extra(4) length_list_update less_one less_or_eq_imp_le list_update_overwrite not_gr0 numeral_plus_numeral one_add_one semiring_norm(5) zero_less_diff)
+  then have  tps3_last:"(?tps'''!(length ?tps'''-1))=\<lceil>\<triangleright>\<rceil>" 
+  using \<open>3 \<le> idd v \<and> idd v + 1 < length tps \<and> v-idd \<turnstile> tps \<sim> s\<close> nth_list_update_neq numeral_le_one_iff one_eq_numeral_iff semiring_norm(70) semiring_norm(85)
+  by (smt (verit) Nat.diff_diff_right \<open>2 < length (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s)), idd v := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1), 2 := tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2 |+| nlength (aexpVal a s), idd v := implant (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! 2) (tps[2 := (\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)] ! idd v) (nlength (aexpVal a s))] ! idd v |#=| 1])\<close> add_lessD1 diff_diff_cancel diff_diff_left diff_is_0_eq' le_numeral_extra(4) length_list_update less_one less_or_eq_imp_le list_update_overwrite not_gr0 numeral_plus_numeral one_add_one semiring_norm(5) zero_less_diff)
+  
+  then  have tps4_last:"(?tps''''!(length ?tps''''-1)) = \<lceil>\<triangleright>\<rceil>"
+  by (smt (z3) \<open>tps ! (length tps - 1) = \<lceil>1\<rceil>\<close> length_list_update nth_list_update_neq tps4_2 tps_2)
+ 
+  
+  then moreover  have "initial_tape ?tps''''" using tps4_last tps4_1 tps4_2 tps4_0 using initial_tape.simps by blast
+
+  have "?tps''''=tps[(idd v):=(\<lfloor>aexpVal a s\<rfloor>\<^sub>N, 1)]" by sledgehammer
+  have "(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and> inj idd " using Assign_vname.prems(2) 
+    by (simp add: tape_list_equiv_IMPminus_state_on_a_set.elims(2))
+  then have "\<forall>v\<in>S. v-idd \<turnstile> tps \<sim> s" by fastforce
+  then have "\<forall>v\<in>S. ((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))" 
+    by (simp add: variable_tape_list_equiv_IMPminus_state.elims(2))
+   then have "\<forall>v\<in>S. ((?tps'''' ! idd v) =(\<lfloor>s' v\<rfloor>\<^sub>N, 1))" by sledgehammer
+  then have "\<forall>v\<in>S. v-idd \<turnstile> ?tps'''' \<sim> s" by fastforce
+  then have "\<forall>v\<in>S. ((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))" by sledgehammer
+  then have "(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> ?tps'''' \<sim> s') \<and> inj idd " by sledgehammer
+  
+
+  
+  then show ?case using M by sledgehammer
  
 (*
     case (Parity x)
@@ -502,7 +600,7 @@ qed
     then have "var_set_of_atomExp x\<subseteq> var_set prog" by force
     then have p1:"\<forall>v \<in>(var_set_of_atomExp x).  idd v\<ge>3 \<and>(idd v+1 < length tps)\<and> v-(idd) \<turnstile> tps \<sim> s"  using b2 by blast
    
-    have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" using Assign_vname.prems(5) by auto
+    have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!(length tps-1)= \<lceil>\<triangleright>\<rceil>)" using Assign_vname.prems(5) by auto
     then have p2:"tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
     let ?ttt1="3 *(nlength (atomVal x s)) + 10"
     let ?tps1="(tps[1:=  (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)])"
@@ -513,7 +611,7 @@ qed
 
     have "?tps1 =tps[1:=  (\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)]" by  blast
     then have p9:"?tps1 !1 =(\<lfloor>atomVal x s\<rfloor>\<^sub>N, 1)" sorry
-    have p10:"?tps1 !2 =(\<lfloor>0\<rfloor>\<^sub>N, 1)" by (simp add: \<open>tps ! 0 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 1 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 2 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> last tps = \<lceil>1\<rceil>\<close>)
+    have p10:"?tps1 !2 =(\<lfloor>0\<rfloor>\<^sub>N, 1)" by (simp add: \<open>tps ! 0 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 1 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps ! 2 = (\<lfloor>0\<rfloor>\<^sub>N, 1) \<and> tps!(length tps-1) = \<lceil>1\<rceil>\<close>)
     have "2<length ?tps1" sorry
     then have e2:"transforms ?M12 ?tps1 1 ?tps2" 
     by (metis add_lessD1 linordered_nonzero_semiring_class.zero_le_one nat_1_add_1 p10 p9 transforms_tm_mod2I zero_less_two)
@@ -549,7 +647,7 @@ qed
     have "proper_tape tps" using Assign_vname.prems(6) by blast
       
     have "initial_tape tps" using Assign_vname.prems(7) by blast
-    then have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)" by simp
+    then have "(tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!(length tps-1)= \<lceil>\<triangleright>\<rceil>)" by simp
     then have p2:"tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)" by blast
     let ?ttt1="3 *(nlength (atomVal x s)) + 10"
     have p3:"Max (idd ` var_set_of_atomExp x)+1<length tps" sorry

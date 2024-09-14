@@ -6,7 +6,7 @@ begin
 
 fun aexp_time::"aexp\<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow>nat" where
 "aexp_time (A a) s = Suc (nlength(atomVal a s)) "|
-"aexp_time (Plus a1 a2) s =Suc (nlength( max (atomVal a1 s) (atomVal a2 s)))"|
+"aexp_time (Plus a1 a2) s =Suc (nlength( max (atomVal a1 s) (atomVal a2 s))+1)"|
 "aexp_time (Sub a1 a2) s = Suc (nlength(max (atomVal a1 s) (atomVal  a2 s)))"|
 "aexp_time (Parity a)  s= Suc (nlength(atomVal a s))"|
 "aexp_time (RightShift a) s = Suc (nlength(atomVal a s))"
@@ -16,7 +16,7 @@ inductive
   big_step_Logt :: "com \<times> AExp.state \<Rightarrow> nat \<Rightarrow> AExp.state \<Rightarrow> bool"  ("_ \<Rightarrow>\<^bsup> _ \<^esup>\<^esup> _" 55)
 where
 Skip: "(SKIP,s) \<Rightarrow>\<^bsup> 0 \<^esup>\<^esup> s"|
-Assign_vname: "(x ::= a, s) \<Rightarrow>\<^bsup> aexp_time a s \<^esup>\<^esup> s(x := aval a s)" |
+Assign_vname: "(x ::= a, s) \<Rightarrow>\<^bsup>aexp_time a s \<^esup>\<^esup> s(x := aval a s)" |
 Seq: "\<lbrakk> (c1,s1) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> s2;  (c2,s2) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> s3 ;z=x+y\<rbrakk> \<Longrightarrow> (c1;;c2, s1) \<Rightarrow>\<^bsup>z \<^esup>\<^esup> s3" |
 IfTrue: "\<lbrakk> s b \<noteq> 0;  (c1,s) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> t; y=x+1 \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> t" |
 IfFalse: "\<lbrakk> s b = 0; (c2,s) \<Rightarrow>\<^bsup> x \<^esup>\<^esup> t; y=x+1  \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup>\<^esup> t" |

@@ -100,7 +100,7 @@ fun tape_content_to_num :: "tape \<Rightarrow> nat" where
 
 fun initial_tape :: "tape list  \<Rightarrow> bool"
 where  
-" initial_tape tps \<longleftrightarrow> (tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (last tps= \<lceil>\<triangleright>\<rceil>)"
+" initial_tape tps \<longleftrightarrow> (tps!0=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and>  (tps!1=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> (tps!2=(\<lfloor>0\<rfloor>\<^sub>N, 1)) \<and> ( tps!(length tps-1)= \<lceil>\<triangleright>\<rceil>)"
 
 fun proper_tape ::"tape list \<Rightarrow>bool "
   where
@@ -124,20 +124,21 @@ where
 *)
 fun tape_list_equiv_IMPminus_state_on_a_set :: "(vname set) \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_ @ _ \<turnstile> _ \<sim> _\<close> 55)
 where  
-  "S@idd \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and>
-     inj idd
-"
+  "S @ idd \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and> inj idd "
 
+lemma equiv_monoton:" S2\<subseteq>S \<longrightarrow> S@idd \<turnstile> tps \<sim> s \<longrightarrow>  S2@idd \<turnstile> tps \<sim> s"
+  by auto
 
 lemma var_prog_finite :"finite (var_set prog)"
   by (metis List.finite_set vars_aux_set)
 
-
-theorem tape_list_equiv_IMPminus_state_for_Seq:
-  assumes "(prog1;;prog2)  (idd) \<turnstile> tps \<sim> s" 
-  shows"prog1 (idd) \<turnstile> tps \<sim> s " 
+(*
+lemma tape_list_equiv_IMPminus_state_for_Seq:
+  assumes "(prog1;;prog2) @ idd \<turnstile> tps \<sim> s" 
+  shows"prog1 @idd \<turnstile> tps \<sim> s " 
 proof -
   have "idd ` var_set prog1 \<subseteq> idd ` var_set (prog1;;prog2)"  by (simp add: image_mono)
   then show "prog1 (idd) \<turnstile> tps \<sim> s " using assms by auto
 qed
+*)
 end
