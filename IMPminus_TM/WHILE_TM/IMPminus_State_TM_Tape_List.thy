@@ -106,28 +106,16 @@ fun proper_tape ::"tape list \<Rightarrow>bool "
   where
 "proper_tape tps \<longleftrightarrow> length tps\<ge>4 \<and> (\<forall>i<(length tps). clean_tape (tps!i))"
 
-(*
-fun variable_tape_list_equiv_IMPminus_state :: "vname \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_-(_) \<turnstile> _ \<sim> _\<close> 55)
-where  
-  "v-(idd) \<turnstile> tps \<sim> s \<longleftrightarrow>((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))"
-*)
 fun variable_tape_list_equiv_IMPminus_state :: "vname \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_-_ \<turnstile> _ \<sim> _\<close> 55)
 where  
   "v-idd \<turnstile> tps \<sim> s \<longleftrightarrow>((tps ! idd v) =(\<lfloor>s v\<rfloor>\<^sub>N, 1))"
 
-(*
-fun tape_list_equiv_IMPminus_state :: "com \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_(_) \<turnstile> _ \<sim> _\<close> 55)
-where  
-  "prog (idd) \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall> v\<in>( var_set prog). idd v\<ge>3 \<and>idd v+1 < length tps\<and> v-(idd) \<turnstile> tps \<sim> s) \<and>
-     inj idd
-"
-*)
 fun tape_list_equiv_IMPminus_state_on_a_set :: "(vname set) \<Rightarrow>(vname\<Rightarrow>nat) \<Rightarrow> tape list \<Rightarrow> AExp.state \<Rightarrow> bool" (\<open>_ @ _ \<turnstile> _ \<sim> _\<close> 55)
 where  
-  "S @ idd \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and> inj idd "
+  "S @ idd \<turnstile> tps \<sim> s \<longleftrightarrow>(\<forall>v\<in>S. idd v\<ge>3 \<and> idd v+1 < length tps\<and> v-idd \<turnstile> tps \<sim> s) \<and> inj_on idd S "
 
 lemma equiv_monoton:" S2\<subseteq>S \<longrightarrow> S@idd \<turnstile> tps \<sim> s \<longrightarrow>  S2@idd \<turnstile> tps \<sim> s"
-  by auto
+  apply auto using inj_on_subset by blast
 
 lemma var_prog_finite :"finite (var_set prog)"
   by (metis List.finite_set vars_aux_set)
