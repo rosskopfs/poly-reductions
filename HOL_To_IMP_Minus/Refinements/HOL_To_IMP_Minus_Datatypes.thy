@@ -124,10 +124,12 @@ paragraph \<open>length\<close>
 (* TODO: these all end up getting named size_... *)
 thm HOL_To_HOL_Nat.size_nat_eq_unfolded
 lemmas size_nat_eq = HOL_To_HOL_Nat.size_nat_eq_unfolded[simplified case_list_nat_def]
-unconditional_nat size_nat_eq
-compile_nat size_nat_unconditional.simps
+unconditional_nat size_nat_eq basename length_nat
+declare length_nat_unconditional.simps [simp del]
+compile_nat length_nat_unconditional.simps
+print_theorems
 (* TODO: also the proof doesn't work *)
-(* HOL_To_IMP_Minus_correct size_nat_unconditional by (cook mode = tailcall) *)
+(* HOL_To_IMP_Minus_correct length_nat_unconditional by (cook mode = tailcall) *)
 
 paragraph\<open>compare_lengths\<close>
 

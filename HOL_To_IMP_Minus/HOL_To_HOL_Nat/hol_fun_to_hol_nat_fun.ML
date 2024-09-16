@@ -164,7 +164,7 @@ val _ =
       in function_compile_nat_cmd thm lthy end))
 
 
-fun unrelate_nat_command f_eq _ lthy =
+fun unconditional_nat_command f_eq basename lthy =
   let
     val (lhs, rhs) =
       (* import to avoid free variable name clashes *)
@@ -178,9 +178,10 @@ fun unrelate_nat_command f_eq _ lthy =
 
     val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
 
-    val f'_binding =
-      Transport_Util.add_suffix (Const f |> term_binding) (@{binding unconditional})
-    val f'_name = f'_binding |> Binding.name_of
+    val base_binding = case basename of
+        SOME (name, _) => Binding.name name
+      | NONE => Const f |> term_binding
+    val f'_name = Transport_Util.add_suffix base_binding (@{binding unconditional}) |> Binding.name_of
     val f' = Free (f'_name, f'_typ)
 
     (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
@@ -198,12 +199,11 @@ fun unrelate_nat_command f_eq _ lthy =
     val lhs' = Term.list_comb (f', rem_args)
     val rhs' = rewrite_rhs rhs
     val _ = @{print} (lhs', rhs')
-    val lthy' = register_fun f'_binding lhs' rhs' lthy
+    val lthy' = register_fun (Binding.name f'_name) lhs' rhs' lthy
 
   in lthy' end
 
 local
-  (* TODO: basename support *)
   val parser = Parse.thm -- Scan.option (\<^keyword>\<open>basename\<close> |-- Parse.name_position)
 in
   val _ = Outer_Syntax.local_theory
@@ -211,7 +211,7 @@ in
     "remove Rel_nat/rel_fun assumptions and TYPE(_) args"
     (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
-      in unrelate_nat_command thm namepos_opt lthy end))
+      in unconditional_nat_command thm namepos_opt lthy end))
 end
 
 end
