@@ -198,7 +198,6 @@ fun unconditional_nat_command f_eq basename lthy =
 
     val lhs' = Term.list_comb (f', rem_args)
     val rhs' = rewrite_rhs rhs
-    val _ = @{print} (lhs', rhs')
     val lthy' = register_fun (Binding.name f'_name) lhs' rhs' lthy
 
   in lthy' end

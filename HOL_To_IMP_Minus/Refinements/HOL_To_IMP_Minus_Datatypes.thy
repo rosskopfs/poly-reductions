@@ -111,7 +111,6 @@ lemma rev_eq_rev_aux0: "List.rev xs = rev_aux [] xs"
   using rev_eq_rev_aux[where ys = "[]"] by auto
 
 function_compile_nat rev_eq_rev_aux0
-print_theorems
 
 
 paragraph \<open>append\<close>
