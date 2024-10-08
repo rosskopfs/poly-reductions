@@ -163,4 +163,54 @@ val _ =
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
       in function_compile_nat_cmd thm lthy end))
 
+
+fun unconditional_nat_command f_eq basename lthy =
+  let
+    val (lhs, rhs) =
+      (* import to avoid free variable name clashes *)
+      yield_singleton (Variable.import_terms false) (Thm.prop_of f_eq) lthy |> fst
+      |> Logic.strip_imp_concl |> dest_eq_equals_prop
+    val f = lhs |> Term.head_of |> Term.dest_Const
+
+    fun is_typrep (Type (@{type_name itself}, [_])) = true | is_typrep _ = false
+    val (typrep_arg_count, rem_args) =
+      lhs |> Term.args_of |> chop_prefix (is_typrep o Term.fastype_of) |>> List.length
+
+    val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
+
+    val base_binding = case basename of
+        SOME (name, _) => Binding.name name
+      | NONE => Const f |> term_binding
+    val f'_name = Transport_Util.add_suffix base_binding (@{binding unconditional}) |> Binding.name_of
+    val f' = Free (f'_name, f'_typ)
+
+    (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
+    fun rewrite_rhs t =
+      let
+        val (head, args) = Term.strip_comb t
+        val is_rec_call = case head of Const g => f = g | _ => false
+        val _ = (is_rec_call andalso length args < typrep_arg_count)
+          andalso raise TERM ("Can't strip all '_ itself' arguments", [t])
+      in
+        (if is_rec_call then (f', drop typrep_arg_count args) else (head, args))
+        ||> map rewrite_rhs |> Term.list_comb
+      end
+
+    val lhs' = Term.list_comb (f', rem_args)
+    val rhs' = rewrite_rhs rhs
+    val lthy' = register_fun (Binding.name f'_name) lhs' rhs' lthy
+
+  in lthy' end
+
+local
+  val parser = Parse.thm -- Scan.option (\<^keyword>\<open>basename\<close> |-- Parse.name_position)
+in
+  val _ = Outer_Syntax.local_theory
+    \<^command_keyword>\<open>unconditional_nat\<close>
+    "remove Rel_nat/rel_fun assumptions and TYPE(_) args"
+    (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
+      let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
+      in unconditional_nat_command thm namepos_opt lthy end))
+end
+
 end
