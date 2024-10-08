@@ -8,8 +8,7 @@ begin
 context HOL_To_IMP_Minus
 begin
 
-
-(* multiplication *)
+paragraph \<open>Multiplication\<close>
 
 fun mul_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
 "mul_acc_nat 0 _ z = z" |
@@ -19,7 +18,8 @@ lemma mul_acc_nat_eq_mul_add[simp]: "mul_acc_nat x y z = x * y + z"
   by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
   (auto simp: mul_acc_nat.simps mult_eq_if)
 
-case_of_simps mul_acc_nat_eq[simplified Nitpick.case_nat_unfold] : mul_acc_nat.simps
+
+case_of_simps mul_acc_nat_eq[simplified case_nat_eq_if] : mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
 HOL_To_IMP_Minus_correct mul_acc_nat by (cook mode = tailcall)
@@ -40,7 +40,7 @@ declare_compiled_const "times"
 HOL_To_IMP_Minus_correct mul_nat by cook
 
 
-(* division *)
+paragraph \<open>Division\<close>
 
 fun div_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "div_acc_nat x y z = (if y = 0 then z else if x < y then z else div_acc_nat (x - y) y (z + 1))"
@@ -69,19 +69,19 @@ declare_compiled_const "divide"
 HOL_To_IMP_Minus_correct div_nat by cook
 
 
-(* triangle (pair encoding) *)
+paragraph \<open>Pair Encoding\<close>
 
 compile_nat triangle_def
 HOL_To_IMP_Minus_correct triangle by cook
 
-lemma pair_nat_triangle: "pair_nat a b = triangle (a + b) + a"
-  unfolding pair_nat_def prod_encode_def by simp
+lemma pair_nat_eq_triangle_add: "pair_nat a b = triangle (a + b) + a"
+  unfolding pair_nat_eq prod_encode_def by simp
 
-compile_nat pair_nat_triangle
+compile_nat pair_nat_eq_triangle_add
 HOL_To_IMP_Minus_correct pair_nat by cook
 
 
-(* square *)
+paragraph \<open>Squaring\<close>
 
 definition square_nat :: "nat \<Rightarrow> nat" where
   "square_nat x \<equiv> mul_nat x x"
@@ -92,9 +92,6 @@ lemma square_nat_eq_square[simp]: "square_nat x = x\<^sup>2"
 compile_nat square_nat_def basename square
 
 HOL_To_IMP_Minus_correct square_nat by cook
-
-
-(* integer square root *)
 
 (*takes lower and upper bound for root*)
 function sqrt_aux_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where

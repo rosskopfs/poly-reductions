@@ -12,6 +12,7 @@ locale HOL_To_HOL_Nat =
   and transport_eq_restrict_id.partial_equivalence_rel_equivalence[per_intro del]
 begin
 
+(* <<<<<<< HEAD *)
 
 section \<open>Pair\<close>
 
@@ -151,6 +152,23 @@ fun assoc_lookup :: "'k \<Rightarrow> ('k \<times> 'v) list \<Rightarrow> 'v opt
 case_of_simps assoc_lookup_eq : assoc_lookup.simps
 function_compile_nat assoc_lookup_eq
 
+(* =======
+fun rev_aux :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+"rev_aux [] acc = acc" |
+"rev_aux (x # xs) acc = rev_aux xs (x # acc)"
+
+lemma rev_aux_eq_rev_append [simp]: "rev_aux xs acc = rev xs @ acc"
+  by (induction xs arbitrary: acc) auto
+
+case_of_simps rev_aux_eq_case : rev_aux.simps
+function_compile_nat rev_aux_eq_case
+print_theorems
+definition "rev xs \<equiv> rev_aux xs []"
+
+lemma rev_eq_rev [simp]: "rev xs = rev xs"
+  unfolding rev_def by simp
+>>>>>>> master *)
+
 end
 
 context HOL_To_IMP_Minus
@@ -268,11 +286,95 @@ HOL_To_IMP_Minus_correct compare_lengths_nat_unconditional by (cook mode = tailc
 
 paragraph \<open>rev_aux\<close>
 
+(* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
+   congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
 lemmas rev_aux_nat_eq = HOL_To_HOL_Nat.rev_aux_nat_eq_unfolded[simplified case_list_nat_def]
 unconditional_nat rev_aux_nat_eq
 declare rev_aux_nat_unconditional.simps [simp del]
 compile_nat rev_aux_nat_unconditional.simps
 HOL_To_IMP_Minus_correct rev_aux_nat_unconditional by (cook mode = tailcall)
+
+(* Problem: We have obtained an unconditional equation. However, we
+   still have to prove it to be related to the original HOL function *)
+context
+  fixes xs ys and xs' ys' :: "('a :: compile_nat) list"
+  assumes rels: "Rel_nat xs xs'" "Rel_nat ys ys'"
+begin
+  term HOL_To_HOL_Nat.rev_aux_nat
+  print_statement HOL_To_HOL_Nat.rev_aux_nat_eq_unfolded
+  print_statement HOL_To_HOL_Nat.rev_aux_nat_eq_unfolded[OF rels, unfolded case_list_nat_def]
+end
+
+(* TODO: how to prove the two functions to be related? Currently, we are
+   missing the right lemmas to make it automatic *)
+
+lemma natify_list_simps_Nil: "natify [] = Nil_nat"
+  by (subst natify_list.simps) simp
+
+lemma natify_list_simps_Cons: "natify (x # xs) = Cons_nat (natify x) (natify xs)"
+  by (subst natify_list.simps) simp
+
+lemma Rel_nat_NilE:
+  assumes rel: "Rel_nat xs []"
+  obtains "xs = Nil_nat"
+  apply standard
+  apply (subst rel[simplified Rel_nat_iff_eq_natify])
+    apply (subst natify_list_simps_Nil)
+    apply (rule refl)
+   apply ((rule Rel_nat_natify_self)+)?
+  done
+  (* this proof is not "optimal", but can be mechanically derived for each constructor *)
+
+lemma Rel_nat_ConsE:
+  assumes rel: "Rel_nat xs (y # ys)"
+  obtains z zs where "xs = Cons_nat z zs" "Rel_nat z y" "Rel_nat zs ys"
+  apply standard
+  apply (subst rel[simplified Rel_nat_iff_eq_natify])
+    apply (subst natify_list_simps_Cons)
+    apply (rule refl)
+   apply ((rule Rel_nat_natify_self)+)?
+  done
+
+
+lemma Rel_nat_NilD:
+  assumes "Rel_nat xs []"
+  shows "xs = Nil_nat"
+  using assms Rel_nat_NilE by blast
+
+lemma Rel_nat_ConsD:
+  assumes "Rel_nat xs (y # ys)"
+  shows "\<exists>z zs. xs = Cons_nat z zs \<and> Rel_nat z y \<and> Rel_nat zs ys"
+  using assms Rel_nat_ConsE by blast
+
+(* probably best approach: use induction on the original function's definition *)
+lemma
+  fixes xs acc and xs' acc' :: "('a :: compile_nat) list"
+  assumes rels: "Rel_nat xs xs'" "Rel_nat acc acc'"
+  shows "Rel_nat (rev_aux_nat_unconditional xs acc) (HOL_To_HOL_Nat.rev_aux xs' acc')"
+  using assms
+  apply (induction xs' acc' arbitrary: xs acc rule: HOL_To_HOL_Nat.rev_aux.induct)
+
+  apply (subst HOL_To_HOL_Nat.rev_aux.simps)
+  apply (frule Rel_nat_NilD Rel_nat_ConsD; (elim exE)?)
+  apply hypsubst
+  apply (subst rev_aux_nat_unconditional.simps)
+  apply (simp (no_asm) add: Nil_nat_def Cons_nat_def,
+   (simp (no_asm) only: flip: Nil_nat_def Cons_nat_def)?)
+
+  apply (subst HOL_To_HOL_Nat.rev_aux.simps)
+  apply (frule Rel_nat_NilD Rel_nat_ConsD; (elim conjE exE)?)
+  apply hypsubst
+  apply (subst rev_aux_nat_unconditional.simps)
+  apply (simp (no_asm) add: Nil_nat_def Cons_nat_def,
+   (simp (no_asm) only: flip: Nil_nat_def Cons_nat_def)?)
+  subgoal premises p
+    apply (rule p(1))
+    apply (insert p(2-))
+    apply (metis Rel_nat_Cons_nat rel_funD)
+    apply (metis Rel_nat_Cons_nat rel_funD)
+    done
+  done
+
 
 paragraph \<open>rev\<close>
 
@@ -291,6 +393,7 @@ unconditional_nat zip_aux_nat_eq
 declare zip_aux_nat_unconditional.simps [simp del]
 compile_nat zip_aux_nat_unconditional.simps
 HOL_To_IMP_Minus_correct zip_aux_nat_unconditional by (cook mode = tailcall)
+
 
 (* TODO: aux function rev needed for zip *)
 
