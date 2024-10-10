@@ -1,7 +1,6 @@
 theory IMP_Tailcalls_Dynamic imports IMP_Calls begin
 
-unbundle no_com_syntax
-unbundle com'_syntax
+unbundle no com_syntax and com'_syntax
 declare [[syntax_ambiguity_warning=false]]
 
 datatype
@@ -13,20 +12,13 @@ datatype
 \<comment> \<open>Changes: No while, plus a tail-call command\<close>
       | tTAIL
 
-bundle tcom_syntax begin
+open_bundle tcom_syntax begin
 notation tAssign ("_ ::= _" [1000, 61] 61) and
          tSeq ("_;;/ _"  [60, 61] 60) and
          tIf ("(IF _/\<noteq>0 THEN _/ ELSE _)"  [0, 0, 61] 61) and
-         tCall ("CALL _ RETURN _") end
-
-bundle no_tcom_syntax begin
-no_notation tAssign ("_ ::= _" [1000, 61] 61) and
-            tSeq ("_;;/ _"  [60, 61] 60) and
-            tIf ("(IF _/\<noteq>0 THEN _/ ELSE _)"  [0, 0, 61] 61) and
-            tCall ("CALL _ RETURN _") end
-
-unbundle no_com'_syntax
-unbundle tcom_syntax
+         tCall ("CALL _ RETURN _")
+end
+unbundle no com'_syntax
 
 inductive
   tbig_step_t :: "tcom \<Rightarrow> tcom \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool" ("_ \<turnstile> _ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
@@ -174,8 +166,7 @@ next
 qed
 
 
-unbundle no_tcom_syntax
-unbundle com'_syntax
+unbundle no tcom_syntax and com'_syntax
 
 lemma while'_unrolling:
   assumes "s b \<noteq> 0"

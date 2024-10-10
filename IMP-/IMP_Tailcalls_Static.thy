@@ -1,7 +1,6 @@
 theory IMP_Tailcalls_Static imports IMP_Calls begin
 
-unbundle no_com_syntax
-unbundle com'_syntax
+unbundle no com_syntax and com'_syntax
 declare [[syntax_ambiguity_warning=false]]
 
 datatype tcom = TCall (cond: aexp) (body: com')
@@ -32,7 +31,7 @@ instance ..
 
 end
 
-lemma noninterference: 
+lemma noninterference:
   "(c,s) \<Rightarrow>''\<^bsup> x \<^esup> t \<Longrightarrow> s = s' on set (vars c) \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>''\<^bsup> x \<^esup> t' \<and> t = t' on set (vars c)"
   apply (induction c s x t arbitrary: s' rule: tail_step_t_induct)
   apply (auto)
@@ -55,7 +54,7 @@ lemma TCall_sem:
   assumes tr: "\<And>x. f x = (if b x then f (g x) else x)"
   assumes gt_less: "\<And>x. g_t (g x) \<le> g_t x"
   assumes terminate: "\<And>x. b x \<Longrightarrow> f_m (g x) < f_m x"
-  assumes g_correct: 
+  assumes g_correct:
     "\<And>x y ss. \<lbrakk> g x = y; \<alpha> ss = x \<rbrakk> \<Longrightarrow> \<exists>st z. (g_c,ss)\<Rightarrow>'\<^bsup> z \<^esup> st \<and> \<alpha> st = y \<and> z\<le> g_t x"
   assumes b_correct: "\<And>s x. \<alpha> s = x \<Longrightarrow> (aval b_e s) \<noteq> 0 \<longleftrightarrow> b x"
 
@@ -67,10 +66,10 @@ proof (induction "TCall b_e g_c" ss z st arbitrary: x rule: tail_step_t_induct)
   hence "\<alpha> s = x" "f x = x" by metis+
   then show ?case by auto
 next
-  case (TCallTrue' s\<^sub>1 z\<^sub>1 s\<^sub>2 z\<^sub>2 s\<^sub>3 z x) 
+  case (TCallTrue' s\<^sub>1 z\<^sub>1 s\<^sub>2 z\<^sub>2 s\<^sub>3 z x)
   hence "b x" "f_m (g x) < f_m x" by auto
   from TCallTrue' obtain x' where x': "\<alpha> s\<^sub>2 = x'" by auto
-  with TCallTrue' have f: "\<alpha> s\<^sub>3 = f x'" and z2: "z\<^sub>2 \<le> 4 + f_m x' * (3 + g_t x')" by auto 
+  with TCallTrue' have f: "\<alpha> s\<^sub>3 = f x'" and z2: "z\<^sub>2 \<le> 4 + f_m x' * (3 + g_t x')" by auto
   from x' TCallTrue' determ have x'_def: "x' = g x" by blast
   from x' TCallTrue' determ have z1: "z\<^sub>1 \<le> g_t x" by blast
   from z1 z2 \<open>3 + z\<^sub>1 + z\<^sub>2 = z\<close> have "z \<le> 3+ g_t x + 4 + f_m x' * (3 + g_t x')" by simp
@@ -115,16 +114,16 @@ proof (cases c)
       by (metis CONT_def IMP_Tailcalls.noninterference TCall WhileFalse'.prems eq_on_fupd1 fresh)
   next
     case (WhileTrue' x s2 y s3 z)
-    from WhileTrue'.hyps(2) obtain x' s2' where 
+    from WhileTrue'.hyps(2) obtain x' s2' where
       c'_sem: "(c', s(CONT := aval b s)) \<Rightarrow>'\<^bsup> x'\<^esup>  s2'" and
       CONT_sem: "(CONT ::= b,s2')\<Rightarrow>'\<^bsup> Suc (Suc 0)\<^esup>  s2" and
       x': "x = x' + (Suc (Suc 0))"
       by fastforce
 
-    have "s2 = (s2'(CONT := s CONT))(CONT := aval b (s2'(CONT := s CONT)))" 
+    have "s2 = (s2'(CONT := s CONT))(CONT := aval b (s2'(CONT := s CONT)))"
       using vars CONT_sem by auto
-    
-    from WhileTrue'.hyps(4)[OF this] obtain t' where 
+
+    from WhileTrue'.hyps(4)[OF this] obtain t' where
       "(TCall b c', s2') \<Rightarrow>''\<^bsup> Suc (Suc 0) + y\<^esup>  t' \<and> s3 = t' on set (vars c)"
       using TCall vars by fastforce
     moreover have "aval b (s(CONT := aval b s)) \<noteq> 0"
@@ -134,7 +133,7 @@ proof (cases c)
       using c'_sem x' \<open>1 + x + y = z\<close> by auto
 
     then show ?case using noninterference[of c "s(CONT := aval b s)" " Suc (Suc 0) + z" t' s ] TCall WhileTrue'.prems(1) vars
-      by (smt (verit, ccfv_SIG) CONT_def IMP_Tailcalls.noninterference eq_on_def fresh fun_upd_other) 
+      by (smt (verit, ccfv_SIG) CONT_def IMP_Tailcalls.noninterference eq_on_def fresh fun_upd_other)
   qed
 
   then show ?thesis using that TCall z by auto
@@ -151,11 +150,11 @@ lemma compile:
       and "z' \<le> z" "z \<le> (z' + 1) * (1 + size\<^sub>c (body c))"
 proof -
   from inline[OF assms[unfolded compile_def]] obtain z' t' where
-     loop_sem: "(loop c,s) \<Rightarrow>'\<^bsup>z'\<^esup> t'" and 
-     t': "t = t' on set (vars (loop c))" and 
+     loop_sem: "(loop c,s) \<Rightarrow>'\<^bsup>z'\<^esup> t'" and
+     t': "t = t' on set (vars (loop c))" and
      z': "z' \<le> z" "z \<le> (z' + 1) * (1 + size\<^sub>c (loop c))" by blast
   from loop[OF loop_sem] obtain t'' where
-    c_sem: "(c,s) \<Rightarrow>''\<^bsup> z' \<^esup> t''" and 
+    c_sem: "(c,s) \<Rightarrow>''\<^bsup> z' \<^esup> t''" and
     t'': "t' = t'' on set (vars c)" by blast
   moreover from t' t'' have "t = t'' on set (vars c)" by (cases c) (fastforce simp: Let_def)
   ultimately show ?thesis using z' that by (cases c) (auto simp: Let_def)
@@ -163,7 +162,7 @@ qed
 
 definition "comp_time f_m g_t x c = (5 + f_m x * (3 + g_t x)) * (1 + size\<^sub>c (body c))"
 
-lemma final: 
+lemma final:
   fixes c :: tcom
   fixes \<alpha> :: "state \<Rightarrow> 'a"
   fixes b :: "'a \<Rightarrow> bool"
@@ -176,7 +175,7 @@ assumes measure: "\<And>x. b x \<Longrightarrow> f_m (g x) < f_m x"
 assumes tr: "\<And>x. f x = (if b x then f (g x) else x)"
 assumes mono: "\<And>x .g_t (g x) \<le> g_t x"
 assumes vars: "\<And>s t. s = t on set (vars c) \<Longrightarrow> \<alpha> s = \<alpha> t"
-assumes g_correct: 
+assumes g_correct:
   "\<And>x y ss. \<lbrakk> y = g x; x = \<alpha> ss \<rbrakk> \<Longrightarrow> (\<exists>st z. (body c,ss) \<Rightarrow>'\<^bsup> z \<^esup> st \<and> \<alpha> st = y \<and> z \<le> g_t x)"
 assumes b_correct: "\<And>s x. \<alpha> s = x \<Longrightarrow> (aval (cond c) s) \<noteq> 0 \<longleftrightarrow> b x"
 
@@ -200,7 +199,7 @@ proof -
     by (metis One_nat_def Suc_le_mono add.right_neutral add_Suc_right dual_order.trans mult_le_mono1)
   hence "z \<le> comp_time f_m g_t (\<alpha> ss) c" unfolding comp_time_def x_def z''_def by auto
 
-  moreover from * st' z' vars x_def have "\<alpha> st = f (\<alpha> ss)" by auto  
+  moreover from * st' z' vars x_def have "\<alpha> st = f (\<alpha> ss)" by auto
   ultimately show ?thesis unfolding comp_time_def by auto
 qed
 

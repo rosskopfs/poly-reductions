@@ -76,13 +76,9 @@ fun register_related_transfer_thm f lthy =
   let
     val binding = mk_related_transfer_binding f
     val related_thm = get_transport_related_thm f lthy
-  in
-    register_attrs_thms
-      @{attributes [folded rel_inv_Fun_Rel_rel_eq rel_inv_iff_rel[symmetric] rel_fun_eq_Fun_Rel_rel,
-        transfer_rule]}
-      binding [related_thm] lthy
-    |>> apsnd the_single
-  end
+      |> Local_Defs.fold lthy
+        @{thms rel_inv_Fun_Rel_rel_eq rel_inv_iff_rel[symmetric]  rel_fun_eq_Fun_Rel_rel}
+  in register_transfer_thms binding [related_thm] lthy |>> apsnd the_single end
 
 fun mk_related_unfolded_assms Ts ctxt =
   let
@@ -113,8 +109,7 @@ fun register_related_unfolded_thm f f_eq lthy =
         |> HEADGOAL
       end)
     val binding = mk_related_unfolded_binding f
-    val ([thm], lthy) =
-      register_attrs_thms @{attributes [transfer_rule]} binding [thm] lthy |>> snd
+    val ([thm], lthy) = register_thms binding [thm] lthy |>> snd
     val (lthy, old_lthy) = `Local_Theory.end_nested lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
@@ -163,16 +158,18 @@ val _ =
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
       in function_compile_nat_cmd thm lthy end))
 
+val unconditional_nat_binding = @{binding "unconditional"}
+fun mk_unconditional_nat_binding b = TrpUtil.add_suffix b unconditional_nat_binding
 
 fun unconditional_nat_command f_eq basename lthy =
   let
     val (lhs, rhs) =
-      (* import to avoid free variable name clashes *)
       yield_singleton (Variable.import_terms false) (Thm.prop_of f_eq) lthy |> fst
       |> Logic.strip_imp_concl |> dest_eq_equals_prop
     val f = lhs |> Term.head_of |> Term.dest_Const
 
-    fun is_typrep (Type (@{type_name itself}, [_])) = true | is_typrep _ = false
+    fun is_typrep (Type (@{type_name itself}, [_])) = true
+      | is_typrep _ = false
     val (typrep_arg_count, rem_args) =
       lhs |> Term.args_of |> chop_prefix (is_typrep o Term.fastype_of) |>> List.length
 
@@ -181,7 +178,7 @@ fun unconditional_nat_command f_eq basename lthy =
     val base_binding = case basename of
         SOME (name, _) => Binding.name name
       | NONE => Const f |> term_binding
-    val f'_name = Transport_Util.add_suffix base_binding (@{binding unconditional}) |> Binding.name_of
+    val f'_name = mk_unconditional_nat_binding base_binding |> Binding.name_of
     val f' = Free (f'_name, f'_typ)
 
     (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
@@ -198,16 +195,14 @@ fun unconditional_nat_command f_eq basename lthy =
 
     val lhs' = Term.list_comb (f', rem_args)
     val rhs' = rewrite_rhs rhs
-    val lthy' = register_fun (Binding.name f'_name) lhs' rhs' lthy
-
-  in lthy' end
+  in register_fun (Binding.name f'_name) lhs' rhs' lthy end
 
 local
   val parser = Parse.thm -- Scan.option (\<^keyword>\<open>basename\<close> |-- Parse.name_position)
 in
   val _ = Outer_Syntax.local_theory
     \<^command_keyword>\<open>unconditional_nat\<close>
-    "remove Rel_nat/rel_fun assumptions and TYPE(_) args"
+    "create function without Rel_nat/rel_fun assumptions and TYPE(_) args"
     (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
       in unconditional_nat_command thm namepos_opt lthy end))

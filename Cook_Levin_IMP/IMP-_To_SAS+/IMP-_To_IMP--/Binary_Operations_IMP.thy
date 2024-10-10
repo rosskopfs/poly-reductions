@@ -8,7 +8,7 @@ theory Binary_Operations_IMP
     Utilities
 begin
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 subsection \<open>com_list_to_seq\<close>
 
 subsubsection \<open>com_list_to_seq_acc\<close>
@@ -75,7 +75,7 @@ definition "com_list_to_seq_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas com_list_to_seq_acc_imp_subprogram_simps = 
+lemmas com_list_to_seq_acc_imp_subprogram_simps =
   com_list_to_seq_acc_state_upd_def
   com_list_to_seq_acc_imp_compute_loop_condition_def
   com_list_to_seq_acc_imp_after_loop_def
@@ -105,7 +105,7 @@ lemma com_list_to_seq_acc_imp_correct[let_function_correctness]:
   apply (subst com_list_to_seq_acc.simps)
   apply (simp del: com_list_to_seq_acc.simps add: com_list_to_seq_acc_imp_subprogram_simps Let_def
   cons_imp_correct hd_imp_correct tl_imp_correct)
-  done 
+  done
 
 definition "com_list_to_seq_acc_state_upd_time t s \<equiv>
   (let
@@ -181,7 +181,7 @@ definition "com_list_to_seq_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas com_list_to_seq_acc_imp_subprogram_time_simps = 
+lemmas com_list_to_seq_acc_imp_subprogram_time_simps =
   com_list_to_seq_acc_state_upd_time_def
   com_list_to_seq_acc_imp_compute_loop_condition_time_def
   com_list_to_seq_acc_imp_after_loop_time_def
@@ -216,19 +216,19 @@ lemma com_list_to_seq_acc_imp_time_acc:
   "(com_list_to_seq_acc_imp_time (Suc t) s) = Suc (com_list_to_seq_acc_imp_time t s)"
   by (induction t s rule: com_list_to_seq_acc_imp_time.induct)
     ((subst (1 2) com_list_to_seq_acc_imp_time.simps);
-      (simp add: com_list_to_seq_acc_state_upd_def))            
+      (simp add: com_list_to_seq_acc_state_upd_def))
 
 lemma com_list_to_seq_acc_imp_time_acc_2_aux:
   "(com_list_to_seq_acc_imp_time t s) = t + (com_list_to_seq_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: com_list_to_seq_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: com_list_to_seq_acc_imp_time_acc)+
 
 lemma com_list_to_seq_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (com_list_to_seq_acc_imp_time t s) = t + (com_list_to_seq_acc_imp_time 0 s)"
-  by (rule com_list_to_seq_acc_imp_time_acc_2_aux)            
+  by (rule com_list_to_seq_acc_imp_time_acc_2_aux)
 
 lemma com_list_to_seq_acc_imp_time_acc_3:
   "(com_list_to_seq_acc_imp_time (a + b) s) = a + (com_list_to_seq_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: com_list_to_seq_acc_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: com_list_to_seq_acc_imp_time_acc)+
 
 abbreviation "com_list_to_seq_acc_while_cond \<equiv> ''condition''"
 
@@ -361,7 +361,7 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
       subgoal premises p using p(25) by fastforce
-      apply(erule hd_IMP_Minus_correct[where 
+      apply(erule hd_IMP_Minus_correct[where
             vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
       subgoal premises p using p(27) by fastforce
       apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
@@ -379,7 +379,7 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
       subgoal premises p using p(25) by fastforce
-      apply(erule hd_IMP_Minus_correct[where 
+      apply(erule hd_IMP_Minus_correct[where
             vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
       subgoal premises p using p(27) by fastforce
       apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
@@ -390,14 +390,14 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_function:
       subgoal premises p using p(33) by fastforce
       by (fastforce_sorted_premises2 simp: com_list_to_seq_acc_imp_subprogram_simps
           com_list_to_seq_acc_state_translators Let_def)
-  done  
+  done
 
 lemma com_list_to_seq_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ com_list_to_seq_acc_pref) com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix com_list_to_seq_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast     
+  by blast
 
 lemmas com_list_to_seq_acc_complete_time_simps =
   com_list_to_seq_acc_imp_subprogram_time_simps
@@ -436,7 +436,7 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_time:
     apply(erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
     subgoal premises p using p(47) by fastforce
-    apply(erule hd_IMP_Minus_correct[where 
+    apply(erule hd_IMP_Minus_correct[where
           vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
     subgoal premises p using p(49) by fastforce
     apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
@@ -454,7 +454,7 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_time:
     apply(erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
     subgoal premises p using p(47) by fastforce
-    apply(erule hd_IMP_Minus_correct[where 
+    apply(erule hd_IMP_Minus_correct[where
           vars = "insert (cons_prefix @ cons_ret_str) com_list_to_seq_acc_IMP_vars"])
     subgoal premises p using p(49) by fastforce
     apply(erule cons_IMP_Minus_correct[where vars = "com_list_to_seq_acc_IMP_vars"])
@@ -465,7 +465,7 @@ lemma com_list_to_seq_acc_IMP_Minus_correct_time:
     subgoal premises p using p(55) by fastforce
     apply(simp only: com_list_to_seq_acc_complete_time_simps Let_def)
     by (fastforce_sorted_premises simp: Let_def com_list_to_seq_acc_complete_time_simps)
-  done 
+  done
 
 lemma com_list_to_seq_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) com_list_to_seq_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -520,9 +520,9 @@ definition "com_list_to_seq_tail_state_upd s =
 function com_list_to_seq_tail_imp ::
   "com_list_to_seq_tail_state \<Rightarrow> com_list_to_seq_tail_state" where
   "com_list_to_seq_tail_imp s =
-  (let 
+  (let
       ret = com_list_to_seq_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -536,7 +536,7 @@ lemma com_list_to_seq_tail_imp_correct[let_function_correctness]:
     com_list_to_seq_tail (com_list_to_seq_tail_ys s)"
   apply (simp only: com_list_to_seq_tail_imp.simps Let_def com_list_to_seq_tail_state_upd_def
   cons_imp_correct reverse_nat_imp_correct com_list_to_seq_acc_imp_correct com_list_to_seq_tail_def)
-  by simp    
+  by simp
 
 function com_list_to_seq_tail_imp_time ::
   "nat \<Rightarrow> com_list_to_seq_tail_state \<Rightarrow> nat" where
@@ -588,19 +588,19 @@ lemma com_list_to_seq_tail_imp_time_acc:
   "(com_list_to_seq_tail_imp_time (Suc t) s) = Suc (com_list_to_seq_tail_imp_time t s)"
   by (induction t s rule: com_list_to_seq_tail_imp_time.induct)
     ((subst (1 2) com_list_to_seq_tail_imp_time.simps);
-      (simp add: com_list_to_seq_tail_state_upd_def Let_def))            
+      (simp add: com_list_to_seq_tail_state_upd_def Let_def))
 
 lemma com_list_to_seq_tail_imp_time_acc_2_aux:
   "(com_list_to_seq_tail_imp_time t s) = t + (com_list_to_seq_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: com_list_to_seq_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: com_list_to_seq_tail_imp_time_acc)+
 
 lemma com_list_to_seq_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (com_list_to_seq_tail_imp_time t s) = t + (com_list_to_seq_tail_imp_time 0 s)"
-  by (rule com_list_to_seq_tail_imp_time_acc_2_aux)            
+  by (rule com_list_to_seq_tail_imp_time_acc_2_aux)
 
 lemma com_list_to_seq_tail_imp_time_acc_3:
   "(com_list_to_seq_tail_imp_time (a + b) s) = a + (com_list_to_seq_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: com_list_to_seq_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: com_list_to_seq_tail_imp_time_acc)+
 
 abbreviation "com_list_to_seq_tail_cons_result \<equiv> ''cons_result''"
 
@@ -669,14 +669,14 @@ lemma com_list_to_seq_tail_IMP_Minus_correct_function:
   apply(erule com_list_to_seq_acc_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
   subgoal premises p using p(17) by fastforce
   by(fastforce simp: com_list_to_seq_tail_state_translators
-    com_list_to_seq_tail_state_upd_def)     
+    com_list_to_seq_tail_state_upd_def)
 
 lemma com_list_to_seq_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ com_list_to_seq_tail_pref) com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix com_list_to_seq_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma com_list_to_seq_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -690,7 +690,7 @@ lemma com_list_to_seq_tail_IMP_Minus_correct_time:
   subgoal premises p using p(27) by fastforce
   apply(erule com_list_to_seq_acc_IMP_Minus_correct[where vars = "com_list_to_seq_tail_IMP_vars"])
   subgoal premises p using p(29) by fastforce
-  by(fastforce simp add: Let_def com_list_to_seq_tail_state_translators)   
+  by(fastforce simp add: Let_def com_list_to_seq_tail_state_translators)
 
 lemma com_list_to_seq_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) com_list_to_seq_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -712,7 +712,7 @@ subsection \<open>binary_assign_constant\<close>
 subsubsection \<open>binary_assign_constant_acc_aux\<close>
 
 fun binary_assign_constant_acc_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_assign_constant_acc_aux diff n v x = 
+  "binary_assign_constant_acc_aux diff n v x =
     (cons (var_bit_to_var_tail(prod_encode (v,n-diff))) (cons (nth_bit_tail x (n-diff)) 0))"
 
 record binary_assign_constant_acc_aux_state =
@@ -774,9 +774,9 @@ definition "binary_assign_constant_acc_aux_state_upd s \<equiv>
 function binary_assign_constant_acc_aux_imp ::
   "binary_assign_constant_acc_aux_state \<Rightarrow> binary_assign_constant_acc_aux_state" where
   "binary_assign_constant_acc_aux_imp s =
-  (let 
+  (let
       ret = binary_assign_constant_acc_aux_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -791,7 +791,7 @@ lemma binary_assign_constant_acc_aux_imp_correct[let_function_correctness]:
       (binary_assign_constant_acc_aux_v s) (binary_assign_constant_acc_aux_x s)"
   apply (simp only: binary_assign_constant_acc_aux_imp.simps Let_def binary_assign_constant_acc_aux_state_upd_def
   prod_encode_imp_correct var_bit_to_var_tail_imp_correct nth_bit_tail_imp_correct cons_imp_correct)
-  by (simp add: nth_bit_tail'_correct)    
+  by (simp add: nth_bit_tail'_correct)
 
 function binary_assign_constant_acc_aux_imp_time ::
   "nat \<Rightarrow> binary_assign_constant_acc_aux_state \<Rightarrow> nat" where
@@ -867,19 +867,19 @@ lemma binary_assign_constant_acc_aux_imp_time_acc:
   "(binary_assign_constant_acc_aux_imp_time (Suc t) s) = Suc (binary_assign_constant_acc_aux_imp_time t s)"
   by (induction t s rule: binary_assign_constant_acc_aux_imp_time.induct)
     ((subst (1 2) binary_assign_constant_acc_aux_imp_time.simps);
-      (simp add: binary_assign_constant_acc_aux_state_upd_def Let_def))            
+      (simp add: binary_assign_constant_acc_aux_state_upd_def Let_def))
 
 lemma binary_assign_constant_acc_aux_imp_time_acc_2_aux:
   "(binary_assign_constant_acc_aux_imp_time t s) = t + (binary_assign_constant_acc_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+
 
 lemma binary_assign_constant_acc_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_acc_aux_imp_time t s) = t + (binary_assign_constant_acc_aux_imp_time 0 s)"
-  by (rule binary_assign_constant_acc_aux_imp_time_acc_2_aux)            
+  by (rule binary_assign_constant_acc_aux_imp_time_acc_2_aux)
 
 lemma binary_assign_constant_acc_aux_imp_time_acc_3:
   "(binary_assign_constant_acc_aux_imp_time (a + b) s) = a + (binary_assign_constant_acc_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_aux_imp_time_acc)+
 
 abbreviation "binary_assign_constant_acc_aux_var_bit_to_var_tail_result \<equiv> ''var_bit_to_var_tail_result''"
 
@@ -978,18 +978,18 @@ lemma binary_assign_constant_acc_aux_IMP_Minus_correct_function:
   apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
   subgoal premises p using p(25) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
-  subgoal premises p using p(27) by fastforce      
+  subgoal premises p using p(27) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
   subgoal premises p using p(29) by fastforce
   by(fastforce_sorted_premises2 simp: binary_assign_constant_acc_aux_state_translators Let_def
-    binary_assign_constant_acc_aux_state_upd_def)        
+    binary_assign_constant_acc_aux_state_upd_def)
 
 lemma binary_assign_constant_acc_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_acc_aux_pref) binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_assign_constant_acc_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma binary_assign_constant_acc_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_assign_constant_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1004,7 +1004,7 @@ lemma binary_assign_constant_acc_aux_IMP_Minus_correct_time:
   apply(erule nth_bit_tail_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
   subgoal premises p using p(45) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
-  subgoal premises p using p(47) by fastforce      
+  subgoal premises p using p(47) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_assign_constant_acc_aux_IMP_vars"])
   subgoal premises p using p(49) by fastforce
   by(force simp: Let_def binary_assign_constant_acc_aux_state_translators)
@@ -1027,7 +1027,7 @@ subsubsection \<open>binary_assign_constant_acc\<close>
 
 fun binary_assign_constant_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
   "binary_assign_constant_acc' acc diff n v x = (if diff = 0 then acc else
-    binary_assign_constant_acc' (cons 2 (cons (cons 1 
+    binary_assign_constant_acc' (cons 2 (cons (cons 1
       (binary_assign_constant_acc_aux diff n v x))
       (cons acc 0) )) (diff-1) n v x )"
 
@@ -1117,7 +1117,7 @@ definition "binary_assign_constant_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas binary_assign_constant_acc_imp_subprogram_simps = 
+lemmas binary_assign_constant_acc_imp_subprogram_simps =
   binary_assign_constant_acc_state_upd_def
   binary_assign_constant_acc_imp_compute_loop_condition_def
   binary_assign_constant_acc_imp_after_loop_def
@@ -1148,7 +1148,7 @@ lemma binary_assign_constant_acc_imp_correct[let_function_correctness]:
   apply (subst binary_assign_constant_acc.simps)
   apply (simp del: binary_assign_constant_acc.simps add: binary_assign_constant_acc_imp_subprogram_simps Let_def
     binary_assign_constant_acc_aux_imp_correct cons_imp_correct)
-  done 
+  done
 
 definition "binary_assign_constant_acc_state_upd_time t s \<equiv>
   (let
@@ -1243,7 +1243,7 @@ definition "binary_assign_constant_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas binary_assign_constant_acc_imp_subprogram_time_simps = 
+lemmas binary_assign_constant_acc_imp_subprogram_time_simps =
   binary_assign_constant_acc_state_upd_time_def
   binary_assign_constant_acc_imp_compute_loop_condition_time_def
   binary_assign_constant_acc_imp_after_loop_time_def
@@ -1272,25 +1272,25 @@ termination
   apply (relation "measure (binary_assign_constant_acc_diff \<circ> snd)")
   by (simp add: binary_assign_constant_acc_imp_subprogram_time_simps)+
 
-declare binary_assign_constant_acc_imp_time.simps [simp del]   
+declare binary_assign_constant_acc_imp_time.simps [simp del]
 
 lemma binary_assign_constant_acc_imp_time_acc:
   "(binary_assign_constant_acc_imp_time (Suc t) s) = Suc (binary_assign_constant_acc_imp_time t s)"
   by (induction t s rule: binary_assign_constant_acc_imp_time.induct)
     ((subst (1 2) binary_assign_constant_acc_imp_time.simps);
-      (simp add: binary_assign_constant_acc_state_upd_def))            
+      (simp add: binary_assign_constant_acc_state_upd_def))
 
 lemma binary_assign_constant_acc_imp_time_acc_2_aux:
   "(binary_assign_constant_acc_imp_time t s) = t + (binary_assign_constant_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_acc_imp_time_acc)+
 
 lemma binary_assign_constant_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_acc_imp_time t s) = t + (binary_assign_constant_acc_imp_time 0 s)"
-  by (rule binary_assign_constant_acc_imp_time_acc_2_aux)            
+  by (rule binary_assign_constant_acc_imp_time_acc_2_aux)
 
 lemma binary_assign_constant_acc_imp_time_acc_3:
   "(binary_assign_constant_acc_imp_time (a + b) s) = a + (binary_assign_constant_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_acc_imp_time_acc)+
 
 abbreviation "binary_assign_constant_acc_while_cond \<equiv> ''condition''"
 abbreviation "binary_assign_constant_acc_cons_result \<equiv> ''cons_result''"
@@ -1474,14 +1474,14 @@ lemma binary_assign_constant_acc_IMP_Minus_correct_function:
       subgoal premises p using p(38) by fastforce
       by (fastforce_sorted_premises simp: binary_assign_constant_acc_imp_subprogram_simps
           binary_assign_constant_acc_state_translators Let_def)
-    done  
+    done
 
 lemma binary_assign_constant_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_acc_pref) binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_assign_constant_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast   
+  by blast
 
 lemmas binary_assign_constant_acc_complete_time_simps =
   binary_assign_constant_acc_imp_subprogram_time_simps
@@ -1548,7 +1548,7 @@ lemma binary_assign_constant_acc_IMP_Minus_correct_time:
     apply(simp only: binary_assign_constant_acc_complete_time_simps Let_def)
     by(force simp: Let_def binary_assign_constant_acc_state_translators)
 
-  done   
+  done
 
 lemma binary_assign_constant_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_assign_constant_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -1609,9 +1609,9 @@ definition "binary_assign_constant_tail_state_upd s =
 function binary_assign_constant_tail_imp ::
   "binary_assign_constant_tail_state \<Rightarrow> binary_assign_constant_tail_state" where
   "binary_assign_constant_tail_imp s =
-  (let 
+  (let
       ret = binary_assign_constant_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -1679,19 +1679,19 @@ lemma binary_assign_constant_tail_imp_time_acc:
   "(binary_assign_constant_tail_imp_time (Suc t) s) = Suc (binary_assign_constant_tail_imp_time t s)"
   by (induction t s rule: binary_assign_constant_tail_imp_time.induct)
     ((subst (1 2) binary_assign_constant_tail_imp_time.simps);
-      (simp add: binary_assign_constant_tail_state_upd_def Let_def))            
+      (simp add: binary_assign_constant_tail_state_upd_def Let_def))
 
 lemma binary_assign_constant_tail_imp_time_acc_2_aux:
   "(binary_assign_constant_tail_imp_time t s) = t + (binary_assign_constant_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_assign_constant_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_assign_constant_tail_imp_time_acc)+
 
 lemma binary_assign_constant_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_assign_constant_tail_imp_time t s) = t + (binary_assign_constant_tail_imp_time 0 s)"
-  by (rule binary_assign_constant_tail_imp_time_acc_2_aux)            
+  by (rule binary_assign_constant_tail_imp_time_acc_2_aux)
 
 lemma binary_assign_constant_tail_imp_time_acc_3:
   "(binary_assign_constant_tail_imp_time (a + b) s) = a + (binary_assign_constant_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_assign_constant_tail_imp_time_acc)+    
+  by (induction a arbitrary: b s) (simp add: binary_assign_constant_tail_imp_time_acc)+
 
 definition binary_assign_constant_tail_IMP_Minus where
   "binary_assign_constant_tail_IMP_Minus \<equiv>
@@ -1760,14 +1760,14 @@ lemma binary_assign_constant_tail_IMP_Minus_correct_function:
   apply(erule binary_assign_constant_acc_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
   subgoal premises p using p(14) by fastforce
   by(fastforce simp: binary_assign_constant_tail_state_translators
-    binary_assign_constant_tail_state_upd_def) 
+    binary_assign_constant_tail_state_upd_def)
 
 lemma binary_assign_constant_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_assign_constant_tail_pref) binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_assign_constant_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma binary_assign_constant_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1779,7 +1779,7 @@ lemma binary_assign_constant_tail_IMP_Minus_correct_time:
   subgoal premises p using p(23) by fastforce
   apply(erule binary_assign_constant_acc_IMP_Minus_correct[where vars = "binary_assign_constant_tail_IMP_vars"])
   subgoal premises p using p(25) by fastforce
-  by(fastforce simp add: Let_def binary_assign_constant_tail_state_translators) 
+  by(fastforce simp add: Let_def binary_assign_constant_tail_state_translators)
 
 lemma binary_assign_constant_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_assign_constant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -1810,7 +1810,7 @@ abbreviation "copy_var_to_operand_aux1_op_str \<equiv> ''op''"
 abbreviation "copy_var_to_operand_aux1_diff_str \<equiv> ''diff''"
 abbreviation "copy_var_to_operand_aux1_ret_str \<equiv> ''ret''"
 
-definition "copy_var_to_operand_aux1_imp_state_upd s \<equiv> 
+definition "copy_var_to_operand_aux1_imp_state_upd s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux1_op s;
    prod_encode_b' = copy_var_to_operand_aux1_diff s;
@@ -1838,14 +1838,14 @@ definition "copy_var_to_operand_aux1_imp_state_upd s \<equiv>
   in
    ret)"
 
-function copy_var_to_operand_aux1_imp 
- :: "copy_var_to_operand_aux1_state \<Rightarrow> copy_var_to_operand_aux1_state" where 
-"copy_var_to_operand_aux1_imp s = 
+function copy_var_to_operand_aux1_imp
+ :: "copy_var_to_operand_aux1_state \<Rightarrow> copy_var_to_operand_aux1_state" where
+"copy_var_to_operand_aux1_imp s =
   (let
      ret = copy_var_to_operand_aux1_imp_state_upd s
    in
     ret)" by simp+
-termination 
+termination
   by (relation "measure copy_var_to_operand_aux1_op", simp)
 
 declare copy_var_to_operand_aux1_imp.simps[simp del]
@@ -1855,11 +1855,11 @@ lemma copy_var_to_operand_aux1_imp_correct[let_function_correctness]:
     = ((var_bit_to_var_tail (prod_encode (
         (copy_var_to_operand_aux1_op s), (copy_var_to_operand_aux1_diff s)))) ## 0)"
 apply (subst copy_var_to_operand_aux1_imp.simps copy_var_to_operand_aux1_imp_state_upd_def)+
-apply (auto simp add: Let_def var_bit_to_var_tail_imp_correct 
+apply (auto simp add: Let_def var_bit_to_var_tail_imp_correct
   cons_imp_correct prod_encode_imp_correct)
-done 
+done
 
-definition "copy_var_to_operand_aux1_imp_state_upd_time t s \<equiv> 
+definition "copy_var_to_operand_aux1_imp_state_upd_time t s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux1_op s;
    t = t + 2;
@@ -1900,38 +1900,38 @@ definition "copy_var_to_operand_aux1_imp_state_upd_time t s \<equiv>
   in
    t)"
 
-function copy_var_to_operand_aux1_imp_time 
- :: "nat \<Rightarrow> copy_var_to_operand_aux1_state \<Rightarrow> nat" where 
-"copy_var_to_operand_aux1_imp_time t s = 
+function copy_var_to_operand_aux1_imp_time
+ :: "nat \<Rightarrow> copy_var_to_operand_aux1_state \<Rightarrow> nat" where
+"copy_var_to_operand_aux1_imp_time t s =
   (let
      ret = copy_var_to_operand_aux1_imp_state_upd s;
      t = t + copy_var_to_operand_aux1_imp_state_upd_time 0 s
    in
     t)" by auto
-termination 
+termination
   by (relation "measure (copy_var_to_operand_aux1_op \<circ> snd)", simp)
 
-definition "copy_var_to_operand_aux1_IMP_Minus \<equiv> 
+definition "copy_var_to_operand_aux1_IMP_Minus \<equiv>
   (prod_encode_prefix @ prod_encode_a_str) ::= A (V copy_var_to_operand_aux1_op_str);;
   (prod_encode_prefix @ prod_encode_b_str) ::= A (V copy_var_to_operand_aux1_diff_str);;
   (prod_encode_prefix @ prod_encode_ret_str) ::= A (N 0);;
   invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
-  
+
   (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_n_str) ::= A (V (prod_encode_prefix @ prod_encode_ret_str));;
   (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str) ::= A (N 0);;
   invoke_subprogram var_bit_to_var_tail_prefix var_bit_to_var_tail_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (var_bit_to_var_tail_prefix @ var_bit_to_var_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   copy_var_to_operand_aux1_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
 
-abbreviation "copy_var_to_operand_aux1_IMP_vars \<equiv> 
+abbreviation "copy_var_to_operand_aux1_IMP_vars \<equiv>
   {copy_var_to_operand_aux1_op_str, copy_var_to_operand_aux1_diff_str, copy_var_to_operand_aux1_ret_str}"
 
-definition "copy_var_to_operand_aux1_imp_to_HOL_state p s \<equiv> 
+definition "copy_var_to_operand_aux1_imp_to_HOL_state p s \<equiv>
   \<lparr>copy_var_to_operand_aux1_op = s (add_prefix p copy_var_to_operand_aux1_op_str),
   copy_var_to_operand_aux1_diff = s (add_prefix p copy_var_to_operand_aux1_diff_str),
   copy_var_to_operand_aux1_ret = s (add_prefix p copy_var_to_operand_aux1_ret_str)\<rparr>"
@@ -1939,7 +1939,7 @@ definition "copy_var_to_operand_aux1_imp_to_HOL_state p s \<equiv>
 lemmas copy_var_to_operand_aux1_state_translators =
   copy_var_to_operand_aux1_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
-  var_bit_to_var_tail_imp_to_HOL_state_def 
+  var_bit_to_var_tail_imp_to_HOL_state_def
   prod_encode_imp_to_HOL_state_def
 
 lemma copy_var_to_operand_aux1_IMP_Minus_correct_function:
@@ -1956,7 +1956,7 @@ lemma copy_var_to_operand_aux1_IMP_Minus_correct_function:
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux1_IMP_vars])
   subgoal premises p using p(16) by fastforce
   apply (force simp add: copy_var_to_operand_aux1_state_translators Let_def)
-  done 
+  done
 
 lemma copy_var_to_operand_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_var_to_operand_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1971,7 +1971,7 @@ lemma copy_var_to_operand_aux1_IMP_Minus_correct_time:
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux1_IMP_vars])
   subgoal premises p using p(27) by fastforce
   apply (force simp add: copy_var_to_operand_aux1_state_translators Let_def)
-  done 
+  done
 
 lemma copy_var_to_operand_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_var_to_operand_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -1982,7 +1982,7 @@ lemma copy_var_to_operand_aux1_IMP_Minus_correct:
           (copy_var_to_operand_aux1_imp (copy_var_to_operand_aux1_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_var_to_operand_aux1_IMP_Minus_correct_function 
+  using copy_var_to_operand_aux1_IMP_Minus_correct_function
       copy_var_to_operand_aux1_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -1999,7 +1999,7 @@ abbreviation "copy_var_to_operand_aux2_op_str \<equiv> ''op''"
 abbreviation "copy_var_to_operand_aux2_diff_str \<equiv> ''diff''"
 abbreviation "copy_var_to_operand_aux2_ret_str \<equiv> ''ret''"
 
-definition "copy_var_to_operand_aux2_imp_state_upd s \<equiv> 
+definition "copy_var_to_operand_aux2_imp_state_upd s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux2_op s;
    prod_encode_b' = copy_var_to_operand_aux2_diff s;
@@ -2039,14 +2039,14 @@ definition "copy_var_to_operand_aux2_imp_state_upd s \<equiv>
   in
    ret)"
 
-function copy_var_to_operand_aux2_imp 
- :: "copy_var_to_operand_aux2_state \<Rightarrow> copy_var_to_operand_aux2_state" where 
-"copy_var_to_operand_aux2_imp s = 
+function copy_var_to_operand_aux2_imp
+ :: "copy_var_to_operand_aux2_state \<Rightarrow> copy_var_to_operand_aux2_state" where
+"copy_var_to_operand_aux2_imp s =
   (let
      ret = copy_var_to_operand_aux2_imp_state_upd s
    in
     ret)" by simp+
-termination 
+termination
   by (relation "measure copy_var_to_operand_aux2_op", simp)
 
 declare copy_var_to_operand_aux2_imp.simps[simp del]
@@ -2056,11 +2056,11 @@ lemma copy_var_to_operand_aux2_imp_correct[let_function_correctness]:
     = (1 ## (operand_bit_to_var_tail (prod_encode (
         (copy_var_to_operand_aux2_op s), (copy_var_to_operand_aux2_diff s)))) ## 1 ## 0)"
 apply (subst copy_var_to_operand_aux2_imp.simps copy_var_to_operand_aux2_imp_state_upd_def)+
-apply (auto simp add: Let_def operand_bit_to_var_tail_imp_correct 
+apply (auto simp add: Let_def operand_bit_to_var_tail_imp_correct
   cons_imp_correct prod_encode_imp_correct)
-done 
+done
 
-definition "copy_var_to_operand_aux2_imp_state_upd_time t s \<equiv> 
+definition "copy_var_to_operand_aux2_imp_state_upd_time t s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux2_op s;
    t = t + 2;
@@ -2121,23 +2121,23 @@ definition "copy_var_to_operand_aux2_imp_state_upd_time t s \<equiv>
   in
    t)"
 
-function copy_var_to_operand_aux2_imp_time 
- :: "nat \<Rightarrow> copy_var_to_operand_aux2_state \<Rightarrow> nat" where 
-"copy_var_to_operand_aux2_imp_time t s = 
+function copy_var_to_operand_aux2_imp_time
+ :: "nat \<Rightarrow> copy_var_to_operand_aux2_state \<Rightarrow> nat" where
+"copy_var_to_operand_aux2_imp_time t s =
   (let
      ret = copy_var_to_operand_aux2_imp_state_upd s;
      t = t + copy_var_to_operand_aux2_imp_state_upd_time 0 s
    in
     t)" by auto
-termination 
+termination
   by (relation "measure (copy_var_to_operand_aux2_op \<circ> snd)", simp)
 
-definition "copy_var_to_operand_aux2_IMP_Minus \<equiv> 
+definition "copy_var_to_operand_aux2_IMP_Minus \<equiv>
   (prod_encode_prefix @ prod_encode_a_str) ::= A (V copy_var_to_operand_aux2_op_str);;
   (prod_encode_prefix @ prod_encode_b_str) ::= A (V copy_var_to_operand_aux2_diff_str);;
   (prod_encode_prefix @ prod_encode_ret_str) ::= A (N 0);;
   invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
-  
+
   (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_n_str) ::= A (V (prod_encode_prefix @ prod_encode_ret_str));;
   (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str) ::= A (N 0);;
   invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus;;
@@ -2156,13 +2156,13 @@ definition "copy_var_to_operand_aux2_IMP_Minus \<equiv>
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   copy_var_to_operand_aux2_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
 
-abbreviation "copy_var_to_operand_aux2_IMP_vars \<equiv> 
+abbreviation "copy_var_to_operand_aux2_IMP_vars \<equiv>
   {copy_var_to_operand_aux2_op_str, copy_var_to_operand_aux2_diff_str, copy_var_to_operand_aux2_ret_str}"
 
-definition "copy_var_to_operand_aux2_imp_to_HOL_state p s \<equiv> 
+definition "copy_var_to_operand_aux2_imp_to_HOL_state p s \<equiv>
   \<lparr>copy_var_to_operand_aux2_op = s (add_prefix p copy_var_to_operand_aux2_op_str),
   copy_var_to_operand_aux2_diff = s (add_prefix p copy_var_to_operand_aux2_diff_str),
   copy_var_to_operand_aux2_ret = s (add_prefix p copy_var_to_operand_aux2_ret_str)\<rparr>"
@@ -2170,7 +2170,7 @@ definition "copy_var_to_operand_aux2_imp_to_HOL_state p s \<equiv>
 lemmas copy_var_to_operand_aux2_state_translators =
   copy_var_to_operand_aux2_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
-  operand_bit_to_var_tail_imp_to_HOL_state_def 
+  operand_bit_to_var_tail_imp_to_HOL_state_def
   prod_encode_imp_to_HOL_state_def
 
 lemma copy_var_to_operand_aux2_IMP_Minus_correct_function:
@@ -2188,11 +2188,11 @@ lemma copy_var_to_operand_aux2_IMP_Minus_correct_function:
   subgoal premises p using p(24) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux2_IMP_vars])
   subgoal premises p using p(26) by fastforce
-  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux2_IMP_vars 
+  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux2_IMP_vars
     \<union> {operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str}"])
   subgoal premises p using p(28) by fastforce
-  apply (force simp: copy_var_to_operand_aux2_state_translators Let_def) 
-  done 
+  apply (force simp: copy_var_to_operand_aux2_state_translators Let_def)
+  done
 
 lemma copy_var_to_operand_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_var_to_operand_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2208,11 +2208,11 @@ lemma copy_var_to_operand_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(43) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux2_IMP_vars])
   subgoal premises p using p(45) by fastforce
-  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux2_IMP_vars 
+  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux2_IMP_vars
     \<union> {operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str}"])
   subgoal premises p using p(47) by fastforce
-  apply (force simp: copy_var_to_operand_aux2_state_translators Let_def) 
-  done 
+  apply (force simp: copy_var_to_operand_aux2_state_translators Let_def)
+  done
 
 lemma copy_var_to_operand_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_var_to_operand_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -2223,7 +2223,7 @@ lemma copy_var_to_operand_aux2_IMP_Minus_correct:
           (copy_var_to_operand_aux2_imp (copy_var_to_operand_aux2_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_var_to_operand_aux2_IMP_Minus_correct_function 
+  using copy_var_to_operand_aux2_IMP_Minus_correct_function
       copy_var_to_operand_aux2_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -2240,7 +2240,7 @@ abbreviation "copy_var_to_operand_aux3_op_str \<equiv> ''op''"
 abbreviation "copy_var_to_operand_aux3_diff_str \<equiv> ''diff''"
 abbreviation "copy_var_to_operand_aux3_ret_str \<equiv> ''ret''"
 
-definition "copy_var_to_operand_aux3_imp_state_upd s \<equiv> 
+definition "copy_var_to_operand_aux3_imp_state_upd s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux3_op s;
    prod_encode_b' = copy_var_to_operand_aux3_diff s;
@@ -2280,14 +2280,14 @@ definition "copy_var_to_operand_aux3_imp_state_upd s \<equiv>
   in
    ret)"
 
-function copy_var_to_operand_aux3_imp 
- :: "copy_var_to_operand_aux3_state \<Rightarrow> copy_var_to_operand_aux3_state" where 
-"copy_var_to_operand_aux3_imp s = 
+function copy_var_to_operand_aux3_imp
+ :: "copy_var_to_operand_aux3_state \<Rightarrow> copy_var_to_operand_aux3_state" where
+"copy_var_to_operand_aux3_imp s =
   (let
      ret = copy_var_to_operand_aux3_imp_state_upd s
    in
     ret)" by simp+
-termination 
+termination
   by (relation "measure copy_var_to_operand_aux3_op", simp)
 
 declare copy_var_to_operand_aux3_imp.simps[simp del]
@@ -2297,11 +2297,11 @@ lemma copy_var_to_operand_aux3_imp_correct[let_function_correctness]:
     = (1 ## (operand_bit_to_var_tail (prod_encode (
         (copy_var_to_operand_aux3_op s), (copy_var_to_operand_aux3_diff s)))) ## 0 ## 0)"
 apply (subst copy_var_to_operand_aux3_imp.simps copy_var_to_operand_aux3_imp_state_upd_def)+
-apply (auto simp add: Let_def operand_bit_to_var_tail_imp_correct 
+apply (auto simp add: Let_def operand_bit_to_var_tail_imp_correct
   cons_imp_correct prod_encode_imp_correct)
-done 
+done
 
-definition "copy_var_to_operand_aux3_imp_state_upd_time t s \<equiv> 
+definition "copy_var_to_operand_aux3_imp_state_upd_time t s \<equiv>
  (let
    prod_encode_a' = copy_var_to_operand_aux3_op s;
    t = t + 2;
@@ -2362,23 +2362,23 @@ definition "copy_var_to_operand_aux3_imp_state_upd_time t s \<equiv>
   in
    t)"
 
-function copy_var_to_operand_aux3_imp_time 
- :: "nat \<Rightarrow> copy_var_to_operand_aux3_state \<Rightarrow> nat" where 
-"copy_var_to_operand_aux3_imp_time t s = 
+function copy_var_to_operand_aux3_imp_time
+ :: "nat \<Rightarrow> copy_var_to_operand_aux3_state \<Rightarrow> nat" where
+"copy_var_to_operand_aux3_imp_time t s =
   (let
      ret = copy_var_to_operand_aux3_imp_state_upd s;
      t = t + copy_var_to_operand_aux3_imp_state_upd_time 0 s
    in
     t)" by auto
-termination 
+termination
   by (relation "measure (copy_var_to_operand_aux3_op \<circ> snd)", simp)
 
-definition "copy_var_to_operand_aux3_IMP_Minus \<equiv> 
+definition "copy_var_to_operand_aux3_IMP_Minus \<equiv>
   (prod_encode_prefix @ prod_encode_a_str) ::= A (V copy_var_to_operand_aux3_op_str);;
   (prod_encode_prefix @ prod_encode_b_str) ::= A (V copy_var_to_operand_aux3_diff_str);;
   (prod_encode_prefix @ prod_encode_ret_str) ::= A (N 0);;
   invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
-  
+
   (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_n_str) ::= A (V (prod_encode_prefix @ prod_encode_ret_str));;
   (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str) ::= A (N 0);;
   invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus;;
@@ -2397,13 +2397,13 @@ definition "copy_var_to_operand_aux3_IMP_Minus \<equiv>
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   copy_var_to_operand_aux3_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
 
-abbreviation "copy_var_to_operand_aux3_IMP_vars \<equiv> 
+abbreviation "copy_var_to_operand_aux3_IMP_vars \<equiv>
   {copy_var_to_operand_aux3_op_str, copy_var_to_operand_aux3_diff_str, copy_var_to_operand_aux3_ret_str}"
 
-definition "copy_var_to_operand_aux3_imp_to_HOL_state p s \<equiv> 
+definition "copy_var_to_operand_aux3_imp_to_HOL_state p s \<equiv>
   \<lparr>copy_var_to_operand_aux3_op = s (add_prefix p copy_var_to_operand_aux3_op_str),
   copy_var_to_operand_aux3_diff = s (add_prefix p copy_var_to_operand_aux3_diff_str),
   copy_var_to_operand_aux3_ret = s (add_prefix p copy_var_to_operand_aux3_ret_str)\<rparr>"
@@ -2411,7 +2411,7 @@ definition "copy_var_to_operand_aux3_imp_to_HOL_state p s \<equiv>
 lemmas copy_var_to_operand_aux3_state_translators =
   copy_var_to_operand_aux3_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
-  operand_bit_to_var_tail_imp_to_HOL_state_def 
+  operand_bit_to_var_tail_imp_to_HOL_state_def
   prod_encode_imp_to_HOL_state_def
 
 lemma copy_var_to_operand_aux3_IMP_Minus_correct_function:
@@ -2429,11 +2429,11 @@ lemma copy_var_to_operand_aux3_IMP_Minus_correct_function:
   subgoal premises p using p(24) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux3_IMP_vars])
   subgoal premises p using p(26) by fastforce
-  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux3_IMP_vars 
+  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux3_IMP_vars
     \<union> {operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str}"])
   subgoal premises p using p(28) by fastforce
-  apply (force simp: copy_var_to_operand_aux3_state_translators Let_def) 
-  done 
+  apply (force simp: copy_var_to_operand_aux3_state_translators Let_def)
+  done
 
 lemma copy_var_to_operand_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_var_to_operand_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2449,11 +2449,11 @@ lemma copy_var_to_operand_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(43) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux3_IMP_vars])
   subgoal premises p using p(45) by fastforce
-  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux3_IMP_vars 
+  apply (erule cons_IMP_Minus_correct[where vars="copy_var_to_operand_aux3_IMP_vars
     \<union> {operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str}"])
   subgoal premises p using p(47) by fastforce
-  apply (force simp: copy_var_to_operand_aux3_state_translators Let_def) 
-  done 
+  apply (force simp: copy_var_to_operand_aux3_state_translators Let_def)
+  done
 
 lemma copy_var_to_operand_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_var_to_operand_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -2464,7 +2464,7 @@ lemma copy_var_to_operand_aux3_IMP_Minus_correct:
           (copy_var_to_operand_aux3_imp (copy_var_to_operand_aux3_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_var_to_operand_aux3_IMP_Minus_correct_function 
+  using copy_var_to_operand_aux3_IMP_Minus_correct_function
       copy_var_to_operand_aux3_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -2475,7 +2475,7 @@ record copy_var_to_operand_aux4_state=
   copy_var_to_operand_aux4_diff::nat
   copy_var_to_operand_aux4_i::nat
   copy_var_to_operand_aux4_op::nat
-  copy_var_to_operand_aux4_v::nat 
+  copy_var_to_operand_aux4_v::nat
   copy_var_to_operand_aux4_ret::nat
 
 abbreviation "copy_var_to_operand_aux4_prefix \<equiv> ''copy_var_to_operand_aux4_prefix.''"
@@ -2485,7 +2485,7 @@ abbreviation "copy_var_to_operand_aux4_op_str \<equiv> ''op''"
 abbreviation "copy_var_to_operand_aux4_v_str \<equiv> ''v''"
 abbreviation "copy_var_to_operand_aux4_ret_str \<equiv> ''ret''"
 
-definition "copy_var_to_operand_aux4_state_upd s \<equiv> 
+definition "copy_var_to_operand_aux4_state_upd s \<equiv>
  (let
    copy_var_to_operand_aux3_op' = copy_var_to_operand_aux4_op s;
    copy_var_to_operand_aux3_diff' = copy_var_to_operand_aux4_i s - copy_var_to_operand_aux4_diff s;
@@ -2524,13 +2524,13 @@ definition "copy_var_to_operand_aux4_state_upd s \<equiv>
   copy_var_to_operand_aux1_ret_state = copy_var_to_operand_aux1_imp copy_var_to_operand_aux1_state;
 
  cons_h' = copy_var_to_operand_aux1_ret copy_var_to_operand_aux1_ret_state;
- cons_t' = cons_ret cons_ret_state; 
+ cons_t' = cons_ret cons_ret_state;
  cons_ret' = 0;
  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
  cons_ret_state = cons_imp cons_state;
 
  cons_h' = 3;
- cons_t' = cons_ret cons_ret_state; 
+ cons_t' = cons_ret cons_ret_state;
  cons_ret' = 0;
  cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
  cons_ret_state = cons_imp cons_state;
@@ -2544,34 +2544,34 @@ definition "copy_var_to_operand_aux4_state_upd s \<equiv>
  in
   ret)"
 
-function copy_var_to_operand_aux4_imp 
+function copy_var_to_operand_aux4_imp
   :: "copy_var_to_operand_aux4_state \<Rightarrow> copy_var_to_operand_aux4_state" where
-"copy_var_to_operand_aux4_imp s = 
+"copy_var_to_operand_aux4_imp s =
   (let
     ret = copy_var_to_operand_aux4_state_upd s
    in
     ret)" by simp+
-termination 
+termination
  by (relation "measure copy_var_to_operand_aux4_diff", simp)
 
 declare copy_var_to_operand_aux4_imp.simps[simp del]
 
 lemma copy_var_to_operand_aux4_imp_correct:
-  "copy_var_to_operand_aux4_ret (copy_var_to_operand_aux4_imp s) = 
-    (3 ## ((var_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_v s), 
+  "copy_var_to_operand_aux4_ret (copy_var_to_operand_aux4_imp s) =
+    (3 ## ((var_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_v s),
       (copy_var_to_operand_aux4_i s) - (copy_var_to_operand_aux4_diff s)))) ## 0)
-    ## (1 ## (operand_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_op s), 
+    ## (1 ## (operand_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_op s),
        (copy_var_to_operand_aux4_i s) - (copy_var_to_operand_aux4_diff s)))) ## 1 ## 0)
-    ## (1 ## (operand_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_op s), 
+    ## (1 ## (operand_bit_to_var_tail (prod_encode ((copy_var_to_operand_aux4_op s),
       (copy_var_to_operand_aux4_i s) - (copy_var_to_operand_aux4_diff s)))) ## 0 ## 0)
     ## 0)"
   apply (simp only: copy_var_to_operand_aux4_imp.simps copy_var_to_operand_aux4_state_upd_def)
-  apply (auto simp add: cons_imp_correct Let_def 
+  apply (auto simp add: cons_imp_correct Let_def
     copy_var_to_operand_aux1_imp_correct copy_var_to_operand_aux3_imp_correct
     copy_var_to_operand_aux2_imp_correct)
-  done 
+  done
 
-definition "copy_var_to_operand_aux4_state_upd_time t s \<equiv> 
+definition "copy_var_to_operand_aux4_state_upd_time t s \<equiv>
  (let
    copy_var_to_operand_aux3_op' = copy_var_to_operand_aux4_op s;
    t = t + 2;
@@ -2631,7 +2631,7 @@ definition "copy_var_to_operand_aux4_state_upd_time t s \<equiv>
 
  cons_h' = copy_var_to_operand_aux1_ret copy_var_to_operand_aux1_ret_state;
    t = t + 2;
- cons_t' = cons_ret cons_ret_state; 
+ cons_t' = cons_ret cons_ret_state;
    t = t + 2;
  cons_ret' = 0;
    t = t + 2;
@@ -2641,7 +2641,7 @@ definition "copy_var_to_operand_aux4_state_upd_time t s \<equiv>
 
  cons_h' = 3;
    t = t + 2;
- cons_t' = cons_ret cons_ret_state; 
+ cons_t' = cons_ret cons_ret_state;
    t = t + 2;
  cons_ret' = 0;
    t = t + 2;
@@ -2660,20 +2660,20 @@ definition "copy_var_to_operand_aux4_state_upd_time t s \<equiv>
   t)"
 
 
-function copy_var_to_operand_aux4_imp_time 
+function copy_var_to_operand_aux4_imp_time
   :: "nat \<Rightarrow> copy_var_to_operand_aux4_state \<Rightarrow> nat" where
-"copy_var_to_operand_aux4_imp_time t s = 
+"copy_var_to_operand_aux4_imp_time t s =
   (let
     ret = copy_var_to_operand_aux4_state_upd s;
     t = t + copy_var_to_operand_aux4_state_upd_time 0 s
    in
     t)" by auto
-termination 
+termination
  by (relation "measure (copy_var_to_operand_aux4_diff \<circ> snd)", simp)
 
 declare copy_var_to_operand_aux4_imp_time.simps[simp del]
 
-definition "copy_var_to_operand_aux4_IMP_Minus \<equiv> 
+definition "copy_var_to_operand_aux4_IMP_Minus \<equiv>
   (copy_var_to_operand_aux3_prefix @ copy_var_to_operand_aux3_op_str)
     ::= A (V copy_var_to_operand_aux4_op_str);;
   (copy_var_to_operand_aux3_prefix @ copy_var_to_operand_aux3_diff_str)
@@ -2681,7 +2681,7 @@ definition "copy_var_to_operand_aux4_IMP_Minus \<equiv>
   (copy_var_to_operand_aux3_prefix @ copy_var_to_operand_aux3_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_var_to_operand_aux3_prefix copy_var_to_operand_aux3_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (copy_var_to_operand_aux3_prefix @ copy_var_to_operand_aux3_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -2694,12 +2694,12 @@ definition "copy_var_to_operand_aux4_IMP_Minus \<equiv>
   (copy_var_to_operand_aux2_prefix @ copy_var_to_operand_aux2_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_var_to_operand_aux2_prefix copy_var_to_operand_aux2_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (copy_var_to_operand_aux2_prefix @ copy_var_to_operand_aux2_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (copy_var_to_operand_aux1_prefix @ copy_var_to_operand_aux1_op_str)
     ::= A (V copy_var_to_operand_aux4_v_str);;
   (copy_var_to_operand_aux1_prefix @ copy_var_to_operand_aux1_diff_str)
@@ -2707,43 +2707,43 @@ definition "copy_var_to_operand_aux4_IMP_Minus \<equiv>
   (copy_var_to_operand_aux1_prefix @ copy_var_to_operand_aux1_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_var_to_operand_aux1_prefix copy_var_to_operand_aux1_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (copy_var_to_operand_aux1_prefix @ copy_var_to_operand_aux1_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 3);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   copy_var_to_operand_aux4_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
 
-abbreviation "copy_var_to_operand_aux4_IMP_vars \<equiv> 
+abbreviation "copy_var_to_operand_aux4_IMP_vars \<equiv>
  {copy_var_to_operand_aux4_diff_str, copy_var_to_operand_aux4_i_str,
  copy_var_to_operand_aux4_op_str, copy_var_to_operand_aux4_v_str}"
 
-definition "copy_var_to_operand_aux4_imp_to_HOL_state p s = 
+definition "copy_var_to_operand_aux4_imp_to_HOL_state p s =
   \<lparr>copy_var_to_operand_aux4_diff = s (add_prefix p copy_var_to_operand_aux4_diff_str),
   copy_var_to_operand_aux4_i = s (add_prefix p copy_var_to_operand_aux4_i_str),
   copy_var_to_operand_aux4_op = s (add_prefix p copy_var_to_operand_aux4_op_str),
   copy_var_to_operand_aux4_v = s (add_prefix p copy_var_to_operand_aux4_v_str),
   copy_var_to_operand_aux4_ret = s (add_prefix p copy_var_to_operand_aux4_ret_str)\<rparr>"
 
-lemmas copy_var_to_operand_aux4_state_translators = 
+lemmas copy_var_to_operand_aux4_state_translators =
   copy_var_to_operand_aux4_imp_to_HOL_state_def
   copy_var_to_operand_aux3_imp_to_HOL_state_def
-  copy_var_to_operand_aux2_imp_to_HOL_state_def 
+  copy_var_to_operand_aux2_imp_to_HOL_state_def
   copy_var_to_operand_aux1_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
-    
+
 lemma copy_var_to_operand_aux4_IMP_Minus_correct_function:
  "(invoke_subprogram p copy_var_to_operand_aux4_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p copy_var_to_operand_aux4_ret_str)
-      = copy_var_to_operand_aux4_ret (copy_var_to_operand_aux4_imp (copy_var_to_operand_aux4_imp_to_HOL_state p s))" 
+      = copy_var_to_operand_aux4_ret (copy_var_to_operand_aux4_imp (copy_var_to_operand_aux4_imp_to_HOL_state p s))"
   apply (simp only: copy_var_to_operand_aux4_imp.simps copy_var_to_operand_aux4_state_upd_def)
-  apply (simp only: copy_var_to_operand_aux4_IMP_Minus_def prefix_simps)  
+  apply (simp only: copy_var_to_operand_aux4_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
   apply (erule copy_var_to_operand_aux3_IMP_Minus_correct[where vars=copy_var_to_operand_aux4_IMP_vars])
   subgoal premises p using p(29) by fastforce
@@ -2764,9 +2764,9 @@ lemma copy_var_to_operand_aux4_IMP_Minus_correct_function:
 
 lemma copy_var_to_operand_aux4_IMP_Minus_correct_time:
  "(invoke_subprogram p copy_var_to_operand_aux4_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = copy_var_to_operand_aux4_imp_time 0 (copy_var_to_operand_aux4_imp_to_HOL_state p s)" 
+     t = copy_var_to_operand_aux4_imp_time 0 (copy_var_to_operand_aux4_imp_to_HOL_state p s)"
   apply (simp only: copy_var_to_operand_aux4_imp_time.simps copy_var_to_operand_aux4_state_upd_time_def)
-  apply (simp only: copy_var_to_operand_aux4_IMP_Minus_def prefix_simps)  
+  apply (simp only: copy_var_to_operand_aux4_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule copy_var_to_operand_aux3_IMP_Minus_correct[where vars=copy_var_to_operand_aux4_IMP_vars])
   subgoal premises p using p(57) by fastforce
@@ -2794,19 +2794,19 @@ lemma copy_var_to_operand_aux4_IMP_Minus_correct:
           (copy_var_to_operand_aux4_imp (copy_var_to_operand_aux4_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_var_to_operand_aux4_IMP_Minus_correct_function 
+  using copy_var_to_operand_aux4_IMP_Minus_correct_function
       copy_var_to_operand_aux4_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
 subsubsection copy_var_to_operand_aux5
 
-record copy_var_to_operand_aux5_state = 
+record copy_var_to_operand_aux5_state =
   copy_var_to_operand_aux5_acc::nat
   copy_var_to_operand_aux5_diff::nat
   copy_var_to_operand_aux5_i::nat
   copy_var_to_operand_aux5_op::nat
-  copy_var_to_operand_aux5_v::nat 
+  copy_var_to_operand_aux5_v::nat
   copy_var_to_operand_aux5_ret::nat
 
 abbreviation "copy_var_to_operand_aux5_prefix \<equiv> ''copy_var_to_operand_aux5.''"
@@ -2830,7 +2830,7 @@ definition "copy_var_to_operand_aux5_state_upd s \<equiv>
    copy_var_to_operand_aux4_op' = copy_var_to_operand_aux5_op s;
    copy_var_to_operand_aux4_v' = copy_var_to_operand_aux5_v s;
    copy_var_to_operand_aux4_ret' = 0;
-   copy_var_to_operand_aux4_state = 
+   copy_var_to_operand_aux4_state =
     \<lparr>copy_var_to_operand_aux4_diff = copy_var_to_operand_aux4_diff',
     copy_var_to_operand_aux4_i = copy_var_to_operand_aux4_i',
     copy_var_to_operand_aux4_op = copy_var_to_operand_aux4_op',
@@ -2860,21 +2860,21 @@ definition "copy_var_to_operand_aux5_state_upd s \<equiv>
   in
    ret)"
 
-function copy_var_to_operand_aux5_imp :: 
+function copy_var_to_operand_aux5_imp ::
   "copy_var_to_operand_aux5_state \<Rightarrow> copy_var_to_operand_aux5_state" where
-"copy_var_to_operand_aux5_imp s = 
+"copy_var_to_operand_aux5_imp s =
   (let
    ret =copy_var_to_operand_aux5_state_upd s
   in
    ret)" by simp+
-  termination 
+  termination
    by (relation "measure copy_var_to_operand_aux5_diff", simp)
 
 declare copy_var_to_operand_aux5_imp.simps[simp del]
 
-fun copy_var_to_operand_aux5 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"copy_var_to_operand_aux5 acc diff i op v = 
-  (2 ## 
+fun copy_var_to_operand_aux5 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+"copy_var_to_operand_aux5 acc diff i op v =
+  (2 ##
       (3 ## ((var_bit_to_var_tail (prod_encode (v, i - diff))) ## 0)
           ## (1 ## (operand_bit_to_var_tail (prod_encode (op, i - diff))) ## 1 ## 0)
           ## (1 ## (operand_bit_to_var_tail (prod_encode (op, i - diff))) ## 0 ## 0)
@@ -2883,12 +2883,12 @@ fun copy_var_to_operand_aux5 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Right
         ## 0)"
 
 lemma copy_var_to_operand_aux5_imp_correct:
-  "copy_var_to_operand_aux5_ret (copy_var_to_operand_aux5_imp s) = 
+  "copy_var_to_operand_aux5_ret (copy_var_to_operand_aux5_imp s) =
     copy_var_to_operand_aux5 (copy_var_to_operand_aux5_acc s) (copy_var_to_operand_aux5_diff s)
      (copy_var_to_operand_aux5_i s) (copy_var_to_operand_aux5_op s) (copy_var_to_operand_aux5_v s)"
 apply (subst copy_var_to_operand_aux5_imp.simps copy_var_to_operand_aux5_state_upd_def)+
 apply (auto simp add: copy_var_to_operand_aux4_imp_correct cons_imp_correct Let_def)
-done 
+done
 
 definition "copy_var_to_operand_aux5_state_upd_time t s \<equiv>
   (let
@@ -2912,7 +2912,7 @@ definition "copy_var_to_operand_aux5_state_upd_time t s \<equiv>
    t = t + 2;
    copy_var_to_operand_aux4_ret' = 0;
    t = t + 2;
-   copy_var_to_operand_aux4_state = 
+   copy_var_to_operand_aux4_state =
     \<lparr>copy_var_to_operand_aux4_diff = copy_var_to_operand_aux4_diff',
     copy_var_to_operand_aux4_i = copy_var_to_operand_aux4_i',
     copy_var_to_operand_aux4_op = copy_var_to_operand_aux4_op',
@@ -2952,15 +2952,15 @@ definition "copy_var_to_operand_aux5_state_upd_time t s \<equiv>
   in
    t)"
 
-function copy_var_to_operand_aux5_imp_time :: 
+function copy_var_to_operand_aux5_imp_time ::
   "nat \<Rightarrow> copy_var_to_operand_aux5_state \<Rightarrow> nat" where
-"copy_var_to_operand_aux5_imp_time t s = 
+"copy_var_to_operand_aux5_imp_time t s =
   (let
    ret =copy_var_to_operand_aux5_state_upd s;
    t = t + copy_var_to_operand_aux5_state_upd_time 0 s
   in
    t)" by auto
-  termination 
+  termination
    by (relation "measure (copy_var_to_operand_aux5_diff \<circ> snd)", simp)
 
 declare copy_var_to_operand_aux5_imp_time.simps[simp del]
@@ -2971,15 +2971,15 @@ definition "copy_var_to_operand_aux5_IMP_Minus \<equiv>
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
 
-  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_diff_str) 
+  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_diff_str)
     ::= A (V (copy_var_to_operand_aux5_diff_str));;
-  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_i_str) 
+  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_i_str)
     ::= A (V copy_var_to_operand_aux5_i_str);;
-  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_op_str) 
+  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_op_str)
     ::= A (V copy_var_to_operand_aux5_op_str);;
-  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_v_str) 
+  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_v_str)
     ::= A (V copy_var_to_operand_aux5_v_str);;
-  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_ret_str) 
+  (copy_var_to_operand_aux4_prefix @ copy_var_to_operand_aux4_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_var_to_operand_aux4_prefix copy_var_to_operand_aux4_IMP_Minus;;
 
@@ -3025,7 +3025,7 @@ lemma copy_var_to_operand_aux5_IMP_Minus_correct_function:
   apply (erule Seq_E)+
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
   subgoal premises p using p(19) by fastforce
-  apply (erule copy_var_to_operand_aux4_IMP_Minus_correct[where 
+  apply (erule copy_var_to_operand_aux4_IMP_Minus_correct[where
          vars="copy_var_to_operand_aux5_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(21) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
@@ -3033,14 +3033,14 @@ lemma copy_var_to_operand_aux5_IMP_Minus_correct_function:
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
   subgoal premises p using p(25) by fastforce
   apply (force simp: Let_def copy_var_to_operand_aux5_state_translators)
-  done 
+  done
 
 lemma copy_var_to_operand_aux5_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_var_to_operand_aux5_pref) copy_var_to_operand_aux5_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix copy_var_to_operand_aux5_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma copy_var_to_operand_aux5_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_var_to_operand_aux5_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3050,7 +3050,7 @@ lemma copy_var_to_operand_aux5_IMP_Minus_correct_time:
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
   subgoal premises p using p(37) by fastforce
-  apply (erule copy_var_to_operand_aux4_IMP_Minus_correct[where 
+  apply (erule copy_var_to_operand_aux4_IMP_Minus_correct[where
          vars="copy_var_to_operand_aux5_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(39) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
@@ -3058,7 +3058,7 @@ lemma copy_var_to_operand_aux5_IMP_Minus_correct_time:
   apply (erule cons_IMP_Minus_correct[where vars=copy_var_to_operand_aux5_IMP_vars])
   subgoal premises p using p(43) by fastforce
   apply (force simp: Let_def copy_var_to_operand_aux5_state_translators)
-  done 
+  done
 
 lemma copy_var_to_operand_aux5_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_var_to_operand_aux5_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3080,7 +3080,7 @@ record copy_var_to_operand_acc_state =
   copy_var_to_operand_acc_diff::nat
   copy_var_to_operand_acc_i::nat
   copy_var_to_operand_acc_op::nat
-  copy_var_to_operand_acc_v::nat 
+  copy_var_to_operand_acc_v::nat
   copy_var_to_operand_acc_ret::nat
 
 abbreviation "copy_var_to_operand_acc_prefix \<equiv> ''copy_var_to_operand_acc.''"
@@ -3092,14 +3092,14 @@ abbreviation "copy_var_to_operand_acc_v_str \<equiv> ''v''"
 abbreviation "copy_var_to_operand_acc_ret_str \<equiv> ''ret''"
 
 definition "copy_var_to_operand_acc_state_upd s \<equiv>
-  (let 
+  (let
    copy_var_to_operand_aux5_acc' = copy_var_to_operand_acc_acc s;
    copy_var_to_operand_aux5_diff' = copy_var_to_operand_acc_diff s;
    copy_var_to_operand_aux5_i' = copy_var_to_operand_acc_i s;
    copy_var_to_operand_aux5_op' = copy_var_to_operand_acc_op s;
    copy_var_to_operand_aux5_v' = copy_var_to_operand_acc_v s;
    copy_var_to_operand_aux5_ret' = 0;
-   copy_var_to_operand_aux5_state = 
+   copy_var_to_operand_aux5_state =
     \<lparr>copy_var_to_operand_aux5_acc = copy_var_to_operand_aux5_acc',
     copy_var_to_operand_aux5_diff = copy_var_to_operand_aux5_diff',
     copy_var_to_operand_aux5_i = copy_var_to_operand_aux5_i',
@@ -3120,14 +3120,14 @@ definition "copy_var_to_operand_acc_state_upd s \<equiv>
    ret)"
 
 
-definition "copy_var_to_operand_acc_imp_compute_loop_condition s \<equiv> 
+definition "copy_var_to_operand_acc_imp_compute_loop_condition s \<equiv>
  (let
   condition = copy_var_to_operand_acc_diff s
- in 
+ in
   condition)"
 
-definition "copy_var_to_operand_acc_imp_after_loop s \<equiv> 
- (let 
+definition "copy_var_to_operand_acc_imp_after_loop s \<equiv>
+ (let
   copy_var_to_operand_acc_ret' = copy_var_to_operand_acc_acc s;
   ret = \<lparr>copy_var_to_operand_acc_acc = copy_var_to_operand_acc_acc s,
         copy_var_to_operand_acc_diff = copy_var_to_operand_acc_diff s,
@@ -3138,7 +3138,7 @@ definition "copy_var_to_operand_acc_imp_after_loop s \<equiv>
  in
   ret)"
 
-lemmas copy_var_to_operand_acc_imp_subprogram_simps = 
+lemmas copy_var_to_operand_acc_imp_subprogram_simps =
   copy_var_to_operand_acc_state_upd_def
   copy_var_to_operand_acc_imp_compute_loop_condition_def
   copy_var_to_operand_acc_imp_after_loop_def
@@ -3164,16 +3164,16 @@ declare copy_var_to_operand_acc_imp.simps [simp del]
 
 lemma copy_var_to_operand_acc_imp_correct:
   "copy_var_to_operand_acc_ret (copy_var_to_operand_acc_imp s) =
-    copy_var_to_operand_acc (copy_var_to_operand_acc_acc s) 
+    copy_var_to_operand_acc (copy_var_to_operand_acc_acc s)
     (copy_var_to_operand_acc_diff s) (copy_var_to_operand_acc_i s)
     (copy_var_to_operand_acc_op s) (copy_var_to_operand_acc_v s)"
   apply (induction s rule: copy_var_to_operand_acc_imp.induct)
   apply (subst copy_var_to_operand_acc_imp.simps)
   apply (subst copy_var_to_operand_acc.simps)
-  apply (auto simp del: copy_var_to_operand_acc.simps simp add: 
+  apply (auto simp del: copy_var_to_operand_acc.simps simp add:
   copy_var_to_operand_acc_imp_subprogram_simps Let_def
   copy_var_to_operand_aux5_imp_correct)
-  done            
+  done
 
 
 definition "copy_var_to_operand_acc_state_upd_time t s \<equiv>
@@ -3190,7 +3190,7 @@ definition "copy_var_to_operand_acc_state_upd_time t s \<equiv>
    t = t + 2;
    copy_var_to_operand_aux5_ret' = 0;
    t = t + 2;
-   copy_var_to_operand_aux5_state = 
+   copy_var_to_operand_aux5_state =
     \<lparr>copy_var_to_operand_aux5_acc = copy_var_to_operand_aux5_acc',
     copy_var_to_operand_aux5_diff = copy_var_to_operand_aux5_diff',
     copy_var_to_operand_aux5_i = copy_var_to_operand_aux5_i',
@@ -3235,7 +3235,7 @@ definition "copy_var_to_operand_acc_imp_after_loop_time t s \<equiv>
     t)
 "
 
-lemmas copy_var_to_operand_acc_imp_subprogram_time_simps = 
+lemmas copy_var_to_operand_acc_imp_subprogram_time_simps =
   copy_var_to_operand_acc_state_upd_time_def
   copy_var_to_operand_acc_imp_compute_loop_condition_time_def
   copy_var_to_operand_acc_imp_after_loop_time_def
@@ -3264,25 +3264,25 @@ termination
   apply (relation "measure (copy_var_to_operand_acc_diff \<circ> snd)")
   by (simp add: copy_var_to_operand_acc_imp_subprogram_time_simps)+
 
-declare copy_var_to_operand_acc_imp_time.simps [simp del]            
+declare copy_var_to_operand_acc_imp_time.simps [simp del]
 
 lemma copy_var_to_operand_acc_imp_time_acc:
   "(copy_var_to_operand_acc_imp_time (Suc t) s) = Suc (copy_var_to_operand_acc_imp_time t s)"
   by (induction t s rule: copy_var_to_operand_acc_imp_time.induct)
     ((subst (1 2) copy_var_to_operand_acc_imp_time.simps);
-      (simp add: copy_var_to_operand_acc_state_upd_def))            
+      (simp add: copy_var_to_operand_acc_state_upd_def))
 
 lemma copy_var_to_operand_acc_imp_time_acc_2_aux:
   "(copy_var_to_operand_acc_imp_time t s) = t + (copy_var_to_operand_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: copy_var_to_operand_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: copy_var_to_operand_acc_imp_time_acc)+
 
 lemma copy_var_to_operand_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (copy_var_to_operand_acc_imp_time t s) = t + (copy_var_to_operand_acc_imp_time 0 s)"
-  by (rule copy_var_to_operand_acc_imp_time_acc_2_aux)            
+  by (rule copy_var_to_operand_acc_imp_time_acc_2_aux)
 
 lemma copy_var_to_operand_acc_imp_time_acc_3:
   "(copy_var_to_operand_acc_imp_time (a + b) s) = a + (copy_var_to_operand_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: copy_var_to_operand_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: copy_var_to_operand_acc_imp_time_acc)+
 
 abbreviation "copy_var_to_operand_acc_while_cond \<equiv> ''condition''"
 
@@ -3291,17 +3291,17 @@ definition "copy_var_to_operand_acc_IMP_init_while_cond \<equiv>
 "
 
 definition "copy_var_to_operand_acc_IMP_loop_body \<equiv>
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_acc_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_acc_str)
     ::= A (V (copy_var_to_operand_acc_acc_str));;
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_diff_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_diff_str)
     ::= A (V (copy_var_to_operand_acc_diff_str));;
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_i_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_i_str)
     ::= A (V copy_var_to_operand_acc_i_str);;
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_op_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_op_str)
     ::= A (V copy_var_to_operand_acc_op_str);;
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_v_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_v_str)
     ::= A (V copy_var_to_operand_acc_v_str);;
-  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_ret_str) 
+  (copy_var_to_operand_aux5_prefix @ copy_var_to_operand_aux5_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_var_to_operand_aux5_prefix copy_var_to_operand_aux5_IMP_Minus;;
 
@@ -3393,14 +3393,14 @@ lemma copy_var_to_operand_acc_IMP_Minus_correct_function:
       subgoal premises p using p(14) by fastforce
       by (force simp: copy_var_to_operand_acc_imp_subprogram_simps
           copy_var_to_operand_acc_state_translators Let_def)
-  done        
+  done
 
 lemma copy_var_to_operand_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_var_to_operand_acc_pref) copy_var_to_operand_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix copy_var_to_operand_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas copy_var_to_operand_acc_complete_time_simps =
   copy_var_to_operand_acc_imp_subprogram_time_simps
@@ -3448,8 +3448,8 @@ lemma copy_var_to_operand_acc_IMP_Minus_correct_time:
     apply(erule copy_var_to_operand_aux5_IMP_Minus_correct[where vars = copy_var_to_operand_acc_IMP_vars])
     subgoal premises p using p(25) by fastforce
     apply (force simp: copy_var_to_operand_acc_complete_time_simps Let_def)
-    done      
-  done        
+    done
+  done
 
 lemma copy_var_to_operand_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_var_to_operand_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3462,13 +3462,13 @@ lemma copy_var_to_operand_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using copy_var_to_operand_acc_IMP_Minus_correct_function
   by (auto simp: copy_var_to_operand_acc_IMP_Minus_correct_time)
-    (meson copy_var_to_operand_acc_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson copy_var_to_operand_acc_IMP_Minus_correct_effects set_mono_prefix)
 
-subsubsection copy_var_to_operand_tail 
+subsubsection copy_var_to_operand_tail
 
 record copy_var_to_operand_tail_state =
   copy_var_to_operand_tail_i::nat
-  copy_var_to_operand_tail_op::nat 
+  copy_var_to_operand_tail_op::nat
   copy_var_to_operand_tail_v::nat
   copy_var_to_operand_tail_ret::nat
 
@@ -3478,7 +3478,7 @@ abbreviation "copy_var_to_operand_tail_op_str \<equiv> ''op''"
 abbreviation "copy_var_to_operand_tail_v_str \<equiv> ''v''"
 abbreviation "copy_var_to_operand_tail_ret_str \<equiv> ''ret''"
 
-definition "copy_var_to_operand_tail_state_upd s \<equiv> 
+definition "copy_var_to_operand_tail_state_upd s \<equiv>
 (let
   cons_h' = 0;
   cons_t' = 0;
@@ -3492,7 +3492,7 @@ definition "copy_var_to_operand_tail_state_upd s \<equiv>
   copy_var_to_operand_acc_op' = copy_var_to_operand_tail_op s;
   copy_var_to_operand_acc_v' = copy_var_to_operand_tail_v s;
   copy_var_to_operand_acc_ret' = 0;
-  copy_var_to_operand_acc_state = 
+  copy_var_to_operand_acc_state =
     \<lparr>copy_var_to_operand_acc_acc = copy_var_to_operand_acc_acc',
     copy_var_to_operand_acc_diff = copy_var_to_operand_acc_diff',
     copy_var_to_operand_acc_i = copy_var_to_operand_acc_i',
@@ -3502,17 +3502,17 @@ definition "copy_var_to_operand_tail_state_upd s \<equiv>
   copy_var_to_operand_acc_ret_state = copy_var_to_operand_acc_imp copy_var_to_operand_acc_state;
 
   copy_var_to_operand_tail_ret' = copy_var_to_operand_acc_ret copy_var_to_operand_acc_ret_state;
-  ret = 
+  ret =
     \<lparr>copy_var_to_operand_tail_i = copy_var_to_operand_tail_i s,
     copy_var_to_operand_tail_op = copy_var_to_operand_tail_op s,
     copy_var_to_operand_tail_v = copy_var_to_operand_tail_v s,
     copy_var_to_operand_tail_ret = copy_var_to_operand_tail_ret'\<rparr>
-  in 
+  in
    ret)"
 
-function copy_var_to_operand_tail_imp 
- :: "copy_var_to_operand_tail_state \<Rightarrow> copy_var_to_operand_tail_state" where 
-"copy_var_to_operand_tail_imp s = 
+function copy_var_to_operand_tail_imp
+ :: "copy_var_to_operand_tail_state \<Rightarrow> copy_var_to_operand_tail_state" where
+"copy_var_to_operand_tail_imp s =
  (let
    ret = copy_var_to_operand_tail_state_upd s
   in
@@ -3523,14 +3523,14 @@ declare copy_var_to_operand_tail_imp.simps[simp del]
 
 lemma copy_var_to_operand_tail_imp_correct:
   "copy_var_to_operand_tail_ret (copy_var_to_operand_tail_imp s) =
-    copy_var_to_operand_tail (copy_var_to_operand_tail_i s) 
+    copy_var_to_operand_tail (copy_var_to_operand_tail_i s)
      (copy_var_to_operand_tail_op s) (copy_var_to_operand_tail_v s)"
 apply (simp only: copy_var_to_operand_tail_imp.simps copy_var_to_operand_tail_state_upd_def)
-apply (simp add: copy_var_to_operand_acc_imp_correct cons_imp_correct 
+apply (simp add: copy_var_to_operand_acc_imp_correct cons_imp_correct
       Let_def copy_var_to_operand_tail_def)
-done 
+done
 
-definition "copy_var_to_operand_tail_state_upd_time t s \<equiv> 
+definition "copy_var_to_operand_tail_state_upd_time t s \<equiv>
 (let
   cons_h' = 0;
   t = t + 2;
@@ -3554,7 +3554,7 @@ definition "copy_var_to_operand_tail_state_upd_time t s \<equiv>
   t = t + 2;
   copy_var_to_operand_acc_ret' = 0;
   t = t + 2;
-  copy_var_to_operand_acc_state = 
+  copy_var_to_operand_acc_state =
     \<lparr>copy_var_to_operand_acc_acc = copy_var_to_operand_acc_acc',
     copy_var_to_operand_acc_diff = copy_var_to_operand_acc_diff',
     copy_var_to_operand_acc_i = copy_var_to_operand_acc_i',
@@ -3566,17 +3566,17 @@ definition "copy_var_to_operand_tail_state_upd_time t s \<equiv>
 
   copy_var_to_operand_tail_ret' = copy_var_to_operand_acc_ret copy_var_to_operand_acc_ret_state;
   t = t + 2;
-  ret = 
+  ret =
     \<lparr>copy_var_to_operand_tail_i = copy_var_to_operand_tail_i s,
     copy_var_to_operand_tail_op = copy_var_to_operand_tail_op s,
     copy_var_to_operand_tail_v = copy_var_to_operand_tail_v s,
     copy_var_to_operand_tail_ret = copy_var_to_operand_tail_ret'\<rparr>
-  in 
+  in
    t)"
 
-function copy_var_to_operand_tail_imp_time 
- :: "nat \<Rightarrow> copy_var_to_operand_tail_state \<Rightarrow> nat" where 
-"copy_var_to_operand_tail_imp_time t s = 
+function copy_var_to_operand_tail_imp_time
+ :: "nat \<Rightarrow> copy_var_to_operand_tail_state \<Rightarrow> nat" where
+"copy_var_to_operand_tail_imp_time t s =
  (let
    ret = copy_var_to_operand_tail_state_upd s;
    t = t + copy_var_to_operand_tail_state_upd_time 0 s
@@ -3586,8 +3586,8 @@ function copy_var_to_operand_tail_imp_time
 
 declare copy_var_to_operand_tail_imp_time.simps[simp del]
 
-abbreviation "copy_var_to_operand_tail_IMP_vars \<equiv> 
-  {copy_var_to_operand_tail_i_str, copy_var_to_operand_tail_op_str, 
+abbreviation "copy_var_to_operand_tail_IMP_vars \<equiv>
+  {copy_var_to_operand_tail_i_str, copy_var_to_operand_tail_op_str,
   copy_var_to_operand_tail_v_str, copy_var_to_operand_tail_ret_str}"
 
 definition "copy_var_to_operand_tail_imp_to_HOL_state p s \<equiv>
@@ -3596,12 +3596,12 @@ definition "copy_var_to_operand_tail_imp_to_HOL_state p s \<equiv>
   copy_var_to_operand_tail_v = s (add_prefix p copy_var_to_operand_tail_v_str),
   copy_var_to_operand_tail_ret = s (add_prefix p copy_var_to_operand_tail_ret_str)\<rparr>"
 
-definition "copy_var_to_operand_tail_IMP_Minus \<equiv> 
+definition "copy_var_to_operand_tail_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (N 0);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (copy_var_to_operand_acc_prefix @ copy_var_to_operand_acc_acc_str)
     ::= A (V (cons_prefix @ cons_ret_str));;
   (copy_var_to_operand_acc_prefix @ copy_var_to_operand_acc_diff_str)
@@ -3615,10 +3615,10 @@ definition "copy_var_to_operand_tail_IMP_Minus \<equiv>
   (copy_var_to_operand_acc_prefix @ copy_var_to_operand_acc_ret_str)
     ::= A (N 0);;
   invoke_subprogram  copy_var_to_operand_acc_prefix  copy_var_to_operand_acc_IMP_Minus;;
-  
-  copy_var_to_operand_tail_ret_str 
+
+  copy_var_to_operand_tail_ret_str
     ::= A (V (copy_var_to_operand_acc_prefix @ copy_var_to_operand_acc_ret_str))
-    
+
   "
 
 lemmas copy_var_to_operand_tail_state_translators=
@@ -3639,7 +3639,7 @@ subgoal premises p using p(12) by fastforce
 apply (erule copy_var_to_operand_acc_IMP_Minus_correct[where vars=copy_var_to_operand_tail_IMP_vars])
 subgoal premises p using p(14) by fastforce
 apply (force simp add: copy_var_to_operand_tail_state_translators Let_def)
-done 
+done
 
 lemma copy_var_to_operand_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_var_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3652,7 +3652,7 @@ subgoal premises p using p(23) by fastforce
 apply (erule copy_var_to_operand_acc_IMP_Minus_correct[where vars=copy_var_to_operand_tail_IMP_vars])
 subgoal premises p using p(25) by fastforce
 apply (force simp add: copy_var_to_operand_tail_state_translators Let_def)
-done 
+done
 
 lemma copy_var_to_operand_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_var_to_operand_tail_pref) copy_var_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3672,7 +3672,7 @@ lemma copy_var_to_operand_tail_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using copy_var_to_operand_tail_IMP_Minus_correct_function
   by (auto simp: copy_var_to_operand_tail_IMP_Minus_correct_time)
-    (meson copy_var_to_operand_tail_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson copy_var_to_operand_tail_IMP_Minus_correct_effects set_mono_prefix)
 
 subsection copy_const_to_operand
 
@@ -3690,7 +3690,7 @@ abbreviation "copy_const_to_operand_aux1_diff_str \<equiv> ''diff''"
 abbreviation "copy_const_to_operand_aux1_op_str \<equiv> ''op''"
 abbreviation "copy_const_to_operand_aux1_ret_str \<equiv> ''ret''"
 
-definition "copy_const_to_operand_aux1_imp s \<equiv> 
+definition "copy_const_to_operand_aux1_imp s \<equiv>
 (let
   nth_bit_tail_acc' = copy_const_to_operand_aux1_x s;
   nth_bit_tail_n' = copy_const_to_operand_aux1_diff s;
@@ -3709,17 +3709,17 @@ definition "copy_const_to_operand_aux1_imp s \<equiv>
   prod_encode_a' = copy_const_to_operand_aux1_op s;
   prod_encode_b' = copy_const_to_operand_aux1_diff s;
   prod_encode_ret' = 0;
-  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a', 
+  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
                        prod_encode_b = prod_encode_b',
                        prod_encode_ret = prod_encode_ret'\<rparr>;
   prod_encode_ret_state = prod_encode_imp prod_encode_state;
 
   operand_bit_to_var_tail_n' = prod_encode_ret prod_encode_ret_state;
   operand_bit_to_var_tail_ret' = 0;
-  operand_bit_to_var_tail_state = 
+  operand_bit_to_var_tail_state =
     \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
     operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
-  operand_bit_to_var_tail_ret_state 
+  operand_bit_to_var_tail_ret_state
     = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
 
   cons_h' = operand_bit_to_var_tail_ret operand_bit_to_var_tail_ret_state;
@@ -3743,17 +3743,17 @@ in
  ret)"
 
 lemma copy_const_to_operand_aux1_imp_correct:
-  "copy_const_to_operand_aux1_ret (copy_const_to_operand_aux1_imp s) 
-  = (1 ## (operand_bit_to_var_tail (prod_encode 
-    (copy_const_to_operand_aux1_op s,copy_const_to_operand_aux1_diff s))) 
-## (nth_bit_tail (copy_const_to_operand_aux1_x s) (copy_const_to_operand_aux1_diff s)) 
+  "copy_const_to_operand_aux1_ret (copy_const_to_operand_aux1_imp s)
+  = (1 ## (operand_bit_to_var_tail (prod_encode
+    (copy_const_to_operand_aux1_op s,copy_const_to_operand_aux1_diff s)))
+## (nth_bit_tail (copy_const_to_operand_aux1_x s) (copy_const_to_operand_aux1_diff s))
 ## 0)"
 apply (simp only: copy_const_to_operand_aux1_imp_def)
 apply (simp add: Let_def cons_imp_correct nth_bit_tail_imp_correct
    operand_bit_to_var_tail_imp_correct prod_encode_imp_correct nth_bit_tail'_correct)
-done 
+done
 
-definition "copy_const_to_operand_aux1_imp_time t s \<equiv> 
+definition "copy_const_to_operand_aux1_imp_time t s \<equiv>
 (let
   nth_bit_tail_acc' = copy_const_to_operand_aux1_x s;
   t = t + 2;
@@ -3783,7 +3783,7 @@ definition "copy_const_to_operand_aux1_imp_time t s \<equiv>
   t = t + 2;
   prod_encode_ret' = 0;
   t = t + 2;
-  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a', 
+  prod_encode_state = \<lparr>prod_encode_a = prod_encode_a',
                        prod_encode_b = prod_encode_b',
                        prod_encode_ret = prod_encode_ret'\<rparr>;
   prod_encode_ret_state = prod_encode_imp prod_encode_state;
@@ -3793,10 +3793,10 @@ definition "copy_const_to_operand_aux1_imp_time t s \<equiv>
   t = t + 2;
   operand_bit_to_var_tail_ret' = 0;
   t = t + 2;
-  operand_bit_to_var_tail_state = 
+  operand_bit_to_var_tail_state =
     \<lparr>operand_bit_to_var_tail_n = operand_bit_to_var_tail_n',
     operand_bit_to_var_tail_ret = operand_bit_to_var_tail_ret'\<rparr>;
-  operand_bit_to_var_tail_ret_state 
+  operand_bit_to_var_tail_ret_state
     = operand_bit_to_var_tail_imp operand_bit_to_var_tail_state;
   t = t + operand_bit_to_var_tail_imp_time 0 operand_bit_to_var_tail_state;
 
@@ -3833,7 +3833,7 @@ abbreviation "copy_const_to_operand_aux1_IMP_vars \<equiv>
   {copy_const_to_operand_aux1_op_str, copy_const_to_operand_aux1_diff_str,
   copy_const_to_operand_aux1_x_str, copy_const_to_operand_aux1_ret_str}"
 
-definition "copy_const_to_operand_aux1_imp_to_HOL_state p s\<equiv> 
+definition "copy_const_to_operand_aux1_imp_to_HOL_state p s\<equiv>
   \<lparr>copy_const_to_operand_aux1_x = s (add_prefix p copy_const_to_operand_aux1_x_str),
   copy_const_to_operand_aux1_diff = s (add_prefix p copy_const_to_operand_aux1_diff_str),
   copy_const_to_operand_aux1_op = s (add_prefix p copy_const_to_operand_aux1_op_str),
@@ -3846,12 +3846,12 @@ prod_encode_imp_to_HOL_state_def
 operand_bit_to_var_tail_imp_to_HOL_state_def
 nth_bit_tail_imp_to_HOL_state_def
 
-definition "copy_const_to_operand_aux1_IMP_Minus \<equiv> 
-   (nth_bit_tail_prefix @ nth_bit_tail_acc_str) 
+definition "copy_const_to_operand_aux1_IMP_Minus \<equiv>
+   (nth_bit_tail_prefix @ nth_bit_tail_acc_str)
      ::= A (V copy_const_to_operand_aux1_x_str);;
-   (nth_bit_tail_prefix @ nth_bit_tail_n_str) 
+   (nth_bit_tail_prefix @ nth_bit_tail_n_str)
      ::= A (V copy_const_to_operand_aux1_diff_str);;
-   (nth_bit_tail_prefix @ nth_bit_tail_ret_str) 
+   (nth_bit_tail_prefix @ nth_bit_tail_ret_str)
      ::= A (N 0);;
    invoke_subprogram nth_bit_tail_prefix nth_bit_tail_IMP_Minus;;
 
@@ -3871,7 +3871,7 @@ definition "copy_const_to_operand_aux1_IMP_Minus \<equiv>
      ::= A (N 0);;
     invoke_subprogram operand_bit_to_var_tail_prefix operand_bit_to_var_tail_IMP_Minus;;
 
-   (cons_prefix @ cons_h_str) 
+   (cons_prefix @ cons_h_str)
      ::= A (V (operand_bit_to_var_tail_prefix @ operand_bit_to_var_tail_ret_str));;
    (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
    (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -3906,7 +3906,7 @@ lemma copy_const_to_operand_aux1_IMP_Minus_correct_function:
   apply (erule cons_IMP_Minus_correct[where vars=copy_const_to_operand_aux1_IMP_vars])
   subgoal premises p using p(34) by fastforce
   apply (force simp: Let_def copy_const_to_operand_aux1_state_translators)
-  done 
+  done
 
 lemma copy_const_to_operand_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_const_to_operand_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3927,7 +3927,7 @@ lemma copy_const_to_operand_aux1_IMP_Minus_correct_time:
   apply (erule cons_IMP_Minus_correct[where vars=copy_const_to_operand_aux1_IMP_vars])
   subgoal premises p using p(57) by fastforce
   apply (force simp: Let_def copy_const_to_operand_aux1_state_translators)
-  done 
+  done
 
 lemma copy_const_to_operand_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_const_to_operand_aux1_pref) copy_const_to_operand_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3947,14 +3947,14 @@ lemma copy_const_to_operand_aux1_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using copy_const_to_operand_aux1_IMP_Minus_correct_function
   by (auto simp: copy_const_to_operand_aux1_IMP_Minus_correct_time)
-    (meson copy_const_to_operand_aux1_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson copy_const_to_operand_aux1_IMP_Minus_correct_effects set_mono_prefix)
 
 
 subsubsection copy_const_to_operand_acc
 
-record copy_const_to_operand_acc_state = 
+record copy_const_to_operand_acc_state =
   copy_const_to_operand_acc_acc::nat
-  copy_const_to_operand_acc_diff::nat 
+  copy_const_to_operand_acc_diff::nat
   copy_const_to_operand_acc_i::nat
   copy_const_to_operand_acc_op::nat
   copy_const_to_operand_acc_x::nat
@@ -3968,7 +3968,7 @@ abbreviation "copy_const_to_operand_acc_op_str \<equiv> ''op''"
 abbreviation "copy_const_to_operand_acc_x_str \<equiv> ''x''"
 abbreviation "copy_const_to_operand_acc_ret_str \<equiv> ''ret''"
 
-definition "copy_const_to_operand_acc_state_upd s \<equiv> 
+definition "copy_const_to_operand_acc_state_upd s \<equiv>
  (let
   cons_h' = copy_const_to_operand_acc_acc s;
   cons_t' = 0;
@@ -3980,7 +3980,7 @@ definition "copy_const_to_operand_acc_state_upd s \<equiv>
   copy_const_to_operand_aux1_diff' = copy_const_to_operand_acc_i s - copy_const_to_operand_acc_diff s;
   copy_const_to_operand_aux1_op'= copy_const_to_operand_acc_op s;
   copy_const_to_operand_aux1_ret' = 0;
-  copy_const_to_operand_aux1_state = 
+  copy_const_to_operand_aux1_state =
     \<lparr>copy_const_to_operand_aux1_x = copy_const_to_operand_aux1_x',
     copy_const_to_operand_aux1_diff = copy_const_to_operand_aux1_diff',
     copy_const_to_operand_aux1_op = copy_const_to_operand_aux1_op',
@@ -4001,7 +4001,7 @@ definition "copy_const_to_operand_acc_state_upd s \<equiv>
 
   copy_const_to_operand_acc_acc' = cons_ret cons_ret_state;
   copy_const_to_operand_acc_diff' = copy_const_to_operand_acc_diff s - 1;
-  ret = 
+  ret =
    \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc',
    copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff',
    copy_const_to_operand_acc_i = copy_const_to_operand_acc_i s,
@@ -4011,26 +4011,26 @@ definition "copy_const_to_operand_acc_state_upd s \<equiv>
  in
   ret)"
 
-definition "copy_const_to_operand_acc_imp_compute_loop_condition s \<equiv> 
-  (let 
+definition "copy_const_to_operand_acc_imp_compute_loop_condition s \<equiv>
+  (let
     cond = copy_const_to_operand_acc_diff s
-   in 
+   in
     cond)"
 
-definition "copy_const_to_operand_acc_imp_after_loop s \<equiv> 
+definition "copy_const_to_operand_acc_imp_after_loop s \<equiv>
 (let
   copy_const_to_operand_acc_ret' = copy_const_to_operand_acc_acc s;
-  ret = 
+  ret =
    \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc s,
    copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff s,
    copy_const_to_operand_acc_i = copy_const_to_operand_acc_i s,
    copy_const_to_operand_acc_op = copy_const_to_operand_acc_op s,
    copy_const_to_operand_acc_x = copy_const_to_operand_acc_x s,
    copy_const_to_operand_acc_ret = copy_const_to_operand_acc_ret'\<rparr>
-in 
+in
    ret)"
 
-lemmas copy_const_to_operand_acc_imp_subprogram_simps = 
+lemmas copy_const_to_operand_acc_imp_subprogram_simps =
   copy_const_to_operand_acc_state_upd_def
   copy_const_to_operand_acc_imp_compute_loop_condition_def
   copy_const_to_operand_acc_imp_after_loop_def
@@ -4062,12 +4062,12 @@ lemma copy_const_to_operand_acc_imp_correct:
   apply (induction s rule: copy_const_to_operand_acc_imp.induct)
   apply (subst copy_const_to_operand_acc_imp.simps)
   apply (subst copy_const_to_operand_acc.simps)
-  apply (auto simp del: copy_const_to_operand_acc.simps 
+  apply (auto simp del: copy_const_to_operand_acc.simps
   simp add: copy_const_to_operand_acc_imp_subprogram_simps Let_def
   cons_imp_correct copy_const_to_operand_aux1_imp_correct)
-  done  
+  done
 
-definition "copy_const_to_operand_acc_state_upd_time t s \<equiv> 
+definition "copy_const_to_operand_acc_state_upd_time t s \<equiv>
  (let
   cons_h' = copy_const_to_operand_acc_acc s;
   t = t + 2;
@@ -4087,7 +4087,7 @@ definition "copy_const_to_operand_acc_state_upd_time t s \<equiv>
   t = t + 2;
   copy_const_to_operand_aux1_ret' = 0;
   t = t + 2;
-  copy_const_to_operand_aux1_state = 
+  copy_const_to_operand_aux1_state =
     \<lparr>copy_const_to_operand_aux1_x = copy_const_to_operand_aux1_x',
     copy_const_to_operand_aux1_diff = copy_const_to_operand_aux1_diff',
     copy_const_to_operand_aux1_op = copy_const_to_operand_aux1_op',
@@ -4119,7 +4119,7 @@ definition "copy_const_to_operand_acc_state_upd_time t s \<equiv>
   t = t + 2;
   copy_const_to_operand_acc_diff' = copy_const_to_operand_acc_diff s - 1;
   t = t + 2;
-  ret = 
+  ret =
    \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc',
    copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff',
    copy_const_to_operand_acc_i = copy_const_to_operand_acc_i s,
@@ -4129,28 +4129,28 @@ definition "copy_const_to_operand_acc_state_upd_time t s \<equiv>
  in
   t)"
 
-definition "copy_const_to_operand_acc_imp_compute_loop_condition_time t s \<equiv> 
-  (let 
+definition "copy_const_to_operand_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
     cond = copy_const_to_operand_acc_diff s;
     t = t + 2
-   in 
+   in
     t)"
 
-definition "copy_const_to_operand_acc_imp_after_loop_time t s \<equiv> 
+definition "copy_const_to_operand_acc_imp_after_loop_time t s \<equiv>
 (let
   copy_const_to_operand_acc_ret' = copy_const_to_operand_acc_acc s;
   t = t + 2;
-  ret = 
+  ret =
    \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc s,
    copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff s,
    copy_const_to_operand_acc_i = copy_const_to_operand_acc_i s,
    copy_const_to_operand_acc_op = copy_const_to_operand_acc_op s,
    copy_const_to_operand_acc_x = copy_const_to_operand_acc_x s,
    copy_const_to_operand_acc_ret = copy_const_to_operand_acc_ret'\<rparr>
-in 
+in
    t)"
 
-lemmas copy_const_to_operand_acc_imp_subprogram_time_simps = 
+lemmas copy_const_to_operand_acc_imp_subprogram_time_simps =
   copy_const_to_operand_acc_state_upd_time_def
   copy_const_to_operand_acc_imp_compute_loop_condition_time_def
   copy_const_to_operand_acc_imp_after_loop_time_def
@@ -4177,29 +4177,29 @@ function copy_const_to_operand_acc_imp_time::
   by auto
 termination
   apply (relation "measure (copy_const_to_operand_acc_diff \<circ> snd)")
-  by (simp add: copy_const_to_operand_acc_imp_subprogram_time_simps 
+  by (simp add: copy_const_to_operand_acc_imp_subprogram_time_simps
   copy_const_to_operand_aux1_imp_correct cons_imp_correct Let_def)+
 
 
-declare copy_const_to_operand_acc_imp_time.simps [simp del]            
+declare copy_const_to_operand_acc_imp_time.simps [simp del]
 
 lemma copy_const_to_operand_acc_imp_time_acc:
   "(copy_const_to_operand_acc_imp_time (Suc t) s) = Suc (copy_const_to_operand_acc_imp_time t s)"
   by (induction t s rule: copy_const_to_operand_acc_imp_time.induct)
     ((subst (1 2) copy_const_to_operand_acc_imp_time.simps);
-      (simp add: copy_const_to_operand_acc_state_upd_def))            
+      (simp add: copy_const_to_operand_acc_state_upd_def))
 
 lemma copy_const_to_operand_acc_imp_time_acc_2_aux:
   "(copy_const_to_operand_acc_imp_time t s) = t + (copy_const_to_operand_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: copy_const_to_operand_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: copy_const_to_operand_acc_imp_time_acc)+
 
 lemma copy_const_to_operand_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (copy_const_to_operand_acc_imp_time t s) = t + (copy_const_to_operand_acc_imp_time 0 s)"
-  by (rule copy_const_to_operand_acc_imp_time_acc_2_aux)            
+  by (rule copy_const_to_operand_acc_imp_time_acc_2_aux)
 
 lemma copy_const_to_operand_acc_imp_time_acc_3:
   "(copy_const_to_operand_acc_imp_time (a + b) s) = a + (copy_const_to_operand_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: copy_const_to_operand_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: copy_const_to_operand_acc_imp_time_acc)+
 
 abbreviation "copy_const_to_operand_acc_while_cond \<equiv> ''condition''"
 
@@ -4207,7 +4207,7 @@ definition "copy_const_to_operand_acc_IMP_init_while_cond \<equiv>
   copy_const_to_operand_acc_while_cond ::= A (V copy_const_to_operand_acc_diff_str)
 "
 
-definition "copy_const_to_operand_acc_IMP_loop_body \<equiv> 
+definition "copy_const_to_operand_acc_IMP_loop_body \<equiv>
 (cons_prefix @ cons_h_str) ::= A (V copy_const_to_operand_acc_acc_str);;
 (cons_prefix @ cons_t_str) ::= A (N 0);;
 (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -4222,8 +4222,8 @@ invoke_subprogram cons_prefix cons_IMP_Minus;;
   (copy_const_to_operand_aux1_prefix @ copy_const_to_operand_aux1_ret_str)
   ::= A (N 0);;
 invoke_subprogram copy_const_to_operand_aux1_prefix copy_const_to_operand_aux1_IMP_Minus;;
- 
-(cons_prefix @ cons_h_str) 
+
+(cons_prefix @ cons_h_str)
   ::= A (V (copy_const_to_operand_aux1_prefix @ copy_const_to_operand_aux1_ret_str));;
 (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
 (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -4310,7 +4310,7 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
       subgoal premises p using p(24) by fastforce
-      apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where 
+      apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where
         vars = "copy_const_to_operand_acc_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
       subgoal premises p using p(26) by fastforce
       apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
@@ -4326,7 +4326,7 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
       subgoal premises p using p(24) by fastforce
-      apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where 
+      apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where
         vars = "copy_const_to_operand_acc_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
       subgoal premises p using p(26) by fastforce
       apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
@@ -4335,14 +4335,14 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_function:
       subgoal premises p using p(30) by fastforce
       by (force simp: copy_const_to_operand_acc_imp_subprogram_simps
           copy_const_to_operand_acc_state_translators Let_def)
-  done        
+  done
 
 lemma copy_const_to_operand_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_const_to_operand_acc_pref) copy_const_to_operand_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix copy_const_to_operand_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas copy_const_to_operand_acc_complete_time_simps =
   copy_const_to_operand_acc_imp_subprogram_time_simps
@@ -4380,7 +4380,7 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_time:
     apply(erule Seq_E)+
     apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
     subgoal premises p using p(27) by fastforce
-    apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where 
+    apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where
       vars = "copy_const_to_operand_acc_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
     subgoal premises p using p(29) by fastforce
     apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
@@ -4389,14 +4389,14 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_time:
     subgoal premises p using p(33) by fastforce
     by (force simp: copy_const_to_operand_acc_imp_subprogram_simps
         copy_const_to_operand_acc_state_translators Let_def)
-  
+
   subgoal
     apply(simp only: prefix_simps copy_const_to_operand_acc_IMP_init_while_cond_def
         copy_const_to_operand_acc_IMP_loop_body_def)
     apply(erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
     subgoal premises p using p(45) by fastforce
-    apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where 
+    apply(erule copy_const_to_operand_aux1_IMP_Minus_correct[where
       vars = "copy_const_to_operand_acc_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
     subgoal premises p using p(47) by fastforce
     apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
@@ -4404,7 +4404,7 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct_time:
     apply(erule cons_IMP_Minus_correct[where vars = "copy_const_to_operand_acc_IMP_vars"])
     subgoal premises p using p(51) by fastforce
     by(force simp: copy_const_to_operand_acc_complete_time_simps Let_def)
- done      
+ done
 
 lemma copy_const_to_operand_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_const_to_operand_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -4421,7 +4421,7 @@ lemma copy_const_to_operand_acc_IMP_Minus_correct:
 
 subsubsection copy_const_to_operand_tail
 
-record copy_const_to_operand_tail_state = 
+record copy_const_to_operand_tail_state =
   copy_const_to_operand_tail_i::nat
   copy_const_to_operand_tail_op::nat
   copy_const_to_operand_tail_x::nat
@@ -4433,9 +4433,9 @@ abbreviation "copy_const_to_operand_tail_op_str \<equiv> ''op''"
 abbreviation "copy_const_to_operand_tail_x_str \<equiv> ''x''"
 abbreviation "copy_const_to_operand_tail_ret_str \<equiv> ''ret''"
 
-function copy_const_to_operand_tail_imp 
-  :: "copy_const_to_operand_tail_state \<Rightarrow> copy_const_to_operand_tail_state" where 
-"copy_const_to_operand_tail_imp s = 
+function copy_const_to_operand_tail_imp
+  :: "copy_const_to_operand_tail_state \<Rightarrow> copy_const_to_operand_tail_state" where
+"copy_const_to_operand_tail_imp s =
   (let
     cons_h' = 0;
     cons_t' = 0;
@@ -4449,7 +4449,7 @@ function copy_const_to_operand_tail_imp
     copy_const_to_operand_acc_op' = copy_const_to_operand_tail_op s;
     copy_const_to_operand_acc_x' = copy_const_to_operand_tail_x s;
     copy_const_to_operand_acc_ret' = 0;
-    copy_const_to_operand_acc_state = 
+    copy_const_to_operand_acc_state =
       \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc',
       copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff',
       copy_const_to_operand_acc_i = copy_const_to_operand_acc_i',
@@ -4458,32 +4458,32 @@ function copy_const_to_operand_tail_imp
       copy_const_to_operand_acc_ret = copy_const_to_operand_acc_ret'\<rparr>;
     copy_const_to_operand_acc_ret_state
       = copy_const_to_operand_acc_imp copy_const_to_operand_acc_state;
-    copy_const_to_operand_tail_ret' = 
+    copy_const_to_operand_tail_ret' =
       copy_const_to_operand_acc_ret copy_const_to_operand_acc_ret_state;
     ret =
       \<lparr>copy_const_to_operand_tail_i = copy_const_to_operand_tail_i s,
       copy_const_to_operand_tail_op = copy_const_to_operand_tail_op s,
       copy_const_to_operand_tail_x = copy_const_to_operand_tail_x s,
       copy_const_to_operand_tail_ret = copy_const_to_operand_tail_ret'\<rparr>
-  in 
+  in
    ret)" by simp+
-  termination 
+  termination
   by (relation "measure copy_const_to_operand_tail_i", simp)
 
 declare copy_const_to_operand_tail_imp.simps[simp del]
 
 lemma copy_const_to_operand_tail_imp_correct:
   "copy_const_to_operand_tail_ret (copy_const_to_operand_tail_imp s)
-    = copy_const_to_operand_tail (copy_const_to_operand_tail_i s) 
+    = copy_const_to_operand_tail (copy_const_to_operand_tail_i s)
       (copy_const_to_operand_tail_op s) (copy_const_to_operand_tail_x s)"
 apply (simp only: copy_const_to_operand_tail_imp.simps)
 apply (auto simp add: copy_const_to_operand_acc_imp_correct cons_imp_correct Let_def
   copy_const_to_operand_tail_def)
-done 
+done
 
-function copy_const_to_operand_tail_imp_time 
-  :: "nat \<Rightarrow> copy_const_to_operand_tail_state \<Rightarrow> nat" where 
-"copy_const_to_operand_tail_imp_time t s = 
+function copy_const_to_operand_tail_imp_time
+  :: "nat \<Rightarrow> copy_const_to_operand_tail_state \<Rightarrow> nat" where
+"copy_const_to_operand_tail_imp_time t s =
   (let
     cons_h' = 0;
     t = t + 2;
@@ -4507,7 +4507,7 @@ function copy_const_to_operand_tail_imp_time
     t = t + 2;
     copy_const_to_operand_acc_ret' = 0;
     t = t + 2;
-    copy_const_to_operand_acc_state = 
+    copy_const_to_operand_acc_state =
       \<lparr>copy_const_to_operand_acc_acc = copy_const_to_operand_acc_acc',
       copy_const_to_operand_acc_diff = copy_const_to_operand_acc_diff',
       copy_const_to_operand_acc_i = copy_const_to_operand_acc_i',
@@ -4518,7 +4518,7 @@ function copy_const_to_operand_tail_imp_time
       = copy_const_to_operand_acc_imp copy_const_to_operand_acc_state;
     t = t + copy_const_to_operand_acc_imp_time 0 copy_const_to_operand_acc_state;
 
-    copy_const_to_operand_tail_ret' = 
+    copy_const_to_operand_tail_ret' =
       copy_const_to_operand_acc_ret copy_const_to_operand_acc_ret_state;
     t = t + 2;
     ret =
@@ -4526,16 +4526,16 @@ function copy_const_to_operand_tail_imp_time
       copy_const_to_operand_tail_op = copy_const_to_operand_tail_op s,
       copy_const_to_operand_tail_x = copy_const_to_operand_tail_x s,
       copy_const_to_operand_tail_ret = copy_const_to_operand_tail_ret'\<rparr>
-  in 
+  in
    t)" by auto
-  termination 
+  termination
   by (relation "measure (copy_const_to_operand_tail_i \<circ> snd)", simp)
 
-abbreviation "copy_const_to_operand_tail_IMP_vars \<equiv> 
+abbreviation "copy_const_to_operand_tail_IMP_vars \<equiv>
   {copy_const_to_operand_tail_i_str, copy_const_to_operand_tail_op_str,
   copy_const_to_operand_tail_x_str, copy_const_to_operand_tail_ret_str}"
 
-definition "copy_const_to_operand_tail_imp_to_HOL_state p s \<equiv> 
+definition "copy_const_to_operand_tail_imp_to_HOL_state p s \<equiv>
    \<lparr>copy_const_to_operand_tail_i = s (add_prefix p copy_const_to_operand_tail_i_str),
     copy_const_to_operand_tail_op = s (add_prefix p copy_const_to_operand_tail_op_str),
     copy_const_to_operand_tail_x = s (add_prefix p copy_const_to_operand_tail_x_str),
@@ -4546,12 +4546,12 @@ lemmas copy_const_to_operand_tail_state_translators=
   copy_const_to_operand_acc_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
 
-definition "copy_const_to_operand_tail_IMP_Minus \<equiv> 
+definition "copy_const_to_operand_tail_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (N 0);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (copy_const_to_operand_acc_prefix @ copy_const_to_operand_acc_acc_str)
     ::= A (V (cons_prefix @ cons_ret_str));;
   (copy_const_to_operand_acc_prefix @ copy_const_to_operand_acc_diff_str)
@@ -4565,7 +4565,7 @@ definition "copy_const_to_operand_tail_IMP_Minus \<equiv>
   (copy_const_to_operand_acc_prefix @ copy_const_to_operand_acc_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_const_to_operand_acc_prefix copy_const_to_operand_acc_IMP_Minus;;
-  copy_const_to_operand_tail_ret_str 
+  copy_const_to_operand_tail_ret_str
     ::= A (V (copy_const_to_operand_acc_prefix @ copy_const_to_operand_acc_ret_str))"
 
 lemma copy_const_to_operand_tail_IMP_Minus_correct_function:
@@ -4581,14 +4581,14 @@ lemma copy_const_to_operand_tail_IMP_Minus_correct_function:
   apply (erule copy_const_to_operand_acc_IMP_Minus_correct[where vars = copy_const_to_operand_tail_IMP_vars])
   subgoal premises p using p(14) by fastforce
   apply (force simp: copy_const_to_operand_tail_state_translators Let_def)
-  done 
+  done
 
 lemma copy_const_to_operand_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ copy_const_to_operand_acc_pref) copy_const_to_operand_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix copy_const_to_operand_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma copy_const_to_operand_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_const_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4601,7 +4601,7 @@ lemma copy_const_to_operand_tail_IMP_Minus_correct_time:
   apply (erule copy_const_to_operand_acc_IMP_Minus_correct[where vars = copy_const_to_operand_tail_IMP_vars])
   subgoal premises p using p(25) by fastforce
   apply (force simp: copy_const_to_operand_tail_state_translators Let_def)
-  done 
+  done
 
 lemma copy_const_to_operand_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_const_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -4612,14 +4612,14 @@ lemma copy_const_to_operand_tail_IMP_Minus_correct:
                                         (copy_const_to_operand_tail_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_const_to_operand_tail_IMP_Minus_correct_function 
+  using copy_const_to_operand_tail_IMP_Minus_correct_function
       copy_const_to_operand_tail_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
 subsection copy_atom_to_operand_tail
 
-record copy_atom_to_operand_tail_state = 
+record copy_atom_to_operand_tail_state =
   copy_atom_to_operand_tail_n::nat
   copy_atom_to_operand_tail_op::nat
   copy_atom_to_operand_tail_a::nat
@@ -4632,34 +4632,34 @@ abbreviation "copy_atom_to_operand_tail_a_str \<equiv> ''a''"
 abbreviation "copy_atom_to_operand_tail_ret_str \<equiv> ''ret''"
 abbreviation "copy_atom_to_operand_tail_cond \<equiv> ''cond''"
 
-function copy_atom_to_operand_tail_imp 
+function copy_atom_to_operand_tail_imp
   :: "copy_atom_to_operand_tail_state \<Rightarrow> copy_atom_to_operand_tail_state"
-where 
-"copy_atom_to_operand_tail_imp s = 
+where
+"copy_atom_to_operand_tail_imp s =
 (let
   fst'_state_p' = copy_atom_to_operand_tail_a s;
   fst'_state = \<lparr>fst'_state_p = fst'_state_p'\<rparr>;
   fst'_ret_state = fst'_imp fst'_state;
   cond = fst'_state_p fst'_ret_state
 in
-  (if cond \<noteq> 0 
+  (if cond \<noteq> 0
   then (let
          snd'_state_p' = copy_atom_to_operand_tail_a s;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
-         
+
          copy_const_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          copy_const_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          copy_const_to_operand_tail_x' = snd'_state_p snd'_ret_state;
          copy_const_to_operand_tail_ret' = 0;
-         copy_const_to_operand_tail_state 
+         copy_const_to_operand_tail_state
            = \<lparr>copy_const_to_operand_tail_i = copy_const_to_operand_tail_i',
              copy_const_to_operand_tail_op = copy_const_to_operand_tail_op',
              copy_const_to_operand_tail_x = copy_const_to_operand_tail_x',
              copy_const_to_operand_tail_ret = copy_const_to_operand_tail_ret'\<rparr>;
-         copy_const_to_operand_tail_ret_state = 
+         copy_const_to_operand_tail_ret_state =
             copy_const_to_operand_tail_imp copy_const_to_operand_tail_state;
-         copy_atom_to_operand_tail_ret' 
+         copy_atom_to_operand_tail_ret'
             = copy_const_to_operand_tail_ret copy_const_to_operand_tail_ret_state;
          ret =
            \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
@@ -4672,19 +4672,19 @@ in
          snd'_state_p' = copy_atom_to_operand_tail_a s;
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
-         
+
          copy_var_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          copy_var_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
          copy_var_to_operand_tail_v' = snd'_state_p snd'_ret_state;
          copy_var_to_operand_tail_ret' = 0;
-         copy_var_to_operand_tail_state 
+         copy_var_to_operand_tail_state
            = \<lparr>copy_var_to_operand_tail_i = copy_var_to_operand_tail_i',
              copy_var_to_operand_tail_op = copy_var_to_operand_tail_op',
              copy_var_to_operand_tail_v = copy_var_to_operand_tail_v',
              copy_var_to_operand_tail_ret = copy_var_to_operand_tail_ret'\<rparr>;
-         copy_var_to_operand_tail_ret_state = 
+         copy_var_to_operand_tail_ret_state =
             copy_var_to_operand_tail_imp copy_var_to_operand_tail_state;
-         copy_atom_to_operand_tail_ret' 
+         copy_atom_to_operand_tail_ret'
             = copy_var_to_operand_tail_ret copy_var_to_operand_tail_ret_state;
          ret =
            \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n s,
@@ -4699,19 +4699,19 @@ termination by (relation "measure copy_atom_to_operand_tail_n", simp)
 declare copy_atom_to_operand_tail_imp.simps[simp del]
 
 lemma copy_atom_to_operand_tail_imp_correct[let_function_correctness]:
-  "copy_atom_to_operand_tail_ret (copy_atom_to_operand_tail_imp s) = 
+  "copy_atom_to_operand_tail_ret (copy_atom_to_operand_tail_imp s) =
     copy_atom_to_operand_tail (copy_atom_to_operand_tail_n s)
       (copy_atom_to_operand_tail_op s) (copy_atom_to_operand_tail_a s)"
 apply (simp only: copy_atom_to_operand_tail_imp.simps)
 apply (simp add: copy_var_to_operand_tail_imp_correct
 copy_const_to_operand_tail_imp_correct fst'_imp_correct snd'_imp_correct Let_def
 copy_atom_to_operand_tail_def fst_nat_fst'_nat snd_nat_snd'_nat)
-done 
+done
 
-function copy_atom_to_operand_tail_imp_time 
+function copy_atom_to_operand_tail_imp_time
   :: "nat \<Rightarrow> copy_atom_to_operand_tail_state \<Rightarrow> nat"
-where 
-"copy_atom_to_operand_tail_imp_time t s = 
+where
+"copy_atom_to_operand_tail_imp_time t s =
 (let
   fst'_state_p' = copy_atom_to_operand_tail_a s;
   t = t + 2;
@@ -4721,7 +4721,7 @@ where
   cond = fst'_state_p fst'_ret_state;
   t = t + 2
 in
-  (if cond \<noteq> 0 
+  (if cond \<noteq> 0
   then (let
          t = t + 1;
          snd'_state_p' = copy_atom_to_operand_tail_a s;
@@ -4729,7 +4729,7 @@ in
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          t = t + snd'_imp_time 0 snd'_state;
-         
+
          copy_const_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          t = t + 2;
          copy_const_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
@@ -4738,15 +4738,15 @@ in
          t = t + 2;
          copy_const_to_operand_tail_ret' = 0;
          t = t + 2;
-         copy_const_to_operand_tail_state 
+         copy_const_to_operand_tail_state
            = \<lparr>copy_const_to_operand_tail_i = copy_const_to_operand_tail_i',
              copy_const_to_operand_tail_op = copy_const_to_operand_tail_op',
              copy_const_to_operand_tail_x = copy_const_to_operand_tail_x',
              copy_const_to_operand_tail_ret = copy_const_to_operand_tail_ret'\<rparr>;
-         copy_const_to_operand_tail_ret_state = 
+         copy_const_to_operand_tail_ret_state =
             copy_const_to_operand_tail_imp copy_const_to_operand_tail_state;
          t = t + copy_const_to_operand_tail_imp_time 0 copy_const_to_operand_tail_state;
-         copy_atom_to_operand_tail_ret' 
+         copy_atom_to_operand_tail_ret'
             = copy_const_to_operand_tail_ret copy_const_to_operand_tail_ret_state;
          t = t + 2;
          ret =
@@ -4763,7 +4763,7 @@ in
          snd'_state = \<lparr>snd'_state_p = snd'_state_p'\<rparr>;
          snd'_ret_state = snd'_imp snd'_state;
          t = t + snd'_imp_time 0 snd'_state;
-         
+
          copy_var_to_operand_tail_i' = copy_atom_to_operand_tail_n s;
          t = t + 2;
          copy_var_to_operand_tail_op' = copy_atom_to_operand_tail_op s;
@@ -4772,15 +4772,15 @@ in
          t = t + 2;
          copy_var_to_operand_tail_ret' = 0;
          t = t + 2;
-         copy_var_to_operand_tail_state 
+         copy_var_to_operand_tail_state
            = \<lparr>copy_var_to_operand_tail_i = copy_var_to_operand_tail_i',
              copy_var_to_operand_tail_op = copy_var_to_operand_tail_op',
              copy_var_to_operand_tail_v = copy_var_to_operand_tail_v',
              copy_var_to_operand_tail_ret = copy_var_to_operand_tail_ret'\<rparr>;
-         copy_var_to_operand_tail_ret_state = 
+         copy_var_to_operand_tail_ret_state =
             copy_var_to_operand_tail_imp copy_var_to_operand_tail_state;
          t = t + copy_var_to_operand_tail_imp_time 0 copy_var_to_operand_tail_state;
-         copy_atom_to_operand_tail_ret' 
+         copy_atom_to_operand_tail_ret'
             = copy_var_to_operand_tail_ret copy_var_to_operand_tail_ret_state;
          t = t + 2;
          ret =
@@ -4795,12 +4795,12 @@ termination by (relation "measure (copy_atom_to_operand_tail_n \<circ> snd)", si
 
 declare copy_atom_to_operand_tail_imp_time.simps[simp del]
 
-abbreviation "copy_atom_to_operand_tail_IMP_vars \<equiv> 
+abbreviation "copy_atom_to_operand_tail_IMP_vars \<equiv>
  {copy_atom_to_operand_tail_ret_str, copy_atom_to_operand_tail_n_str,
  copy_atom_to_operand_tail_op_str, copy_atom_to_operand_tail_a_str,
  copy_atom_to_operand_tail_cond}"
 
-definition "copy_atom_to_operand_tail_imp_to_HOL_state p s\<equiv> 
+definition "copy_atom_to_operand_tail_imp_to_HOL_state p s\<equiv>
 \<lparr>copy_atom_to_operand_tail_n = s (add_prefix p copy_atom_to_operand_tail_n_str),
 copy_atom_to_operand_tail_op = s (add_prefix p copy_atom_to_operand_tail_op_str),
 copy_atom_to_operand_tail_a = s (add_prefix p copy_atom_to_operand_tail_a_str),
@@ -4812,12 +4812,12 @@ lemmas copy_atom_to_operand_tail_state_translators=
   copy_const_to_operand_tail_imp_to_HOL_state_def
   fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def
 
-definition "copy_atom_to_operand_tail_IMP_Minus \<equiv> 
+definition "copy_atom_to_operand_tail_IMP_Minus \<equiv>
   (fst'_prefix @ fst'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
   invoke_subprogram fst'_prefix fst'_IMP_Minus;;
   copy_atom_to_operand_tail_cond ::= A (V (fst'_prefix @ fst'_p_str));;
-  IF copy_atom_to_operand_tail_cond\<noteq>0 
-  THEN 
+  IF copy_atom_to_operand_tail_cond\<noteq>0
+  THEN
     (
     (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
     invoke_subprogram snd'_prefix snd'_IMP_Minus;;
@@ -4835,7 +4835,7 @@ definition "copy_atom_to_operand_tail_IMP_Minus \<equiv>
     (copy_atom_to_operand_tail_ret_str) ::=
       A (V (copy_const_to_operand_tail_prefix @ copy_const_to_operand_tail_ret_str))
     )
-  ELSE 
+  ELSE
     (
     (snd'_prefix @ snd'_p_str) ::= A (V copy_atom_to_operand_tail_a_str);;
     invoke_subprogram snd'_prefix snd'_IMP_Minus;;
@@ -4866,24 +4866,24 @@ lemma copy_atom_to_operand_tail_IMP_Minus_correct_function:
   apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
   subgoal premises p using p(4) by fastforce
   apply (erule If_E)
-    subgoal 
+    subgoal
       apply (erule Seq_E)+
       apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (14) by fastforce
       apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (16) by fastforce
       apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
-    done 
+    done
 
-    subgoal 
+    subgoal
       apply (erule Seq_E)+
       apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (14) by fastforce
       apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (16) by fastforce
       apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
-    done 
-  done 
+    done
+  done
 
 lemma copy_atom_to_operand_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p copy_atom_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4894,24 +4894,24 @@ lemma copy_atom_to_operand_tail_IMP_Minus_correct_time:
   apply (erule fst'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
   subgoal premises p using p(7) by fastforce
   apply (erule If_tE)
-    subgoal 
+    subgoal
       apply (erule Seq_tE)+
       apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (25) by fastforce
       apply (erule copy_const_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (27) by fastforce
       apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
-    done 
+    done
 
-    subgoal 
+    subgoal
       apply (erule Seq_tE)+
       apply (erule snd'_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (25) by fastforce
       apply (erule copy_var_to_operand_tail_IMP_Minus_correct[where vars = copy_atom_to_operand_tail_IMP_vars])
       subgoal premises p using p (27) by fastforce
       apply (force simp: copy_atom_to_operand_tail_state_translators Let_def)
-    done 
-  done 
+    done
+  done
 
 lemma copy_atom_to_operand_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) copy_atom_to_operand_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -4922,7 +4922,7 @@ lemma copy_atom_to_operand_tail_IMP_Minus_correct:
                                         (copy_atom_to_operand_tail_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using copy_atom_to_operand_tail_IMP_Minus_correct_function 
+  using copy_atom_to_operand_tail_IMP_Minus_correct_function
       copy_atom_to_operand_tail_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -4936,7 +4936,7 @@ definition "binary_parity_tail_aux1 n a \<equiv>
  (copy_atom_to_operand_tail n (encode_char (CHR ''a'')) (prod_encode(1,0)))
   ## 0"
 
-record binary_parity_tail_aux1_state = 
+record binary_parity_tail_aux1_state =
 binary_parity_tail_aux1_n::nat
 binary_parity_tail_aux1_a::nat
 binary_parity_tail_aux1_ret::nat
@@ -4951,7 +4951,7 @@ definition "binary_parity_tail_aux1_state_upd s \<equiv>
   prod_encode_a' = 1;
   prod_encode_b' = 0;
   prod_encode_ret' = 0;
-  prod_encode_state = 
+  prod_encode_state =
     \<lparr>prod_encode_a = prod_encode_a',
     prod_encode_b = prod_encode_b',
     prod_encode_ret = prod_encode_ret'\<rparr>;
@@ -4961,7 +4961,7 @@ definition "binary_parity_tail_aux1_state_upd s \<equiv>
   copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
   copy_atom_to_operand_tail_a' = prod_encode_ret prod_encode_ret_state;
   copy_atom_to_operand_tail_ret' = 0;
-  copy_atom_to_operand_tail_state = 
+  copy_atom_to_operand_tail_state =
     \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
@@ -4978,7 +4978,7 @@ definition "binary_parity_tail_aux1_state_upd s \<equiv>
   copy_atom_to_operand_tail_op' = a_encode_char_as_nat;
   copy_atom_to_operand_tail_a' =  binary_parity_tail_aux1_a s;
   copy_atom_to_operand_tail_ret' = 0;
-  copy_atom_to_operand_tail_state = 
+  copy_atom_to_operand_tail_state =
     \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
@@ -4998,7 +4998,7 @@ definition "binary_parity_tail_aux1_state_upd s \<equiv>
   cons_ret_state = cons_imp cons_state;
 
   binary_parity_tail_aux1_ret' = cons_ret cons_ret_state;
-  ret = 
+  ret =
    \<lparr>binary_parity_tail_aux1_n = binary_parity_tail_aux1_n s,
    binary_parity_tail_aux1_a = binary_parity_tail_aux1_a s,
    binary_parity_tail_aux1_ret = binary_parity_tail_aux1_ret'\<rparr>
@@ -5009,9 +5009,9 @@ in
 function binary_parity_tail_aux1_imp ::
   "binary_parity_tail_aux1_state \<Rightarrow> binary_parity_tail_aux1_state" where
   "binary_parity_tail_aux1_imp s =
-  (let 
+  (let
       ret = binary_parity_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -5027,7 +5027,7 @@ lemma binary_parity_tail_aux1_imp_correct[let_function_correctness]:
   binary_parity_tail_aux1_def)
   apply (simp add: cons_imp_correct copy_atom_to_operand_tail_imp_correct prod_encode_imp_correct
   a_encode_char_val)
-  done 
+  done
 
 function binary_parity_tail_aux1_imp_time ::
   "nat \<Rightarrow> binary_parity_tail_aux1_state \<Rightarrow> nat" where
@@ -5039,7 +5039,7 @@ function binary_parity_tail_aux1_imp_time ::
   t = t + 2;
   prod_encode_ret' = 0;
   t = t + 2;
-  prod_encode_state = 
+  prod_encode_state =
     \<lparr>prod_encode_a = prod_encode_a',
     prod_encode_b = prod_encode_b',
     prod_encode_ret = prod_encode_ret'\<rparr>;
@@ -5054,7 +5054,7 @@ function binary_parity_tail_aux1_imp_time ::
   t = t + 2;
   copy_atom_to_operand_tail_ret' = 0;
   t = t + 2;
-  copy_atom_to_operand_tail_state = 
+  copy_atom_to_operand_tail_state =
     \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
@@ -5080,7 +5080,7 @@ function binary_parity_tail_aux1_imp_time ::
   t = t + 2;
   copy_atom_to_operand_tail_ret' = 0;
   t = t + 2;
-  copy_atom_to_operand_tail_state = 
+  copy_atom_to_operand_tail_state =
     \<lparr>copy_atom_to_operand_tail_n = copy_atom_to_operand_tail_n',
     copy_atom_to_operand_tail_op = copy_atom_to_operand_tail_op',
     copy_atom_to_operand_tail_a = copy_atom_to_operand_tail_a',
@@ -5110,7 +5110,7 @@ function binary_parity_tail_aux1_imp_time ::
 
   binary_parity_tail_aux1_ret' = cons_ret cons_ret_state;
   t = t + 2;
-  ret = 
+  ret =
    \<lparr>binary_parity_tail_aux1_n = binary_parity_tail_aux1_n s,
    binary_parity_tail_aux1_a = binary_parity_tail_aux1_a s,
    binary_parity_tail_aux1_ret = binary_parity_tail_aux1_ret'\<rparr>
@@ -5127,19 +5127,19 @@ lemma binary_parity_tail_aux1_imp_time_acc:
   "(binary_parity_tail_aux1_imp_time (Suc t) s) = Suc (binary_parity_tail_aux1_imp_time t s)"
   by (induction t s rule: binary_parity_tail_aux1_imp_time.induct)
     ((subst (1 2) binary_parity_tail_aux1_imp_time.simps);
-      (simp add: binary_parity_tail_aux1_state_upd_def Let_def))            
+      (simp add: binary_parity_tail_aux1_state_upd_def Let_def))
 
 lemma binary_parity_tail_aux1_imp_time_acc_2_aux:
   "(binary_parity_tail_aux1_imp_time t s) = t + (binary_parity_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux1_imp_time_acc)+
 
 lemma binary_parity_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_parity_tail_aux1_imp_time t s) = t + (binary_parity_tail_aux1_imp_time 0 s)"
-  by (rule binary_parity_tail_aux1_imp_time_acc_2_aux)            
+  by (rule binary_parity_tail_aux1_imp_time_acc_2_aux)
 
 lemma binary_parity_tail_aux1_imp_time_acc_3:
   "(binary_parity_tail_aux1_imp_time (a + b) s) = a + (binary_parity_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux1_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux1_imp_time_acc)+
 
 definition binary_parity_tail_aux1_IMP_Minus where
   "binary_parity_tail_aux1_IMP_Minus \<equiv>
@@ -5148,33 +5148,33 @@ definition binary_parity_tail_aux1_IMP_Minus where
   (prod_encode_prefix @ prod_encode_ret_str) ::= A (N 0);;
   invoke_subprogram prod_encode_prefix prod_encode_IMP_Minus;;
 
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str)
     ::= A (V binary_parity_tail_aux1_n_str);;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str)
     ::= A (N a_encode_char_as_nat);;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str)
     ::= A (V (prod_encode_prefix @ prod_encode_ret_str));;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
 
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_n_str)
     ::= A (V binary_parity_tail_aux1_n_str);;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_op_str)
     ::= A (N a_encode_char_as_nat);;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_a_str)
     ::= A (V binary_parity_tail_aux1_a_str);;
-  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str) 
+  (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram copy_atom_to_operand_tail_prefix copy_atom_to_operand_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (copy_atom_to_operand_tail_prefix @ copy_atom_to_operand_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -5218,14 +5218,14 @@ lemma binary_parity_tail_aux1_IMP_Minus_correct_function:
   subgoal premises p using p(31) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_parity_tail_aux1_IMP_vars"])
   subgoal premises p using p(33) by fastforce
-  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = 
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars =
     "binary_parity_tail_aux1_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(35) by fastforce
-  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = 
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars =
     "binary_parity_tail_aux1_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(37) by fastforce
  by(fastforce simp: binary_parity_tail_aux1_state_translators
-    binary_parity_tail_aux1_state_upd_def) 
+    binary_parity_tail_aux1_state_upd_def)
 
 
 
@@ -5234,7 +5234,7 @@ lemma binary_parity_tail_aux1_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix binary_parity_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_parity_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_parity_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5250,13 +5250,13 @@ lemma binary_parity_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(57) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_parity_tail_aux1_IMP_vars"])
   subgoal premises p using p(59) by fastforce
-  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = 
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars =
     "binary_parity_tail_aux1_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(61) by fastforce
-  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars = 
+  apply(erule copy_atom_to_operand_tail_IMP_Minus_correct[where vars =
     "binary_parity_tail_aux1_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(63) by fastforce
-  by(fastforce simp add: Let_def binary_parity_tail_aux1_state_translators)  
+  by(fastforce simp add: Let_def binary_parity_tail_aux1_state_translators)
 
 
 lemma binary_parity_tail_aux1_IMP_Minus_correct:
@@ -5271,13 +5271,13 @@ lemma binary_parity_tail_aux1_IMP_Minus_correct:
   using binary_parity_tail_aux1_IMP_Minus_correct_function
     binary_parity_tail_aux1_IMP_Minus_correct_time
     binary_parity_tail_aux1_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)    
+  by (meson set_mono_prefix)
 
 subsubsection binary_parity_tail_aux2
 
 definition "binary_parity_tail_aux2 a \<equiv> (var_bit_to_var_tail(prod_encode(snd_nat a, 0))) ## 0"
 
-record binary_parity_tail_aux2_state = 
+record binary_parity_tail_aux2_state =
 binary_parity_tail_aux2_a::nat
 binary_parity_tail_aux2_ret::nat
 
@@ -5294,8 +5294,8 @@ definition "binary_parity_tail_aux2_state_upd s \<equiv>
   prod_encode_a' = snd'_state_p snd'_ret_state;
   prod_encode_b' = 0;
   prod_encode_ret' = 0;
-  prod_encode_state = 
-    \<lparr>prod_encode_a = prod_encode_a', 
+  prod_encode_state =
+    \<lparr>prod_encode_a = prod_encode_a',
     prod_encode_b = prod_encode_b',
     prod_encode_ret = prod_encode_ret'\<rparr>;
   prod_encode_ret_state = prod_encode_imp prod_encode_state;
@@ -5305,13 +5305,13 @@ definition "binary_parity_tail_aux2_state_upd s \<equiv>
   var_bit_to_var_tail_state = \<lparr>var_bit_to_var_tail_n = var_bit_to_var_tail_n',
                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
   var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
-  
+
   cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
   cons_t' = 0;
   cons_ret' = 0;
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
-  
+
   binary_parity_tail_aux2_ret' = cons_ret cons_ret_state;
   ret = \<lparr>binary_parity_tail_aux2_a = binary_parity_tail_aux2_a s,
   binary_parity_tail_aux2_ret = binary_parity_tail_aux2_ret'\<rparr>
@@ -5321,9 +5321,9 @@ in
 function binary_parity_tail_aux2_imp ::
   "binary_parity_tail_aux2_state \<Rightarrow> binary_parity_tail_aux2_state" where
   "binary_parity_tail_aux2_imp s =
-  (let 
+  (let
       ret = binary_parity_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -5339,7 +5339,7 @@ lemma binary_parity_tail_aux2_imp_correct[let_function_correctness]:
   binary_parity_tail_aux2_def)
   apply (simp add: cons_imp_correct snd'_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct
   snd_nat_snd'_nat)
-  done  
+  done
 
 function binary_parity_tail_aux2_imp_time ::
   "nat \<Rightarrow> binary_parity_tail_aux2_state \<Rightarrow> nat" where
@@ -5357,8 +5357,8 @@ function binary_parity_tail_aux2_imp_time ::
   t = t + 2;
   prod_encode_ret' = 0;
   t = t + 2;
-  prod_encode_state = 
-    \<lparr>prod_encode_a = prod_encode_a', 
+  prod_encode_state =
+    \<lparr>prod_encode_a = prod_encode_a',
     prod_encode_b = prod_encode_b',
     prod_encode_ret = prod_encode_ret'\<rparr>;
   prod_encode_ret_state = prod_encode_imp prod_encode_state;
@@ -5372,7 +5372,7 @@ function binary_parity_tail_aux2_imp_time ::
                               var_bit_to_var_tail_ret = var_bit_to_var_tail_ret'\<rparr>;
   var_bit_to_var_tail_ret_state = var_bit_to_var_tail_imp var_bit_to_var_tail_state;
   t = t + var_bit_to_var_tail_imp_time 0 var_bit_to_var_tail_state;
-  
+
   cons_h' = var_bit_to_var_tail_ret var_bit_to_var_tail_ret_state;
   t = t + 2;
   cons_t' = 0;
@@ -5382,7 +5382,7 @@ function binary_parity_tail_aux2_imp_time ::
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
   t = t + cons_imp_time 0 cons_state;
-  
+
   binary_parity_tail_aux2_ret' = cons_ret cons_ret_state;
   t = t + 2;
   ret = \<lparr>binary_parity_tail_aux2_a = binary_parity_tail_aux2_a s,
@@ -5400,19 +5400,19 @@ lemma binary_parity_tail_aux2_imp_time_acc:
   "(binary_parity_tail_aux2_imp_time (Suc t) s) = Suc (binary_parity_tail_aux2_imp_time t s)"
   by (induction t s rule: binary_parity_tail_aux2_imp_time.induct)
     ((subst (1 2) binary_parity_tail_aux2_imp_time.simps);
-      (simp add: binary_parity_tail_aux2_state_upd_def Let_def))            
+      (simp add: binary_parity_tail_aux2_state_upd_def Let_def))
 
 lemma binary_parity_tail_aux2_imp_time_acc_2_aux:
   "(binary_parity_tail_aux2_imp_time t s) = t + (binary_parity_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux2_imp_time_acc)+
 
 lemma binary_parity_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_parity_tail_aux2_imp_time t s) = t + (binary_parity_tail_aux2_imp_time 0 s)"
-  by (rule binary_parity_tail_aux2_imp_time_acc_2_aux)            
+  by (rule binary_parity_tail_aux2_imp_time_acc_2_aux)
 
 lemma binary_parity_tail_aux2_imp_time_acc_3:
   "(binary_parity_tail_aux2_imp_time (a + b) s) = a + (binary_parity_tail_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux2_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux2_imp_time_acc)+
 
 definition binary_parity_tail_aux2_IMP_Minus where
   "binary_parity_tail_aux2_IMP_Minus \<equiv>
@@ -5467,14 +5467,14 @@ lemma binary_parity_tail_aux2_IMP_Minus_correct_function:
   apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_parity_tail_aux2_IMP_vars"])
   subgoal premises p using p(20) by fastforce
   by(fastforce simp: binary_parity_tail_aux2_state_translators
-    binary_parity_tail_aux2_state_upd_def)        
+    binary_parity_tail_aux2_state_upd_def)
 
 lemma binary_parity_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_parity_tail_aux2_pref) binary_parity_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_parity_tail_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_parity_tail_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_parity_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5491,7 +5491,7 @@ lemma binary_parity_tail_aux2_IMP_Minus_correct_time:
   apply(erule prod_encode_IMP_Minus_correct[where vars = "binary_parity_tail_aux2_IMP_vars"])
   subgoal premises p using p(33) by fastforce
   by(fastforce simp: binary_parity_tail_aux2_state_translators
-    Let_def)         
+    Let_def)
 
 lemma binary_parity_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_parity_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5505,19 +5505,19 @@ lemma binary_parity_tail_aux2_IMP_Minus_correct:
   using binary_parity_tail_aux2_IMP_Minus_correct_function
     binary_parity_tail_aux2_IMP_Minus_correct_time
     binary_parity_tail_aux2_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
   subsubsection binary_parity_tail_aux3
 
 definition "binary_parity_tail_aux3 n v a \<equiv>
-  3 ## (binary_parity_tail_aux2 a) ## (binary_assign_constant_tail n v 1) 
+  3 ## (binary_parity_tail_aux2 a) ## (binary_assign_constant_tail n v 1)
  ## (binary_assign_constant_tail n v 0) ## 0"
 
-record binary_parity_tail_aux3_state = 
+record binary_parity_tail_aux3_state =
 binary_parity_tail_aux3_n::nat
 binary_parity_tail_aux3_v::nat
 binary_parity_tail_aux3_a::nat
-binary_parity_tail_aux3_ret::nat 
+binary_parity_tail_aux3_ret::nat
 
 abbreviation "binary_parity_tail_aux3_prefix \<equiv> ''binary_parity_tail_aux3.''"
 abbreviation "binary_parity_tail_aux3_n_str \<equiv> ''n''"
@@ -5526,19 +5526,19 @@ abbreviation "binary_parity_tail_aux3_a_str \<equiv> ''a''"
 abbreviation "binary_parity_tail_aux3_ret_str \<equiv> ''ret''"
 
 definition "binary_parity_tail_aux3_state_upd s \<equiv>
-(let 
+(let
   binary_assign_constant_tail_n' = binary_parity_tail_aux3_n s;
   binary_assign_constant_tail_v' = binary_parity_tail_aux3_v s;
   binary_assign_constant_tail_x' = 0;
   binary_assign_constant_tail_ret' = 0;
-  binary_assign_constant_tail_state = 
+  binary_assign_constant_tail_state =
     \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
      binary_assign_constant_tail_v = binary_assign_constant_tail_v',
      binary_assign_constant_tail_x = binary_assign_constant_tail_x',
      binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>;
-  binary_assign_constant_tail_ret_state = 
+  binary_assign_constant_tail_ret_state =
     binary_assign_constant_tail_imp binary_assign_constant_tail_state;
-  
+
   cons_h' = binary_assign_constant_tail_ret binary_assign_constant_tail_ret_state;
   cons_t' = 0;
   cons_ret' = 0;
@@ -5549,14 +5549,14 @@ definition "binary_parity_tail_aux3_state_upd s \<equiv>
   binary_assign_constant_tail_v' = binary_parity_tail_aux3_v s;
   binary_assign_constant_tail_x' = 1;
   binary_assign_constant_tail_ret' = 0;
-  binary_assign_constant_tail_state = 
+  binary_assign_constant_tail_state =
     \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
      binary_assign_constant_tail_v = binary_assign_constant_tail_v',
      binary_assign_constant_tail_x = binary_assign_constant_tail_x',
      binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>;
-  binary_assign_constant_tail_ret_state = 
+  binary_assign_constant_tail_ret_state =
     binary_assign_constant_tail_imp binary_assign_constant_tail_state;
-  
+
   cons_h' = binary_assign_constant_tail_ret binary_assign_constant_tail_ret_state;
   cons_t' = cons_ret cons_ret_state;
   cons_ret' = 0;
@@ -5593,9 +5593,9 @@ in
 function binary_parity_tail_aux3_imp ::
   "binary_parity_tail_aux3_state \<Rightarrow> binary_parity_tail_aux3_state" where
   "binary_parity_tail_aux3_imp s =
-  (let 
+  (let
       ret = binary_parity_tail_aux3_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -5610,7 +5610,7 @@ lemma binary_parity_tail_aux3_imp_correct[let_function_correctness]:
   apply (simp only: binary_parity_tail_aux3_imp.simps Let_def binary_parity_tail_aux3_state_upd_def
   binary_parity_tail_aux3_def)
   apply (simp add: cons_imp_correct binary_parity_tail_aux2_imp_correct binary_assign_constant_tail_imp_correct)
-  done 
+  done
 
 function binary_parity_tail_aux3_imp_time ::
   "nat \<Rightarrow> binary_parity_tail_aux3_state \<Rightarrow> nat" where
@@ -5624,15 +5624,15 @@ function binary_parity_tail_aux3_imp_time ::
   t = t + 2;
   binary_assign_constant_tail_ret' = 0;
   t = t + 2;
-  binary_assign_constant_tail_state = 
+  binary_assign_constant_tail_state =
     \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
      binary_assign_constant_tail_v = binary_assign_constant_tail_v',
      binary_assign_constant_tail_x = binary_assign_constant_tail_x',
      binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>;
-  binary_assign_constant_tail_ret_state = 
+  binary_assign_constant_tail_ret_state =
     binary_assign_constant_tail_imp binary_assign_constant_tail_state;
   t = t + binary_assign_constant_tail_imp_time 0 binary_assign_constant_tail_state;
-  
+
   cons_h' = binary_assign_constant_tail_ret binary_assign_constant_tail_ret_state;
   t = t + 2;
   cons_t' = 0;
@@ -5651,15 +5651,15 @@ function binary_parity_tail_aux3_imp_time ::
   t = t + 2;
   binary_assign_constant_tail_ret' = 0;
   t = t + 2;
-  binary_assign_constant_tail_state = 
+  binary_assign_constant_tail_state =
     \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
      binary_assign_constant_tail_v = binary_assign_constant_tail_v',
      binary_assign_constant_tail_x = binary_assign_constant_tail_x',
      binary_assign_constant_tail_ret = binary_assign_constant_tail_ret'\<rparr>;
-  binary_assign_constant_tail_ret_state = 
+  binary_assign_constant_tail_ret_state =
     binary_assign_constant_tail_imp binary_assign_constant_tail_state;
   t = t + binary_assign_constant_tail_imp_time 0 binary_assign_constant_tail_state;
-  
+
   cons_h' = binary_assign_constant_tail_ret binary_assign_constant_tail_ret_state;
   t = t + 2;
   cons_t' = cons_ret cons_ret_state;
@@ -5718,19 +5718,19 @@ lemma binary_parity_tail_aux3_imp_time_acc:
   "(binary_parity_tail_aux3_imp_time (Suc t) s) = Suc (binary_parity_tail_aux3_imp_time t s)"
   by (induction t s rule: binary_parity_tail_aux3_imp_time.induct)
     ((subst (1 2) binary_parity_tail_aux3_imp_time.simps);
-      (simp add: binary_parity_tail_aux3_state_upd_def Let_def))            
+      (simp add: binary_parity_tail_aux3_state_upd_def Let_def))
 
 lemma binary_parity_tail_aux3_imp_time_acc_2_aux:
   "(binary_parity_tail_aux3_imp_time t s) = t + (binary_parity_tail_aux3_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux3_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_parity_tail_aux3_imp_time_acc)+
 
 lemma binary_parity_tail_aux3_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_parity_tail_aux3_imp_time t s) = t + (binary_parity_tail_aux3_imp_time 0 s)"
-  by (rule binary_parity_tail_aux3_imp_time_acc_2_aux)            
+  by (rule binary_parity_tail_aux3_imp_time_acc_2_aux)
 
 lemma binary_parity_tail_aux3_imp_time_acc_3:
   "(binary_parity_tail_aux3_imp_time (a + b) s) = a + (binary_parity_tail_aux3_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux3_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: binary_parity_tail_aux3_imp_time_acc)+
 
 definition binary_parity_tail_aux3_IMP_Minus where
   "binary_parity_tail_aux3_IMP_Minus \<equiv>
@@ -5744,7 +5744,7 @@ definition binary_parity_tail_aux3_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram binary_assign_constant_tail_prefix binary_assign_constant_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (binary_assign_constant_tail_prefix @ binary_assign_constant_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -5760,7 +5760,7 @@ definition binary_parity_tail_aux3_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram binary_assign_constant_tail_prefix binary_assign_constant_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (binary_assign_constant_tail_prefix @ binary_assign_constant_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -5827,14 +5827,14 @@ lemma binary_parity_tail_aux3_IMP_Minus_correct_function:
   apply (erule cons_IMP_Minus_correct[where vars="binary_parity_tail_aux3_IMP_vars"])
   subgoal premises p using p(42) by fastforce
   by(fastforce simp: binary_parity_tail_aux3_state_translators
-    binary_parity_tail_aux3_state_upd_def) 
+    binary_parity_tail_aux3_state_upd_def)
 
 lemma binary_parity_tail_aux3_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_parity_tail_aux3_pref) binary_parity_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_parity_tail_aux3_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_parity_tail_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_parity_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5859,7 +5859,7 @@ lemma binary_parity_tail_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(69) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars="binary_parity_tail_aux3_IMP_vars"])
   subgoal premises p using p(71) by fastforce
-  by(fastforce simp add: Let_def binary_parity_tail_aux3_state_translators)        
+  by(fastforce simp add: Let_def binary_parity_tail_aux3_state_translators)
 
 lemma binary_parity_tail_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_parity_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5873,22 +5873,22 @@ lemma binary_parity_tail_aux3_IMP_Minus_correct:
   using binary_parity_tail_aux3_IMP_Minus_correct_function
     binary_parity_tail_aux3_IMP_Minus_correct_time
     binary_parity_tail_aux3_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)  
+  by (meson set_mono_prefix)
 
 subsection binary_parity_tail
 
 lemma binary_parity_tail_aux_correct:
 "binary_parity_tail n v a  = (if fst_nat a \<noteq> 0 then  binary_assign_constant_tail n v (snd_nat a mod 2)
-else 2## (binary_parity_tail_aux3 n v a)## 
- 
+else 2## (binary_parity_tail_aux3 n v a)##
+
  (binary_parity_tail_aux1 n a) ## 0 )"
 by (simp add: binary_parity_tail_def binary_parity_tail_aux1_def binary_parity_tail_aux3_def
 binary_parity_tail_aux2_def)
 
 subsubsection binary_parity_tail
 
-record binary_parity_tail_state = 
-binary_parity_tail_n::nat 
+record binary_parity_tail_state =
+binary_parity_tail_n::nat
 binary_parity_tail_v::nat
 binary_parity_tail_a::nat
 binary_parity_tail_ret::nat
@@ -5917,7 +5917,7 @@ in
       binary_assign_constant_tail_v' = binary_parity_tail_v s;
       binary_assign_constant_tail_x' = (snd'_state_p snd'_ret_state) mod 2;
       binary_assign_constant_tail_ret' = 0;
-      binary_assign_constant_tail_state = 
+      binary_assign_constant_tail_state =
         \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
         binary_assign_constant_tail_v = binary_assign_constant_tail_v',
         binary_assign_constant_tail_x = binary_assign_constant_tail_x',
@@ -5930,7 +5930,7 @@ in
       binary_parity_tail_a = binary_parity_tail_a s,
       binary_parity_tail_ret = binary_parity_tail_ret'\<rparr>
       in
-       ret) 
+       ret)
  else (let
       binary_parity_tail_aux1_n' = binary_parity_tail_n s;
       binary_parity_tail_aux1_a' = binary_parity_tail_a s;
@@ -5941,7 +5941,7 @@ in
         binary_parity_tail_aux1_ret = binary_parity_tail_aux1_ret'\<rparr>;
       binary_parity_tail_aux1_ret_state =
         binary_parity_tail_aux1_imp binary_parity_tail_aux1_state;
-      
+
       cons_h' = binary_parity_tail_aux1_ret binary_parity_tail_aux1_ret_state;
       cons_t' = 0;
       cons_ret' = 0;
@@ -5959,7 +5959,7 @@ in
         binary_parity_tail_aux3_ret = binary_parity_tail_aux3_ret'\<rparr>;
       binary_parity_tail_aux3_ret_state =
         binary_parity_tail_aux3_imp binary_parity_tail_aux3_state;
-      
+
       cons_h' = binary_parity_tail_aux3_ret binary_parity_tail_aux3_ret_state;
       cons_t' = cons_ret cons_ret_state;
       cons_ret' = 0;
@@ -5984,9 +5984,9 @@ in
 function binary_parity_tail_imp ::
   "binary_parity_tail_state \<Rightarrow> binary_parity_tail_state" where
   "binary_parity_tail_imp s =
-  (let 
+  (let
       ret = binary_parity_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -5998,12 +5998,12 @@ declare binary_parity_tail_imp.simps [simp del]
 lemma binary_parity_tail_imp_correct[let_function_correctness]:
   "binary_parity_tail_ret (binary_parity_tail_imp s) =
     binary_parity_tail (binary_parity_tail_n s) (binary_parity_tail_v s) (binary_parity_tail_a s)"
-  apply (simp only: binary_parity_tail_imp.simps Let_def binary_parity_tail_state_upd_def 
+  apply (simp only: binary_parity_tail_imp.simps Let_def binary_parity_tail_state_upd_def
   binary_parity_tail_aux_correct)
   apply (simp add: cons_imp_correct binary_parity_tail_aux3_imp_correct binary_parity_tail_aux1_imp_correct
-  binary_assign_constant_tail_imp_correct snd'_imp_correct fst'_imp_correct snd_nat_snd'_nat 
-  fst_nat_fst'_nat) 
-  done    
+  binary_assign_constant_tail_imp_correct snd'_imp_correct fst'_imp_correct snd_nat_snd'_nat
+  fst_nat_fst'_nat)
+  done
 
 function binary_parity_tail_imp_time ::
   "nat \<Rightarrow> binary_parity_tail_state \<Rightarrow> nat" where
@@ -6034,7 +6034,7 @@ in
       t = t + 2;
       binary_assign_constant_tail_ret' = 0;
       t = t + 2;
-      binary_assign_constant_tail_state = 
+      binary_assign_constant_tail_state =
         \<lparr>binary_assign_constant_tail_n = binary_assign_constant_tail_n',
         binary_assign_constant_tail_v = binary_assign_constant_tail_v',
         binary_assign_constant_tail_x = binary_assign_constant_tail_x',
@@ -6049,7 +6049,7 @@ in
       binary_parity_tail_a = binary_parity_tail_a s,
       binary_parity_tail_ret = binary_parity_tail_ret'\<rparr>
       in
-       t) 
+       t)
  else (let
       t = t + 1;
       binary_parity_tail_aux1_n' = binary_parity_tail_n s;
@@ -6065,7 +6065,7 @@ in
       binary_parity_tail_aux1_ret_state =
         binary_parity_tail_aux1_imp binary_parity_tail_aux1_state;
       t = t + binary_parity_tail_aux1_imp_time 0 binary_parity_tail_aux1_state;
-      
+
       cons_h' = binary_parity_tail_aux1_ret binary_parity_tail_aux1_ret_state;
       t = t + 2;
       cons_t' = 0;
@@ -6092,7 +6092,7 @@ in
       binary_parity_tail_aux3_ret_state =
         binary_parity_tail_aux3_imp binary_parity_tail_aux3_state;
       t = t + binary_parity_tail_aux3_imp_time 0 binary_parity_tail_aux3_state;
-      
+
       cons_h' = binary_parity_tail_aux3_ret binary_parity_tail_aux3_ret_state;
       t = t + 2;
       cons_t' = cons_ret cons_ret_state;
@@ -6132,19 +6132,19 @@ lemma binary_parity_tail_imp_time_acc:
   "(binary_parity_tail_imp_time (Suc t) s) = Suc (binary_parity_tail_imp_time t s)"
   by (induction t s rule: binary_parity_tail_imp_time.induct)
     ((subst (1 2) binary_parity_tail_imp_time.simps);
-      (simp add: binary_parity_tail_state_upd_def Let_def))            
+      (simp add: binary_parity_tail_state_upd_def Let_def))
 
 lemma binary_parity_tail_imp_time_acc_2_aux:
   "(binary_parity_tail_imp_time t s) = t + (binary_parity_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_parity_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_parity_tail_imp_time_acc)+
 
 lemma binary_parity_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_parity_tail_imp_time t s) = t + (binary_parity_tail_imp_time 0 s)"
-  by (rule binary_parity_tail_imp_time_acc_2_aux)            
+  by (rule binary_parity_tail_imp_time_acc_2_aux)
 
 lemma binary_parity_tail_imp_time_acc_3:
   "(binary_parity_tail_imp_time (a + b) s) = a + (binary_parity_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_parity_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: binary_parity_tail_imp_time_acc)+
 
 definition binary_parity_tail_IMP_Minus where
   "binary_parity_tail_IMP_Minus \<equiv>
@@ -6168,36 +6168,36 @@ definition binary_parity_tail_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram binary_assign_constant_tail_prefix binary_assign_constant_tail_IMP_Minus;;
 
-  binary_assign_constant_tail_ret_str 
+  binary_assign_constant_tail_ret_str
    ::= A (V (binary_assign_constant_tail_prefix @ binary_assign_constant_tail_ret_str))
   )
-  ELSE 
+  ELSE
   (
-  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_n_str) 
+  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_n_str)
     ::=  A (V binary_parity_tail_n_str);;
-  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_a_str) 
+  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_a_str)
     ::=  A (V binary_parity_tail_a_str);;
-  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_ret_str) 
+  (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_ret_str)
     ::=  A (N 0);;
   invoke_subprogram binary_parity_tail_aux1_prefix binary_parity_tail_aux1_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (binary_parity_tail_aux1_prefix @ binary_parity_tail_aux1_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
 
-  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_n_str) 
+  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_n_str)
     ::=  A (V binary_parity_tail_n_str);;
-  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_v_str) 
+  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_v_str)
     ::=  A (V binary_parity_tail_v_str);;
-  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_a_str) 
+  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_a_str)
     ::=  A (V binary_parity_tail_a_str);;
-  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_ret_str) 
+  (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_ret_str)
     ::=  A (N 0);;
   invoke_subprogram binary_parity_tail_aux3_prefix binary_parity_tail_aux3_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (binary_parity_tail_aux3_prefix @ binary_parity_tail_aux3_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -6262,14 +6262,14 @@ lemma binary_parity_tail_IMP_Minus_correct_function:
     apply(erule binary_parity_tail_aux1_IMP_Minus_correct[where vars = "binary_parity_tail_IMP_vars"])
     subgoal premises p using p(36) by fastforce
     by (fastforce simp add: binary_parity_tail_state_translators binary_parity_tail_state_upd_def)
-  done       
+  done
 
 lemma binary_parity_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_parity_tail_pref) binary_parity_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_parity_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_parity_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_parity_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -6301,7 +6301,7 @@ lemma binary_parity_tail_IMP_Minus_correct_time:
     apply(erule binary_parity_tail_aux1_IMP_Minus_correct[where vars = "binary_parity_tail_IMP_vars"])
     subgoal premises p using p(61) by fastforce
     by (fastforce simp add: binary_parity_tail_state_translators Let_def)
-  done              
+  done
 
 lemma binary_parity_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_parity_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -6315,7 +6315,7 @@ lemma binary_parity_tail_IMP_Minus_correct:
   using binary_parity_tail_IMP_Minus_correct_function
     binary_parity_tail_IMP_Minus_correct_time
     binary_parity_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection assign_var_carry_sub_tail
 
@@ -6325,7 +6325,7 @@ definition "assign_var_carry_sub_tail_aux1 a b c \<equiv>
 (if b + c = 0 \<or> b + c = 2 then (if a = 1 then 1 else 0)
     else (if b + c = 1 \<and> a = 0 then 1 else 0))"
 
-record assign_var_carry_sub_tail_aux1_state = 
+record assign_var_carry_sub_tail_aux1_state =
 assign_var_carry_sub_tail_aux1_a::nat
 assign_var_carry_sub_tail_aux1_b::nat
 assign_var_carry_sub_tail_aux1_c::nat
@@ -6340,7 +6340,7 @@ abbreviation "assign_var_carry_sub_tail_aux1_cond_str \<equiv> ''cond''"
 abbreviation "assign_var_carry_sub_tail_aux1_result \<equiv> ''result''"
 
 definition "assign_var_carry_sub_tail_aux1_state_upd s \<equiv>
-(let 
+(let
   EQUAL_neq_zero_a' = assign_var_carry_sub_tail_aux1_b s + assign_var_carry_sub_tail_aux1_c s;
   EQUAL_neq_zero_b' = 0;
   EQUAL_neq_zero_ret' = 0;
@@ -6368,7 +6368,7 @@ definition "assign_var_carry_sub_tail_aux1_state_upd s \<equiv>
   cond = OR_neq_zero_ret OR_neq_zero_ret_state
 in
   (if cond \<noteq> 0 then
-    (let 
+    (let
       EQUAL_neq_zero_a' = assign_var_carry_sub_tail_aux1_a s;
       EQUAL_neq_zero_b' = 1;
       EQUAL_neq_zero_ret' = 0;
@@ -6383,7 +6383,7 @@ in
             assign_var_carry_sub_tail_aux1_ret = assign_var_carry_sub_tail_aux1_ret'
             \<rparr>
     in
-     ret) 
+     ret)
   else (let
       EQUAL_neq_zero_a' = assign_var_carry_sub_tail_aux1_b s + assign_var_carry_sub_tail_aux1_c s;
       EQUAL_neq_zero_b' = 1;
@@ -6416,17 +6416,17 @@ in
             assign_var_carry_sub_tail_aux1_ret = assign_var_carry_sub_tail_aux1_ret'
             \<rparr>
       in
-      ret 
-    ) 
+      ret
+    )
 ))
 "
 
 function assign_var_carry_sub_tail_aux1_imp ::
   "assign_var_carry_sub_tail_aux1_state \<Rightarrow> assign_var_carry_sub_tail_aux1_state" where
   "assign_var_carry_sub_tail_aux1_imp s =
-  (let 
+  (let
       ret = assign_var_carry_sub_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -6442,7 +6442,7 @@ lemma assign_var_carry_sub_tail_aux1_imp_correct[let_function_correctness]:
   apply (simp only: assign_var_carry_sub_tail_aux1_imp.simps Let_def assign_var_carry_sub_tail_aux1_state_upd_def
   assign_var_carry_sub_tail_aux1_def)
   apply (auto simp add: EQUAL_neq_zero_imp_correct  OR_neq_zero_imp_correct AND_neq_zero_imp_correct)
-  done       
+  done
 
 function assign_var_carry_sub_tail_aux1_imp_time ::
   "nat \<Rightarrow> assign_var_carry_sub_tail_aux1_state \<Rightarrow> nat" where
@@ -6489,7 +6489,7 @@ function assign_var_carry_sub_tail_aux1_imp_time ::
   t = t + 2
 in
   (if cond \<noteq> 0 then
-    (let 
+    (let
       t = t + 1;
       EQUAL_neq_zero_a' = assign_var_carry_sub_tail_aux1_a s;
       t = t + 2;
@@ -6511,7 +6511,7 @@ in
             \<rparr>
     in
      t)
-  else 
+  else
     (let
       t = t + 1;
       EQUAL_neq_zero_a' = assign_var_carry_sub_tail_aux1_b s + assign_var_carry_sub_tail_aux1_c s;
@@ -6559,7 +6559,7 @@ in
             assign_var_carry_sub_tail_aux1_ret = assign_var_carry_sub_tail_aux1_ret'
             \<rparr>
       in
-      t 
+      t
     ))
   )"
   by auto
@@ -6572,37 +6572,37 @@ lemma assign_var_carry_sub_tail_aux1_imp_time_acc:
   "(assign_var_carry_sub_tail_aux1_imp_time (Suc t) s) = Suc (assign_var_carry_sub_tail_aux1_imp_time t s)"
   by (induction t s rule: assign_var_carry_sub_tail_aux1_imp_time.induct)
     ((subst (1 2) assign_var_carry_sub_tail_aux1_imp_time.simps);
-      (simp add: assign_var_carry_sub_tail_aux1_state_upd_def Let_def))            
+      (simp add: assign_var_carry_sub_tail_aux1_state_upd_def Let_def))
 
 lemma assign_var_carry_sub_tail_aux1_imp_time_acc_2_aux:
   "(assign_var_carry_sub_tail_aux1_imp_time t s) = t + (assign_var_carry_sub_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux1_imp_time_acc)+
 
 lemma assign_var_carry_sub_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_sub_tail_aux1_imp_time t s) = t + (assign_var_carry_sub_tail_aux1_imp_time 0 s)"
-  by (rule assign_var_carry_sub_tail_aux1_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_sub_tail_aux1_imp_time_acc_2_aux)
 
 lemma assign_var_carry_sub_tail_aux1_imp_time_acc_3:
   "(assign_var_carry_sub_tail_aux1_imp_time (a + b) s) = a + (assign_var_carry_sub_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux1_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux1_imp_time_acc)+
 
 definition assign_var_carry_sub_tail_aux1_IMP_Minus where
   "assign_var_carry_sub_tail_aux1_IMP_Minus \<equiv>
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)
     ::= Plus (V assign_var_carry_sub_tail_aux1_b_str) (V assign_var_carry_sub_tail_aux1_c_str);;
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str)
     ::= A (N 0);;
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)
     ::= A (N 0);;
   invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
-  assign_var_carry_sub_tail_aux1_result 
+  assign_var_carry_sub_tail_aux1_result
     ::= A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str));;
 
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)
     ::= Plus (V assign_var_carry_sub_tail_aux1_b_str) (V assign_var_carry_sub_tail_aux1_c_str);;
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str)
     ::= A (N 2);;
-  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) 
+  (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)
     ::= A (N 0);;
   invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
 
@@ -6618,13 +6618,13 @@ definition assign_var_carry_sub_tail_aux1_IMP_Minus where
     A (V (OR_neq_zero_prefix @ OR_neq_zero_ret_str));;
 
   IF assign_var_carry_sub_tail_aux1_cond_str\<noteq>0
-  THEN 
+  THEN
     (
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)
       ::= A (V assign_var_carry_sub_tail_aux1_a_str);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str)
       ::= A (N 1);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)
       ::= A (N 0);;
     invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
     (assign_var_carry_sub_tail_aux1_ret_str)
@@ -6632,21 +6632,21 @@ definition assign_var_carry_sub_tail_aux1_IMP_Minus where
     )
   ELSE
     (
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)
       ::= Plus (V assign_var_carry_sub_tail_aux1_b_str) (V assign_var_carry_sub_tail_aux1_c_str);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str)
       ::= A (N 1);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)
       ::= A (N 0);;
     invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
-    assign_var_carry_sub_tail_aux1_result 
+    assign_var_carry_sub_tail_aux1_result
       ::= A (V (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str));;
 
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str)
       ::= A (V assign_var_carry_sub_tail_aux1_a_str);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_b_str)
       ::= A (N 0);;
-    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str) 
+    (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_ret_str)
       ::= A (N 0);;
     invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
 
@@ -6709,15 +6709,15 @@ lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct_function:
     subgoal premises p using p(39) by fastforce
     by (force simp add: assign_var_carry_sub_tail_aux1_state_translators
   AND_neq_zero_imp_to_HOL_state_def)
-  done 
-     
+  done
+
 
 lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_sub_tail_aux1_pref) assign_var_carry_sub_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_sub_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_sub_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -6747,7 +6747,7 @@ lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct_time:
     subgoal premises p using p(67) by fastforce
     by (force simp add: assign_var_carry_sub_tail_aux1_state_translators
   AND_neq_zero_imp_to_HOL_state_def Let_def)
-  done         
+  done
 
 lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_sub_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -6761,10 +6761,10 @@ lemma assign_var_carry_sub_tail_aux1_IMP_Minus_correct:
   using assign_var_carry_sub_tail_aux1_IMP_Minus_correct_function
     assign_var_carry_sub_tail_aux1_IMP_Minus_correct_time
     assign_var_carry_sub_tail_aux1_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 
-subsubsection assign_var_carry_sub_tail_aux2 
+subsubsection assign_var_carry_sub_tail_aux2
 
 definition "assign_var_carry_sub_tail_aux2 a b c \<equiv>
 (1##(vname_encode ''carry'')## (if a < b + c then 1 else 0) ## 0)
@@ -6809,7 +6809,7 @@ definition "assign_var_carry_sub_tail_aux2_state_upd s \<equiv>
   cons_ret' = 0;
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
-  
+
   assign_var_carry_sub_tail_aux2_ret' = cons_ret cons_ret_state;
   ret = \<lparr>assign_var_carry_sub_tail_aux2_a = assign_var_carry_sub_tail_aux2_a s,
                 assign_var_carry_sub_tail_aux2_b = assign_var_carry_sub_tail_aux2_b s,
@@ -6822,9 +6822,9 @@ in
 function assign_var_carry_sub_tail_aux2_imp ::
   "assign_var_carry_sub_tail_aux2_state \<Rightarrow> assign_var_carry_sub_tail_aux2_state" where
   "assign_var_carry_sub_tail_aux2_imp s =
-  (let 
+  (let
       ret = assign_var_carry_sub_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -6840,7 +6840,7 @@ lemma assign_var_carry_sub_tail_aux2_imp_correct[let_function_correctness]:
   apply (simp only: assign_var_carry_sub_tail_aux2_imp.simps Let_def assign_var_carry_sub_tail_aux2_state_upd_def
   assign_var_carry_sub_tail_aux2_def)
   apply (auto simp add: cons_imp_correct LESS_neq_zero_imp_correct carry_vname_encode_val)
-  done 
+  done
 
 function assign_var_carry_sub_tail_aux2_imp_time ::
   "nat \<Rightarrow> assign_var_carry_sub_tail_aux2_state \<Rightarrow> nat" where
@@ -6887,7 +6887,7 @@ function assign_var_carry_sub_tail_aux2_imp_time ::
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
   t = t + cons_imp_time 0 cons_state;
-  
+
   assign_var_carry_sub_tail_aux2_ret' = cons_ret cons_ret_state;
   t = t + 2;
   ret = \<lparr>assign_var_carry_sub_tail_aux2_a = assign_var_carry_sub_tail_aux2_a s,
@@ -6907,19 +6907,19 @@ lemma assign_var_carry_sub_tail_aux2_imp_time_acc:
   "(assign_var_carry_sub_tail_aux2_imp_time (Suc t) s) = Suc (assign_var_carry_sub_tail_aux2_imp_time t s)"
   by (induction t s rule: assign_var_carry_sub_tail_aux2_imp_time.induct)
     ((subst (1 2) assign_var_carry_sub_tail_aux2_imp_time.simps);
-      (simp add: assign_var_carry_sub_tail_aux2_state_upd_def Let_def))            
+      (simp add: assign_var_carry_sub_tail_aux2_state_upd_def Let_def))
 
 lemma assign_var_carry_sub_tail_aux2_imp_time_acc_2_aux:
   "(assign_var_carry_sub_tail_aux2_imp_time t s) = t + (assign_var_carry_sub_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux2_imp_time_acc)+
 
 lemma assign_var_carry_sub_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_sub_tail_aux2_imp_time t s) = t + (assign_var_carry_sub_tail_aux2_imp_time 0 s)"
-  by (rule assign_var_carry_sub_tail_aux2_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_sub_tail_aux2_imp_time_acc_2_aux)
 
 lemma assign_var_carry_sub_tail_aux2_imp_time_acc_3:
   "(assign_var_carry_sub_tail_aux2_imp_time (a + b) s) = a + (assign_var_carry_sub_tail_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux2_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux2_imp_time_acc)+
 
 definition assign_var_carry_sub_tail_aux2_IMP_Minus where
   "assign_var_carry_sub_tail_aux2_IMP_Minus \<equiv>
@@ -6981,14 +6981,14 @@ lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux2_IMP_vars"])
   subgoal premises p using p(23) by fastforce
   by(fastforce simp: assign_var_carry_sub_tail_aux2_state_translators
-    assign_var_carry_sub_tail_aux2_state_upd_def)      
+    assign_var_carry_sub_tail_aux2_state_upd_def)
 
 lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_sub_tail_aux2_pref) assign_var_carry_sub_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_sub_tail_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_sub_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -7005,7 +7005,7 @@ lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct_time:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux2_IMP_vars"])
   subgoal premises p using p(39) by fastforce
   by(fastforce simp: assign_var_carry_sub_tail_aux2_state_translators
-    Let_def)          
+    Let_def)
 
 lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_sub_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -7019,7 +7019,7 @@ lemma assign_var_carry_sub_tail_aux2_IMP_Minus_correct:
   using assign_var_carry_sub_tail_aux2_IMP_Minus_correct_function
     assign_var_carry_sub_tail_aux2_IMP_Minus_correct_time
     assign_var_carry_sub_tail_aux2_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)   
+  by (meson set_mono_prefix)
 
 subsubsection assign_var_carry_sub_tail_aux3
 
@@ -7104,9 +7104,9 @@ in
 function assign_var_carry_sub_tail_aux3_imp ::
   "assign_var_carry_sub_tail_aux3_state \<Rightarrow> assign_var_carry_sub_tail_aux3_state" where
   "assign_var_carry_sub_tail_aux3_imp s =
-  (let 
+  (let
       ret = assign_var_carry_sub_tail_aux3_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -7124,7 +7124,7 @@ lemma assign_var_carry_sub_tail_aux3_imp_correct[let_function_correctness]:
   assign_var_carry_sub_tail_aux3_def)
   apply (auto simp add: cons_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct
   assign_var_carry_sub_tail_aux1_imp_correct)
-  done             
+  done
 
 function assign_var_carry_sub_tail_aux3_imp_time ::
   "nat \<Rightarrow> assign_var_carry_sub_tail_aux3_state \<Rightarrow> nat" where
@@ -7220,19 +7220,19 @@ lemma assign_var_carry_sub_tail_aux3_imp_time_acc:
   "(assign_var_carry_sub_tail_aux3_imp_time (Suc t) s) = Suc (assign_var_carry_sub_tail_aux3_imp_time t s)"
   by (induction t s rule: assign_var_carry_sub_tail_aux3_imp_time.induct)
     ((subst (1 2) assign_var_carry_sub_tail_aux3_imp_time.simps);
-      (simp add: assign_var_carry_sub_tail_aux3_state_upd_def Let_def))            
+      (simp add: assign_var_carry_sub_tail_aux3_state_upd_def Let_def))
 
 lemma assign_var_carry_sub_tail_aux3_imp_time_acc_2_aux:
   "(assign_var_carry_sub_tail_aux3_imp_time t s) = t + (assign_var_carry_sub_tail_aux3_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux3_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_aux3_imp_time_acc)+
 
 lemma assign_var_carry_sub_tail_aux3_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_sub_tail_aux3_imp_time t s) = t + (assign_var_carry_sub_tail_aux3_imp_time 0 s)"
-  by (rule assign_var_carry_sub_tail_aux3_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_sub_tail_aux3_imp_time_acc_2_aux)
 
 lemma assign_var_carry_sub_tail_aux3_imp_time_acc_3:
   "(assign_var_carry_sub_tail_aux3_imp_time (a + b) s) = a + (assign_var_carry_sub_tail_aux3_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux3_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_aux3_imp_time_acc)+
 
 definition assign_var_carry_sub_tail_aux3_IMP_Minus where
   "assign_var_carry_sub_tail_aux3_IMP_Minus \<equiv>
@@ -7301,7 +7301,7 @@ lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_function:
   apply(subst assign_var_carry_sub_tail_aux3_imp.simps)
   apply(simp only: assign_var_carry_sub_tail_aux3_IMP_Minus_def prefix_simps)
   apply(erule Seq_E)+
-  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars 
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars
     \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(25) by fastforce
   apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars
@@ -7316,14 +7316,14 @@ lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_function:
   apply(erule assign_var_carry_sub_tail_aux1_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars"])
   subgoal premises p using p(35) by fastforce
   by(force simp: assign_var_carry_sub_tail_aux3_state_translators
-    assign_var_carry_sub_tail_aux3_state_upd_def)        
+    assign_var_carry_sub_tail_aux3_state_upd_def)
 
 lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_sub_tail_aux3_pref) assign_var_carry_sub_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_sub_tail_aux3_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_sub_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -7331,7 +7331,7 @@ lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_time:
   apply(subst assign_var_carry_sub_tail_aux3_imp_time.simps)
   apply(simp only: assign_var_carry_sub_tail_aux3_IMP_Minus_def prefix_simps)
   apply(erule Seq_tE)+
-  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars 
+  apply(erule prod_encode_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars
     \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(49) by fastforce
   apply(erule var_bit_to_var_tail_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars
@@ -7346,7 +7346,7 @@ lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct_time:
   apply(erule assign_var_carry_sub_tail_aux1_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_aux3_IMP_vars"])
   subgoal premises p using p(59) by fastforce
   by(force simp: assign_var_carry_sub_tail_aux3_state_translators
-    Let_def)       
+    Let_def)
 
 lemma assign_var_carry_sub_tail_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_sub_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -7381,14 +7381,14 @@ abbreviation "assign_var_carry_sub_tail_c_str \<equiv> ''c''"
 abbreviation "assign_var_carry_sub_tail_ret_str \<equiv> ''ret''"
 
 lemma assign_var_carry_sub_tail_aux_correct:
-  "assign_var_carry_sub_tail i v a b c = (2 ## 
+  "assign_var_carry_sub_tail i v a b c = (2 ##
 (assign_var_carry_sub_tail_aux3 i v a b c)
 ## (assign_var_carry_sub_tail_aux2 a b c) ## 0)"
 unfolding assign_var_carry_sub_tail_aux1_def assign_var_carry_sub_tail_aux2_def
-assign_var_carry_sub_tail_aux3_def assign_var_carry_sub_tail_def 
+assign_var_carry_sub_tail_aux3_def assign_var_carry_sub_tail_def
 by blast
 
-definition "assign_var_carry_sub_tail_state_upd s \<equiv> 
+definition "assign_var_carry_sub_tail_state_upd s \<equiv>
 (let
   assign_var_carry_sub_tail_aux2_a' = assign_var_carry_sub_tail_a s;
   assign_var_carry_sub_tail_aux2_b' = assign_var_carry_sub_tail_b s;
@@ -7449,9 +7449,9 @@ in
 function assign_var_carry_sub_tail_imp ::
   "assign_var_carry_sub_tail_state \<Rightarrow> assign_var_carry_sub_tail_state" where
   "assign_var_carry_sub_tail_imp s =
-  (let 
+  (let
       ret = assign_var_carry_sub_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -7470,7 +7470,7 @@ lemma assign_var_carry_sub_tail_imp_correct[let_function_correctness]:
     assign_var_carry_sub_tail_aux2_imp_correct
    assign_var_carry_sub_tail_aux3_imp_correct
   cons_imp_correct)
-  done 
+  done
 
 function assign_var_carry_sub_tail_imp_time ::
   "nat \<Rightarrow> assign_var_carry_sub_tail_state \<Rightarrow> nat" where
@@ -7567,19 +7567,19 @@ lemma assign_var_carry_sub_tail_imp_time_acc:
   "(assign_var_carry_sub_tail_imp_time (Suc t) s) = Suc (assign_var_carry_sub_tail_imp_time t s)"
   by (induction t s rule: assign_var_carry_sub_tail_imp_time.induct)
     ((subst (1 2) assign_var_carry_sub_tail_imp_time.simps);
-      (simp add: assign_var_carry_sub_tail_state_upd_def Let_def))            
+      (simp add: assign_var_carry_sub_tail_state_upd_def Let_def))
 
 lemma assign_var_carry_sub_tail_imp_time_acc_2_aux:
   "(assign_var_carry_sub_tail_imp_time t s) = t + (assign_var_carry_sub_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_sub_tail_imp_time_acc)+
 
 lemma assign_var_carry_sub_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_sub_tail_imp_time t s) = t + (assign_var_carry_sub_tail_imp_time 0 s)"
-  by (rule assign_var_carry_sub_tail_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_sub_tail_imp_time_acc_2_aux)
 
 lemma assign_var_carry_sub_tail_imp_time_acc_3:
   "(assign_var_carry_sub_tail_imp_time (a + b) s) = a + (assign_var_carry_sub_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_sub_tail_imp_time_acc)+
 
 definition assign_var_carry_sub_tail_IMP_Minus where
   "assign_var_carry_sub_tail_IMP_Minus \<equiv>
@@ -7654,7 +7654,7 @@ lemma assign_var_carry_sub_tail_IMP_Minus_correct_function:
   apply(erule Seq_E)+
   apply(erule assign_var_carry_sub_tail_aux2_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
   subgoal premises p using p(25) by fastforce
-  apply(erule assign_var_carry_sub_tail_aux3_IMP_Minus_correct[where vars = 
+  apply(erule assign_var_carry_sub_tail_aux3_IMP_Minus_correct[where vars =
     "assign_var_carry_sub_tail_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(27) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
@@ -7664,14 +7664,14 @@ lemma assign_var_carry_sub_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
   subgoal premises p using p(33) by fastforce
   by(force simp: assign_var_carry_sub_tail_state_translators
-    assign_var_carry_sub_tail_state_upd_def)        
+    assign_var_carry_sub_tail_state_upd_def)
 
 lemma assign_var_carry_sub_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_sub_tail_pref) assign_var_carry_sub_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_sub_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma assign_var_carry_sub_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_sub_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -7681,7 +7681,7 @@ lemma assign_var_carry_sub_tail_IMP_Minus_correct_time:
   apply(erule Seq_tE)+
   apply(erule assign_var_carry_sub_tail_aux2_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
   subgoal premises p using p(49) by fastforce
-  apply(erule assign_var_carry_sub_tail_aux3_IMP_Minus_correct[where vars = 
+  apply(erule assign_var_carry_sub_tail_aux3_IMP_Minus_correct[where vars =
     "assign_var_carry_sub_tail_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(51) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
@@ -7691,7 +7691,7 @@ lemma assign_var_carry_sub_tail_IMP_Minus_correct_time:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_sub_tail_IMP_vars"])
   subgoal premises p using p(57) by fastforce
   by(force simp: assign_var_carry_sub_tail_state_translators
-    Let_def)         
+    Let_def)
 
 lemma assign_var_carry_sub_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_sub_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -7705,14 +7705,14 @@ lemma assign_var_carry_sub_tail_IMP_Minus_correct:
   using assign_var_carry_sub_tail_IMP_Minus_correct_function
     assign_var_carry_sub_tail_IMP_Minus_correct_time
     assign_var_carry_sub_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>full_subtractor\<close>
 
 subsubsection \<open>full_subtractor_tail_aux1\<close>
 
 fun full_subtractor_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_subtractor_tail_aux1 op_b i v a b = 
+  "full_subtractor_tail_aux1 op_b i v a b =
     (3 ## (op_b ## 0) ## (assign_var_carry_sub_tail i v a b 1) ## (assign_var_carry_sub_tail i v a b 0) ## 0)"
 
 record full_subtractor_tail_aux1_state =
@@ -7769,7 +7769,7 @@ definition "full_subtractor_tail_aux1_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = full_subtractor_tail_aux1_op_b s;
       cons_t' = 0;
@@ -7800,9 +7800,9 @@ definition "full_subtractor_tail_aux1_state_upd s =
 function full_subtractor_tail_aux1_imp ::
   "full_subtractor_tail_aux1_state \<Rightarrow> full_subtractor_tail_aux1_state" where
   "full_subtractor_tail_aux1_imp s =
-  (let 
+  (let
       ret = full_subtractor_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -7817,7 +7817,7 @@ lemma full_subtractor_tail_aux1_imp_correct[let_function_correctness]:
       (full_subtractor_tail_aux1_a s) (full_subtractor_tail_aux1_b s)"
   apply (simp only: full_subtractor_tail_aux1_imp.simps Let_def full_subtractor_tail_aux1_state_upd_def
     assign_var_carry_sub_tail_imp_correct cons_imp_correct)
-  by simp  
+  by simp
 
 function full_subtractor_tail_aux1_imp_time ::
   "nat \<Rightarrow> full_subtractor_tail_aux1_state \<Rightarrow> nat" where
@@ -7933,19 +7933,19 @@ lemma full_subtractor_tail_aux1_imp_time_acc:
   "(full_subtractor_tail_aux1_imp_time (Suc t) s) = Suc (full_subtractor_tail_aux1_imp_time t s)"
   by (induction t s rule: full_subtractor_tail_aux1_imp_time.induct)
     ((subst (1 2) full_subtractor_tail_aux1_imp_time.simps);
-      (simp add: full_subtractor_tail_aux1_state_upd_def Let_def))            
+      (simp add: full_subtractor_tail_aux1_state_upd_def Let_def))
 
 lemma full_subtractor_tail_aux1_imp_time_acc_2_aux:
   "(full_subtractor_tail_aux1_imp_time t s) = t + (full_subtractor_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux1_imp_time_acc)+
 
 lemma full_subtractor_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_subtractor_tail_aux1_imp_time t s) = t + (full_subtractor_tail_aux1_imp_time 0 s)"
-  by (rule full_subtractor_tail_aux1_imp_time_acc_2_aux)            
+  by (rule full_subtractor_tail_aux1_imp_time_acc_2_aux)
 
 lemma full_subtractor_tail_aux1_imp_time_acc_3:
   "(full_subtractor_tail_aux1_imp_time (a + b) s) = a + (full_subtractor_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: full_subtractor_tail_aux1_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: full_subtractor_tail_aux1_imp_time_acc)+
 
 abbreviation "full_subtractor_tail_aux1_cons_result \<equiv> ''cons_result''"
 
@@ -8091,14 +8091,14 @@ lemma full_subtractor_tail_aux1_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux1_IMP_vars"])
   subgoal premises p using p(49) by fastforce
   by(force simp: full_subtractor_tail_aux1_state_translators
-    full_subtractor_tail_aux1_state_upd_def)   
+    full_subtractor_tail_aux1_state_upd_def)
 
 lemma full_subtractor_tail_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_subtractor_tail_aux1_pref) full_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_subtractor_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma full_subtractor_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p full_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -8120,7 +8120,7 @@ lemma full_subtractor_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux1_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def full_subtractor_tail_aux1_state_translators) 
+  by(force simp add: Let_def full_subtractor_tail_aux1_state_translators)
 
 lemma full_subtractor_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8139,8 +8139,8 @@ lemma full_subtractor_tail_aux1_IMP_Minus_correct:
 subsubsection \<open>full_subtractor_tail_aux2\<close>
 
 fun full_subtractor_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_subtractor_tail_aux2 op_b i v a = 
-    (3 ## ((vname_encode ''carry'') ## 0) ## 
+  "full_subtractor_tail_aux2 op_b i v a =
+    (3 ## ((vname_encode ''carry'') ## 0) ##
     (full_subtractor_tail_aux1 op_b i v a 1) ##
     (full_subtractor_tail_aux1 op_b i v a 0) ## 0)"
 
@@ -8196,7 +8196,7 @@ definition "full_subtractor_tail_aux2_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = carry_vname_encode_as_nat;
       cons_t' = 0;
@@ -8226,9 +8226,9 @@ definition "full_subtractor_tail_aux2_state_upd s =
 function full_subtractor_tail_aux2_imp ::
   "full_subtractor_tail_aux2_state \<Rightarrow> full_subtractor_tail_aux2_state" where
   "full_subtractor_tail_aux2_imp s =
-  (let 
+  (let
       ret = full_subtractor_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -8358,15 +8358,15 @@ lemma full_subtractor_tail_aux2_imp_time_acc:
   "(full_subtractor_tail_aux2_imp_time (Suc t) s) = Suc (full_subtractor_tail_aux2_imp_time t s)"
   by (induction t s rule: full_subtractor_tail_aux2_imp_time.induct)
     ((subst (1 2) full_subtractor_tail_aux2_imp_time.simps);
-      (simp add: full_subtractor_tail_aux2_state_upd_def Let_def))            
+      (simp add: full_subtractor_tail_aux2_state_upd_def Let_def))
 
 lemma full_subtractor_tail_aux2_imp_time_acc_2_aux:
   "(full_subtractor_tail_aux2_imp_time t s) = t + (full_subtractor_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux2_imp_time_acc)+
 
 lemma full_subtractor_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_subtractor_tail_aux2_imp_time t s) = t + (full_subtractor_tail_aux2_imp_time 0 s)"
-  by (rule full_subtractor_tail_aux2_imp_time_acc_2_aux)            
+  by (rule full_subtractor_tail_aux2_imp_time_acc_2_aux)
 
 lemma full_subtractor_tail_aux2_imp_time_acc_3:
   "(full_subtractor_tail_aux2_imp_time (a + b) s) = a + (full_subtractor_tail_aux2_imp_time b s)"
@@ -8513,7 +8513,7 @@ lemma full_subtractor_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux2_IMP_vars"])
   subgoal premises p using p(49) by fastforce
   by(force simp: full_subtractor_tail_aux2_state_translators
-    full_subtractor_tail_aux2_state_upd_def)     
+    full_subtractor_tail_aux2_state_upd_def)
 
 lemma full_subtractor_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_subtractor_tail_aux2_pref) full_subtractor_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8542,7 +8542,7 @@ lemma full_subtractor_tail_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux2_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def full_subtractor_tail_aux2_state_translators)  
+  by(force simp add: Let_def full_subtractor_tail_aux2_state_translators)
 
 lemma full_subtractor_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_subtractor_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8561,7 +8561,7 @@ lemma full_subtractor_tail_aux2_IMP_Minus_correct:
 subsubsection \<open>full_subtractor_tail_aux3\<close>
 
 fun full_subtractor_tail_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_subtractor_tail_aux3 op_a op_b i v = 
+  "full_subtractor_tail_aux3 op_a op_b i v =
     (op_a ## 0) ## (full_subtractor_tail_aux2 op_b i v 1) ## (full_subtractor_tail_aux2 op_b i v 0) ## 0"
 
 record full_subtractor_tail_aux3_state =
@@ -8612,7 +8612,7 @@ definition "full_subtractor_tail_aux3_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = full_subtractor_tail_aux3_op_a s;
       cons_t' = 0;
@@ -8637,9 +8637,9 @@ definition "full_subtractor_tail_aux3_state_upd s =
 function full_subtractor_tail_aux3_imp ::
   "full_subtractor_tail_aux3_state \<Rightarrow> full_subtractor_tail_aux3_state" where
   "full_subtractor_tail_aux3_imp s =
-  (let 
+  (let
       ret = full_subtractor_tail_aux3_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -8654,7 +8654,7 @@ lemma full_subtractor_tail_aux3_imp_correct[let_function_correctness]:
       (full_subtractor_tail_aux3_i s) (full_subtractor_tail_aux3_v s)"
   apply (simp only: full_subtractor_tail_aux3_imp.simps Let_def full_subtractor_tail_aux3_state_upd_def
     full_subtractor_tail_aux2_imp_correct cons_imp_correct)
-  by simp  
+  by simp
 
 function full_subtractor_tail_aux3_imp_time ::
   "nat \<Rightarrow> full_subtractor_tail_aux3_state \<Rightarrow> nat" where
@@ -8754,15 +8754,15 @@ lemma full_subtractor_tail_aux3_imp_time_acc:
   "(full_subtractor_tail_aux3_imp_time (Suc t) s) = Suc (full_subtractor_tail_aux3_imp_time t s)"
   by (induction t s rule: full_subtractor_tail_aux3_imp_time.induct)
     ((subst (1 2) full_subtractor_tail_aux3_imp_time.simps);
-      (simp add: full_subtractor_tail_aux3_state_upd_def Let_def))            
+      (simp add: full_subtractor_tail_aux3_state_upd_def Let_def))
 
 lemma full_subtractor_tail_aux3_imp_time_acc_2_aux:
   "(full_subtractor_tail_aux3_imp_time t s) = t + (full_subtractor_tail_aux3_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux3_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_subtractor_tail_aux3_imp_time_acc)+
 
 lemma full_subtractor_tail_aux3_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_subtractor_tail_aux3_imp_time t s) = t + (full_subtractor_tail_aux3_imp_time 0 s)"
-  by (rule full_subtractor_tail_aux3_imp_time_acc_2_aux)            
+  by (rule full_subtractor_tail_aux3_imp_time_acc_2_aux)
 
 lemma full_subtractor_tail_aux3_imp_time_acc_3:
   "(full_subtractor_tail_aux3_imp_time (a + b) s) = a + (full_subtractor_tail_aux3_imp_time b s)"
@@ -8892,14 +8892,14 @@ lemma full_subtractor_tail_aux3_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux3_IMP_vars"])
   subgoal premises p using p(41) by fastforce
   by(force simp: full_subtractor_tail_aux3_state_translators
-    full_subtractor_tail_aux3_state_upd_def)    
+    full_subtractor_tail_aux3_state_upd_def)
 
 lemma full_subtractor_tail_aux3_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_subtractor_tail_aux3_pref) full_subtractor_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_subtractor_tail_aux3_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast    
+  by blast
 
 lemma full_subtractor_tail_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p full_subtractor_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -8919,7 +8919,7 @@ lemma full_subtractor_tail_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(69) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_aux3_IMP_vars"])
   subgoal premises p using p(71) by fastforce
-  by(force simp add: Let_def full_subtractor_tail_aux3_state_translators)        
+  by(force simp add: Let_def full_subtractor_tail_aux3_state_translators)
 
 lemma full_subtractor_tail_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_subtractor_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8933,21 +8933,21 @@ lemma full_subtractor_tail_aux3_IMP_Minus_correct:
   using full_subtractor_tail_aux3_IMP_Minus_correct_function
     full_subtractor_tail_aux3_IMP_Minus_correct_time
     full_subtractor_tail_aux3_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>full_subtractor_tail\<close>
 
 fun full_subtractor_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "full_subtractor_tail' i v =
     (let op_a = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''a''), i));
-         op_b = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''b''), i)) in 
+         op_b = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''b''), i)) in
     3 ## (full_subtractor_tail_aux3 op_a op_b i v)
   )"
 
 lemma full_subtractor_tail'_correct:
   "full_subtractor_tail i v = full_subtractor_tail' i v"
   unfolding full_subtractor_tail_def
-  by (simp only: full_subtractor_tail'.simps full_subtractor_tail_aux1.simps full_subtractor_tail_aux2.simps 
+  by (simp only: full_subtractor_tail'.simps full_subtractor_tail_aux1.simps full_subtractor_tail_aux2.simps
     full_subtractor_tail_aux3.simps Let_def)
 
 record full_subtractor_tail_state =
@@ -9013,9 +9013,9 @@ definition "full_subtractor_tail_state_upd s =
 function full_subtractor_tail_imp ::
   "full_subtractor_tail_state \<Rightarrow> full_subtractor_tail_state" where
   "full_subtractor_tail_imp s =
-  (let 
+  (let
       ret = full_subtractor_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -9120,19 +9120,19 @@ lemma full_subtractor_tail_imp_time_acc:
   "(full_subtractor_tail_imp_time (Suc t) s) = Suc (full_subtractor_tail_imp_time t s)"
   by (induction t s rule: full_subtractor_tail_imp_time.induct)
     ((subst (1 2) full_subtractor_tail_imp_time.simps);
-      (simp add: full_subtractor_tail_state_upd_def Let_def))            
+      (simp add: full_subtractor_tail_state_upd_def Let_def))
 
 lemma full_subtractor_tail_imp_time_acc_2_aux:
   "(full_subtractor_tail_imp_time t s) = t + (full_subtractor_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_subtractor_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_subtractor_tail_imp_time_acc)+
 
 lemma full_subtractor_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_subtractor_tail_imp_time t s) = t + (full_subtractor_tail_imp_time 0 s)"
-  by (rule full_subtractor_tail_imp_time_acc_2_aux)            
+  by (rule full_subtractor_tail_imp_time_acc_2_aux)
 
 lemma full_subtractor_tail_imp_time_acc_3:
   "(full_subtractor_tail_imp_time (a + b) s) = a + (full_subtractor_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: full_subtractor_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: full_subtractor_tail_imp_time_acc)+
 
 abbreviation "full_subtractor_tail_operand_bit_to_var_tail_result \<equiv> ''operand_bit_to_var_tail_result''"
 
@@ -9212,7 +9212,7 @@ definition full_subtractor_tail_IMP_Minus where
 "
 
 abbreviation "full_subtractor_tail_IMP_vars \<equiv>
-  {full_subtractor_tail_i_str, full_subtractor_tail_v_str, full_subtractor_tail_ret_str, 
+  {full_subtractor_tail_i_str, full_subtractor_tail_v_str, full_subtractor_tail_ret_str,
   full_subtractor_tail_operand_bit_to_var_tail_result}"
 
 definition "full_subtractor_tail_imp_to_HOL_state p s =
@@ -9248,14 +9248,14 @@ lemma full_subtractor_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_IMP_vars"])
   subgoal premises p using p(36) by fastforce
   by(force simp: full_subtractor_tail_state_translators
-    full_subtractor_tail_state_upd_def)        
+    full_subtractor_tail_state_upd_def)
 
 lemma full_subtractor_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_subtractor_tail_pref) full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_subtractor_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma full_subtractor_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -9275,7 +9275,7 @@ lemma full_subtractor_tail_IMP_Minus_correct_time:
   subgoal premises p using p(59) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_subtractor_tail_IMP_vars"])
   subgoal premises p using p(61) by fastforce
-  by(force simp add: Let_def full_subtractor_tail_state_translators)  
+  by(force simp add: Let_def full_subtractor_tail_state_translators)
 
 lemma full_subtractor_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -9290,8 +9290,8 @@ lemma full_subtractor_tail_IMP_Minus_correct:
     full_subtractor_tail_IMP_Minus_correct_time
     full_subtractor_tail_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
-  
-subsection map_full_subtractor 
+
+subsection map_full_subtractor
 
 subsubsection map_full_subtractor_acc
 
@@ -9307,7 +9307,7 @@ abbreviation "map_full_subtractor_acc_v_str \<equiv> ''v''"
 abbreviation "map_full_subtractor_acc_n_str \<equiv> ''n''"
 abbreviation "map_full_subtractor_acc_ret_str \<equiv> ''ret''"
 
-definition "map_full_subtractor_acc_state_upd s \<equiv> 
+definition "map_full_subtractor_acc_state_upd s \<equiv>
 (let
   hd_xs' = map_full_subtractor_acc_n s;
   hd_ret' = 0;
@@ -9317,7 +9317,7 @@ definition "map_full_subtractor_acc_state_upd s \<equiv>
   full_subtractor_tail_i' = hd_ret hd_ret_state;
   full_subtractor_tail_v' = map_full_subtractor_acc_v s;
   full_subtractor_tail_ret' = 0;
-  full_subtractor_tail_state = 
+  full_subtractor_tail_state =
     \<lparr>full_subtractor_tail_i = full_subtractor_tail_i',
     full_subtractor_tail_v = full_subtractor_tail_v',
     full_subtractor_tail_ret = full_subtractor_tail_ret'\<rparr>;
@@ -9361,7 +9361,7 @@ in
  ret)
 "
 
-lemmas map_full_subtractor_acc_imp_subprogram_simps = 
+lemmas map_full_subtractor_acc_imp_subprogram_simps =
   map_full_subtractor_acc_state_upd_def
   map_full_subtractor_acc_imp_compute_loop_condition_def
   map_full_subtractor_acc_imp_after_loop_def
@@ -9393,7 +9393,7 @@ lemma map_full_subtractor_acc_imp_correct:
   apply (subst map_full_subtractor_acc.simps)
   apply (simp del: map_full_subtractor_acc.simps add: map_full_subtractor_acc_imp_subprogram_simps Let_def
   cons_imp_correct hd_imp_correct tl_imp_correct full_subtractor_tail_imp_correct)
-  done            
+  done
 
 definition "map_full_subtractor_acc_state_upd_time t s \<equiv>
   (let
@@ -9411,7 +9411,7 @@ definition "map_full_subtractor_acc_state_upd_time t s \<equiv>
   t = t + 2;
   full_subtractor_tail_ret' = 0;
   t = t + 2;
-  full_subtractor_tail_state = 
+  full_subtractor_tail_state =
     \<lparr>full_subtractor_tail_i = full_subtractor_tail_i',
     full_subtractor_tail_v = full_subtractor_tail_v',
     full_subtractor_tail_ret = full_subtractor_tail_ret'\<rparr>;
@@ -9468,7 +9468,7 @@ definition "map_full_subtractor_acc_imp_after_loop_time t s \<equiv>
     t)
 "
 
-lemmas map_full_subtractor_acc_imp_subprogram_time_simps = 
+lemmas map_full_subtractor_acc_imp_subprogram_time_simps =
   map_full_subtractor_acc_state_upd_time_def
   map_full_subtractor_acc_imp_compute_loop_condition_time_def
   map_full_subtractor_acc_imp_after_loop_time_def
@@ -9497,25 +9497,25 @@ termination
   apply (relation "measure (map_full_subtractor_acc_n \<circ> snd)")
   by (simp add: map_full_subtractor_acc_imp_subprogram_time_simps tl_imp_correct)+
 
-declare map_full_subtractor_acc_imp_time.simps [simp del]            
+declare map_full_subtractor_acc_imp_time.simps [simp del]
 
 lemma map_full_subtractor_acc_imp_time_acc:
   "(map_full_subtractor_acc_imp_time (Suc t) s) = Suc (map_full_subtractor_acc_imp_time t s)"
   by (induction t s rule: map_full_subtractor_acc_imp_time.induct)
     ((subst (1 2) map_full_subtractor_acc_imp_time.simps);
-      (simp add: map_full_subtractor_acc_state_upd_def))            
+      (simp add: map_full_subtractor_acc_state_upd_def))
 
 lemma map_full_subtractor_acc_imp_time_acc_2_aux:
   "(map_full_subtractor_acc_imp_time t s) = t + (map_full_subtractor_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_full_subtractor_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_full_subtractor_acc_imp_time_acc)+
 
 lemma map_full_subtractor_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_full_subtractor_acc_imp_time t s) = t + (map_full_subtractor_acc_imp_time 0 s)"
-  by (rule map_full_subtractor_acc_imp_time_acc_2_aux)            
+  by (rule map_full_subtractor_acc_imp_time_acc_2_aux)
 
 lemma map_full_subtractor_acc_imp_time_acc_3:
   "(map_full_subtractor_acc_imp_time (a + b) s) = a + (map_full_subtractor_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_full_subtractor_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: map_full_subtractor_acc_imp_time_acc)+
 
 abbreviation "map_full_subtractor_acc_while_cond \<equiv> ''condition''"
 
@@ -9524,11 +9524,11 @@ definition "map_full_subtractor_acc_IMP_loop_body \<equiv>
   (hd_prefix @ hd_ret_str) ::= A (N 0);;
   invoke_subprogram hd_prefix hd_IMP_Minus;;
 
-  (full_subtractor_tail_prefix @ full_subtractor_tail_i_str) 
+  (full_subtractor_tail_prefix @ full_subtractor_tail_i_str)
     ::= A (V (hd_prefix @ hd_ret_str));;
-  (full_subtractor_tail_prefix @ full_subtractor_tail_v_str) 
+  (full_subtractor_tail_prefix @ full_subtractor_tail_v_str)
     ::= A (V map_full_subtractor_acc_v_str);;
-  (full_subtractor_tail_prefix @ full_subtractor_tail_ret_str) 
+  (full_subtractor_tail_prefix @ full_subtractor_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram full_subtractor_tail_prefix full_subtractor_tail_IMP_Minus;;
 
@@ -9643,14 +9643,14 @@ lemma map_full_subtractor_acc_IMP_Minus_correct_function:
       subgoal premises p using p(27) by fastforce
       by (force simp: map_full_subtractor_acc_imp_subprogram_simps
           map_full_subtractor_acc_state_translators Let_def)
-  done        
+  done
 
 lemma map_full_subtractor_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_full_subtractor_acc_pref) map_full_subtractor_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_full_subtractor_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas map_full_subtractor_acc_complete_time_simps =
   map_full_subtractor_acc_imp_subprogram_time_simps
@@ -9711,7 +9711,7 @@ lemma map_full_subtractor_acc_IMP_Minus_correct_time:
     subgoal premises p using p(45) by fastforce
     by(force simp: map_full_subtractor_acc_complete_time_simps Let_def)
 
-  done        
+  done
 
 lemma map_full_subtractor_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_full_subtractor_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -9724,12 +9724,12 @@ lemma map_full_subtractor_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using map_full_subtractor_acc_IMP_Minus_correct_function
   by (auto simp: map_full_subtractor_acc_IMP_Minus_correct_time)
-    (meson map_full_subtractor_acc_IMP_Minus_correct_effects set_mono_prefix) 
-  
-  
+    (meson map_full_subtractor_acc_IMP_Minus_correct_effects set_mono_prefix)
+
+
  subsubsection map_full_subtractor_tail
 
-record map_full_subtractor_tail_state = 
+record map_full_subtractor_tail_state =
 map_full_subtractor_tail_v::nat
 map_full_subtractor_tail_n::nat
 map_full_subtractor_tail_ret::nat
@@ -9739,13 +9739,13 @@ abbreviation "map_full_subtractor_tail_v_str \<equiv> ''v''"
 abbreviation "map_full_subtractor_tail_n_str \<equiv> ''n''"
 abbreviation "map_full_subtractor_tail_ret_str \<equiv> ''ret''"
 
-definition "map_full_subtractor_tail_state_upd s \<equiv> 
+definition "map_full_subtractor_tail_state_upd s \<equiv>
 (let
   map_full_subtractor_acc_acc' = 0;
   map_full_subtractor_acc_v' = map_full_subtractor_tail_v s;
   map_full_subtractor_acc_n' = map_full_subtractor_tail_n s;
   map_full_subtractor_acc_ret' = 0;
-  map_full_subtractor_acc_state = 
+  map_full_subtractor_acc_state =
   \<lparr>map_full_subtractor_acc_acc = map_full_subtractor_acc_acc',
   map_full_subtractor_acc_v = map_full_subtractor_acc_v',
   map_full_subtractor_acc_n = map_full_subtractor_acc_n',
@@ -9768,9 +9768,9 @@ in
 function map_full_subtractor_tail_imp ::
   "map_full_subtractor_tail_state \<Rightarrow> map_full_subtractor_tail_state" where
   "map_full_subtractor_tail_imp s =
-  (let 
+  (let
       ret = map_full_subtractor_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -9785,7 +9785,7 @@ lemma map_full_subtractor_tail_imp_correct[let_function_correctness]:
   apply (simp only: map_full_subtractor_tail_imp.simps Let_def map_full_subtractor_tail_state_upd_def
   map_full_subtractor_tail_def)
   apply (auto simp add: reverse_nat_imp_correct map_full_subtractor_acc_imp_correct)
-  done            
+  done
 
 function map_full_subtractor_tail_imp_time ::
   "nat \<Rightarrow> map_full_subtractor_tail_state \<Rightarrow> nat" where
@@ -9799,7 +9799,7 @@ function map_full_subtractor_tail_imp_time ::
   t = t + 2;
   map_full_subtractor_acc_ret' = 0;
   t = t + 2;
-  map_full_subtractor_acc_state = 
+  map_full_subtractor_acc_state =
   \<lparr>map_full_subtractor_acc_acc = map_full_subtractor_acc_acc',
   map_full_subtractor_acc_v = map_full_subtractor_acc_v',
   map_full_subtractor_acc_n = map_full_subtractor_acc_n',
@@ -9833,31 +9833,31 @@ lemma map_full_subtractor_tail_imp_time_acc:
   "(map_full_subtractor_tail_imp_time (Suc t) s) = Suc (map_full_subtractor_tail_imp_time t s)"
   by (induction t s rule: map_full_subtractor_tail_imp_time.induct)
     ((subst (1 2) map_full_subtractor_tail_imp_time.simps);
-      (simp add: map_full_subtractor_tail_state_upd_def Let_def))            
+      (simp add: map_full_subtractor_tail_state_upd_def Let_def))
 
 lemma map_full_subtractor_tail_imp_time_acc_2_aux:
   "(map_full_subtractor_tail_imp_time t s) = t + (map_full_subtractor_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_full_subtractor_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_full_subtractor_tail_imp_time_acc)+
 
 lemma map_full_subtractor_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_full_subtractor_tail_imp_time t s) = t + (map_full_subtractor_tail_imp_time 0 s)"
-  by (rule map_full_subtractor_tail_imp_time_acc_2_aux)            
+  by (rule map_full_subtractor_tail_imp_time_acc_2_aux)
 
 lemma map_full_subtractor_tail_imp_time_acc_3:
   "(map_full_subtractor_tail_imp_time (a + b) s) = a + (map_full_subtractor_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_full_subtractor_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: map_full_subtractor_tail_imp_time_acc)+
 
 definition map_full_subtractor_tail_IMP_Minus where
   "map_full_subtractor_tail_IMP_Minus \<equiv>
   (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_acc_str) ::= A (N 0);;
-  (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_v_str) 
+  (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_v_str)
     ::= A (V map_full_subtractor_tail_v_str);;
-  (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_n_str) 
+  (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_n_str)
     ::= A (V map_full_subtractor_tail_n_str);;
   (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_ret_str) ::= A (N 0);;
   invoke_subprogram map_full_subtractor_acc_prefix map_full_subtractor_acc_IMP_Minus;;
 
-  (reverse_nat_prefix @ reverse_nat_n_str) ::= 
+  (reverse_nat_prefix @ reverse_nat_n_str) ::=
     A (V (map_full_subtractor_acc_prefix @ map_full_subtractor_acc_ret_str));;
   (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
   invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
@@ -9891,14 +9891,14 @@ lemma map_full_subtractor_tail_IMP_Minus_correct_function:
    apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_full_subtractor_tail_IMP_vars"])
   subgoal premises p using p(11) by fastforce
   by(fastforce simp: map_full_subtractor_tail_state_translators
-    map_full_subtractor_tail_state_upd_def)        
+    map_full_subtractor_tail_state_upd_def)
 
 lemma map_full_subtractor_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_full_subtractor_tail_pref) map_full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_full_subtractor_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma map_full_subtractor_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p map_full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -9911,7 +9911,7 @@ lemma map_full_subtractor_tail_IMP_Minus_correct_time:
    apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_full_subtractor_tail_IMP_vars"])
   subgoal premises p using p(19) by fastforce
   by(fastforce simp: map_full_subtractor_tail_state_translators
-    Let_def)       
+    Let_def)
 
 lemma map_full_subtractor_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_full_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -9925,7 +9925,7 @@ lemma map_full_subtractor_tail_IMP_Minus_correct:
   using map_full_subtractor_tail_IMP_Minus_correct_function
     map_full_subtractor_tail_IMP_Minus_correct_time
     map_full_subtractor_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)         
+  by (meson set_mono_prefix)
 
 subsection underflow_handler_tail
 
@@ -9949,7 +9949,7 @@ abbreviation "underflow_handler_tail_aux_ret_str \<equiv> ''ret''"
 abbreviation "underflow_handler_tail_aux_cons_result \<equiv> ''result''"
 
 definition "underflow_handler_tail_aux_state_upd s \<equiv>
-(let 
+(let
   cons_h' = 0;
   cons_t' = 0;
   cons_ret' = 0;
@@ -9968,7 +9968,7 @@ definition "underflow_handler_tail_aux_state_upd s \<equiv>
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
   cons_result = cons_ret cons_ret_state;
-  
+
   binary_assign_constant_tail_n' = underflow_handler_tail_aux_n s;
   binary_assign_constant_tail_v' = underflow_handler_tail_aux_v s;
   binary_assign_constant_tail_x' = 0;
@@ -10009,9 +10009,9 @@ in
 function underflow_handler_tail_aux_imp ::
   "underflow_handler_tail_aux_state \<Rightarrow> underflow_handler_tail_aux_state" where
   "underflow_handler_tail_aux_imp s =
-  (let 
+  (let
       ret = underflow_handler_tail_aux_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -10028,7 +10028,7 @@ lemma underflow_handler_tail_aux_imp_correct[let_function_correctness]:
   underflow_handler_tail_aux_def)
   apply (auto simp add: cons_imp_correct binary_assign_constant_tail_imp_correct
   carry_vname_encode_val)
-  done 
+  done
 
 function underflow_handler_tail_aux_imp_time ::
   "nat \<Rightarrow> underflow_handler_tail_aux_state \<Rightarrow> nat" where
@@ -10065,7 +10065,7 @@ function underflow_handler_tail_aux_imp_time ::
   t = t + cons_imp_time 0 cons_state;
   cons_result = cons_ret cons_ret_state;
   t = t + 2;
-  
+
   binary_assign_constant_tail_n' = underflow_handler_tail_aux_n s;
   t = t + 2;
   binary_assign_constant_tail_v' = underflow_handler_tail_aux_v s;
@@ -10130,19 +10130,19 @@ lemma underflow_handler_tail_aux_imp_time_acc:
   "(underflow_handler_tail_aux_imp_time (Suc t) s) = Suc (underflow_handler_tail_aux_imp_time t s)"
   by (induction t s rule: underflow_handler_tail_aux_imp_time.induct)
     ((subst (1 2) underflow_handler_tail_aux_imp_time.simps);
-      (simp add: underflow_handler_tail_aux_state_upd_def Let_def))            
+      (simp add: underflow_handler_tail_aux_state_upd_def Let_def))
 
 lemma underflow_handler_tail_aux_imp_time_acc_2_aux:
   "(underflow_handler_tail_aux_imp_time t s) = t + (underflow_handler_tail_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: underflow_handler_tail_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: underflow_handler_tail_aux_imp_time_acc)+
 
 lemma underflow_handler_tail_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (underflow_handler_tail_aux_imp_time t s) = t + (underflow_handler_tail_aux_imp_time 0 s)"
-  by (rule underflow_handler_tail_aux_imp_time_acc_2_aux)            
+  by (rule underflow_handler_tail_aux_imp_time_acc_2_aux)
 
 lemma underflow_handler_tail_aux_imp_time_acc_3:
   "(underflow_handler_tail_aux_imp_time (a + b) s) = a + (underflow_handler_tail_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: underflow_handler_tail_aux_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: underflow_handler_tail_aux_imp_time_acc)+
 
 definition underflow_handler_tail_aux_IMP_Minus where
   "underflow_handler_tail_aux_IMP_Minus \<equiv>
@@ -10172,7 +10172,7 @@ definition underflow_handler_tail_aux_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram binary_assign_constant_tail_prefix binary_assign_constant_tail_IMP_Minus;;
 
-  (cons_prefix @ cons_h_str) 
+  (cons_prefix @ cons_h_str)
     ::= A (V (binary_assign_constant_tail_prefix @ binary_assign_constant_tail_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -10228,14 +10228,14 @@ lemma underflow_handler_tail_aux_IMP_Minus_correct_function:
   apply(erule binary_assign_constant_tail_IMP_Minus_correct[where vars = "underflow_handler_tail_aux_IMP_vars"])
   subgoal premises p using p(43) by fastforce
   by(force simp: underflow_handler_tail_aux_state_translators
-    underflow_handler_tail_aux_state_upd_def)        
+    underflow_handler_tail_aux_state_upd_def)
 
 lemma underflow_handler_tail_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ underflow_handler_tail_aux_pref) underflow_handler_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix underflow_handler_tail_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma underflow_handler_tail_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p underflow_handler_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -10258,7 +10258,7 @@ lemma underflow_handler_tail_aux_IMP_Minus_correct_time:
   apply(erule binary_assign_constant_tail_IMP_Minus_correct[where vars = "underflow_handler_tail_aux_IMP_vars"])
   subgoal premises p using p(73) by fastforce
   by(force simp: underflow_handler_tail_aux_state_translators
-    Let_def)       
+    Let_def)
 
 lemma underflow_handler_tail_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) underflow_handler_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -10272,12 +10272,12 @@ lemma underflow_handler_tail_aux_IMP_Minus_correct:
   using underflow_handler_tail_aux_IMP_Minus_correct_function
     underflow_handler_tail_aux_IMP_Minus_correct_time
     underflow_handler_tail_aux_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection underflow_handler_tail
 
 lemma underflow_handler_tail_aux_correct:
-  "underflow_handler_tail n v = 3##((vname_encode ''carry'')## 0) ## 
+  "underflow_handler_tail n v = 3##((vname_encode ''carry'')## 0) ##
 (underflow_handler_tail_aux n v)
 ## (0##0) ## 0"
 unfolding underflow_handler_tail_aux_def underflow_handler_tail_def
@@ -10311,7 +10311,7 @@ definition "underflow_handler_tail_state_upd s \<equiv>
   underflow_handler_tail_aux_n' = underflow_handler_tail_n s;
   underflow_handler_tail_aux_v' = underflow_handler_tail_v s;
   underflow_handler_tail_aux_ret' = 0;
-  underflow_handler_tail_aux_state = 
+  underflow_handler_tail_aux_state =
     \<lparr>underflow_handler_tail_aux_n = underflow_handler_tail_aux_n',
             underflow_handler_tail_aux_v = underflow_handler_tail_aux_v',
             underflow_handler_tail_aux_ret = underflow_handler_tail_aux_ret'\<rparr>;
@@ -10322,7 +10322,7 @@ definition "underflow_handler_tail_state_upd s \<equiv>
   cons_ret' = 0;
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
-  underflow_handler_tail_cons_result = cons_ret cons_ret_state; 
+  underflow_handler_tail_cons_result = cons_ret cons_ret_state;
 
   cons_h' = carry_vname_encode_as_nat;
   cons_t' = 0;
@@ -10352,9 +10352,9 @@ in
 function underflow_handler_tail_imp ::
   "underflow_handler_tail_state \<Rightarrow> underflow_handler_tail_state" where
   "underflow_handler_tail_imp s =
-  (let 
+  (let
       ret = underflow_handler_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -10369,7 +10369,7 @@ lemma underflow_handler_tail_imp_correct[let_function_correctness]:
   apply (simp only: underflow_handler_tail_imp.simps Let_def underflow_handler_tail_state_upd_def
   underflow_handler_tail_aux_correct)
   apply (auto simp add: underflow_handler_tail_aux_imp_correct cons_imp_correct carry_vname_encode_val)
-  done 
+  done
 
 function underflow_handler_tail_imp_time ::
   "nat \<Rightarrow> underflow_handler_tail_state \<Rightarrow> nat" where
@@ -10401,7 +10401,7 @@ function underflow_handler_tail_imp_time ::
   t = t + 2;
   underflow_handler_tail_aux_ret' = 0;
   t = t + 2;
-  underflow_handler_tail_aux_state = 
+  underflow_handler_tail_aux_state =
     \<lparr>underflow_handler_tail_aux_n = underflow_handler_tail_aux_n',
             underflow_handler_tail_aux_v = underflow_handler_tail_aux_v',
             underflow_handler_tail_aux_ret = underflow_handler_tail_aux_ret'\<rparr>;
@@ -10417,7 +10417,7 @@ function underflow_handler_tail_imp_time ::
   cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
   cons_ret_state = cons_imp cons_state;
   t = t + cons_imp_time 0 cons_state;
-  underflow_handler_tail_cons_result = cons_ret cons_ret_state; 
+  underflow_handler_tail_cons_result = cons_ret cons_ret_state;
   t = t + 2;
 
   cons_h' = carry_vname_encode_as_nat;
@@ -10468,19 +10468,19 @@ lemma underflow_handler_tail_imp_time_acc:
   "(underflow_handler_tail_imp_time (Suc t) s) = Suc (underflow_handler_tail_imp_time t s)"
   by (induction t s rule: underflow_handler_tail_imp_time.induct)
     ((subst (1 2) underflow_handler_tail_imp_time.simps);
-      (simp add: underflow_handler_tail_state_upd_def Let_def))            
+      (simp add: underflow_handler_tail_state_upd_def Let_def))
 
 lemma underflow_handler_tail_imp_time_acc_2_aux:
   "(underflow_handler_tail_imp_time t s) = t + (underflow_handler_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: underflow_handler_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: underflow_handler_tail_imp_time_acc)+
 
 lemma underflow_handler_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (underflow_handler_tail_imp_time t s) = t + (underflow_handler_tail_imp_time 0 s)"
-  by (rule underflow_handler_tail_imp_time_acc_2_aux)            
+  by (rule underflow_handler_tail_imp_time_acc_2_aux)
 
 lemma underflow_handler_tail_imp_time_acc_3:
   "(underflow_handler_tail_imp_time (a + b) s) = a + (underflow_handler_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: underflow_handler_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: underflow_handler_tail_imp_time_acc)+
 
 definition underflow_handler_tail_IMP_Minus where
   "underflow_handler_tail_IMP_Minus \<equiv>
@@ -10539,7 +10539,7 @@ lemmas underflow_handler_tail_imp_state_translators =
   underflow_handler_tail_imp_to_HOL_state_def
   underflow_handler_tail_aux_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
-  
+
 
 lemma underflow_handler_tail_Minus_correct_function:
   "(invoke_subprogram p underflow_handler_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -10561,18 +10561,18 @@ lemma underflow_handler_tail_Minus_correct_function:
   subgoal premises p using p(38) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "underflow_handler_tail_imp_vars"])
   subgoal premises p using p(40) by fastforce
-  apply(erule underflow_handler_tail_aux_IMP_Minus_correct[where vars = 
+  apply(erule underflow_handler_tail_aux_IMP_Minus_correct[where vars =
     "underflow_handler_tail_imp_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(42) by fastforce
   by(force simp: underflow_handler_tail_imp_state_translators
-    underflow_handler_tail_state_upd_def)        
+    underflow_handler_tail_state_upd_def)
 
 lemma underflow_handler_tail_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ underflow_handler_tail_pref) underflow_handler_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix underflow_handler_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma underflow_handler_tail_Minus_correct_time:
   "(invoke_subprogram p underflow_handler_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -10592,11 +10592,11 @@ lemma underflow_handler_tail_Minus_correct_time:
   subgoal premises p using p(67) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "underflow_handler_tail_imp_vars"])
   subgoal premises p using p(69) by fastforce
-  apply(erule underflow_handler_tail_aux_IMP_Minus_correct[where vars = 
+  apply(erule underflow_handler_tail_aux_IMP_Minus_correct[where vars =
     "underflow_handler_tail_imp_vars \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(71) by fastforce
   by(force simp: underflow_handler_tail_imp_state_translators
-    Let_def)      
+    Let_def)
 
 lemma underflow_handler_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) underflow_handler_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -10610,7 +10610,7 @@ lemma underflow_handler_tail_IMP_Minus_correct:
   using underflow_handler_tail_Minus_correct_function
     underflow_handler_tail_Minus_correct_time
     underflow_handler_tail_Minus_correct_effects
-  by (meson set_mono_prefix)    
+  by (meson set_mono_prefix)
 
 subsection subtract_handle_underflow_tail
 
@@ -10634,7 +10634,7 @@ definition "subtract_handle_underflow_tail_state_upd s \<equiv>
   map_full_subtractor_tail_v' = subtract_handle_underflow_tail_v s;
   map_full_subtractor_tail_n' = list_less_tail_ret list_less_tail_ret_state;
   map_full_subtractor_tail_ret' = 0;
-  map_full_subtractor_tail_state = 
+  map_full_subtractor_tail_state =
     \<lparr>map_full_subtractor_tail_v = map_full_subtractor_tail_v',
     map_full_subtractor_tail_n = map_full_subtractor_tail_n',
     map_full_subtractor_tail_ret = map_full_subtractor_tail_ret'\<rparr>;
@@ -10642,7 +10642,7 @@ definition "subtract_handle_underflow_tail_state_upd s \<equiv>
 
   com_list_to_seq_tail_ys' = map_full_subtractor_tail_ret map_full_subtractor_tail_ret_state;
   com_list_to_seq_tail_ret' = 0;
-  com_list_to_seq_tail_state = 
+  com_list_to_seq_tail_state =
     \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys',
     com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>;
   com_list_to_seq_tail_ret_state = com_list_to_seq_tail_imp com_list_to_seq_tail_state;
@@ -10650,7 +10650,7 @@ definition "subtract_handle_underflow_tail_state_upd s \<equiv>
   underflow_handler_tail_n' = subtract_handle_underflow_tail_n s;
   underflow_handler_tail_v' = subtract_handle_underflow_tail_v s;
   underflow_handler_tail_ret' = 0;
-  underflow_handler_tail_state = 
+  underflow_handler_tail_state =
   \<lparr>underflow_handler_tail_n = underflow_handler_tail_n',
   underflow_handler_tail_v = underflow_handler_tail_v',
   underflow_handler_tail_ret = underflow_handler_tail_ret'\<rparr>;
@@ -10685,9 +10685,9 @@ in
 function subtract_handle_underflow_tail_imp ::
   "subtract_handle_underflow_tail_state \<Rightarrow> subtract_handle_underflow_tail_state" where
   "subtract_handle_underflow_tail_imp s =
-  (let 
+  (let
       ret = subtract_handle_underflow_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -10703,8 +10703,8 @@ lemma subtract_handle_underflow_tail_imp_correct[let_function_correctness]:
   subtract_handle_underflow_tail_def)
  apply (auto simp add: cons_imp_correct underflow_handler_tail_imp_correct
  com_list_to_seq_tail_imp_correct map_full_subtractor_tail_imp_correct
- list_less_tail_imp_correct)           
-  done 
+ list_less_tail_imp_correct)
+  done
 
 function subtract_handle_underflow_tail_imp_time ::
   "nat \<Rightarrow> subtract_handle_underflow_tail_state \<Rightarrow> nat" where
@@ -10724,7 +10724,7 @@ function subtract_handle_underflow_tail_imp_time ::
   t = t + 2;
   map_full_subtractor_tail_ret' = 0;
   t = t + 2;
-  map_full_subtractor_tail_state = 
+  map_full_subtractor_tail_state =
     \<lparr>map_full_subtractor_tail_v = map_full_subtractor_tail_v',
     map_full_subtractor_tail_n = map_full_subtractor_tail_n',
     map_full_subtractor_tail_ret = map_full_subtractor_tail_ret'\<rparr>;
@@ -10735,7 +10735,7 @@ function subtract_handle_underflow_tail_imp_time ::
   t = t + 2;
   com_list_to_seq_tail_ret' = 0;
   t = t + 2;
-  com_list_to_seq_tail_state = 
+  com_list_to_seq_tail_state =
     \<lparr>com_list_to_seq_tail_ys = com_list_to_seq_tail_ys',
     com_list_to_seq_tail_ret = com_list_to_seq_tail_ret'\<rparr>;
   com_list_to_seq_tail_ret_state = com_list_to_seq_tail_imp com_list_to_seq_tail_state;
@@ -10747,7 +10747,7 @@ function subtract_handle_underflow_tail_imp_time ::
   t = t + 2;
   underflow_handler_tail_ret' = 0;
   t = t + 2;
-  underflow_handler_tail_state = 
+  underflow_handler_tail_state =
   \<lparr>underflow_handler_tail_n = underflow_handler_tail_n',
   underflow_handler_tail_v = underflow_handler_tail_v',
   underflow_handler_tail_ret = underflow_handler_tail_ret'\<rparr>;
@@ -10802,19 +10802,19 @@ lemma subtract_handle_underflow_tail_imp_time_acc:
   "(subtract_handle_underflow_tail_imp_time (Suc t) s) = Suc (subtract_handle_underflow_tail_imp_time t s)"
   by (induction t s rule: subtract_handle_underflow_tail_imp_time.induct)
     ((subst (1 2) subtract_handle_underflow_tail_imp_time.simps);
-      (simp add: subtract_handle_underflow_tail_state_upd_def Let_def))            
+      (simp add: subtract_handle_underflow_tail_state_upd_def Let_def))
 
 lemma subtract_handle_underflow_tail_imp_time_acc_2_aux:
   "(subtract_handle_underflow_tail_imp_time t s) = t + (subtract_handle_underflow_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: subtract_handle_underflow_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: subtract_handle_underflow_tail_imp_time_acc)+
 
 lemma subtract_handle_underflow_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (subtract_handle_underflow_tail_imp_time t s) = t + (subtract_handle_underflow_tail_imp_time 0 s)"
-  by (rule subtract_handle_underflow_tail_imp_time_acc_2_aux)            
+  by (rule subtract_handle_underflow_tail_imp_time_acc_2_aux)
 
 lemma subtract_handle_underflow_tail_imp_time_acc_3:
   "(subtract_handle_underflow_tail_imp_time (a + b) s) = a + (subtract_handle_underflow_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: subtract_handle_underflow_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: subtract_handle_underflow_tail_imp_time_acc)+
 
 definition subtract_handle_underflow_tail_IMP_Minus where
   "subtract_handle_underflow_tail_IMP_Minus \<equiv>
@@ -10822,20 +10822,20 @@ definition subtract_handle_underflow_tail_IMP_Minus where
   (list_less_tail_prefix @ list_less_tail_ret_str) ::= A (N 0);;
   invoke_subprogram list_less_tail_prefix list_less_tail_IMP_Minus;;
 
-  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_v_str) 
+  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_v_str)
     ::=  A (V subtract_handle_underflow_tail_v_str);;
-  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_n_str) 
+  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_n_str)
     ::=  A (V (list_less_tail_prefix @ list_less_tail_ret_str));;
-  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_ret_str) 
+  (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_ret_str)
     ::=  A (N 0);;
   invoke_subprogram map_full_subtractor_tail_prefix map_full_subtractor_tail_IMP_Minus;;
 
-  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ys_str) 
+  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ys_str)
     ::= A (V (map_full_subtractor_tail_prefix @ map_full_subtractor_tail_ret_str));;
-  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ret_str) 
+  (com_list_to_seq_tail_prefix @ com_list_to_seq_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram com_list_to_seq_tail_prefix com_list_to_seq_tail_IMP_Minus;;
-  
+
   (underflow_handler_tail_prefix @ underflow_handler_tail_v_str)
     ::=  A (V subtract_handle_underflow_tail_v_str);;
   (underflow_handler_tail_prefix @ underflow_handler_tail_n_str)
@@ -10874,8 +10874,8 @@ lemmas subtract_handle_underflow_tail_state_translators =
   subtract_handle_underflow_tail_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
   list_less_tail_imp_to_HOL_state_def
-  map_full_subtractor_tail_imp_to_HOL_state_def 
-  com_list_to_seq_tail_imp_to_HOL_state_def 
+  map_full_subtractor_tail_imp_to_HOL_state_def
+  com_list_to_seq_tail_imp_to_HOL_state_def
   underflow_handler_tail_imp_to_HOL_state_def
 
 lemma subtract_handle_underflow_tail_IMP_Minus_correct_function:
@@ -10905,14 +10905,14 @@ lemma subtract_handle_underflow_tail_IMP_Minus_correct_function:
   apply(erule list_less_tail_IMP_Minus_correct[where vars = "subtract_handle_underflow_tail_IMP_vars"])
   subgoal premises p using p(39) by fastforce
   by(fastforce simp: subtract_handle_underflow_tail_state_translators
-    subtract_handle_underflow_tail_state_upd_def)        
+    subtract_handle_underflow_tail_state_upd_def)
 
 lemma subtract_handle_underflow_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ subtract_handle_underflow_tail_pref) subtract_handle_underflow_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix subtract_handle_underflow_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma subtract_handle_underflow_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p subtract_handle_underflow_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -10939,7 +10939,7 @@ lemma subtract_handle_underflow_tail_IMP_Minus_correct_time:
   apply(erule list_less_tail_IMP_Minus_correct[where vars = "subtract_handle_underflow_tail_IMP_vars"])
   subgoal premises p using p(65) by fastforce
   by(force simp: subtract_handle_underflow_tail_state_translators
-    Let_def)        
+    Let_def)
 
 lemma subtract_handle_underflow_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) subtract_handle_underflow_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -10953,16 +10953,16 @@ lemma subtract_handle_underflow_tail_IMP_Minus_correct:
   using subtract_handle_underflow_tail_IMP_Minus_correct_function
     subtract_handle_underflow_tail_IMP_Minus_correct_time
     subtract_handle_underflow_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
-  
-  
+  by (meson set_mono_prefix)
+
+
   subsection \<open>binary_subtractor\<close>
 
 subsubsection \<open>binary_subtractor_tail_aux1\<close>
 
 fun binary_subtractor_tail_aux1 :: "nat \<Rightarrow> nat" where
-  "binary_subtractor_tail_aux1 n = 
-    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ## 
+  "binary_subtractor_tail_aux1 n =
+    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ##
     (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) (prod_encode(1,0))) ## 0)"
 
 record binary_subtractor_tail_aux1_state =
@@ -11033,9 +11033,9 @@ definition "binary_subtractor_tail_aux1_state_upd s =
 function binary_subtractor_tail_aux1_imp ::
   "binary_subtractor_tail_aux1_state \<Rightarrow> binary_subtractor_tail_aux1_state" where
   "binary_subtractor_tail_aux1_imp s =
-  (let 
+  (let
       ret = binary_subtractor_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -11050,7 +11050,7 @@ lemma binary_subtractor_tail_aux1_imp_correct[let_function_correctness]:
   apply (simp only: binary_subtractor_tail_aux1_imp.simps Let_def binary_subtractor_tail_aux1_state_upd_def
     prod_encode_imp_correct copy_atom_to_operand_tail_imp_correct cons_imp_correct a_encode_char_val
     b_encode_char_val binary_subtractor_tail_aux1.simps)
-  by simp 
+  by simp
 
 function binary_subtractor_tail_aux1_imp_time ::
   "nat \<Rightarrow> binary_subtractor_tail_aux1_state \<Rightarrow> nat" where
@@ -11152,19 +11152,19 @@ lemma binary_subtractor_tail_aux1_imp_time_acc:
   "(binary_subtractor_tail_aux1_imp_time (Suc t) s) = Suc (binary_subtractor_tail_aux1_imp_time t s)"
   by (induction t s rule: binary_subtractor_tail_aux1_imp_time.induct)
     ((subst (1 2) binary_subtractor_tail_aux1_imp_time.simps);
-      (simp add: binary_subtractor_tail_aux1_state_upd_def Let_def))            
+      (simp add: binary_subtractor_tail_aux1_state_upd_def Let_def))
 
 lemma binary_subtractor_tail_aux1_imp_time_acc_2_aux:
   "(binary_subtractor_tail_aux1_imp_time t s) = t + (binary_subtractor_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_aux1_imp_time_acc)+
 
 lemma binary_subtractor_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_subtractor_tail_aux1_imp_time t s) = t + (binary_subtractor_tail_aux1_imp_time 0 s)"
-  by (rule binary_subtractor_tail_aux1_imp_time_acc_2_aux)            
+  by (rule binary_subtractor_tail_aux1_imp_time_acc_2_aux)
 
 lemma binary_subtractor_tail_aux1_imp_time_acc_3:
   "(binary_subtractor_tail_aux1_imp_time (a + b) s) = a + (binary_subtractor_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_aux1_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_aux1_imp_time_acc)+
 
 abbreviation "binary_subtractor_tail_aux1_cons_result \<equiv> ''cons_result''"
 
@@ -11291,14 +11291,14 @@ lemma binary_subtractor_tail_aux1_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_aux1_IMP_vars"])
   subgoal premises p using p(44) by fastforce
   by(force simp: binary_subtractor_tail_aux1_state_translators
-    binary_subtractor_tail_aux1_state_upd_def) 
+    binary_subtractor_tail_aux1_state_upd_def)
 
 lemma binary_subtractor_tail_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_subtractor_tail_aux1_pref) binary_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_subtractor_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_subtractor_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -11320,7 +11320,7 @@ lemma binary_subtractor_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(73) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_aux1_IMP_vars"])
   subgoal premises p using p(75) by fastforce
-  by(force simp add: Let_def binary_subtractor_tail_aux1_state_translators)   
+  by(force simp add: Let_def binary_subtractor_tail_aux1_state_translators)
 
 lemma binary_subtractor_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_subtractor_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -11334,13 +11334,13 @@ lemma binary_subtractor_tail_aux1_IMP_Minus_correct:
   using binary_subtractor_tail_aux1_IMP_Minus_correct_function
     binary_subtractor_tail_aux1_IMP_Minus_correct_time
     binary_subtractor_tail_aux1_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>binary_subtractor_tail_aux2\<close>
 
 fun binary_subtractor_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_subtractor_tail_aux2 n v b = 
-    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) b) ## 
+  "binary_subtractor_tail_aux2 n v b =
+    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) b) ##
     (2 ## (subtract_handle_underflow_tail n v) ## (binary_subtractor_tail_aux1 n) ## 0) ## 0"
 
 record binary_subtractor_tail_aux2_state =
@@ -11418,9 +11418,9 @@ definition "binary_subtractor_tail_aux2_state_upd s =
 function binary_subtractor_tail_aux2_imp ::
   "binary_subtractor_tail_aux2_state \<Rightarrow> binary_subtractor_tail_aux2_state" where
   "binary_subtractor_tail_aux2_imp s =
-  (let 
+  (let
       ret = binary_subtractor_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -11434,7 +11434,7 @@ lemma binary_subtractor_tail_aux2_imp_correct[let_function_correctness]:
   apply (simp only: binary_subtractor_tail_aux2_imp.simps Let_def binary_subtractor_tail_aux2_state_upd_def
     binary_subtractor_tail_aux1_imp_correct cons_imp_correct subtract_handle_underflow_tail_imp_correct copy_atom_to_operand_tail_imp_correct
     b_encode_char_val binary_subtractor_tail_aux2.simps)
-  by simp   
+  by simp
 
 declare binary_subtractor_tail_aux2_imp.simps [simp del]
 
@@ -11545,19 +11545,19 @@ lemma binary_subtractor_tail_aux2_imp_time_acc:
   "(binary_subtractor_tail_aux2_imp_time (Suc t) s) = Suc (binary_subtractor_tail_aux2_imp_time t s)"
   by (induction t s rule: binary_subtractor_tail_aux2_imp_time.induct)
     ((subst (1 2) binary_subtractor_tail_aux2_imp_time.simps);
-      (simp add: binary_subtractor_tail_aux2_state_upd_def Let_def))            
+      (simp add: binary_subtractor_tail_aux2_state_upd_def Let_def))
 
 lemma binary_subtractor_tail_aux2_imp_time_acc_2_aux:
   "(binary_subtractor_tail_aux2_imp_time t s) = t + (binary_subtractor_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_aux2_imp_time_acc)+
 
 lemma binary_subtractor_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_subtractor_tail_aux2_imp_time t s) = t + (binary_subtractor_tail_aux2_imp_time 0 s)"
-  by (rule binary_subtractor_tail_aux2_imp_time_acc_2_aux)            
+  by (rule binary_subtractor_tail_aux2_imp_time_acc_2_aux)
 
 lemma binary_subtractor_tail_aux2_imp_time_acc_3:
   "(binary_subtractor_tail_aux2_imp_time (a + b) s) = a + (binary_subtractor_tail_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_aux2_imp_time_acc)+     
+  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_aux2_imp_time_acc)+
 
 abbreviation "binary_subtractor_tail_aux2_cons_result \<equiv> ''cons_result''"
 
@@ -11697,14 +11697,14 @@ lemma binary_subtractor_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_aux2_IMP_vars"])
   subgoal premises p using p(50) by fastforce
   by(force simp: binary_subtractor_tail_aux2_state_translators
-    binary_subtractor_tail_aux2_state_upd_def)   
+    binary_subtractor_tail_aux2_state_upd_def)
 
 lemma binary_subtractor_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_subtractor_tail_aux2_pref) binary_subtractor_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_subtractor_tail_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma binary_subtractor_tail_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_subtractor_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -11728,7 +11728,7 @@ lemma binary_subtractor_tail_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_aux2_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def binary_subtractor_tail_aux2_state_translators)   
+  by(force simp add: Let_def binary_subtractor_tail_aux2_state_translators)
 
 lemma binary_subtractor_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_subtractor_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -11742,12 +11742,12 @@ lemma binary_subtractor_tail_aux2_IMP_Minus_correct:
   using binary_subtractor_tail_aux2_IMP_Minus_correct_function
     binary_subtractor_tail_aux2_IMP_Minus_correct_time
     binary_subtractor_tail_aux2_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>binary_subtractor_tail\<close>
 
 fun binary_subtractor_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_subtractor_tail' n v a b = 
+  "binary_subtractor_tail' n v a b =
     2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) a) ##
     (2 ## (binary_subtractor_tail_aux2 n v b)) ## 0"
 
@@ -11824,9 +11824,9 @@ definition "binary_subtractor_tail_state_upd s =
 function binary_subtractor_tail_imp ::
   "binary_subtractor_tail_state \<Rightarrow> binary_subtractor_tail_state" where
   "binary_subtractor_tail_imp s =
-  (let 
+  (let
       ret = binary_subtractor_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -11842,7 +11842,7 @@ lemma binary_subtractor_tail_imp_correct[let_function_correctness]:
   apply (simp only: binary_subtractor_tail_imp.simps Let_def binary_subtractor_tail_state_upd_def
     binary_subtractor_tail_aux2_imp_correct cons_imp_correct copy_atom_to_operand_tail_imp_correct
     a_encode_char_val binary_subtractor_tail'_correct binary_subtractor_tail'.simps)
-  by simp 
+  by simp
 
 function binary_subtractor_tail_imp_time ::
   "nat \<Rightarrow> binary_subtractor_tail_state \<Rightarrow> nat" where
@@ -11934,19 +11934,19 @@ lemma binary_subtractor_tail_imp_time_acc:
   "(binary_subtractor_tail_imp_time (Suc t) s) = Suc (binary_subtractor_tail_imp_time t s)"
   by (induction t s rule: binary_subtractor_tail_imp_time.induct)
     ((subst (1 2) binary_subtractor_tail_imp_time.simps);
-      (simp add: binary_subtractor_tail_state_upd_def Let_def))            
+      (simp add: binary_subtractor_tail_state_upd_def Let_def))
 
 lemma binary_subtractor_tail_imp_time_acc_2_aux:
   "(binary_subtractor_tail_imp_time t s) = t + (binary_subtractor_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_subtractor_tail_imp_time_acc)+
 
 lemma binary_subtractor_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_subtractor_tail_imp_time t s) = t + (binary_subtractor_tail_imp_time 0 s)"
-  by (rule binary_subtractor_tail_imp_time_acc_2_aux)            
+  by (rule binary_subtractor_tail_imp_time_acc_2_aux)
 
 lemma binary_subtractor_tail_imp_time_acc_3:
   "(binary_subtractor_tail_imp_time (a + b) s) = a + (binary_subtractor_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: binary_subtractor_tail_imp_time_acc)+
 
 abbreviation "binary_subtractor_tail_cons_result \<equiv> ''cons_result''"
 
@@ -12065,14 +12065,14 @@ lemma binary_subtractor_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_IMP_vars"])
   subgoal premises p using p(38) by fastforce
   by(force simp: binary_subtractor_tail_state_translators
-    binary_subtractor_tail_state_upd_def)   
+    binary_subtractor_tail_state_upd_def)
 
 lemma binary_subtractor_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_subtractor_tail_pref) binary_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_subtractor_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_subtractor_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -12092,7 +12092,7 @@ lemma binary_subtractor_tail_IMP_Minus_correct_time:
   subgoal premises p using p(63) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_subtractor_tail_IMP_vars"])
   subgoal premises p using p(65) by fastforce
-  by(force simp add: Let_def binary_subtractor_tail_state_translators) 
+  by(force simp add: Let_def binary_subtractor_tail_state_translators)
 
 lemma binary_subtractor_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_subtractor_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -12106,7 +12106,7 @@ lemma binary_subtractor_tail_IMP_Minus_correct:
   using binary_subtractor_tail_IMP_Minus_correct_function
     binary_subtractor_tail_IMP_Minus_correct_time
     binary_subtractor_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>assign_var_carry\<close>
 
@@ -12196,9 +12196,9 @@ definition "assign_var_carry_tail_aux1_state_upd s =
 function assign_var_carry_tail_aux1_imp ::
   "assign_var_carry_tail_aux1_state \<Rightarrow> assign_var_carry_tail_aux1_state" where
   "assign_var_carry_tail_aux1_imp s =
-  (let 
+  (let
       ret = assign_var_carry_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -12214,7 +12214,7 @@ lemma assign_var_carry_tail_aux1_imp_correct[let_function_correctness]:
   apply (simp only: assign_var_carry_tail_aux1_imp.simps Let_def assign_var_carry_tail_aux1_state_upd_def
     EQUAL_neq_zero_imp_correct OR_neq_zero_imp_correct cons_imp_correct prod_encode_imp_correct
     var_bit_to_var_tail_imp_correct)
-  by simp   
+  by simp
 
 function assign_var_carry_tail_aux1_imp_time ::
   "nat \<Rightarrow> assign_var_carry_tail_aux1_state \<Rightarrow> nat" where
@@ -12319,19 +12319,19 @@ lemma assign_var_carry_tail_aux1_imp_time_acc:
   "(assign_var_carry_tail_aux1_imp_time (Suc t) s) = Suc (assign_var_carry_tail_aux1_imp_time t s)"
   by (induction t s rule: assign_var_carry_tail_aux1_imp_time.induct)
     ((subst (1 2) assign_var_carry_tail_aux1_imp_time.simps);
-      (simp add: assign_var_carry_tail_aux1_state_upd_def Let_def))            
+      (simp add: assign_var_carry_tail_aux1_state_upd_def Let_def))
 
 lemma assign_var_carry_tail_aux1_imp_time_acc_2_aux:
   "(assign_var_carry_tail_aux1_imp_time t s) = t + (assign_var_carry_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+
 
 lemma assign_var_carry_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_aux1_imp_time t s) = t + (assign_var_carry_tail_aux1_imp_time 0 s)"
-  by (rule assign_var_carry_tail_aux1_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_tail_aux1_imp_time_acc_2_aux)
 
 lemma assign_var_carry_tail_aux1_imp_time_acc_3:
   "(assign_var_carry_tail_aux1_imp_time (a + b) s) = a + (assign_var_carry_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux1_imp_time_acc)+
 
 abbreviation "assign_var_carry_tail_aux1_EQUAL_neq_zero_result \<equiv> ''EQUAL_neq_zero_result''"
 abbreviation "assign_var_carry_tail_aux1_cons_result \<equiv> ''cons_result''"
@@ -12479,7 +12479,7 @@ lemma assign_var_carry_tail_aux1_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix assign_var_carry_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma assign_var_carry_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -12501,7 +12501,7 @@ lemma assign_var_carry_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(73) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux1_IMP_vars"])
   subgoal premises p using p(75) by fastforce
-  by(force simp add: Let_def assign_var_carry_tail_aux1_state_translators)   
+  by(force simp add: Let_def assign_var_carry_tail_aux1_state_translators)
 
 lemma assign_var_carry_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -12515,12 +12515,12 @@ lemma assign_var_carry_tail_aux1_IMP_Minus_correct:
   using assign_var_carry_tail_aux1_IMP_Minus_correct_function
     assign_var_carry_tail_aux1_IMP_Minus_correct_time
     assign_var_carry_tail_aux1_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>assign_var_carry_tail_aux2\<close>
 
 fun assign_var_carry_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_var_carry_tail_aux2 a b c = 
+  "assign_var_carry_tail_aux2 a b c =
     (1 ## (vname_encode ''carry'') ## (if a + b + c \<ge> 2 then 1 else 0) ## 0) ## 0"
 
 record assign_var_carry_tail_aux2_state =
@@ -12577,9 +12577,9 @@ definition "assign_var_carry_tail_aux2_state_upd s =
 function assign_var_carry_tail_aux2_imp ::
   "assign_var_carry_tail_aux2_state \<Rightarrow> assign_var_carry_tail_aux2_state" where
   "assign_var_carry_tail_aux2_imp s =
-  (let 
+  (let
       ret = assign_var_carry_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -12667,19 +12667,19 @@ lemma assign_var_carry_tail_aux2_imp_time_acc:
   "(assign_var_carry_tail_aux2_imp_time (Suc t) s) = Suc (assign_var_carry_tail_aux2_imp_time t s)"
   by (induction t s rule: assign_var_carry_tail_aux2_imp_time.induct)
     ((subst (1 2) assign_var_carry_tail_aux2_imp_time.simps);
-      (simp add: assign_var_carry_tail_aux2_state_upd_def Let_def))            
+      (simp add: assign_var_carry_tail_aux2_state_upd_def Let_def))
 
 lemma assign_var_carry_tail_aux2_imp_time_acc_2_aux:
   "(assign_var_carry_tail_aux2_imp_time t s) = t + (assign_var_carry_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+
 
 lemma assign_var_carry_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_aux2_imp_time t s) = t + (assign_var_carry_tail_aux2_imp_time 0 s)"
-  by (rule assign_var_carry_tail_aux2_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_tail_aux2_imp_time_acc_2_aux)
 
 lemma assign_var_carry_tail_aux2_imp_time_acc_3:
   "(assign_var_carry_tail_aux2_imp_time (a + b) s) = a + (assign_var_carry_tail_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_aux2_imp_time_acc)+
 
 definition assign_var_carry_tail_aux2_IMP_Minus where
   "assign_var_carry_tail_aux2_IMP_Minus \<equiv>
@@ -12688,7 +12688,7 @@ definition assign_var_carry_tail_aux2_IMP_Minus where
   \<comment> \<open>  LESS_EQUAL_neq_zero_b' = assign_var_carry_tail_aux2_a s + assign_var_carry_tail_aux2_b s;\<close>
   (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str) ::= (Plus (V assign_var_carry_tail_aux2_a_str) (V assign_var_carry_tail_aux2_b_str));;
   \<comment> \<open>  LESS_EQUAL_neq_zero_b' = LESS_EQUAL_neq_zero_b' + assign_var_carry_tail_aux2_c s;\<close>
-  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str) ::= 
+  (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str) ::=
     (Plus (V (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_b_str)) (V assign_var_carry_tail_aux2_c_str));;
   \<comment> \<open>  LESS_EQUAL_neq_zero_ret' = 0;\<close>
   (LESS_EQUAL_neq_zero_prefix @ LESS_EQUAL_neq_zero_ret_str) ::= (A (N 0));;
@@ -12775,14 +12775,14 @@ lemma assign_var_carry_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
   subgoal premises p using p(30) by fastforce
   by(force simp: assign_var_carry_tail_aux2_state_translators
-    assign_var_carry_tail_aux2_state_upd_def)   
+    assign_var_carry_tail_aux2_state_upd_def)
 
 lemma assign_var_carry_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_tail_aux2_pref) assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_tail_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast   
+  by blast
 
 lemma assign_var_carry_tail_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -12800,7 +12800,7 @@ lemma assign_var_carry_tail_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(49) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_aux2_IMP_vars"])
   subgoal premises p using p(51) by fastforce
-  by(force simp add: Let_def assign_var_carry_tail_aux2_state_translators) 
+  by(force simp add: Let_def assign_var_carry_tail_aux2_state_translators)
 
 lemma assign_var_carry_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -12819,7 +12819,7 @@ lemma assign_var_carry_tail_aux2_IMP_Minus_correct:
 subsubsection \<open>assign_var_carry_tail\<close>
 
 fun assign_var_carry_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_var_carry_tail' i v a b c = 
+  "assign_var_carry_tail' i v a b c =
     2 ## (1 ## (assign_var_carry_tail_aux1 i v a b c)) ## (assign_var_carry_tail_aux2 a b c)"
 
 lemma assign_var_carry_tail'_correct:
@@ -12899,9 +12899,9 @@ definition "assign_var_carry_tail_state_upd s =
 function assign_var_carry_tail_imp ::
   "assign_var_carry_tail_state \<Rightarrow> assign_var_carry_tail_state" where
   "assign_var_carry_tail_imp s =
-  (let 
+  (let
       ret = assign_var_carry_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -12917,7 +12917,7 @@ lemma assign_var_carry_tail_imp_correct[let_function_correctness]:
   apply (simp only: assign_var_carry_tail_imp.simps Let_def assign_var_carry_tail_state_upd_def
     assign_var_carry_tail'_correct assign_var_carry_tail_aux1_imp_correct cons_imp_correct
     assign_var_carry_tail_aux2_imp_correct)
-  by simp    
+  by simp
 
 function assign_var_carry_tail_imp_time ::
   "nat \<Rightarrow> assign_var_carry_tail_state \<Rightarrow> nat" where
@@ -13007,19 +13007,19 @@ lemma assign_var_carry_tail_imp_time_acc:
   "(assign_var_carry_tail_imp_time (Suc t) s) = Suc (assign_var_carry_tail_imp_time t s)"
   by (induction t s rule: assign_var_carry_tail_imp_time.induct)
     ((subst (1 2) assign_var_carry_tail_imp_time.simps);
-      (simp add: assign_var_carry_tail_state_upd_def Let_def))            
+      (simp add: assign_var_carry_tail_state_upd_def Let_def))
 
 lemma assign_var_carry_tail_imp_time_acc_2_aux:
   "(assign_var_carry_tail_imp_time t s) = t + (assign_var_carry_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_var_carry_tail_imp_time_acc)+
 
 lemma assign_var_carry_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_var_carry_tail_imp_time t s) = t + (assign_var_carry_tail_imp_time 0 s)"
-  by (rule assign_var_carry_tail_imp_time_acc_2_aux)            
+  by (rule assign_var_carry_tail_imp_time_acc_2_aux)
 
 lemma assign_var_carry_tail_imp_time_acc_3:
   "(assign_var_carry_tail_imp_time (a + b) s) = a + (assign_var_carry_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: assign_var_carry_tail_imp_time_acc)+
 
 abbreviation "assign_var_carry_tail_cons_result \<equiv> ''cons_result''"
 
@@ -13136,14 +13136,14 @@ lemma assign_var_carry_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
   subgoal premises p using p(34) by fastforce
   by(force simp: assign_var_carry_tail_state_translators
-    assign_var_carry_tail_state_upd_def)  
+    assign_var_carry_tail_state_upd_def)
 
 lemma assign_var_carry_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_var_carry_tail_pref) assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_var_carry_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma assign_var_carry_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -13161,7 +13161,7 @@ lemma assign_var_carry_tail_IMP_Minus_correct_time:
   subgoal premises p using p(57) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_var_carry_tail_IMP_vars"])
   subgoal premises p using p(59) by fastforce
-  by(force simp add: Let_def assign_var_carry_tail_state_translators)  
+  by(force simp add: Let_def assign_var_carry_tail_state_translators)
 
 lemma assign_var_carry_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_var_carry_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -13182,7 +13182,7 @@ subsection \<open>full_adder\<close>
 subsubsection \<open>full_adder_tail_aux1\<close>
 
 fun full_adder_tail_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_adder_tail_aux1 op_b i v a b = 
+  "full_adder_tail_aux1 op_b i v a b =
     (3 ## (op_b ## 0) ## (assign_var_carry_tail i v a b 1) ## (assign_var_carry_tail i v a b 0) ## 0)"
 
 record full_adder_tail_aux1_state =
@@ -13239,7 +13239,7 @@ definition "full_adder_tail_aux1_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = full_adder_tail_aux1_op_b s;
       cons_t' = 0;
@@ -13270,9 +13270,9 @@ definition "full_adder_tail_aux1_state_upd s =
 function full_adder_tail_aux1_imp ::
   "full_adder_tail_aux1_state \<Rightarrow> full_adder_tail_aux1_state" where
   "full_adder_tail_aux1_imp s =
-  (let 
+  (let
       ret = full_adder_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -13287,7 +13287,7 @@ lemma full_adder_tail_aux1_imp_correct[let_function_correctness]:
       (full_adder_tail_aux1_a s) (full_adder_tail_aux1_b s)"
   apply (simp only: full_adder_tail_aux1_imp.simps Let_def full_adder_tail_aux1_state_upd_def
     assign_var_carry_tail_imp_correct cons_imp_correct)
-  by simp  
+  by simp
 
 function full_adder_tail_aux1_imp_time ::
   "nat \<Rightarrow> full_adder_tail_aux1_state \<Rightarrow> nat" where
@@ -13403,19 +13403,19 @@ lemma full_adder_tail_aux1_imp_time_acc:
   "(full_adder_tail_aux1_imp_time (Suc t) s) = Suc (full_adder_tail_aux1_imp_time t s)"
   by (induction t s rule: full_adder_tail_aux1_imp_time.induct)
     ((subst (1 2) full_adder_tail_aux1_imp_time.simps);
-      (simp add: full_adder_tail_aux1_state_upd_def Let_def))            
+      (simp add: full_adder_tail_aux1_state_upd_def Let_def))
 
 lemma full_adder_tail_aux1_imp_time_acc_2_aux:
   "(full_adder_tail_aux1_imp_time t s) = t + (full_adder_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_adder_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux1_imp_time_acc)+
 
 lemma full_adder_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux1_imp_time t s) = t + (full_adder_tail_aux1_imp_time 0 s)"
-  by (rule full_adder_tail_aux1_imp_time_acc_2_aux)            
+  by (rule full_adder_tail_aux1_imp_time_acc_2_aux)
 
 lemma full_adder_tail_aux1_imp_time_acc_3:
   "(full_adder_tail_aux1_imp_time (a + b) s) = a + (full_adder_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: full_adder_tail_aux1_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_aux1_imp_time_acc)+
 
 abbreviation "full_adder_tail_aux1_cons_result \<equiv> ''cons_result''"
 
@@ -13561,14 +13561,14 @@ lemma full_adder_tail_aux1_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
   subgoal premises p using p(49) by fastforce
   by(force simp: full_adder_tail_aux1_state_translators
-    full_adder_tail_aux1_state_upd_def)   
+    full_adder_tail_aux1_state_upd_def)
 
 lemma full_adder_tail_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux1_pref) full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_adder_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma full_adder_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -13590,7 +13590,7 @@ lemma full_adder_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux1_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def full_adder_tail_aux1_state_translators) 
+  by(force simp add: Let_def full_adder_tail_aux1_state_translators)
 
 lemma full_adder_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -13609,8 +13609,8 @@ lemma full_adder_tail_aux1_IMP_Minus_correct:
 subsubsection \<open>full_adder_tail_aux2\<close>
 
 fun full_adder_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_adder_tail_aux2 op_b i v a = 
-    (3 ## ((vname_encode ''carry'') ## 0) ## 
+  "full_adder_tail_aux2 op_b i v a =
+    (3 ## ((vname_encode ''carry'') ## 0) ##
     (full_adder_tail_aux1 op_b i v a 1) ##
     (full_adder_tail_aux1 op_b i v a 0) ## 0)"
 
@@ -13666,7 +13666,7 @@ definition "full_adder_tail_aux2_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = carry_vname_encode_as_nat;
       cons_t' = 0;
@@ -13696,9 +13696,9 @@ definition "full_adder_tail_aux2_state_upd s =
 function full_adder_tail_aux2_imp ::
   "full_adder_tail_aux2_state \<Rightarrow> full_adder_tail_aux2_state" where
   "full_adder_tail_aux2_imp s =
-  (let 
+  (let
       ret = full_adder_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -13828,15 +13828,15 @@ lemma full_adder_tail_aux2_imp_time_acc:
   "(full_adder_tail_aux2_imp_time (Suc t) s) = Suc (full_adder_tail_aux2_imp_time t s)"
   by (induction t s rule: full_adder_tail_aux2_imp_time.induct)
     ((subst (1 2) full_adder_tail_aux2_imp_time.simps);
-      (simp add: full_adder_tail_aux2_state_upd_def Let_def))            
+      (simp add: full_adder_tail_aux2_state_upd_def Let_def))
 
 lemma full_adder_tail_aux2_imp_time_acc_2_aux:
   "(full_adder_tail_aux2_imp_time t s) = t + (full_adder_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_adder_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux2_imp_time_acc)+
 
 lemma full_adder_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux2_imp_time t s) = t + (full_adder_tail_aux2_imp_time 0 s)"
-  by (rule full_adder_tail_aux2_imp_time_acc_2_aux)            
+  by (rule full_adder_tail_aux2_imp_time_acc_2_aux)
 
 lemma full_adder_tail_aux2_imp_time_acc_3:
   "(full_adder_tail_aux2_imp_time (a + b) s) = a + (full_adder_tail_aux2_imp_time b s)"
@@ -13983,7 +13983,7 @@ lemma full_adder_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
   subgoal premises p using p(49) by fastforce
   by(force simp: full_adder_tail_aux2_state_translators
-    full_adder_tail_aux2_state_upd_def)     
+    full_adder_tail_aux2_state_upd_def)
 
 lemma full_adder_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux2_pref) full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -14012,7 +14012,7 @@ lemma full_adder_tail_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux2_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def full_adder_tail_aux2_state_translators)  
+  by(force simp add: Let_def full_adder_tail_aux2_state_translators)
 
 lemma full_adder_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -14031,7 +14031,7 @@ lemma full_adder_tail_aux2_IMP_Minus_correct:
 subsubsection \<open>full_adder_tail_aux3\<close>
 
 fun full_adder_tail_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "full_adder_tail_aux3 op_a op_b i v = 
+  "full_adder_tail_aux3 op_a op_b i v =
     (op_a ## 0) ## (full_adder_tail_aux2 op_b i v 1) ## (full_adder_tail_aux2 op_b i v 0) ## 0"
 
 record full_adder_tail_aux3_state =
@@ -14082,7 +14082,7 @@ definition "full_adder_tail_aux3_state_upd s =
       cons_t' = cons_result;
       cons_ret' = 0;
       cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
-      cons_ret_state = cons_imp cons_state;      
+      cons_ret_state = cons_imp cons_state;
       cons_result = cons_ret cons_ret_state;
       cons_h' = full_adder_tail_aux3_op_a s;
       cons_t' = 0;
@@ -14107,9 +14107,9 @@ definition "full_adder_tail_aux3_state_upd s =
 function full_adder_tail_aux3_imp ::
   "full_adder_tail_aux3_state \<Rightarrow> full_adder_tail_aux3_state" where
   "full_adder_tail_aux3_imp s =
-  (let 
+  (let
       ret = full_adder_tail_aux3_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -14124,7 +14124,7 @@ lemma full_adder_tail_aux3_imp_correct[let_function_correctness]:
       (full_adder_tail_aux3_i s) (full_adder_tail_aux3_v s)"
   apply (simp only: full_adder_tail_aux3_imp.simps Let_def full_adder_tail_aux3_state_upd_def
     full_adder_tail_aux2_imp_correct cons_imp_correct)
-  by simp  
+  by simp
 
 function full_adder_tail_aux3_imp_time ::
   "nat \<Rightarrow> full_adder_tail_aux3_state \<Rightarrow> nat" where
@@ -14224,15 +14224,15 @@ lemma full_adder_tail_aux3_imp_time_acc:
   "(full_adder_tail_aux3_imp_time (Suc t) s) = Suc (full_adder_tail_aux3_imp_time t s)"
   by (induction t s rule: full_adder_tail_aux3_imp_time.induct)
     ((subst (1 2) full_adder_tail_aux3_imp_time.simps);
-      (simp add: full_adder_tail_aux3_state_upd_def Let_def))            
+      (simp add: full_adder_tail_aux3_state_upd_def Let_def))
 
 lemma full_adder_tail_aux3_imp_time_acc_2_aux:
   "(full_adder_tail_aux3_imp_time t s) = t + (full_adder_tail_aux3_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_adder_tail_aux3_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_adder_tail_aux3_imp_time_acc)+
 
 lemma full_adder_tail_aux3_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_aux3_imp_time t s) = t + (full_adder_tail_aux3_imp_time 0 s)"
-  by (rule full_adder_tail_aux3_imp_time_acc_2_aux)            
+  by (rule full_adder_tail_aux3_imp_time_acc_2_aux)
 
 lemma full_adder_tail_aux3_imp_time_acc_3:
   "(full_adder_tail_aux3_imp_time (a + b) s) = a + (full_adder_tail_aux3_imp_time b s)"
@@ -14362,14 +14362,14 @@ lemma full_adder_tail_aux3_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
   subgoal premises p using p(41) by fastforce
   by(force simp: full_adder_tail_aux3_state_translators
-    full_adder_tail_aux3_state_upd_def)    
+    full_adder_tail_aux3_state_upd_def)
 
 lemma full_adder_tail_aux3_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_aux3_pref) full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_adder_tail_aux3_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast    
+  by blast
 
 lemma full_adder_tail_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -14389,7 +14389,7 @@ lemma full_adder_tail_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(69) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_aux3_IMP_vars"])
   subgoal premises p using p(71) by fastforce
-  by(force simp add: Let_def full_adder_tail_aux3_state_translators)        
+  by(force simp add: Let_def full_adder_tail_aux3_state_translators)
 
 lemma full_adder_tail_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -14403,21 +14403,21 @@ lemma full_adder_tail_aux3_IMP_Minus_correct:
   using full_adder_tail_aux3_IMP_Minus_correct_function
     full_adder_tail_aux3_IMP_Minus_correct_time
     full_adder_tail_aux3_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>full_adder_tail\<close>
 
 fun full_adder_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "full_adder_tail' i v =
     (let op_a = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''a''), i));
-         op_b = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''b''), i)) in 
+         op_b = operand_bit_to_var_tail (prod_encode(encode_char (CHR ''b''), i)) in
     3 ## (full_adder_tail_aux3 op_a op_b i v)
   )"
 
 lemma full_adder_tail'_correct:
   "full_adder_tail i v = full_adder_tail' i v"
   unfolding full_adder_tail_def
-  by (simp only: full_adder_tail'.simps full_adder_tail_aux1.simps full_adder_tail_aux2.simps 
+  by (simp only: full_adder_tail'.simps full_adder_tail_aux1.simps full_adder_tail_aux2.simps
     full_adder_tail_aux3.simps Let_def)
 
 record full_adder_tail_state =
@@ -14483,9 +14483,9 @@ definition "full_adder_tail_state_upd s =
 function full_adder_tail_imp ::
   "full_adder_tail_state \<Rightarrow> full_adder_tail_state" where
   "full_adder_tail_imp s =
-  (let 
+  (let
       ret = full_adder_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -14590,19 +14590,19 @@ lemma full_adder_tail_imp_time_acc:
   "(full_adder_tail_imp_time (Suc t) s) = Suc (full_adder_tail_imp_time t s)"
   by (induction t s rule: full_adder_tail_imp_time.induct)
     ((subst (1 2) full_adder_tail_imp_time.simps);
-      (simp add: full_adder_tail_state_upd_def Let_def))            
+      (simp add: full_adder_tail_state_upd_def Let_def))
 
 lemma full_adder_tail_imp_time_acc_2_aux:
   "(full_adder_tail_imp_time t s) = t + (full_adder_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: full_adder_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: full_adder_tail_imp_time_acc)+
 
 lemma full_adder_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (full_adder_tail_imp_time t s) = t + (full_adder_tail_imp_time 0 s)"
-  by (rule full_adder_tail_imp_time_acc_2_aux)            
+  by (rule full_adder_tail_imp_time_acc_2_aux)
 
 lemma full_adder_tail_imp_time_acc_3:
   "(full_adder_tail_imp_time (a + b) s) = a + (full_adder_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: full_adder_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: full_adder_tail_imp_time_acc)+
 
 abbreviation "full_adder_tail_operand_bit_to_var_tail_result \<equiv> ''operand_bit_to_var_tail_result''"
 
@@ -14682,7 +14682,7 @@ definition full_adder_tail_IMP_Minus where
 "
 
 abbreviation "full_adder_tail_IMP_vars \<equiv>
-  {full_adder_tail_i_str, full_adder_tail_v_str, full_adder_tail_ret_str, 
+  {full_adder_tail_i_str, full_adder_tail_v_str, full_adder_tail_ret_str,
   full_adder_tail_operand_bit_to_var_tail_result}"
 
 definition "full_adder_tail_imp_to_HOL_state p s =
@@ -14718,14 +14718,14 @@ lemma full_adder_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
   subgoal premises p using p(36) by fastforce
   by(force simp: full_adder_tail_state_translators
-    full_adder_tail_state_upd_def)        
+    full_adder_tail_state_upd_def)
 
 lemma full_adder_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ full_adder_tail_pref) full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix full_adder_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma full_adder_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -14745,7 +14745,7 @@ lemma full_adder_tail_IMP_Minus_correct_time:
   subgoal premises p using p(59) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "full_adder_tail_IMP_vars"])
   subgoal premises p using p(61) by fastforce
-  by(force simp add: Let_def full_adder_tail_state_translators)  
+  by(force simp add: Let_def full_adder_tail_state_translators)
 
 lemma full_adder_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) full_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -14828,7 +14828,7 @@ definition "map_adder_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas map_adder_acc_imp_subprogram_simps = 
+lemmas map_adder_acc_imp_subprogram_simps =
   map_adder_acc_state_upd_def
   map_adder_acc_imp_compute_loop_condition_def
   map_adder_acc_imp_after_loop_def
@@ -14858,7 +14858,7 @@ lemma map_adder_acc_imp_correct:
   apply (subst map_adder_acc.simps)
   apply (simp del: map_adder_acc.simps add: map_adder_acc_imp_subprogram_simps Let_def
     hd_imp_correct full_adder_tail_imp_correct cons_imp_correct tl_imp_correct)
-  done    
+  done
 
 definition "map_adder_acc_state_upd_time t s \<equiv>
   (let
@@ -14929,7 +14929,7 @@ definition "map_adder_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas map_adder_acc_imp_subprogram_time_simps = 
+lemmas map_adder_acc_imp_subprogram_time_simps =
   map_adder_acc_state_upd_time_def
   map_adder_acc_imp_compute_loop_condition_time_def
   map_adder_acc_imp_after_loop_time_def
@@ -14958,25 +14958,25 @@ termination
   apply (relation "measure (map_adder_acc_n \<circ> snd)")
   by (simp add: map_adder_acc_imp_subprogram_time_simps tl_imp_correct)+
 
-declare map_adder_acc_imp_time.simps [simp del]   
+declare map_adder_acc_imp_time.simps [simp del]
 
 lemma map_adder_acc_imp_time_acc:
   "(map_adder_acc_imp_time (Suc t) s) = Suc (map_adder_acc_imp_time t s)"
   by (induction t s rule: map_adder_acc_imp_time.induct)
     ((subst (1 2) map_adder_acc_imp_time.simps);
-      (simp add: map_adder_acc_state_upd_def))            
+      (simp add: map_adder_acc_state_upd_def))
 
 lemma map_adder_acc_imp_time_acc_2_aux:
   "(map_adder_acc_imp_time t s) = t + (map_adder_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_adder_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_adder_acc_imp_time_acc)+
 
 lemma map_adder_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_adder_acc_imp_time t s) = t + (map_adder_acc_imp_time 0 s)"
-  by (rule map_adder_acc_imp_time_acc_2_aux)            
+  by (rule map_adder_acc_imp_time_acc_2_aux)
 
 lemma map_adder_acc_imp_time_acc_3:
   "(map_adder_acc_imp_time (a + b) s) = a + (map_adder_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_adder_acc_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: map_adder_acc_imp_time_acc)+
 
 abbreviation "map_adder_acc_while_cond \<equiv> ''condition''"
 
@@ -15129,14 +15129,14 @@ lemma map_adder_acc_IMP_Minus_correct_function:
       subgoal premises p using p(27) by fastforce
       by (fastforce_sorted_premises2 simp: map_adder_acc_imp_subprogram_simps
           map_adder_acc_state_translators Let_def)
-  done   
+  done
 
 lemma map_adder_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_adder_acc_pref) map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_adder_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas map_adder_acc_complete_time_simps =
   map_adder_acc_imp_subprogram_time_simps
@@ -15198,7 +15198,7 @@ lemma map_adder_acc_IMP_Minus_correct_time:
     subgoal premises p using p(45) by fastforce
     apply(simp only: map_adder_acc_complete_time_simps Let_def)
     by (fastforce_sorted_premises simp: map_adder_acc_complete_time_simps Let_def)
-  done   
+  done
 
 lemma map_adder_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_adder_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -15252,9 +15252,9 @@ definition "map_adder_tail_state_upd s =
 function map_adder_tail_imp ::
   "map_adder_tail_state \<Rightarrow> map_adder_tail_state" where
   "map_adder_tail_imp s =
-  (let 
+  (let
       ret = map_adder_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -15268,7 +15268,7 @@ lemma map_adder_tail_imp_correct[let_function_correctness]:
     map_adder_tail (map_adder_tail_v s) (map_adder_tail_n s)"
   apply (simp only: map_adder_tail_imp.simps Let_def map_adder_tail_state_upd_def
     map_adder_acc_imp_correct reverse_nat_imp_correct map_adder_tail_def)
-  by simp  
+  by simp
 
 function map_adder_tail_imp_time ::
   "nat \<Rightarrow> map_adder_tail_state \<Rightarrow> nat" where
@@ -15314,19 +15314,19 @@ lemma map_adder_tail_imp_time_acc:
   "(map_adder_tail_imp_time (Suc t) s) = Suc (map_adder_tail_imp_time t s)"
   by (induction t s rule: map_adder_tail_imp_time.induct)
     ((subst (1 2) map_adder_tail_imp_time.simps);
-      (simp add: map_adder_tail_state_upd_def Let_def))            
+      (simp add: map_adder_tail_state_upd_def Let_def))
 
 lemma map_adder_tail_imp_time_acc_2_aux:
   "(map_adder_tail_imp_time t s) = t + (map_adder_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_adder_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_adder_tail_imp_time_acc)+
 
 lemma map_adder_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_adder_tail_imp_time t s) = t + (map_adder_tail_imp_time 0 s)"
-  by (rule map_adder_tail_imp_time_acc_2_aux)            
+  by (rule map_adder_tail_imp_time_acc_2_aux)
 
 lemma map_adder_tail_imp_time_acc_3:
   "(map_adder_tail_imp_time (a + b) s) = a + (map_adder_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_adder_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: map_adder_tail_imp_time_acc)+
 
 definition map_adder_tail_IMP_Minus where
   "map_adder_tail_IMP_Minus \<equiv>
@@ -15385,14 +15385,14 @@ lemma map_adder_tail_IMP_Minus_correct_function:
   apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
   subgoal premises p using p(11) by fastforce
   by(fastforce simp: map_adder_tail_state_translators
-    map_adder_tail_state_upd_def)        
+    map_adder_tail_state_upd_def)
 
 lemma map_adder_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_adder_tail_pref) map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_adder_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast     
+  by blast
 
 lemma map_adder_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -15404,7 +15404,7 @@ lemma map_adder_tail_IMP_Minus_correct_time:
   subgoal premises p using p(17) by fastforce
   apply(erule reverse_nat_IMP_Minus_correct[where vars = "map_adder_tail_IMP_vars"])
   subgoal premises p using p(19) by fastforce
-  by(fastforce simp add: Let_def map_adder_tail_state_translators)        
+  by(fastforce simp add: Let_def map_adder_tail_state_translators)
 
 lemma map_adder_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -15418,7 +15418,7 @@ lemma map_adder_tail_IMP_Minus_correct:
   using map_adder_tail_IMP_Minus_correct_function
     map_adder_tail_IMP_Minus_correct_time
     map_adder_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>adder_tail\<close>
 
@@ -15493,9 +15493,9 @@ definition "adder_tail_state_upd s =
 function adder_tail_imp ::
   "adder_tail_state \<Rightarrow> adder_tail_state" where
   "adder_tail_imp s =
-  (let 
+  (let
       ret = adder_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -15616,19 +15616,19 @@ lemma adder_tail_imp_time_acc:
   "(adder_tail_imp_time (Suc t) s) = Suc (adder_tail_imp_time t s)"
   by (induction t s rule: adder_tail_imp_time.induct)
     ((subst (1 2) adder_tail_imp_time.simps);
-      (simp add: adder_tail_state_upd_def Let_def))            
+      (simp add: adder_tail_state_upd_def Let_def))
 
 lemma adder_tail_imp_time_acc_2_aux:
   "(adder_tail_imp_time t s) = t + (adder_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: adder_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: adder_tail_imp_time_acc)+
 
 lemma adder_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (adder_tail_imp_time t s) = t + (adder_tail_imp_time 0 s)"
-  by (rule adder_tail_imp_time_acc_2_aux)            
+  by (rule adder_tail_imp_time_acc_2_aux)
 
 lemma adder_tail_imp_time_acc_3:
   "(adder_tail_imp_time (a + b) s) = a + (adder_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: adder_tail_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: adder_tail_imp_time_acc)+
 
 abbreviation "adder_tail_cons_result \<equiv> ''cons_result''"
 
@@ -15765,14 +15765,14 @@ lemma adder_tail_IMP_Minus_correct_function:
   subgoal premises p using p(50) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
   subgoal premises p using p(52) by fastforce
-  by(force simp: adder_tail_state_translators adder_tail_state_upd_def)  
+  by(force simp: adder_tail_state_translators adder_tail_state_upd_def)
 
 lemma adder_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ adder_tail_pref) adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix adder_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma adder_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -15798,7 +15798,7 @@ lemma adder_tail_IMP_Minus_correct_time:
   subgoal premises p using p(85) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "adder_tail_IMP_vars"])
   subgoal premises p using p(87) by fastforce
-  by(force simp add: Let_def adder_tail_state_translators)  
+  by(force simp add: Let_def adder_tail_state_translators)
 
 lemma adder_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -15819,8 +15819,8 @@ subsection \<open>binary_adder\<close>
 subsubsection \<open>binary_adder_tail_aux1\<close>
 
 fun binary_adder_tail_aux1 :: "nat \<Rightarrow> nat" where
-  "binary_adder_tail_aux1 n = 
-    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ## 
+  "binary_adder_tail_aux1 n =
+    (2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ##
     (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) (prod_encode(1,0))) ## 0)"
 
 record binary_adder_tail_aux1_state =
@@ -15891,9 +15891,9 @@ definition "binary_adder_tail_aux1_state_upd s =
 function binary_adder_tail_aux1_imp ::
   "binary_adder_tail_aux1_state \<Rightarrow> binary_adder_tail_aux1_state" where
   "binary_adder_tail_aux1_imp s =
-  (let 
+  (let
       ret = binary_adder_tail_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -15908,7 +15908,7 @@ lemma binary_adder_tail_aux1_imp_correct[let_function_correctness]:
   apply (simp only: binary_adder_tail_aux1_imp.simps Let_def binary_adder_tail_aux1_state_upd_def
     prod_encode_imp_correct copy_atom_to_operand_tail_imp_correct cons_imp_correct a_encode_char_val
     b_encode_char_val binary_adder_tail_aux1.simps)
-  by simp 
+  by simp
 
 function binary_adder_tail_aux1_imp_time ::
   "nat \<Rightarrow> binary_adder_tail_aux1_state \<Rightarrow> nat" where
@@ -16010,19 +16010,19 @@ lemma binary_adder_tail_aux1_imp_time_acc:
   "(binary_adder_tail_aux1_imp_time (Suc t) s) = Suc (binary_adder_tail_aux1_imp_time t s)"
   by (induction t s rule: binary_adder_tail_aux1_imp_time.induct)
     ((subst (1 2) binary_adder_tail_aux1_imp_time.simps);
-      (simp add: binary_adder_tail_aux1_state_upd_def Let_def))            
+      (simp add: binary_adder_tail_aux1_state_upd_def Let_def))
 
 lemma binary_adder_tail_aux1_imp_time_acc_2_aux:
   "(binary_adder_tail_aux1_imp_time t s) = t + (binary_adder_tail_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux1_imp_time_acc)+
 
 lemma binary_adder_tail_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_aux1_imp_time t s) = t + (binary_adder_tail_aux1_imp_time 0 s)"
-  by (rule binary_adder_tail_aux1_imp_time_acc_2_aux)            
+  by (rule binary_adder_tail_aux1_imp_time_acc_2_aux)
 
 lemma binary_adder_tail_aux1_imp_time_acc_3:
   "(binary_adder_tail_aux1_imp_time (a + b) s) = a + (binary_adder_tail_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux1_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux1_imp_time_acc)+
 
 abbreviation "binary_adder_tail_aux1_cons_result \<equiv> ''cons_result''"
 
@@ -16149,14 +16149,14 @@ lemma binary_adder_tail_aux1_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
   subgoal premises p using p(44) by fastforce
   by(force simp: binary_adder_tail_aux1_state_translators
-    binary_adder_tail_aux1_state_upd_def) 
+    binary_adder_tail_aux1_state_upd_def)
 
 lemma binary_adder_tail_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_aux1_pref) binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_adder_tail_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_adder_tail_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -16178,7 +16178,7 @@ lemma binary_adder_tail_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(73) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux1_IMP_vars"])
   subgoal premises p using p(75) by fastforce
-  by(force simp add: Let_def binary_adder_tail_aux1_state_translators)   
+  by(force simp add: Let_def binary_adder_tail_aux1_state_translators)
 
 lemma binary_adder_tail_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -16192,13 +16192,13 @@ lemma binary_adder_tail_aux1_IMP_Minus_correct:
   using binary_adder_tail_aux1_IMP_Minus_correct_function
     binary_adder_tail_aux1_IMP_Minus_correct_time
     binary_adder_tail_aux1_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>binary_adder_tail_aux2\<close>
 
 fun binary_adder_tail_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_adder_tail_aux2 n v b = 
-    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) b) ## 
+  "binary_adder_tail_aux2 n v b =
+    (copy_atom_to_operand_tail n (encode_char(CHR ''b'')) b) ##
     (2 ## (adder_tail n v) ## (binary_adder_tail_aux1 n) ## 0) ## 0"
 
 record binary_adder_tail_aux2_state =
@@ -16276,9 +16276,9 @@ definition "binary_adder_tail_aux2_state_upd s =
 function binary_adder_tail_aux2_imp ::
   "binary_adder_tail_aux2_state \<Rightarrow> binary_adder_tail_aux2_state" where
   "binary_adder_tail_aux2_imp s =
-  (let 
+  (let
       ret = binary_adder_tail_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -16292,7 +16292,7 @@ lemma binary_adder_tail_aux2_imp_correct[let_function_correctness]:
   apply (simp only: binary_adder_tail_aux2_imp.simps Let_def binary_adder_tail_aux2_state_upd_def
     binary_adder_tail_aux1_imp_correct cons_imp_correct adder_tail_imp_correct copy_atom_to_operand_tail_imp_correct
     b_encode_char_val binary_adder_tail_aux2.simps)
-  by simp   
+  by simp
 
 declare binary_adder_tail_aux2_imp.simps [simp del]
 
@@ -16403,19 +16403,19 @@ lemma binary_adder_tail_aux2_imp_time_acc:
   "(binary_adder_tail_aux2_imp_time (Suc t) s) = Suc (binary_adder_tail_aux2_imp_time t s)"
   by (induction t s rule: binary_adder_tail_aux2_imp_time.induct)
     ((subst (1 2) binary_adder_tail_aux2_imp_time.simps);
-      (simp add: binary_adder_tail_aux2_state_upd_def Let_def))            
+      (simp add: binary_adder_tail_aux2_state_upd_def Let_def))
 
 lemma binary_adder_tail_aux2_imp_time_acc_2_aux:
   "(binary_adder_tail_aux2_imp_time t s) = t + (binary_adder_tail_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_aux2_imp_time_acc)+
 
 lemma binary_adder_tail_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_aux2_imp_time t s) = t + (binary_adder_tail_aux2_imp_time 0 s)"
-  by (rule binary_adder_tail_aux2_imp_time_acc_2_aux)            
+  by (rule binary_adder_tail_aux2_imp_time_acc_2_aux)
 
 lemma binary_adder_tail_aux2_imp_time_acc_3:
   "(binary_adder_tail_aux2_imp_time (a + b) s) = a + (binary_adder_tail_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux2_imp_time_acc)+     
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_aux2_imp_time_acc)+
 
 abbreviation "binary_adder_tail_aux2_cons_result \<equiv> ''cons_result''"
 
@@ -16555,14 +16555,14 @@ lemma binary_adder_tail_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
   subgoal premises p using p(50) by fastforce
   by(force simp: binary_adder_tail_aux2_state_translators
-    binary_adder_tail_aux2_state_upd_def)   
+    binary_adder_tail_aux2_state_upd_def)
 
 lemma binary_adder_tail_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_aux2_pref) binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_adder_tail_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma binary_adder_tail_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -16586,7 +16586,7 @@ lemma binary_adder_tail_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(83) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_aux2_IMP_vars"])
   subgoal premises p using p(85) by fastforce
-  by(force simp add: Let_def binary_adder_tail_aux2_state_translators)   
+  by(force simp add: Let_def binary_adder_tail_aux2_state_translators)
 
 lemma binary_adder_tail_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -16600,12 +16600,12 @@ lemma binary_adder_tail_aux2_IMP_Minus_correct:
   using binary_adder_tail_aux2_IMP_Minus_correct_function
     binary_adder_tail_aux2_IMP_Minus_correct_time
     binary_adder_tail_aux2_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>binary_adder_tail\<close>
 
 fun binary_adder_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_adder_tail' n v a b = 
+  "binary_adder_tail' n v a b =
     2 ## (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) a) ##
     (2 ## (binary_adder_tail_aux2 n v b)) ## 0"
 
@@ -16682,9 +16682,9 @@ definition "binary_adder_tail_state_upd s =
 function binary_adder_tail_imp ::
   "binary_adder_tail_state \<Rightarrow> binary_adder_tail_state" where
   "binary_adder_tail_imp s =
-  (let 
+  (let
       ret = binary_adder_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -16700,7 +16700,7 @@ lemma binary_adder_tail_imp_correct[let_function_correctness]:
   apply (simp only: binary_adder_tail_imp.simps Let_def binary_adder_tail_state_upd_def
     binary_adder_tail_aux2_imp_correct cons_imp_correct copy_atom_to_operand_tail_imp_correct
     a_encode_char_val binary_adder_tail'_correct binary_adder_tail'.simps)
-  by simp 
+  by simp
 
 function binary_adder_tail_imp_time ::
   "nat \<Rightarrow> binary_adder_tail_state \<Rightarrow> nat" where
@@ -16792,19 +16792,19 @@ lemma binary_adder_tail_imp_time_acc:
   "(binary_adder_tail_imp_time (Suc t) s) = Suc (binary_adder_tail_imp_time t s)"
   by (induction t s rule: binary_adder_tail_imp_time.induct)
     ((subst (1 2) binary_adder_tail_imp_time.simps);
-      (simp add: binary_adder_tail_state_upd_def Let_def))            
+      (simp add: binary_adder_tail_state_upd_def Let_def))
 
 lemma binary_adder_tail_imp_time_acc_2_aux:
   "(binary_adder_tail_imp_time t s) = t + (binary_adder_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_adder_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_adder_tail_imp_time_acc)+
 
 lemma binary_adder_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_adder_tail_imp_time t s) = t + (binary_adder_tail_imp_time 0 s)"
-  by (rule binary_adder_tail_imp_time_acc_2_aux)            
+  by (rule binary_adder_tail_imp_time_acc_2_aux)
 
 lemma binary_adder_tail_imp_time_acc_3:
   "(binary_adder_tail_imp_time (a + b) s) = a + (binary_adder_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_adder_tail_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: binary_adder_tail_imp_time_acc)+
 
 abbreviation "binary_adder_tail_cons_result \<equiv> ''cons_result''"
 
@@ -16923,14 +16923,14 @@ lemma binary_adder_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
   subgoal premises p using p(38) by fastforce
   by(force simp: binary_adder_tail_state_translators
-    binary_adder_tail_state_upd_def)   
+    binary_adder_tail_state_upd_def)
 
 lemma binary_adder_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_adder_tail_pref) binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_adder_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma binary_adder_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -16950,7 +16950,7 @@ lemma binary_adder_tail_IMP_Minus_correct_time:
   subgoal premises p using p(63) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_adder_tail_IMP_vars"])
   subgoal premises p using p(65) by fastforce
-  by(force simp add: Let_def binary_adder_tail_state_translators) 
+  by(force simp add: Let_def binary_adder_tail_state_translators)
 
 lemma binary_adder_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_adder_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -16964,14 +16964,14 @@ lemma binary_adder_tail_IMP_Minus_correct:
   using binary_adder_tail_IMP_Minus_correct_function
     binary_adder_tail_IMP_Minus_correct_time
     binary_adder_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>assign_shifted_bits\<close>
 
 subsubsection \<open>assign_shifted_bits_acc_aux1\<close>
 
 fun assign_shifted_bits_acc_aux1 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_shifted_bits_acc_aux1 diff i v = 
+  "assign_shifted_bits_acc_aux1 diff i v =
     (1 ## (var_bit_to_var_tail (prod_encode(v, i-diff))) ## 0 ## 0) ## 0"
 
 record assign_shifted_bits_acc_aux1_state =
@@ -17033,9 +17033,9 @@ definition "assign_shifted_bits_acc_aux1_state_upd s =
 function assign_shifted_bits_acc_aux1_imp ::
   "assign_shifted_bits_acc_aux1_state \<Rightarrow> assign_shifted_bits_acc_aux1_state" where
   "assign_shifted_bits_acc_aux1_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_acc_aux1_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -17050,7 +17050,7 @@ lemma assign_shifted_bits_acc_aux1_imp_correct[let_function_correctness]:
       (assign_shifted_bits_acc_aux1_v s)"
   apply (simp only: assign_shifted_bits_acc_aux1_imp.simps Let_def assign_shifted_bits_acc_aux1_state_upd_def
     cons_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct)
-  by simp   
+  by simp
 
 function assign_shifted_bits_acc_aux1_imp_time ::
   "nat \<Rightarrow> assign_shifted_bits_acc_aux1_state \<Rightarrow> nat" where
@@ -17132,19 +17132,19 @@ lemma assign_shifted_bits_acc_aux1_imp_time_acc:
   "(assign_shifted_bits_acc_aux1_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux1_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_acc_aux1_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_acc_aux1_imp_time.simps);
-      (simp add: assign_shifted_bits_acc_aux1_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_acc_aux1_state_upd_def Let_def))
 
 lemma assign_shifted_bits_acc_aux1_imp_time_acc_2_aux:
   "(assign_shifted_bits_acc_aux1_imp_time t s) = t + (assign_shifted_bits_acc_aux1_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+
 
 lemma assign_shifted_bits_acc_aux1_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux1_imp_time t s) = t + (assign_shifted_bits_acc_aux1_imp_time 0 s)"
-  by (rule assign_shifted_bits_acc_aux1_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_acc_aux1_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_acc_aux1_imp_time_acc_3:
   "(assign_shifted_bits_acc_aux1_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux1_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux1_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_acc_aux1_cons_result \<equiv> ''cons_result''"
 
@@ -17252,14 +17252,14 @@ lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
   subgoal premises p using p(35) by fastforce
   by(force simp: assign_shifted_bits_acc_aux1_state_translators
-    assign_shifted_bits_acc_aux1_state_upd_def) 
+    assign_shifted_bits_acc_aux1_state_upd_def)
 
 lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux1_pref) assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux1_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -17279,7 +17279,7 @@ lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct_time:
   subgoal premises p using p(57) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux1_IMP_vars"])
   subgoal premises p using p(59) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_acc_aux1_state_translators) 
+  by(force simp add: Let_def assign_shifted_bits_acc_aux1_state_translators)
 
 lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -17298,8 +17298,8 @@ lemma assign_shifted_bits_acc_aux1_IMP_Minus_correct:
 subsubsection \<open>assign_shifted_bits_acc_aux2\<close>
 
 fun assign_shifted_bits_acc_aux2 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_shifted_bits_acc_aux2 diff i v = 
-    (1 ## (var_bit_to_var_tail (prod_encode(v, i-diff))) ## 1 ## 0) ## 
+  "assign_shifted_bits_acc_aux2 diff i v =
+    (1 ## (var_bit_to_var_tail (prod_encode(v, i-diff))) ## 1 ## 0) ##
       assign_shifted_bits_acc_aux1 diff i v"
 
 record assign_shifted_bits_acc_aux2_state =
@@ -17371,9 +17371,9 @@ definition "assign_shifted_bits_acc_aux2_state_upd s =
 function assign_shifted_bits_acc_aux2_imp ::
   "assign_shifted_bits_acc_aux2_state \<Rightarrow> assign_shifted_bits_acc_aux2_state" where
   "assign_shifted_bits_acc_aux2_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_acc_aux2_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -17388,7 +17388,7 @@ lemma assign_shifted_bits_acc_aux2_imp_correct[let_function_correctness]:
       (assign_shifted_bits_acc_aux2_v s)"
   apply (simp only: assign_shifted_bits_acc_aux2_imp.simps Let_def assign_shifted_bits_acc_aux2_state_upd_def
     cons_imp_correct prod_encode_imp_correct var_bit_to_var_tail_imp_correct assign_shifted_bits_acc_aux1_imp_correct)
-  by simp      
+  by simp
 
 function assign_shifted_bits_acc_aux2_imp_time ::
   "nat \<Rightarrow> assign_shifted_bits_acc_aux2_state \<Rightarrow> nat" where
@@ -17486,19 +17486,19 @@ lemma assign_shifted_bits_acc_aux2_imp_time_acc:
   "(assign_shifted_bits_acc_aux2_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux2_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_acc_aux2_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_acc_aux2_imp_time.simps);
-      (simp add: assign_shifted_bits_acc_aux2_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_acc_aux2_state_upd_def Let_def))
 
 lemma assign_shifted_bits_acc_aux2_imp_time_acc_2_aux:
   "(assign_shifted_bits_acc_aux2_imp_time t s) = t + (assign_shifted_bits_acc_aux2_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+
 
 lemma assign_shifted_bits_acc_aux2_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux2_imp_time t s) = t + (assign_shifted_bits_acc_aux2_imp_time 0 s)"
-  by (rule assign_shifted_bits_acc_aux2_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_acc_aux2_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_acc_aux2_imp_time_acc_3:
   "(assign_shifted_bits_acc_aux2_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux2_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux2_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_acc_aux2_cons_result \<equiv> ''cons_result''"
 
@@ -17625,14 +17625,14 @@ lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
   subgoal premises p using p(43) by fastforce
   by(force simp: assign_shifted_bits_acc_aux2_state_translators
-    assign_shifted_bits_acc_aux2_state_upd_def)        
+    assign_shifted_bits_acc_aux2_state_upd_def)
 
 lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux2_pref) assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux2_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -17654,7 +17654,7 @@ lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct_time:
   subgoal premises p using p(71) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux2_IMP_vars"])
   subgoal premises p using p(73) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_acc_aux2_state_translators)        
+  by(force simp add: Let_def assign_shifted_bits_acc_aux2_state_translators)
 
 lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -17673,7 +17673,7 @@ lemma assign_shifted_bits_acc_aux2_IMP_Minus_correct:
 subsubsection \<open>assign_shifted_bits_acc_aux3\<close>
 
 fun assign_shifted_bits_acc_aux3 :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_shifted_bits_acc_aux3 diff i v = 
+  "assign_shifted_bits_acc_aux3 diff i v =
     ((operand_bit_to_var_tail (prod_encode (encode_char(CHR ''a''), i-diff +1 ))) ## 0) ##
       assign_shifted_bits_acc_aux2 diff i v"
 
@@ -17736,9 +17736,9 @@ definition "assign_shifted_bits_acc_aux3_state_upd s =
 function assign_shifted_bits_acc_aux3_imp ::
   "assign_shifted_bits_acc_aux3_state \<Rightarrow> assign_shifted_bits_acc_aux3_state" where
   "assign_shifted_bits_acc_aux3_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_acc_aux3_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -17754,7 +17754,7 @@ lemma assign_shifted_bits_acc_aux3_imp_correct[let_function_correctness]:
   apply (simp only: assign_shifted_bits_acc_aux3_imp.simps Let_def assign_shifted_bits_acc_aux3_state_upd_def
     prod_encode_imp_correct operand_bit_to_var_tail_imp_correct cons_imp_correct assign_shifted_bits_acc_aux2_imp_correct
     a_encode_char_val assign_shifted_bits_acc_aux3.simps)
-  by simp 
+  by simp
 
 function assign_shifted_bits_acc_aux3_imp_time ::
   "nat \<Rightarrow> assign_shifted_bits_acc_aux3_state \<Rightarrow> nat" where
@@ -17834,19 +17834,19 @@ lemma assign_shifted_bits_acc_aux3_imp_time_acc:
   "(assign_shifted_bits_acc_aux3_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_aux3_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_acc_aux3_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_acc_aux3_imp_time.simps);
-      (simp add: assign_shifted_bits_acc_aux3_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_acc_aux3_state_upd_def Let_def))
 
 lemma assign_shifted_bits_acc_aux3_imp_time_acc_2_aux:
   "(assign_shifted_bits_acc_aux3_imp_time t s) = t + (assign_shifted_bits_acc_aux3_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+
 
 lemma assign_shifted_bits_acc_aux3_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_aux3_imp_time t s) = t + (assign_shifted_bits_acc_aux3_imp_time 0 s)"
-  by (rule assign_shifted_bits_acc_aux3_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_acc_aux3_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_acc_aux3_imp_time_acc_3:
   "(assign_shifted_bits_acc_aux3_imp_time (a + b) s) = a + (assign_shifted_bits_acc_aux3_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_aux3_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_acc_aux3_cons_result \<equiv> ''cons_result''"
 
@@ -17951,14 +17951,14 @@ lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
   subgoal premises p using p(31) by fastforce
   by(force simp: assign_shifted_bits_acc_aux3_state_translators
-    assign_shifted_bits_acc_aux3_state_upd_def)        
+    assign_shifted_bits_acc_aux3_state_upd_def)
 
 lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_aux3_pref) assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_acc_aux3_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -17976,7 +17976,7 @@ lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct_time:
   subgoal premises p using p(51) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_aux3_IMP_vars"])
   subgoal premises p using p(53) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_acc_aux3_state_translators)        
+  by(force simp add: Let_def assign_shifted_bits_acc_aux3_state_translators)
 
 lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -17990,15 +17990,15 @@ lemma assign_shifted_bits_acc_aux3_IMP_Minus_correct:
   using assign_shifted_bits_acc_aux3_IMP_Minus_correct_function
     assign_shifted_bits_acc_aux3_IMP_Minus_correct_time
     assign_shifted_bits_acc_aux3_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>assign_shifted_bits_acc\<close>
 
 fun assign_shifted_bits_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_shifted_bits_acc' acc diff i v = 
+  "assign_shifted_bits_acc' acc diff i v =
     (if diff = 0 then acc else assign_shifted_bits_acc'
-      (2 ## (3 ## assign_shifted_bits_acc_aux3 diff i v) ## 
-      (acc) ## 0) 
+      (2 ## (3 ## assign_shifted_bits_acc_aux3 diff i v) ##
+      (acc) ## 0)
     (diff-1) i v
 )"
 
@@ -18082,7 +18082,7 @@ definition "assign_shifted_bits_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas assign_shifted_bits_acc_imp_subprogram_simps = 
+lemmas assign_shifted_bits_acc_imp_subprogram_simps =
   assign_shifted_bits_acc_state_upd_def
   assign_shifted_bits_acc_imp_compute_loop_condition_def
   assign_shifted_bits_acc_imp_after_loop_def
@@ -18113,7 +18113,7 @@ lemma assign_shifted_bits_acc_imp_correct[let_function_correctness]:
   apply (subst assign_shifted_bits_acc.simps)
   apply (simp del: assign_shifted_bits_acc.simps add: assign_shifted_bits_acc_imp_subprogram_simps Let_def
     assign_shifted_bits_acc'_correct cons_imp_correct assign_shifted_bits_acc_aux3_imp_correct)
-  done  
+  done
 
 definition "assign_shifted_bits_acc_state_upd_time t s \<equiv>
   (let
@@ -18203,7 +18203,7 @@ definition "assign_shifted_bits_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas assign_shifted_bits_acc_imp_subprogram_time_simps = 
+lemmas assign_shifted_bits_acc_imp_subprogram_time_simps =
   assign_shifted_bits_acc_state_upd_time_def
   assign_shifted_bits_acc_imp_compute_loop_condition_time_def
   assign_shifted_bits_acc_imp_after_loop_time_def
@@ -18232,25 +18232,25 @@ termination
   apply (relation "measure (assign_shifted_bits_acc_diff \<circ> snd)")
   by (simp add: assign_shifted_bits_acc_imp_subprogram_time_simps)+
 
-declare assign_shifted_bits_acc_imp_time.simps [simp del] 
+declare assign_shifted_bits_acc_imp_time.simps [simp del]
 
 lemma assign_shifted_bits_acc_imp_time_acc:
   "(assign_shifted_bits_acc_imp_time (Suc t) s) = Suc (assign_shifted_bits_acc_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_acc_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_acc_imp_time.simps);
-      (simp add: assign_shifted_bits_acc_state_upd_def))            
+      (simp add: assign_shifted_bits_acc_state_upd_def))
 
 lemma assign_shifted_bits_acc_imp_time_acc_2_aux:
   "(assign_shifted_bits_acc_imp_time t s) = t + (assign_shifted_bits_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_acc_imp_time_acc)+
 
 lemma assign_shifted_bits_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_acc_imp_time t s) = t + (assign_shifted_bits_acc_imp_time 0 s)"
-  by (rule assign_shifted_bits_acc_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_acc_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_acc_imp_time_acc_3:
   "(assign_shifted_bits_acc_imp_time (a + b) s) = a + (assign_shifted_bits_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_acc_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_acc_while_cond \<equiv> ''condition''"
 abbreviation "assign_shifted_bits_acc_cons_result \<equiv> ''cons_result''"
@@ -18425,14 +18425,14 @@ lemma assign_shifted_bits_acc_IMP_Minus_correct_function:
       apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_acc_IMP_vars"])
       subgoal premises p using p(37) by fastforce
       by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_simps Let_def)
-  done  
+  done
 
 lemma assign_shifted_bits_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_acc_pref) assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemmas assign_shifted_bits_acc_complete_time_simps =
   assign_shifted_bits_acc_imp_subprogram_time_simps
@@ -18498,7 +18498,7 @@ lemma assign_shifted_bits_acc_IMP_Minus_correct_time:
     apply(simp only: assign_shifted_bits_acc_complete_time_simps Let_def)
     by (fastforce_sorted_premises simp: assign_shifted_bits_acc_complete_time_simps Let_def)
 
-  done  
+  done
 
 lemma assign_shifted_bits_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -18512,7 +18512,7 @@ lemma assign_shifted_bits_acc_IMP_Minus_correct:
   using assign_shifted_bits_acc_IMP_Minus_correct_function
     assign_shifted_bits_acc_IMP_Minus_correct_time
     assign_shifted_bits_acc_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)     
+  by (meson set_mono_prefix)
 
 subsubsection \<open>assign_shifted_bits_tail\<close>
 
@@ -18555,9 +18555,9 @@ definition "assign_shifted_bits_tail_state_upd s =
 function assign_shifted_bits_tail_imp ::
   "assign_shifted_bits_tail_state \<Rightarrow> assign_shifted_bits_tail_state" where
   "assign_shifted_bits_tail_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -18571,7 +18571,7 @@ lemma assign_shifted_bits_tail_imp_correct[let_function_correctness]:
     assign_shifted_bits_tail (assign_shifted_bits_tail_i s) (assign_shifted_bits_tail_v s)"
   apply (simp only: assign_shifted_bits_tail_imp.simps Let_def assign_shifted_bits_tail_state_upd_def
     cons_imp_correct assign_shifted_bits_acc_imp_correct assign_shifted_bits_tail_def)
-  by simp      
+  by simp
 
 function assign_shifted_bits_tail_imp_time ::
   "nat \<Rightarrow> assign_shifted_bits_tail_state \<Rightarrow> nat" where
@@ -18621,19 +18621,19 @@ lemma assign_shifted_bits_tail_imp_time_acc:
   "(assign_shifted_bits_tail_imp_time (Suc t) s) = Suc (assign_shifted_bits_tail_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_tail_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_tail_imp_time.simps);
-      (simp add: assign_shifted_bits_tail_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_tail_state_upd_def Let_def))
 
 lemma assign_shifted_bits_tail_imp_time_acc_2_aux:
   "(assign_shifted_bits_tail_imp_time t s) = t + (assign_shifted_bits_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_tail_imp_time_acc)+
 
 lemma assign_shifted_bits_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_tail_imp_time t s) = t + (assign_shifted_bits_tail_imp_time 0 s)"
-  by (rule assign_shifted_bits_tail_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_tail_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_tail_imp_time_acc_3:
   "(assign_shifted_bits_tail_imp_time (a + b) s) = a + (assign_shifted_bits_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_tail_imp_time_acc)+
 
 definition assign_shifted_bits_tail_IMP_Minus where
   "assign_shifted_bits_tail_IMP_Minus \<equiv>
@@ -18696,14 +18696,14 @@ lemma assign_shifted_bits_tail_IMP_Minus_correct_function:
   apply(erule assign_shifted_bits_acc_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
   subgoal premises p using p(13) by fastforce
   by(force simp: assign_shifted_bits_tail_state_translators
-    assign_shifted_bits_tail_state_upd_def)  
+    assign_shifted_bits_tail_state_upd_def)
 
 lemma assign_shifted_bits_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_tail_pref) assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast     
+  by blast
 
 lemma assign_shifted_bits_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -18715,7 +18715,7 @@ lemma assign_shifted_bits_tail_IMP_Minus_correct_time:
   subgoal premises p using p(21) by fastforce
   apply(erule assign_shifted_bits_acc_IMP_Minus_correct[where vars = "assign_shifted_bits_tail_IMP_vars"])
   subgoal premises p using p(23) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_tail_state_translators)        
+  by(force simp add: Let_def assign_shifted_bits_tail_state_translators)
 
 lemma assign_shifted_bits_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -18729,14 +18729,14 @@ lemma assign_shifted_bits_tail_IMP_Minus_correct:
   using assign_shifted_bits_tail_IMP_Minus_correct_function
     assign_shifted_bits_tail_IMP_Minus_correct_time
     assign_shifted_bits_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>assign_shifted_bits_and_zero_most_significant\<close>
 
 subsubsection \<open>assign_shifted_bits_and_zero_most_significant_tail_aux\<close>
 
 fun assign_shifted_bits_and_zero_most_significant_tail_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "assign_shifted_bits_and_zero_most_significant_tail_aux n v = 
+  "assign_shifted_bits_and_zero_most_significant_tail_aux n v =
     (1 ## (var_bit_to_var_tail (prod_encode(v, n - 1))) ## 0 ## 0)"
 
 record assign_shifted_bits_and_zero_most_significant_tail_aux_state =
@@ -18744,7 +18744,7 @@ record assign_shifted_bits_and_zero_most_significant_tail_aux_state =
   assign_shifted_bits_and_zero_most_significant_tail_aux_v::nat
   assign_shifted_bits_and_zero_most_significant_tail_aux_ret::nat
 
-abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_prefix \<equiv> 
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_prefix \<equiv>
   ''assign_shifted_bits_and_zero_most_significant_tail_aux.''"
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_n_str \<equiv> ''n''"
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_v_str \<equiv> ''v''"
@@ -18791,9 +18791,9 @@ definition "assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd s =
 function assign_shifted_bits_and_zero_most_significant_tail_aux_imp ::
   "assign_shifted_bits_and_zero_most_significant_tail_aux_state \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_aux_state" where
   "assign_shifted_bits_and_zero_most_significant_tail_aux_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -18804,12 +18804,12 @@ declare assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps [simp d
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_correct[let_function_correctness]:
   "assign_shifted_bits_and_zero_most_significant_tail_aux_ret (assign_shifted_bits_and_zero_most_significant_tail_aux_imp s) =
-    assign_shifted_bits_and_zero_most_significant_tail_aux 
+    assign_shifted_bits_and_zero_most_significant_tail_aux
       (assign_shifted_bits_and_zero_most_significant_tail_aux_n s) (assign_shifted_bits_and_zero_most_significant_tail_aux_v s)"
-  apply (simp only: assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps Let_def 
+  apply (simp only: assign_shifted_bits_and_zero_most_significant_tail_aux_imp.simps Let_def
     assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def cons_imp_correct prod_encode_imp_correct
     var_bit_to_var_tail_imp_correct assign_shifted_bits_and_zero_most_significant_tail_aux.simps)
-  by simp   
+  by simp
 
 function assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time ::
   "nat \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_aux_state \<Rightarrow> nat" where
@@ -18881,19 +18881,19 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc:
   "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time (Suc t) s) = Suc (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time.simps);
-      (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def Let_def))
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2_aux:
   "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time 0 s)"
-  by (rule assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc_3:
   "(assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time (a + b) s) = a + (assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_aux_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_aux_cons_result \<equiv> ''cons_result''"
 
@@ -18988,7 +18988,7 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_f
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
   subgoal premises p using p(29) by fastforce
   by(force simp: assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators
-    assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def) 
+    assign_shifted_bits_and_zero_most_significant_tail_aux_state_upd_def)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_and_zero_most_significant_tail_aux_pref) assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -19013,7 +19013,7 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct_t
   subgoal premises p using p(47) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_vars"])
   subgoal premises p using p(49) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators)   
+  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_aux_state_translators)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -19032,7 +19032,7 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_aux_IMP_Minus_correct:
 subsubsection \<open>assign_shifted_bits_and_zero_most_significant_tail\<close>
 
 fun assign_shifted_bits_and_zero_most_significant_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat " where
-  "assign_shifted_bits_and_zero_most_significant_tail' n v = 
+  "assign_shifted_bits_and_zero_most_significant_tail' n v =
     2 ## (assign_shifted_bits_tail (n - 1) v) ##
     (assign_shifted_bits_and_zero_most_significant_tail_aux n v) ## 0"
 
@@ -19047,7 +19047,7 @@ record assign_shifted_bits_and_zero_most_significant_tail_state =
   assign_shifted_bits_and_zero_most_significant_tail_v::nat
   assign_shifted_bits_and_zero_most_significant_tail_ret::nat
 
-abbreviation "assign_shifted_bits_and_zero_most_significant_tail_prefix \<equiv> 
+abbreviation "assign_shifted_bits_and_zero_most_significant_tail_prefix \<equiv>
   ''assign_shifted_bits_and_zero_most_significant_tail.''"
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_n_str \<equiv> ''n''"
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_v_str \<equiv> ''v''"
@@ -19058,7 +19058,7 @@ definition "assign_shifted_bits_and_zero_most_significant_tail_state_upd s =
       assign_shifted_bits_and_zero_most_significant_tail_aux_n' = assign_shifted_bits_and_zero_most_significant_tail_n s;
       assign_shifted_bits_and_zero_most_significant_tail_aux_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;
       assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;
-      assign_shifted_bits_and_zero_most_significant_tail_aux_state = 
+      assign_shifted_bits_and_zero_most_significant_tail_aux_state =
         \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n',
          assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v',
          assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>;
@@ -19098,9 +19098,9 @@ definition "assign_shifted_bits_and_zero_most_significant_tail_state_upd s =
 function assign_shifted_bits_and_zero_most_significant_tail_imp ::
   "assign_shifted_bits_and_zero_most_significant_tail_state \<Rightarrow> assign_shifted_bits_and_zero_most_significant_tail_state" where
   "assign_shifted_bits_and_zero_most_significant_tail_imp s =
-  (let 
+  (let
       ret = assign_shifted_bits_and_zero_most_significant_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -19129,7 +19129,7 @@ function assign_shifted_bits_and_zero_most_significant_tail_imp_time ::
       t = t + 2;
       assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;
       t = t + 2;
-      assign_shifted_bits_and_zero_most_significant_tail_aux_state = 
+      assign_shifted_bits_and_zero_most_significant_tail_aux_state =
         \<lparr>assign_shifted_bits_and_zero_most_significant_tail_aux_n = assign_shifted_bits_and_zero_most_significant_tail_aux_n',
          assign_shifted_bits_and_zero_most_significant_tail_aux_v = assign_shifted_bits_and_zero_most_significant_tail_aux_v',
          assign_shifted_bits_and_zero_most_significant_tail_aux_ret = assign_shifted_bits_and_zero_most_significant_tail_aux_ret'\<rparr>;
@@ -19194,29 +19194,29 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc:
   "(assign_shifted_bits_and_zero_most_significant_tail_imp_time (Suc t) s) = Suc (assign_shifted_bits_and_zero_most_significant_tail_imp_time t s)"
   by (induction t s rule: assign_shifted_bits_and_zero_most_significant_tail_imp_time.induct)
     ((subst (1 2) assign_shifted_bits_and_zero_most_significant_tail_imp_time.simps);
-      (simp add: assign_shifted_bits_and_zero_most_significant_tail_state_upd_def Let_def))            
+      (simp add: assign_shifted_bits_and_zero_most_significant_tail_state_upd_def Let_def))
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2_aux:
   "(assign_shifted_bits_and_zero_most_significant_tail_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assign_shifted_bits_and_zero_most_significant_tail_imp_time t s) = t + (assign_shifted_bits_and_zero_most_significant_tail_imp_time 0 s)"
-  by (rule assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2_aux)            
+  by (rule assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_2_aux)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc_3:
   "(assign_shifted_bits_and_zero_most_significant_tail_imp_time (a + b) s) = a + (assign_shifted_bits_and_zero_most_significant_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: assign_shifted_bits_and_zero_most_significant_tail_imp_time_acc)+
 
 abbreviation "assign_shifted_bits_and_zero_most_significant_tail_cons_result \<equiv> ''cons_result''"
 
 definition assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus where
   "assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus \<equiv>
   \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_n' = assign_shifted_bits_and_zero_most_significant_tail_n s;\<close>
-  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_n_str) ::= 
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_n_str) ::=
     (A (V assign_shifted_bits_and_zero_most_significant_tail_n_str));;
   \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_v' = assign_shifted_bits_and_zero_most_significant_tail_v s;\<close>
-  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_v_str) ::= 
+  (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_v_str) ::=
     (A (V assign_shifted_bits_and_zero_most_significant_tail_v_str));;
   \<comment> \<open>  assign_shifted_bits_and_zero_most_significant_tail_aux_ret' = 0;\<close>
   (assign_shifted_bits_and_zero_most_significant_tail_aux_prefix @ assign_shifted_bits_and_zero_most_significant_tail_aux_ret_str) ::= (A (N 0));;
@@ -19309,14 +19309,14 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_funct
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
   subgoal premises p using p(30) by fastforce
   by(force simp: assign_shifted_bits_and_zero_most_significant_tail_state_translators
-    assign_shifted_bits_and_zero_most_significant_tail_state_upd_def)   
+    assign_shifted_bits_and_zero_most_significant_tail_state_upd_def)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assign_shifted_bits_and_zero_most_significant_tail_pref) assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assign_shifted_bits_and_zero_most_significant_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast    
+  by blast
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -19334,7 +19334,7 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_time:
   subgoal premises p using p(49) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "assign_shifted_bits_and_zero_most_significant_tail_IMP_vars"])
   subgoal premises p using p(51) by fastforce
-  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_state_translators)   
+  by(force simp add: Let_def assign_shifted_bits_and_zero_most_significant_tail_state_translators)
 
 lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -19348,7 +19348,7 @@ lemma assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct:
   using assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_function
     assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_time
     assign_shifted_bits_and_zero_most_significant_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsection \<open>binary_right_shift\<close>
 
@@ -19376,7 +19376,7 @@ definition "binary_right_shift_tail_aux_state_upd s =
       assign_shifted_bits_and_zero_most_significant_tail_n' = binary_right_shift_tail_aux_n s;
       assign_shifted_bits_and_zero_most_significant_tail_v' = binary_right_shift_tail_aux_v s;
       assign_shifted_bits_and_zero_most_significant_tail_ret' = 0;
-      assign_shifted_bits_and_zero_most_significant_tail_state = 
+      assign_shifted_bits_and_zero_most_significant_tail_state =
         \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n',
          assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v',
          assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>;
@@ -19419,9 +19419,9 @@ definition "binary_right_shift_tail_aux_state_upd s =
 function binary_right_shift_tail_aux_imp ::
   "binary_right_shift_tail_aux_state \<Rightarrow> binary_right_shift_tail_aux_state" where
   "binary_right_shift_tail_aux_imp s =
-  (let 
+  (let
       ret = binary_right_shift_tail_aux_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -19437,7 +19437,7 @@ lemma binary_right_shift_tail_aux_imp_correct[let_function_correctness]:
   apply (simp only: binary_right_shift_tail_aux_imp.simps Let_def binary_right_shift_tail_aux_state_upd_def
     assign_shifted_bits_and_zero_most_significant_tail_imp_correct cons_imp_correct
     copy_atom_to_operand_tail_imp_correct a_encode_char_val binary_right_shift_tail_aux.simps)
-  by simp   
+  by simp
 
 function binary_right_shift_tail_aux_imp_time ::
   "nat \<Rightarrow> binary_right_shift_tail_aux_state \<Rightarrow> nat" where
@@ -19449,7 +19449,7 @@ function binary_right_shift_tail_aux_imp_time ::
       t = t + 2;
       assign_shifted_bits_and_zero_most_significant_tail_ret' = 0;
       t = t + 2;
-      assign_shifted_bits_and_zero_most_significant_tail_state = 
+      assign_shifted_bits_and_zero_most_significant_tail_state =
         \<lparr>assign_shifted_bits_and_zero_most_significant_tail_n = assign_shifted_bits_and_zero_most_significant_tail_n',
          assign_shifted_bits_and_zero_most_significant_tail_v = assign_shifted_bits_and_zero_most_significant_tail_v',
          assign_shifted_bits_and_zero_most_significant_tail_ret = assign_shifted_bits_and_zero_most_significant_tail_ret'\<rparr>;
@@ -19518,19 +19518,19 @@ lemma binary_right_shift_tail_aux_imp_time_acc:
   "(binary_right_shift_tail_aux_imp_time (Suc t) s) = Suc (binary_right_shift_tail_aux_imp_time t s)"
   by (induction t s rule: binary_right_shift_tail_aux_imp_time.induct)
     ((subst (1 2) binary_right_shift_tail_aux_imp_time.simps);
-      (simp add: binary_right_shift_tail_aux_state_upd_def Let_def))            
+      (simp add: binary_right_shift_tail_aux_state_upd_def Let_def))
 
 lemma binary_right_shift_tail_aux_imp_time_acc_2_aux:
   "(binary_right_shift_tail_aux_imp_time t s) = t + (binary_right_shift_tail_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+
 
 lemma binary_right_shift_tail_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_right_shift_tail_aux_imp_time t s) = t + (binary_right_shift_tail_aux_imp_time 0 s)"
-  by (rule binary_right_shift_tail_aux_imp_time_acc_2_aux)            
+  by (rule binary_right_shift_tail_aux_imp_time_acc_2_aux)
 
 lemma binary_right_shift_tail_aux_imp_time_acc_3:
   "(binary_right_shift_tail_aux_imp_time (a + b) s) = a + (binary_right_shift_tail_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_aux_imp_time_acc)+
 
 abbreviation "binary_right_shift_tail_aux_cons_result \<equiv> ''cons_result''"
 
@@ -19638,14 +19638,14 @@ lemma binary_right_shift_tail_aux_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
   subgoal premises p using p(31) by fastforce
   by(force simp: binary_right_shift_tail_aux_state_translators
-    binary_right_shift_tail_aux_state_upd_def) 
+    binary_right_shift_tail_aux_state_upd_def)
 
 lemma binary_right_shift_tail_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_right_shift_tail_aux_pref) binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_right_shift_tail_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma binary_right_shift_tail_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -19663,7 +19663,7 @@ lemma binary_right_shift_tail_aux_IMP_Minus_correct_time:
   subgoal premises p using p(51) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_aux_IMP_vars"])
   subgoal premises p using p(53) by fastforce
-  by(force simp add: Let_def binary_right_shift_tail_aux_state_translators)  
+  by(force simp add: Let_def binary_right_shift_tail_aux_state_translators)
 
 lemma binary_right_shift_tail_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_right_shift_tail_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -19677,12 +19677,12 @@ lemma binary_right_shift_tail_aux_IMP_Minus_correct:
   using binary_right_shift_tail_aux_IMP_Minus_correct_function
     binary_right_shift_tail_aux_IMP_Minus_correct_time
     binary_right_shift_tail_aux_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>binary_right_shift_tail\<close>
 
 fun binary_right_shift_tail' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "binary_right_shift_tail' n v a = 
+  "binary_right_shift_tail' n v a =
     2 ## (binary_right_shift_tail_aux n v a) ##
     (copy_atom_to_operand_tail n (encode_char(CHR ''a'')) (prod_encode(1,0))) ## 0"
 
@@ -19758,9 +19758,9 @@ definition "binary_right_shift_tail_state_upd s =
 function binary_right_shift_tail_imp ::
   "binary_right_shift_tail_state \<Rightarrow> binary_right_shift_tail_state" where
   "binary_right_shift_tail_imp s =
-  (let 
+  (let
       ret = binary_right_shift_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -19777,7 +19777,7 @@ lemma binary_right_shift_tail_imp_correct[let_function_correctness]:
     prod_encode_imp_correct copy_atom_to_operand_tail_imp_correct cons_imp_correct
     binary_right_shift_tail_aux_imp_correct a_encode_char_val binary_right_shift_tail'_correct
     binary_right_shift_tail'.simps)
-  by simp     
+  by simp
 
 function binary_right_shift_tail_imp_time ::
   "nat \<Rightarrow> binary_right_shift_tail_state \<Rightarrow> nat" where
@@ -19870,19 +19870,19 @@ lemma binary_right_shift_tail_imp_time_acc:
   "(binary_right_shift_tail_imp_time (Suc t) s) = Suc (binary_right_shift_tail_imp_time t s)"
   by (induction t s rule: binary_right_shift_tail_imp_time.induct)
     ((subst (1 2) binary_right_shift_tail_imp_time.simps);
-      (simp add: binary_right_shift_tail_state_upd_def Let_def))            
+      (simp add: binary_right_shift_tail_state_upd_def Let_def))
 
 lemma binary_right_shift_tail_imp_time_acc_2_aux:
   "(binary_right_shift_tail_imp_time t s) = t + (binary_right_shift_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: binary_right_shift_tail_imp_time_acc)+
 
 lemma binary_right_shift_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (binary_right_shift_tail_imp_time t s) = t + (binary_right_shift_tail_imp_time 0 s)"
-  by (rule binary_right_shift_tail_imp_time_acc_2_aux)            
+  by (rule binary_right_shift_tail_imp_time_acc_2_aux)
 
 lemma binary_right_shift_tail_imp_time_acc_3:
   "(binary_right_shift_tail_imp_time (a + b) s) = a + (binary_right_shift_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_imp_time_acc)+     
+  by (induction a arbitrary: b s) (simp add: binary_right_shift_tail_imp_time_acc)+
 
 abbreviation "binary_right_shift_tail_cons_result \<equiv> ''cons_result''"
 
@@ -20001,14 +20001,14 @@ lemma binary_right_shift_tail_IMP_Minus_correct_function:
   apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
   subgoal premises p using p(38) by fastforce
   by(force simp: binary_right_shift_tail_state_translators
-    binary_right_shift_tail_state_upd_def) 
+    binary_right_shift_tail_state_upd_def)
 
 lemma binary_right_shift_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ binary_right_shift_tail_pref) binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix binary_right_shift_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma binary_right_shift_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -20028,7 +20028,7 @@ lemma binary_right_shift_tail_IMP_Minus_correct_time:
   subgoal premises p using p(63) by fastforce
   apply(erule cons_IMP_Minus_correct[where vars = "binary_right_shift_tail_IMP_vars"])
   subgoal premises p using p(65) by fastforce
-  by(force simp add: Let_def binary_right_shift_tail_state_translators)        
+  by(force simp add: Let_def binary_right_shift_tail_state_translators)
 
 lemma binary_right_shift_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) binary_right_shift_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -20085,7 +20085,7 @@ lemmas assignment_to_binary_tail_state_translators =
 
 paragraph \<open>if_eq_zero\<close>
 
-definition "assignment_to_binary_tail_if_eq_zero_imp s = 
+definition "assignment_to_binary_tail_if_eq_zero_imp s =
   (let
       nth_nat_n' = 1;
       nth_nat_x' = assignment_to_binary_tail_aexp s;
@@ -20241,7 +20241,7 @@ lemma assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_function:
   subgoal premises p using p(18) by fastforce
   apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(20) by fastforce
-  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def)  
+  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def)
 
 lemma assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_time:
   "(invoke_subprogram p assignment_to_binary_tail_if_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -20255,11 +20255,11 @@ lemma assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_time:
   subgoal premises p using p(33) by fastforce
   apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(35) by fastforce
-  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def) 
+  by(fastforce_sorted_premises2 simp: assignment_to_binary_tail_state_translators Let_def)
 
 paragraph \<open>if_eq_one\<close>
 
-definition "assignment_to_binary_tail_if_eq_one_imp s = 
+definition "assignment_to_binary_tail_if_eq_one_imp s =
   (let
       nth_nat_n' = 1;
       nth_nat_x' = assignment_to_binary_tail_aexp s;
@@ -20297,7 +20297,7 @@ lemma assignment_to_binary_tail_if_eq_one_imp_correct[let_function_correctness]:
     binary_adder_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
       (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))"
   unfolding assignment_to_binary_tail_if_eq_one_imp_def
-  apply (simp only: Let_def nth_nat_imp_correct binary_adder_tail_imp_correct numeral_2_eq_2) 
+  apply (simp only: Let_def nth_nat_imp_correct binary_adder_tail_imp_correct numeral_2_eq_2)
   by simp
 
 definition "assignment_to_binary_tail_if_eq_one_imp_time t s =
@@ -20409,7 +20409,7 @@ lemma assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_function:
   subgoal premises p using p(18) by fastforce
   apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(20) by fastforce
-  by(fastforce simp: assignment_to_binary_tail_state_translators)         
+  by(fastforce simp: assignment_to_binary_tail_state_translators)
 
 lemma assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_time:
   "(invoke_subprogram p assignment_to_binary_tail_if_eq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -20423,11 +20423,11 @@ lemma assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_time:
   subgoal premises p using p(33) by fastforce
   apply(erule binary_adder_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(35) by fastforce
-  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)       
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)
 
 paragraph \<open>if_eq_two\<close>
 
-definition "assignment_to_binary_tail_if_eq_two_imp s = 
+definition "assignment_to_binary_tail_if_eq_two_imp s =
   (let
       nth_nat_n' = 1;
       nth_nat_x' = assignment_to_binary_tail_aexp s;
@@ -20465,7 +20465,7 @@ lemma assignment_to_binary_tail_if_eq_two_imp_correct[let_function_correctness]:
     binary_subtractor_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
       (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))"
   unfolding assignment_to_binary_tail_if_eq_two_imp_def
-  apply (simp only: Let_def nth_nat_imp_correct binary_subtractor_tail_imp_correct numeral_2_eq_2) 
+  apply (simp only: Let_def nth_nat_imp_correct binary_subtractor_tail_imp_correct numeral_2_eq_2)
   by simp
 
 definition "assignment_to_binary_tail_if_eq_two_imp_time t s =
@@ -20591,11 +20591,11 @@ lemma assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_time:
   subgoal premises p using p(33) by fastforce
   apply(erule binary_subtractor_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(35) by fastforce
-  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)  
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)
 
 paragraph \<open>if_eq_three\<close>
 
-definition "assignment_to_binary_tail_if_eq_three_imp s = 
+definition "assignment_to_binary_tail_if_eq_three_imp s =
   (let
       nth_nat_n' = 1;
       nth_nat_x' = assignment_to_binary_tail_aexp s;
@@ -20719,11 +20719,11 @@ lemma assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_time:
   subgoal premises p using p(19) by fastforce
   apply(erule binary_parity_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(21) by fastforce
-  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators) 
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)
 
 paragraph \<open>else\<close>
 
-definition "assignment_to_binary_tail_else_imp s = 
+definition "assignment_to_binary_tail_else_imp s =
   (let
       nth_nat_n' = 1;
       nth_nat_x' = assignment_to_binary_tail_aexp s;
@@ -20754,7 +20754,7 @@ lemma assignment_to_binary_tail_else_imp_correct[let_function_correctness]:
      (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s))"
   unfolding assignment_to_binary_tail_else_imp_def
   apply (simp only: Let_def nth_nat_imp_correct binary_right_shift_tail_imp_correct)
-  by simp    
+  by simp
 
 definition "assignment_to_binary_tail_else_imp_time t s =
   (let
@@ -20835,7 +20835,7 @@ lemma assignment_to_binary_tail_else_IMP_Minus_correct_function:
   subgoal premises p using p(10) by fastforce
   apply(erule binary_right_shift_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(12) by fastforce
-  by(fastforce simp: assignment_to_binary_tail_state_translators) 
+  by(fastforce simp: assignment_to_binary_tail_state_translators)
 
 lemma assignment_to_binary_tail_else_IMP_Minus_correct_time:
   "(invoke_subprogram p assignment_to_binary_tail_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -20847,11 +20847,11 @@ lemma assignment_to_binary_tail_else_IMP_Minus_correct_time:
   subgoal premises p using p(19) by fastforce
   apply(erule binary_right_shift_tail_IMP_Minus_correct[where vars = "assignment_to_binary_tail_IMP_vars"])
   subgoal premises p using p(21) by fastforce
-  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)     
+  by(fastforce simp add: Let_def assignment_to_binary_tail_state_translators)
 
 paragraph \<open>assignment_to_binary_tail_aux\<close>
 
-definition "assignment_to_binary_tail_aux_imp s = 
+definition "assignment_to_binary_tail_aux_imp s =
   (let
       hd_xs' = assignment_to_binary_tail_aexp s;
       hd_ret' = 0;
@@ -20891,8 +20891,8 @@ definition "assignment_to_binary_tail_aux_imp s =
 
 lemma assignment_to_binary_tail_aux_imp_correct[let_function_correctness]:
   "assignment_to_binary_tail_ret (assignment_to_binary_tail_aux_imp s) =
-    (if hd_nat (assignment_to_binary_tail_aexp s) = 2 
-      then binary_subtractor_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s) 
+    (if hd_nat (assignment_to_binary_tail_aexp s) = 2
+      then binary_subtractor_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
         (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)) (nth_nat (Suc (Suc 0)) (assignment_to_binary_tail_aexp s))
     else if hd_nat (assignment_to_binary_tail_aexp s) = 3
       then binary_parity_tail (assignment_to_binary_tail_n s) (assignment_to_binary_tail_v s)
@@ -20901,7 +20901,7 @@ lemma assignment_to_binary_tail_aux_imp_correct[let_function_correctness]:
         (nth_nat (Suc 0) (assignment_to_binary_tail_aexp s)))"
   unfolding assignment_to_binary_tail_aux_imp_def
   by (simp add: Let_def hd_imp_correct EQUAL_neq_zero_imp_correct assignment_to_binary_tail_if_eq_two_imp_correct
-    assignment_to_binary_tail_if_eq_three_imp_correct assignment_to_binary_tail_else_imp_correct)  
+    assignment_to_binary_tail_if_eq_three_imp_correct assignment_to_binary_tail_else_imp_correct)
 
 definition "assignment_to_binary_tail_aux_imp_time t s =
   (let
@@ -21049,7 +21049,7 @@ lemma assignment_to_binary_tail_aux_IMP_Minus_correct_function:
   apply(erule If_E)
   subgoal
     by(fastforce dest!: assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
   subgoal
     apply(erule Seq_E)+
@@ -21060,11 +21060,11 @@ lemma assignment_to_binary_tail_aux_IMP_Minus_correct_function:
     apply(erule If_E)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_else_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -21082,7 +21082,7 @@ lemma assignment_to_binary_tail_aux_IMP_Minus_correct_time:
   apply(erule If_tE)
   subgoal
     by(fastforce dest!: assignment_to_binary_tail_if_eq_two_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
   subgoal
     apply(erule Seq_tE)+
@@ -21093,11 +21093,11 @@ lemma assignment_to_binary_tail_aux_IMP_Minus_correct_time:
     apply(erule If_tE)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_if_eq_three_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_else_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -21145,9 +21145,9 @@ definition "assignment_to_binary_tail_state_upd s =
 function assignment_to_binary_tail_imp ::
   "assignment_to_binary_tail_state \<Rightarrow> assignment_to_binary_tail_state" where
   "assignment_to_binary_tail_imp s =
-  (let 
+  (let
       ret = assignment_to_binary_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -21163,7 +21163,7 @@ lemma assignment_to_binary_tail_imp_correct[let_function_correctness]:
   unfolding assignment_to_binary_tail_def
   by (simp add: assignment_to_binary_tail_imp.simps Let_def assignment_to_binary_tail_state_upd_def
     hd_imp_correct EQUAL_neq_zero_imp_correct assignment_to_binary_tail_if_eq_zero_imp_correct
-    assignment_to_binary_tail_if_eq_one_imp_correct assignment_to_binary_tail_aux_imp_correct) 
+    assignment_to_binary_tail_if_eq_one_imp_correct assignment_to_binary_tail_aux_imp_correct)
 
 function assignment_to_binary_tail_imp_time ::
   "nat \<Rightarrow> assignment_to_binary_tail_state \<Rightarrow> nat" where
@@ -21246,19 +21246,19 @@ lemma assignment_to_binary_tail_imp_time_acc:
   "(assignment_to_binary_tail_imp_time (Suc t) s) = Suc (assignment_to_binary_tail_imp_time t s)"
   by (induction t s rule: assignment_to_binary_tail_imp_time.induct)
     ((subst (1 2) assignment_to_binary_tail_imp_time.simps);
-      (simp add: assignment_to_binary_tail_state_upd_def Let_def))            
+      (simp add: assignment_to_binary_tail_state_upd_def Let_def))
 
 lemma assignment_to_binary_tail_imp_time_acc_2_aux:
   "(assignment_to_binary_tail_imp_time t s) = t + (assignment_to_binary_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: assignment_to_binary_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: assignment_to_binary_tail_imp_time_acc)+
 
 lemma assignment_to_binary_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (assignment_to_binary_tail_imp_time t s) = t + (assignment_to_binary_tail_imp_time 0 s)"
-  by (rule assignment_to_binary_tail_imp_time_acc_2_aux)            
+  by (rule assignment_to_binary_tail_imp_time_acc_2_aux)
 
 lemma assignment_to_binary_tail_imp_time_acc_3:
   "(assignment_to_binary_tail_imp_time (a + b) s) = a + (assignment_to_binary_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: assignment_to_binary_tail_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: assignment_to_binary_tail_imp_time_acc)+
 
 abbreviation "assignment_to_binary_tail_IMP_else \<equiv>
   \<comment> \<open>  hd_xs' = assignment_to_binary_tail_aexp s;\<close>
@@ -21336,7 +21336,7 @@ lemma assignment_to_binary_tail_IMP_Minus_correct_function:
   apply(erule If_E)
   subgoal
     by(fastforce dest!: assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
   subgoal
     apply(erule Seq_E)+
@@ -21347,21 +21347,21 @@ lemma assignment_to_binary_tail_IMP_Minus_correct_function:
     apply(erule If_E)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_aux_IMP_Minus_correct_function
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
     done
-  done  
+  done
 
 lemma assignment_to_binary_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ assignment_to_binary_tail_pref) assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix assignment_to_binary_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast   
+  by blast
 
 lemma assignment_to_binary_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -21376,7 +21376,7 @@ lemma assignment_to_binary_tail_IMP_Minus_correct_time:
   apply(erule If_tE)
   subgoal
     by(fastforce dest!: assignment_to_binary_tail_if_eq_zero_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
   subgoal
     apply(erule Seq_tE)+
@@ -21387,14 +21387,14 @@ lemma assignment_to_binary_tail_IMP_Minus_correct_time:
     apply(erule If_tE)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_if_eq_one_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
     subgoal
       by(fastforce dest!: assignment_to_binary_tail_aux_IMP_Minus_correct_time
-      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def 
+      simp: assignment_to_binary_tail_imp_to_HOL_state_def hd_imp_to_HOL_state_def
         EQUAL_neq_zero_imp_to_HOL_state_def Let_def assignment_to_binary_tail_state_upd_def)
     done
-  done 
+  done
 
 lemma assignment_to_binary_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) assignment_to_binary_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -21408,6 +21408,6 @@ lemma assignment_to_binary_tail_IMP_Minus_correct:
   using assignment_to_binary_tail_IMP_Minus_correct_function
     assignment_to_binary_tail_IMP_Minus_correct_time
     assignment_to_binary_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
-end 
+end

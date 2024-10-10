@@ -15,7 +15,7 @@ begin
 (*
   Disable syntax for IMP_Minus_Minus programs. This prevents parsing becoming exponential.
 *)
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 
 subsection \<open>Multiplication\<close>
 
@@ -286,7 +286,7 @@ lemma square_IMP_Minus_correct_time:
   apply(simp only: square_IMP_Minus_def prefix_simps)
   apply(vcg_time "{square_square_str}")
   by(fastforce simp add: mul_imp_to_HOL_state_def square_imp_to_HOL_state_def)
-  
+
 declare prefix_defs[simp del]
 
 lemma square_IMP_Minus_correct_effects:
@@ -509,7 +509,7 @@ lemma dsqrt'_IMP_Minus_correct_function_1:
   subgoal
     apply (simp only: dsqrt'_IMP_Minus_while_condition_def prefix_simps)
     by (auto simp add: dsqrt'_imp_to_HOL_state_def)
-    
+
 
   subgoal
     apply(subst (asm) (1) dsqrt'_IMP_Minus_while_condition_def)
@@ -2327,9 +2327,9 @@ definition "LESS_neq_zero_state_upd s \<equiv>
 
 fun LESS_neq_zero_imp :: "LESS_neq_zero_state \<Rightarrow> LESS_neq_zero_state" where
   "LESS_neq_zero_imp s =
-  (let 
+  (let
       ret = LESS_neq_zero_state_upd s
-    in 
+    in
       ret
   )"
 
@@ -2400,7 +2400,7 @@ lemma LESS_neq_zero_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix LESS_neq_zero_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma LESS_neq_zero_IMP_Minus_correct_time:
   "(invoke_subprogram p LESS_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2448,9 +2448,9 @@ definition "LESS_EQUAL_neq_zero_state_upd s \<equiv>
 fun LESS_EQUAL_neq_zero_imp ::
   "LESS_EQUAL_neq_zero_state \<Rightarrow> LESS_EQUAL_neq_zero_state" where
   "LESS_EQUAL_neq_zero_imp s =
-  (let 
+  (let
       ret = LESS_EQUAL_neq_zero_state_upd s
-    in 
+    in
       ret
   )"
 
@@ -2526,7 +2526,7 @@ lemma LESS_EQUAL_neq_zero_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix LESS_EQUAL_neq_zero_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma LESS_EQUAL_neq_zero_IMP_Minus_correct_time:
   "(invoke_subprogram p LESS_EQUAL_neq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2551,8 +2551,8 @@ subsection \<open>Options\<close>
 
 subsubsection \<open>some_nat\<close>
 
-text \<open>The function some_nat is just defined as "some_nat = Suc", however for the purpose 
-of the refinement we treat it as if it were defined as "some_nat n = n + 1" (the two 
+text \<open>The function some_nat is just defined as "some_nat = Suc", however for the purpose
+of the refinement we treat it as if it were defined as "some_nat n = n + 1" (the two
 definitions are equivalent).\<close>
 
 record some_nat_state =
@@ -2593,7 +2593,7 @@ lemma some_nat_imp_correct[let_function_correctness]:
       some_nat_state_upd_def)
 
 function some_nat_imp_time :: "nat \<Rightarrow> some_nat_state \<Rightarrow> nat" where
-  "some_nat_imp_time t s = 
+  "some_nat_imp_time t s =
   (let
       some_nat_n' = some_nat_n s;
       t = t + 2;
@@ -2614,19 +2614,19 @@ lemma some_nat_imp_time_acc:
   "(some_nat_imp_time (Suc t) s) = Suc (some_nat_imp_time t s)"
   by (induction t s rule: some_nat_imp_time.induct)
     ((subst (1 2) some_nat_imp_time.simps);
-      (simp add: some_nat_state_upd_def))            
+      (simp add: some_nat_state_upd_def))
 
 lemma some_nat_imp_time_acc_2_aux:
   "(some_nat_imp_time t s) = t + (some_nat_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: some_nat_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: some_nat_imp_time_acc)+
 
 lemma some_nat_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (some_nat_imp_time t s) = t + (some_nat_imp_time 0 s)"
-  by (rule some_nat_imp_time_acc_2_aux)            
+  by (rule some_nat_imp_time_acc_2_aux)
 
 lemma some_nat_imp_time_acc_3:
   "(some_nat_imp_time (a + b) s) = a + (some_nat_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: some_nat_imp_time_acc)+      
+  by (induction a arbitrary: b s) (simp add: some_nat_imp_time_acc)+
 
 definition some_nat_IMP_Minus where
   "some_nat_IMP_Minus \<equiv>
@@ -2663,14 +2663,14 @@ lemma some_nat_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix some_nat_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma some_nat_IMP_Minus_correct_time:
   "(invoke_subprogram p some_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = some_nat_imp_time 0 (some_nat_imp_to_HOL_state p s)"
   apply(simp only: some_nat_IMP_Minus_def prefix_simps)
   apply(erule Seq_tE)+
-  by (fastforce simp: some_nat_state_translators Let_def 
+  by (fastforce simp: some_nat_state_translators Let_def
       some_nat_imp_time.simps some_nat_state_upd_def)
 
 lemma some_nat_IMP_Minus_correct:
@@ -2937,12 +2937,12 @@ lemma tl_IMP_Minus_correct[functional_correctness]:
   by auto
 
 subsubsection \<open>map_list_find\<close>
-paragraph map_list_find_aux 
+paragraph map_list_find_aux
 
 fun map_list_find_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
 "map_list_find_aux xs a = (
-  if xs \<noteq> 0 \<and> fst_nat (hd_nat xs) \<noteq> a 
-  then map_list_find_nat (tl_nat xs) a 
+  if xs \<noteq> 0 \<and> fst_nat (hd_nat xs) \<noteq> a
+  then map_list_find_nat (tl_nat xs) a
   else (
     if xs \<noteq> 0 then some_nat (snd_nat (hd_nat xs))
     else 0
@@ -2953,7 +2953,7 @@ lemma map_list_find_aux_eq_map_list_find_nat:
  "map_list_find_aux xs a = map_list_find_nat xs a"
  by (induction xs) auto
 
-record map_list_find_aux_state = 
+record map_list_find_aux_state =
   map_list_find_aux_xs::nat
   map_list_find_aux_a::nat
   map_list_find_aux_ret::nat
@@ -3010,11 +3010,11 @@ definition "map_list_find_aux_imp_compute_loop_condition s \<equiv>
 
 definition "map_list_find_aux_imp_after_loop s \<equiv>
   (
-    let 
+    let
       map_list_find_aux_xs' = map_list_find_aux_xs s
     in
-    (if map_list_find_aux_xs' \<noteq> 0 then  
-      let 
+    (if map_list_find_aux_xs' \<noteq> 0 then
+      let
        hd_xs' = map_list_find_aux_xs s;
        hd_ret' = 0;
        hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
@@ -3029,23 +3029,23 @@ definition "map_list_find_aux_imp_after_loop s \<equiv>
        some_nat_state = \<lparr>some_nat_n = some_nat_n', some_nat_ret = some_nat_ret'\<rparr>;
        some_nat_ret_state = some_nat_imp some_nat_state;
        map_list_find_aux_ret' = some_nat_ret some_nat_ret_state;
-       
+
        ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
              map_list_find_aux_a = map_list_find_aux_a s,
              map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
-      in 
+      in
         ret
     else (
-      let 
+      let
         map_list_find_aux_ret' = 0;
         ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
                map_list_find_aux_a = map_list_find_aux_a s,
                map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
-      in 
+      in
         ret
     )))"
 
-lemmas map_list_find_aux_imp_subprogram_simps = 
+lemmas map_list_find_aux_imp_subprogram_simps =
   map_list_find_aux_state_upd_def
   map_list_find_aux_imp_compute_loop_condition_def
   map_list_find_aux_imp_after_loop_def
@@ -3064,7 +3064,7 @@ function map_list_find_aux_imp::
   by simp+
 termination
   apply (relation "measure map_list_find_aux_xs")
-  apply (simp add: map_list_find_aux_imp_subprogram_simps 
+  apply (simp add: map_list_find_aux_imp_subprogram_simps
      AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct
     hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct split: if_splits)+
   done
@@ -3083,7 +3083,7 @@ lemma map_list_find_aux_imp_correct[let_function_correctness]:
     hd_imp_correct tl_imp_correct fst'_imp_correct snd'_imp_correct some_nat_imp_correct
     fst_nat_fst'_nat snd_nat_snd'_nat)
   apply simp
-  done          
+  done
 
 definition "map_list_find_aux_state_upd_time t s \<equiv>
   (let
@@ -3149,12 +3149,12 @@ definition "map_list_find_aux_imp_compute_loop_condition_time t s \<equiv>
 
 definition "map_list_find_aux_imp_after_loop_time t s \<equiv>
   (
-    let 
+    let
       map_list_find_aux_xs' = map_list_find_aux_xs s;
       t = t + 2
     in
-    (if map_list_find_aux_xs' \<noteq> 0 then  
-      let 
+    (if map_list_find_aux_xs' \<noteq> 0 then
+      let
        t = t + 1;
        hd_xs' = map_list_find_aux_xs s;
        t = t + 2;
@@ -3179,26 +3179,26 @@ definition "map_list_find_aux_imp_after_loop_time t s \<equiv>
        t = t + some_nat_imp_time 0 some_nat_state;
        map_list_find_aux_ret' = some_nat_ret some_nat_ret_state;
        t = t + 2;
-       
+
        ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
              map_list_find_aux_a = map_list_find_aux_a s,
              map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
       in
         t
      else (
-      let 
+      let
         t = t + 1;
         map_list_find_aux_ret' = 0;
         t = t + 2;
         ret = \<lparr>map_list_find_aux_xs = map_list_find_aux_xs s,
                map_list_find_aux_a = map_list_find_aux_a s,
                map_list_find_aux_ret = map_list_find_aux_ret'\<rparr>
-      in 
+      in
         t
      )))
 "
 
-lemmas map_list_find_aux_imp_subprogram_time_simps = 
+lemmas map_list_find_aux_imp_subprogram_time_simps =
   map_list_find_aux_state_upd_time_def
   map_list_find_aux_imp_compute_loop_condition_time_def
   map_list_find_aux_imp_after_loop_time_def
@@ -3230,25 +3230,25 @@ termination
     fst_nat_fst'_nat snd_nat_snd'_nat split: if_splits)+
   done
 
-declare map_list_find_aux_imp_time.simps [simp del]            
+declare map_list_find_aux_imp_time.simps [simp del]
 
 lemma map_list_find_aux_imp_time_acc:
   "(map_list_find_aux_imp_time (Suc t) s) = Suc (map_list_find_aux_imp_time t s)"
   by (induction t s rule: map_list_find_aux_imp_time.induct)
     ((subst (1 2) map_list_find_aux_imp_time.simps);
-      (simp add: map_list_find_aux_state_upd_def))            
+      (simp add: map_list_find_aux_state_upd_def))
 
 lemma map_list_find_aux_imp_time_acc_2_aux:
   "(map_list_find_aux_imp_time t s) = t + (map_list_find_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_list_find_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_list_find_aux_imp_time_acc)+
 
 lemma map_list_find_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_list_find_aux_imp_time t s) = t + (map_list_find_aux_imp_time 0 s)"
-  by (rule map_list_find_aux_imp_time_acc_2_aux)            
+  by (rule map_list_find_aux_imp_time_acc_2_aux)
 
 lemma map_list_find_aux_imp_time_acc_3:
   "(map_list_find_aux_imp_time (a + b) s) = a + (map_list_find_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_list_find_aux_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: map_list_find_aux_imp_time_acc)+
 
 abbreviation "map_list_find_aux_while_cond \<equiv> ''condition''"
 
@@ -3323,8 +3323,8 @@ definition "map_list_find_aux_IMP_after_loop \<equiv>
 
   \<comment> \<open>in\<close>
   \<comment> \<open>(if map_list_find_aux_xs' \<noteq> 0 then  \<close>
-  (IF  map_list_find_aux_xs_temp_str \<noteq>0 
-    THEN (    
+  (IF  map_list_find_aux_xs_temp_str \<noteq>0
+    THEN (
   \<comment> \<open>  let \<close>
   \<comment> \<open>   hd_xs' = map_list_find_aux_xs s;\<close>
   (hd_prefix @ hd_xs_str) ::= A (V map_list_find_aux_xs_str);;
@@ -3391,14 +3391,14 @@ lemmas map_list_find_aux_state_translators =
   map_list_find_aux_imp_to_HOL_state_def
   hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
   fst'_imp_to_HOL_state_def snd'_imp_to_HOL_state_def
-  some_nat_imp_to_HOL_state_def 
+  some_nat_imp_to_HOL_state_def
   NOTEQUAL_neq_zero_imp_to_HOL_state_def
   AND_neq_zero_imp_to_HOL_state_def
 
 lemmas map_list_find_aux_complete_simps =
   map_list_find_aux_IMP_subprogram_simps
   map_list_find_aux_imp_subprogram_simps
-  map_list_find_aux_state_translators      
+  map_list_find_aux_state_translators
 
 lemma map_list_find_aux_IMP_Minus_correct_function:
   "(invoke_subprogram p map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3423,8 +3423,8 @@ lemma map_list_find_aux_IMP_Minus_correct_function:
     subgoal premises p using p(24) by fastforce
     apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
     subgoal premises p using p(26) by fastforce
-    apply (erule If_E) 
-      subgoal 
+    apply (erule If_E)
+      subgoal
         apply (erule Seq_E)+
         apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
         subgoal premises p using p(37) by fastforce
@@ -3436,7 +3436,7 @@ lemma map_list_find_aux_IMP_Minus_correct_function:
           map_list_find_aux_imp_subprogram_simps
           map_list_find_aux_state_translators)
       done
-      subgoal 
+      subgoal
         apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
           map_list_find_aux_imp_subprogram_simps
           map_list_find_aux_state_translators)
@@ -3457,7 +3457,7 @@ lemma map_list_find_aux_IMP_Minus_correct_function:
       subgoal premises p using p(36) by fastforce
       apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
       subgoal premises p using p(38) by fastforce
-      apply (simp only: map_list_find_aux_complete_simps Let_def) 
+      apply (simp only: map_list_find_aux_complete_simps Let_def)
       apply fastforce
       done
 
@@ -3497,14 +3497,14 @@ lemma map_list_find_aux_IMP_Minus_correct_function:
           map_list_find_aux_state_translators Let_def split: if_split)
       apply fastforce
       done
-  done        
+  done
 
 lemma map_list_find_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_list_find_aux_pref) map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_list_find_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas map_list_find_aux_complete_time_simps =
   map_list_find_aux_imp_subprogram_time_simps
@@ -3535,8 +3535,8 @@ lemma map_list_find_aux_IMP_Minus_correct_time:
     subgoal premises p using p(40) by fastforce
     apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
     subgoal premises p using p(42) by fastforce
-    apply (erule If_tE) 
-      subgoal 
+    apply (erule If_tE)
+      subgoal
         apply (erule Seq_tE)+
         apply(erule hd_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
         subgoal premises p using p(62) by fastforce
@@ -3548,7 +3548,7 @@ lemma map_list_find_aux_IMP_Minus_correct_time:
           map_list_find_aux_imp_subprogram_time_simps
           map_list_find_aux_state_translators Let_def)
       done
-      subgoal 
+      subgoal
         apply (fastforce simp: map_list_find_aux_IMP_subprogram_simps
           map_list_find_aux_imp_subprogram_time_simps
           map_list_find_aux_state_translators Let_def)
@@ -3570,7 +3570,7 @@ lemma map_list_find_aux_IMP_Minus_correct_time:
     subgoal premises p using p(65) by fastforce
     apply(erule AND_neq_zero_IMP_Minus_correct[where vars = "map_list_find_aux_IMP_vars"])
     subgoal premises p using p(67) by fastforce
-    apply (simp only: map_list_find_aux_complete_simps Let_def) 
+    apply (simp only: map_list_find_aux_complete_simps Let_def)
     apply fastforce
     done
 
@@ -3610,7 +3610,7 @@ lemma map_list_find_aux_IMP_Minus_correct_time:
     apply (simp only: map_list_find_aux_complete_time_simps Let_def)
     apply fastforce
     done
-  done  
+  done
 
 lemma map_list_find_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_list_find_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3623,7 +3623,7 @@ lemma map_list_find_aux_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using map_list_find_aux_IMP_Minus_correct_function
   by (auto simp: map_list_find_aux_IMP_Minus_correct_time)
-    (meson map_list_find_aux_IMP_Minus_correct_effects set_mono_prefix)    
+    (meson map_list_find_aux_IMP_Minus_correct_effects set_mono_prefix)
 
 subsubsection \<open>length\<close>
 (* changes its argument which makes very messy correctness lemmas *)
@@ -5044,7 +5044,7 @@ definition "list_from_acc_state_upd s \<equiv>
              list_from_acc_ret = list_from_acc_ret' \<rparr>
     in
       ret
-      
+
 )"
 
 definition "list_from_acc_imp_compute_loop_condition s \<equiv>
@@ -5074,7 +5074,7 @@ function list_from_acc_imp:: "list_from_acc_state \<Rightarrow> list_from_acc_st
       (let next_iteration = list_from_acc_imp (list_from_acc_state_upd s)
       in
         next_iteration)
-    else 
+    else
       (let ret = list_from_acc_imp_after_loop s in ret)
     )"
   by simp+
@@ -5117,7 +5117,7 @@ definition "list_from_acc_state_upd_time t s \<equiv> (
     t
 )"
 
-    
+
 definition "list_from_acc_imp_compute_loop_condition_time t s \<equiv>
   (let
     condition = list_from_acc_n s;
@@ -5137,7 +5137,7 @@ definition "list_from_acc_imp_after_loop_time t s \<equiv>
     t
 "
 
-lemmas list_from_acc_imp_subprogram_time_simps = 
+lemmas list_from_acc_imp_subprogram_time_simps =
   list_from_acc_state_upd_time_def
   list_from_acc_imp_compute_loop_condition_time_def
   list_from_acc_imp_after_loop_time_def
@@ -5166,25 +5166,25 @@ termination
   apply (relation "measure (\<lambda>(t, s). list_from_acc_n s)")
   by (simp add: list_from_acc_imp_subprogram_time_simps)+
 
-declare list_from_acc_imp_time.simps [simp del]            
+declare list_from_acc_imp_time.simps [simp del]
 
 lemma list_from_acc_imp_time_acc:
   "(list_from_acc_imp_time (Suc t) s) = Suc (list_from_acc_imp_time t s)"
   by (induction t s rule: list_from_acc_imp_time.induct)
     ((subst (1 2) list_from_acc_imp_time.simps);
-      (simp add: list_from_acc_state_upd_def))            
+      (simp add: list_from_acc_state_upd_def))
 
 lemma list_from_acc_imp_time_acc_2_aux:
   "(list_from_acc_imp_time t s) = t + (list_from_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: list_from_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: list_from_acc_imp_time_acc)+
 
 lemma list_from_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (list_from_acc_imp_time t s) = t + (list_from_acc_imp_time 0 s)"
-  by (rule list_from_acc_imp_time_acc_2_aux)            
+  by (rule list_from_acc_imp_time_acc_2_aux)
 
 lemma list_from_acc_imp_time_acc_3:
   "(list_from_acc_imp_time (a + b) s) = a + (list_from_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: list_from_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: list_from_acc_imp_time_acc)+
 
 abbreviation "list_from_acc_while_cond \<equiv> ''condition''"
 
@@ -5300,12 +5300,12 @@ lemma list_from_acc_IMP_Minus_correct_function:
       apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
       subgoal premises p using p(13) by fastforce
       apply (simp only:  list_from_acc_state.simps
-          list_from_acc_state_translators Let_def cons_imp_to_HOL_state_def 
+          list_from_acc_state_translators Let_def cons_imp_to_HOL_state_def
            cons_state.simps cons_imp_correct list_from_acc_imp_subprogram_simps)
       apply (clarsimp)
       subgoal premises p using p(4)
         by (smt (z3) fun_upd_other list.discI remove_nth.simps(2) same_append_eq)
-      done        
+      done
 done
 
 lemma list_from_acc_IMP_Minus_correct_effects:
@@ -5313,7 +5313,7 @@ lemma list_from_acc_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix list_from_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas list_from_acc_complete_time_simps =
   list_from_acc_imp_subprogram_time_simps
@@ -5361,23 +5361,23 @@ lemma list_from_acc_IMP_Minus_correct_time:
       by (smt (z3) fun_upd_other list.simps(3) p(10) remove_nth.simps(2) same_append_eq)
     done
 
-  
+
   subgoal
     apply(simp only: prefix_simps list_from_acc_IMP_init_while_cond_def
         list_from_acc_IMP_loop_body_def)
     apply(erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "list_from_acc_IMP_vars"])
     subgoal premises p using p(23) by fastforce
-    apply(simp only: list_from_acc_complete_time_simps Let_def 
+    apply(simp only: list_from_acc_complete_time_simps Let_def
            cons_imp_correct list_from_acc_state.simps
-          cons_state.simps prefix_simps cons_imp_to_HOL_state_def 
+          cons_state.simps prefix_simps cons_imp_to_HOL_state_def
           cons_IMP_Minus_correct_time)
     apply(clarsimp)
     subgoal premises p using p(9)[of list_from_acc_n_str] p(9)[of list_from_acc_s_str]
       by fastforce
     done
 
-  done        
+  done
 
 lemma list_from_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) list_from_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5444,7 +5444,7 @@ termination
 declare list_from_tail_imp.simps [simp del]
 
 lemma list_from_tail_imp_correct[let_function_correctness]:
-  "list_from_tail_ret (list_from_tail_imp s) = 
+  "list_from_tail_ret (list_from_tail_imp s) =
     list_from_tail (list_from_tail_s s) (list_from_tail_n s)"
   by (simp add: list_from_tail_imp.simps reverse_nat_imp_correct
       list_from_acc_imp_correct list_from_tail_def Let_def
@@ -5497,22 +5497,22 @@ lemma list_from_tail_imp_time_acc:
   "(list_from_tail_imp_time (Suc t) s) = Suc (list_from_tail_imp_time t s)"
   by (induction t s rule: list_from_tail_imp_time.induct)
     ((subst (1 2) list_from_tail_imp_time.simps);
-      (simp add: list_from_tail_state_upd_def Let_def))      
+      (simp add: list_from_tail_state_upd_def Let_def))
 
 lemma list_from_tail_imp_time_acc_2_aux:
   "(list_from_tail_imp_time t s) = t + (list_from_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: list_from_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: list_from_tail_imp_time_acc)+
 
 lemma list_from_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (list_from_tail_imp_time t s) = t + (list_from_tail_imp_time 0 s)"
-  by (rule list_from_tail_imp_time_acc_2_aux)            
+  by (rule list_from_tail_imp_time_acc_2_aux)
 
 lemma list_from_tail_imp_time_acc_3:
   "(list_from_tail_imp_time (a + b) s) = a + (list_from_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: list_from_tail_imp_time_acc)+   
+  by (induction a arbitrary: b s) (simp add: list_from_tail_imp_time_acc)+
 
 definition list_from_tail_IMP_Minus where
-  "list_from_tail_IMP_Minus \<equiv> 
+  "list_from_tail_IMP_Minus \<equiv>
   \<comment> \<open>  list_from_acc_acc' = 0;\<close>
   (list_from_acc_prefix @ list_from_acc_acc_str) ::= (A (N 0));;
   \<comment> \<open>  list_from_acc_s' = list_from_tail_s s;\<close>
@@ -5558,7 +5558,7 @@ definition "list_from_tail_imp_to_HOL_state p s =
 lemmas list_from_tail_state_translators =
   list_from_tail_imp_to_HOL_state_def
   list_from_acc_imp_to_HOL_state_def
-  reverse_nat_imp_to_HOL_state_def    
+  reverse_nat_imp_to_HOL_state_def
 
 lemma list_from_tail_IMP_Minus_correct_function:
   "(invoke_subprogram p list_from_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5567,7 +5567,7 @@ lemma list_from_tail_IMP_Minus_correct_function:
           (list_from_tail_imp (list_from_tail_imp_to_HOL_state p s))"
   by (fastforce elim: list_from_acc_IMP_Minus_correct reverse_nat_IMP_Minus_correct
       simp: list_from_tail_imp_to_HOL_state_def
-      list_from_tail_imp.simps list_from_tail_state_upd_def 
+      list_from_tail_imp.simps list_from_tail_state_upd_def
       reverse_nat_imp_to_HOL_state_def
       list_from_acc_imp_to_HOL_state_def
       list_from_tail_IMP_Minus_def invoke_subprogram_append)
@@ -5577,7 +5577,7 @@ lemma list_from_tail_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix list_from_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast   
+  by blast
 
 lemma list_from_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p list_from_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5648,12 +5648,12 @@ declare list_less_tail_imp.simps [simp del]
 lemma list_less_tail_imp_correct[let_function_correctness]:
   "list_less_tail_ret (list_less_tail_imp s) =
     list_less_tail (list_less_tail_n s)"
-  by (simp add: list_less_tail_imp.simps 
+  by (simp add: list_less_tail_imp.simps
       list_from_tail_imp_correct list_less_tail_def Let_def
       list_less_tail_state_upd_def)
 
 function list_less_tail_imp_time :: "nat \<Rightarrow> list_less_tail_state \<Rightarrow> nat" where
-  "list_less_tail_imp_time t s = 
+  "list_less_tail_imp_time t s =
   (let
       list_from_tail_s' = 0;
       t = t + 2;
@@ -5685,22 +5685,22 @@ lemma list_less_tail_imp_time_acc:
   "(list_less_tail_imp_time (Suc t) s) = Suc (list_less_tail_imp_time t s)"
   by (induction t s rule: list_less_tail_imp_time.induct)
     ((subst (1 2) list_less_tail_imp_time.simps);
-      (simp add: list_less_tail_state_upd_def))            
+      (simp add: list_less_tail_state_upd_def))
 
 lemma list_less_tail_imp_time_acc_2_aux:
   "(list_less_tail_imp_time t s) = t + (list_less_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: list_less_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: list_less_tail_imp_time_acc)+
 
 lemma list_less_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (list_less_tail_imp_time t s) = t + (list_less_tail_imp_time 0 s)"
-  by (rule list_less_tail_imp_time_acc_2_aux)            
+  by (rule list_less_tail_imp_time_acc_2_aux)
 
 lemma list_less_tail_imp_time_acc_3:
   "(list_less_tail_imp_time (a + b) s) = a + (list_less_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: list_less_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: list_less_tail_imp_time_acc)+
 
 definition list_less_tail_IMP_Minus where
-  "list_less_tail_IMP_Minus \<equiv> 
+  "list_less_tail_IMP_Minus \<equiv>
   \<comment> \<open>  list_from_tail_s' = 0;\<close>
   (list_from_tail_prefix @ list_from_tail_s_str) ::= (A (N 0));;
   \<comment> \<open>  list_from_tail_n' = list_less_tail_n s;\<close>
@@ -5729,7 +5729,7 @@ definition "list_less_tail_imp_to_HOL_state p s =
 
 lemmas list_less_tail_state_translators =
   list_less_tail_imp_to_HOL_state_def
-  list_from_tail_imp_to_HOL_state_def 
+  list_from_tail_imp_to_HOL_state_def
 
 lemma list_less_tail_IMP_Minus_correct_function:
   "(invoke_subprogram p list_less_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5819,9 +5819,9 @@ definition "concat_acc_state_upd s \<equiv>
 )"
 
 definition "concat_acc_imp_compute_loop_condition s \<equiv> (
-  let 
+  let
     condition = concat_acc_n s
-  in 
+  in
     condition
 )"
 
@@ -5834,7 +5834,7 @@ definition "concat_acc_imp_after_loop s \<equiv>
     ret
 )"
 
-lemmas concat_acc_imp_subprogram_simps = 
+lemmas concat_acc_imp_subprogram_simps =
   concat_acc_state_upd_def
   concat_acc_imp_compute_loop_condition_def
   concat_acc_imp_after_loop_def
@@ -5854,7 +5854,7 @@ function concat_acc_imp::
 termination
   apply (relation "measure (\<lambda>s. concat_acc_n s)")
   by (simp add: concat_acc_imp_subprogram_simps tl_imp_correct)+
- 
+
 
 declare concat_acc_imp.simps [simp del]
 
@@ -5864,7 +5864,7 @@ lemma concat_acc_imp_correct[let_function_correctness]:
   apply (induction s rule: concat_acc_imp.induct)
   apply (subst concat_acc_imp.simps)
   apply (subst concat_acc.simps)
-  apply (simp del: concat_acc.simps add: concat_acc_imp_subprogram_simps 
+  apply (simp del: concat_acc.simps add: concat_acc_imp_subprogram_simps
         Let_def tl_imp_correct hd_imp_correct append_nat_imp_correct
         reverse_nat_imp_correct)
   using subtail_append by presburger
@@ -5917,8 +5917,8 @@ definition "concat_acc_state_upd_time t s \<equiv> (
       t
 )"
 
-definition "concat_acc_imp_compute_loop_condition_time t s \<equiv> 
-  (let 
+definition "concat_acc_imp_compute_loop_condition_time t s \<equiv>
+  (let
     condition = concat_acc_n s;
     t = t + 2
   in
@@ -5936,7 +5936,7 @@ definition "concat_acc_imp_after_loop_time t s \<equiv> (
 "
 
 
-lemmas concat_acc_imp_subprogram_time_simps = 
+lemmas concat_acc_imp_subprogram_time_simps =
   concat_acc_state_upd_time_def
   concat_acc_imp_compute_loop_condition_time_def
   concat_acc_imp_after_loop_time_def
@@ -5965,25 +5965,25 @@ termination
   apply (relation "measure (\<lambda>(t, s). concat_acc_n s)")
    by (simp add: concat_acc_imp_subprogram_simps tl_imp_correct)+
 
-declare concat_acc_imp_time.simps [simp del]            
+declare concat_acc_imp_time.simps [simp del]
 
 lemma concat_acc_imp_time_acc:
   "(concat_acc_imp_time (Suc t) s) = Suc (concat_acc_imp_time t s)"
   by (induction t s rule: concat_acc_imp_time.induct)
     ((subst (1 2) concat_acc_imp_time.simps);
-      (simp add: concat_acc_state_upd_def))            
+      (simp add: concat_acc_state_upd_def))
 
 lemma concat_acc_imp_time_acc_2_aux:
   "(concat_acc_imp_time t s) = t + (concat_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: concat_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: concat_acc_imp_time_acc)+
 
 lemma concat_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (concat_acc_imp_time t s) = t + (concat_acc_imp_time 0 s)"
-  by (rule concat_acc_imp_time_acc_2_aux)            
+  by (rule concat_acc_imp_time_acc_2_aux)
 
 lemma concat_acc_imp_time_acc_3:
   "(concat_acc_imp_time (a + b) s) = a + (concat_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: concat_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: concat_acc_imp_time_acc)+
 
 abbreviation "concat_acc_while_cond \<equiv> ''condition''"
 
@@ -6022,7 +6022,7 @@ definition "concat_acc_IMP_loop_body \<equiv>
   invoke_subprogram append_nat_prefix append_nat_IMP_Minus;;
   \<comment> \<open>concat_acc_acc' = append_nat_ret append_nat_ret_state;\<close>
   concat_acc_acc_str ::= A (V (append_nat_prefix @ append_nat_ret_str));;
-       \<comment> \<open>tl_xs' = concat_acc_n s;\<close>     
+       \<comment> \<open>tl_xs' = concat_acc_n s;\<close>
   (tl_prefix @ tl_xs_str) ::= A (V concat_acc_n_str);;
        \<comment> \<open>tl_ret' = 0;\<close>
   (tl_prefix @ tl_ret_str) ::= A (N 0);;
@@ -6037,7 +6037,7 @@ definition "concat_acc_IMP_loop_body \<equiv>
              concat_acc_ret = concat_acc_ret'\<rparr>\<close>
 "
 
-definition "concat_acc_IMP_after_loop \<equiv> 
+definition "concat_acc_IMP_after_loop \<equiv>
               concat_acc_ret_str ::= A (V concat_acc_acc_str)"
 
 definition "concat_acc_IMP_Minus \<equiv>
@@ -6052,12 +6052,12 @@ abbreviation "concat_acc_IMP_vars \<equiv>
   {concat_acc_while_cond, concat_acc_acc_str, concat_acc_n_str,
   concat_acc_ret_str}"
 
-lemmas concat_acc_IMP_subprogram_simps = 
+lemmas concat_acc_IMP_subprogram_simps =
   concat_acc_IMP_init_while_cond_def
   concat_acc_IMP_loop_body_def
   concat_acc_IMP_after_loop_def
 
-definition "concat_acc_imp_to_HOL_state p s = 
+definition "concat_acc_imp_to_HOL_state p s =
   \<lparr>concat_acc_acc = (s (add_prefix p concat_acc_acc_str)),
   concat_acc_n = (s (add_prefix p concat_acc_n_str)),
   concat_acc_ret = (s (add_prefix p concat_acc_ret_str))\<rparr>"
@@ -6075,7 +6075,7 @@ lemma concat_acc_IMP_Minus_correct_function:
      s' (add_prefix p concat_acc_ret_str)
       = concat_acc_ret
           (concat_acc_imp (concat_acc_imp_to_HOL_state p s))"
-  
+
   apply(induction "concat_acc_imp_to_HOL_state p s" arbitrary: s s' t
     rule: concat_acc_imp.induct)
   apply(subst concat_acc_imp.simps)
@@ -6112,7 +6112,7 @@ lemma concat_acc_IMP_Minus_correct_function:
       tl_imp_to_HOL_state_def tl_imp_correct tl_state.simps
       reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps)
       by force
-    subgoal 
+    subgoal
        apply(simp only: concat_acc_IMP_init_while_cond_def prefix_simps
           concat_acc_IMP_loop_body_def)
       apply(erule Seq_E)+
@@ -6133,7 +6133,7 @@ lemma concat_acc_IMP_Minus_correct_function:
       reverse_nat_imp_to_HOL_state_def reverse_nat_imp_correct reverse_nat_state.simps)
       apply clarsimp
       subgoal premises p using p(6) p(10) p(12) p(8)
-      by (smt (z3) fun_upd_other fun_upd_same list.inject list.simps(3) same_append_eq) 
+      by (smt (z3) fun_upd_other fun_upd_same list.inject list.simps(3) same_append_eq)
       done
     done
 
@@ -6143,7 +6143,7 @@ lemma concat_acc_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix concat_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas concat_acc_complete_time_simps =
   concat_acc_imp_subprogram_time_simps
@@ -6198,8 +6198,8 @@ lemma concat_acc_IMP_Minus_correct_time:
       by force
   subgoal
     apply(simp only: prefix_simps concat_acc_IMP_init_while_cond_def
-          concat_acc_IMP_loop_body_def) 
-      apply(erule Seq_tE)+ 
+          concat_acc_IMP_loop_body_def)
+      apply(erule Seq_tE)+
       apply(erule hd_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
       subgoal premises p using p(39) by fastforce
       apply(erule reverse_nat_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
@@ -6208,9 +6208,9 @@ lemma concat_acc_IMP_Minus_correct_time:
       subgoal premises p using p(43) by fastforce
       apply(erule tl_IMP_Minus_correct[where vars = "concat_acc_IMP_vars"])
       subgoal premises p using p(45) by fastforce
-      apply (simp only: concat_acc_complete_time_simps 
+      apply (simp only: concat_acc_complete_time_simps
        Let_def prefix_simps
-      concat_acc_state.simps 
+      concat_acc_state.simps
       append_nat_imp_to_HOL_state_def append_nat_imp_correct append_nat_state.simps
       append_nat_IMP_Minus_correct_time
       hd_imp_to_HOL_state_def hd_imp_correct hd_state.simps hd_IMP_Minus_correct_time
@@ -6220,7 +6220,7 @@ lemma concat_acc_IMP_Minus_correct_time:
       )
       apply clarsimp
       subgoal premises p
-              by (smt (z3) fun_upd_other fun_upd_same list.inject 
+              by (smt (z3) fun_upd_other fun_upd_same list.inject
               list.simps(3) p(11) p(13) p(15) p(9) same_append_eq)
       done
     done
@@ -6236,18 +6236,18 @@ lemma concat_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using concat_acc_IMP_Minus_correct_function
   by (auto simp: concat_acc_IMP_Minus_correct_time)
-    (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson concat_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 paragraph concat_tail
-record concat_tail_state = 
-concat_tail_ys :: nat 
+record concat_tail_state =
+concat_tail_ys :: nat
 concat_tail_ret :: nat
 
 abbreviation "concat_tail_prefix \<equiv> ''concat_tail.''"
 abbreviation "concat_tail_ys_str \<equiv> ''concat_tail_ys_str''"
 abbreviation "concat_tail_ret_str \<equiv> ''concat_tail_ret_str''"
 
-definition "concat_tail_state_upd s \<equiv> 
+definition "concat_tail_state_upd s \<equiv>
  (let
   concat_acc_acc' = 0;
   concat_acc_n' = concat_tail_ys s;
@@ -6270,9 +6270,9 @@ definition "concat_tail_state_upd s \<equiv>
 function concat_tail_imp::
   "concat_tail_state \<Rightarrow> concat_tail_state" where
   "concat_tail_imp s =
-    (let 
+    (let
       ret = concat_tail_state_upd s
-    in 
+    in
      ret)"
   by simp+
 termination
@@ -6287,7 +6287,7 @@ lemma concat_tail_imp_correct[let_function_correctness]:
     concat_acc_imp_correct reverse_nat_imp_correct Let_def)
   done
 
-definition "concat_tail_state_upd_time t s \<equiv> 
+definition "concat_tail_state_upd_time t s \<equiv>
  (let
   concat_acc_acc' = 0;
   t = t + 2;
@@ -6318,8 +6318,8 @@ definition "concat_tail_state_upd_time t s \<equiv>
 
 function concat_tail_imp_time::
   "nat \<Rightarrow> concat_tail_state \<Rightarrow> nat" where
-  "concat_tail_imp_time t s = 
-    (let 
+  "concat_tail_imp_time t s =
+    (let
       ret = t + concat_tail_state_upd_time 0 s
     in
       ret)"
@@ -6327,25 +6327,25 @@ function concat_tail_imp_time::
 termination
   by (relation "measure (\<lambda>(t, s). concat_tail_ys s)") simp
 
-declare concat_tail_imp_time.simps [simp del]            
+declare concat_tail_imp_time.simps [simp del]
 
 lemma concat_tail_imp_time_acc:
   "(concat_tail_imp_time (Suc t) s) = Suc (concat_tail_imp_time t s)"
   by (induction t s rule: concat_tail_imp_time.induct)
     ((subst (1 2) concat_tail_imp_time.simps);
-      (simp add: concat_tail_state_upd_def))            
+      (simp add: concat_tail_state_upd_def))
 
 lemma concat_tail_imp_time_acc_2_aux:
   "(concat_tail_imp_time t s) = t + (concat_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: concat_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: concat_tail_imp_time_acc)+
 
 lemma concat_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (concat_tail_imp_time t s) = t + (concat_tail_imp_time 0 s)"
-  by (rule concat_tail_imp_time_acc_2_aux)            
+  by (rule concat_tail_imp_time_acc_2_aux)
 
 lemma concat_tail_imp_time_acc_3:
   "(concat_tail_imp_time (a + b) s) = a + (concat_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: concat_tail_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: concat_tail_imp_time_acc)+
 
 definition "concat_tail_IMP_Minus \<equiv>
 \<comment>\<open>concat_acc_acc' = 0;
@@ -6375,7 +6375,7 @@ definition "concat_tail_IMP_Minus \<equiv>
 
 abbreviation "concat_tail_IMP_vars \<equiv> {concat_tail_ys_str, concat_tail_ret_str}"
 
-definition "concat_tail_imp_to_HOL_state p s \<equiv> 
+definition "concat_tail_imp_to_HOL_state p s \<equiv>
   \<lparr>concat_tail_ys = s (add_prefix p concat_tail_ys_str),
    concat_tail_ret = s (add_prefix p concat_tail_ret_str)\<rparr>"
 
@@ -6393,10 +6393,10 @@ lemma concat_tail_IMP_Minus_correct_function:
   apply (simp only: concat_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
   apply (erule concat_acc_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
-  subgoal premises p using p(8) by fastforce 
+  subgoal premises p using p(8) by fastforce
   apply (erule reverse_nat_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
   subgoal premises p using p(10) by fastforce
-  apply (force simp: concat_tail_state_upd_def 
+  apply (force simp: concat_tail_state_upd_def
   concat_tail_state_translators Let_def)
   done
 
@@ -6405,7 +6405,7 @@ lemma concat_tail_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix concat_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma concat_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p concat_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -6414,7 +6414,7 @@ lemma concat_tail_IMP_Minus_correct_time:
   apply (simp only: concat_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule concat_acc_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
-  subgoal premises p using p(15) by fastforce 
+  subgoal premises p using p(15) by fastforce
   apply (erule reverse_nat_IMP_Minus_correct[where vars=concat_tail_IMP_vars])
   subgoal premises p using p(17) by fastforce
   apply (force simp: concat_tail_state_upd_time_def
@@ -6432,7 +6432,7 @@ lemma concat_tail_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using concat_tail_IMP_Minus_correct_function concat_tail_IMP_Minus_correct_time
   by (meson concat_tail_IMP_Minus_correct_effects set_mono_prefix)
-  
+
 
 subsubsection \<open>nth\<close>
 paragraph nth_nat
@@ -6447,8 +6447,8 @@ abbreviation "nth_nat_n_str \<equiv> ''n''"
 abbreviation "nth_nat_x_str \<equiv> ''x''"
 abbreviation "nth_nat_ret_str \<equiv> ''ret''"
 
-definition "nth_nat_state_upd s \<equiv> 
-  (let 
+definition "nth_nat_state_upd s \<equiv>
+  (let
      tl_xs' = nth_nat_x s;
      tl_ret' = 0;
      tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;
@@ -6465,9 +6465,9 @@ definition "nth_nat_state_upd s \<equiv>
 
 definition "nth_nat_imp_compute_loop_condition s \<equiv>
   (
-    let 
+    let
       condition = nth_nat_n s
-    in 
+    in
       condition
   )"
 
@@ -6486,7 +6486,7 @@ definition "nth_nat_imp_after_loop s \<equiv>
       ret
   )"
 
-lemmas nth_nat_imp_subprogram_simps = 
+lemmas nth_nat_imp_subprogram_simps =
   nth_nat_state_upd_def
   nth_nat_imp_compute_loop_condition_def
   nth_nat_imp_after_loop_def
@@ -6516,8 +6516,8 @@ lemma nth_nat_imp_correct:
   apply (induction s rule: nth_nat_imp.induct)
   apply (subst nth_nat_imp.simps)
   apply (simp del: nth_nat.simps add: nth_nat_imp_subprogram_simps Let_def hd_imp_correct
-  tl_imp_correct) 
-  using gr0_conv_Suc by fastforce 
+  tl_imp_correct)
+  using gr0_conv_Suc by fastforce
 
 definition "nth_nat_state_upd_time t s \<equiv>
   (let
@@ -6569,7 +6569,7 @@ definition "nth_nat_imp_after_loop_time t s \<equiv>
   )
 "
 
-lemmas nth_nat_imp_subprogram_time_simps = 
+lemmas nth_nat_imp_subprogram_time_simps =
   nth_nat_state_upd_time_def
   nth_nat_imp_compute_loop_condition_time_def
   nth_nat_imp_after_loop_time_def
@@ -6598,25 +6598,25 @@ termination
   apply (relation "measure (\<lambda>(t, s). nth_nat_n s)")
   by (simp add: nth_nat_imp_subprogram_time_simps)+
 
-declare nth_nat_imp_time.simps [simp del]            
+declare nth_nat_imp_time.simps [simp del]
 
 lemma nth_nat_imp_time_acc:
   "(nth_nat_imp_time (Suc t) s) = Suc (nth_nat_imp_time t s)"
   by (induction t s rule: nth_nat_imp_time.induct)
     ((subst (1 2) nth_nat_imp_time.simps);
-      (simp add: nth_nat_state_upd_def))            
+      (simp add: nth_nat_state_upd_def))
 
 lemma nth_nat_imp_time_acc_2_aux:
   "(nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: nth_nat_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: nth_nat_imp_time_acc)+
 
 lemma nth_nat_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (nth_nat_imp_time t s) = t + (nth_nat_imp_time 0 s)"
-  by (rule nth_nat_imp_time_acc_2_aux)            
+  by (rule nth_nat_imp_time_acc_2_aux)
 
 lemma nth_nat_imp_time_acc_3:
   "(nth_nat_imp_time (a + b) s) = a + (nth_nat_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: nth_nat_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: nth_nat_imp_time_acc)+
 
 abbreviation "nth_nat_while_cond \<equiv> ''condition''"
 
@@ -6714,7 +6714,7 @@ lemma nth_nat_IMP_Minus_correct_function:
           hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def
           )
       by force
-    
+
 
   apply(erule Seq_E)+
   apply(dest_com_gen)
@@ -6746,14 +6746,14 @@ lemma nth_nat_IMP_Minus_correct_function:
           tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
           )
       by force
-  done        
+  done
 
 lemma nth_nat_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ nth_nat_pref) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix nth_nat_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas nth_nat_complete_time_simps =
   nth_nat_imp_subprogram_time_simps
@@ -6779,7 +6779,7 @@ lemma nth_nat_IMP_Minus_correct_time:
     apply(erule hd_IMP_Minus_correct[where vars = "nth_nat_IMP_vars"])
     subgoal premises p using p(14) by fastforce
     apply (simp only: nth_nat_complete_time_simps Let_def prefix_simps
-    hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def hd_IMP_Minus_correct_time) 
+    hd_imp_correct hd_state.simps hd_imp_to_HOL_state_def hd_IMP_Minus_correct_time)
    by force
 
   apply(erule Seq_tE)+
@@ -6799,7 +6799,7 @@ lemma nth_nat_IMP_Minus_correct_time:
     apply (simp only: nth_nat_imp_subprogram_simps
           nth_nat_state_translators Let_def prefix_simps
           tl_imp_correct tl_state.simps tl_imp_to_HOL_state_def
-          ) 
+          )
     by force
 
   subgoal
@@ -6814,7 +6814,7 @@ lemma nth_nat_IMP_Minus_correct_time:
           )
     by force
 
-done        
+done
 
 lemma nth_nat_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) nth_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -6833,7 +6833,7 @@ lemma nth_nat_IMP_Minus_correct:
 subsubsection \<open>elemof\<close>
 
 fun elemof' :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-"elemof' e l = 
+"elemof' e l =
   (if l \<noteq> 0 \<and> hd_nat l \<noteq> e
   then elemof' e (tl_nat l)
   else (if l \<noteq> 0
@@ -6875,7 +6875,7 @@ definition "elemof_imp_compute_loop_condition s \<equiv>
   (let
       hd_xs' = elemof_l s;
       hd_ret' = 0;
-      hd_state = \<lparr>hd_xs = hd_xs', 
+      hd_state = \<lparr>hd_xs = hd_xs',
                   hd_ret = hd_ret'\<rparr>;
       hd_ret_state = hd_imp hd_state;
       NOTEQUAL_neq_zero_a' = hd_ret hd_ret_state;
@@ -6901,7 +6901,7 @@ definition "elemof_imp_after_loop s \<equiv>
   (let
       elemof_e' = elemof_e s;
       elemof_l' = elemof_l s;
-      elemof_ret' = 
+      elemof_ret' =
         (if elemof_l' \<noteq> 0
         then 1
         else 0);
@@ -6912,7 +6912,7 @@ definition "elemof_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas elemof_imp_subprogram_simps = 
+lemmas elemof_imp_subprogram_simps =
   elemof_state_upd_def
   elemof_imp_compute_loop_condition_def
   elemof_imp_after_loop_def
@@ -6942,7 +6942,7 @@ lemma elemof_imp_correct[let_function_correctness]:
   apply (subst elemof.simps)
   apply (simp del: elemof.simps add: elemof_imp_subprogram_simps Let_def
   AND_neq_zero_imp_correct NOTEQUAL_neq_zero_imp_correct hd_imp_correct tl_imp_correct)
-  done 
+  done
 
 definition "elemof_state_upd_time t s \<equiv>
   let
@@ -6973,7 +6973,7 @@ definition "elemof_imp_compute_loop_condition_time t s \<equiv>
       t = t + 2;
       hd_ret' = 0;
       t = t + 2;
-      hd_state = \<lparr>hd_xs = hd_xs', 
+      hd_state = \<lparr>hd_xs = hd_xs',
                   hd_ret = hd_ret'\<rparr>;
       hd_ret_state = hd_imp hd_state;
       t = t + hd_imp_time 0 hd_state;
@@ -7011,7 +7011,7 @@ definition "elemof_imp_after_loop_time t s \<equiv>
       t = t + 2;
       elemof_l' = elemof_l s;
       t = t + 2;
-      elemof_ret' = 
+      elemof_ret' =
         (if elemof_l' \<noteq> 0
         then 1
         else 0);
@@ -7026,7 +7026,7 @@ definition "elemof_imp_after_loop_time t s \<equiv>
       t
 "
 
-lemmas elemof_imp_subprogram_time_simps = 
+lemmas elemof_imp_subprogram_time_simps =
   elemof_state_upd_time_def
   elemof_imp_compute_loop_condition_time_def
   elemof_imp_after_loop_time_def
@@ -7061,19 +7061,19 @@ lemma elemof_imp_time_acc:
   "(elemof_imp_time (Suc t) s) = Suc (elemof_imp_time t s)"
   by (induction t s rule: elemof_imp_time.induct)
     ((subst (1 2) elemof_imp_time.simps);
-      (simp add: elemof_state_upd_def))            
+      (simp add: elemof_state_upd_def))
 
 lemma elemof_imp_time_acc_2_aux:
   "(elemof_imp_time t s) = t + (elemof_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: elemof_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: elemof_imp_time_acc)+
 
 lemma elemof_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (elemof_imp_time t s) = t + (elemof_imp_time 0 s)"
-  by (rule elemof_imp_time_acc_2_aux)            
+  by (rule elemof_imp_time_acc_2_aux)
 
 lemma elemof_imp_time_acc_3:
   "(elemof_imp_time (a + b) s) = a + (elemof_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: elemof_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: elemof_imp_time_acc)+
 
 abbreviation "elemof_while_cond \<equiv> ''condition''"
 
@@ -7082,7 +7082,7 @@ definition "elemof_IMP_init_while_cond \<equiv>
   (hd_prefix @ hd_xs_str) ::= (A (V elemof_l_str));;
   \<comment> \<open>  hd_ret' = 0;\<close>
   (hd_prefix @ hd_ret_str) ::= (A (N 0));;
-  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close> 
+  \<comment> \<open>  hd_state = \<lparr>hd_xs = hd_xs',\<close>
   \<comment> \<open>              hd_ret = hd_ret'\<rparr>;\<close>
   \<comment> \<open>  hd_ret_state = hd_imp hd_state;\<close>
   (invoke_subprogram hd_prefix hd_IMP_Minus);;
@@ -7100,7 +7100,7 @@ definition "elemof_IMP_init_while_cond \<equiv>
   \<comment> \<open>  AND_neq_zero_a' = elemof_l s;\<close>
   (AND_neq_zero_prefix @ AND_neq_zero_a_str) ::= (A (V elemof_l_str));;
   \<comment> \<open>  AND_neq_zero_b' = NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state;\<close>
-  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::= 
+  (AND_neq_zero_prefix @ AND_neq_zero_b_str) ::=
     (A (V (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str)));;
   \<comment> \<open>  AND_neq_zero_ret' = 0;\<close>
   (AND_neq_zero_prefix @ AND_neq_zero_ret_str) ::= (A (N 0));;
@@ -7340,7 +7340,7 @@ lemma elemof_IMP_Minus_correct_time:
     apply(simp only: elemof_complete_time_simps Let_def)
     by force
 
-  done 
+  done
 
 lemma elemof_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) elemof_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -7354,7 +7354,7 @@ lemma elemof_IMP_Minus_correct:
   using elemof_IMP_Minus_correct_function
     elemof_IMP_Minus_correct_time
     elemof_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 
 subsubsection \<open>remdups\<close>
@@ -7440,7 +7440,7 @@ lemma remdups_acc_aux_imp_correct_acc[let_function_correctness]:
   apply (subst remdups_acc_aux_imp.simps)
   apply (simp only: remdups_acc_aux_state_upd_def Let_def hd_imp_correct tl_imp_correct
   elemof_imp_correct cons_imp_correct split: if_splits)
-  by (metis cons_state.select_convs(1) cons_state.select_convs(2) elemof_state.select_convs(1) 
+  by (metis cons_state.select_convs(1) cons_state.select_convs(2) elemof_state.select_convs(1)
   elemof_state.select_convs(2) hd_state.select_convs(1) remdups_acc_aux_state.select_convs(1)
   tl_state.select_convs(1))
 
@@ -7453,7 +7453,7 @@ lemma remdups_acc_aux_imp_correct_n[let_function_correctness]:
   by (metis remdups_acc_aux_state.select_convs(2) tl_state.select_convs(1))
 
 function remdups_acc_aux_imp_time:: "nat \<Rightarrow> remdups_acc_aux_state \<Rightarrow> nat" where
-  "remdups_acc_aux_imp_time t s = 
+  "remdups_acc_aux_imp_time t s =
   (let
       hd_xs' = remdups_acc_aux_n s;
       t = t + 2;
@@ -7528,25 +7528,25 @@ function remdups_acc_aux_imp_time:: "nat \<Rightarrow> remdups_acc_aux_state \<R
 termination
   by (relation "measure (remdups_acc_aux_n \<circ> snd)") simp
 
-declare remdups_acc_aux_imp_time.simps [simp del] 
+declare remdups_acc_aux_imp_time.simps [simp del]
 
 lemma remdups_acc_aux_imp_time_acc:
   "(remdups_acc_aux_imp_time (Suc t) s) = Suc (remdups_acc_aux_imp_time t s)"
   by (induction t s rule: remdups_acc_aux_imp_time.induct)
     ((subst (1 2) remdups_acc_aux_imp_time.simps);
-      (simp add: remdups_acc_aux_state_upd_def Let_def))            
+      (simp add: remdups_acc_aux_state_upd_def Let_def))
 
 lemma remdups_acc_aux_imp_time_acc_2_aux:
   "(remdups_acc_aux_imp_time t s) = t + (remdups_acc_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: remdups_acc_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: remdups_acc_aux_imp_time_acc)+
 
 lemma remdups_acc_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (remdups_acc_aux_imp_time t s) = t + (remdups_acc_aux_imp_time 0 s)"
-  by (rule remdups_acc_aux_imp_time_acc_2_aux)            
+  by (rule remdups_acc_aux_imp_time_acc_2_aux)
 
 lemma remdups_acc_aux_imp_time_acc_3:
   "(remdups_acc_aux_imp_time (a + b) s) = a + (remdups_acc_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: remdups_acc_aux_imp_time_acc)+ 
+  by (induction a arbitrary: b s) (simp add: remdups_acc_aux_imp_time_acc)+
 
 abbreviation "remdups_acc_aux_hd_result \<equiv> ''hd_result''"
 abbreviation "remdups_acc_aux_tl_result \<equiv> ''tl_result''"
@@ -7695,7 +7695,7 @@ lemma remdups_acc_aux_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix remdups_acc_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast    
+  by blast
 
 lemma remdups_acc_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p remdups_acc_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -7812,7 +7812,7 @@ definition "remdups_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas remdups_acc_imp_subprogram_simps = 
+lemmas remdups_acc_imp_subprogram_simps =
   remdups_acc_state_upd_def
   remdups_acc_imp_compute_loop_condition_def
   remdups_acc_imp_after_loop_def
@@ -7844,7 +7844,7 @@ lemma remdups_acc_imp_correct[let_function_correctness]:
   remdups_acc_aux_imp_correct_acc remdups_acc_aux_imp_correct_n)
   by (smt (z3) remdups_acc_aux_state.select_convs(1) remdups_acc_aux_state.select_convs(2)
   remdups_acc_state.select_convs(1) remdups_acc_state.select_convs(2) remdups_acc_state.select_convs(3))
-   
+
 definition "remdups_acc_state_upd_time t s \<equiv>
   (let
       remdups_acc_aux_acc' = remdups_acc_acc s;
@@ -7885,7 +7885,7 @@ definition "remdups_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas remdups_acc_imp_subprogram_time_simps = 
+lemmas remdups_acc_imp_subprogram_time_simps =
   remdups_acc_state_upd_time_def
   remdups_acc_imp_compute_loop_condition_time_def
   remdups_acc_imp_after_loop_time_def
@@ -7920,15 +7920,15 @@ lemma remdups_acc_imp_time_acc:
   "(remdups_acc_imp_time (Suc t) s) = Suc (remdups_acc_imp_time t s)"
   by (induction t s rule: remdups_acc_imp_time.induct)
     ((subst (1 2) remdups_acc_imp_time.simps);
-      (simp add: remdups_acc_state_upd_def))            
+      (simp add: remdups_acc_state_upd_def))
 
 lemma remdups_acc_imp_time_acc_2_aux:
   "(remdups_acc_imp_time t s) = t + (remdups_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: remdups_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: remdups_acc_imp_time_acc)+
 
 lemma remdups_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (remdups_acc_imp_time t s) = t + (remdups_acc_imp_time 0 s)"
-  by (rule remdups_acc_imp_time_acc_2_aux)            
+  by (rule remdups_acc_imp_time_acc_2_aux)
 
 lemma remdups_acc_imp_time_acc_3:
   "(remdups_acc_imp_time (a + b) s) = a + (remdups_acc_imp_time b s)"
@@ -8045,7 +8045,7 @@ lemma remdups_acc_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix remdups_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemmas remdups_acc_complete_time_simps =
   remdups_acc_imp_subprogram_time_simps
@@ -8109,7 +8109,7 @@ lemma remdups_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using remdups_acc_IMP_Minus_correct_function
   remdups_acc_IMP_Minus_correct_time
-  remdups_acc_IMP_Minus_correct_effects 
+  remdups_acc_IMP_Minus_correct_effects
   by (meson set_mono_prefix)
 
 
@@ -8203,19 +8203,19 @@ lemma remdups_tail_imp_time_acc:
   "(remdups_tail_imp_time (Suc t) s) = Suc (remdups_tail_imp_time t s)"
   by (induction t s rule: remdups_tail_imp_time.induct)
     ((subst (1 2) remdups_tail_imp_time.simps);
-      (simp add: remdups_tail_state_upd_def Let_def))            
+      (simp add: remdups_tail_state_upd_def Let_def))
 
 lemma remdups_tail_imp_time_acc_2_aux:
   "(remdups_tail_imp_time t s) = t + (remdups_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: remdups_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: remdups_tail_imp_time_acc)+
 
 lemma remdups_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (remdups_tail_imp_time t s) = t + (remdups_tail_imp_time 0 s)"
-  by (rule remdups_tail_imp_time_acc_2_aux)            
+  by (rule remdups_tail_imp_time_acc_2_aux)
 
 lemma remdups_tail_imp_time_acc_3:
   "(remdups_tail_imp_time (a + b) s) = a + (remdups_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: remdups_tail_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: remdups_tail_imp_time_acc)+
 
 definition remdups_tail_IMP_Minus where
   "remdups_tail_IMP_Minus \<equiv>
@@ -8275,7 +8275,7 @@ lemma remdups_tail_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix remdups_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast  
+  by blast
 
 lemma remdups_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p remdups_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -8347,32 +8347,32 @@ definition "restrict_aux_state_upd s \<equiv>
           cons_state = \<lparr>cons_h = cons_h', cons_t = cons_t', cons_ret = cons_ret'\<rparr>;
           cons_ret_state = cons_imp cons_state;
           restrict_aux_acc' = cons_ret cons_ret_state;
-          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc',
                  restrict_aux_l = tl_result,
                  restrict_aux_s = restrict_aux_s s\<rparr>
-        in 
+        in
           ret
-      ) 
+      )
       else (
         let
           restrict_aux_acc' = restrict_aux_acc s;
-          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc',
                  restrict_aux_l = tl_result,
                  restrict_aux_s = restrict_aux_s s\<rparr>
-        in 
+        in
           ret
       ))
   )"
 
-lemmas restrict_aux_imp_subprogram_simps = 
+lemmas restrict_aux_imp_subprogram_simps =
   restrict_aux_state_upd_def
 
 function restrict_aux_imp::
   "restrict_aux_state \<Rightarrow> restrict_aux_state" where
   "restrict_aux_imp s =
-    (let 
+    (let
       ret = restrict_aux_state_upd s
-    in 
+    in
      ret)"
   by simp+
 termination
@@ -8382,28 +8382,28 @@ declare restrict_aux_imp.simps [simp del]
 
 lemma restrict_aux_imp_correct_acc[let_function_correctness]:
   "restrict_aux_acc (restrict_aux_imp s) =
-    (if elemof (fst_nat (hd_nat (restrict_aux_l s))) (restrict_aux_s s) \<noteq> 0 then 
+    (if elemof (fst_nat (hd_nat (restrict_aux_l s))) (restrict_aux_s s) \<noteq> 0 then
    (hd_nat (restrict_aux_l s))## (restrict_aux_acc s) else (restrict_aux_acc s))"
   apply (subst restrict_aux_imp.simps)
-  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct
         fst'_imp_correct cons_imp_correct Let_def split: if_splits)
-  by (metis cons_state.select_convs(1) cons_state.select_convs(2) elemof_state.select_convs(1) 
-  elemof_state.select_convs(2) fst'_state.select_convs(1) 
+  by (metis cons_state.select_convs(1) cons_state.select_convs(2) elemof_state.select_convs(1)
+  elemof_state.select_convs(2) fst'_state.select_convs(1)
   fst_nat_fst'_nat hd_state.select_convs(1) restrict_aux_state.select_convs(1))
 
 lemma restrict_aux_imp_correct_l[let_function_correctness]:
   "restrict_aux_l (restrict_aux_imp s) = (tl_nat (restrict_aux_l s))"
   apply (subst restrict_aux_imp.simps)
-  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
-        fst'_imp_correct cons_imp_correct Let_def split: if_splits) 
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct
+        fst'_imp_correct cons_imp_correct Let_def split: if_splits)
   by (metis restrict_aux_state.select_convs(2) tl_state.select_convs(1))
 
 
 lemma restrict_aux_imp_correct_s[let_function_correctness]:
   "restrict_aux_s (restrict_aux_imp s) = (restrict_aux_s s)"
   apply (subst restrict_aux_imp.simps)
-  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct 
-        fst'_imp_correct cons_imp_correct Let_def split: if_splits) 
+  apply (simp only: restrict_aux_state_upd_def elemof_imp_correct hd_imp_correct tl_imp_correct
+        fst'_imp_correct cons_imp_correct Let_def split: if_splits)
   by (meson restrict_aux_state.select_convs(3))
 
 definition "restrict_aux_state_upd_time t s \<equiv>
@@ -8464,33 +8464,33 @@ definition "restrict_aux_state_upd_time t s \<equiv>
           t = t + 2;
           restrict_aux_l' = tl_result;
           t = t + 2;
-          ret = \<lparr>restrict_aux_acc = restrict_aux_acc', 
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc',
                  restrict_aux_l = restrict_aux_l',
                  restrict_aux_s = restrict_aux_s s\<rparr>
-        in 
+        in
           t
-      ) 
+      )
       else (
         let
           t = t + 1;
           restrict_aux_l' = tl_result;
           t = t + 2;
-          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s, 
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s,
                  restrict_aux_l = restrict_aux_l',
                  restrict_aux_s = restrict_aux_s s\<rparr>
-        in 
+        in
           t
       )))
 "
 
-lemmas restrict_aux_imp_subprogram_time_simps = 
+lemmas restrict_aux_imp_subprogram_time_simps =
   restrict_aux_state_upd_time_def
   restrict_aux_imp_subprogram_simps
 
 function restrict_aux_imp_time::
   "nat \<Rightarrow> restrict_aux_state \<Rightarrow> nat" where
-  "restrict_aux_imp_time t s = 
-    (let 
+  "restrict_aux_imp_time t s =
+    (let
       ret = t + restrict_aux_state_upd_time 0 s
     in
       ret)"
@@ -8498,25 +8498,25 @@ function restrict_aux_imp_time::
 termination
   by (relation "measure (\<lambda>(t, s). restrict_aux_acc s)") simp
 
-declare restrict_aux_imp_time.simps [simp del]            
+declare restrict_aux_imp_time.simps [simp del]
 
 lemma restrict_aux_imp_time_acc:
   "(restrict_aux_imp_time (Suc t) s) = Suc (restrict_aux_imp_time t s)"
   by (induction t s rule: restrict_aux_imp_time.induct)
     ((subst (1 2) restrict_aux_imp_time.simps);
-      (simp add: restrict_aux_state_upd_def))            
+      (simp add: restrict_aux_state_upd_def))
 
 lemma restrict_aux_imp_time_acc_2_aux:
   "(restrict_aux_imp_time t s) = t + (restrict_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: restrict_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: restrict_aux_imp_time_acc)+
 
 lemma restrict_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (restrict_aux_imp_time t s) = t + (restrict_aux_imp_time 0 s)"
-  by (rule restrict_aux_imp_time_acc_2_aux)            
+  by (rule restrict_aux_imp_time_acc_2_aux)
 
 lemma restrict_aux_imp_time_acc_3:
   "(restrict_aux_imp_time (a + b) s) = a + (restrict_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: restrict_aux_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: restrict_aux_imp_time_acc)+
 
 
 abbreviation "restrict_aux_hd_result \<equiv> ''restrict_aux_hd_result''"
@@ -8524,7 +8524,7 @@ abbreviation "restrict_aux_tl_result \<equiv> ''restrict_aux_tl_resultt''"
 abbreviation "restrict_aux_elemof_result \<equiv> ''restrict_aux_elemof_resultt''"
 abbreviation "restrict_aux_fst'_result \<equiv> ''restrict_aux_fst'_result''"
 
-abbreviation "restrict_aux_IMP_if \<equiv> 
+abbreviation "restrict_aux_IMP_if \<equiv>
   \<comment> \<open>    let\<close>
   \<comment> \<open>      cons_h' = hd_result;\<close>
   (cons_prefix @ cons_h_str) ::= A (V restrict_aux_hd_result);;
@@ -8543,10 +8543,10 @@ abbreviation "restrict_aux_IMP_if \<equiv>
   \<comment> \<open>             restrict_aux_l = restrict_aux_l',\<close>
   \<comment> \<open>             restrict_aux_s = restrict_aux_s'\<rparr>\<close>"
 
-abbreviation "restrict_aux_IMP_else \<equiv> 
+abbreviation "restrict_aux_IMP_else \<equiv>
   restrict_aux_l_str ::= A (V restrict_aux_tl_result)
   \<comment>\<open>restrict_aux_l' = restrict_aux_l s;
-          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s, 
+          ret = \<lparr>restrict_aux_acc = restrict_aux_acc s,
                  restrict_aux_l = restrict_aux_l'
                  restrict_aux_s = restrict_aux_s s\<rparr>\<close> "
 
@@ -8592,9 +8592,9 @@ definition "restrict_aux_IMP_Minus \<equiv>
   (restrict_aux_elemof_result) ::= A (V (elemof_prefix @ elemof_ret_str));;
   \<comment> \<open>in\<close>
   \<comment> \<open>  (if elemof_ret' \<noteq> 0 then (\<close>
-  (IF restrict_aux_elemof_result \<noteq>0 THEN  
+  (IF restrict_aux_elemof_result \<noteq>0 THEN
     restrict_aux_IMP_if
-  ELSE 
+  ELSE
     restrict_aux_IMP_else)
 "
 
@@ -8640,7 +8640,7 @@ lemma restrict_aux_IMP_Minus_correct_function_acc:
   apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
   subgoal premises p using p(23) by fastforce
   apply (erule If_E)
-  subgoal 
+  subgoal
     apply (erule Seq_E)+
     apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
     subgoal premises p using p(31) by fastforce
@@ -8670,7 +8670,7 @@ lemma restrict_aux_IMP_Minus_correct_function_l:
   apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
   subgoal premises p using p(23) by fastforce
   apply (erule If_E)
-  subgoal 
+  subgoal
     apply (erule Seq_E)+
     apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
     subgoal premises p using p(31) by fastforce
@@ -8700,7 +8700,7 @@ lemma restrict_aux_IMP_Minus_correct_function_s:
   apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
   subgoal premises p using p(23) by fastforce
   apply (erule If_E)
-  subgoal 
+  subgoal
     apply (erule Seq_E)+
     apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
     subgoal premises p using p(31) by fastforce
@@ -8718,7 +8718,7 @@ lemma restrict_aux_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix restrict_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma restrict_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -8735,7 +8735,7 @@ lemma restrict_aux_IMP_Minus_correct_time:
   apply (erule elemof_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
   subgoal premises p using p(39) by fastforce
   apply (erule If_tE)
-  subgoal 
+  subgoal
     apply (erule Seq_tE)+
     apply (erule cons_IMP_Minus_correct[where vars=restrict_aux_IMP_vars])
     subgoal premises p using p(53) by fastforce
@@ -8746,7 +8746,7 @@ lemma restrict_aux_IMP_Minus_correct_time:
     apply (fastforce_sorted_premises2 simp: restrict_aux_state_upd_time_def Let_def
       restrict_aux_state_translators)
     done
-  done      
+  done
 
 lemma restrict_aux_IMP_Minus_correct_acc:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8759,7 +8759,7 @@ lemma restrict_aux_IMP_Minus_correct_acc:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using restrict_aux_IMP_Minus_correct_function_acc
   by (auto simp: restrict_aux_IMP_Minus_correct_time)
-    (meson restrict_aux_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson restrict_aux_IMP_Minus_correct_effects set_mono_prefix)
 
 lemma restrict_aux_IMP_Minus_correct_l:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -8802,7 +8802,7 @@ lemma restrict_aux_IMP_Minus_correct:
                                         (restrict_aux_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-   using restrict_aux_IMP_Minus_correct_acc 
+   using restrict_aux_IMP_Minus_correct_acc
      restrict_aux_IMP_Minus_correct_l restrict_aux_IMP_Minus_correct_s
      by (smt (verit, del_insts))
 
@@ -8815,7 +8815,7 @@ abbreviation "restrict_acc_l_str \<equiv> ''restrict_acc_l''"
 abbreviation "restrict_acc_s_str \<equiv> ''restrict_acc_s''"
 abbreviation "restrict_acc_ret_str \<equiv> ''restrict_acc_ret''"
 
-definition "restrict_acc_state_upd s \<equiv> 
+definition "restrict_acc_state_upd s \<equiv>
   (let
     restrict_aux_acc' = restrict_acc_acc s;
     restrict_aux_l' = restrict_acc_l s;
@@ -8852,7 +8852,7 @@ definition "restrict_acc_imp_after_loop s \<equiv> (
     ret
 )"
 
-lemmas restrict_acc_imp_subprogram_simps = 
+lemmas restrict_acc_imp_subprogram_simps =
   restrict_acc_state_upd_def
   restrict_acc_imp_compute_loop_condition_def
   restrict_acc_imp_after_loop_def
@@ -8884,10 +8884,10 @@ lemma restrict_acc_imp_correct:
   apply (subst restrict_acc.simps)
   apply (simp del: restrict_acc.simps only: restrict_acc_imp_subprogram_simps Let_def
   restrict_aux_imp_correct_acc restrict_aux_imp_correct_l restrict_aux_imp_correct_s)
-  by (smt (z3) restrict_acc_state.select_convs(1) restrict_acc_state.select_convs(2) 
-  restrict_acc_state.select_convs(3) restrict_acc_state.select_convs(4) 
-  restrict_aux_state.select_convs(1) restrict_aux_state.select_convs(2) 
-  restrict_aux_state.select_convs(3)) 
+  by (smt (z3) restrict_acc_state.select_convs(1) restrict_acc_state.select_convs(2)
+  restrict_acc_state.select_convs(3) restrict_acc_state.select_convs(4)
+  restrict_aux_state.select_convs(1) restrict_aux_state.select_convs(2)
+  restrict_aux_state.select_convs(3))
 
 definition "restrict_acc_state_upd_time t s \<equiv>
   let
@@ -8936,7 +8936,7 @@ definition "restrict_acc_imp_after_loop_time t s \<equiv>
     t
 "
 
-lemmas restrict_acc_imp_subprogram_time_simps = 
+lemmas restrict_acc_imp_subprogram_time_simps =
   restrict_acc_state_upd_time_def
   restrict_acc_imp_compute_loop_condition_time_def
   restrict_acc_imp_after_loop_time_def
@@ -8967,25 +8967,25 @@ termination
      restrict_aux_imp_correct_l Let_def)+
   done
 
-declare restrict_acc_imp_time.simps [simp del]            
+declare restrict_acc_imp_time.simps [simp del]
 
 lemma restrict_acc_imp_time_acc:
   "(restrict_acc_imp_time (Suc t) s) = Suc (restrict_acc_imp_time t s)"
   by (induction t s rule: restrict_acc_imp_time.induct)
     ((subst (1 2) restrict_acc_imp_time.simps);
-      (simp add: restrict_acc_state_upd_def))            
+      (simp add: restrict_acc_state_upd_def))
 
 lemma restrict_acc_imp_time_acc_2_aux:
   "(restrict_acc_imp_time t s) = t + (restrict_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: restrict_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: restrict_acc_imp_time_acc)+
 
 lemma restrict_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (restrict_acc_imp_time t s) = t + (restrict_acc_imp_time 0 s)"
-  by (rule restrict_acc_imp_time_acc_2_aux)            
+  by (rule restrict_acc_imp_time_acc_2_aux)
 
 lemma restrict_acc_imp_time_acc_3:
   "(restrict_acc_imp_time (a + b) s) = a + (restrict_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: restrict_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: restrict_acc_imp_time_acc)+
 
 abbreviation "restrict_acc_while_cond \<equiv> ''restrict_acc_condition''"
 
@@ -9037,7 +9037,7 @@ definition restrict_acc_IMP_Minus where
   restrict_acc_IMP_after_loop"
 
 abbreviation "restrict_acc_IMP_vars\<equiv>
-  {restrict_acc_acc_str, restrict_acc_l_str, restrict_acc_s_str, 
+  {restrict_acc_acc_str, restrict_acc_l_str, restrict_acc_s_str,
   restrict_acc_ret_str, restrict_acc_while_cond}"
 
 lemmas restrict_acc_IMP_subprogram_simps =
@@ -9104,14 +9104,14 @@ lemma restrict_acc_IMP_Minus_correct_function:
           restrict_acc_state_translators Let_def)
       apply force
       done
-  done        
+  done
 
 lemma restrict_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ restrict_acc_pref) restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix restrict_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas restrict_acc_complete_time_simps =
   restrict_acc_imp_subprogram_time_simps
@@ -9163,7 +9163,7 @@ lemma restrict_acc_IMP_Minus_correct_time:
     apply force
     done
 
-  done        
+  done
 
 lemma restrict_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) restrict_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -9176,12 +9176,12 @@ lemma restrict_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using restrict_acc_IMP_Minus_correct_function
   by (auto simp: restrict_acc_IMP_Minus_correct_time)
-    (meson restrict_acc_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson restrict_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 
 paragraph restrict_tail
 
-record restrict_tail_state = 
+record restrict_tail_state =
 restrict_tail_l :: nat
 restrict_tail_s :: nat
 restrict_tail_ret :: nat
@@ -9191,7 +9191,7 @@ abbreviation "restrict_tail_l_str \<equiv> ''restrict_tail_l''"
 abbreviation "restrict_tail_s_str \<equiv> ''restrict_tail_s''"
 abbreviation "restrict_tail_ret_str \<equiv> ''restrict_tail_ret''"
 
-definition "restrict_tail_state_upd s \<equiv> 
+definition "restrict_tail_state_upd s \<equiv>
   (let
    restrict_acc_acc' = 0;
    restrict_acc_l' = restrict_tail_l s;
@@ -9217,9 +9217,9 @@ definition "restrict_tail_state_upd s \<equiv>
 function restrict_tail_imp::
   "restrict_tail_state \<Rightarrow> restrict_tail_state" where
   "restrict_tail_imp s =
-    (let 
+    (let
       ret = restrict_tail_state_upd s
-    in 
+    in
      ret)"
   by simp+
 termination
@@ -9232,10 +9232,10 @@ lemma restrict_tail_imp_correct[let_function_correctness]:
   apply (subst restrict_tail_imp.simps)
   apply (simp only: restrict_tail_state_upd_def restrict_tail_def
     restrict_acc_imp_correct reverse_nat_imp_correct Let_def)
-  apply simp 
+  apply simp
   done
 
-definition "restrict_tail_state_upd_time t s \<equiv> 
+definition "restrict_tail_state_upd_time t s \<equiv>
   (let
    restrict_acc_acc' = 0;
    t = t + 2;
@@ -9270,8 +9270,8 @@ definition "restrict_tail_state_upd_time t s \<equiv>
 
 function restrict_tail_imp_time::
   "nat \<Rightarrow> restrict_tail_state \<Rightarrow> nat" where
-  "restrict_tail_imp_time t s = 
-    (let 
+  "restrict_tail_imp_time t s =
+    (let
       ret = t + restrict_tail_state_upd_time 0 s
     in
       ret)"
@@ -9279,27 +9279,27 @@ function restrict_tail_imp_time::
 termination
   by (relation "measure (\<lambda>(t, s). restrict_tail_l s)") simp
 
-declare restrict_tail_imp_time.simps [simp del]            
+declare restrict_tail_imp_time.simps [simp del]
 
 lemma restrict_tail_imp_time_acc:
   "(restrict_tail_imp_time (Suc t) s) = Suc (restrict_tail_imp_time t s)"
   by (induction t s rule: restrict_tail_imp_time.induct)
     ((subst (1 2) restrict_tail_imp_time.simps);
-      (simp add: restrict_tail_state_upd_def))            
+      (simp add: restrict_tail_state_upd_def))
 
 lemma restrict_tail_imp_time_acc_2_aux:
   "(restrict_tail_imp_time t s) = t + (restrict_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: restrict_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: restrict_tail_imp_time_acc)+
 
 lemma restrict_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (restrict_tail_imp_time t s) = t + (restrict_tail_imp_time 0 s)"
-  by (rule restrict_tail_imp_time_acc_2_aux)            
+  by (rule restrict_tail_imp_time_acc_2_aux)
 
 lemma restrict_tail_imp_time_acc_3:
   "(restrict_tail_imp_time (a + b) s) = a + (restrict_tail_imp_time b s)"
   by (induction a arbitrary: b s) (simp add: restrict_tail_imp_time_acc)+
 
-definition "restrict_tail_IMP_Minus \<equiv> 
+definition "restrict_tail_IMP_Minus \<equiv>
   \<comment>\<open>restrict_acc_acc' = 0;
    restrict_acc_l' = restrict_tail_l s;
    restrict_acc_s' = restrict_tail_s s;
@@ -9328,15 +9328,15 @@ definition "restrict_tail_IMP_Minus \<equiv>
   invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
   restrict_tail_ret_str ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str))"
 
-abbreviation "restrict_tail_IMP_vars \<equiv> {restrict_tail_l_str, restrict_tail_s_str, 
+abbreviation "restrict_tail_IMP_vars \<equiv> {restrict_tail_l_str, restrict_tail_s_str,
 restrict_tail_ret_str}"
 
-definition "restrict_tail_imp_to_HOL_state p s \<equiv> 
+definition "restrict_tail_imp_to_HOL_state p s \<equiv>
 \<lparr>restrict_tail_l = s (add_prefix p restrict_tail_l_str),
  restrict_tail_s = s (add_prefix p restrict_tail_s_str),
  restrict_tail_ret = s (add_prefix p restrict_tail_ret_str)\<rparr>"
 
-lemmas restrict_tail_state_translators = 
+lemmas restrict_tail_state_translators =
  restrict_tail_imp_to_HOL_state_def
  restrict_acc_imp_to_HOL_state_def
  reverse_nat_imp_to_HOL_state_def
@@ -9350,10 +9350,10 @@ lemma restrict_tail_IMP_Minus_correct_function:
   apply (simp only: restrict_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
   apply (erule restrict_acc_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
-  subgoal premises p using p(9) by fastforce 
+  subgoal premises p using p(9) by fastforce
   apply (erule reverse_nat_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
   subgoal premises p using p(11) by fastforce
-  apply (force simp: restrict_tail_state_upd_def 
+  apply (force simp: restrict_tail_state_upd_def
   restrict_tail_state_translators Let_def)
   done
 
@@ -9362,7 +9362,7 @@ lemma restrict_tail_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix restrict_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma restrict_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p restrict_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -9371,7 +9371,7 @@ lemma restrict_tail_IMP_Minus_correct_time:
   apply (simp only: restrict_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule restrict_acc_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
-  subgoal premises p using p(17) by fastforce 
+  subgoal premises p using p(17) by fastforce
   apply (erule reverse_nat_IMP_Minus_correct[where vars=restrict_tail_IMP_vars])
   subgoal premises p using p(19) by fastforce
   apply (force simp: restrict_tail_state_upd_time_def
@@ -9389,7 +9389,7 @@ lemma restrict_tail_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using restrict_tail_IMP_Minus_correct_function restrict_tail_IMP_Minus_correct_time
   by (meson restrict_tail_IMP_Minus_correct_effects set_mono_prefix)
-  
+
 section \<open>Logic, continued\<close>
 text \<open>This is a structural issue to be handled, for elemof uses logical operations
 BigAnd uses the cons of lists
@@ -9406,7 +9406,7 @@ abbreviation "BigAnd_aux_acc_str \<equiv> ''acc''"
 abbreviation "BigAnd_aux_xs_str \<equiv> ''xs''"
 abbreviation "BigAnd_aux_ret_str \<equiv> ''ret''"
 
-definition "BigAnd_aux_state_upd s \<equiv> 
+definition "BigAnd_aux_state_upd s \<equiv>
   (let
     cons_h' = BigAnd_aux_acc s;
     cons_t' = 0;
@@ -9432,15 +9432,15 @@ definition "BigAnd_aux_state_upd s \<equiv>
     cons_ret_state = cons_imp cons_state;
 
     BigAnd_aux_ret' = cons_ret cons_ret_state;
-    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
-          BigAnd_aux_xs = BigAnd_aux_xs s, 
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s,
+          BigAnd_aux_xs = BigAnd_aux_xs s,
           BigAnd_aux_ret = BigAnd_aux_ret'
           \<rparr>
     in
       ret
   )"
 
-lemmas BigAnd_aux_imp_subprogram_simps = 
+lemmas BigAnd_aux_imp_subprogram_simps =
   BigAnd_aux_state_upd_def
 
 function BigAnd_aux_imp::
@@ -9448,7 +9448,7 @@ function BigAnd_aux_imp::
   "BigAnd_aux_imp s =
   (let
      next_iteration = BigAnd_aux_state_upd s
-    in 
+    in
      next_iteration)"
   by simp+
 termination
@@ -9463,9 +9463,9 @@ lemma BigAnd_aux_imp_correct:
    3 ## (hd_nat (BigAnd_aux_xs s)) ## (BigAnd_aux_acc s) ## 0"
   apply (induction s rule: BigAnd_aux_imp.induct)
   apply (subst BigAnd_aux_imp.simps)
-  apply (simp add: BigAnd_aux_imp_subprogram_simps Let_def 
+  apply (simp add: BigAnd_aux_imp_subprogram_simps Let_def
         cons_imp_correct hd_imp_correct)
-  done            
+  done
 
 definition "BigAnd_aux_state_upd_time t s \<equiv>
   let
@@ -9509,14 +9509,14 @@ definition "BigAnd_aux_state_upd_time t s \<equiv>
 
     BigAnd_aux_ret' = cons_ret cons_ret_state;
     t = t + 2;
-    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
-          BigAnd_aux_xs = BigAnd_aux_xs s, 
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s,
+          BigAnd_aux_xs = BigAnd_aux_xs s,
           BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>
   in
     t
 "
 
-lemmas BigAnd_aux_imp_subprogram_time_simps = 
+lemmas BigAnd_aux_imp_subprogram_time_simps =
   BigAnd_aux_state_upd_time_def
   BigAnd_aux_imp_subprogram_simps
 
@@ -9533,25 +9533,25 @@ termination
   apply simp
   done
 
-declare BigAnd_aux_imp_time.simps [simp del]            
+declare BigAnd_aux_imp_time.simps [simp del]
 
 lemma BigAnd_aux_imp_time_acc:
   "(BigAnd_aux_imp_time (Suc t) s) = Suc (BigAnd_aux_imp_time t s)"
   by (induction t s rule: BigAnd_aux_imp_time.induct)
     ((subst (1 2) BigAnd_aux_imp_time.simps);
-      (simp add: BigAnd_aux_state_upd_def))            
+      (simp add: BigAnd_aux_state_upd_def))
 
 lemma BigAnd_aux_imp_time_acc_2_aux:
   "(BigAnd_aux_imp_time t s) = t + (BigAnd_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: BigAnd_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: BigAnd_aux_imp_time_acc)+
 
 lemma BigAnd_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (BigAnd_aux_imp_time t s) = t + (BigAnd_aux_imp_time 0 s)"
-  by (rule BigAnd_aux_imp_time_acc_2_aux)            
+  by (rule BigAnd_aux_imp_time_acc_2_aux)
 
 lemma BigAnd_aux_imp_time_acc_3:
   "(BigAnd_aux_imp_time (a + b) s) = a + (BigAnd_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: BigAnd_aux_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: BigAnd_aux_imp_time_acc)+
 
 definition BigAnd_aux_IMP_Minus where
   "BigAnd_aux_IMP_Minus \<equiv>
@@ -9595,11 +9595,11 @@ definition BigAnd_aux_IMP_Minus where
     invoke_subprogram (cons_prefix) cons_IMP_Minus;;
 
   \<comment>\<open>BigAnd_aux_ret' = cons_ret cons_ret_state'';
-    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s, 
-          BigAnd_aux_xs = BigAnd_aux_xs s, 
+    ret = \<lparr>BigAnd_aux_acc = BigAnd_aux_acc s,
+          BigAnd_aux_xs = BigAnd_aux_xs s,
           BigAnd_aux_ret = BigAnd_aux_ret'\<rparr>\<close>
     BigAnd_aux_ret_str ::= A (V (cons_prefix @ cons_ret_str))
-  
+
   "
 
 abbreviation "BigAnd_aux_IMP_vars\<equiv>
@@ -9607,7 +9607,7 @@ abbreviation "BigAnd_aux_IMP_vars\<equiv>
 
 lemmas BigAnd_aux_IMP_subprogram_simps =
   BigAnd_aux_IMP_Minus_def
-  
+
 definition "BigAnd_aux_imp_to_HOL_state p s =
   \<lparr>BigAnd_aux_acc = (s (add_prefix p BigAnd_aux_acc_str)),
    BigAnd_aux_xs = (s (add_prefix p BigAnd_aux_xs_str)),
@@ -9649,7 +9649,7 @@ lemma BigAnd_aux_IMP_Minus_correct_function:
     subgoal premises p
     using p(8)[of BigAnd_aux_xs_str] apply simp
     apply (subst p(7)[symmetric])
-    using p(4)[of "cons_prefix @ cons_ret_str"] 
+    using p(4)[of "cons_prefix @ cons_ret_str"]
     by force
   *)
 
@@ -9658,7 +9658,7 @@ lemma BigAnd_aux_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix BigAnd_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas BigAnd_aux_complete_time_simps =
   BigAnd_aux_imp_subprogram_time_simps
@@ -9680,10 +9680,10 @@ lemma BigAnd_aux_IMP_Minus_correct_time:
   apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
   subgoal premises p using p(35) by fastforce
   apply (erule  cons_IMP_Minus_correct[where vars=BigAnd_aux_IMP_vars])
-  subgoal premises p using p(37) by fastforce 
+  subgoal premises p using p(37) by fastforce
   apply (simp only: BigAnd_aux_state_translators
   Let_def BigAnd_aux_state_upd_time_def
-  cons_imp_to_HOL_state_def 
+  cons_imp_to_HOL_state_def
   hd_imp_to_HOL_state_def )
   apply fastforce
   done
@@ -9741,12 +9741,12 @@ definition "BigAnd_acc_state_upd s \<equiv>
           BigAnd_acc_ret = BigAnd_acc_ret s\<rparr>
   in
     ret
-  )" 
+  )"
 
 definition "BigAnd_acc_imp_compute_loop_condition s \<equiv> (
   let
     condition = BigAnd_acc_xs s
-  in 
+  in
     condition
 )"
 
@@ -9759,7 +9759,7 @@ definition "BigAnd_acc_imp_after_loop s \<equiv> (
     ret
 )"
 
-lemmas BigAnd_acc_imp_subprogram_simps = 
+lemmas BigAnd_acc_imp_subprogram_simps =
   BigAnd_acc_state_upd_def
   BigAnd_acc_imp_compute_loop_condition_def
   BigAnd_acc_imp_after_loop_def
@@ -9789,10 +9789,10 @@ lemma BigAnd_acc_imp_correct:
   apply (induction s rule: BigAnd_acc_imp.induct)
   apply (subst BigAnd_acc_imp.simps)
   apply (subst BigAnd_acc.simps)
-  apply (simp del: BigAnd_acc.simps 
+  apply (simp del: BigAnd_acc.simps
       add: BigAnd_acc_imp_subprogram_simps Let_def
       tl_imp_correct BigAnd_aux_imp_correct)
-  done            
+  done
 
 definition "BigAnd_acc_state_upd_time t s \<equiv>
 (
@@ -9826,7 +9826,7 @@ definition "BigAnd_acc_state_upd_time t s \<equiv>
           BigAnd_acc_ret = BigAnd_acc_ret s\<rparr>
   in
     t
-  )" 
+  )"
 
 
 definition "BigAnd_acc_imp_compute_loop_condition_time t s \<equiv>
@@ -9847,7 +9847,7 @@ definition "BigAnd_acc_imp_after_loop_time t s \<equiv>
     t
 "
 
-lemmas BigAnd_acc_imp_subprogram_time_simps = 
+lemmas BigAnd_acc_imp_subprogram_time_simps =
   BigAnd_acc_state_upd_time_def
   BigAnd_acc_imp_compute_loop_condition_time_def
   BigAnd_acc_imp_after_loop_time_def
@@ -9877,25 +9877,25 @@ termination
   apply (simp add: BigAnd_acc_imp_subprogram_time_simps tl_imp_correct)+
   done
 
-declare BigAnd_acc_imp_time.simps [simp del]            
+declare BigAnd_acc_imp_time.simps [simp del]
 
 lemma BigAnd_acc_imp_time_acc:
   "(BigAnd_acc_imp_time (Suc t) s) = Suc (BigAnd_acc_imp_time t s)"
   by (induction t s rule: BigAnd_acc_imp_time.induct)
     ((subst (1 2) BigAnd_acc_imp_time.simps);
-      (simp add: BigAnd_acc_state_upd_def))            
+      (simp add: BigAnd_acc_state_upd_def))
 
 lemma BigAnd_acc_imp_time_acc_2_aux:
   "(BigAnd_acc_imp_time t s) = t + (BigAnd_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: BigAnd_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: BigAnd_acc_imp_time_acc)+
 
 lemma BigAnd_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (BigAnd_acc_imp_time t s) = t + (BigAnd_acc_imp_time 0 s)"
-  by (rule BigAnd_acc_imp_time_acc_2_aux)            
+  by (rule BigAnd_acc_imp_time_acc_2_aux)
 
 lemma BigAnd_acc_imp_time_acc_3:
   "(BigAnd_acc_imp_time (a + b) s) = a + (BigAnd_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: BigAnd_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: BigAnd_acc_imp_time_acc)+
 
 abbreviation "BigAnd_acc_while_cond \<equiv> ''condition''"
 
@@ -9926,7 +9926,7 @@ definition "BigAnd_acc_IMP_loop_body \<equiv>
   \<comment> \<open>tl_state = \<lparr>tl_xs = tl_xs', tl_ret = tl_ret'\<rparr>;\<close>
   \<comment> \<open>tl_ret_state = tl_imp tl_state;\<close>
     invoke_subprogram tl_prefix tl_IMP_Minus;;
-  
+
   \<comment> \<open>BigAnd_acc_xs' = tl_ret tl_ret_state;\<close>
     BigAnd_acc_xs_str ::= A (V (tl_prefix @ tl_ret_str))
   \<comment> \<open>ret = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',\<close>
@@ -10004,7 +10004,7 @@ lemma BigAnd_acc_IMP_Minus_correct_function:
       subgoal premises p using p(16) by fastforce
       apply (simp only: Let_def prefix_simps
           BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
-          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_acc_imp_subprogram_simps
           BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_imp_correct
           tl_imp_to_HOL_state_def tl_imp_correct)+
       apply force
@@ -10020,23 +10020,23 @@ lemma BigAnd_acc_IMP_Minus_correct_function:
       subgoal premises p using p(16) by fastforce
       apply (simp only: Let_def prefix_simps
           BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
-          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_acc_imp_subprogram_simps
           BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_state.simps BigAnd_aux_imp_correct
           tl_imp_to_HOL_state_def tl_state.simps tl_imp_correct)+
-      apply clarsimp 
-      subgoal premises p 
+      apply clarsimp
+      subgoal premises p
         using p(6)[of BigAnd_acc_xs_str]
               p(6)[of BigAnd_acc_acc_str]
               p(4) p(6) same_append_eq by fastforce
   done
-done        
+done
 
 lemma BigAnd_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ BigAnd_acc_pref) BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix BigAnd_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas BigAnd_acc_complete_time_simps =
   BigAnd_acc_imp_subprogram_time_simps
@@ -10079,7 +10079,7 @@ lemma BigAnd_acc_IMP_Minus_correct_time:
       subgoal premises p using p(19) by fastforce
       apply (simp only: Let_def prefix_simps
           BigAnd_acc_state.simps BigAnd_acc_imp_to_HOL_state_def
-          BigAnd_acc_imp_subprogram_simps 
+          BigAnd_acc_imp_subprogram_simps
           BigAnd_aux_imp_to_HOL_state_def BigAnd_aux_state.simps BigAnd_aux_imp_correct
           tl_imp_to_HOL_state_def tl_state.simps tl_imp_correct)+
       apply force
@@ -10100,16 +10100,16 @@ lemma BigAnd_acc_IMP_Minus_correct_time:
           tl_imp_to_HOL_state_def tl_imp_correct
           tl_IMP_Minus_correct_time)+
       apply clarsimp
-        subgoal premises p 
+        subgoal premises p
         using p(11)[of BigAnd_acc_xs_str] apply simp
         using p(11)[of BigAnd_acc_ret_str] apply simp
         using p(9)[of BigAnd_acc_ret_str] apply simp
         using p(9)[of BigAnd_acc_acc_str] apply simp
         done
-      
+
       done
 
-  done        
+  done
 
 lemma BigAnd_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) BigAnd_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -10122,9 +10122,9 @@ lemma BigAnd_acc_IMP_Minus_correct:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using BigAnd_acc_IMP_Minus_correct_function
   by (auto simp: BigAnd_acc_IMP_Minus_correct_time)
-    (meson BigAnd_acc_IMP_Minus_correct_effects set_mono_prefix)                        
+    (meson BigAnd_acc_IMP_Minus_correct_effects set_mono_prefix)
 
- 
+
 
 paragraph  BigAnd_tail
 record BigAnd_tail_state =
@@ -10164,8 +10164,8 @@ definition "BigAnd_tail_state_upd s \<equiv>
    BigAnd_acc_acc' = cons_ret cons_ret_state;
    BigAnd_acc_xs' = reverse_nat_ret reverse_nat_ret_state;
    BigAnd_acc_ret' = 0;
-   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
-                    BigAnd_acc_xs = BigAnd_acc_xs', 
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',
+                    BigAnd_acc_xs = BigAnd_acc_xs',
                     BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
    BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
    BigAnd_tail_ret' = BigAnd_acc_ret BigAnd_acc_ret_state;
@@ -10177,9 +10177,9 @@ definition "BigAnd_tail_state_upd s \<equiv>
 function BigAnd_tail_imp::
   "BigAnd_tail_state \<Rightarrow> BigAnd_tail_state" where
   "BigAnd_tail_imp s =
-    (let 
+    (let
       ret = BigAnd_tail_state_upd s
-    in 
+    in
      ret)"
   by simp+
 termination
@@ -10242,8 +10242,8 @@ definition "BigAnd_tail_state_upd_time t s \<equiv>
     t = t + 2;
    BigAnd_acc_ret' = 0;
     t = t + 2;
-   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
-                    BigAnd_acc_xs = BigAnd_acc_xs', 
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',
+                    BigAnd_acc_xs = BigAnd_acc_xs',
                     BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
    BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
     t = t + BigAnd_acc_imp_time 0 BigAnd_acc_state;
@@ -10256,8 +10256,8 @@ definition "BigAnd_tail_state_upd_time t s \<equiv>
 
 function BigAnd_tail_imp_time::
   "nat \<Rightarrow> BigAnd_tail_state \<Rightarrow> nat" where
-  "BigAnd_tail_imp_time t s = 
-    (let 
+  "BigAnd_tail_imp_time t s =
+    (let
       ret = t + BigAnd_tail_state_upd_time 0 s
     in
       ret)"
@@ -10265,9 +10265,9 @@ function BigAnd_tail_imp_time::
 termination
   by (relation "measure (\<lambda>(t, s). BigAnd_tail_xs s)") simp
 
-declare BigAnd_tail_imp_time.simps [simp del]            
+declare BigAnd_tail_imp_time.simps [simp del]
 
-definition "BigAnd_tail_IMP_Minus \<equiv> 
+definition "BigAnd_tail_IMP_Minus \<equiv>
 \<comment>\<open>cons_h' = 0;
     cons_t' = 0;
     cons_ret' = 0;
@@ -10295,38 +10295,38 @@ definition "BigAnd_tail_IMP_Minus \<equiv>
    BigAnd_acc_acc' = cons_ret cons_ret_state;
    BigAnd_acc_xs' = reverse_nat_ret reverse_nat_ret_state;
    BigAnd_acc_ret' = 0;
-   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc', 
-                    BigAnd_acc_xs = BigAnd_acc_xs', 
+   BigAnd_acc_state = \<lparr>BigAnd_acc_acc = BigAnd_acc_acc',
+                    BigAnd_acc_xs = BigAnd_acc_xs',
                     BigAnd_acc_ret = BigAnd_acc_ret'\<rparr>;
    BigAnd_acc_ret_state = BigAnd_acc_imp BigAnd_acc_state;
    BigAnd_tail_ret' = BigAnd_acc_ret BigAnd_acc_ret_state;
    ret = \<lparr>BigAnd_tail_xs = BigAnd_tail_xs s,
           BigAnd_tail_ret = BigAnd_tail_ret'\<rparr>\<close>
-          
+
   (cons_prefix @ cons_h_str) ::= A (N 0);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 2);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (reverse_nat_prefix @ reverse_nat_n_str) ::= A (V BigAnd_tail_xs_str);;
   (reverse_nat_prefix @ reverse_nat_ret_str) ::= A (N 0);;
   invoke_subprogram reverse_nat_prefix reverse_nat_IMP_Minus;;
-  
+
   (BigAnd_acc_prefix @ BigAnd_acc_acc_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (BigAnd_acc_prefix @ BigAnd_acc_xs_str) ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str));;
   (BigAnd_acc_prefix @ BigAnd_acc_ret_str) ::= A (N 0);;
   invoke_subprogram BigAnd_acc_prefix BigAnd_acc_IMP_Minus;;
-  
+
   BigAnd_tail_ret_str ::= A (V (BigAnd_acc_prefix @ BigAnd_acc_ret_str))"
 
 abbreviation "BigAnd_tail_IMP_vars \<equiv> {BigAnd_tail_xs_str, BigAnd_tail_ret_str}"
@@ -10350,17 +10350,17 @@ lemma BigAnd_tail_IMP_Minus_correct_function:
   apply (simp only: BigAnd_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_E)+
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(20) by fastforce 
+  subgoal premises p using p(20) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(22) by fastforce 
+  subgoal premises p using p(22) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(24) by fastforce 
-  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars 
+  subgoal premises p using p(24) by fastforce
+  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars
   \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(26) by fastforce
   apply (erule BigAnd_acc_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
   subgoal premises p using p(28) by fastforce
-  apply (force simp: BigAnd_tail_state_upd_def 
+  apply (force simp: BigAnd_tail_state_upd_def
   BigAnd_tail_state_translators Let_def)
   done
 
@@ -10369,7 +10369,7 @@ lemma BigAnd_tail_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix BigAnd_tail_prefix v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast 
+  by blast
 
 lemma BigAnd_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p BigAnd_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -10378,17 +10378,17 @@ lemma BigAnd_tail_IMP_Minus_correct_time:
   apply (simp only: BigAnd_tail_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(39) by fastforce 
+  subgoal premises p using p(39) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(41) by fastforce 
+  subgoal premises p using p(41) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
-  subgoal premises p using p(43) by fastforce 
-  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars 
+  subgoal premises p using p(43) by fastforce
+  apply (erule reverse_nat_IMP_Minus_correct[where vars="BigAnd_tail_IMP_vars
   \<union> {cons_prefix @ cons_ret_str}"])
   subgoal premises p using p(45) by fastforce
   apply (erule BigAnd_acc_IMP_Minus_correct[where vars=BigAnd_tail_IMP_vars])
   subgoal premises p using p(47) by fastforce
-  apply (force simp: BigAnd_tail_state_upd_time_def 
+  apply (force simp: BigAnd_tail_state_upd_time_def
   BigAnd_tail_state_translators Let_def)
   done
 
@@ -10402,7 +10402,7 @@ lemma BigAnd_tail_IMP_Minus_correct:
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using BigAnd_tail_IMP_Minus_correct_function BigAnd_tail_IMP_Minus_correct_time
-  BigAnd_tail_IMP_Minus_correct_effects 
+  BigAnd_tail_IMP_Minus_correct_effects
   by (meson com_add_prefix_valid_subset com_only_vars)
 
 end

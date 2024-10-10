@@ -14,22 +14,15 @@ datatype
 \<comment> \<open>The only change: A call to an IMP- @{typ com}, storing its result in the return @{typ vname}.\<close>
       | Call'   com vname
 
-bundle com'_syntax begin
+open_bundle com'_syntax
+begin
 notation Assign' ("_ ::= _" [1000, 61] 61) and
          Seq' ("_;;/ _"  [60, 61] 60) and
          If' ("(IF _/\<noteq>0 THEN _/ ELSE _)"  [0, 0, 61] 61) and
          While' ("(WHILE _/\<noteq>0 DO _)"  [0, 61] 61) and
-         Call' ("CALL _ RETURN _") end
-
-bundle no_com'_syntax begin
-no_notation Assign' ("_ ::= _" [1000, 61] 61) and
-            Seq' ("_;;/ _"  [60, 61] 60) and
-            If' ("(IF _/\<noteq>0 THEN _/ ELSE _)"  [0, 0, 61] 61) and
-            While' ("(WHILE _/\<noteq>0 DO _)"  [0, 61] 61) and
-            Call' ("CALL _ RETURN _") end
-
-unbundle no_com_syntax
-unbundle com'_syntax
+         Call' ("CALL _ RETURN _")
+end
+unbundle no com_syntax
 
 inductive
   big_step_t' :: "com' \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool"  ("_ \<Rightarrow>''\<^bsup> _\<^esup>  _" 55)
@@ -90,11 +83,11 @@ next
 qed fastforce+
 
 
-lemma noninterference: 
+lemma noninterference:
   "(c,s) \<Rightarrow>'\<^bsup> x \<^esup> t \<Longrightarrow> set (vars c) \<subseteq> S \<Longrightarrow> s = s' on S \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>'\<^bsup> x \<^esup> t' \<and> t = t' on S"
 proof (induction c s x t arbitrary: s' rule: big_step_t'_induct)
   case (Assign' x a s)
-  then show ?case 
+  then show ?case
     using aval_eq_if_eq_on_vars big_step_t'.Assign' eq_on_def eq_on_subset fun_upd_apply set_subset_Cons vars_com'.simps(2) by fastforce
 next
   case (WhileTrue' s1 b c x s2 y s3 z)
@@ -136,8 +129,7 @@ fun size\<^sub>c :: "com' \<Rightarrow> nat" where
   "size\<^sub>c (CALL c RETURN r) = 2 * length (vars c) + 5" |
   "size\<^sub>c _ = 0"
 
-unbundle no_com'_syntax
-unbundle com_syntax
+unbundle no com'_syntax and com_syntax
 
 fun ssubst where
 "ssubst m [] = SKIP" |
@@ -180,7 +172,7 @@ proof (induction vs arbitrary: s)
     by (metis Cons.prems(2) eq_on_feq1 fun_upd_other list.set_intros(1))
   with 1 2 show ?case unfolding eq_on_def
     apply (simp add: numeral_eq_Suc)
-    by (metis One_nat_def Seq add_Suc plus_1_eq_Suc) 
+    by (metis One_nat_def Seq add_Suc plus_1_eq_Suc)
 qed auto
 
 
@@ -275,7 +267,7 @@ proof -
     unfolding inline1_def by fastforce
 
   hence s\<^sub>1: "s\<^sub>1 = s(?m r := s r)" "t = s\<^sub>2(r := s\<^sub>2(?m r))" by auto
-  moreover have "s\<^sub>1 = s\<^sub>2 on set S" using transfer_unchanged[OF transfer_sem inj disj] 
+  moreover have "s\<^sub>1 = s\<^sub>2 on set S" using transfer_unchanged[OF transfer_sem inj disj]
     by force
 
   ultimately show "s = t on set S - {r}"
@@ -449,7 +441,7 @@ proof (induction "inline_S S c'" s z t arbitrary: c' s' rule: big_step_t_induct)
   then show ?case by (cases c') (auto simp: inline1_def)
 next
   case (Assign x a s)
-  then show ?case 
+  then show ?case
     apply (cases c')
     apply (auto simp: inline1_def split: if_splits)
     by (smt (verit) Assign' aval_eq_if_eq_on_vars dual_order.refl eq_on_def eq_on_subset fun_upd_apply lessI)
@@ -485,35 +477,35 @@ next
 next
   case (IfTrue s b c\<^sub>1 x t y c\<^sub>2)
   then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') (auto simp: inline1_def)
-  with IfTrue obtain x' t' where 
+  with IfTrue obtain x' t' where
     "(c\<^sub>1', s') \<Rightarrow>'\<^bsup>x'\<^esup> t' \<and> t = t' on set S \<and> x' \<le> x" "x < (x' + 1) * (1 + size\<^sub>c c\<^sub>1')" by auto blast
   moreover have "s' b \<noteq> 0" using IfTrue c' by auto
-  ultimately have "(If' b c\<^sub>1' c\<^sub>2', s') \<Rightarrow>'\<^bsup> x' + 1\<^esup>  t' \<and> t = t' on set S \<and> x' + 1 \<le> y" using IfTrue by auto 
+  ultimately have "(If' b c\<^sub>1' c\<^sub>2', s') \<Rightarrow>'\<^bsup> x' + 1\<^esup>  t' \<and> t = t' on set S \<and> x' + 1 \<le> y" using IfTrue by auto
   moreover from \<open>y = x + 1\<close> \<open> x < (x' + 1) * (1 + size\<^sub>c c\<^sub>1')\<close>
   have "y < ((x' + 1) + 1) * (1 + size\<^sub>c c')" using c' by (auto simp: algebra_simps)
   ultimately have "(c', s') \<Rightarrow>'\<^bsup> x' + 1\<^esup>  t' \<and> t = t' on set S \<and> x' + 1 \<le> y \<and> y < (x' + 1 + 1) * (1 + size\<^sub>c c')" using c' by auto
-  thus ?case by blast 
+  thus ?case by blast
 next
   case (IfFalse s b c\<^sub>2 x t y c\<^sub>1)
   then obtain c\<^sub>1' c\<^sub>2' where c': "c' = If' b c\<^sub>1' c\<^sub>2'" by (cases c') (auto simp: inline1_def)
-  with IfFalse obtain x' t' where 
+  with IfFalse obtain x' t' where
     "(c\<^sub>2', s') \<Rightarrow>'\<^bsup>x'\<^esup> t' \<and> (t = t' on set S) \<and> x' \<le> x" "x < (x' + 1) * (1 + size\<^sub>c c\<^sub>2')" by auto blast
   moreover have "s' b = 0" using IfFalse c' by auto
   ultimately have "(If' b c\<^sub>1' c\<^sub>2', s') \<Rightarrow>'\<^bsup> x' + 1\<^esup>  t' \<and> t = t' on set S \<and> x' + 1 \<le> y" using IfFalse by auto
   moreover from \<open>y = x + 1\<close> \<open> x < (x' + 1) * (1 + size\<^sub>c c\<^sub>2')\<close>
   have "y < ((x' + 1) + 1) * (1 + size\<^sub>c c')" using c' by (auto simp: algebra_simps)
   ultimately have "(c', s') \<Rightarrow>'\<^bsup> x' + 1\<^esup>  t' \<and> t = t' on set S \<and> x' + 1 \<le> y \<and> y < (x' + 1 + 1) * (1 + size\<^sub>c c')" using c' by auto
-  thus ?case by blast 
+  thus ?case by blast
 next
   case (WhileFalse s b c)
-  then show ?case 
-    apply (cases c') 
+  then show ?case
+    apply (cases c')
     apply (auto simp: inline1_def trans_le_add1 le_Suc_eq WhileFalse') by fastforce
 next
   case (WhileTrue s\<^sub>1 b c\<^sub>1 x s\<^sub>2 y s\<^sub>3 z c' s\<^sub>1')
   then obtain c\<^sub>1' where c'[simp]: "c' = While' b c\<^sub>1'" by (cases c') (auto simp: inline1_def)
   with WhileTrue obtain s\<^sub>2' x' where 1: "(c\<^sub>1', s\<^sub>1') \<Rightarrow>'\<^bsup> x' \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' on set S" " x' \<le> x" "x < (x' + 1) * (1 + size\<^sub>c c')" by auto metis
-  with WhileTrue c' obtain s\<^sub>3' y' where 2: "(While' b c\<^sub>1', s\<^sub>2') \<Rightarrow>'\<^bsup> y' \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' on set S" "y' \<le> y" "y < (y' + 1) * (1 + size\<^sub>c c')" 
+  with WhileTrue c' obtain s\<^sub>3' y' where 2: "(While' b c\<^sub>1', s\<^sub>2') \<Rightarrow>'\<^bsup> y' \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' on set S" "y' \<le> y" "y < (y' + 1) * (1 + size\<^sub>c c')"
     apply auto by (metis WhileTrue.hyps(7) WhileTrue.prems(2) c' size\<^sub>c.simps(3))
   from c' WhileTrue.prems WhileTrue.hyps(1) have b: "s\<^sub>1' b \<noteq> 0" by auto
   with 1 2 c' have "(While' b c\<^sub>1', s\<^sub>1') \<Rightarrow>'\<^bsup> 1 + x' + y' \<^esup> s\<^sub>3'" "1 + x' + y' \<le> 1 + x + y"

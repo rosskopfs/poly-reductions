@@ -33,22 +33,13 @@ datatype aexp =  A atomExp            |
   Parity atomExp       |
   RightShift atomExp
 
-bundle aexp_syntax
+open_bundle aexp_syntax
 begin
 notation Plus            ("_ \<oplus> _" [60,60] 60) and
   Sub             ("_ \<ominus> _" [60,60] 60) and
   Parity          ("_ \<doteq>1" [60] 60)   and
   RightShift      ("_\<then>" [60] 60)
-
 end
-bundle no_aexp_syntax
-begin
-notation Plus            ("_ \<oplus> _" [60,60] 60) and
-  Sub             ("_ \<ominus> _" [60,60] 60) and
-  Parity          ("_ \<doteq>1" [60] 60)    and
-  RightShift      ("_\<then>" [60] 60)
-end
-unbundle aexp_syntax
 
 fun aval :: "aexp \<Rightarrow> state \<Rightarrow> val" where
   "aval (A atomExp) s = atomVal atomExp s"        |
@@ -73,11 +64,6 @@ translations
 bundle state_syntax
 begin
 notation null_state ("<>")
-end
-
-bundle no_state_syntax
-begin
-no_notation null_state ("<>")
 end
 
 lemma "<a := 1, b := 2> = (<> (a := 1)) (b := (2::int))"

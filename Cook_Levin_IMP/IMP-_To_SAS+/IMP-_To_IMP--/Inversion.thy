@@ -22,8 +22,8 @@ lemma "\<not> surj (power2 :: nat \<Rightarrow> nat)"
 *)
 locale inversion =
   fixes f :: "nat \<Rightarrow> nat"
-  assumes inj: "inj f" 
-  assumes mono: "mono f" 
+  assumes inj: "inj f"
+  assumes mono: "mono f"
   assumes 0: "f 0 = 0" (* I would like to get rid of this, but then the inverse is only defined *)
 begin
 
@@ -74,11 +74,11 @@ lemma f_nat_le_imp_le:
   shows "m \<le> n"
 proof (cases m)
   case 0
-  then show ?thesis 
+  then show ?thesis
     by simp
 next
   case (Suc nat)
-  then show ?thesis 
+  then show ?thesis
     using assms inc
     using order_trans by blast
 qed
@@ -104,14 +104,14 @@ proof -
 qed
 
 lemma f_inv_zero [simp]: "f_inv 0 = 0"
-  using f_inv_inverse_f [of 0] 
+  using f_inv_inverse_f [of 0]
   by (simp add: "0")
 
 (* Might no longer hold
 (* Now this is gettingout of hand :) *)
 lemma f_inv_one [simp]: "f_inv 1 = 1"
   using f_inv_inverse_f [of 1]  sledgehammer
-  by (metis "0" One_nat_def bij bij_inv_eq_iff inversion.f_inv_inverse inversion.f_inv_unique inversion.inc 
+  by (metis "0" One_nat_def bij bij_inv_eq_iff inversion.f_inv_inverse inversion.f_inv_unique inversion.inc
       inversion_axioms linordered_nonzero_semiring_class.zero_le_one order_le_less)
 *)
 
@@ -141,7 +141,7 @@ lemma f_inv_greater_zero_iff [simp]: "f_inv n > 0 \<longleftrightarrow> n > 0"
 proof -
   have *: "0 < Max {m. f m \<le> n} \<longleftrightarrow> (\<exists>a\<in>{m. f m \<le> n}. 0 < a)"
     by (rule Max_gr_iff) (fact f_inv_aux)+
-  show ?thesis 
+  show ?thesis
   proof
     assume "0 < f_inv n"
     then have "0 < Max {m. f m \<le> n}" by (simp add: f_inv_def)
@@ -150,7 +150,7 @@ proof -
     assume "0 < n"
     hence "f 1 \<le> n"
     then have "f 1 \<le> n \<and> 0 < (1::nat)"
-      by (metis "0" One_nat_def Suc_leI f_inv_one f_inv_unique linorder_not_le linordered_nonzero_semiring_class.zero_le_one 
+      by (metis "0" One_nat_def Suc_leI f_inv_one f_inv_unique linorder_not_le linordered_nonzero_semiring_class.zero_le_one
           order_trans zero_less_one)
     then have "\<exists>q. f q \<le> n \<and> 0 < q" ..
     with * have "0 < Max {m. f m \<le> n}" by blast
@@ -162,9 +162,9 @@ qed
 (* No idea what this proof does, find out sometime :) *)
 lemma f_inv_f_le [simp]: "f (f_inv n) \<le> n" (* FIXME tune proof *)
 proof (cases "n > 0")
-  case False then show ?thesis 
-    using mono inc 0 
-    by (metis f_inv_inverse_f gr0I) 
+  case False then show ?thesis
+    using mono inc 0
+    by (metis f_inv_inverse_f gr0I)
 next
   case True (*then have "f_inv n > 0"
     using f_inv_greater_zero_iff by blast*)
@@ -198,7 +198,7 @@ next
      apply auto
     apply (metis le0 mult_0_right)
     done
-  with * show ?thesis 
+  with * show ?thesis
     using f_inv_aux Max_in by (auto simp add: f_inv_def)
 qed
 
@@ -211,7 +211,7 @@ lemma Suc_f_inv_f_gt: "n < f (Suc (f_inv n))"
 
 lemma le_f_inv_iff: "x \<le> f_inv y \<longleftrightarrow> f x \<le> y"
 proof -
-  have "x \<le> f_inv y \<longleftrightarrow> (\<exists>z. f z \<le> y \<and> x \<le> z)"    
+  have "x \<le> f_inv y \<longleftrightarrow> (\<exists>z. f z \<le> y \<and> x \<le> z)"
     using Max_ge_iff[OF f_inv_aux, of x y] by (simp add: f_inv_def)
   also have "\<dots> \<longleftrightarrow> f x \<le> y"
   proof safe
@@ -220,7 +220,7 @@ proof -
   qed auto
   finally show ?thesis .
 qed
-  
+
 lemma le_f_invI: "f x \<le> y \<Longrightarrow> x \<le> f_inv y"
   by (simp add: le_f_inv_iff)
 
@@ -230,7 +230,7 @@ lemma f_inv_le_iff: "f_inv y \<le> x \<longleftrightarrow> (\<forall>z. f z \<le
 lemma sqrt_leI:
   "(\<And>z. f z \<le> y \<Longrightarrow> z \<le> x) \<Longrightarrow> f_inv y \<le> x"
   by simp
-    
+
 lemma f_less_imp_less: "f x < f y \<Longrightarrow> 0 \<le> y \<Longrightarrow> x < y"
   by (simp add: less_le_not_le f_nat_le_eq_le)
 lemma f_inv_Suc:
@@ -239,7 +239,7 @@ proof cases
   assume "\<exists> m. Suc n = f m"
   then obtain m where m_def: "Suc n = f m" by blast
   then have lhs: "f_inv (Suc n) = m" by simp
-  from m_def f_inv_f_le[of n] 
+  from m_def f_inv_f_le[of n]
     have "f (f_inv n) < f m" by linarith
   with f_less_imp_less have lt_m: "f_inv n < m" by blast
   from m_def Suc_f_inv_f_gt[of "n"]
@@ -251,7 +251,7 @@ proof cases
 next
   assume asm: "\<not> (\<exists> m. Suc n = f m)"
   hence "Suc n \<noteq> f (f_inv (Suc n))" by simp
-  with f_inv_f_le[of "Suc n"] 
+  with f_inv_f_le[of "Suc n"]
     have "f_inv (Suc n) \<le> f_inv n" by (intro le_f_invI) linarith
   moreover have "f_inv (Suc n) \<ge> f_inv n"
     by (intro monoD[OF mono_f_inv]) simp_all
@@ -265,21 +265,21 @@ function f_inv_bisection' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarr
   by force+
 termination by (relation "Wellfounded.measure (\<lambda>(y,L,R) . R-L)") auto
 
-lemma f_inv_bisection'_correct': 
+lemma f_inv_bisection'_correct':
   "(0::nat) \<le> L \<Longrightarrow> L < R \<Longrightarrow> f L \<le> y \<Longrightarrow> y < f R \<Longrightarrow> f (f_inv_bisection' y L R) \<le> y \<and> y < f (Suc (f_inv_bisection' y L R))"
   by (induction y L R rule: f_inv_bisection'.induct) (simp_all add: le_Suc_eq)
 
 (* This is what I would like *)
-lemma f_inv_bisection'_correct'': 
-  assumes "(0::nat) \<le> L" "L < R" "f L \<le> y" "y < f R" 
+lemma f_inv_bisection'_correct'':
+  assumes "(0::nat) \<le> L" "L < R" "f L \<le> y" "y < f R"
   shows "f (f_inv_bisection' y L R) \<le> y" "y < f (Suc (f_inv_bisection' y L R))"
   using assms f_inv_bisection'_correct'  by blast+
 
 definition "f_inv_bisection y \<equiv> f_inv_bisection' y 0 (Suc y)"
 
-lemma f_inv_bisection_correct': 
+lemma f_inv_bisection_correct':
   "f (f_inv_bisection y) \<le> y" "y < f (Suc (f_inv_bisection y))"
-  unfolding f_inv_bisection_def apply (all \<open>rule f_inv_bisection'_correct''\<close>) 
+  unfolding f_inv_bisection_def apply (all \<open>rule f_inv_bisection'_correct''\<close>)
      apply (simp_all add: "0")
   using mono Suc_le_eq inc by blast+
 
@@ -293,7 +293,7 @@ lemmas f_inv_bisection_code[code] = f_inv_bisection_correct[symmetric]
 (* Even the timing function should be defineable without ML *)
 
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 
 end
 (* I wondered a bit how much we can do with just locales, but for timing we definitely need ML,
@@ -316,7 +316,7 @@ locale inversion_imp = inversion +
   fixes f_imp :: "'a \<Rightarrow> 'a"
   (* Timing function, generated from f_imp *)
   fixes f_imp_time :: "nat \<Rightarrow> 'a \<Rightarrow> nat"
-  
+
   (* Correctness of f, more complicated in general, proof hopefully fairly automatic *)
   assumes f_imp_correct: "f_imp_state_out (f_imp s) = f (f_imp_state_in s)"
 
@@ -325,7 +325,7 @@ locale inversion_imp = inversion +
 
   (* Variable names occuring in IMP_Minus program, of course more general for others,
     note that there might be internal vars not in the record(Which are not relevant, input/output)
-    Should be generateable from f_imp 
+    Should be generateable from f_imp
     prefix str without . for now
   *)
   fixes f_pref_str :: string
@@ -339,7 +339,7 @@ locale inversion_imp = inversion +
   fixes f_imp_to_HOL_state :: "string \<Rightarrow> AExp.state \<Rightarrow> 'a"
 
   (* Provable from from f_imp_to_HOL_state definition, nothing special *)
-  assumes f_imp_to_HOL_state_add_prefix: 
+  assumes f_imp_to_HOL_state_add_prefix:
     "f_imp_to_HOL_state (add_prefix p1 p2) S = f_imp_to_HOL_state p2 (S o (add_prefix p1))"
 
   (* f_imp_to_HOL_state translates correctly, probably given by definition of f_imp_to_HOL_state *)
@@ -355,7 +355,7 @@ locale inversion_imp = inversion +
   "\<lbrakk>(invoke_subprogram (p1 @ p2) f_IMP_Minus, S) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = f_imp_time 0 (f_imp_to_HOL_state (p1 @ p2) S);
-      s' (add_prefix (p1 @ p2) f_out_str) = 
+      s' (add_prefix (p1 @ p2) f_out_str) =
         f_imp_state_out (f_imp (f_imp_to_HOL_state (p1 @ p2) S));
       \<And>v. v \<in> vars \<Longrightarrow> S (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
@@ -367,19 +367,19 @@ lemma f_imp_time_acc': "f_imp_time t s = t + f_imp_time 0 s"
 
 (* Record package not localized :( In this case I can just use a datatype instead,
   why still records btw? is there any reason? *)
-datatype f_inv_bisection'_state = f_inv_bisection'_state (f_inv_bisection'_state_y: nat) 
+datatype f_inv_bisection'_state = f_inv_bisection'_state (f_inv_bisection'_state_y: nat)
   (f_inv_bisection'_state_L: nat) (f_inv_bisection'_state_R: nat)
 
 definition "f_inv_bisection'_imp_state_upd s = (let
     M = f_inv_bisection'_state_L s + f_inv_bisection'_state_R s;
     M = M div 2;
-    
+
     f_in = M;
     f_out = 0; \<comment> \<open>For general version, just use one var\<close>
     f_inv_bisection'_f_state = f_imp_state f_in f_out;
     f_ret = f_imp f_inv_bisection'_f_state;
     M2 = f_imp_state_out f_ret;
-    
+
     \<comment> \<open>Canonical way to do general (i.e. not just one assignment) branching?\<close>
     cond = M2 - f_inv_bisection'_state_y s;
     L = if cond \<noteq> 0 then f_inv_bisection'_state_L s else M;
@@ -397,7 +397,7 @@ abbreviation "f_inv_bisection'_L_str \<equiv> ''L''"
 abbreviation "f_inv_bisection'_R_str \<equiv> ''R''"
 
 function f_inv_bisection'_imp :: "f_inv_bisection'_state \<Rightarrow> f_inv_bisection'_state" where
-  "f_inv_bisection'_imp s = 
+  "f_inv_bisection'_imp s =
   (if f_inv_bisection'_state_R s - (f_inv_bisection'_state_L s + 1) \<noteq> 0 then \<comment> \<open>While L+1 < R\<close>
     (
       let
@@ -415,35 +415,35 @@ function f_inv_bisection'_imp :: "f_inv_bisection'_state \<Rightarrow> f_inv_bis
   )"
   by pat_completeness auto
 termination (* Same termination proof as recursive version, just some additional decoration *)
-  by (relation "Wellfounded.measure (\<lambda>s. f_inv_bisection'_state_R s - f_inv_bisection'_state_L s)") 
+  by (relation "Wellfounded.measure (\<lambda>s. f_inv_bisection'_state_R s - f_inv_bisection'_state_L s)")
     (auto simp: f_inv_bisection'_imp_state_upd_def Let_def split: if_splits)
 
 declare f_inv_bisection'_imp.simps[simp del]
 
-lemma f_inv_bisection'_imp_correct: "f_inv_bisection'_state_L (f_inv_bisection'_imp s) 
+lemma f_inv_bisection'_imp_correct: "f_inv_bisection'_state_L (f_inv_bisection'_imp s)
   = f_inv_bisection' (f_inv_bisection'_state_y s) (f_inv_bisection'_state_L s) (f_inv_bisection'_state_R s)"
 proof (induction s rule: f_inv_bisection'_imp.induct)
   case (1 s)
   then show ?case
     apply(subst f_inv_bisection'_imp.simps)
-    apply (auto simp: f_inv_bisection'_imp_state_upd_def Let_def f_imp_correct 
+    apply (auto simp: f_inv_bisection'_imp_state_upd_def Let_def f_imp_correct
          split: if_splits) (* Slow, very slow, do better*)
     done
 qed
 
 function f_inv_bisection'_imp_time :: "nat \<Rightarrow> f_inv_bisection'_state \<Rightarrow> nat" where
-  "f_inv_bisection'_imp_time t s = 
+  "f_inv_bisection'_imp_time t s =
   (if f_inv_bisection'_state_R s - (f_inv_bisection'_state_L s + 1) \<noteq> 0 then \<comment> \<open>While L+1 < R\<close>
     (
       let
         t = t + 5; \<comment> \<open>To account for while loop condition checking and difference computation\<close>
          \<comment> \<open>Computation of M\<close>
-        
+
         M = f_inv_bisection'_state_L s + f_inv_bisection'_state_R s;
         t = t + 2;
         M = M div 2;
         t = t + 2;
-        
+
         f_in = M;
         t = t + 2;
         f_out = 0; \<comment> \<open>For general version, just use one var\<close>
@@ -453,7 +453,7 @@ function f_inv_bisection'_imp_time :: "nat \<Rightarrow> f_inv_bisection'_state 
         t = t + f_imp_time 0 f_inv_bisection'_f_state;
         M2 = f_imp_state_out f_ret;
         t = t + 2;
-        
+
         \<comment> \<open>Canonical way to do general (i.e. not just one assignment) branching?\<close>
         cond = M2 - f_inv_bisection'_state_y s;
         t = t + 2;
@@ -477,7 +477,7 @@ function f_inv_bisection'_imp_time :: "nat \<Rightarrow> f_inv_bisection'_state 
   )"
   by pat_completeness auto
 termination (* Same termination proof as recursive version, just some additional decoration *)
-  by (relation "Wellfounded.measure (\<lambda>(t,s). f_inv_bisection'_state_R s - f_inv_bisection'_state_L s)") 
+  by (relation "Wellfounded.measure (\<lambda>(t,s). f_inv_bisection'_state_R s - f_inv_bisection'_state_L s)")
     (auto simp: f_inv_bisection'_imp_state_upd_def Let_def split: if_splits)
 
 
@@ -497,7 +497,7 @@ proof (induction t s arbitrary: rule: f_inv_bisection'_imp_time.induct)
       using 1 by (simp add: f_inv_bisection'_imp_state_upd_def Let_def split: if_splits)
   next
     case False
-    then show ?thesis 
+    then show ?thesis
       by (auto simp add: f_inv_bisection'_imp_time.simps split: if_splits)
   qed
 qed
@@ -508,7 +508,7 @@ lemma f_inv_bisection'_imp_time_acc'': "NO_MATCH 0 t \<Longrightarrow> (f_inv_bi
   using f_inv_bisection'_imp_time_acc' .
 
 definition f_inv_bisection'_IMP_Minus_while_condition where
-  "f_inv_bisection'_IMP_Minus_while_condition \<equiv> 
+  "f_inv_bisection'_IMP_Minus_while_condition \<equiv>
   ''inc'' ::= ((V f_inv_bisection'_L_str) \<oplus> (N 1));;
    ''diff'' ::= ((V f_inv_bisection'_R_str) \<ominus> (V ''inc''))"
 
@@ -549,13 +549,13 @@ definition f_inv_bisection'_IMP_Minus where
 lemmas f_inv_bisection'_IMP_Minus_subprogram_simps =
   f_inv_bisection'_IMP_Minus_while_condition_def f_inv_bisection'_IMP_Minus_loop_body_def f_inv_bisection'_IMP_Minus_after_loop_def
 
-definition "f_inv_bisection'_imp_to_HOL_state p s = f_inv_bisection'_state 
+definition "f_inv_bisection'_imp_to_HOL_state p s = f_inv_bisection'_state
   (s (add_prefix p f_inv_bisection'_y_str))
   (s (add_prefix p f_inv_bisection'_L_str))
   (s (add_prefix p f_inv_bisection'_R_str))"
 
-abbreviation 
-  "f_inv_bisection'_IMP_vars \<equiv> {f_inv_bisection'_y_str, f_inv_bisection'_L_str, f_inv_bisection'_R_str, 
+abbreviation
+  "f_inv_bisection'_IMP_vars \<equiv> {f_inv_bisection'_y_str, f_inv_bisection'_L_str, f_inv_bisection'_R_str,
   ''inc'', ''diff'', ''cond'', ''M'', ''M2''}"
 
 lemma why_is_this_not_happening: "f_inv_bisection'_state_y
@@ -566,7 +566,7 @@ lemma why_is_this_not_happening: "f_inv_bisection'_state_y
 lemma do_not_want_to_search: "n+1 = Suc n"
   by simp
 
-lemma cond_elim: "(\<And>v . v \<in> insert w W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)) 
+lemma cond_elim: "(\<And>v . v \<in> insert w W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v))
   \<Longrightarrow> (s (add_prefix p w) = s' (add_prefix p w) \<Longrightarrow> (\<And>v . v \<in> W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)) \<Longrightarrow> P)
   \<Longrightarrow> P"
   by auto
@@ -574,9 +574,9 @@ lemma cond_elim: "(\<And>v . v \<in> insert w W \<Longrightarrow> s (add_prefix 
 lemma simp_cond1: "(\<And>v . v \<in> W \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)) \<equiv> Trueprop (\<forall>v\<in>W . s (add_prefix p v) = s' (add_prefix p v))"
   by (rule atomize_ball)
 
-lemma simp_cond2: "(\<forall>v\<in>insert w W . s (add_prefix p v) = s' (add_prefix p v)) 
+lemma simp_cond2: "(\<forall>v\<in>insert w W . s (add_prefix p v) = s' (add_prefix p v))
   = (s (add_prefix p w) = s' (add_prefix p w) \<and> (\<forall>v\<in>W . s (add_prefix p v) = s' (add_prefix p v)))"
-  by auto 
+  by auto
 
 lemma simp_cond3: "(\<forall>v\<in>{} . P v) = True"
   by auto
@@ -585,13 +585,13 @@ lemma "set xs \<noteq> set ys \<Longrightarrow> xs \<noteq> ys"
   by blast
 
 (* YEAAAH! *)
-lemma f_inv_bisection'_IMP_Minus_correct_function_1: 
+lemma f_inv_bisection'_IMP_Minus_correct_function_1:
   "(invoke_subprogram p f_inv_bisection'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     s' (add_prefix p f_inv_bisection'_L_str) = 
+     s' (add_prefix p f_inv_bisection'_L_str) =
        f_inv_bisection'_state_L (f_inv_bisection'_imp (f_inv_bisection'_imp_to_HOL_state p s))"
 proof (induction "f_inv_bisection'_imp_to_HOL_state p s" arbitrary: s s' t rule: f_inv_bisection'_imp.induct)
   case 1
-  then show ?case 
+  then show ?case
   apply (subst f_inv_bisection'_imp.simps)
   apply (simp only: f_inv_bisection'_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
@@ -605,89 +605,89 @@ proof (induction "f_inv_bisection'_imp_to_HOL_state p s" arbitrary: s s' t rule:
     subgoal (* This seems unproblematic *)
     apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def prefix_simps)
     apply (erule Seq_tE)+
-      by (auto simp add: f_inv_bisection'_imp_to_HOL_state_def) 
+      by (auto simp add: f_inv_bisection'_imp_to_HOL_state_def)
 
-    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
       thm p
       using p(4,5,8,9) apply -
       apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def f_inv_bisection'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule f_IMP_Minus_correct[where vars = "f_inv_bisection'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p,
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
           (* All proofs the same now, instantiations maybe with simprocs *)
-          subgoal premises p 
+          subgoal premises p
           using p(1,13,15-) using p(14) apply (elim cond_elim) (* Seems to work, still need to filter garbage out *)
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
         done
 
-      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
       thm p
       using p(4,5,8,9) apply -
       apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def f_inv_bisection'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule f_IMP_Minus_correct[where vars = "f_inv_bisection'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p,
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
           (* All proofs the same now, instantiations maybe with simprocs *)
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
         done
       done
   qed
 
-lemma f_inv_bisection'_IMP_Minus_correct_time: 
+lemma f_inv_bisection'_IMP_Minus_correct_time:
   "(invoke_subprogram p f_inv_bisection'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = f_inv_bisection'_imp_time 0 (f_inv_bisection'_imp_to_HOL_state p s)"
 proof (induction "f_inv_bisection'_imp_to_HOL_state p s" arbitrary: s s' t rule: f_inv_bisection'_imp.induct)
   case 1
-  from "1.prems" show ?case 
+  from "1.prems" show ?case
   apply (subst f_inv_bisection'_imp_time.simps)
   apply (simp only: f_inv_bisection'_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
@@ -703,90 +703,90 @@ proof (induction "f_inv_bisection'_imp_to_HOL_state p s" arbitrary: s s' t rule:
     subgoal (* This seems unproblematic *)
     apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def prefix_simps)
     apply (erule Seq_tE)+
-      by (auto simp add: f_inv_bisection'_imp_to_HOL_state_def) 
+      by (auto simp add: f_inv_bisection'_imp_to_HOL_state_def)
 
 
-    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+    subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
       thm p
       using p(4,5,8,9) apply -
       apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def f_inv_bisection'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule f_IMP_Minus_correct[where vars = "f_inv_bisection'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p,
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
           (* All proofs the same now, instantiations maybe with simprocs *)
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           done
         done
 
-      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc 
+      subgoal premises p for x s2 y xa s2a ya xb s2b yb xc s2c yc
       thm p
       using p(4,5,8,9) apply -
       apply (simp only: f_inv_bisection'_IMP_Minus_while_condition_def f_inv_bisection'_IMP_Minus_loop_body_def prefix_simps)
       apply(erule Seq_tE)+
       apply(all \<open>erule f_IMP_Minus_correct[where vars = "f_inv_bisection'_IMP_vars"]\<close>)
-      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p, 
+      subgoal premises p  using p(24) by (auto simp add: prefix_Cons) (* Here we already see how auto gets confused by all the crap in p,
         also a free prefix made it more difficult, abuse . *)
       apply(elim If_tE)
       apply (all \<open>drule AssignD\<close>)+
          apply (all \<open>erule conjE\<close>)+
           (* All proofs the same now, instantiations maybe with simprocs *)
-          subgoal premises p thm p 
-          using p(1,13,15-) 
+          subgoal premises p thm p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
-          by (metis f_imp_state f_imp_state_in f_imp_state_out) (* ? *)
-          subgoal premises p 
-          using p(1,13,15-) 
-          (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
           apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
-          
-          done
-          subgoal premises p 
-          using p(1,13,15-) 
+          by (metis f_imp_state f_imp_state_in f_imp_state_out) (* ? *)
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
+
           done
-          subgoal premises p 
-          using p(1,13,15-) 
+          subgoal premises p
+          using p(1,13,15-)
           (* Full hammer, but it won't work without instantiations *)
-          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"] 
-          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv) 
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
+          done
+          subgoal premises p
+          using p(1,13,15-)
+          (* Full hammer, but it won't work without instantiations *)
+          using p(14)[of "''M2''"] p(14)[of "''M''"] p(14)[of "''inc''"] p(14)[of "''diff''"] p(14)[of "''cond''"] p(14)[of "''y''"] p(14)[of "''L''"] p(14)[of "''R''"]
+          apply (auto simp add: f_inv_bisection'_imp_state_upd_def f_inv_bisection'_imp_to_HOL_state_def Let_def f_imp_correct split: if_splits simp add: p(14)[of "''y''"] Cons_eq_append_conv)
           by (metis f_imp_state f_imp_state_in f_imp_state_out) (* ? *)
           done
         done
   qed
 
 lemma IMP_Minus_correct_effects:
-  "(invoke_subprogram (p1 @ p2) prog, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (prefix p2 v) 
+  "(invoke_subprogram (p1 @ p2) prog, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>  v \<in> vars \<Longrightarrow> \<not> (prefix p2 v)
   \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)"
   using com_add_prefix_valid'' com_only_vars
   by (metis prefix_def)
@@ -795,7 +795,7 @@ lemma f_inv_bisection'_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) f_inv_bisection'_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (f_inv_bisection'_imp_time 0 (f_inv_bisection'_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) f_inv_bisection'_L_str) = 
+      s' (add_prefix (p1 @ p2) f_inv_bisection'_L_str) =
         f_inv_bisection'_state_L (f_inv_bisection'_imp (f_inv_bisection'_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
@@ -804,31 +804,31 @@ lemma f_inv_bisection'_IMP_Minus_correct:
   by auto
 
 
-datatype f_inv_bisection_state = f_inv_bisection_state (f_inv_bisection_state_y: nat) (f_inv_bisection_state_ret: nat) 
+datatype f_inv_bisection_state = f_inv_bisection_state (f_inv_bisection_state_y: nat) (f_inv_bisection_state_ret: nat)
 
 abbreviation "f_inv_bisection_prefix \<equiv> f_pref_str @ ''inv_bisection.''"
 abbreviation "f_inv_bisection_y_str \<equiv> ''y''"
 abbreviation "f_inv_bisection_ret_str \<equiv> ''ret''"
 
-abbreviation 
+abbreviation
   "f_inv_bisection_IMP_vars \<equiv> {f_inv_bisection_y_str, f_inv_bisection_ret_str}"
 
 definition "f_inv_bisection_imp_state_upd s = (let
     f_inv_bisection'_y = f_inv_bisection_state_y s;
     f_inv_bisection'_L = 0;
     f_inv_bisection'_R = Suc (f_inv_bisection_state_y s);
-    
+
     f_inv_bisection_f_inv_bisection'_state = f_inv_bisection'_state f_inv_bisection'_y f_inv_bisection'_L f_inv_bisection'_R;
     f_inv_bisection'_ret = f_inv_bisection'_imp f_inv_bisection_f_inv_bisection'_state;
-    
+
     f_inv_bisection_ret = f_inv_bisection'_state_L f_inv_bisection'_ret;
     ret = f_inv_bisection_state (f_inv_bisection_state_y s) f_inv_bisection_ret
   in
     ret)
 "
-     
+
 fun f_inv_bisection_imp :: "f_inv_bisection_state \<Rightarrow> f_inv_bisection_state" where
-  "f_inv_bisection_imp s = 
+  "f_inv_bisection_imp s =
   (let
     ret = f_inv_bisection_imp_state_upd s
   in
@@ -843,7 +843,7 @@ lemma f_inv_bisection_imp_correct:
       Let_def f_inv_bisection_correct[symmetric] split: if_splits)
 
 fun f_inv_bisection_imp_time:: "nat \<Rightarrow> f_inv_bisection_state\<Rightarrow> nat" where
-  "f_inv_bisection_imp_time t s = 
+  "f_inv_bisection_imp_time t s =
     (
       let
         f_inv_bisection'_y = f_inv_bisection_state_y s;
@@ -852,11 +852,11 @@ fun f_inv_bisection_imp_time:: "nat \<Rightarrow> f_inv_bisection_state\<Rightar
         t = t+2;
         f_inv_bisection'_R = Suc (f_inv_bisection_state_y s);
         t = t+2;
-        
+
         f_inv_bisection_f_inv_bisection'_state = f_inv_bisection'_state f_inv_bisection'_y f_inv_bisection'_L f_inv_bisection'_R;
         f_inv_bisection'_ret = f_inv_bisection'_imp f_inv_bisection_f_inv_bisection'_state;
         t = t + f_inv_bisection'_imp_time 0 f_inv_bisection_f_inv_bisection'_state;
-        
+
         f_inv_bisection_ret = f_inv_bisection'_state_L f_inv_bisection'_ret;
         t = t+2;
         ret = t
@@ -884,7 +884,7 @@ definition f_inv_bisection_IMP_Minus where
     (f_inv_bisection'_pref @ f_inv_bisection'_y_str) ::= A (V f_inv_bisection_y_str);;
     (f_inv_bisection'_pref @ f_inv_bisection'_L_str) ::= A (N 0);;
     (f_inv_bisection'_pref @ f_inv_bisection'_R_str) ::= (V f_inv_bisection_y_str \<oplus> N 1);;
-    
+
     invoke_subprogram f_inv_bisection'_pref f_inv_bisection'_IMP_Minus;;
 
     f_inv_bisection_ret_str ::= A (V (f_inv_bisection'_pref @ f_inv_bisection'_L_str))
@@ -894,23 +894,23 @@ definition "f_inv_bisection_imp_to_HOL_state p s = f_inv_bisection_state
   (s (add_prefix p f_inv_bisection_y_str)) (s (add_prefix p f_inv_bisection_ret_str))"
 
 
-lemma f_inv_bisection_IMP_Minus_correct_function: 
+lemma f_inv_bisection_IMP_Minus_correct_function:
   "(invoke_subprogram p f_inv_bisection_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      s' (add_prefix p f_inv_bisection_ret_str) = f_inv_bisection_state_ret (f_inv_bisection_imp (f_inv_bisection_imp_to_HOL_state p s))"
   apply(subst f_inv_bisection_imp.simps)
   apply(simp only: f_inv_bisection_IMP_Minus_def com_add_prefix.simps aexp_add_prefix.simps atomExp_add_prefix.simps invoke_subprogram_append)
   apply (erule Seq_tE)+
   apply(all \<open>erule f_inv_bisection'_IMP_Minus_correct[where vars = "f_inv_bisection_IMP_vars"]\<close>) (* Probably do not need this here *)
-   apply simp 
+   apply simp
     (* ? *)
-   apply auto[] 
+   apply auto[]
    apply (metis bot_nat_0.not_eq_extremum f_imp_state f_imp_state_in f_imp_state_out lessI)
    apply (metis bot_nat_0.not_eq_extremum f_imp_state f_imp_state_in f_imp_state_out lessI)
   apply (drule AssignD)+
   apply (auto simp add: f_inv_bisection_imp_state_upd_def f_inv_bisection_imp_to_HOL_state_def f_inv_bisection'_imp_to_HOL_state_def)
   done
 
-lemma f_inv_bisection_IMP_Minus_correct_time: 
+lemma f_inv_bisection_IMP_Minus_correct_time:
   "(invoke_subprogram p f_inv_bisection_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
      t = f_inv_bisection_imp_time 0 (f_inv_bisection_imp_to_HOL_state p s)"
   apply(subst f_inv_bisection_imp_time.simps)
@@ -919,7 +919,7 @@ lemma f_inv_bisection_IMP_Minus_correct_time:
   apply(all \<open>erule f_inv_bisection'_IMP_Minus_correct[where vars = "f_inv_bisection_IMP_vars"]\<close>) (* Probably do not need this here *)
    apply simp
     (* ? *)
-   apply auto[] 
+   apply auto[]
    apply (metis bot_nat_0.not_eq_extremum f_imp_state f_imp_state_in f_imp_state_out lessI)
    apply (metis bot_nat_0.not_eq_extremum f_imp_state f_imp_state_in f_imp_state_out lessI)
   apply (drule AssignD)+
@@ -930,12 +930,12 @@ lemma f_inv_bisection_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) f_inv_bisection_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (prefix p2 v);
      \<lbrakk>t = (f_inv_bisection_imp_time 0 (f_inv_bisection_imp_to_HOL_state (p1 @ p2) s));
-      s' (add_prefix (p1 @ p2) f_inv_bisection_ret_str) = 
+      s' (add_prefix (p1 @ p2) f_inv_bisection_ret_str) =
         f_inv_bisection_state_ret (f_inv_bisection_imp (f_inv_bisection_imp_to_HOL_state (p1 @ p2) s));
       \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
      \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using f_inv_bisection_IMP_Minus_correct_time f_inv_bisection_IMP_Minus_correct_function
-        IMP_Minus_correct_effects 
+        IMP_Minus_correct_effects
   by auto
 
 end

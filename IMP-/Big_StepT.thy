@@ -3,7 +3,7 @@ section "Big step semantics of IMP-"
 theory Big_StepT imports Main Max_Constant Com "HOL-Eisbach.Eisbach_Tools" begin
 
 paragraph "Summary"
-text\<open>We define big step semantics with time for IMP-. 
+text\<open>We define big step semantics with time for IMP-.
 Based on the big step semantics definition with time of IMP\<close>
 
 subsection "Big step semantics definition:"
@@ -19,17 +19,12 @@ Seq: "\<lbrakk> (c1,s1) \<Rightarrow>\<^bsup> x \<^esup> s2;  (c2,s2) \<Rightarr
 IfTrue: "\<lbrakk> s b \<noteq> 0;  (c1,s) \<Rightarrow>\<^bsup> x \<^esup> t; y=x+1 \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup> t" |
 IfFalse: "\<lbrakk> s b = 0; (c2,s) \<Rightarrow>\<^bsup> x \<^esup> t; y=x+1  \<rbrakk> \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup> t" |
 WhileFalse: "\<lbrakk> s b = 0 \<rbrakk> \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s" |
-WhileTrue: "\<lbrakk> s1 b \<noteq> 0;  (c,s1) \<Rightarrow>\<^bsup> x \<^esup> s2;  (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> s3; 1+x+y=z  \<rbrakk> 
-    \<Longrightarrow> (WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3" 
+WhileTrue: "\<lbrakk> s1 b \<noteq> 0;  (c,s1) \<Rightarrow>\<^bsup> x \<^esup> s2;  (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> s3; 1+x+y=z  \<rbrakk>
+    \<Longrightarrow> (WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3"
 
 bundle big_step_syntax
 begin
 notation big_step_t ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)
-end
-
-bundle no_big_step_syntax 
-begin
-no_notation big_step_t ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)
 end
 
 code_pred big_step_t .
@@ -97,7 +92,7 @@ theorem big_step_t_determ2: "\<lbrakk> (c,s) \<Rightarrow>\<^bsup> p \<^esup> t;
     apply(elim If_tE)  apply (linarith) apply simp
     apply(erule While_tE) apply(simp) apply simp
   subgoal premises p for s1 b c x s2 y s3 z u q
-    using p(7) apply(safe) 
+    using p(7) apply(safe)
       apply(erule While_tE)
         using p(1-6) apply fast
         using p(1-6) apply (simp)
@@ -110,22 +105,22 @@ lemma bigstep_det: "(c1, s) \<Rightarrow>\<^bsup> p1 \<^esup> t1 \<Longrightarro
   using big_step_t_determ2 by simp
 
 lemma seq_assign_t_simp:
-  "((c ;; x ::= a, s) \<Rightarrow>\<^bsup> Suc(Suc t) \<^esup>  s') 
+  "((c ;; x ::= a, s) \<Rightarrow>\<^bsup> Suc(Suc t) \<^esup>  s')
   \<longleftrightarrow> (\<exists>s''. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<and> s' = s''(x := aval a s''))"
 proof
   assume "(c;; x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc t) \<^esup> s'"
   then obtain s'' where "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''" by auto
   have "s' = s''(x := aval a s'')" using \<open>(c;; x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc t) \<^esup> s'\<close>
-    using bigstep_det \<open>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''\<close> 
+    using bigstep_det \<open>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''\<close>
     by blast
   thus "\<exists>s''. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<and> s' = s''(x := aval a s'')"
-    using \<open>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''\<close> 
+    using \<open>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''\<close>
     by blast
 qed auto
 
 lemma seq_assign_t_intro: "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<Longrightarrow> s' = s''(x := aval a s'')
   \<Longrightarrow>(c ;; x ::= a, s) \<Rightarrow>\<^bsup> Suc(Suc t) \<^esup>  s'"
-  using seq_assign_t_simp 
+  using seq_assign_t_simp
   by auto
 
 lemma seq_is_noop[simp]: "(SKIP, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> (t = Suc 0 \<and> s = s')" by auto
@@ -139,38 +134,38 @@ lemma bigstep_progress: "(c, s) \<Rightarrow>\<^bsup> p \<^esup> t \<Longrightar
 
 subsection "abbreviations and properties"
 abbreviation terminates ("\<down>") where "terminates cs \<equiv> (\<exists>n a. (cs \<Rightarrow>\<^bsup> n \<^esup> a))"
-abbreviation thestate ("\<down>\<^sub>s") where "thestate cs \<equiv> (THE a. \<exists>n. (cs \<Rightarrow>\<^bsup> n \<^esup> a))" 
+abbreviation thestate ("\<down>\<^sub>s") where "thestate cs \<equiv> (THE a. \<exists>n. (cs \<Rightarrow>\<^bsup> n \<^esup> a))"
 abbreviation thetime ("\<down>\<^sub>t") where "thetime cs \<equiv> (THE n. \<exists>a. (cs \<Rightarrow>\<^bsup> n \<^esup> a))"
 
 
 lemma bigstepT_the_cost: "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> \<down>\<^sub>t(c, s) = t"
-  using bigstep_det by blast 
+  using bigstep_det by blast
 
 lemma bigstepT_the_state: "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> \<down>\<^sub>s(c, s) = s'"
-  using bigstep_det by blast 
+  using bigstep_det by blast
 
 lemma SKIPnot: "(\<not> (SKIP, s) \<Rightarrow>\<^bsup> p \<^esup> t) \<longleftrightarrow> (s\<noteq>t \<or> p\<noteq>Suc 0)" by blast
 
 lemma SKIPp: "\<down>\<^sub>t(SKIP,s) = Suc 0"
   apply(rule the_equality)
   apply fast
-  apply auto done 
+  apply auto done
 
 lemma SKIPt: "\<down>\<^sub>s(SKIP,s) = s"
   apply(rule the_equality)
   apply fast
-  apply auto done 
+  apply auto done
 
 
 lemma ASSp: "(THE p. Ex (big_step_t (x ::= e, s) p)) = Suc(Suc 0)"
   apply(rule the_equality)
   apply fast
-  apply auto done 
+  apply auto done
 
 lemma ASSt: "(THE t. \<exists>p. (x ::= e, s) \<Rightarrow>\<^bsup> p \<^esup> t) = s(x := aval e s)"
   apply(rule the_equality)
   apply fast
-  apply auto done 
+  apply auto done
 
 lemma ASSnot: "( \<not> (x ::= e, s) \<Rightarrow>\<^bsup> p \<^esup> t ) = (p\<noteq>Suc(Suc 0) \<or> t\<noteq>s(x := aval e s))"
   apply auto done
@@ -200,7 +195,7 @@ qed
 lemma terminates_in_state_intro: "(c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> s' = s'' \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s''"
   by simp
 
-lemma terminates_in_time_state_intro: "(c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = t' \<Longrightarrow> s' = s'' 
+lemma terminates_in_time_state_intro: "(c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow> t = t' \<Longrightarrow> s' = s''
   \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t'\<^esup> s''"
   by simp
 
@@ -208,34 +203,34 @@ lemma terminates_in_time_state_intro': "(c', s) \<Rightarrow>\<^bsup>t\<^esup> s
   \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t'\<^esup> s''"
   by simp
 
-method dest_com  = 
+method dest_com  =
   (match premises in a: "\<lbrakk>loop_cond; state_upd\<rbrakk> \<Longrightarrow> (_, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
     for s s' t loop_cond state_upd \<Rightarrow> \<open>rule terminates_in_time_state_intro'[OF a]\<close>)
 
-method dest_com' = 
-  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; (_, s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P" 
+method dest_com' =
+  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; (_, s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P"
     for s s' t loop_cond state_upd P  \<Rightarrow>
    \<open>match premises in b[thin]: "(While _ _, s2) \<Rightarrow>\<^bsup>t2\<^esup> s2'"
       for s2 s2' t2 \<Rightarrow> \<open>insert a[OF _ _ b]\<close>\<close>)
 
 
-method dest_com_init_while = 
-  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; ((_ ;; While _ _), s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P" 
+method dest_com_init_while =
+  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; ((_ ;; While _ _), s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P"
     for s s' t loop_cond state_upd P  \<Rightarrow>
    \<open>match premises in b[thin]: "((_ ;; While _ _), s2) \<Rightarrow>\<^bsup>t2\<^esup> s2'"
       for s2 s2' t2 \<Rightarrow> \<open>insert a[OF _ _ b]\<close>\<close>)
 
-(*method dest_com_init_while = 
-  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; (v ::= a;; WHILE v \<noteq>0 DO _, s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P" 
+(*method dest_com_init_while =
+  (match premises in a[thin]: "\<lbrakk>loop_cond; state_upd; (v ::= a;; WHILE v \<noteq>0 DO _, s) \<Rightarrow>\<^bsup>t\<^esup> s'\<rbrakk> \<Longrightarrow> P"
     for v a s s' t loop_cond state_upd P  \<Rightarrow>
    \<open>match premises in b[thin]: "(v ::= a;; WHILE v \<noteq>0 DO _, s2) \<Rightarrow>\<^bsup>t2\<^esup> s2'"
       for s2 s2' t2 \<Rightarrow> \<open>insert a\<close>\<close>)*)
 
-lemma terminates_split_if : "(P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t1\<^esup> s1 ) \<Longrightarrow> 
+lemma terminates_split_if : "(P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t1\<^esup> s1 ) \<Longrightarrow>
 (\<not> P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>t2\<^esup> s2 ) \<Longrightarrow> (c,s) \<Rightarrow>\<^bsup>if P s then t1 else t2\<^esup>  if P s then s1 else s2"
   by auto
 
-lemma AssignD': 
+lemma AssignD':
 "(x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<Longrightarrow> s' = s (x:= aval a s)"
   by (auto simp add: eval_nat_numeral)
 
@@ -250,7 +245,7 @@ lemma WhileI:
 "\<lbrakk>(s1 b \<noteq> 0 \<Longrightarrow> (c,s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<and> (WHILE b \<noteq>0 DO c, s2) \<Rightarrow>\<^bsup> y \<^esup> s3);
   (s1 b = 0 \<Longrightarrow> s1 = s3);
   z = (if s1 b \<noteq> 0 then 1+x+y else 2)\<rbrakk>
-        \<Longrightarrow> (WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3" 
+        \<Longrightarrow> (WHILE b \<noteq>0 DO c, s1) \<Rightarrow>\<^bsup> z \<^esup> s3"
   by (auto simp add: WhileTrue WhileFalse numeral_2_eq_2)
 
 lemma IfI:
@@ -258,12 +253,12 @@ lemma IfI:
   s b = 0 \<Longrightarrow> (c2,s) \<Rightarrow>\<^bsup> x2 \<^esup> t2;
   y = (if s b \<noteq> 0 then x1 else x2) + 1;
   t = (if s b \<noteq> 0 then t1 else t2)\<rbrakk>
-        \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup> t" 
+        \<Longrightarrow> (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> y \<^esup> t"
   by (auto simp add: IfTrue IfFalse)
 
-lemma IfE: 
-"(IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> (if s b \<noteq> 0 then x1 else x2) + 1 \<^esup> (if s b \<noteq> 0 then s1 else s2) \<Longrightarrow> 
- \<lbrakk>\<lbrakk>s b \<noteq> 0; (if s b \<noteq> 0 then x1 else x2) + 1 = x1 + 1; 
+lemma IfE:
+"(IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> (if s b \<noteq> 0 then x1 else x2) + 1 \<^esup> (if s b \<noteq> 0 then s1 else s2) \<Longrightarrow>
+ \<lbrakk>\<lbrakk>s b \<noteq> 0; (if s b \<noteq> 0 then x1 else x2) + 1 = x1 + 1;
   (if s b \<noteq> 0 then s1 else s2) = s1; (c1,s) \<Rightarrow>\<^bsup> x1 \<^esup> s1\<rbrakk> \<Longrightarrow> P;
   \<lbrakk>s b = 0; (if s b \<noteq> 0 then x1 else x2) + 1 = x2 + 1;
    (if s b \<noteq> 0 then s1 else s2) = s2; (c2,s) \<Rightarrow>\<^bsup> x2 \<^esup> s2\<rbrakk> \<Longrightarrow> P\<rbrakk>
@@ -273,10 +268,10 @@ lemma IfE:
 thm Seq_tE
 
 lemma IfD:
-"(IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> (if s b \<noteq> 0 then x1 else x2) + 1 \<^esup> (if s b \<noteq> 0 then t1 else t2) \<Longrightarrow> 
+"(IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> (if s b \<noteq> 0 then x1 else x2) + 1 \<^esup> (if s b \<noteq> 0 then t1 else t2) \<Longrightarrow>
  \<lbrakk>\<lbrakk>s b \<noteq> 0; (c1,s) \<Rightarrow>\<^bsup> x1 \<^esup> t1\<rbrakk> \<Longrightarrow> P;
   \<lbrakk>s b = 0; (c2,s) \<Rightarrow>\<^bsup> x2 \<^esup> t2\<rbrakk> \<Longrightarrow> P\<rbrakk>
-        \<Longrightarrow> P" 
+        \<Longrightarrow> P"
   by (auto simp add: IfTrue IfFalse)
 
 
@@ -284,30 +279,30 @@ lemma IfD:
 
 lemma AssignI:
 "\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
-        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s'" 
+        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s'"
   by (auto simp add: Assign)
 
-lemma AssignI': 
+lemma AssignI':
 "\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
-        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s'" 
+        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s'"
   by (auto simp add: Assign eval_nat_numeral)
 
-lemma AssignI'': 
+lemma AssignI'':
 "\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
-        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<and> s' = s'" 
+        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<and> s' = s'"
   by (auto simp add: Assign eval_nat_numeral)
 
 lemma AssignD: "(x ::= a, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> t = 2 \<and> s' = s(x := aval a s)"
   by auto
 
 lemma compose_programs_1:
-  "(c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> 
+  "(c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow>
     ((c1;; c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
    \<Longrightarrow> P"
   by auto
 
 lemma compose_programs_2:
-  "(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> 
+  "(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> (c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow>
     ((c1;; c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
    \<Longrightarrow> P"
   by auto
@@ -319,33 +314,33 @@ lemma While_tE_time:
   by auto
 
 lemma Seq_tE_While_init:
-  "(WHILE v \<noteq>0 DO c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow> 
+  "(WHILE v \<noteq>0 DO c2, s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<Longrightarrow> (c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<Longrightarrow>
     ((c1;; WHILE v \<noteq>0 DO c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<Longrightarrow> P)
    \<Longrightarrow> P"
   by auto
 
-method dest_com_gen = 
+method dest_com_gen =
   (erule compose_programs_1[where ?c2.0 = "(Com.While _ _)"], assumption,
     erule compose_programs_2[where ?c1.0 = "(_;; Com.While _ _)"], assumption,
     (match premises
-      in a[thin]: 
-      "(init_while_cond;; 
+      in a[thin]:
+      "(init_while_cond;;
                 WHILE _ \<noteq>0 DO (loop_body;; init_while_cond);;
                 after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
-    for init_while_cond loop_body after_loop  \<Rightarrow> 
+    for init_while_cond loop_body after_loop  \<Rightarrow>
       \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a]\<close>\<close>))
 
 
-method dest_com_gen_time = 
+method dest_com_gen_time =
   (erule compose_programs_1[where ?c2.0 = "(Com.While _ _)"], assumption,
     erule compose_programs_2[where ?c1.0 = "(_;; Com.While _ _)"], assumption,
     (match premises
-      in a[thin]: 
-      "(init_while_cond;; 
+      in a[thin]:
+      "(init_while_cond;;
                 WHILE _ \<noteq>0 DO (loop_body;; init_while_cond);;
                 after_loop, _) \<Rightarrow>\<^bsup>_\<^esup> _"
-    for init_while_cond loop_body after_loop  \<Rightarrow> 
+    for init_while_cond loop_body after_loop  \<Rightarrow>
       \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a, simplified add.assoc]\<close>\<close>))
 

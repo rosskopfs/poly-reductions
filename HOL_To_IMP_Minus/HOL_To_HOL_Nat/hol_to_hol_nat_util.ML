@@ -92,7 +92,7 @@ fun dest_eq_equals_prop t = case t of
   | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
   | t => raise TERM ("Unknown equality:", [t])
 
-val dest_eq_equals_thm = Thm.concl_of #> dest_eq_equals_prop
+val dest_eq_equals_thm = Thm.prop_of #> dest_eq_equals_prop
 
 val app = curry (op $)
 

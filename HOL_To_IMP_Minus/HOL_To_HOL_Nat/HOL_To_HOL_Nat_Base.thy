@@ -16,7 +16,8 @@ theory HOL_To_HOL_Nat_Base
   and "basename"
 begin
 
-unbundle no_HOL_relation_syntax
+unbundle no HOL_relation_syntax
+unbundle lifting_syntax
 
 text \<open>Types with encodings as natural numbers.\<close>
 class compile_nat =
@@ -43,13 +44,16 @@ lemmas
     OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify, transfer_rule] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
+lemma right_unique_Rel_nat: "Transfer.right_unique Rel_nat"
+  by (fact typedef_nat_transfer)
+
 lemma left_unique_Rel_nat: "left_unique Rel_nat"
   by (fact typedef_nat_transfer)
 
 lemma Rel_nat_natify_self [transfer_rule]: "Rel_nat (natify x) x"
   by (simp add: Rel_nat_iff_eq_natify)
 
-lemma Rel_nat_denatify_natify [transfer_rule]: "rel_fun Rel_nat Rel_nat\<inverse> denatify natify"
+lemma Rel_nat_denatify_natify [transfer_rule]: "(Rel_nat ===> Rel_nat\<inverse>) denatify natify"
   by (intro rel_funI) (auto iff: Rel_nat_iff_eq_natify)
 
 interpretation flip : transport compile_nat_type_def.R compile_nat_type_def.L natify denatify .

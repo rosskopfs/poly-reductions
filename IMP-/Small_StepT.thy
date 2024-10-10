@@ -6,7 +6,7 @@ subsection "Small step semantics definition"
 theory Small_StepT  imports Main Com Rel_Pow begin
 
 paragraph "Summary"
-text\<open>We give small step semantics with time for IMP-. 
+text\<open>We give small step semantics with time for IMP-.
 Based on the small step semantics definition time for IMP\<close>
 
 inductive
@@ -34,12 +34,6 @@ bundle small_step_syntax
 begin
 notation small_step (infix "\<rightarrow>" 55) and
          small_step_pow ("_ \<rightarrow>\<^bsup>_\<^esup> _" 55)
-end
-
-bundle no_small_step_syntax
-begin
-no_notation small_step (infix "\<rightarrow>" 55) and
-            small_step_pow ("_ \<rightarrow>\<^bsup>_\<^esup> _" 55)
 end
 
 subsection\<open>Executability\<close>
@@ -102,7 +96,7 @@ text "sequence property"
 lemma star_seq2: "(c1,s) \<rightarrow>\<^bsup>t\<^esup> (c1',s') \<Longrightarrow> (c1;;c2,s) \<rightarrow>\<^bsup> t \<^esup> (c1';;c2,s')"
 proof(induction t arbitrary: c1 c1' s s')
   case (Suc t)
-  then obtain c1'' s'' where "(c1,s) \<rightarrow> (c1'', s'')" 
+  then obtain c1'' s'' where "(c1,s) \<rightarrow> (c1'', s'')"
                          and "(c1'', s'')  \<rightarrow>\<^bsup> t \<^esup>  (c1', s')" by auto
   moreover then have "(c1'';;c2, s'') \<rightarrow>\<^bsup> t \<^esup> (c1';;c2, s')" using Suc by simp
   ultimately show ?case by auto
@@ -120,7 +114,7 @@ next
   case (Suc t1)
   then obtain c1' s1' where *: "(c1, s1) \<rightarrow> (c1',s1')" and "(c1',s1') \<rightarrow>\<^bsup> t1 \<^esup> (SKIP,s2)"
     using relpowp_Suc_E2 by auto
-  then have "(c1';;c2, s1') \<rightarrow>\<^bsup> t1 + t2 + 1 \<^esup> (c3, s3)" using Suc by blast 
+  then have "(c1';;c2, s1') \<rightarrow>\<^bsup> t1 + t2 + 1 \<^esup> (c3, s3)" using Suc by blast
   then show ?case using Suc by auto
 qed
 
@@ -131,16 +125,16 @@ proof(rule ccontr)
   assume "(c1, s1) \<rightarrow>\<^bsup>t1\<^esup> (SKIP, s2)" "(c1, s1) \<rightarrow>\<^bsup>t2\<^esup> (c3, s3)" "\<not> t2 \<le> t1"
   then obtain t3 where "t2 = t1 + t3" "t3 > 0"
     by (metis less_imp_add_positive not_le)
-  hence "(c1, s1) \<rightarrow>\<^bsup> t1 + t3 \<^esup> (c3, s3)" 
-    using \<open>(c1, s1) \<rightarrow>\<^bsup> t2 \<^esup> (c3, s3)\<close> 
+  hence "(c1, s1) \<rightarrow>\<^bsup> t1 + t3 \<^esup> (c3, s3)"
+    using \<open>(c1, s1) \<rightarrow>\<^bsup> t2 \<^esup> (c3, s3)\<close>
     by auto
-  then obtain c4s4 where "(c1, s1) \<rightarrow>\<^bsup>t1\<^esup> c4s4" "c4s4 \<rightarrow>\<^bsup>t3\<^esup> (c3, s3)" 
+  then obtain c4s4 where "(c1, s1) \<rightarrow>\<^bsup>t1\<^esup> c4s4" "c4s4 \<rightarrow>\<^bsup>t3\<^esup> (c3, s3)"
     using \<open>(c1, s1) \<rightarrow>\<^bsup>t2\<^esup> (c3, s3)\<close> rel_pow_sum_decomp[OF \<open>(c1, s1) \<rightarrow>\<^bsup> t1 + t3 \<^esup> (c3, s3)\<close>]
     by blast
   hence "c4s4 = (SKIP, s2)"
     using small_step_t_deterministic \<open>(c1, s1) \<rightarrow>\<^bsup>t1\<^esup> (SKIP, s2)\<close>
     by simp
-  hence "t3 = 0" 
+  hence "t3 = 0"
     using \<open>c4s4 \<rightarrow>\<^bsup>t3\<^esup> (c3, s3)\<close>
     by (cases t3) auto
   thus False using \<open>t3 > 0\<close> by simp

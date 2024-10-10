@@ -6,7 +6,7 @@ theory Binary_Arithmetic_IMP
     Utilities
 begin
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 
 subsection \<open>N-th bit of Natural Number\<close>
 
@@ -127,7 +127,7 @@ termination
       Let_def split: if_splits)+
 
 declare nth_bit_of_num_imp.simps [simp del]
-declare 
+declare
   arg_cong3[where f=nth_bit_of_num_state.make, state_congs]
   arg_cong[where f=nth_bit_of_num_ret, state_congs]
   arg_cong[where f=nth_bit_of_num_imp, state_congs]
@@ -395,7 +395,7 @@ lemmas nth_bit_of_num_state_translators =
   AND_neq_zero_imp_to_HOL_state_def
   nth_bit_of_num_imp_to_HOL_state_def
 
-thm 
+thm
   nth_bit_of_num_IMP_subprogram_simps (* TODO *)
 
 lemmas nth_bit_of_num_complete_simps =
@@ -580,7 +580,7 @@ termination
     (simp add: nth_bit_tail_imp_subprogram_simps)+
 
 declare nth_bit_tail_imp.simps [simp del]
-declare 
+declare
   arg_cong3[where f=nth_bit_tail_state.make, state_congs]
   arg_cong[where f=nth_bit_tail_ret, state_congs]
   arg_cong[where f=nth_bit_tail_imp, state_congs]
@@ -891,7 +891,7 @@ definition "bit_length_acc_imp_after_loop s \<equiv>
       ret
 )"
 
-lemmas bit_length_acc_imp_subprogram_simps = 
+lemmas bit_length_acc_imp_subprogram_simps =
   bit_length_acc_state_upd_def
   bit_length_acc_imp_compute_loop_condition_def
   bit_length_acc_imp_after_loop_def
@@ -966,7 +966,7 @@ definition "bit_length_acc_imp_after_loop_time t s \<equiv>
       t
 )"
 
-lemmas bit_length_acc_imp_subprogram_time_simps = 
+lemmas bit_length_acc_imp_subprogram_time_simps =
   bit_length_acc_state_upd_time_def
   bit_length_acc_imp_compute_loop_condition_time_def
   bit_length_acc_imp_after_loop_time_def
@@ -1002,19 +1002,19 @@ lemma bit_length_acc_imp_time_acc:
   "(bit_length_acc_imp_time (Suc t) s) = Suc (bit_length_acc_imp_time t s)"
   by (induction t s rule: bit_length_acc_imp_time.induct)
     ((subst (1 2) bit_length_acc_imp_time.simps);
-      (simp add: bit_length_acc_state_upd_def))            
+      (simp add: bit_length_acc_state_upd_def))
 
 lemma bit_length_acc_imp_time_acc_2_aux:
   "(bit_length_acc_imp_time t s) = t + (bit_length_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: bit_length_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: bit_length_acc_imp_time_acc)+
 
 lemma bit_length_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (bit_length_acc_imp_time t s) = t + (bit_length_acc_imp_time 0 s)"
-  by (rule bit_length_acc_imp_time_acc_2_aux)            
+  by (rule bit_length_acc_imp_time_acc_2_aux)
 
 lemma bit_length_acc_imp_time_acc_3:
   "(bit_length_acc_imp_time (a + b) s) = a + (bit_length_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: bit_length_acc_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: bit_length_acc_imp_time_acc)+
 
 abbreviation "bit_length_acc_while_cond \<equiv> ''condition''"
 
@@ -1138,7 +1138,7 @@ lemma bit_length_acc_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix bit_length_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas bit_length_acc_complete_time_simps =
   bit_length_acc_imp_subprogram_time_simps
@@ -1195,7 +1195,7 @@ lemma bit_length_acc_IMP_Minus_correct_time:
     apply(simp only: bit_length_acc_complete_time_simps Let_def)
     by force
 
-  done        
+  done
 
 lemma bit_length_acc_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) bit_length_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -1209,7 +1209,7 @@ lemma bit_length_acc_IMP_Minus_correct:
   using bit_length_acc_IMP_Minus_correct_function
     bit_length_acc_IMP_Minus_correct_time
     bit_length_acc_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection \<open>bit_length_tail\<close>
 
@@ -1240,9 +1240,9 @@ definition "bit_length_tail_state_upd s =
 function bit_length_tail_imp ::
   "bit_length_tail_state \<Rightarrow> bit_length_tail_state" where
   "bit_length_tail_imp s =
-  (let 
+  (let
       ret = bit_length_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -1256,7 +1256,7 @@ lemma bit_length_tail_imp_correct[let_function_correctness]:
     bit_length_tail (bit_length_tail_n s)"
   apply (simp only: bit_length_tail_imp.simps Let_def bit_length_tail_state_upd_def
     bit_length_acc_imp_correct bit_length_tail_def)
-  by simp 
+  by simp
 
 function bit_length_tail_imp_time ::
   "nat \<Rightarrow> bit_length_tail_state \<Rightarrow> nat" where
@@ -1290,19 +1290,19 @@ lemma bit_length_tail_imp_time_acc:
   "(bit_length_tail_imp_time (Suc t) s) = Suc (bit_length_tail_imp_time t s)"
   by (induction t s rule: bit_length_tail_imp_time.induct)
     ((subst (1 2) bit_length_tail_imp_time.simps);
-      (simp add: bit_length_tail_state_upd_def Let_def))            
+      (simp add: bit_length_tail_state_upd_def Let_def))
 
 lemma bit_length_tail_imp_time_acc_2_aux:
   "(bit_length_tail_imp_time t s) = t + (bit_length_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: bit_length_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: bit_length_tail_imp_time_acc)+
 
 lemma bit_length_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (bit_length_tail_imp_time t s) = t + (bit_length_tail_imp_time 0 s)"
-  by (rule bit_length_tail_imp_time_acc_2_aux)            
+  by (rule bit_length_tail_imp_time_acc_2_aux)
 
 lemma bit_length_tail_imp_time_acc_3:
   "(bit_length_tail_imp_time (a + b) s) = a + (bit_length_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: bit_length_tail_imp_time_acc)+  
+  by (induction a arbitrary: b s) (simp add: bit_length_tail_imp_time_acc)+
 
 definition bit_length_tail_IMP_Minus where
   "bit_length_tail_IMP_Minus \<equiv>
@@ -1345,14 +1345,14 @@ lemma bit_length_tail_IMP_Minus_correct_function:
   apply(erule bit_length_acc_IMP_Minus_correct[where vars = "bit_length_tail_IMP_vars"])
   subgoal premises p using p(5) by fastforce
   by(fastforce simp: bit_length_tail_state_translators
-    bit_length_tail_state_upd_def)        
+    bit_length_tail_state_upd_def)
 
 lemma bit_length_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ bit_length_tail_pref) bit_length_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix bit_length_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma bit_length_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p bit_length_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1362,7 +1362,7 @@ lemma bit_length_tail_IMP_Minus_correct_time:
   apply(erule Seq_tE)+
   apply(erule bit_length_acc_IMP_Minus_correct[where vars = "bit_length_tail_IMP_vars"])
   subgoal premises p using p(9) by fastforce
-  by(fastforce simp add: Let_def bit_length_tail_state_translators)        
+  by(fastforce simp add: Let_def bit_length_tail_state_translators)
 
 lemma bit_length_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) bit_length_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';

@@ -1,5 +1,5 @@
 theory IMP_Minus_To_IMP_Minus_Minus_aux
-  imports 
+  imports
   Primitives_IMP_Minus
     Binary_Arithmetic_IMP
     IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
@@ -10,7 +10,7 @@ theory IMP_Minus_To_IMP_Minus_Minus_aux
 
 begin
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 
 subsection IMP_Minus_to_IMP_Minus_Minus_stack
 
@@ -36,16 +36,16 @@ in
     cons_t' = 0;
     cons_ret' = 0;
     cons_state = \<lparr>cons_h = cons_h',
-                  cons_t = cons_t', 
+                  cons_t = cons_t',
                   cons_ret = cons_ret'\<rparr>;
     cons_ret_state = cons_imp cons_state;
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret' = cons_ret cons_ret_state;
-    ret = 
+    ret =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s s,
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret'\<rparr>
   in
   ret)
-  else 
+  else
   (let
     hd_xs' = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s s;
     hd_ret' = 0;
@@ -54,7 +54,7 @@ in
     nth_nat_n' = 1;
     nth_nat_x' = hd_ret hd_ret_state;
     nth_nat_ret' = 0;
-    nth_nat_state = 
+    nth_nat_state =
     \<lparr>nth_nat_n = nth_nat_n',
     nth_nat_x = nth_nat_x',
     nth_nat_ret = nth_nat_ret'\<rparr>;
@@ -70,9 +70,9 @@ in
 function IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp ::
   "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state" where
   "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp s =
-  (let 
+  (let
       ret = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -86,7 +86,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_correct[let_function_corr
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp.simps Let_def IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def)
   apply (simp add: nth_nat_imp_correct cons_imp_correct hd_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_def)
-  done 
+  done
 
 function IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time ::
   "nat \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state \<Rightarrow> nat" where
@@ -105,18 +105,18 @@ function IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time ::
     cons_ret' = 0;
     t = t + 2;
     cons_state = \<lparr>cons_h = cons_h',
-                  cons_t = cons_t', 
+                  cons_t = cons_t',
                   cons_ret = cons_ret'\<rparr>;
     cons_ret_state = cons_imp cons_state;
     t = t + cons_imp_time 0 cons_state;
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret' = cons_ret cons_ret_state;
     t = t + 2;
-    ret = 
+    ret =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s s,
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret'\<rparr>
   in
   t)
-  else 
+  else
   (let
     t = t + 1;
     hd_xs' = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s s;
@@ -133,7 +133,7 @@ function IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time ::
     t = t + 2;
     nth_nat_ret' = 0;
     t = t + 2;
-    nth_nat_state = 
+    nth_nat_state =
     \<lparr>nth_nat_n = nth_nat_n',
     nth_nat_x = nth_nat_x',
     nth_nat_ret = nth_nat_ret'\<rparr>;
@@ -157,19 +157,19 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time (Suc t) s) = Suc (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time t s)"
   by (induction t s rule: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time.induct)
     ((subst (1 2) IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time.simps);
-      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def Let_def))            
+      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def Let_def))
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc_2_aux:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc)+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time 0 s)"
-  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc_2_aux)            
+  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc_2_aux)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc_3:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time (a + b) s) = a + (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time_acc)+
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars \<equiv>
   {IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s_str}"
@@ -191,7 +191,7 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus where
   IF IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_cond \<noteq>0
   THEN
     (
-      (hd_prefix @ hd_xs_str) 
+      (hd_prefix @ hd_xs_str)
         ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s_str);;
       (hd_prefix @ hd_ret_str) ::= A (N 0);;
       invoke_subprogram hd_prefix hd_IMP_Minus;;
@@ -200,7 +200,7 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus where
       (nth_nat_prefix @ nth_nat_x_str) ::= A (V (hd_prefix @ hd_ret_str));;
       (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
       invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-      IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str 
+      IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str
         ::= A (V (nth_nat_prefix @ nth_nat_ret_str))
     )
   ELSE
@@ -209,7 +209,7 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus where
       (cons_prefix @ cons_t_str) ::= A (N 0);;
       (cons_prefix @ cons_ret_str) ::= A (N 0);;
       invoke_subprogram cons_prefix cons_IMP_Minus;;
-      IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str 
+      IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str
         ::= A (V (cons_prefix @ cons_ret_str))
   )
 "
@@ -223,29 +223,29 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_function:
   apply(simp only: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_def prefix_simps)
   apply(erule Seq_E)+
   apply (erule If_E)
-    subgoal 
+    subgoal
     apply (erule Seq_E)+
     apply(erule hd_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(10) by fastforce
     apply(erule nth_nat_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(12) by fastforce
     by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_translators
-    IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def)  
-    
+    IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def)
+
     subgoal
     apply (erule Seq_E)+
     apply(erule cons_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(7) by fastforce
     by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_translators
-    IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def)  
-  done       
+    IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_upd_def)
+  done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_pref) IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -254,22 +254,22 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_time:
   apply(simp only: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_def prefix_simps)
    apply(erule Seq_tE)+
   apply (erule If_tE)
-    subgoal 
+    subgoal
     apply (erule Seq_tE)+
     apply(erule hd_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(19) by fastforce
     apply(erule nth_nat_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(21) by fastforce
     by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_translators
-    Let_def)  
-    
+    Let_def)
+
     subgoal
     apply (erule Seq_tE)+
     apply(erule cons_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_vars"])
     subgoal premises p using p(13) by fastforce
     by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state_translators
-    Let_def)  
-  done        
+    Let_def)
+  done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -283,7 +283,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct:
   using IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_function
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_time
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 subsubsection IMP_Minus_to_IMP_Minus_Minus_stack_aux
 
@@ -301,11 +301,11 @@ abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_aux_t_str \<equiv> ''t''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_aux_s_str \<equiv> ''s''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_str \<equiv> ''ret''"
 
-abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars \<equiv> 
+abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars \<equiv>
  {IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str, IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str,
  IMP_Minus_to_IMP_Minus_Minus_stack_aux_t_str, IMP_Minus_to_IMP_Minus_Minus_stack_aux_s_str}"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state p s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state p s \<equiv>
   \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str),
   IMP_Minus_to_IMP_Minus_Minus_stack_aux_h = s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str),
   IMP_Minus_to_IMP_Minus_Minus_stack_aux_t = s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_aux_t_str),
@@ -352,7 +352,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd s \<equiv>
   var_bit_list_tail_n' = nth_nat_result;
   var_bit_list_tail_v' = nth_nat_ret nth_nat_ret_state;
   var_bit_list_tail_ret' = 0;
-  var_bit_list_tail_state = 
+  var_bit_list_tail_state =
   \<lparr>var_bit_list_tail_n = var_bit_list_tail_n',
   var_bit_list_tail_v = var_bit_list_tail_v',
   var_bit_list_tail_ret = var_bit_list_tail_ret'\<rparr>;
@@ -445,7 +445,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_time t s \<equ
   t = t + 2;
   var_bit_list_tail_ret' = 0;
   t = t + 2;
-  var_bit_list_tail_state = 
+  var_bit_list_tail_state =
   \<lparr>var_bit_list_tail_n = var_bit_list_tail_n',
   var_bit_list_tail_v = var_bit_list_tail_v',
   var_bit_list_tail_ret = var_bit_list_tail_ret'\<rparr>;
@@ -485,7 +485,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_time t s \<equ
   add_result_to_stack_nat_ret_state = add_result_to_stack_nat_imp add_result_to_stack_nat_state;
   t = t + add_result_to_stack_nat_imp_time 0 add_result_to_stack_nat_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'
     = add_result_to_stack_nat_ret add_result_to_stack_nat_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s,
@@ -499,16 +499,16 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd s)
-    = 
-  (add_result_to_stack_nat 
-  (4 ## (var_bit_list_nat (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) 
+    =
+  (add_result_to_stack_nat
+  (4 ## (var_bit_list_nat (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 1 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)))
-  ## (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0) 
+  ## (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0)
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_def)
 apply (simp add: nth_nat_imp_correct cons_imp_correct var_bit_list_tail_imp_correct
 add_result_to_stack_nat_imp_correct)
-done 
+done
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
@@ -517,7 +517,7 @@ nth_nat_imp_to_HOL_state_def
 var_bit_list_tail_imp_to_HOL_state_def
 add_result_to_stack_nat_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 4);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -532,7 +532,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_nth_result 
+  IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_nth_result
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
 
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
@@ -540,11 +540,11 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
 
-  (var_bit_list_tail_prefix @ var_bit_list_tail_n_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_n_str)
     ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_nth_result);;
-  (var_bit_list_tail_prefix @ var_bit_list_tail_v_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_v_str)
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
-  (var_bit_list_tail_prefix @ var_bit_list_tail_ret_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram var_bit_list_tail_prefix var_bit_list_tail_IMP_Minus;;
 
@@ -578,26 +578,26 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_nth_result, cons_prefix @ cons_ret_str}"])
    subgoal premises p using p(34) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(36) by fastforce 
+   subgoal premises p using p(36) by fastforce
    apply (erule var_bit_list_tail_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(38) by fastforce 
+   subgoal premises p using p(38) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(40) by fastforce 
+   subgoal premises p using p(40) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(42) by fastforce 
+   subgoal premises p using p(42) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(44) by fastforce 
+   subgoal premises p using p(44) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(46) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(48) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_translators) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_translators)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -605,26 +605,26 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_nth_result, cons_prefix @ cons_ret_str}"])
    subgoal premises p using p(67) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(69) by fastforce 
+   subgoal premises p using p(69) by fastforce
    apply (erule var_bit_list_tail_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(71) by fastforce 
+   subgoal premises p using p(71) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(73) by fastforce 
+   subgoal premises p using p(73) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(75) by fastforce 
+   subgoal premises p using p(75) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(77) by fastforce 
+   subgoal premises p using p(77) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(79) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(81) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight
 
@@ -680,7 +680,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd s \<equiv>
   var_bit_list_tail_n' = nth_nat_result;
   var_bit_list_tail_v' = nth_nat_ret nth_nat_ret_state;
   var_bit_list_tail_ret' = 0;
-  var_bit_list_tail_state = 
+  var_bit_list_tail_state =
   \<lparr>var_bit_list_tail_n = var_bit_list_tail_n',
   var_bit_list_tail_v = var_bit_list_tail_v',
   var_bit_list_tail_ret = var_bit_list_tail_ret'\<rparr>;
@@ -795,7 +795,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_time t s \<e
   t = t + 2;
   var_bit_list_tail_ret' = 0;
   t = t + 2;
-  var_bit_list_tail_state = 
+  var_bit_list_tail_state =
   \<lparr>var_bit_list_tail_n = var_bit_list_tail_n',
   var_bit_list_tail_v = var_bit_list_tail_v',
   var_bit_list_tail_ret = var_bit_list_tail_ret'\<rparr>;
@@ -835,7 +835,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_time t s \<e
   add_result_to_stack_nat_ret_state = add_result_to_stack_nat_imp add_result_to_stack_nat_state;
   t = t + add_result_to_stack_nat_imp_time 0 add_result_to_stack_nat_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'
     = add_result_to_stack_nat_ret add_result_to_stack_nat_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s,
@@ -849,17 +849,17 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd s)
-    = 
-  (add_result_to_stack_nat 
-  (3 ## (var_bit_list_nat (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) 
+    =
+  (add_result_to_stack_nat
+  (3 ## (var_bit_list_nat (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 1 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)))
-  ## (nth_nat 5 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) 
-  ## (nth_nat 6 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0) 
+  ## (nth_nat 5 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
+  ## (nth_nat 6 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0)
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_def)
 apply (simp add: nth_nat_imp_correct cons_imp_correct var_bit_list_tail_imp_correct
 add_result_to_stack_nat_imp_correct)
-done 
+done
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
@@ -868,7 +868,7 @@ nth_nat_imp_to_HOL_state_def
 var_bit_list_tail_imp_to_HOL_state_def
 add_result_to_stack_nat_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 6);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -893,7 +893,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_nth_result 
+  IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_nth_result
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
 
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
@@ -901,11 +901,11 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
 
-  (var_bit_list_tail_prefix @ var_bit_list_tail_n_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_n_str)
     ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_nth_result);;
-  (var_bit_list_tail_prefix @ var_bit_list_tail_v_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_v_str)
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
-  (var_bit_list_tail_prefix @ var_bit_list_tail_ret_str) 
+  (var_bit_list_tail_prefix @ var_bit_list_tail_ret_str)
     ::= A (N 0);;
   invoke_subprogram var_bit_list_tail_prefix var_bit_list_tail_IMP_Minus;;
 
@@ -939,31 +939,31 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_nth_result, cons_prefix @ cons_ret_str}"])
    subgoal premises p using p(42) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(44) by fastforce 
+   subgoal premises p using p(44) by fastforce
    apply (erule var_bit_list_tail_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(46) by fastforce 
+   subgoal premises p using p(46) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(48) by fastforce 
+   subgoal premises p using p(48) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(50) by fastforce 
+   subgoal premises p using p(50) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(52) by fastforce 
+   subgoal premises p using p(52) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(54) by fastforce 
+   subgoal premises p using p(54) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(56) by fastforce 
+   subgoal premises p using p(56) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(58) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(60) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_translators) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_translators)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -971,31 +971,31 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_nth_result, cons_prefix @ cons_ret_str}"])
    subgoal premises p using p(83) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(85) by fastforce 
+   subgoal premises p using p(85) by fastforce
    apply (erule var_bit_list_tail_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(87) by fastforce 
+   subgoal premises p using p(87) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(89) by fastforce 
+   subgoal premises p using p(89) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(91) by fastforce 
+   subgoal premises p using p(91) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(93) by fastforce 
+   subgoal premises p using p(93) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(95) by fastforce 
+   subgoal premises p using p(95) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(97) by fastforce 
+   subgoal premises p using p(97) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(99) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(101) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five
 
@@ -1123,7 +1123,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_upd_time t s \<eq
   add_result_to_stack_nat_ret_state = add_result_to_stack_nat_imp add_result_to_stack_nat_state;
   t = t + add_result_to_stack_nat_imp_time 0 add_result_to_stack_nat_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'
     = add_result_to_stack_nat_ret add_result_to_stack_nat_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s,
@@ -1137,15 +1137,15 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_upd s)
-    = 
-  (add_result_to_stack_nat 
-  (2 ## (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) 
-  ## (nth_nat 5 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0) 
+    =
+  (add_result_to_stack_nat
+  (2 ## (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
+  ## (nth_nat 5 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)) ## 0)
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_upd_def)
 apply (simp add: nth_nat_imp_correct cons_imp_correct var_bit_list_tail_imp_correct
 add_result_to_stack_nat_imp_correct)
-done 
+done
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
@@ -1153,7 +1153,7 @@ cons_imp_to_HOL_state_def
 nth_nat_imp_to_HOL_state_def
 add_result_to_stack_nat_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 5);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -1201,18 +1201,18 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus_correct_function:
    apply (erule Seq_E)+
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(25) by fastforce 
+   subgoal premises p using p(25) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(27) by fastforce 
+   subgoal premises p using p(27) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(29) by fastforce 
+   subgoal premises p using p(29) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(31) by fastforce 
+   subgoal premises p using p(31) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(33) by fastforce 
+   subgoal premises p using p(33) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(35) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_translators) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_translators)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1222,18 +1222,18 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus_correct_time:
    apply (erule Seq_tE)+
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {cons_prefix @ cons_ret_str}"])
-   subgoal premises p using p(49) by fastforce 
+   subgoal premises p using p(49) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(51) by fastforce 
+   subgoal premises p using p(51) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(53) by fastforce 
+   subgoal premises p using p(53) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(55) by fastforce 
+   subgoal premises p using p(55) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(57) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(59) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two
 
@@ -1268,7 +1268,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd s \<equiv>
 
   assignment_to_binary_tail_axep' = nth_nat_ret nth_nat_ret_state;
   assignment_to_binary_tail_ret' = 0;
-  assignment_to_binary_tail_state = 
+  assignment_to_binary_tail_state =
     \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n',
     assignment_to_binary_tail_v = assignment_to_binary_tail_v',
     assignment_to_binary_tail_aexp = assignment_to_binary_tail_axep',
@@ -1341,7 +1341,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd_time t s \<equ
   t = t + 2;
   assignment_to_binary_tail_ret' = 0;
   t = t + 2;
-  assignment_to_binary_tail_state = 
+  assignment_to_binary_tail_state =
     \<lparr>assignment_to_binary_tail_n = assignment_to_binary_tail_n',
     assignment_to_binary_tail_v = assignment_to_binary_tail_v',
     assignment_to_binary_tail_aexp = assignment_to_binary_tail_axep',
@@ -1375,45 +1375,45 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd s)
-    = 
-  (add_result_to_stack_nat 
-  (assignment_to_binary_nat 
+    =
+  (add_result_to_stack_nat
+  (assignment_to_binary_nat
   (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 1 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
-  (nth_nat 2 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))) 
+  (nth_nat 2 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s)))
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd_def)
 apply (simp add: nth_nat_imp_correct  add_result_to_stack_nat_imp_correct
-assignment_to_binary_tail_imp_correct subtail_assignment_to_binary) 
-done 
+assignment_to_binary_tail_imp_correct subtail_assignment_to_binary)
+done
 
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
 nth_nat_imp_to_HOL_state_def
-assignment_to_binary_tail_imp_to_HOL_state_def 
+assignment_to_binary_tail_imp_to_HOL_state_def
 add_result_to_stack_nat_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str) 
+  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str)
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
 
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_v_str) 
+  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_v_str)
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
 
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_aexp_str) 
+  (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_aexp_str)
     ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
 
   (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_ret_str) ::= A (N 0);;
@@ -1439,10 +1439,10 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {(assignment_to_binary_tail_prefix @ assignment_to_binary_tail_v_str), (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str)}"])
    subgoal premises p using p(22) by fastforce
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {(assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str)}"])
    subgoal premises p using p(24) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
@@ -1451,7 +1451,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_function:
    subgoal premises p using p(28) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(30) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_translators) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_translators)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1459,10 +1459,10 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {(assignment_to_binary_tail_prefix @ assignment_to_binary_tail_v_str), (assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str)}"])
    subgoal premises p using p(43) by fastforce
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {(assignment_to_binary_tail_prefix @ assignment_to_binary_tail_n_str)}"])
    subgoal premises p using p(45) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
@@ -1471,7 +1471,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_time:
    subgoal premises p using p(49) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(51) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_translators Let_def)
 
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd s \<equiv>
@@ -1526,7 +1526,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd_time t s \<equ
   add_result_to_stack_nat_ret_state = add_result_to_stack_nat_imp add_result_to_stack_nat_state;
   t = t + add_result_to_stack_nat_imp_time 0 add_result_to_stack_nat_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'
     = add_result_to_stack_nat_ret add_result_to_stack_nat_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s,
@@ -1540,20 +1540,20 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd s)
-    = 
-  (add_result_to_stack_nat 
-  (0##0) 
+    =
+  (add_result_to_stack_nat
+  (0##0)
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd_def)
 apply (simp add: cons_imp_correct add_result_to_stack_nat_imp_correct)
-done 
+done
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
 cons_imp_to_HOL_state_def
 add_result_to_stack_nat_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (N 0);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1580,10 +1580,10 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_correct_function:
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
-   subgoal premises p using p(9) by fastforce 
+   subgoal premises p using p(9) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(11) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_translators) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_translators)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1595,7 +1595,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_correct_time:
    subgoal premises p using p(17) by fastforce
    apply (erule add_result_to_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(19) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine
 
@@ -1694,24 +1694,24 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd s)
-    = 
+    =
   (push_on_stack_nat
   (nth_nat 2 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd_def)
-apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct ) 
-done 
+apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct )
+done
 
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
-nth_nat_imp_to_HOL_state_def 
+nth_nat_imp_to_HOL_state_def
 push_on_stack_nat_imp_to_HOL_state_def
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_res_one \<equiv> ''res1''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -1746,15 +1746,15 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_functi
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_res_one}"])
    subgoal premises p using p(15) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(17) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(19) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_translators) 
-   
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_translators)
+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1762,14 +1762,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_res_one}"])
    subgoal premises p using p(29) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(31) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(33) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven
 
@@ -1868,24 +1868,24 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd s)
-    = 
+    =
   (push_on_stack_nat
   (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd_def)
-apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct ) 
-done 
+apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct )
+done
 
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
-nth_nat_imp_to_HOL_state_def 
+nth_nat_imp_to_HOL_state_def
 push_on_stack_nat_imp_to_HOL_state_def
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_res_one \<equiv> ''res1''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -1920,15 +1920,15 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_res_one}"])
    subgoal premises p using p(15) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(17) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(19) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_translators) 
-   
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_translators)
+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1936,14 +1936,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_res_one}"])
    subgoal premises p using p(29) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(31) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(33) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six
 
@@ -2042,24 +2042,24 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd s)
-    = 
+    =
   (push_on_stack_nat
   (nth_nat 2 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 4 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd_def)
-apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct ) 
-done 
+apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct )
+done
 
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
-nth_nat_imp_to_HOL_state_def 
+nth_nat_imp_to_HOL_state_def
 push_on_stack_nat_imp_to_HOL_state_def
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_res_one \<equiv> ''res1''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -2094,15 +2094,15 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_res_one}"])
    subgoal premises p using p(15) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(17) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(19) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_translators) 
-   
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_translators)
+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2110,14 +2110,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_res_one}"])
    subgoal premises p using p(29) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(31) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(33) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_translators Let_def)
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three
 
@@ -2216,24 +2216,24 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd s)
-    = 
+    =
   (push_on_stack_nat
   (nth_nat 1 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (nth_nat 3 (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s))
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s))"
 apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd_def)
-apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct ) 
-done 
+apply (simp add: nth_nat_imp_correct  push_on_stack_nat_imp_correct )
+done
 
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_translators =
 IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state_def
-nth_nat_imp_to_HOL_state_def 
+nth_nat_imp_to_HOL_state_def
 push_on_stack_nat_imp_to_HOL_state_def
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_res_one \<equiv> ''res1''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 1);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
@@ -2268,15 +2268,15 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_correct_function:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_res_one}"])
    subgoal premises p using p(15) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(17) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(19) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_translators) 
-   
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_translators)
+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2284,14 +2284,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_correct_time:
    apply (subst IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd_time_def)
    apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
-   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars 
+   apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars
      \<union> {IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_res_one}"])
    subgoal premises p using p(29) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(31) by fastforce
    apply (erule push_on_stack_nat_IMP_Minus_correct[where vars="IMP_Minus_to_IMP_Minus_Minus_stack_aux_IMP_vars"])
    subgoal premises p using p(33) by fastforce
-   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_translators Let_def) 
+   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_translators Let_def)
 
 subsubsection "auxiliary functions"
 
@@ -2308,16 +2308,16 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 10;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd s
- else 
+ else
    (let
      IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' = 0;
      ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_aux_c = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s,
@@ -2336,7 +2336,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2345,14 +2345,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret' = 0;
@@ -2371,7 +2371,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux0_imp_correct:
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux0_def)
   apply (simp add:EQUAL_neq_zero_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_imp_correct)
-  done 
+  done
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus \<equiv>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str);;
@@ -2397,13 +2397,13 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
      subgoal
      by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators)
-   done 
+   done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2415,7 +2415,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_ten_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2430,14 +2430,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 8;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd s
    ))"
@@ -2450,7 +2450,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2459,14 +2459,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux0_state_upd_time 0 s
@@ -2480,7 +2480,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux1_imp_correct:
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux1_def)
   apply (simp add:EQUAL_neq_zero_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_imp_correct
   IMP_Minus_to_IMP_Minus_Minus_stack_aux0_imp_correct)
-  done 
+  done
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus \<equiv>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str);;
@@ -2506,7 +2506,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2514,7 +2514,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus_correct_function:
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_aux0_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
-   done 
+   done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2526,7 +2526,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_eight_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2543,14 +2543,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 5;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd s
    ))"
@@ -2563,7 +2563,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2572,14 +2572,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux1_state_upd_time 0 s
@@ -2593,7 +2593,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux2_imp_correct:
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux2_def)
   apply (simp add:EQUAL_neq_zero_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_imp_correct
   IMP_Minus_to_IMP_Minus_Minus_stack_aux1_imp_correct)
-  done 
+  done
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus \<equiv>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str);;
@@ -2619,7 +2619,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2627,7 +2627,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus_correct_function:
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_aux1_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
-   done 
+   done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2639,7 +2639,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_five_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2656,14 +2656,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 2;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd s
    ))"
@@ -2676,7 +2676,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2685,14 +2685,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux2_state_upd_time 0 s
@@ -2706,7 +2706,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux3_imp_correct:
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux3_def)
   apply (simp add:EQUAL_neq_zero_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_imp_correct
   IMP_Minus_to_IMP_Minus_Minus_stack_aux2_imp_correct)
-  done 
+  done
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus \<equiv>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str);;
@@ -2732,7 +2732,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2740,7 +2740,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus_correct_function:
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_aux2_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
-   done 
+   done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2752,7 +2752,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_two_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2769,14 +2769,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 1;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd s
    ))"
@@ -2789,7 +2789,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2798,14 +2798,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux3_state_upd_time 0 s
@@ -2819,7 +2819,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux4_imp_correct:
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux4_def)
   apply (simp add:EQUAL_neq_zero_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_imp_correct
   IMP_Minus_to_IMP_Minus_Minus_stack_aux3_imp_correct)
-  done 
+  done
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus \<equiv>
   (EQUAL_neq_zero_prefix @ EQUAL_neq_zero_a_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str);;
@@ -2845,7 +2845,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2853,7 +2853,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus_correct_function:
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_aux3_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
-   done 
+   done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2865,7 +2865,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux4_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_one_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2882,14 +2882,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 9;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd s
    ))"
@@ -2902,7 +2902,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -2911,14 +2911,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux4_state_upd_time 0 s
@@ -2927,7 +2927,7 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux5_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd s)
-    = IMP_Minus_to_IMP_Minus_Minus_stack_aux5 
+    = IMP_Minus_to_IMP_Minus_Minus_stack_aux5
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s)
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux5_def)
@@ -2959,7 +2959,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux5_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2979,7 +2979,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux5_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -2996,14 +2996,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 7;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd s
    ))"
@@ -3016,7 +3016,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -3025,14 +3025,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux5_state_upd_time 0 s
@@ -3041,7 +3041,7 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux6_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd s)
-    = IMP_Minus_to_IMP_Minus_Minus_stack_aux6 
+    = IMP_Minus_to_IMP_Minus_Minus_stack_aux6
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s)
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux6_def)
@@ -3073,7 +3073,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux6_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3093,7 +3093,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux6_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_seven_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3110,14 +3110,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 6;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd s
    ))"
@@ -3130,7 +3130,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -3139,14 +3139,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux6_state_upd_time 0 s
@@ -3155,7 +3155,7 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux7_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd s)
-    = IMP_Minus_to_IMP_Minus_Minus_stack_aux7 
+    = IMP_Minus_to_IMP_Minus_Minus_stack_aux7
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s)
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux7_def)
@@ -3187,7 +3187,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux7_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3207,7 +3207,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux7_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_six_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3224,14 +3224,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 4;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd s
    ))"
@@ -3244,7 +3244,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -3253,14 +3253,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux7_state_upd_time 0 s
@@ -3269,7 +3269,7 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux8_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd s)
-    = IMP_Minus_to_IMP_Minus_Minus_stack_aux8 
+    = IMP_Minus_to_IMP_Minus_Minus_stack_aux8
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s)
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux8_def)
@@ -3301,7 +3301,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux8_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3321,7 +3321,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux8_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_four_nine_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3338,14 +3338,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd s \<equiv>
   EQUAL_neq_zero_a' = IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s;
   EQUAL_neq_zero_b' = 3;
   EQUAL_neq_zero_ret' = 0;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
   EQUAL_neq_zero_ret_state = EQUAL_neq_zero_imp EQUAL_neq_zero_state;
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd s
  else IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd s
    ))"
@@ -3358,7 +3358,7 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd_time t s \<equiv>
   t = t + 2;
   EQUAL_neq_zero_ret' = 0;
   t = t + 2;
-  EQUAL_neq_zero_state = 
+  EQUAL_neq_zero_state =
     \<lparr>EQUAL_neq_zero_a = EQUAL_neq_zero_a',
     EQUAL_neq_zero_b = EQUAL_neq_zero_b',
     EQUAL_neq_zero_ret = EQUAL_neq_zero_ret'\<rparr>;
@@ -3367,14 +3367,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd_time t s \<equiv>
   cond = EQUAL_neq_zero_ret EQUAL_neq_zero_ret_state;
   t = t + 2
 in
- (if cond \<noteq> 0 
+ (if cond \<noteq> 0
  then (
   let
    t = t + 1;
    t = t + IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_state_upd_time 0 s
   in
    t)
- else 
+ else
    (let
      t = t + 1;
      t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux8_state_upd_time 0 s
@@ -3383,7 +3383,7 @@ in
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux9_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd s)
-    = IMP_Minus_to_IMP_Minus_Minus_stack_aux9 
+    = IMP_Minus_to_IMP_Minus_Minus_stack_aux9
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_s s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_c s)
     (IMP_Minus_to_IMP_Minus_Minus_stack_aux_h s) (IMP_Minus_to_IMP_Minus_Minus_stack_aux_t s)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd_def IMP_Minus_to_IMP_Minus_Minus_stack_aux9_def)
@@ -3415,7 +3415,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct_function:
      \<union> {''ret''}"])
    subgoal premises p using p(6) by fastforce
    apply (erule  If_E)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_correct_function)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3435,7 +3435,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct_time:
      \<union> {''ret''}"])
    subgoal premises p using p(11) by fastforce
    apply (erule  If_tE)
-     subgoal 
+     subgoal
      apply (drule IMP_Minus_to_IMP_Minus_Minus_stack_c_eq_three_IMP_Minus_correct_time)
      by (fastforce
        simp add: IMP_Minus_to_IMP_Minus_Minus_stack_aux_state_translators Let_def)
@@ -3454,7 +3454,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct:
                                         (IMP_Minus_to_IMP_Minus_Minus_stack_aux_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-   using IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct_function 
+   using IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct_function
    IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct_time
    by (meson com_add_prefix_valid_subset com_only_vars)
 
@@ -3462,12 +3462,12 @@ subsubsection IMP_Minus_to_IMP_Minus_Minus_stack_nat
 
 paragraph IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition
 
-record IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state = 
+record IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state =
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s::nat
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c::nat
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret::nat
 
-abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_prefix 
+abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_prefix
   \<equiv> ''IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition.''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s_str \<equiv> ''s''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c_str \<equiv> ''c''"
@@ -3527,9 +3527,9 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd s \<equiv
 function IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp ::
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state" where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp s =
-  (let 
+  (let
       ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -3540,7 +3540,7 @@ declare IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp.simps [simp del]
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_correct:
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp s)
-  = (if (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s s) = 0 
+  = (if (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s s) = 0
     \<or> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c s = 0)
     \<or> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c s > 10)
    then 1 else 0)"
@@ -3638,19 +3638,19 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time (Suc t) s) = Suc (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time t s)"
   by (induction t s rule: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time.induct)
     ((subst (1 2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time.simps);
-      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_def Let_def))            
+      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_def Let_def))
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc_2_aux:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc)+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time 0 s)"
-  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc_2_aux)            
+  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc_2_aux)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc_3:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time (a + b) s) = a + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time_acc)+
 
 definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus \<equiv>
@@ -3693,7 +3693,7 @@ invoke_subprogram EQUAL_neq_zero_prefix EQUAL_neq_zero_IMP_Minus;;
 (OR_neq_zero_prefix @ OR_neq_zero_ret_str)
   ::= A (N 0);;
 invoke_subprogram OR_neq_zero_prefix OR_neq_zero_IMP_Minus;;
-IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_str 
+IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_str
   ::= A (V (OR_neq_zero_prefix @ OR_neq_zero_ret_str))
 "
 
@@ -3702,11 +3702,11 @@ abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_vars \<equiv>
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c_str}"
 
 definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_to_HOL_state p s =
-  \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s 
+  \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s
     = (s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s_str)),
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c
    = (s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c_str)),
-   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret 
+   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret
    = (s (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_str))\<rparr>"
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_translators =
@@ -3736,14 +3736,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_functio
   apply(erule OR_neq_zero_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_vars"])
   subgoal premises p using p(29) by fastforce
   by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_translators
-    IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_def Let_def)       
+    IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_def Let_def)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_pref) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3763,8 +3763,8 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_time:
   subgoal premises p using p(47) by fastforce
   apply(erule OR_neq_zero_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_vars"])
   subgoal premises p using p(49) by fastforce
-  by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_translators 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_time_def Let_def)     
+  by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_translators
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state_upd_time_def Let_def)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3778,17 +3778,17 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct:
   using IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_function
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_time
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)   
+  by (meson set_mono_prefix)
 
 record IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state=
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s::nat
-IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret::nat 
+IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret::nat
 
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_prefix \<equiv> ''IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux.''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s_str \<equiv> ''s''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_str \<equiv> ''ret''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd s \<equiv>
 (let
   hd_xs' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s;
   hd_ret' = 0;
@@ -3803,20 +3803,20 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd s \<e
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c' = hd_ret hd_ret_state;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret' = 0;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state
     = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret'
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s,
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret'\<rparr>
 in
  ret)"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_time t s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_time t s \<equiv>
 (let
   hd_xs' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s;
   t = t + 2;
@@ -3840,14 +3840,14 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_time 
   t = t + 2;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret' = 0;
   t = t + 2;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state
     = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_c',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state;
   t = t + IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_time 0 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_state;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret'
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s,
@@ -3858,9 +3858,9 @@ in
 function IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp ::
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state" where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp s =
-  (let 
+  (let
       ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -3871,13 +3871,13 @@ declare IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp.simps [simp del
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_correct[let_function_correctness]:
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp s) =
-    (if (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s) = 0 
+    (if (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s) = 0
     \<or> (hd_nat (hd_nat (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s))) = 0
     \<or> (hd_nat (hd_nat (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s s))) > 10
    then 1 else 0)"
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp.simps Let_def IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_def)
   apply (simp add: hd_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_imp_correct)
-  done 
+  done
 
 function IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time ::
   "nat \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state \<Rightarrow> nat" where
@@ -3897,19 +3897,19 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time (Suc t) s) = Suc (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time t s)"
   by (induction t s rule: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time.induct)
     ((subst (1 2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time.simps);
-      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_def Let_def))            
+      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_def Let_def))
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc_2_aux:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc)+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time 0 s)"
-  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc_2_aux)            
+  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc_2_aux)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc_3:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time (a + b) s) = a + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time_acc)+
 
 definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus \<equiv>
@@ -3929,7 +3929,7 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus;;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_str 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_str
     ::= A (V (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_ret_str))
 "
 
@@ -3960,14 +3960,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_fun
   apply(erule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_vars"])
   subgoal premises p using p(15) by fastforce
   by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_translators
-    IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_def)        
+    IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_def)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_pref) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3982,7 +3982,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_tim
   apply(erule IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_vars"])
   subgoal premises p using p(25) by fastforce
   by(fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_translators
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_time_def Let_def)         
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state_upd_time_def Let_def)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -3996,7 +3996,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct:
   using IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_function
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_time
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus_correct_effects
-  by (meson set_mono_prefix)  
+  by (meson set_mono_prefix)
 
 paragraph "loop body"
 record IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state =
@@ -4007,7 +4007,7 @@ abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix \<equiv> ''IMP_
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str \<equiv> ''s''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_str \<equiv> ''ret''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd s \<equiv>
 (let
   hd_xs' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s;
   hd_ret' = 0;
@@ -4035,10 +4035,10 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd s \<equiv>
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_t = IMP_Minus_to_IMP_Minus_Minus_stack_aux_t',
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_aux_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret = IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd IMP_Minus_to_IMP_Minus_Minus_stack_aux_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret'
     = IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s,
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret'\<rparr>
@@ -4048,9 +4048,9 @@ in
 function IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp ::
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state" where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp s =
-  (let 
+  (let
       ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -4061,13 +4061,13 @@ declare IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp.simps [simp del]
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_correct[let_function_correctness]:
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp s) =
-    IMP_Minus_to_IMP_Minus_Minus_stack_aux9 
+    IMP_Minus_to_IMP_Minus_Minus_stack_aux9
     (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s) (hd_nat (hd_nat (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s)))
     (hd_nat (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s)) (tl_nat (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s))
     "
   apply (simp only: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp.simps Let_def IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd_def)
   apply (simp add: hd_imp_correct tl_imp_correct IMP_Minus_to_IMP_Minus_Minus_stack_aux9_imp_correct )
-  done 
+  done
 
 function IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time ::
   "nat \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state \<Rightarrow> nat" where
@@ -4113,11 +4113,11 @@ function IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time ::
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_t = IMP_Minus_to_IMP_Minus_Minus_stack_aux_t',
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_aux_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret = IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd IMP_Minus_to_IMP_Minus_Minus_stack_aux_state;
   t = t + IMP_Minus_to_IMP_Minus_Minus_stack_aux9_state_upd_time 0 IMP_Minus_to_IMP_Minus_Minus_stack_aux_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret'
     = IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s s,
@@ -4135,19 +4135,19 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time (Suc t) s) = Suc (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time t s)"
   by (induction t s rule: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time.induct)
     ((subst (1 2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time.simps);
-      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd_def Let_def))            
+      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd_def Let_def))
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc_2_aux:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc)+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time 0 s)"
-  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc_2_aux)            
+  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc_2_aux)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc_3:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time (a + b) s) = a + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time_acc)+
 
 definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus where
   "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus \<equiv>
@@ -4162,7 +4162,7 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus where
   invoke_subprogram hd_prefix hd_IMP_Minus;;
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str)
     ::= A (V (hd_prefix @ hd_ret_str));;
-  
+
   (tl_prefix @ tl_xs_str) ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str);;
   (tl_prefix @ tl_ret_str) ::= A (N 0);;
   invoke_subprogram tl_prefix tl_IMP_Minus;;
@@ -4173,9 +4173,9 @@ definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus where
     ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str);;
   (IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_str)
     ::= A (N 0);;
-  invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix 
+  invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix
     IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus;;
-  
+
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_str
     ::= A (V (IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_ret_str))
 "
@@ -4213,18 +4213,18 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct_function:
   apply(erule IMP_Minus_to_IMP_Minus_Minus_stack_aux9_IMP_Minus_correct[where vars = "IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_vars"])
   subgoal premises p using p(22) by fastforce
   apply (clarsimp simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_translators
-    IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd_def Let_def)     
-  subgoal premises p 
+    IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_upd_def Let_def)
+  subgoal premises p
     using
     p(2)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str)", symmetric]
     p(6)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str)", symmetric]
     p(6)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str)", symmetric]
     apply simp
-    unfolding p(8)[symmetric] p(4)  
+    unfolding p(8)[symmetric] p(4)
       using p(6)[of IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str, symmetric]
             p(2)[of IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str, symmetric]
     by simp
-  done 
+  done
 
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct_effects:
@@ -4232,7 +4232,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct_effects:
     v \<in> vars; \<not> (prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct_time:
   "(invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4253,19 +4253,19 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct_time:
   subgoal premises p using p(37) by fastforce
   apply (clarsimp simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state_translators
     Let_def)
-  subgoal premises p 
-    using 
+  subgoal premises p
+    using
     p(3)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str)"]
     p(7)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_h_str)"]
     p(7)[of "(IMP_Minus_to_IMP_Minus_Minus_stack_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_aux_c_str)"]
     apply simp
     unfolding p(5) p(9)[symmetric]
-    using 
+    using
     p(7)[of IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str, symmetric]
     p(3)[of IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str, symmetric]
     by simp
-  done 
-   
+  done
+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -4292,17 +4292,17 @@ abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str \<equiv> ''s''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret_str \<equiv> ''ret''"
 abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_while_cond \<equiv> ''cond''"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd s \<equiv>
 (let
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s s;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret' = 0;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_s' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_s'
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s',
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret s\<rparr>
@@ -4313,28 +4313,28 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_compute_loop_condition s 
 (let
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s s;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret' = 0;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state
     = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state;
   cond = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state
   in
    cond
   )"
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop s \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop s \<equiv>
   (let
   IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s' = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s s;
   IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret' = 0;
-  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state =
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret' = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret' =
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state;
-  
+
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s s,
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret'\<rparr>
   in
@@ -4343,25 +4343,25 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop s \<equiv>
 
 function (domintros) IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp
   :: "IMP_Minus_to_IMP_Minus_Minus_stack_nat_state \<Rightarrow> IMP_Minus_to_IMP_Minus_Minus_stack_nat_state" where
-"IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp s = 
+"IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp s =
   (if IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_compute_loop_condition s \<noteq> 0
-  then 
+  then
     let next_iteration = IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp (IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd s)
     in next_iteration
-  else 
+  else
     let ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop s
     in ret)"
  by simp+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_term:
-  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_dom 
+  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_dom
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMPm_IMPmm_list_encode c,
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret = 0\<rparr>"
  apply (induction c rule: IMP_Minus_to_IMP_Minus_Minus_stack.induct)
  sorry
 
 
-(*TODO: the partial termination of the imp function, should be resolved by 
+(*TODO: the partial termination of the imp function, should be resolved by
 a similar induction as the functional implementation*)
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_simps
@@ -4379,13 +4379,13 @@ sorry
 
 thm IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp.pinduct[OF IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_term]
 
-lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_simps = 
+lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_simps =
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd_def
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_compute_loop_condition_def
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop_def
 
-abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_vars \<equiv> 
-{IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str, 
+abbreviation "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_vars \<equiv>
+{IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str,
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_while_cond,
 IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret_str}"
 
@@ -4398,14 +4398,14 @@ lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_compute_loop_condition_state
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_to_HOL_state_def
   IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_init_while_cond \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_init_while_cond \<equiv>
 (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s_str)
   ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str);;
 (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_str)
   ::= A (N 0);;
 invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_IMP_Minus;;
 
-IMP_Minus_to_IMP_Minus_Minus_stack_nat_while_cond 
+IMP_Minus_to_IMP_Minus_Minus_stack_nat_while_cond
   ::= A (V (IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_str))
 "
 
@@ -4414,10 +4414,10 @@ lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_loop_body_state_translators=
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_to_HOL_state_def
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_to_HOL_state_def
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_loop_body \<equiv> 
-(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str) 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_loop_body \<equiv>
+(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s_str)
   ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str);;
-(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_str) 
+(IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_str)
   ::= A (N 0);;
 invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_IMP_Minus;;
 
@@ -4425,14 +4425,14 @@ IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str
   ::= A (V (IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_str))
 "
 
-definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_after_loop \<equiv> 
+definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_after_loop \<equiv>
 (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s_str)
   ::= A (V IMP_Minus_to_IMP_Minus_Minus_stack_nat_s_str);;
 (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str)
   ::= A (N 0);;
 invoke_subprogram IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_prefix IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_IMP_Minus;;
 
-IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret_str 
+IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret_str
   ::= A (V (IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_prefix @ IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_str))
 "
 
@@ -4445,11 +4445,11 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd_time t s \<equiv>
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state;
   t = t + IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_imp_time 0 IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_state;
 
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_s' 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_s'
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_body_ret_state;
   t = t + 2;
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s',
@@ -4464,10 +4464,10 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_compute_loop_condition_ti
   t = t + 2;
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret' = 0;
   t = t + 2;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state
     = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state
     = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state;
   t = t + IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_imp_time 0 IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_state;
   cond = IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret IMP_Minus_to_IMP_Minus_Minus_stack_nat_condition_aux_ret_state;
@@ -4482,23 +4482,23 @@ definition "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop_time t s \<equ
   t = t + 2;
   IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret' = 0;
   t = t + 2;
-  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state =
     \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_s',
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret = IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret'\<rparr>;
-  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state =
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state;
   t = t + IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_imp_time 0 IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_state;
-  IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret' = 
+  IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret' =
     IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret IMP_Minus_to_IMP_Minus_Minus_stack_end_recur_ret_state;
   t = t + 2;
-  
+
   ret = \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMP_Minus_to_IMP_Minus_Minus_stack_nat_s s,
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret = IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret'\<rparr>
   in
     t)
 "
 
-lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_time_simps = 
+lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_time_simps =
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd_time_def
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_compute_loop_condition_time_def
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_after_loop_time_def
@@ -4525,14 +4525,14 @@ function (domintros) IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time::
   by auto
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_term:
-  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_dom 
+  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_dom
     (t, \<lparr>IMP_Minus_to_IMP_Minus_Minus_stack_nat_s = IMPm_IMPmm_list_encode c,
     IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret = 0\<rparr>)"
  apply (induction c rule: IMP_Minus_to_IMP_Minus_Minus_stack.induct)
  sorry
 
 
-(*TODO: the partial termination of the imp function, should be resolved by 
+(*TODO: the partial termination of the imp function, should be resolved by
 a similar induction as the functional implementation*)
 
 lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_simps
@@ -4546,20 +4546,20 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time (Suc t) s) = Suc (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time t s)"
   by (induction t s rule: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_induct)
     ((subst (1 2) IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_simps);
-      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd_def))            
+      (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_upd_def))
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc_2_aux:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc)+
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time t s) = t + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time 0 s)"
-  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc_2_aux)            
+  by (rule IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc_2_aux)
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc_3:
   "(IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time (a + b) s) = a + (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc)+      
-   
+  by (induction a arbitrary: b s) (simp add: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_acc)+
+
 *)
 
 definition IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus where
@@ -4582,8 +4582,8 @@ lemmas IMP_Minus_to_IMP_Minus_Minus_stack_nat_complete_simps =
   IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_simps
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct_function:
-  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_dom (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_to_HOL_state p s) 
-     \<Longrightarrow> (invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' 
+  "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_dom (IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_to_HOL_state p s)
+     \<Longrightarrow> (invoke_subprogram p IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s'
      \<Longrightarrow>
      s' (add_prefix p IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret_str)
       = IMP_Minus_to_IMP_Minus_Minus_stack_nat_ret
@@ -4629,7 +4629,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct_function:
       subgoal premises p using p(15) by fastforce
       by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_simps
       IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_loop_body_state_translators Let_def)
-  
+
 
   subgoal
       apply(simp only: IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_init_while_cond_def prefix_simps
@@ -4641,14 +4641,14 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct_function:
       subgoal premises p using p(18) by fastforce
       by (fastforce simp: IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_subprogram_simps
       IMP_Minus_to_IMP_Minus_Minus_stack_nat_state_loop_body_state_translators Let_def)
-  done        
+  done
 
 lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ IMP_Minus_to_IMP_Minus_Minus_stack_nat_pref) IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix IMP_Minus_to_IMP_Minus_Minus_stack_nat_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 thm IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_time_induct
 
@@ -4675,7 +4675,7 @@ using dom apply (induction "IMP_Minus_to_IMP_Minus_Minus_stack_nat_imp_to_HOL_st
 
   apply(erule Seq_tE)+
   apply(simp add: add.assoc)
-sorry 
+sorry
 
 (*
 "apply (dest_com_gen_time)" fails here
@@ -4691,7 +4691,7 @@ lemma IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct:
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using IMP_Minus_to_IMP_Minus_Minus_stack_nat_IMP_Minus_correct_function
-  sorry  
+  sorry
 
 
-end 
+end

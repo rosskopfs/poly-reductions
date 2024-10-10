@@ -10,7 +10,7 @@ theory IMP_Minus_To_IMP_Minus_Minus_IMP
 begin
 
 
-unbundle IMP_Minus_Minus_Com.no_com_syntax
+unbundle no IMP_Minus_Minus_Com.com_syntax
 
 subsection \<open>Useful Definitions and Lemmas\<close>
 
@@ -19,7 +19,7 @@ subsection "add_result_to_stack"
 subsubsection "add_result_to_stack_aux"
 
 record add_result_to_stack_aux_state =
-  add_result_to_stack_aux_c::nat 
+  add_result_to_stack_aux_c::nat
   add_result_to_stack_aux_h::nat
   add_result_to_stack_aux_con::nat
   add_result_to_stack_aux_t::nat
@@ -34,7 +34,7 @@ abbreviation "add_result_to_stack_aux_t_str \<equiv> ''t''"
 abbreviation "add_result_to_stack_aux_s_str \<equiv> ''s''"
 abbreviation "add_result_to_stack_aux_ret_str \<equiv> ''ret''"
 
-definition "add_result_to_stack_aux_imp_to_HOL_state p s \<equiv> 
+definition "add_result_to_stack_aux_imp_to_HOL_state p s \<equiv>
   \<lparr>add_result_to_stack_aux_c = s (add_prefix p add_result_to_stack_aux_c_str),
   add_result_to_stack_aux_h = s (add_prefix p add_result_to_stack_aux_h_str),
   add_result_to_stack_aux_con = s (add_prefix p add_result_to_stack_aux_con_str),
@@ -42,20 +42,20 @@ definition "add_result_to_stack_aux_imp_to_HOL_state p s \<equiv>
   add_result_to_stack_aux_s = s (add_prefix p add_result_to_stack_aux_s_str),
   add_result_to_stack_aux_ret = s (add_prefix p add_result_to_stack_aux_ret_str)\<rparr>"
 
-abbreviation "add_result_to_stack_aux_IMP_vars \<equiv> 
-  {add_result_to_stack_aux_c_str, add_result_to_stack_aux_h_str, 
-  add_result_to_stack_aux_con_str, add_result_to_stack_aux_t_str, 
+abbreviation "add_result_to_stack_aux_IMP_vars \<equiv>
+  {add_result_to_stack_aux_c_str, add_result_to_stack_aux_h_str,
+  add_result_to_stack_aux_con_str, add_result_to_stack_aux_t_str,
   add_result_to_stack_aux_s_str, add_result_to_stack_aux_ret_str}"
 
-lemmas add_result_to_stack_aux_state_translators = 
+lemmas add_result_to_stack_aux_state_translators =
   add_result_to_stack_aux_imp_to_HOL_state_def
   nth_nat_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
 
 paragraph "con_eq_three"
 
-definition "add_result_to_stack_aux_con_eq_three_imp s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_three_imp s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -117,20 +117,20 @@ definition "add_result_to_stack_aux_con_eq_three_imp s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    ret)"
 
 lemma add_result_to_stack_aux_con_eq_three_imp_correct[let_function_correctness]:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_three_imp s) = 
-    ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_three_imp s) =
+    ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
   apply (subst add_result_to_stack_aux_con_eq_three_imp_def)
   apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
-  done 
+  done
 
-definition "add_result_to_stack_aux_con_eq_three_imp_time t s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_three_imp_time t s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     t = t + 2;
     cons_t' = 0;
@@ -229,30 +229,30 @@ definition "add_result_to_stack_aux_con_eq_three_imp_time t s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    t)"
 
-definition "add_result_to_stack_aux_con_eq_three_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_con_eq_three_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-    
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -262,17 +262,17 @@ definition "add_result_to_stack_aux_con_eq_three_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 4);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -289,25 +289,25 @@ apply (subst add_result_to_stack_aux_con_eq_three_imp_def)
 apply (simp only: add_result_to_stack_aux_con_eq_three_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(37) by fastforce 
+subgoal premises p using p(37) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(39) by fastforce 
+subgoal premises p using p(39) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(41) by fastforce 
+subgoal premises p using p(41) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(43) by fastforce 
+subgoal premises p using p(43) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(45) by fastforce 
+subgoal premises p using p(45) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(47) by fastforce 
+subgoal premises p using p(47) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(49) by fastforce 
+subgoal premises p using p(49) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(51) by fastforce 
+subgoal premises p using p(51) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(53) by fastforce 
+subgoal premises p using p(53) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 lemma add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_aux_con_eq_three_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -316,31 +316,31 @@ apply (subst add_result_to_stack_aux_con_eq_three_imp_time_def)
 apply (simp only: add_result_to_stack_aux_con_eq_three_IMP_Minus_def prefix_simps)
 apply (erule Seq_tE)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(73) by fastforce 
+subgoal premises p using p(73) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(75) by fastforce 
+subgoal premises p using p(75) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(77) by fastforce 
+subgoal premises p using p(77) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(79) by fastforce 
+subgoal premises p using p(79) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(81) by fastforce 
+subgoal premises p using p(81) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(83) by fastforce 
+subgoal premises p using p(83) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(85) by fastforce 
+subgoal premises p using p(85) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(87) by fastforce 
+subgoal premises p using p(87) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(89) by fastforce 
+subgoal premises p using p(89) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 
 paragraph "con_eq_four"
 
-definition "add_result_to_stack_aux_con_eq_four_imp s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_four_imp s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -414,21 +414,21 @@ definition "add_result_to_stack_aux_con_eq_four_imp s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    ret)"
 
 lemma add_result_to_stack_aux_con_eq_four_imp_correct[let_function_correctness]:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_four_imp s) = 
-    ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_four_imp s) =
+    ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
   apply (subst add_result_to_stack_aux_con_eq_four_imp_def)
   apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
-  done 
+  done
 
-definition "add_result_to_stack_aux_con_eq_four_imp_time t s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_four_imp_time t s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     t = t + 2;
     cons_t' = 0;
@@ -547,10 +547,10 @@ definition "add_result_to_stack_aux_con_eq_four_imp_time t s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    t)"
 
-definition "add_result_to_stack_aux_con_eq_four_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_con_eq_four_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -560,27 +560,27 @@ definition "add_result_to_stack_aux_con_eq_four_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-    
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -590,17 +590,17 @@ definition "add_result_to_stack_aux_con_eq_four_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 5);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -617,29 +617,29 @@ apply (subst add_result_to_stack_aux_con_eq_four_imp_def)
 apply (simp only: add_result_to_stack_aux_con_eq_four_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(45) by fastforce 
+subgoal premises p using p(45) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(47) by fastforce 
+subgoal premises p using p(47) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(49) by fastforce 
+subgoal premises p using p(49) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(51) by fastforce 
+subgoal premises p using p(51) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(53) by fastforce 
+subgoal premises p using p(53) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(55) by fastforce 
+subgoal premises p using p(55) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(57) by fastforce 
+subgoal premises p using p(57) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(59) by fastforce 
+subgoal premises p using p(59) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(61) by fastforce 
+subgoal premises p using p(61) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(63) by fastforce 
+subgoal premises p using p(63) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(65) by fastforce 
+subgoal premises p using p(65) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 lemma add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_aux_con_eq_four_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -648,34 +648,34 @@ apply (subst add_result_to_stack_aux_con_eq_four_imp_time_def)
 apply (simp only: add_result_to_stack_aux_con_eq_four_IMP_Minus_def prefix_simps)
 apply (erule Seq_tE)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(89) by fastforce 
+subgoal premises p using p(89) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(91) by fastforce 
+subgoal premises p using p(91) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(93) by fastforce 
+subgoal premises p using p(93) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(95) by fastforce 
+subgoal premises p using p(95) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(97) by fastforce 
+subgoal premises p using p(97) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(99) by fastforce 
+subgoal premises p using p(99) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(101) by fastforce 
+subgoal premises p using p(101) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(103) by fastforce 
+subgoal premises p using p(103) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(105) by fastforce 
+subgoal premises p using p(105) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(107) by fastforce 
+subgoal premises p using p(107) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(109) by fastforce 
+subgoal premises p using p(109) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 paragraph "con_eq_six"
 
-definition "add_result_to_stack_aux_con_eq_six_imp s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_six_imp s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -749,21 +749,21 @@ definition "add_result_to_stack_aux_con_eq_six_imp s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    ret)"
 
 lemma add_result_to_stack_aux_con_eq_six_imp_correct[let_function_correctness]:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_six_imp s) = 
-    ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_six_imp s) =
+    ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
   apply (subst add_result_to_stack_aux_con_eq_six_imp_def)
   apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
-  done 
+  done
 
-definition "add_result_to_stack_aux_con_eq_six_imp_time t s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_six_imp_time t s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     t = t + 2;
     cons_t' = 0;
@@ -882,10 +882,10 @@ definition "add_result_to_stack_aux_con_eq_six_imp_time t s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    t)"
 
-definition "add_result_to_stack_aux_con_eq_six_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_con_eq_six_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -895,27 +895,27 @@ definition "add_result_to_stack_aux_con_eq_six_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-    
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -925,17 +925,17 @@ definition "add_result_to_stack_aux_con_eq_six_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 7);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -952,29 +952,29 @@ apply (subst add_result_to_stack_aux_con_eq_six_imp_def)
 apply (simp only: add_result_to_stack_aux_con_eq_six_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(45) by fastforce 
+subgoal premises p using p(45) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(47) by fastforce 
+subgoal premises p using p(47) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(49) by fastforce 
+subgoal premises p using p(49) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(51) by fastforce 
+subgoal premises p using p(51) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(53) by fastforce 
+subgoal premises p using p(53) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(55) by fastforce 
+subgoal premises p using p(55) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(57) by fastforce 
+subgoal premises p using p(57) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(59) by fastforce 
+subgoal premises p using p(59) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(61) by fastforce 
+subgoal premises p using p(61) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(63) by fastforce 
+subgoal premises p using p(63) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(65) by fastforce 
+subgoal premises p using p(65) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 lemma add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_aux_con_eq_six_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -983,34 +983,34 @@ apply (subst add_result_to_stack_aux_con_eq_six_imp_time_def)
 apply (simp only: add_result_to_stack_aux_con_eq_six_IMP_Minus_def prefix_simps)
 apply (erule Seq_tE)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(89) by fastforce 
+subgoal premises p using p(89) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(91) by fastforce 
+subgoal premises p using p(91) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(93) by fastforce 
+subgoal premises p using p(93) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(95) by fastforce 
+subgoal premises p using p(95) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(97) by fastforce 
+subgoal premises p using p(97) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(99) by fastforce 
+subgoal premises p using p(99) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(101) by fastforce 
+subgoal premises p using p(101) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(103) by fastforce 
+subgoal premises p using p(103) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(105) by fastforce 
+subgoal premises p using p(105) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(107) by fastforce 
+subgoal premises p using p(107) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(109) by fastforce 
+subgoal premises p using p(109) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done
 
 paragraph "con_eq_nine"
 
-definition "add_result_to_stack_aux_con_eq_nine_imp s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_nine_imp s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -1072,20 +1072,20 @@ definition "add_result_to_stack_aux_con_eq_nine_imp s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    ret)"
 
 lemma add_result_to_stack_aux_con_eq_nine_imp_correct[let_function_correctness]:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_nine_imp s) = 
-    ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_nine_imp s) =
+    ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
   apply (subst add_result_to_stack_aux_con_eq_nine_imp_def)
   apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
-  done 
+  done
 
-definition "add_result_to_stack_aux_con_eq_nine_imp_time t s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_nine_imp_time t s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     t = t + 2;
     cons_t' = 0;
@@ -1184,30 +1184,30 @@ definition "add_result_to_stack_aux_con_eq_nine_imp_time t s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    t)"
 
-definition "add_result_to_stack_aux_con_eq_nine_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_con_eq_nine_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-    
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1217,17 +1217,17 @@ definition "add_result_to_stack_aux_con_eq_nine_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 10);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1244,25 +1244,25 @@ apply (subst add_result_to_stack_aux_con_eq_nine_imp_def)
 apply (simp only: add_result_to_stack_aux_con_eq_nine_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(37) by fastforce 
+subgoal premises p using p(37) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(39) by fastforce 
+subgoal premises p using p(39) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(41) by fastforce 
+subgoal premises p using p(41) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(43) by fastforce 
+subgoal premises p using p(43) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(45) by fastforce 
+subgoal premises p using p(45) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(47) by fastforce 
+subgoal premises p using p(47) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(49) by fastforce 
+subgoal premises p using p(49) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(51) by fastforce 
+subgoal premises p using p(51) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(53) by fastforce 
+subgoal premises p using p(53) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 lemma add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_aux_con_eq_nine_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1271,30 +1271,30 @@ apply (subst add_result_to_stack_aux_con_eq_nine_imp_time_def)
 apply (simp only: add_result_to_stack_aux_con_eq_nine_IMP_Minus_def prefix_simps)
 apply (erule Seq_tE)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(73) by fastforce 
+subgoal premises p using p(73) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(75) by fastforce 
+subgoal premises p using p(75) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(77) by fastforce 
+subgoal premises p using p(77) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(79) by fastforce 
+subgoal premises p using p(79) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(81) by fastforce 
+subgoal premises p using p(81) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(83) by fastforce 
+subgoal premises p using p(83) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(85) by fastforce 
+subgoal premises p using p(85) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(87) by fastforce 
+subgoal premises p using p(87) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(89) by fastforce 
+subgoal premises p using p(89) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 paragraph "con_eq_seven"
 
-definition "add_result_to_stack_aux_con_eq_seven_imp s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_seven_imp s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -1380,22 +1380,22 @@ definition "add_result_to_stack_aux_con_eq_seven_imp s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    ret)"
 
 lemma add_result_to_stack_aux_con_eq_seven_imp_correct[let_function_correctness]:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_seven_imp s) = 
-    ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_con_eq_seven_imp s) =
+    ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (nth_nat (Suc (Suc (Suc (Suc 0)))) (add_result_to_stack_aux_h s))
-      ## (nth_nat (Suc (Suc (Suc (Suc (Suc 0))))) (add_result_to_stack_aux_h s)) 
+      ## (nth_nat (Suc (Suc (Suc (Suc (Suc 0))))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))"
   apply (subst add_result_to_stack_aux_con_eq_seven_imp_def)
   apply (auto simp add: cons_imp_correct nth_nat_imp_correct eval_nat_numeral Let_def)
-  done 
+  done
 
-definition "add_result_to_stack_aux_con_eq_seven_imp_time t s = 
-  (let 
+definition "add_result_to_stack_aux_con_eq_seven_imp_time t s =
+  (let
     cons_h' = add_result_to_stack_aux_c s;
     t = t + 2;
     cons_t' = 0;
@@ -1534,10 +1534,10 @@ definition "add_result_to_stack_aux_con_eq_seven_imp_time t s =
           add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
           add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
           add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-  in 
+  in
    t)"
 
-definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv>
   (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_aux_c_str);;
   (cons_prefix @ cons_t_str) ::= A (N 0);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1547,7 +1547,7 @@ definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1557,27 +1557,27 @@ definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-    
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 3);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (nth_nat_prefix @ nth_nat_n_str) ::= A (N 2);;
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1587,17 +1587,17 @@ definition "add_result_to_stack_aux_con_eq_seven_IMP_Minus \<equiv>
   (nth_nat_prefix @ nth_nat_x_str) ::= A (V add_result_to_stack_aux_h_str);;
   (nth_nat_prefix @ nth_nat_ret_str) ::= A (N 0);;
   invoke_subprogram nth_nat_prefix nth_nat_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (nth_nat_prefix @ nth_nat_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (N 8);;
   (cons_prefix @ cons_t_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
   invoke_subprogram cons_prefix cons_IMP_Minus;;
-  
+
   (cons_prefix @ cons_h_str) ::= A (V (cons_prefix @ cons_ret_str));;
   (cons_prefix @ cons_t_str) ::= A (V add_result_to_stack_aux_t_str);;
   (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -1614,33 +1614,33 @@ apply (subst add_result_to_stack_aux_con_eq_seven_imp_def)
 apply (simp only: add_result_to_stack_aux_con_eq_seven_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(53) by fastforce 
+subgoal premises p using p(53) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(55) by fastforce 
+subgoal premises p using p(55) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(57) by fastforce 
+subgoal premises p using p(57) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(59) by fastforce 
+subgoal premises p using p(59) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(61) by fastforce 
+subgoal premises p using p(61) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(63) by fastforce 
+subgoal premises p using p(63) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(65) by fastforce 
+subgoal premises p using p(65) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(67) by fastforce 
+subgoal premises p using p(67) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(69) by fastforce 
+subgoal premises p using p(69) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(71) by fastforce 
+subgoal premises p using p(71) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(73) by fastforce 
+subgoal premises p using p(73) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(75) by fastforce 
+subgoal premises p using p(75) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(77) by fastforce 
+subgoal premises p using p(77) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
-done 
+done
 
 lemma add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_aux_con_eq_seven_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -1651,29 +1651,29 @@ apply (erule Seq_tE)+
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
 subgoal premises p using p(105) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(107) by fastforce 
+subgoal premises p using p(107) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(109) by fastforce 
+subgoal premises p using p(109) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(111) by fastforce 
+subgoal premises p using p(111) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(113) by fastforce 
+subgoal premises p using p(113) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(115) by fastforce 
+subgoal premises p using p(115) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(117) by fastforce 
+subgoal premises p using p(117) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(119) by fastforce 
+subgoal premises p using p(119) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(121) by fastforce 
+subgoal premises p using p(121) by fastforce
 apply (erule nth_nat_IMP_Minus_correct[where vars="add_result_to_stack_aux_IMP_vars \<union> {cons_prefix @ cons_ret_str}"])
-subgoal premises p using p(123) by fastforce 
+subgoal premises p using p(123) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(125) by fastforce 
+subgoal premises p using p(125) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(127) by fastforce 
+subgoal premises p using p(127) by fastforce
 apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_aux_IMP_vars])
-subgoal premises p using p(129) by fastforce 
+subgoal premises p using p(129) by fastforce
 apply (fastforce simp : add_result_to_stack_aux_state_translators Let_def)
 done
 
@@ -1682,7 +1682,7 @@ paragraph separations_of_nested_ifs
 abbreviation "add_result_to_stack_aux_cond_str \<equiv> ''cond''"
 
 definition "add_result_to_stack_aux_sub_branch_aux1 s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   NOTEQUAL_neq_zero_b' = 9;
   NOTEQUAL_neq_zero_ret' = 0;
@@ -1691,9 +1691,9 @@ definition "add_result_to_stack_aux_sub_branch_aux1 s \<equiv>
                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
   NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          add_result_to_stack_aux_ret' =  add_result_to_stack_aux_s s;
          ret = \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c s,
                add_result_to_stack_aux_h = add_result_to_stack_aux_h s,
@@ -1701,24 +1701,24 @@ definition "add_result_to_stack_aux_sub_branch_aux1 s \<equiv>
                add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
                add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
                add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-        in 
+        in
          ret)
      else add_result_to_stack_aux_con_eq_nine_imp s
        ))"
 
 lemma add_result_to_stack_aux_sub_branch_aux1_imp_correct:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux1 s) = 
-    (if (add_result_to_stack_aux_con s)=9 
-     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux1 s) =
+    (if (add_result_to_stack_aux_con s)=9
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
      else (add_result_to_stack_aux_s s))"
   apply (subst add_result_to_stack_aux_sub_branch_aux1_def)
   apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_nine_imp_correct)
-  done 
+  done
 
 definition "add_result_to_stack_aux_sub_branch_aux1_time t s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   t = t + 2;
   NOTEQUAL_neq_zero_b' = 9;
@@ -1732,9 +1732,9 @@ definition "add_result_to_stack_aux_sub_branch_aux1_time t s \<equiv>
   t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
   t = t + 2
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          t = t + 1;
          add_result_to_stack_aux_ret' =  add_result_to_stack_aux_s s;
          t = t + 2;
@@ -1744,16 +1744,16 @@ definition "add_result_to_stack_aux_sub_branch_aux1_time t s \<equiv>
                add_result_to_stack_aux_t = add_result_to_stack_aux_t s,
                add_result_to_stack_aux_s = add_result_to_stack_aux_s s,
                add_result_to_stack_aux_ret = add_result_to_stack_aux_ret'\<rparr>
-        in 
+        in
          t)
-     else (let 
+     else (let
             t = t + 1;
             t = t + add_result_to_stack_aux_con_eq_nine_imp_time 0 s
-           in 
+           in
             t)
        ))"
 
-definition "add_result_to_stack_aux_sub_branch_aux1_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_sub_branch_aux1_IMP_Minus \<equiv>
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 9);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
@@ -1777,9 +1777,9 @@ lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function:
   apply (erule If_E)
     subgoal
       apply (fastforce simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_function
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -1795,7 +1795,7 @@ lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time:
   apply (erule If_tE)
     subgoal
       apply (fastforce simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
      apply (fastforce dest!: add_result_to_stack_aux_con_eq_nine_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
@@ -1803,7 +1803,7 @@ lemma add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time:
   done
 
 definition "add_result_to_stack_aux_sub_branch_aux2 s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   NOTEQUAL_neq_zero_b' = 7;
   NOTEQUAL_neq_zero_ret' = 0;
@@ -1812,30 +1812,30 @@ definition "add_result_to_stack_aux_sub_branch_aux2 s \<equiv>
                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
   NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
      then add_result_to_stack_aux_sub_branch_aux1 s
      else add_result_to_stack_aux_con_eq_seven_imp s
        ))"
 
 lemma add_result_to_stack_aux_sub_branch_aux2_imp_correct:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux2 s) = 
-    (if (add_result_to_stack_aux_con s)=7 
-     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
-     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux2 s) =
+    (if (add_result_to_stack_aux_con s)=7
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0)
      ## (add_result_to_stack_aux_t s)))
-     else (if (add_result_to_stack_aux_con s)=9 
-     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+     else (if (add_result_to_stack_aux_con s)=9
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
      else (add_result_to_stack_aux_s s)))"
   apply (subst add_result_to_stack_aux_sub_branch_aux2_def)
   apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_seven_imp_correct
   add_result_to_stack_aux_sub_branch_aux1_imp_correct)
-  done 
+  done
 
 definition "add_result_to_stack_aux_sub_branch_aux2_time t s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   t = t + 2;
   NOTEQUAL_neq_zero_b' = 7;
@@ -1849,21 +1849,21 @@ definition "add_result_to_stack_aux_sub_branch_aux2_time t s \<equiv>
   t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
   t = t + 2
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          t = t + 1;
          t = t + add_result_to_stack_aux_sub_branch_aux1_time 0 s
-        in 
+        in
          t)
-     else (let 
+     else (let
             t = t + 1;
             t = t + add_result_to_stack_aux_con_eq_seven_imp_time 0 s
-           in 
+           in
             t)
        ))"
 
-definition "add_result_to_stack_aux_sub_branch_aux2_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_sub_branch_aux2_IMP_Minus \<equiv>
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 7);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
@@ -1888,9 +1888,9 @@ lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_function
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -1907,7 +1907,7 @@ lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time:
     subgoal
       apply (force dest!: add_result_to_stack_aux_sub_branch_aux1_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
      apply (force dest!: add_result_to_stack_aux_con_eq_seven_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
@@ -1915,7 +1915,7 @@ lemma add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time:
   done
 
 definition "add_result_to_stack_aux_sub_branch_aux3 s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   NOTEQUAL_neq_zero_b' = 6;
   NOTEQUAL_neq_zero_ret' = 0;
@@ -1924,33 +1924,33 @@ definition "add_result_to_stack_aux_sub_branch_aux3 s \<equiv>
                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
   NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
      then add_result_to_stack_aux_sub_branch_aux2 s
      else add_result_to_stack_aux_con_eq_six_imp s
        ))"
 
 lemma add_result_to_stack_aux_sub_branch_aux3_imp_correct:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux3 s) = 
-    (if (add_result_to_stack_aux_con s)=6 
-     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux3 s) =
+    (if (add_result_to_stack_aux_con s)=6
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else (if (add_result_to_stack_aux_con s)=7 
-     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
-     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     else (if (add_result_to_stack_aux_con s)=7
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0)
      ## (add_result_to_stack_aux_t s)))
-     else (if (add_result_to_stack_aux_con s)=9 
-     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+     else (if (add_result_to_stack_aux_con s)=9
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
      else (add_result_to_stack_aux_s s))))"
   apply (subst add_result_to_stack_aux_sub_branch_aux3_def)
   apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_six_imp_correct
   add_result_to_stack_aux_sub_branch_aux2_imp_correct)
-  done 
+  done
 
 definition "add_result_to_stack_aux_sub_branch_aux3_time t s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   t = t + 2;
   NOTEQUAL_neq_zero_b' = 6;
@@ -1964,21 +1964,21 @@ definition "add_result_to_stack_aux_sub_branch_aux3_time t s \<equiv>
   t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
   t = t + 2
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          t = t + 1;
          t = t + add_result_to_stack_aux_sub_branch_aux2_time 0 s
-        in 
+        in
          t)
-     else (let 
+     else (let
             t = t + 1;
             t = t + add_result_to_stack_aux_con_eq_six_imp_time 0 s
-           in 
+           in
             t)
        ))"
 
-definition "add_result_to_stack_aux_sub_branch_aux3_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_sub_branch_aux3_IMP_Minus \<equiv>
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 6);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
@@ -2003,9 +2003,9 @@ lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_function
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2022,7 +2022,7 @@ lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux2_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
      apply (force dest!: add_result_to_stack_aux_con_eq_six_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
@@ -2030,7 +2030,7 @@ lemma add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time:
   done
 
 definition "add_result_to_stack_aux_sub_branch_aux4 s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   NOTEQUAL_neq_zero_b' = 4;
   NOTEQUAL_neq_zero_ret' = 0;
@@ -2039,36 +2039,36 @@ definition "add_result_to_stack_aux_sub_branch_aux4 s \<equiv>
                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
   NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
      then add_result_to_stack_aux_sub_branch_aux3 s
      else add_result_to_stack_aux_con_eq_four_imp s
        ))"
 
 lemma add_result_to_stack_aux_sub_branch_aux4_imp_correct:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux4 s) = 
-    (if (add_result_to_stack_aux_con s)=4 
-     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_sub_branch_aux4 s) =
+    (if (add_result_to_stack_aux_con s)=4
+     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else (if (add_result_to_stack_aux_con s)=6 
-     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     else (if (add_result_to_stack_aux_con s)=6
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else (if (add_result_to_stack_aux_con s)=7 
-     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
-     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     else (if (add_result_to_stack_aux_con s)=7
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0)
      ## (add_result_to_stack_aux_t s)))
-     else (if (add_result_to_stack_aux_con s)=9 
-     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+     else (if (add_result_to_stack_aux_con s)=9
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
      else (add_result_to_stack_aux_s s)))))"
   apply (subst add_result_to_stack_aux_sub_branch_aux4_def)
   apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_four_imp_correct
   add_result_to_stack_aux_sub_branch_aux3_imp_correct)
-  done 
+  done
 
 definition "add_result_to_stack_aux_sub_branch_aux4_time t s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   t = t + 2;
   NOTEQUAL_neq_zero_b' = 4;
@@ -2082,21 +2082,21 @@ definition "add_result_to_stack_aux_sub_branch_aux4_time t s \<equiv>
   t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
   t = t + 2
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          t = t + 1;
          t = t + add_result_to_stack_aux_sub_branch_aux3_time 0 s
-        in 
+        in
          t)
-     else (let 
+     else (let
             t = t + 1;
             t = t + add_result_to_stack_aux_con_eq_four_imp_time 0 s
-           in 
+           in
             t)
        ))"
 
-definition "add_result_to_stack_aux_sub_branch_aux4_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_sub_branch_aux4_IMP_Minus \<equiv>
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 4);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
@@ -2121,9 +2121,9 @@ lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_function
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2140,7 +2140,7 @@ lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux3_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
      apply (fastforce dest!: add_result_to_stack_aux_con_eq_four_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
@@ -2148,7 +2148,7 @@ lemma add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time:
   done
 
 definition "add_result_to_stack_aux_imp s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   NOTEQUAL_neq_zero_b' = 3;
   NOTEQUAL_neq_zero_ret' = 0;
@@ -2157,39 +2157,39 @@ definition "add_result_to_stack_aux_imp s \<equiv>
                             NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
   NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
      then add_result_to_stack_aux_sub_branch_aux4 s
      else add_result_to_stack_aux_con_eq_three_imp s
        ))"
 
 lemma add_result_to_stack_aux_imp_correct:
-  "add_result_to_stack_aux_ret (add_result_to_stack_aux_imp s) = 
-    (if (add_result_to_stack_aux_con s)=3 
-     then ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+  "add_result_to_stack_aux_ret (add_result_to_stack_aux_imp s) =
+    (if (add_result_to_stack_aux_con s)=3
+     then ((4## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else ((if (add_result_to_stack_aux_con s)=4 
-     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     else ((if (add_result_to_stack_aux_con s)=4
+     then ((5## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else (if (add_result_to_stack_aux_con s)=6 
-     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
+     else (if (add_result_to_stack_aux_con s)=6
+     then ((7## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
        ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
-     else (if (add_result_to_stack_aux_con s)=7 
-     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))  
-     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0) 
+     else (if (add_result_to_stack_aux_con s)=7
+     then ( ((8## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
+     ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) (add_result_to_stack_aux_h s))  ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) (add_result_to_stack_aux_h s)) ## (add_result_to_stack_aux_c s) ## 0)
      ## (add_result_to_stack_aux_t s)))
-     else (if (add_result_to_stack_aux_con s)=9 
-     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s)) 
-      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s)) 
+     else (if (add_result_to_stack_aux_con s)=9
+     then ((10## (nth_nat (Suc 0) (add_result_to_stack_aux_h s)) ## (nth_nat (Suc (Suc 0)) (add_result_to_stack_aux_h s))
+      ## (nth_nat (Suc (Suc (Suc 0))) (add_result_to_stack_aux_h s))
       ## (add_result_to_stack_aux_c s) ## 0) ## (add_result_to_stack_aux_t s))
      else (add_result_to_stack_aux_s s)))))))"
   apply (subst add_result_to_stack_aux_imp_def)
   apply (auto simp add: NOTEQUAL_neq_zero_imp_correct add_result_to_stack_aux_con_eq_three_imp_correct
   add_result_to_stack_aux_sub_branch_aux4_imp_correct)
-  done 
+  done
 
 definition "add_result_to_stack_aux_imp_time t s \<equiv>
-  (let 
+  (let
   NOTEQUAL_neq_zero_a' = add_result_to_stack_aux_con s;
   t = t + 2;
   NOTEQUAL_neq_zero_b' = 3;
@@ -2203,21 +2203,21 @@ definition "add_result_to_stack_aux_imp_time t s \<equiv>
   t = t + NOTEQUAL_neq_zero_imp_time 0 NOTEQUAL_neq_zero_state;
   add_result_to_stack_aux_cond = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
   t = t + 2
-  in 
+  in
    (if add_result_to_stack_aux_cond \<noteq> 0
-     then (let 
+     then (let
          t = t + 1;
          t = t + add_result_to_stack_aux_sub_branch_aux4_time 0 s
-        in 
+        in
          t)
-     else (let 
+     else (let
             t = t + 1;
             t = t + add_result_to_stack_aux_con_eq_three_imp_time 0 s
-           in 
+           in
             t)
        ))"
 
-definition "add_result_to_stack_aux_IMP_Minus \<equiv> 
+definition "add_result_to_stack_aux_IMP_Minus \<equiv>
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_a_str) ::= A (V add_result_to_stack_aux_con_str);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_b_str) ::= A (N 3);;
   (NOTEQUAL_neq_zero_prefix @ NOTEQUAL_neq_zero_ret_str) ::= A (N 0);;
@@ -2242,9 +2242,9 @@ lemma add_result_to_stack_aux_IMP_Minus_correct_function:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_function
          simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_function
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2261,7 +2261,7 @@ lemma add_result_to_stack_aux_IMP_Minus_correct_time:
     subgoal
       apply (fastforce dest!: add_result_to_stack_aux_sub_branch_aux4_IMP_Minus_correct_time
        simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def)
-    done 
+    done
     subgoal
      apply (fastforce dest!: add_result_to_stack_aux_con_eq_three_IMP_Minus_correct_time
       simp: add_result_to_stack_aux_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def)
@@ -2277,7 +2277,7 @@ lemma add_result_to_stack_aux_IMP_Minus_correct:
                                         (add_result_to_stack_aux_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using add_result_to_stack_aux_IMP_Minus_correct_function 
+  using add_result_to_stack_aux_IMP_Minus_correct_function
        add_result_to_stack_aux_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -2285,7 +2285,7 @@ lemma add_result_to_stack_aux_IMP_Minus_correct:
 subsubsection "add_result_to_stack_nat"
 
 record add_result_to_stack_nat_state =
-  add_result_to_stack_nat_c::nat 
+  add_result_to_stack_nat_c::nat
   add_result_to_stack_nat_s::nat
   add_result_to_stack_nat_ret::nat
 
@@ -2294,15 +2294,15 @@ abbreviation "add_result_to_stack_nat_c_str \<equiv> ''c''"
 abbreviation "add_result_to_stack_nat_s_str \<equiv> ''s''"
 abbreviation "add_result_to_stack_nat_ret_str \<equiv> ''ret''"
 
-definition "add_result_to_stack_nat_imp_to_HOL_state p s \<equiv> 
+definition "add_result_to_stack_nat_imp_to_HOL_state p s \<equiv>
   \<lparr>add_result_to_stack_nat_c = s (add_prefix p add_result_to_stack_nat_c_str),
   add_result_to_stack_nat_s = s (add_prefix p add_result_to_stack_nat_s_str),
   add_result_to_stack_nat_ret = s (add_prefix p add_result_to_stack_nat_ret_str)\<rparr>"
 
 paragraph add_result_to_stack_nat_s_eq_zero
 
-definition "add_result_to_stack_nat_s_eq_zero_imp s \<equiv> 
-  (let 
+definition "add_result_to_stack_nat_s_eq_zero_imp s \<equiv>
+  (let
     cons_h' = add_result_to_stack_nat_c s;
     cons_t' = 0;
     cons_ret' = 0;
@@ -2325,7 +2325,7 @@ definition "add_result_to_stack_nat_s_eq_zero_imp s \<equiv>
     ret = \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
            add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
            add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
-    in 
+    in
      ret)"
 
 lemma add_result_to_stack_nat_s_eq_zero_imp_correct[let_function_correctness]:
@@ -2333,9 +2333,9 @@ lemma add_result_to_stack_nat_s_eq_zero_imp_correct[let_function_correctness]:
    unfolding add_result_to_stack_nat_s_eq_zero_imp_def
    by (auto simp add: cons_imp_correct)
 
-definition 
-"add_result_to_stack_nat_s_eq_zero_imp_time t s \<equiv> 
-  (let 
+definition
+"add_result_to_stack_nat_s_eq_zero_imp_time t s \<equiv>
+  (let
     cons_h' = add_result_to_stack_nat_c s;
     t = t + 2;
     cons_t' = 0;
@@ -2371,11 +2371,11 @@ definition
     ret = \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
            add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
            add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
-    in 
+    in
      t)"
 
-definition 
-  "add_result_to_stack_nat_s_eq_zero_IMP_Minus \<equiv> 
+definition
+  "add_result_to_stack_nat_s_eq_zero_IMP_Minus \<equiv>
     (cons_prefix @ cons_h_str) ::= A (V add_result_to_stack_nat_c_str);;
     (cons_prefix @ cons_t_str) ::= A (N 0);;
     (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -2393,10 +2393,10 @@ definition
 
     add_result_to_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))"
 
-abbreviation "add_result_to_stack_nat_IMP_vars \<equiv> 
+abbreviation "add_result_to_stack_nat_IMP_vars \<equiv>
   {add_result_to_stack_nat_c_str, add_result_to_stack_nat_s_str, add_result_to_stack_nat_ret_str}"
 
-lemmas add_result_to_stack_nat_s_eq_zero_state_translators = 
+lemmas add_result_to_stack_nat_s_eq_zero_state_translators =
   add_result_to_stack_nat_imp_to_HOL_state_def
   cons_imp_to_HOL_state_def
 
@@ -2415,7 +2415,7 @@ lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function:
    apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
    subgoal premises p using p(17) by fastforce
    apply (fastforce simp: add_result_to_stack_nat_s_eq_zero_state_translators)
-   done 
+   done
 
 lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time :
   "(invoke_subprogram p add_result_to_stack_nat_s_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2430,12 +2430,12 @@ lemma add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time :
    apply (erule cons_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
    subgoal premises p using p(29) by fastforce
    apply (fastforce simp: add_result_to_stack_nat_s_eq_zero_state_translators Let_def)
-   done 
+   done
 
 paragraph "add_result_to_stack_nat_else_aux"
 
 record add_result_to_stack_nat_else_aux_state =
-  add_result_to_stack_nat_else_aux_c::nat 
+  add_result_to_stack_nat_else_aux_c::nat
   add_result_to_stack_nat_else_aux_s::nat
   add_result_to_stack_nat_else_aux_h::nat
   add_result_to_stack_nat_else_aux_con::nat
@@ -2448,7 +2448,7 @@ abbreviation "add_result_to_stack_nat_else_aux_h_str \<equiv> ''h''"
 abbreviation "add_result_to_stack_nat_else_aux_con_str \<equiv> ''con''"
 abbreviation "add_result_to_stack_nat_else_aux_t_str \<equiv> ''t''"
 
-definition "add_result_to_stack_nat_else_aux_imp_to_HOL_state p s \<equiv> 
+definition "add_result_to_stack_nat_else_aux_imp_to_HOL_state p s \<equiv>
   \<lparr>add_result_to_stack_nat_else_aux_c = s (add_prefix p add_result_to_stack_nat_else_aux_c_str),
   add_result_to_stack_nat_else_aux_s = s (add_prefix p add_result_to_stack_nat_else_aux_s_str),
   add_result_to_stack_nat_else_aux_h = s (add_prefix p add_result_to_stack_nat_else_aux_h_str),
@@ -2456,12 +2456,12 @@ definition "add_result_to_stack_nat_else_aux_imp_to_HOL_state p s \<equiv>
   add_result_to_stack_nat_else_aux_t = s (add_prefix p add_result_to_stack_nat_else_aux_t_str)\<rparr>"
 
 
-abbreviation "add_result_to_stack_nat_else_aux_IMP_vars \<equiv> 
+abbreviation "add_result_to_stack_nat_else_aux_IMP_vars \<equiv>
   {add_result_to_stack_nat_else_aux_c_str, add_result_to_stack_nat_else_aux_s_str, add_result_to_stack_nat_else_aux_h_str,
   add_result_to_stack_nat_else_aux_con_str, add_result_to_stack_nat_else_aux_t_str}"
 
-definition "add_result_to_stack_nat_else_aux_imp s \<equiv> 
-(let 
+definition "add_result_to_stack_nat_else_aux_imp s \<equiv>
+(let
       hd_xs' = add_result_to_stack_nat_else_aux_s s;
       hd_ret' = 0;
       hd_state = \<lparr>hd_xs = hd_xs', hd_ret = hd_ret'\<rparr>;
@@ -2485,7 +2485,7 @@ definition "add_result_to_stack_nat_else_aux_imp s \<equiv>
             add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
             add_result_to_stack_nat_else_aux_con = add_result_to_stack_nat_else_aux_con',
             add_result_to_stack_nat_else_aux_t = add_result_to_stack_nat_else_aux_t'\<rparr>
-      in 
+      in
       ret)"
 
 
@@ -2496,8 +2496,8 @@ lemma add_result_to_stack_nat_else_aux_imp_correct[let_function_correctness]:
   apply (subst add_result_to_stack_nat_else_aux_imp_def)+
   apply (auto simp add: Let_def
         tl_imp_correct hd_imp_correct add_result_to_stack_nat_def)
-  
-  done 
+
+  done
 
 definition "add_result_to_stack_nat_else_aux_imp_time t s \<equiv>
 (let
@@ -2540,7 +2540,7 @@ in
  t)
 "
 
-definition "add_result_to_stack_nat_else_aux_IMP_Minus \<equiv> 
+definition "add_result_to_stack_nat_else_aux_IMP_Minus \<equiv>
     (hd_prefix @ hd_xs_str) ::= A (V add_result_to_stack_nat_s_str);;
     (hd_prefix @ hd_ret_str) ::= A (N 0);;
     invoke_subprogram hd_prefix hd_IMP_Minus;;
@@ -2566,15 +2566,15 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_h:
     apply (erule Seq_E)+
     apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
     subgoal premises p using p(12) by fastforce
-    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str}"])
     subgoal premises p using p(14) by fastforce
-    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
-    done 
+    done
 
 lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_con:
   "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2586,15 +2586,15 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_con:
     apply (erule Seq_E)+
     apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
     subgoal premises p using p(12) by fastforce
-    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str}"])
     subgoal premises p using p(14) by fastforce
-    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (force simp: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
-    done 
+    done
 
 lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_t:
   "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2606,15 +2606,15 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_t:
     apply (erule Seq_E)+
     apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
     subgoal premises p using p(12) by fastforce
-    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str}"])
     subgoal premises p using p(14) by fastforce
-    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(16) by fastforce
-    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
-    done 
+    done
 
   lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_time:
   "(invoke_subprogram p add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2624,16 +2624,16 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct_t:
     apply (erule Seq_tE)+
     apply (erule hd_IMP_Minus_correct[where vars = add_result_to_stack_nat_else_aux_IMP_vars])
     subgoal premises p using p(23) by fastforce
-    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule hd_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str}"])
     subgoal premises p using p(25) by fastforce
-    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars 
+    apply (erule tl_IMP_Minus_correct[where vars = "add_result_to_stack_nat_else_aux_IMP_vars
         \<union> {add_result_to_stack_nat_else_aux_h_str,add_result_to_stack_nat_else_aux_con_str}"])
     subgoal premises p using p(27) by fastforce
-    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def 
+    apply (force simp add: hd_imp_to_HOL_state_def tl_imp_to_HOL_state_def
        add_result_to_stack_nat_else_aux_imp_to_HOL_state_def Let_def)
-    done 
-   
+    done
+
 lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) add_result_to_stack_nat_else_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     \<And>v. v \<in> vars \<Longrightarrow> \<not> (set p2 \<subseteq> set v);
@@ -2649,23 +2649,23 @@ lemma add_result_to_stack_nat_else_aux_IMP_Minus_correct:
                                         (add_result_to_stack_nat_else_aux_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using add_result_to_stack_nat_else_aux_IMP_Minus_correct_h 
-        add_result_to_stack_nat_else_aux_IMP_Minus_correct_con 
-        add_result_to_stack_nat_else_aux_IMP_Minus_correct_t  
+  using add_result_to_stack_nat_else_aux_IMP_Minus_correct_h
+        add_result_to_stack_nat_else_aux_IMP_Minus_correct_con
+        add_result_to_stack_nat_else_aux_IMP_Minus_correct_t
        add_result_to_stack_nat_else_aux_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
 
 paragraph "add_result_to_stack_nat_else"
 
-definition "add_result_to_stack_nat_else_imp s \<equiv> 
+definition "add_result_to_stack_nat_else_imp s \<equiv>
 (let
   add_result_to_stack_nat_else_aux_s' = add_result_to_stack_nat_s s;
   add_result_to_stack_nat_else_aux_c' = add_result_to_stack_nat_c s;
   add_result_to_stack_nat_else_aux_h' = 0;
   add_result_to_stack_nat_else_aux_con' = 0;
   add_result_to_stack_nat_else_aux_t' = 0;
-  add_result_to_stack_nat_else_aux_state = 
+  add_result_to_stack_nat_else_aux_state =
     \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c',
     add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s',
     add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
@@ -2679,7 +2679,7 @@ definition "add_result_to_stack_nat_else_imp s \<equiv>
   add_result_to_stack_aux_con' = add_result_to_stack_nat_else_aux_con add_result_to_stack_nat_else_aux_ret_state;
   add_result_to_stack_aux_t' = add_result_to_stack_nat_else_aux_t add_result_to_stack_nat_else_aux_ret_state;
   add_result_to_stack_aux_ret' = 0;
-  add_result_to_stack_aux_state = 
+  add_result_to_stack_aux_state =
     \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c',
     add_result_to_stack_aux_h = add_result_to_stack_aux_h',
     add_result_to_stack_aux_con = add_result_to_stack_aux_con',
@@ -2690,7 +2690,7 @@ definition "add_result_to_stack_nat_else_imp s \<equiv>
 
   add_result_to_stack_nat_ret' = add_result_to_stack_aux_ret add_result_to_stack_aux_ret_state;
 
-  ret = 
+  ret =
    \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
    add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
    add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
@@ -2698,29 +2698,29 @@ in
  ret)"
 
 lemma add_result_to_stack_nat_else_imp_correct:
-  "add_result_to_stack_nat_ret (add_result_to_stack_nat_else_imp s) = 
-    (let h = hd_nat (add_result_to_stack_nat_s s); con = hd_nat h; t = tl_nat (add_result_to_stack_nat_s s)  in 
-  if con = 3 then ((4## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) ## (nth_nat (Suc (Suc (Suc 0))) h) 
-    ## (add_result_to_stack_nat_c s) ## 0) ## t) 
-  else if con = 4 then ((5## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
-    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h) 
+  "add_result_to_stack_nat_ret (add_result_to_stack_nat_else_imp s) =
+    (let h = hd_nat (add_result_to_stack_nat_s s); con = hd_nat h; t = tl_nat (add_result_to_stack_nat_s s)  in
+  if con = 3 then ((4## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) ## (nth_nat (Suc (Suc (Suc 0))) h)
     ## (add_result_to_stack_nat_c s) ## 0) ## t)
-  else if con = 6 then ((7## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
-    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h) 
-    ## (add_result_to_stack_nat_c s) ## 0) ## t)    
-  else if con = 7 then ((8## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
-    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h)  
+  else if con = 4 then ((5## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h)
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h)
+    ## (add_result_to_stack_nat_c s) ## 0) ## t)
+  else if con = 6 then ((7## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h)
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h)
+    ## (add_result_to_stack_nat_c s) ## 0) ## t)
+  else if con = 7 then ((8## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h)
+    ## (nth_nat (Suc (Suc (Suc 0))) h)  ## (nth_nat (Suc (Suc (Suc ( Suc 0)))) h)
     ## (nth_nat (Suc (Suc (Suc ( Suc (Suc 0))))) h) ## (add_result_to_stack_nat_c s) ## 0) ## t)
-  else if con = 9 then ((10 ## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h) 
-    ## (nth_nat (Suc (Suc (Suc 0))) h) ## (add_result_to_stack_nat_c s) ## 0) ## t) 
+  else if con = 9 then ((10 ## (nth_nat (Suc 0) h) ## (nth_nat (Suc (Suc 0)) h)
+    ## (nth_nat (Suc (Suc (Suc 0))) h) ## (add_result_to_stack_nat_c s) ## 0) ## t)
   else (add_result_to_stack_nat_s s)
 )"
 apply (subst add_result_to_stack_nat_else_imp_def)
 apply (auto simp add: add_result_to_stack_nat_else_aux_imp_correct
  add_result_to_stack_aux_imp_correct Let_def)
-done 
+done
 
-definition "add_result_to_stack_nat_else_imp_time t s \<equiv> 
+definition "add_result_to_stack_nat_else_imp_time t s \<equiv>
 (let
   add_result_to_stack_nat_else_aux_s' = add_result_to_stack_nat_s s;
   t = t + 2;
@@ -2732,7 +2732,7 @@ definition "add_result_to_stack_nat_else_imp_time t s \<equiv>
   t = t + 2;
   add_result_to_stack_nat_else_aux_t' = 0;
   t = t + 2;
-  add_result_to_stack_nat_else_aux_state = 
+  add_result_to_stack_nat_else_aux_state =
     \<lparr>add_result_to_stack_nat_else_aux_c = add_result_to_stack_nat_else_aux_c',
     add_result_to_stack_nat_else_aux_s = add_result_to_stack_nat_else_aux_s',
     add_result_to_stack_nat_else_aux_h = add_result_to_stack_nat_else_aux_h',
@@ -2753,7 +2753,7 @@ definition "add_result_to_stack_nat_else_imp_time t s \<equiv>
     t = t + 2;
   add_result_to_stack_aux_ret' = 0;
     t = t + 2;
-  add_result_to_stack_aux_state = 
+  add_result_to_stack_aux_state =
     \<lparr>add_result_to_stack_aux_c = add_result_to_stack_aux_c',
     add_result_to_stack_aux_h = add_result_to_stack_aux_h',
     add_result_to_stack_aux_con = add_result_to_stack_aux_con',
@@ -2766,14 +2766,14 @@ definition "add_result_to_stack_nat_else_imp_time t s \<equiv>
   add_result_to_stack_nat_ret' = add_result_to_stack_aux_ret add_result_to_stack_aux_ret_state;
   t = t + 2;
 
-  ret = 
+  ret =
    \<lparr>add_result_to_stack_nat_c = add_result_to_stack_nat_c s,
    add_result_to_stack_nat_s = add_result_to_stack_nat_s s,
    add_result_to_stack_nat_ret = add_result_to_stack_nat_ret'\<rparr>
 in
  t)"
 
-definition "add_result_to_stack_nat_else_IMP_Minus \<equiv> 
+definition "add_result_to_stack_nat_else_IMP_Minus \<equiv>
   (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_s_str)
     ::= A (V add_result_to_stack_nat_s_str);;
   (add_result_to_stack_nat_else_aux_prefix @ add_result_to_stack_nat_else_aux_c_str)
@@ -2811,12 +2811,12 @@ apply (subst add_result_to_stack_nat_else_imp_def)
 apply (simp only: add_result_to_stack_nat_else_IMP_Minus_def prefix_simps)
 apply (erule Seq_E)+
 apply (erule add_result_to_stack_nat_else_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
-subgoal premises p using p(14) by fastforce 
+subgoal premises p using p(14) by fastforce
 apply (erule add_result_to_stack_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
-subgoal premises p using p(18) by fastforce 
-apply (fastforce simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def 
+subgoal premises p using p(18) by fastforce
+apply (fastforce simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def
       add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
-done 
+done
 
 lemma add_result_to_stack_nat_else_IMP_Minus_correct_time:
 "(invoke_subprogram p add_result_to_stack_nat_else_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -2825,44 +2825,44 @@ apply (subst add_result_to_stack_nat_else_imp_time_def)
 apply (simp only: add_result_to_stack_nat_else_IMP_Minus_def prefix_simps)
 apply (erule Seq_tE)+
 apply (erule add_result_to_stack_nat_else_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
-subgoal premises p using p(27) by fastforce 
+subgoal premises p using p(27) by fastforce
 apply (erule add_result_to_stack_aux_IMP_Minus_correct[where vars=add_result_to_stack_nat_IMP_vars])
-subgoal premises p using p(31) by fastforce 
-apply (fastforce simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def 
+subgoal premises p using p(31) by fastforce
+apply (fastforce simp add: add_result_to_stack_aux_imp_to_HOL_state_def add_result_to_stack_nat_else_aux_imp_to_HOL_state_def
       add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
-done 
+done
 
 paragraph "add_result_to_stack_nat"
 
 abbreviation "add_result_to_stack_nat_cond_str \<equiv> ''cond''"
 
-definition "add_result_to_stack_nat_imp s \<equiv> 
+definition "add_result_to_stack_nat_imp s \<equiv>
   (let
     add_result_to_stack_nat_cond = add_result_to_stack_nat_s s
-  in 
-   (if add_result_to_stack_nat_cond\<noteq> 0 then 
+  in
+   (if add_result_to_stack_nat_cond\<noteq> 0 then
     add_result_to_stack_nat_else_imp s
     else (add_result_to_stack_nat_s_eq_zero_imp s))
   )"
 
 lemma add_result_to_stack_nat_imp_correct[let_function_correctness]:
-  "add_result_to_stack_nat_ret (add_result_to_stack_nat_imp s) = 
+  "add_result_to_stack_nat_ret (add_result_to_stack_nat_imp s) =
     add_result_to_stack_nat (add_result_to_stack_nat_c s) (add_result_to_stack_nat_s s)"
   apply (subst add_result_to_stack_nat_imp_def)
   apply (auto simp add: Let_def add_result_to_stack_nat_else_imp_correct add_result_to_stack_nat_s_eq_zero_imp_correct
     add_result_to_stack_nat_def)
-  done 
+  done
 
-definition "add_result_to_stack_nat_imp_time t s \<equiv> 
+definition "add_result_to_stack_nat_imp_time t s \<equiv>
   (let
     add_result_to_stack_nat_cond = add_result_to_stack_nat_s s;
     t = t + 2
   in
-   (if add_result_to_stack_nat_cond\<noteq> 0 then 
-     (let 
+   (if add_result_to_stack_nat_cond\<noteq> 0 then
+     (let
         t = t + 1;
         t = t + add_result_to_stack_nat_else_imp_time 0 s
-        in 
+        in
         t)
     else (
         let
@@ -2872,7 +2872,7 @@ definition "add_result_to_stack_nat_imp_time t s \<equiv>
          t))
   )"
 
-definition "add_result_to_stack_nat_IMP_Minus \<equiv> 
+definition "add_result_to_stack_nat_IMP_Minus \<equiv>
   add_result_to_stack_nat_cond_str ::= A (V add_result_to_stack_nat_s_str);;
   (IF add_result_to_stack_nat_cond_str \<noteq>0
   THEN add_result_to_stack_nat_else_IMP_Minus
@@ -2889,11 +2889,11 @@ lemma add_result_to_stack_nat_IMP_Minus_correct_function:
   apply (erule Seq_E)+
     apply (erule If_E)
     subgoal
-      apply (fastforce dest!: add_result_to_stack_nat_else_IMP_Minus_correct_function 
+      apply (fastforce dest!: add_result_to_stack_nat_else_IMP_Minus_correct_function
       simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function 
+     apply (fastforce dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_function
       simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2906,11 +2906,11 @@ lemma add_result_to_stack_nat_IMP_Minus_correct_time:
   apply (erule Seq_tE)+
     apply (erule If_tE)
     subgoal
-      apply (fastforce dest!: add_result_to_stack_nat_else_IMP_Minus_correct_time 
+      apply (fastforce dest!: add_result_to_stack_nat_else_IMP_Minus_correct_time
       simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time  
+     apply (fastforce dest!: add_result_to_stack_nat_s_eq_zero_IMP_Minus_correct_time
       simp: add_result_to_stack_nat_imp_to_HOL_state_def Let_def)
     done
   done
@@ -2924,7 +2924,7 @@ lemma add_result_to_stack_nat_IMP_Minus_correct:
                                         (add_result_to_stack_nat_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using add_result_to_stack_nat_IMP_Minus_correct_function 
+  using add_result_to_stack_nat_IMP_Minus_correct_function
        add_result_to_stack_nat_IMP_Minus_correct_time
        set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -2960,7 +2960,7 @@ abbreviation "push_on_stack_nat_cond_two \<equiv> ''push_on_stack_nat_cond_two''
 abbreviation "push_on_stack_nat_cond_three \<equiv> ''push_on_stack_nat_cond_three''"
 
 abbreviation "push_on_stack_nat_IMP_vars \<equiv> {
-  push_on_stack_nat_c_str, push_on_stack_nat_n_str, push_on_stack_nat_s_str, push_on_stack_nat_ret_str 
+  push_on_stack_nat_c_str, push_on_stack_nat_n_str, push_on_stack_nat_s_str, push_on_stack_nat_ret_str
 }"
 
 
@@ -2971,9 +2971,9 @@ lemmas push_on_stack_nat_state_translators =
   NOTEQUAL_neq_zero_imp_to_HOL_state_def
   nth_nat_imp_to_HOL_state_def
 
-paragraph if_eq_zero 
+paragraph if_eq_zero
 
-definition "push_on_stack_nat_eq_zero s \<equiv> 
+definition "push_on_stack_nat_eq_zero s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   cons_t' = 0;
@@ -3000,13 +3000,13 @@ in
   ret)"
 
 lemma push_on_stack_nat_eq_zero_imp_correct[let_function_correctness]:
-  "push_on_stack_nat_ret (push_on_stack_nat_eq_zero s) = 
+  "push_on_stack_nat_ret (push_on_stack_nat_eq_zero s) =
     cons (cons 1 (cons (push_on_stack_nat_n s) 0)) (push_on_stack_nat_s s)"
   unfolding push_on_stack_nat_eq_zero_def
   apply (simp add: hd_imp_correct cons_imp_correct Let_def)
-  done 
+  done
 
-definition "push_on_stack_nat_eq_zero_time t s \<equiv> 
+definition "push_on_stack_nat_eq_zero_time t s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   t = t + 2;
@@ -3047,7 +3047,7 @@ definition "push_on_stack_nat_eq_zero_time t s \<equiv>
 in
   t)"
 
-definition "push_on_stack_nat_eq_zero_IMP_Minus \<equiv> 
+definition "push_on_stack_nat_eq_zero_IMP_Minus \<equiv>
  (cons_prefix @ cons_h_str) ::= A (V push_on_stack_nat_n_str);;
  (cons_prefix @ cons_t_str) ::= A (N 0);;
  (cons_prefix @ cons_ret_str) ::= A (N 0);;
@@ -3074,14 +3074,14 @@ lemma push_on_stack_nat_eq_zero_IMP_Minus_correct_function:
    apply (simp only: push_on_stack_nat_eq_zero_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(13) by fastforce 
+   subgoal premises p using p(13) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(15) by fastforce 
+   subgoal premises p using p(15) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(17) by fastforce 
-   apply (fastforce simp: 
+   subgoal premises p using p(17) by fastforce
+   apply (fastforce simp:
       push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def Let_def)
-   done 
+   done
 
 lemma push_on_stack_nat_eq_zero_IMP_Minus_correct_time:
   "(invoke_subprogram p push_on_stack_nat_eq_zero_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -3090,18 +3090,18 @@ lemma push_on_stack_nat_eq_zero_IMP_Minus_correct_time:
    apply (simp only: push_on_stack_nat_eq_zero_IMP_Minus_def prefix_simps)
    apply (erule Seq_tE)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(25) by fastforce 
+   subgoal premises p using p(25) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(27) by fastforce 
+   subgoal premises p using p(27) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
-   subgoal premises p using p(29) by fastforce 
+   subgoal premises p using p(29) by fastforce
    apply (fastforce simp:
       push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def Let_def)
    done
 
 paragraph if_eq_one
 
-definition "push_on_stack_nat_eq_one s \<equiv> 
+definition "push_on_stack_nat_eq_one s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   cons_t' = 0;
@@ -3156,15 +3156,15 @@ in
   ret)"
 
 lemma push_on_stack_nat_eq_one_imp_correct[let_function_correctness]:
-  "push_on_stack_nat_ret (push_on_stack_nat_eq_one s) = 
-    (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+  "push_on_stack_nat_ret (push_on_stack_nat_eq_one s) =
+    (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)"
   unfolding push_on_stack_nat_eq_one_def
   apply (simp add: nth_nat_imp_correct cons_imp_correct Let_def numeral_2_eq_2)
   done
 
-definition "push_on_stack_nat_eq_one_time t s \<equiv> 
+definition "push_on_stack_nat_eq_one_time t s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   t = t + 2;
@@ -3289,7 +3289,7 @@ definition "push_on_stack_nat_eq_one_IMP_Minus \<equiv>
   push_on_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))
 "
 
-abbreviation "push_on_stack_nat_IMP_vars_eq_one \<equiv> push_on_stack_nat_IMP_vars 
+abbreviation "push_on_stack_nat_IMP_vars_eq_one \<equiv> push_on_stack_nat_IMP_vars
   \<union> {push_on_stack_nat_nth_nat_ret_one, push_on_stack_nat_cons_res}"
 
 lemma push_on_stack_nat_eq_one_IMP_Minus_correct_function:
@@ -3301,21 +3301,21 @@ lemma push_on_stack_nat_eq_one_IMP_Minus_correct_function:
    apply (simp only: push_on_stack_nat_eq_one_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-   subgoal premises p using p(31) by fastforce 
+   subgoal premises p using p(31) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-   subgoal premises p using p(33) by fastforce 
+   subgoal premises p using p(33) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
    subgoal premises p using p(35) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-   subgoal premises p using p(37) by fastforce 
+   subgoal premises p using p(37) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-   subgoal premises p using p(39) by fastforce 
+   subgoal premises p using p(39) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-   subgoal premises p using p(41) by fastforce 
+   subgoal premises p using p(41) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
    subgoal premises p using p(43) by fastforce
    apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
    done
 
@@ -3327,27 +3327,27 @@ lemma push_on_stack_nat_eq_one_IMP_Minus_correct_time:
   apply (simp only: push_on_stack_nat_eq_one_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-  subgoal premises p using p(61) by fastforce 
+  subgoal premises p using p(61) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-  subgoal premises p using p(63) by fastforce 
+  subgoal premises p using p(63) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
   subgoal premises p using p(65) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-  subgoal premises p using p(67) by fastforce 
+  subgoal premises p using p(67) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-  subgoal premises p using p(69) by fastforce 
+  subgoal premises p using p(69) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
-  subgoal premises p using p(71) by fastforce 
+  subgoal premises p using p(71) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_one])
   subgoal premises p using p(73) by fastforce
-  apply (force simp: 
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+  apply (force simp:
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
   done
 
 paragraph if_eq_two
 
-definition "push_on_stack_nat_eq_two s \<equiv> 
+definition "push_on_stack_nat_eq_two s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   cons_t' = 0;
@@ -3402,15 +3402,15 @@ in
   ret)"
 
 lemma push_on_stack_nat_eq_two_imp_correct[let_function_correctness]:
-  "push_on_stack_nat_ret (push_on_stack_nat_eq_two s) = 
-    (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+  "push_on_stack_nat_ret (push_on_stack_nat_eq_two s) =
+    (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)"
   unfolding push_on_stack_nat_eq_two_def
   apply (simp add: nth_nat_imp_correct cons_imp_correct Let_def numeral_2_eq_2)
   done
 
-definition "push_on_stack_nat_eq_two_time t s \<equiv> 
+definition "push_on_stack_nat_eq_two_time t s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   t = t + 2;
@@ -3535,7 +3535,7 @@ definition "push_on_stack_nat_eq_two_IMP_Minus \<equiv>
   push_on_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))
 "
 
-abbreviation "push_on_stack_nat_IMP_vars_eq_two \<equiv> push_on_stack_nat_IMP_vars 
+abbreviation "push_on_stack_nat_IMP_vars_eq_two \<equiv> push_on_stack_nat_IMP_vars
   \<union> {push_on_stack_nat_nth_nat_ret_one, push_on_stack_nat_cons_res}"
 
 lemma push_on_stack_nat_eq_two_IMP_Minus_correct_function:
@@ -3547,21 +3547,21 @@ lemma push_on_stack_nat_eq_two_IMP_Minus_correct_function:
    apply (simp only: push_on_stack_nat_eq_two_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-   subgoal premises p using p(31) by fastforce 
+   subgoal premises p using p(31) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-   subgoal premises p using p(33) by fastforce 
+   subgoal premises p using p(33) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
    subgoal premises p using p(35) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-   subgoal premises p using p(37) by fastforce 
+   subgoal premises p using p(37) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-   subgoal premises p using p(39) by fastforce 
+   subgoal premises p using p(39) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-   subgoal premises p using p(41) by fastforce 
+   subgoal premises p using p(41) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
    subgoal premises p using p(43) by fastforce
    apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
    done
 
@@ -3572,27 +3572,27 @@ lemma push_on_stack_nat_eq_two_IMP_Minus_correct_time:
   apply (simp only: push_on_stack_nat_eq_two_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-  subgoal premises p using p(61) by fastforce 
+  subgoal premises p using p(61) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-  subgoal premises p using p(63) by fastforce 
+  subgoal premises p using p(63) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
   subgoal premises p using p(65) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-  subgoal premises p using p(67) by fastforce 
+  subgoal premises p using p(67) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-  subgoal premises p using p(69) by fastforce 
+  subgoal premises p using p(69) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
-  subgoal premises p using p(71) by fastforce 
+  subgoal premises p using p(71) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_two])
   subgoal premises p using p(73) by fastforce
   apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
   done
 
 paragraph if_else
 
-definition "push_on_stack_nat_else s \<equiv> 
+definition "push_on_stack_nat_else s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   cons_t' = 0;
@@ -3647,15 +3647,15 @@ in
   ret)"
 
 lemma push_on_stack_nat_else_imp_correct[let_function_correctness]:
-  "push_on_stack_nat_ret (push_on_stack_nat_else s) = 
-    (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+  "push_on_stack_nat_ret (push_on_stack_nat_else s) =
+    (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)"
   unfolding push_on_stack_nat_else_def
   apply (simp add: nth_nat_imp_correct cons_imp_correct Let_def numeral_2_eq_2)
   done
 
-definition "push_on_stack_nat_else_time t s \<equiv> 
+definition "push_on_stack_nat_else_time t s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   t = t + 2;
@@ -3780,7 +3780,7 @@ definition "push_on_stack_nat_else_IMP_Minus \<equiv>
   push_on_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))
 "
 
-abbreviation "push_on_stack_nat_IMP_vars_else \<equiv> push_on_stack_nat_IMP_vars 
+abbreviation "push_on_stack_nat_IMP_vars_else \<equiv> push_on_stack_nat_IMP_vars
   \<union> {push_on_stack_nat_nth_nat_ret_one, push_on_stack_nat_cons_res}"
 
 lemma push_on_stack_nat_else_IMP_Minus_correct_function:
@@ -3792,21 +3792,21 @@ lemma push_on_stack_nat_else_IMP_Minus_correct_function:
    apply (simp only: push_on_stack_nat_else_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-   subgoal premises p using p(31) by fastforce 
+   subgoal premises p using p(31) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-   subgoal premises p using p(33) by fastforce 
+   subgoal premises p using p(33) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
    subgoal premises p using p(35) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-   subgoal premises p using p(37) by fastforce 
+   subgoal premises p using p(37) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-   subgoal premises p using p(39) by fastforce 
+   subgoal premises p using p(39) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-   subgoal premises p using p(41) by fastforce 
+   subgoal premises p using p(41) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
    subgoal premises p using p(43) by fastforce
    apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
    done
 
@@ -3818,27 +3818,27 @@ lemma push_on_stack_nat_else_IMP_Minus_correct_time:
   apply (simp only: push_on_stack_nat_else_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-  subgoal premises p using p(61) by fastforce 
+  subgoal premises p using p(61) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-  subgoal premises p using p(63) by fastforce 
+  subgoal premises p using p(63) by fastforce
   apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
   subgoal premises p using p(65) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-  subgoal premises p using p(67) by fastforce 
+  subgoal premises p using p(67) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-  subgoal premises p using p(69) by fastforce 
+  subgoal premises p using p(69) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
-  subgoal premises p using p(71) by fastforce 
+  subgoal premises p using p(71) by fastforce
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_else])
   subgoal premises p using p(73) by fastforce
   apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
   done
 
 paragraph if_eq_three
 
-definition "push_on_stack_nat_eq_three s \<equiv> 
+definition "push_on_stack_nat_eq_three s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   cons_t' = 0;
@@ -3860,7 +3860,7 @@ definition "push_on_stack_nat_eq_three s \<equiv>
   nth_nat_state = \<lparr>nth_nat_n = nth_nat_n', nth_nat_x = nth_nat_x', nth_nat_ret = nth_nat_ret'\<rparr>;
   nth_nat_ret_state = nth_nat_imp nth_nat_state;
   push_on_stack_nat_nth_nat_ret_two = nth_nat_ret nth_nat_ret_state;
-  
+
   nth_nat_n' = 3;
   nth_nat_x' = push_on_stack_nat_c s;
   nth_nat_ret' = 0;
@@ -3906,8 +3906,8 @@ in
   ret)"
 
 lemma push_on_stack_nat_eq_three_imp_correct[let_function_correctness]:
-  "push_on_stack_nat_ret (push_on_stack_nat_eq_three s) = 
-    (6## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+  "push_on_stack_nat_ret (push_on_stack_nat_eq_three s) =
+    (6## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc (Suc 0))) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)"
@@ -3915,7 +3915,7 @@ lemma push_on_stack_nat_eq_three_imp_correct[let_function_correctness]:
   apply (simp add: nth_nat_imp_correct cons_imp_correct Let_def numeral_2_eq_2 numeral_3_eq_3)
   done
 
-definition "push_on_stack_nat_eq_three_time t s \<equiv> 
+definition "push_on_stack_nat_eq_three_time t s \<equiv>
   (let
   cons_h' = push_on_stack_nat_n s;
   t = t + 2;
@@ -3952,7 +3952,7 @@ definition "push_on_stack_nat_eq_three_time t s \<equiv>
   t = t + nth_nat_imp_time 0 nth_nat_state;
   push_on_stack_nat_nth_nat_ret_two = nth_nat_ret nth_nat_ret_state;
   t = t + 2;
-  
+
   nth_nat_n' = 3;
   t = t + 2;
   nth_nat_x' = push_on_stack_nat_c s;
@@ -4073,8 +4073,8 @@ definition "push_on_stack_nat_eq_three_IMP_Minus \<equiv>
   push_on_stack_nat_ret_str ::= A (V (cons_prefix @ cons_ret_str))
 "
 
-abbreviation "push_on_stack_nat_IMP_vars_eq_three \<equiv> push_on_stack_nat_IMP_vars 
-  \<union> {push_on_stack_nat_nth_nat_ret_one, push_on_stack_nat_nth_nat_ret_two, 
+abbreviation "push_on_stack_nat_IMP_vars_eq_three \<equiv> push_on_stack_nat_IMP_vars
+  \<union> {push_on_stack_nat_nth_nat_ret_one, push_on_stack_nat_nth_nat_ret_two,
      push_on_stack_nat_cons_res}"
 
 lemma push_on_stack_nat_eq_three_IMP_Minus_correct_function:
@@ -4086,27 +4086,27 @@ lemma push_on_stack_nat_eq_three_IMP_Minus_correct_function:
    apply (simp only: push_on_stack_nat_eq_three_IMP_Minus_def prefix_simps)
    apply (erule Seq_E)+
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(40) by fastforce 
+   subgoal premises p using p(40) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(42) by fastforce 
+   subgoal premises p using p(42) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(44) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(46) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(48) by fastforce 
+   subgoal premises p using p(48) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(50) by fastforce 
+   subgoal premises p using p(50) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(52) by fastforce 
+   subgoal premises p using p(52) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(54) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(56) by fastforce
    apply (force simp:
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
-   done 
+   done
 
 
 lemma push_on_stack_nat_eq_three_IMP_Minus_correct_time:
@@ -4116,31 +4116,31 @@ lemma push_on_stack_nat_eq_three_IMP_Minus_correct_time:
   apply (simp only: push_on_stack_nat_eq_three_IMP_Minus_def prefix_simps)
   apply (erule Seq_tE)+
   apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(79) by fastforce 
+   subgoal premises p using p(79) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(81) by fastforce 
+   subgoal premises p using p(81) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(83) by fastforce
    apply (erule nth_nat_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(85) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(87) by fastforce 
+   subgoal premises p using p(87) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(89) by fastforce 
+   subgoal premises p using p(89) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
-   subgoal premises p using p(91) by fastforce 
+   subgoal premises p using p(91) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(93) by fastforce
    apply (erule cons_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars_eq_three])
    subgoal premises p using p(95) by fastforce
-  apply (force simp: 
-      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def 
+  apply (force simp:
+      push_on_stack_nat_imp_to_HOL_state_def cons_imp_to_HOL_state_def
       nth_nat_imp_to_HOL_state_def Let_def)
   done
 
 paragraph separations_of_nested_ifs
 
-definition  "push_on_stack_nat_sub_branch_aux1 s \<equiv> 
+definition  "push_on_stack_nat_sub_branch_aux1 s \<equiv>
        (let
           hd_xs' = push_on_stack_nat_c s;
           hd_ret' = 0;
@@ -4155,18 +4155,18 @@ definition  "push_on_stack_nat_sub_branch_aux1 s \<equiv>
                                     NOTEQUAL_neq_zero_ret = NOTEQUAL_neq_zero_ret'\<rparr>;
           NOTEQUAL_neq_zero_ret_state = NOTEQUAL_neq_zero_imp NOTEQUAL_neq_zero_state;
           push_on_stack_nat_cond_three = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state)
-        in 
+        in
           (if push_on_stack_nat_cond_three \<noteq> 0
                 then push_on_stack_nat_else s
                 else push_on_stack_nat_eq_two s))"
 
 lemma push_on_stack_nat_sub_branch_aux1_imp_correct:
-  "push_on_stack_nat_ret (push_on_stack_nat_sub_branch_aux1 s) = 
+  "push_on_stack_nat_ret (push_on_stack_nat_sub_branch_aux1 s) =
     (if (hd_nat (push_on_stack_nat_c s)) \<noteq>2
-           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)
-           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s))"
   apply (subst push_on_stack_nat_sub_branch_aux1_def)
@@ -4190,7 +4190,7 @@ definition "push_on_stack_nat_sub_branch_aux1_IMP_Minus \<equiv>
     THEN push_on_stack_nat_else_IMP_Minus
     ELSE push_on_stack_nat_eq_two_IMP_Minus)
   "
-definition "push_on_stack_nat_sub_branch_aux1_time t s \<equiv> 
+definition "push_on_stack_nat_sub_branch_aux1_time t s \<equiv>
     (let
        hd_xs' = push_on_stack_nat_c s;
        t = t + 2;
@@ -4215,13 +4215,13 @@ definition "push_on_stack_nat_sub_branch_aux1_time t s \<equiv>
        push_on_stack_nat_cond_three = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
        t = t + 2
        in (if push_on_stack_nat_cond_three \<noteq> 0
-                then 
+                then
                 let
                  t = t + 1;
                  t = t + push_on_stack_nat_else_time 0 s
                 in
                  t
-                else 
+                else
                 let
                  t = t + 1;
                  t = t + push_on_stack_nat_eq_two_time 0 s
@@ -4242,12 +4242,12 @@ lemma push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_function:
   subgoal premises p using p(12) by fastforce
   apply (erule If_E)
     subgoal
-      apply (fastforce dest!: push_on_stack_nat_else_IMP_Minus_correct_function 
+      apply (fastforce dest!: push_on_stack_nat_else_IMP_Minus_correct_function
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
           hd_imp_to_HOL_state_def Let_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: push_on_stack_nat_eq_two_IMP_Minus_correct_function 
+     apply (fastforce dest!: push_on_stack_nat_eq_two_IMP_Minus_correct_function
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
           hd_imp_to_HOL_state_def Let_def)
     done
@@ -4255,7 +4255,7 @@ lemma push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_function:
 
 lemma push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_time:
   "(invoke_subprogram p push_on_stack_nat_sub_branch_aux1_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-    t = push_on_stack_nat_sub_branch_aux1_time 0 
+    t = push_on_stack_nat_sub_branch_aux1_time 0
            (push_on_stack_nat_imp_to_HOL_state p s)"
   apply (subst push_on_stack_nat_sub_branch_aux1_time_def)
   apply (simp only: push_on_stack_nat_sub_branch_aux1_IMP_Minus_def prefix_simps)
@@ -4269,15 +4269,15 @@ lemma push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_time:
       apply (fastforce dest!: push_on_stack_nat_else_IMP_Minus_correct_time
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
           hd_imp_to_HOL_state_def Let_def)
-    done 
+    done
     subgoal
-     apply (fastforce dest!: push_on_stack_nat_eq_two_IMP_Minus_correct_time 
+     apply (fastforce dest!: push_on_stack_nat_eq_two_IMP_Minus_correct_time
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
           hd_imp_to_HOL_state_def Let_def)
     done
   done
 
-  definition "push_on_stack_nat_sub_branch_aux2 s \<equiv> 
+  definition "push_on_stack_nat_sub_branch_aux2 s \<equiv>
     (let
        hd_xs' = push_on_stack_nat_c s;
        hd_ret' = 0;
@@ -4298,16 +4298,16 @@ lemma push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_time:
 
 
 lemma push_on_stack_nat_sub_branch_aux2_imp_correct:
-  "push_on_stack_nat_ret (push_on_stack_nat_sub_branch_aux2 s) = 
+  "push_on_stack_nat_ret (push_on_stack_nat_sub_branch_aux2 s) =
     (if (hd_nat (push_on_stack_nat_c s)) \<noteq>1
      then (if (hd_nat (push_on_stack_nat_c s)) \<noteq>2
-           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)
-           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s))
-     else (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+     else (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s))"
   apply (subst push_on_stack_nat_sub_branch_aux2_def)
@@ -4345,19 +4345,19 @@ lemma push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_function:
   apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(12) by fastforce
   apply (erule If_E)
-    subgoal 
-      apply (fastforce dest!: push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_function 
+    subgoal
+      apply (fastforce dest!: push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_function
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
       hd_imp_to_HOL_state_def Let_def)
-    done 
-    subgoal 
-    apply (fastforce dest!: push_on_stack_nat_eq_one_IMP_Minus_correct_function 
+    done
+    subgoal
+    apply (fastforce dest!: push_on_stack_nat_eq_one_IMP_Minus_correct_function
       simp: push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def
       hd_imp_to_HOL_state_def Let_def)
     done
   done
 
-definition "push_on_stack_nat_sub_branch_aux2_time t s \<equiv> 
+definition "push_on_stack_nat_sub_branch_aux2_time t s \<equiv>
     (let
        hd_xs' = push_on_stack_nat_c s;
        t = t + 2;
@@ -4382,14 +4382,14 @@ definition "push_on_stack_nat_sub_branch_aux2_time t s \<equiv>
        push_on_stack_nat_cond_two = (NOTEQUAL_neq_zero_ret NOTEQUAL_neq_zero_ret_state);
        t = t + 2
        in (if push_on_stack_nat_cond_two \<noteq> 0
-          then 
-            (let 
+          then
+            (let
              t = t + 1;
              t = t + push_on_stack_nat_sub_branch_aux1_time 0 s
-            in 
+            in
              t)
-          else 
-          let 
+          else
+          let
            t = t + 1;
            t = t + push_on_stack_nat_eq_one_time 0 s
           in
@@ -4397,7 +4397,7 @@ definition "push_on_stack_nat_sub_branch_aux2_time t s \<equiv>
 
 lemma push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_time:
   "(invoke_subprogram p push_on_stack_nat_sub_branch_aux2_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
-     t = push_on_stack_nat_sub_branch_aux2_time 0 
+     t = push_on_stack_nat_sub_branch_aux2_time 0
            (push_on_stack_nat_imp_to_HOL_state p s)"
   apply (subst push_on_stack_nat_sub_branch_aux2_time_def)
   apply (simp only: push_on_stack_nat_sub_branch_aux2_IMP_Minus_def prefix_simps)
@@ -4407,19 +4407,19 @@ lemma push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_time:
   apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(21) by fastforce
   apply (erule If_tE)
-    subgoal 
+    subgoal
     apply (fastforce dest!: push_on_stack_nat_sub_branch_aux1_IMP_Minus_correct_time simp:
             push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def
             hd_imp_to_HOL_state_def)
     done
-    subgoal 
+    subgoal
     apply (fastforce dest!: push_on_stack_nat_eq_one_IMP_Minus_correct_time simp:
             push_on_stack_nat_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def Let_def
             hd_imp_to_HOL_state_def)
     done
   done
 
-definition "push_on_stack_nat_sub_branch_aux3 s \<equiv> 
+definition "push_on_stack_nat_sub_branch_aux3 s \<equiv>
 (let
   hd_xs' = push_on_stack_nat_c s;
   hd_ret' = 0;
@@ -4441,21 +4441,21 @@ definition "push_on_stack_nat_sub_branch_aux3 s \<equiv>
 
 lemma push_on_stack_nat_sub_branch_aux3_imp_correct:
    "push_on_stack_nat_ret (push_on_stack_nat_sub_branch_aux3 s) =
-    (if (hd_nat (push_on_stack_nat_c s)) \<noteq>3 
+    (if (hd_nat (push_on_stack_nat_c s)) \<noteq>3
     then (if (hd_nat (push_on_stack_nat_c s)) \<noteq>1
      then (if (hd_nat (push_on_stack_nat_c s)) \<noteq>2
-           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           then (9## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s)
-           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+           else (3## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s))
-     else (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
+     else (2## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
      (nth_nat (Suc (Suc 0)) (push_on_stack_nat_c s)) ##
       (push_on_stack_nat_n s) ## 0)## (push_on_stack_nat_s s))
-    else (6## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ## 
-       (nth_nat (Suc (Suc 0))(push_on_stack_nat_c s)) ## 
-       (nth_nat (Suc (Suc (Suc 0))) (push_on_stack_nat_c s)) 
+    else (6## (nth_nat (Suc 0) (push_on_stack_nat_c s)) ##
+       (nth_nat (Suc (Suc 0))(push_on_stack_nat_c s)) ##
+       (nth_nat (Suc (Suc (Suc 0))) (push_on_stack_nat_c s))
        ## (push_on_stack_nat_n s)  ## 0) ## (push_on_stack_nat_s s)
     )"
   apply (subst push_on_stack_nat_sub_branch_aux3_def)
@@ -4464,7 +4464,7 @@ lemma push_on_stack_nat_sub_branch_aux3_imp_correct:
    Let_def)
   done
 
-definition "push_on_stack_nat_sub_branch_aux3_IMP_Minus \<equiv> 
+definition "push_on_stack_nat_sub_branch_aux3_IMP_Minus \<equiv>
   (hd_prefix @ hd_xs_str) ::= A (V push_on_stack_nat_c_str);;
   (hd_prefix @ hd_ret_str) ::= A (N 0);;
   invoke_subprogram hd_prefix hd_IMP_Minus;;
@@ -4478,7 +4478,7 @@ definition "push_on_stack_nat_sub_branch_aux3_IMP_Minus \<equiv>
   THEN push_on_stack_nat_sub_branch_aux2_IMP_Minus
   ELSE push_on_stack_nat_eq_three_IMP_Minus)"
 
-definition "push_on_stack_nat_sub_branch_aux3_time t s \<equiv> 
+definition "push_on_stack_nat_sub_branch_aux3_time t s \<equiv>
 (let
   hd_xs' = push_on_stack_nat_c s;
   t = t + 2;
@@ -4504,13 +4504,13 @@ definition "push_on_stack_nat_sub_branch_aux3_time t s \<equiv>
   t = t + 2
  in
   (if push_on_stack_nat_cond_one \<noteq> 0
-      then 
-        let 
+      then
+        let
          t = t + 1;
          t = t + push_on_stack_nat_sub_branch_aux2_time 0 s
         in t
-      else 
-       let 
+      else
+       let
         t = t + 1;
         t = t + push_on_stack_nat_eq_three_time 0 s
         in t))"
@@ -4528,15 +4528,15 @@ lemma push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_function:
   apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(12) by fastforce
   apply (erule If_E)
-    subgoal 
-      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_function simp:  
+    subgoal
+      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_function simp:
       Let_def hd_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
       done
-    subgoal 
-    apply (fastforce dest!:push_on_stack_nat_eq_three_IMP_Minus_correct_function simp:  
+    subgoal
+    apply (fastforce dest!:push_on_stack_nat_eq_three_IMP_Minus_correct_function simp:
       Let_def hd_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-    done 
-  done 
+    done
+  done
 
 lemma push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_time:
   "(invoke_subprogram p push_on_stack_nat_sub_branch_aux3_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4549,17 +4549,17 @@ lemma push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_time:
   apply (erule NOTEQUAL_neq_zero_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(21) by fastforce
   apply (erule If_tE)
-    subgoal 
-      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_time simp:  
+    subgoal
+      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux2_IMP_Minus_correct_time simp:
       Let_def hd_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
       done
-    subgoal 
-    apply (fastforce dest!:push_on_stack_nat_eq_three_IMP_Minus_correct_time simp:  
+    subgoal
+    apply (fastforce dest!:push_on_stack_nat_eq_three_IMP_Minus_correct_time simp:
       Let_def hd_imp_to_HOL_state_def NOTEQUAL_neq_zero_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-    done 
-  done 
+    done
+  done
 
-definition "push_on_stack_nat_state_upd s \<equiv> 
+definition "push_on_stack_nat_state_upd s \<equiv>
  (let
   hd_xs' = push_on_stack_nat_c s;
   hd_ret' = 0;
@@ -4575,9 +4575,9 @@ definition "push_on_stack_nat_state_upd s \<equiv>
 function push_on_stack_nat_imp::
   "push_on_stack_nat_state \<Rightarrow> push_on_stack_nat_state" where
   "push_on_stack_nat_imp s =
-    (let 
+    (let
       ret = push_on_stack_nat_state_upd s
-    in 
+    in
      ret)"
   by simp+
 termination
@@ -4590,14 +4590,14 @@ lemma push_on_stack_nat_imp_correct:
     push_on_stack_nat (push_on_stack_nat_c s) (push_on_stack_nat_n s) (push_on_stack_nat_s s)"
   apply (subst push_on_stack_nat_imp.simps)
   apply (subst push_on_stack_nat_def)
-  apply (simp add: push_on_stack_nat_state_upd_def hd_imp_correct cons_imp_correct 
-   NOTEQUAL_neq_zero_imp_correct 
+  apply (simp add: push_on_stack_nat_state_upd_def hd_imp_correct cons_imp_correct
+   NOTEQUAL_neq_zero_imp_correct
     push_on_stack_nat_eq_zero_imp_correct
-   push_on_stack_nat_sub_branch_aux3_imp_correct 
-   Let_def split: if_splits)  
+   push_on_stack_nat_sub_branch_aux3_imp_correct
+   Let_def split: if_splits)
   done
 
-definition "push_on_stack_nat_IMP_Minus \<equiv> 
+definition "push_on_stack_nat_IMP_Minus \<equiv>
  (hd_prefix @ hd_xs_str) ::= A (V push_on_stack_nat_c_str);;
  (hd_prefix @ hd_ret_str) ::= A (N 0);;
  invoke_subprogram hd_prefix hd_IMP_Minus;;
@@ -4606,7 +4606,7 @@ definition "push_on_stack_nat_IMP_Minus \<equiv>
   THEN  push_on_stack_nat_sub_branch_aux3_IMP_Minus
   ELSE push_on_stack_nat_eq_zero_IMP_Minus"
 
-definition "push_on_stack_nat_state_upd_time t s\<equiv> 
+definition "push_on_stack_nat_state_upd_time t s\<equiv>
 (let
   hd_xs' = push_on_stack_nat_c s;
   t = t + 2;
@@ -4619,14 +4619,14 @@ definition "push_on_stack_nat_state_upd_time t s\<equiv>
   t = t + 2
  in
   (if push_on_stack_nat_hd_c \<noteq> 0
-  then 
-    let 
+  then
+    let
      t = t + 1;
      t = t + push_on_stack_nat_sub_branch_aux3_time 0 s
-    in 
-    t 
-  else 
-   let 
+    in
+    t
+  else
+   let
     t = t + 1;
     t = t + push_on_stack_nat_eq_zero_time 0 s
    in
@@ -4635,9 +4635,9 @@ definition "push_on_stack_nat_state_upd_time t s\<equiv>
 
 function push_on_stack_nat_imp_time :: "nat \<Rightarrow> push_on_stack_nat_state \<Rightarrow> nat" where
   "push_on_stack_nat_imp_time t s =
-    (let 
+    (let
       ret = push_on_stack_nat_state_upd_time t s
-    in 
+    in
      ret)"
   by auto
 termination
@@ -4658,15 +4658,15 @@ lemma push_on_stack_nat_IMP_Minus_correct_function:
   apply (erule hd_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(5) by fastforce
   apply (erule If_E)
-    subgoal 
-      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_function simp:  
+    subgoal
+      apply (fastforce dest!:push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_function simp:
       push_on_stack_nat_state_upd_def Let_def hd_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-      done 
-    subgoal 
-    apply (fastforce dest!:push_on_stack_nat_eq_zero_IMP_Minus_correct_function simp:  
+      done
+    subgoal
+    apply (fastforce dest!:push_on_stack_nat_eq_zero_IMP_Minus_correct_function simp:
       push_on_stack_nat_state_upd_def Let_def hd_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-    done 
-  done 
+    done
+  done
 
 lemma push_on_stack_nat_IMP_Minus_correct_time:
   "(invoke_subprogram p push_on_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4677,22 +4677,22 @@ lemma push_on_stack_nat_IMP_Minus_correct_time:
   apply (erule hd_IMP_Minus_correct[where vars=push_on_stack_nat_IMP_vars])
   subgoal premises p using p(9) by fastforce
   apply (erule If_tE)
-    subgoal 
+    subgoal
       apply (fastforce dest!:push_on_stack_nat_sub_branch_aux3_IMP_Minus_correct_time
-      simp: push_on_stack_nat_state_upd_time_def 
+      simp: push_on_stack_nat_state_upd_time_def
       Let_def hd_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-      done 
-    subgoal 
-    apply (fastforce dest!:push_on_stack_nat_eq_zero_IMP_Minus_correct_time simp:  
+      done
+    subgoal
+    apply (fastforce dest!:push_on_stack_nat_eq_zero_IMP_Minus_correct_time simp:
       push_on_stack_nat_state_upd_time_def Let_def hd_imp_to_HOL_state_def push_on_stack_nat_imp_to_HOL_state_def)
-    done 
-  done 
+    done
+  done
 
 lemma push_on_stack_nat_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ push_on_stack_nat_prefix) push_on_stack_nat_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix push_on_stack_nat_prefix v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
-  using com_add_prefix_valid'' com_only_vars prefix_def 
+  using com_add_prefix_valid'' com_only_vars prefix_def
   by blast
 
 lemma push_on_stack_nat_IMP_Minus_correct:
@@ -4704,7 +4704,7 @@ lemma push_on_stack_nat_IMP_Minus_correct:
                                         (push_on_stack_nat_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using push_on_stack_nat_IMP_Minus_correct_function 
+  using push_on_stack_nat_IMP_Minus_correct_function
        push_on_stack_nat_IMP_Minus_correct_time
        push_on_stack_nat_IMP_Minus_correct_effects set_mono_prefix
   by (smt (verit, ccfv_SIG) com_add_prefix_valid_subset com_only_vars)
@@ -4713,7 +4713,7 @@ subsection \<open>map_var_bit_to_var\<close>
 
 subsubsection \<open>map_var_bit_to_var_aux\<close>
 
-fun map_var_bit_to_var_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
+fun map_var_bit_to_var_aux :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
 "map_var_bit_to_var_aux acc v n = ((var_bit_to_var_nat (prod_encode (v,hd_nat n)))## acc)"
 
 record map_var_bit_to_var_aux_state =
@@ -4729,8 +4729,8 @@ abbreviation "map_var_bit_to_var_aux_n_str \<equiv> ''n''"
 abbreviation "map_var_bit_to_var_aux_ret_str \<equiv> ''ret''"
 
 
-function map_var_bit_to_var_aux_imp :: "map_var_bit_to_var_aux_state \<Rightarrow> map_var_bit_to_var_aux_state" where 
-"map_var_bit_to_var_aux_imp s = 
+function map_var_bit_to_var_aux_imp :: "map_var_bit_to_var_aux_state \<Rightarrow> map_var_bit_to_var_aux_state" where
+"map_var_bit_to_var_aux_imp s =
 (let
     hd_xs' = map_var_bit_to_var_aux_n s;
     hd_ret' = 0;
@@ -4756,14 +4756,14 @@ function map_var_bit_to_var_aux_imp :: "map_var_bit_to_var_aux_state \<Rightarro
     cons_t' = map_var_bit_to_var_aux_acc s;
     cons_ret' = 0;
     cons_state = \<lparr>cons_h = cons_h',
-                  cons_t = cons_t', 
+                  cons_t = cons_t',
                   cons_ret = cons_ret'\<rparr>;
     cons_ret_state = cons_imp cons_state;
     map_var_bit_to_var_aux_ret' = cons_ret cons_ret_state;
-    
+
     tl_xs' = map_var_bit_to_var_aux_n s;
     tl_ret' = 0;
-    tl_state = \<lparr>tl_xs = tl_xs', 
+    tl_state = \<lparr>tl_xs = tl_xs',
                 tl_ret = tl_ret'\<rparr>;
     tl_ret_state = tl_imp tl_state;
 
@@ -4777,13 +4777,13 @@ function map_var_bit_to_var_aux_imp :: "map_var_bit_to_var_aux_state \<Rightarro
     " by simp+
     termination
     apply (relation "measure map_var_bit_to_var_aux_acc")
-    apply simp 
-    done 
+    apply simp
+    done
 
 declare map_var_bit_to_var_aux_imp.simps[simp del]
 
 lemma map_var_bit_to_var_aux_imp_correct[let_function_correctness]:
-"map_var_bit_to_var_aux_ret (map_var_bit_to_var_aux_imp s) = 
+"map_var_bit_to_var_aux_ret (map_var_bit_to_var_aux_imp s) =
   map_var_bit_to_var_aux (map_var_bit_to_var_aux_acc s) (map_var_bit_to_var_aux_v s) (map_var_bit_to_var_aux_n s)
   \<and> map_var_bit_to_var_aux_n (map_var_bit_to_var_aux_imp s) = tl_nat (map_var_bit_to_var_aux_n s)"
 apply (subst map_var_bit_to_var_aux_imp.simps)+
@@ -4791,10 +4791,10 @@ apply (auto simp add: hd_imp_correct prod_encode_imp_correct var_bit_to_var_tail
   tl_imp_correct)
   using subtail_var_to_var_bit
   by (simp add: subtail_var_bit_to_var)
- 
 
-function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_var_aux_state \<Rightarrow> nat" where 
-"map_var_bit_to_var_aux_imp_time t s = 
+
+function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_var_aux_state \<Rightarrow> nat" where
+"map_var_bit_to_var_aux_imp_time t s =
 (let
     hd_xs' = map_var_bit_to_var_aux_n s;
     t = t + 2;
@@ -4833,7 +4833,7 @@ function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_va
     cons_ret' = 0;
     t = t + 2;
     cons_state = \<lparr>cons_h = cons_h',
-                  cons_t = cons_t', 
+                  cons_t = cons_t',
                   cons_ret = cons_ret'\<rparr>;
     cons_ret_state = cons_imp cons_state;
     t = t + cons_imp_time 0 cons_state;
@@ -4844,7 +4844,7 @@ function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_va
     t = t + 2;
     tl_ret' = 0;
     t = t + 2;
-    tl_state = \<lparr>tl_xs = tl_xs', 
+    tl_state = \<lparr>tl_xs = tl_xs',
                 tl_ret = tl_ret'\<rparr>;
     tl_ret_state = tl_imp tl_state;
     t = t + tl_imp_time 0 tl_state;
@@ -4860,12 +4860,12 @@ function map_var_bit_to_var_aux_imp_time :: "nat \<Rightarrow> map_var_bit_to_va
     " by auto
     termination
     apply (relation "measure (map_var_bit_to_var_aux_acc \<circ> snd)")
-    apply simp 
-    done 
+    apply simp
+    done
 
 declare map_var_bit_to_var_aux_imp_time.simps[simp del]
 
-definition  "map_var_bit_to_var_aux_IMP_Minus \<equiv> 
+definition  "map_var_bit_to_var_aux_IMP_Minus \<equiv>
   (hd_prefix @ hd_xs_str) ::= (A (V map_var_bit_to_var_aux_n_str));;
   (hd_prefix @ hd_ret_str) ::= (A (N 0));;
   invoke_subprogram hd_prefix hd_IMP_Minus;;
@@ -4907,7 +4907,7 @@ lemmas map_var_bit_to_var_aux_state_translators =
   tl_imp_to_HOL_state_def
 
 abbreviation "map_var_bit_to_var_aux_IMP_vars \<equiv> {
-  map_var_bit_to_var_aux_acc_str, map_var_bit_to_var_aux_v_str, 
+  map_var_bit_to_var_aux_acc_str, map_var_bit_to_var_aux_v_str,
   map_var_bit_to_var_aux_n_str, map_var_bit_to_var_aux_ret_str}"
 
 lemma map_var_bit_to_var_aux_IMP_Minus_correct_function_ret:
@@ -4930,8 +4930,8 @@ subgoal premises p using p(27) by fastforce
 apply (clarsimp simp add:
   map_var_bit_to_var_aux_state_translators Let_def map_var_bit_to_var_aux_imp.simps)
 subgoal premises p
-  using p(10) p(8) p(6) p(4) p(2) by force 
-done 
+  using p(10) p(8) p(6) p(4) p(2) by force
+done
 
 lemma map_var_bit_to_var_aux_IMP_Minus_correct_function_n:
   "(invoke_subprogram p map_var_bit_to_var_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -4953,15 +4953,15 @@ subgoal premises p using p(27) by fastforce
 apply (clarsimp simp add:
   map_var_bit_to_var_aux_state_translators Let_def map_var_bit_to_var_aux_imp.simps)
 subgoal premises p
-  using p(10) p(8) p(6) p(4) p(2) by force 
-done 
+  using p(10) p(8) p(6) p(4) p(2) by force
+done
 
 lemma map_var_bit_to_var_aux_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_var_bit_to_var_aux_pref) map_var_bit_to_var_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_var_bit_to_var_aux_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 
 lemma map_var_bit_to_var_aux_IMP_Minus_correct_time:
@@ -4979,9 +4979,9 @@ apply (erule cons_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(43) by fastforce
 apply (erule tl_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(45) by fastforce
-apply (force simp: map_var_bit_to_var_aux_imp_time.simps 
+apply (force simp: map_var_bit_to_var_aux_imp_time.simps
   Let_def map_var_bit_to_var_aux_state_translators)
-done 
+done
 
 lemma map_var_bit_to_var_aux_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_var_bit_to_var_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -4995,15 +4995,15 @@ lemma map_var_bit_to_var_aux_IMP_Minus_correct[functional_correctness]:
                                         (map_var_bit_to_var_aux_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using map_var_bit_to_var_aux_IMP_Minus_correct_function_ret 
+  using map_var_bit_to_var_aux_IMP_Minus_correct_function_ret
   map_var_bit_to_var_aux_IMP_Minus_correct_function_n
   by (auto simp: map_var_bit_to_var_aux_IMP_Minus_correct_time)
-    (meson map_var_bit_to_var_aux_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson map_var_bit_to_var_aux_IMP_Minus_correct_effects set_mono_prefix)
 
 subsubsection \<open>map_var_bit_to_var_acc\<close>
 
-fun map_var_bit_to_var_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where 
-"map_var_bit_to_var_acc' acc v n = (if n \<noteq> 0 
+fun map_var_bit_to_var_acc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+"map_var_bit_to_var_acc' acc v n = (if n \<noteq> 0
    then (map_var_bit_to_var_acc' ((var_bit_to_var_nat (prod_encode (v,hd_nat n)))## acc) v (tl_nat n))
    else acc)"
 
@@ -5039,12 +5039,12 @@ definition "map_var_bit_to_var_acc_state_upd s \<equiv>
     map_var_bit_to_var_aux_v' = map_var_bit_to_var_acc_v s;
     map_var_bit_to_var_aux_n' = map_var_bit_to_var_acc_n s;
     map_var_bit_to_var_aux_ret' = 0;
-    map_var_bit_to_var_aux_state = 
+    map_var_bit_to_var_aux_state =
       \<lparr>map_var_bit_to_var_aux_acc = map_var_bit_to_var_aux_acc',
       map_var_bit_to_var_aux_v = map_var_bit_to_var_aux_v',
       map_var_bit_to_var_aux_n = map_var_bit_to_var_aux_n',
       map_var_bit_to_var_aux_ret = map_var_bit_to_var_aux_ret'\<rparr>;
-    map_var_bit_to_var_aux_ret_state = 
+    map_var_bit_to_var_aux_ret_state =
         map_var_bit_to_var_aux_imp map_var_bit_to_var_aux_state;
 
 
@@ -5074,7 +5074,7 @@ definition "map_var_bit_to_var_acc_imp_after_loop s \<equiv>
    in ret
   )"
 
-lemmas map_var_bit_to_var_acc_imp_subprogram_simps = 
+lemmas map_var_bit_to_var_acc_imp_subprogram_simps =
   map_var_bit_to_var_acc_state_upd_def
   map_var_bit_to_var_acc_imp_compute_loop_condition_def
   map_var_bit_to_var_acc_imp_after_loop_def
@@ -5091,9 +5091,9 @@ function map_var_bit_to_var_acc_imp::
     in ret
   )"
   by simp+
-termination 
+termination
   apply (relation "measure map_var_bit_to_var_acc_n")
-   apply (simp add: map_var_bit_to_var_acc_imp_subprogram_simps 
+   apply (simp add: map_var_bit_to_var_acc_imp_subprogram_simps
       map_var_bit_to_var_aux_imp_correct Let_def)+
   done
 
@@ -5101,16 +5101,16 @@ declare map_var_bit_to_var_acc_imp.simps [simp del]
 
 lemma map_var_bit_to_var_acc_imp_correct[let_function_correctness]:
   "map_var_bit_to_var_acc_ret (map_var_bit_to_var_acc_imp s) =
-    map_var_bit_to_var_acc' (map_var_bit_to_var_acc_acc s) 
+    map_var_bit_to_var_acc' (map_var_bit_to_var_acc_acc s)
   (map_var_bit_to_var_acc_v s) (map_var_bit_to_var_acc_n s)"
   apply (induction s rule: map_var_bit_to_var_acc_imp.induct)
   apply (subst map_var_bit_to_var_acc_imp.simps)
   apply (subst map_var_bit_to_var_acc'.simps)
-  apply (simp del: map_var_bit_to_var_acc'.simps 
-              add: map_var_bit_to_var_acc_imp_subprogram_simps Let_def 
+  apply (simp del: map_var_bit_to_var_acc'.simps
+              add: map_var_bit_to_var_acc_imp_subprogram_simps Let_def
                    fst_nat_fst'_nat snd_nat_snd'_nat snd'_imp_correct fst'_imp_correct
                    map_var_bit_to_var_aux_imp_correct tl_imp_correct)
-  done            
+  done
 
 definition "map_var_bit_to_var_acc_state_upd_time t s \<equiv>
   let
@@ -5122,12 +5122,12 @@ definition "map_var_bit_to_var_acc_state_upd_time t s \<equiv>
     t = t + 2;
     map_var_bit_to_var_aux_ret' = 0;
     t = t + 2;
-    map_var_bit_to_var_aux_state = 
+    map_var_bit_to_var_aux_state =
       \<lparr>map_var_bit_to_var_aux_acc = map_var_bit_to_var_aux_acc',
       map_var_bit_to_var_aux_v = map_var_bit_to_var_aux_v',
       map_var_bit_to_var_aux_n = map_var_bit_to_var_aux_n',
       map_var_bit_to_var_aux_ret = map_var_bit_to_var_aux_ret'\<rparr>;
-    map_var_bit_to_var_aux_ret_state = 
+    map_var_bit_to_var_aux_ret_state =
         map_var_bit_to_var_aux_imp map_var_bit_to_var_aux_state;
     t = t + map_var_bit_to_var_aux_imp_time 0 map_var_bit_to_var_aux_state;
 
@@ -5163,7 +5163,7 @@ definition "map_var_bit_to_var_acc_imp_after_loop_time t s \<equiv>
     t
 "
 
-lemmas map_var_bit_to_var_acc_imp_subprogram_time_simps = 
+lemmas map_var_bit_to_var_acc_imp_subprogram_time_simps =
   map_var_bit_to_var_acc_state_upd_time_def
   map_var_bit_to_var_acc_imp_compute_loop_condition_time_def
   map_var_bit_to_var_acc_imp_after_loop_time_def
@@ -5193,25 +5193,25 @@ termination
   by (auto simp add: map_var_bit_to_var_acc_imp_subprogram_time_simps
         map_var_bit_to_var_aux_imp_correct Let_def)
 
-declare map_var_bit_to_var_acc_imp_time.simps [simp del]            
+declare map_var_bit_to_var_acc_imp_time.simps [simp del]
 
 lemma map_var_bit_to_var_acc_imp_time_acc:
   "(map_var_bit_to_var_acc_imp_time (Suc t) s) = Suc (map_var_bit_to_var_acc_imp_time t s)"
   by (induction t s rule: map_var_bit_to_var_acc_imp_time.induct)
     ((subst (1 2) map_var_bit_to_var_acc_imp_time.simps);
-      (simp add: map_var_bit_to_var_acc_state_upd_def))            
+      (simp add: map_var_bit_to_var_acc_state_upd_def))
 
 lemma map_var_bit_to_var_acc_imp_time_acc_2_aux:
   "(map_var_bit_to_var_acc_imp_time t s) = t + (map_var_bit_to_var_acc_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: map_var_bit_to_var_acc_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: map_var_bit_to_var_acc_imp_time_acc)+
 
 lemma map_var_bit_to_var_acc_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (map_var_bit_to_var_acc_imp_time t s) = t + (map_var_bit_to_var_acc_imp_time 0 s)"
-  by (rule map_var_bit_to_var_acc_imp_time_acc_2_aux)            
+  by (rule map_var_bit_to_var_acc_imp_time_acc_2_aux)
 
 lemma map_var_bit_to_var_acc_imp_time_acc_3:
   "(map_var_bit_to_var_acc_imp_time (a + b) s) = a + (map_var_bit_to_var_acc_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: map_var_bit_to_var_acc_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: map_var_bit_to_var_acc_imp_time_acc)+
 
 abbreviation "map_var_bit_to_var_acc_while_cond \<equiv> ''condition''"
 
@@ -5230,10 +5230,10 @@ definition "map_var_bit_to_var_acc_IMP_loop_body \<equiv>
  (map_var_bit_to_var_aux_prefix @ map_var_bit_to_var_aux_ret_str)
    ::= A (N 0);;
  invoke_subprogram map_var_bit_to_var_aux_prefix map_var_bit_to_var_aux_IMP_Minus;;
-  
-  (map_var_bit_to_var_acc_acc_str) ::= (A (V (map_var_bit_to_var_aux_prefix 
+
+  (map_var_bit_to_var_acc_acc_str) ::= (A (V (map_var_bit_to_var_aux_prefix
                                              @ map_var_bit_to_var_aux_ret_str)));;
-  (map_var_bit_to_var_acc_n_str) ::=  (A (V (map_var_bit_to_var_aux_prefix 
+  (map_var_bit_to_var_acc_n_str) ::=  (A (V (map_var_bit_to_var_aux_prefix
                                              @ map_var_bit_to_var_aux_n_str)))
 "
 
@@ -5291,10 +5291,10 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_function:
   apply(erule Seq_E)+
   apply(erule While_tE)
 
-    subgoal 
+    subgoal
       apply (simp only: map_var_bit_to_var_acc_IMP_subprogram_simps prefix_simps)
-      apply (clarsimp simp: map_var_bit_to_var_acc_complete_simps) 
-      done 
+      apply (clarsimp simp: map_var_bit_to_var_acc_complete_simps)
+      done
 
   apply(erule Seq_E)+
   apply(dest_com_gen)
@@ -5309,9 +5309,9 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule map_var_bit_to_var_aux_IMP_Minus_correct[where vars = "map_var_bit_to_var_acc_IMP_vars"])
       subgoal premises p using p(12) by fastforce
-      apply (force simp add: map_var_bit_to_var_acc_imp_subprogram_simps 
+      apply (force simp add: map_var_bit_to_var_acc_imp_subprogram_simps
          map_var_bit_to_var_acc_state_translators Let_def)
-      done 
+      done
 
   subgoal
       apply(simp only: map_var_bit_to_var_acc_IMP_init_while_cond_def prefix_simps
@@ -5319,17 +5319,17 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_function:
       apply(erule Seq_E)+
       apply(erule map_var_bit_to_var_aux_IMP_Minus_correct[where vars = "map_var_bit_to_var_acc_IMP_vars"])
       subgoal premises p using p(12) by fastforce
-      apply (force simp add: map_var_bit_to_var_acc_imp_subprogram_simps 
+      apply (force simp add: map_var_bit_to_var_acc_imp_subprogram_simps
          map_var_bit_to_var_acc_state_translators Let_def split: if_splits)
-      done 
-  done 
+      done
+  done
 
 lemma map_var_bit_to_var_acc_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_var_bit_to_var_acc_pref) map_var_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_var_bit_to_var_acc_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemmas map_var_bit_to_var_acc_complete_time_simps =
   map_var_bit_to_var_acc_imp_subprogram_time_simps
@@ -5350,9 +5350,9 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_time:
   apply(erule While_tE_time)
   subgoal
     apply(simp only: map_var_bit_to_var_acc_IMP_subprogram_simps prefix_simps
-     map_var_bit_to_var_acc_complete_time_simps Let_def split: if_splits) 
+     map_var_bit_to_var_acc_complete_time_simps Let_def split: if_splits)
     apply force
-    done 
+    done
 
   apply(erule Seq_tE)+
   apply(simp add: add.assoc)
@@ -5370,7 +5370,7 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_time:
     subgoal premises p using p(21) by fastforce
     apply (force simp: map_var_bit_to_var_acc_imp_subprogram_time_simps
         map_var_bit_to_var_acc_state_translators Let_def)
-    done 
+    done
 
   subgoal
     apply(simp only: prefix_simps map_var_bit_to_var_acc_IMP_init_while_cond_def
@@ -5379,12 +5379,12 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct_time:
     apply(erule map_var_bit_to_var_aux_IMP_Minus_correct[where vars = "map_var_bit_to_var_acc_IMP_vars"])
     subgoal premises p using p(21) by fastforce
     apply (clarsimp simp add: map_var_bit_to_var_acc_complete_time_simps Let_def)
-    subgoal premises p 
-      using p(10) 
-      by (smt (z3) fun_upd_def list.inject list.simps(3) 
+    subgoal premises p
+      using p(10)
+      by (smt (z3) fun_upd_def list.inject list.simps(3)
       map_var_bit_to_var_acc_imp_time_acc_2_aux same_append_eq)
-    done  
-  done   
+    done
+  done
 
 lemma map_var_bit_to_var_acc_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_var_bit_to_var_acc_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5397,28 +5397,28 @@ lemma map_var_bit_to_var_acc_IMP_Minus_correct[functional_correctness]:
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
   using map_var_bit_to_var_acc_IMP_Minus_correct_function
   by (auto simp: map_var_bit_to_var_acc_IMP_Minus_correct_time)
-    (meson map_var_bit_to_var_acc_IMP_Minus_correct_effects set_mono_prefix) 
+    (meson map_var_bit_to_var_acc_IMP_Minus_correct_effects set_mono_prefix)
 
 subsubsection \<open>map_var_bit_to_var_tail\<close>
 record map_var_bit_to_var_tail_state =
 map_var_bit_to_var_tail_v::nat
 map_var_bit_to_var_tail_n::nat
-map_var_bit_to_var_tail_ret::nat 
+map_var_bit_to_var_tail_ret::nat
 
 abbreviation "map_var_bit_to_var_tail_prefix \<equiv> ''map_var_bit_to_var_tail.''"
 abbreviation "map_var_bit_to_var_tail_v_str \<equiv> ''v''"
 abbreviation "map_var_bit_to_var_tail_n_str \<equiv> ''n''"
 abbreviation "map_var_bit_to_var_tail_ret_str \<equiv> ''ret''"
 
-function map_var_bit_to_var_tail_imp :: 
-"map_var_bit_to_var_tail_state \<Rightarrow> map_var_bit_to_var_tail_state"where 
+function map_var_bit_to_var_tail_imp ::
+"map_var_bit_to_var_tail_state \<Rightarrow> map_var_bit_to_var_tail_state"where
 "map_var_bit_to_var_tail_imp s =
- (let 
+ (let
    map_var_bit_to_var_acc_acc' = 0;
    map_var_bit_to_var_acc_v' = map_var_bit_to_var_tail_v s;
    map_var_bit_to_var_acc_n' = map_var_bit_to_var_tail_n s;
    map_var_bit_to_var_acc_ret' = 0;
-   map_var_bit_to_var_acc_state = 
+   map_var_bit_to_var_acc_state =
      \<lparr>map_var_bit_to_var_acc_acc = map_var_bit_to_var_acc_acc',
      map_var_bit_to_var_acc_v = map_var_bit_to_var_acc_v',
      map_var_bit_to_var_acc_n = map_var_bit_to_var_acc_n',
@@ -5434,12 +5434,12 @@ function map_var_bit_to_var_tail_imp ::
   ret = \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v s,
         map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n s,
         map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>
- in 
+ in
   ret)" by simp+
- termination 
+ termination
  apply (relation "measure map_var_bit_to_var_tail_n")
- apply auto 
- done 
+ apply auto
+ done
 
 declare map_var_bit_to_var_tail_imp.simps[simp del]
 
@@ -5448,14 +5448,14 @@ lemma map_var_bit_to_var_tail_imp_correct[let_function_correctness]:
     = map_var_bit_to_var_tail (map_var_bit_to_var_tail_v s) (map_var_bit_to_var_tail_n s)"
 apply (subst map_var_bit_to_var_tail_imp.simps)
 apply auto
-using  map_var_bit_to_var_tail_def reverse_nat_imp_correct 
+using  map_var_bit_to_var_tail_def reverse_nat_imp_correct
 map_var_bit_to_var_acc_imp_correct map_var_bit_to_var_acc'_imp_correct
 by auto
 
-function map_var_bit_to_var_tail_imp_time :: 
-"nat \<Rightarrow> map_var_bit_to_var_tail_state \<Rightarrow> nat"where 
+function map_var_bit_to_var_tail_imp_time ::
+"nat \<Rightarrow> map_var_bit_to_var_tail_state \<Rightarrow> nat"where
 "map_var_bit_to_var_tail_imp_time t s =
- (let 
+ (let
    map_var_bit_to_var_acc_acc' = 0;
    t = t + 2;
    map_var_bit_to_var_acc_v' = map_var_bit_to_var_tail_v s;
@@ -5464,7 +5464,7 @@ function map_var_bit_to_var_tail_imp_time ::
    t = t + 2;
    map_var_bit_to_var_acc_ret' = 0;
    t = t + 2;
-   map_var_bit_to_var_acc_state = 
+   map_var_bit_to_var_acc_state =
      \<lparr>map_var_bit_to_var_acc_acc = map_var_bit_to_var_acc_acc',
      map_var_bit_to_var_acc_v = map_var_bit_to_var_acc_v',
      map_var_bit_to_var_acc_n = map_var_bit_to_var_acc_n',
@@ -5480,22 +5480,22 @@ function map_var_bit_to_var_tail_imp_time ::
                        reverse_nat_ret = reverse_nat_ret'\<rparr>;
   reverse_nat_ret_state = reverse_nat_imp reverse_nat_state;
   t = t + reverse_nat_imp_time 0 reverse_nat_state;
-  
+
   map_var_bit_to_var_tail_ret' = reverse_nat_ret reverse_nat_ret_state;
   t = t + 2;
   ret = \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v s,
         map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n s,
         map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>
- in 
+ in
   t)" by auto
- termination 
+ termination
  apply (relation "measure (map_var_bit_to_var_tail_n \<circ> snd)")
- apply auto 
- done 
+ apply auto
+ done
 
 declare map_var_bit_to_var_tail_imp_time.simps[simp del]
 
-definition "map_var_bit_to_var_tail_IMP_Minus \<equiv> 
+definition "map_var_bit_to_var_tail_IMP_Minus \<equiv>
  (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_acc_str) ::= A (N 0);;
  (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_v_str) ::= A (V map_var_bit_to_var_tail_v_str);;
  (map_var_bit_to_var_acc_prefix @ map_var_bit_to_var_acc_n_str) ::= A (V map_var_bit_to_var_tail_n_str);;
@@ -5509,15 +5509,15 @@ definition "map_var_bit_to_var_tail_IMP_Minus \<equiv>
  map_var_bit_to_var_tail_ret_str ::= A (V (reverse_nat_prefix @ reverse_nat_ret_str))
 "
 
-abbreviation "map_var_bit_to_var_tail_IMP_vars \<equiv> 
+abbreviation "map_var_bit_to_var_tail_IMP_vars \<equiv>
   {map_var_bit_to_var_tail_ret_str, map_var_bit_to_var_tail_n_str, map_var_bit_to_var_tail_v_str}"
 
-definition "map_var_bit_to_var_tail_imp_to_HOL_state p s = 
+definition "map_var_bit_to_var_tail_imp_to_HOL_state p s =
 \<lparr>  map_var_bit_to_var_tail_v = (s (add_prefix p map_var_bit_to_var_tail_v_str)),
   map_var_bit_to_var_tail_n = (s (add_prefix p map_var_bit_to_var_tail_n_str)),
   map_var_bit_to_var_tail_ret = (s (add_prefix p map_var_bit_to_var_tail_ret_str))\<rparr>"
 
-lemmas map_var_bit_to_var_tail_state_translators = 
+lemmas map_var_bit_to_var_tail_state_translators =
   map_var_bit_to_var_tail_imp_to_HOL_state_def
   map_var_bit_to_var_acc_imp_to_HOL_state_def
   reverse_nat_imp_to_HOL_state_def
@@ -5535,14 +5535,14 @@ apply (erule reverse_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_tail_IM
 subgoal premises p using p(11) by fastforce
 apply (clarsimp simp add: map_var_bit_to_var_tail_state_translators Let_def
  map_var_bit_to_var_tail_imp.simps)
-done 
+done
 
 lemma map_var_bit_to_var_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ map_var_bit_to_var_tail_pref) map_var_bit_to_var_aux_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix map_var_bit_to_var_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 
 lemma map_var_bit_to_var_tail_IMP_Minus_correct_time:
@@ -5554,9 +5554,9 @@ apply (erule map_var_bit_to_var_acc_IMP_Minus_correct[where vars=map_var_bit_to_
 subgoal premises p using p(17) by fastforce
 apply (erule reverse_nat_IMP_Minus_correct[where vars=map_var_bit_to_var_aux_IMP_vars])
 subgoal premises p using p(19) by fastforce
-apply (force simp: map_var_bit_to_var_tail_imp_time.simps 
+apply (force simp: map_var_bit_to_var_tail_imp_time.simps
   Let_def map_var_bit_to_var_tail_state_translators)
-done 
+done
 
 lemma map_var_bit_to_var_tail_IMP_Minus_correct[functional_correctness]:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) map_var_bit_to_var_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5567,13 +5567,13 @@ lemma map_var_bit_to_var_tail_IMP_Minus_correct[functional_correctness]:
                                         (map_var_bit_to_var_tail_imp_to_HOL_state (p1 @ p2) s));
      \<And>v. v \<in> vars \<Longrightarrow> s (add_prefix p1 v) = s' (add_prefix p1 v)\<rbrakk>
    \<Longrightarrow> P\<rbrakk> \<Longrightarrow> P"
-  using map_var_bit_to_var_tail_IMP_Minus_correct_function 
+  using map_var_bit_to_var_tail_IMP_Minus_correct_function
    map_var_bit_to_var_tail_IMP_Minus_correct_time
   by (meson com_add_prefix_valid_subset com_only_vars)
 
 subsection var_bit_list_tail
 
-record var_bit_list_tail_state = 
+record var_bit_list_tail_state =
   var_bit_list_tail_n::nat
   var_bit_list_tail_v::nat
   var_bit_list_tail_ret::nat
@@ -5593,7 +5593,7 @@ definition "var_bit_list_tail_state_upd s \<equiv>
   map_var_bit_to_var_tail_v' = var_bit_list_tail_v s;
   map_var_bit_to_var_tail_n' = list_less_tail_ret list_less_tail_ret_state;
   map_var_bit_to_var_tail_ret' = 0;
-  map_var_bit_to_var_tail_state = 
+  map_var_bit_to_var_tail_state =
     \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v',
     map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n',
     map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>;
@@ -5610,9 +5610,9 @@ in
 function var_bit_list_tail_imp ::
   "var_bit_list_tail_state \<Rightarrow> var_bit_list_tail_state" where
   "var_bit_list_tail_imp s =
-  (let 
+  (let
       ret = var_bit_list_tail_state_upd s
-    in 
+    in
       ret
   )"
   by simp+
@@ -5627,7 +5627,7 @@ lemma var_bit_list_tail_imp_correct[let_function_correctness]:
   apply (simp only: var_bit_list_tail_imp.simps Let_def var_bit_list_tail_state_upd_def
   var_bit_list_tail_def subtail_var_bit_list[symmetric])
   apply (simp add: list_less_tail_imp_correct map_var_bit_to_var_tail_imp_correct)
-  done 
+  done
 
 function var_bit_list_tail_imp_time ::
   "nat \<Rightarrow> var_bit_list_tail_state \<Rightarrow> nat" where
@@ -5647,7 +5647,7 @@ function var_bit_list_tail_imp_time ::
   t = t + 2;
   map_var_bit_to_var_tail_ret' = 0;
   t = t + 2;
-  map_var_bit_to_var_tail_state = 
+  map_var_bit_to_var_tail_state =
     \<lparr>map_var_bit_to_var_tail_v = map_var_bit_to_var_tail_v',
     map_var_bit_to_var_tail_n = map_var_bit_to_var_tail_n',
     map_var_bit_to_var_tail_ret = map_var_bit_to_var_tail_ret'\<rparr>;
@@ -5672,19 +5672,19 @@ lemma var_bit_list_tail_imp_time_acc:
   "(var_bit_list_tail_imp_time (Suc t) s) = Suc (var_bit_list_tail_imp_time t s)"
   by (induction t s rule: var_bit_list_tail_imp_time.induct)
     ((subst (1 2) var_bit_list_tail_imp_time.simps);
-      (simp add: var_bit_list_tail_state_upd_def Let_def))            
+      (simp add: var_bit_list_tail_state_upd_def Let_def))
 
 lemma var_bit_list_tail_imp_time_acc_2_aux:
   "(var_bit_list_tail_imp_time t s) = t + (var_bit_list_tail_imp_time 0 s)"
-  by (induction t arbitrary: s) (simp add: var_bit_list_tail_imp_time_acc)+            
+  by (induction t arbitrary: s) (simp add: var_bit_list_tail_imp_time_acc)+
 
 lemma var_bit_list_tail_imp_time_acc_2:
   "t \<noteq> 0 \<Longrightarrow> (var_bit_list_tail_imp_time t s) = t + (var_bit_list_tail_imp_time 0 s)"
-  by (rule var_bit_list_tail_imp_time_acc_2_aux)            
+  by (rule var_bit_list_tail_imp_time_acc_2_aux)
 
 lemma var_bit_list_tail_imp_time_acc_3:
   "(var_bit_list_tail_imp_time (a + b) s) = a + (var_bit_list_tail_imp_time b s)"
-  by (induction a arbitrary: b s) (simp add: var_bit_list_tail_imp_time_acc)+            
+  by (induction a arbitrary: b s) (simp add: var_bit_list_tail_imp_time_acc)+
 
 definition var_bit_list_tail_IMP_Minus where
   "var_bit_list_tail_IMP_Minus \<equiv>
@@ -5700,8 +5700,8 @@ definition var_bit_list_tail_IMP_Minus where
     ::= A (N 0);;
   invoke_subprogram map_var_bit_to_var_tail_prefix map_var_bit_to_var_tail_IMP_Minus;;
 
-  var_bit_list_tail_ret_str 
-    ::= A (V (map_var_bit_to_var_tail_prefix @ map_var_bit_to_var_tail_ret_str)) 
+  var_bit_list_tail_ret_str
+    ::= A (V (map_var_bit_to_var_tail_prefix @ map_var_bit_to_var_tail_ret_str))
 "
 
 abbreviation "var_bit_list_tail_IMP_vars \<equiv>
@@ -5730,14 +5730,14 @@ lemma var_bit_list_tail_IMP_Minus_correct_function:
   apply(erule map_var_bit_to_var_tail_IMP_Minus_correct[where vars = "var_bit_list_tail_IMP_vars"])
   subgoal premises p using p(10) by fastforce
   by(fastforce simp: var_bit_list_tail_state_translators
-    var_bit_list_tail_state_upd_def)        
+    var_bit_list_tail_state_upd_def)
 
 lemma var_bit_list_tail_IMP_Minus_correct_effects:
   "\<lbrakk>(invoke_subprogram (p @ var_bit_list_tail_pref) var_bit_list_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
     v \<in> vars; \<not> (prefix var_bit_list_tail_pref v)\<rbrakk>
    \<Longrightarrow> s (add_prefix p v) = s' (add_prefix p v)"
   using com_add_prefix_valid'' com_only_vars prefix_def
-  by blast            
+  by blast
 
 lemma var_bit_list_tail_IMP_Minus_correct_time:
   "(invoke_subprogram p var_bit_list_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<Longrightarrow>
@@ -5749,7 +5749,7 @@ lemma var_bit_list_tail_IMP_Minus_correct_time:
   subgoal premises p using p(15) by fastforce
   apply(erule map_var_bit_to_var_tail_IMP_Minus_correct[where vars = "var_bit_list_tail_IMP_vars"])
   subgoal premises p using p(17) by fastforce
-  by(fastforce simp add: Let_def var_bit_list_tail_state_translators)        
+  by(fastforce simp add: Let_def var_bit_list_tail_state_translators)
 
 lemma var_bit_list_tail_IMP_Minus_correct:
   "\<lbrakk>(invoke_subprogram (p1 @ p2) var_bit_list_tail_IMP_Minus, s) \<Rightarrow>\<^bsup>t\<^esup> s';
@@ -5763,12 +5763,12 @@ lemma var_bit_list_tail_IMP_Minus_correct:
   using var_bit_list_tail_IMP_Minus_correct_function
     var_bit_list_tail_IMP_Minus_correct_time
     var_bit_list_tail_IMP_Minus_correct_effects
-  by (meson set_mono_prefix) 
+  by (meson set_mono_prefix)
 
 
 
 
- 
+
 
 
 end
