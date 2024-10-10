@@ -163,7 +163,7 @@ experiment
 begin
 interpretation HOL_To_HOL_Nat .
 function_compile_nat rev_eq_rev_acc_nil
-(*We couldn't use 'unconditional_nat' this way since the synthesised definition used an auxiliary
+(*We couldn't use 'unconditional_nat' this way since the synthesised definition uses an auxiliary
 function (rev_acc_nat) with TYPE('a) arguments.*)
 print_statement rev_nat_eq_unfolded
 end
@@ -172,7 +172,7 @@ context HOL_To_HOL_Nat
 begin
 
 (*we can fix this by registering the relatedness theorem of the unconditional rev_acc_nat function
-to transfer instead of *)
+to transfer instead*)
 declare HNTIM.related_rev_acc_nat_unconditional[transfer_rule]
   and rev_acc_related_transfer[transfer_rule del] (*deletion is optional*)
 function_compile_nat rev_eq_rev_acc_nil
