@@ -149,6 +149,10 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
           if (g_name, g_typ) = (f_name, f_typ)
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
+        | Free (g_name, g_typ) =>
+          if (g_name, g_typ) = (f_name, f_typ)
+            then TailCall (map build_tc_ast (Term.args_of t))
+            else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
   in
     t |> build_tc_ast |> index_tc_ast 0 |> snd
@@ -266,6 +270,47 @@ fun define_compiled compiled_binding compiled lthy =
     lthy'
   end
 
+fun dest_eq_equals_prop t = case t of
+    \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for lhs rhs\<close>\<close> => (lhs, rhs)
+  | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
+  | t => raise TERM ("Unknown equality:", [t])
+val term_binding = Term.term_name #> Binding.name
+fun unconditional_nat lthy f_eq =
+  let
+    val (lhs, rhs) =
+      yield_singleton (Variable.import_terms false) f_eq lthy |> fst
+      |> Logic.strip_imp_concl |> dest_eq_equals_prop
+    val f = lhs |> Term.head_of |> Term.dest_Const
+
+    fun is_typrep (Type (@{type_name itself}, [_])) = true
+      | is_typrep _ = false
+    val (typrep_arg_count, rem_args) =
+      lhs |> Term.args_of |> chop_prefix (is_typrep o Term.fastype_of) |>> List.length
+
+    val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
+
+    val base_binding = Const f |> term_binding
+    val f'_name = Binding.name_of base_binding
+    val f' = Free (f'_name, f'_typ)
+
+    (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
+    fun rewrite_rhs t =
+      let
+        val (head, args) = Term.strip_comb t
+        val is_rec_call = case head of Const g => f = g | _ => false
+        val _ = (is_rec_call andalso length args < typrep_arg_count)
+          andalso raise TERM ("Can't strip all '_ itself' arguments", [t])
+      in
+        (if is_rec_call then (f', drop typrep_arg_count args) else (head, args))
+        ||> map rewrite_rhs |> Term.list_comb
+      end
+
+    val lhs' = Term.list_comb (f', rem_args)
+    val rhs' = rewrite_rhs rhs
+  in
+    (lhs', rhs')
+  end
+
 fun reflect_eq thm =
   case Thm.concl_of thm of
     \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for _ _\<close>\<close> => @{thm eq_reflection} OF [thm]
@@ -283,11 +328,23 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val pos = Position.thread_data ()
 
     val f_def = reflect_eq f_def
-    val (args, def_body) =
-      Local_Defs.abs_def_rule lthy f_def
-      |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
 
-    val (f_name, f_typ) = f_def |> Thm.lhs_of |> Thm.term_of |> Term.head_of |> Term.dest_Const
+    val (lhs, rhs) = f_def |> Thm.full_prop_of
+      |> unconditional_nat lthy
+
+    val f_name = f_def
+      |> Thm.full_prop_of
+      |> Logic.strip_imp_concl
+      |> dest_eq_equals_prop |> fst
+      |> Term.head_of |> Term.dest_Const |> fst
+
+    val (f'_name, f_typ) = lhs |> strip_comb |> fst |> Term.dest_Free
+    val replace = map_aterms (fn t => if t = Free (f'_name, f_typ) then Const (f_name, f_typ) else t)
+
+    val (args, def_body) =
+      lhs |> strip_comb |> snd |> map Term.dest_Free
+      |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
+      ||> replace
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
@@ -321,8 +378,8 @@ fun compile_cmd f_def basenamepos_opt lthy =
       |> Proof_Context.read_const {proper = false, strict = false} lthy'
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
-    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
-                     , compiled = f_IMP_const }
+    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
+                       compiled = f_IMP_const }
   in
     lthy'
     |> declare_compiled_const f_name f_compiled
@@ -338,6 +395,7 @@ in
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
       in compile_cmd thm namepos_opt lthy end))
 end
+
 
 local
   val parser =
