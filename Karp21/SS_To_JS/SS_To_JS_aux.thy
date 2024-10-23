@@ -20,14 +20,14 @@ lemma job_seq_cert:
          then Ps!(\<pi>!j) 
          else 0)) \<le> k"
   shows "(Ts, Ds, Ps, k) \<in> job_sequencing"
- using SS_To_JS_aux.job_sequencing_def assms(1,2,3) by blast
+  using SS_To_JS_aux.job_sequencing_def assms by blast
 
 lemma subset_sum_list_cert:
   assumes "(\<forall>i<length xs. xs!i \<in> {0,1})"
           "(\<Sum>i<length as. as!i * xs!i) = s"
           "length xs = length as"
-        shows "(as,s)\<in> subset_sum_list"
-  using subset_sum_list_def assms(1,2,3) by blast
+  shows "(as,s)\<in> subset_sum_list"
+  using subset_sum_list_def assms by blast
 
 
 (* reduction *)
@@ -35,7 +35,6 @@ definition ss_list_to_job_seq :: "nat list \<times> nat \<Rightarrow> nat list \
   "ss_list_to_job_seq \<equiv> \<lambda>(ws, B). (if sum_list ws \<ge> B then 
              (ws, replicate (length ws) B, ws, (sum_list ws - B))
             else ([1],[0],[1],0))"
-
 
 
 (* helper lemmas *)
@@ -63,7 +62,7 @@ proof -
     by (simp add: assms atLeast0LessThan sum_list_distinct_conv_sum_set sum_nth_sum_set)
   also have "\<dots> = (\<Sum> x \<in> set ys. f x)"
     using assms sum_list_distinct_conv_sum_set by blast
-  finally show ?thesis   by (simp add: add.commute)
+  finally show ?thesis by (simp add: add.commute)
 qed
 
 
@@ -102,9 +101,7 @@ proof -
         by (cases "ws!i = 0") auto
       then show ?thesis by (intro sum.cong) auto
     qed
-    also have "... = B"
-      using xs_orig_def(3) by simp
-    finally show ?thesis .
+    finally show ?thesis  using xs_orig_def(3) by simp
   qed
 
   moreover have xs_zero_implies_ws_pos: "\<forall>i. i <length ws \<and> xs!i = 0 \<longrightarrow> ws!i > 0"
@@ -129,36 +126,23 @@ proof -
   finally show ?thesis using xs_orig_def by auto
 qed
 
-
+(* move up  + def + rmv nat *)
 lemma example_not_in_job_sequencing:
-  "([1::nat], [0::nat], [1::nat], 0) \<notin> job_sequencing"
+  "([1], [0], [1], 0) \<notin> job_sequencing"
 proof
   assume js: "([1], [0], [1], 0) \<in> job_sequencing"
-  then have ex_\<pi>: "\<exists>\<pi>. perm \<pi> [0..<length [1]] \<and> (\<Sum>j<length [1::nat]. (if (\<Sum>i<j+1. [1::nat]!(\<pi>!i)) > [0]!(\<pi>!j)
-             then [1::nat]!(\<pi>!j)
-             else 0)) \<le> 0"
-    unfolding job_sequencing_def by auto
-  from ex_\<pi> obtain \<pi> where
+  then obtain \<pi> where
     \<pi>_perm: "perm \<pi> [0..<1]"
     and total_penalty: "(\<Sum>j<length [1]. (if (\<Sum>i<j+1. [1]!(\<pi>!i)) > [0::nat]!(\<pi>!j)
-             then [1::nat]!(\<pi>!j)
+             then [1]!(\<pi>!j)
              else 0)) \<le> (0::nat)" 
-    by auto
-  from \<pi>_perm have "\<pi> = [0]" by simp
-  have "(\<Sum>j<length [1]. (if (\<Sum>i<j+1. [1::nat]!(\<pi>!i)) > [0::nat]!(\<pi>!j)
-             then [1::nat]!(\<pi>!j)
-             else (0::nat))) =   (if (\<Sum>i<0+1. [1::nat]!(\<pi>!i)) > [0::nat]!(\<pi>!0)
-             then [1::nat]!(\<pi>!0)
-             else (0::nat))"
-     by auto
-   also have  "... = (if (\<Sum>i<0+1. [1::nat]!([0]!i)) > [0::nat]!([0]!0)
-             then [1::nat]!([0]!0)
-             else (0::nat))" 
-     using \<open>\<pi> = [0]\<close> by blast
-   also have "... = (1::nat)"   by simp
-   finally have "1 \<le> (0::nat)" using total_penalty 
-   by (metis (mono_tags, lifting))
-    then show False  by simp
+     unfolding job_sequencing_def by auto
+  from \<pi>_perm 
+  have "(\<Sum>j<length [1]. (if (\<Sum>i<j+1. [1]!(\<pi>!i)) > [0::nat]!(\<pi>!j)
+             then [1]!(\<pi>!j)
+             else 0)) = (1::nat)" by auto
+  then show False using total_penalty not_one_le_zero
+    by (metis (no_types, lifting))
 qed
 
 lemma nth_injective_permutation:
@@ -254,20 +238,19 @@ proof -
       finally show ?thesis using xs_subset_sum by presburger
     qed
     then have sum_chosen: "(\<Sum>i<?n1. ?Ts!(?\<pi>!i)) =  B"
-      using sum_nth_sum_set  by auto
+      using sum_nth_sum_set by auto
     have sum_penalties_chosen: "(\<Sum>j<?n1. (if (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)
              then ?Ps!(?\<pi>!j)
              else 0)) = 0"
     proof -
-       have "\<And>j. j < ?n1 \<Longrightarrow> (\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le>  ?Ds!(?\<pi>!j)"
+       have "(\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le>  ?Ds!(?\<pi>!j)" if "j < ?n1" for j
        proof -
-         fix j assume j_chosen: "j < ?n1"
-         then have "(\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le> (\<Sum>i < ?n1. ?Ts ! (?\<pi> ! i))"
+         from that have "(\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le> (\<Sum>i < ?n1. ?Ts ! (?\<pi> ! i))"
            by (meson Iic_subset_Iio_iff bot_nat_0.extremum finite_lessThan sum_mono2)
          then have "(\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le> B" using sum_chosen by auto
          then show "(\<Sum>i \<le> j. ?Ts ! (?\<pi> ! i)) \<le>  ?Ds!(?\<pi>!j)" 
            using all_deadlines_B 
-           by (metis (no_types, lifting) j_chosen n1_small order_less_le_trans)
+           by (metis (no_types, lifting) that n1_small order_less_le_trans)
        qed
        then have "\<And>j. j < ?n1 \<Longrightarrow>  (if (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)
              then ?Ps!(?\<pi>!j)
@@ -286,21 +269,17 @@ proof -
         by (metis Suc_eq_plus1 atLeast0LessThan atLeastAtMost_upt le0 le_SucI set_upt)
       moreover have "(\<Sum>i=?n1..j. ?Ts!(?\<pi>!i)) > 0"
       proof -
-        have "\<And>i. i \<in> {?n1..j} \<Longrightarrow> ?Ts!(?\<pi>!i) > 0"  (* all non_chosen jobs have strictly positive job durations *) 
+        have " ?Ts!(?\<pi>!i) > 0" if  "i \<in> {?n1..j}" for i (* all non_chosen jobs have strictly positive job durations *) 
         proof - 
-          fix i assume " i \<in> {?n1..j}"
-          then have i_bound: "i < length ?Ts \<and> i \<ge> ?n1" using j_bound by (meson atLeastAtMost_iff dual_order.strict_trans2)
+          from that have i_bound: "i < length ?Ts \<and> i \<ge> ?n1" using j_bound by (meson atLeastAtMost_iff dual_order.strict_trans2)
           then have i_non_chosen: "(?\<pi> ! i) \<in> set ?non_chosen" using nth_append_in_set same_length
             using nth_append_in_set same_length by (metis diff_zero length_upt)
           then have "xs!(?\<pi> ! i) = 0" by (simp add: xs_length)
           thus "?Ts ! (?\<pi> ! i) > 0"  using i_bound pi_index zeros_chosen by blast
         qed
-        thus ?thesis 
-           using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] j_bound  by fastforce
+        thus ?thesis using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] j_bound  by fastforce
        qed
-      ultimately have "(\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > (\<Sum>i<?n1. ?Ts!(?\<pi>!i))"
-        by linarith
-      then show "(\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)" using sum_chosen all_deadlines_B j_bound by presburger
+      ultimately show "(\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)" using sum_chosen all_deadlines_B j_bound by presburger
     qed
     (* therefore the non-chosen jobs cause penalty k *)
     moreover have sum_penalties_non_chosen: "(\<Sum>j = ?n1..<length ?Ts. (if (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)
@@ -314,14 +293,14 @@ proof -
       also have "... =  (\<Sum>i\<in>set ?non_chosen. ws!i)"
         using sum_nth_sum_set_append[of "?non_chosen"]
         by (metis List.distinct_filter distinct_upt length_map map_nth same_length)
-      moreover have "... = (sum_list ws - B)"
+      also have "... = (sum_list ws - B)"
       proof -
         have "sum_list ws = (\<Sum>i\<in>set ?chosen. ws!i) + (\<Sum>i\<in>set ?non_chosen. ws!i)"
-          by (metis (no_types, lifting) \<open>distinct ?\<pi>\<close> \<open>set ?\<pi> = set [0..<length ws]\<close> distinct_filter distinct_upt  map_append map_nth sum_list_append sum_list_distinct_conv_sum_set)
-        then have "sum_list ws - B = (\<Sum>i\<in>set ?non_chosen. ws!i)" using sum_chosen_set by arith
-        thus ?thesis by presburger
+          by (metis (no_types, lifting) \<open>distinct ?\<pi>\<close> \<open>set ?\<pi> = set [0..<length ws]\<close> distinct_filter
+              distinct_upt  map_append map_nth sum_list_append sum_list_distinct_conv_sum_set)
+        thus ?thesis  using sum_chosen_set by arith
       qed
-      then show ?thesis using calculation by presburger
+      finally show ?thesis .
     qed
     moreover have "(\<Sum>j<length ?Ts. (if (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)
              then ?Ps!(?\<pi>!j)
@@ -337,9 +316,8 @@ proof -
     ultimately show ?thesis
       using sum_penalties_chosen by linarith
   qed
-  moreover have "sum_list ws \<ge> B" using assms total_sum_ge_goal by auto
   ultimately show ?thesis unfolding ss_list_to_job_seq_def
-    using job_seq_cert[OF pi_perm] 
+    using job_seq_cert[OF pi_perm]  assms total_sum_ge_goal
     by simp
 qed
 
@@ -403,8 +381,7 @@ next
           using EARLY_def \<open>Max EARLY \<in> EARLY\<close> \<open>j \<le> Max EARLY\<close> dual_order.strict_trans2 by blast
       qed
     qed
-    then have "(\<Sum>j\<in>EARLY. Ts!(\<pi>!j)) = C ?M"
-      by (simp add: C_def atMost_def)
+    then have "(\<Sum>j\<in>EARLY. Ts!(\<pi>!j)) = C ?M" by (simp add: C_def atMost_def)
     then show ?thesis  using EARLY_def \<open>Max EARLY \<in> EARLY\<close> by auto
   qed
   
@@ -422,7 +399,8 @@ next
   have sum_late_le: "(\<Sum>j\<in>LATE. Ts!(\<pi>!j)) \<le> sum_list ws - B"
   proof -
     have "\<And>j. j < length Ts \<Longrightarrow> Ds!(\<pi>!j) = B" unfolding Ds_def Ts_def
-      by (metis Ds_def Ts_def \<pi>_perm in_set_replicate len_eq length_map list.set_map map_nth nth_map nth_mem set_mset_mset size_mset)
+      by (metis Ds_def Ts_def \<pi>_perm in_set_replicate len_eq length_map list.set_map map_nth nth_map
+                nth_mem set_mset_mset size_mset)
     then have "(\<Sum>j<length Ts. (if (\<Sum>i<j+1. Ts!(\<pi>!i)) > Ds!(\<pi>!j)
              then Ps!(\<pi>!j)
              else 0))
@@ -466,7 +444,8 @@ next
   have sum_S_eq_B: "(\<Sum>j\<in>S. ws!j) = B"
   proof -
     have "inj_on ((!) \<pi>) EARLY"
-     by (metis (no_types, lifting) EARLY_def \<pi>_perm atLeast_upt distinct_map distinct_upt inj_on_nth length_map map_nth mem_Collect_eq nth_injective_permutation size_mset)
+      by (metis (no_types, lifting) EARLY_def \<pi>_perm atLeast_upt distinct_map distinct_upt inj_on_nth 
+          length_map map_nth mem_Collect_eq nth_injective_permutation size_mset)
     then have "(\<Sum>j\<in>S. ws!j) = (\<Sum>j\<in>EARLY. ws!(\<pi>!j))" using S_def
      by (intro sum.reindex_cong[of "((!) \<pi>)"])  auto
     also have "... = B" using Ts_def sum_early_eq_B by simp
@@ -488,11 +467,10 @@ next
         using xs_def by (intro sum.cong) auto
       also have "... =  sum ((!) ws) {x \<in> {..<length ws}. x \<in> S}" using  sum.inter_filter[of "{..<length ws}" "(!) ws"] by auto
       also have "... = (\<Sum>i\<in>S. ws!i)"  using S_subset by (intro sum.cong,auto)
-      finally show ?thesis by auto
+      finally show ?thesis .
     qed
     then show ?thesis using sum_S_eq_B by simp
   qed
-
   ultimately show ?thesis using subset_sum_list_cert[of xs] by auto
 qed
 
