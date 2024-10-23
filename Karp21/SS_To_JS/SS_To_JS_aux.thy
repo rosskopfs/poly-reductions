@@ -294,9 +294,7 @@ proof -
             using nth_append_in_set same_length by (metis diff_zero length_upt)
           then have "xs!(?\<pi> ! i) = 0" by (simp add: xs_length)
           thus "?Ts ! (?\<pi> ! i) > 0"  using i_bound pi_index zeros_chosen by blast
-          
         qed
-          
         thus ?thesis 
            using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] j_bound  by fastforce
        qed
