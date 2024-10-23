@@ -276,16 +276,7 @@ proof -
        then show ?thesis by fastforce
     qed
 
-    (* all non_chosen jobs have strictly positive job durations *) 
-    have geq_n1_strict_pos: "\<And>j. j < length ?Ts \<and> j \<ge> ?n1 \<Longrightarrow>
-                                 ?Ts ! (?\<pi> ! j) > 0"
-    proof -
-      fix j assume j_bound: "j < length ?Ts \<and> j \<ge> ?n1"
-      then have j_non_chosen: "(?\<pi> ! j) \<in> set ?non_chosen" using nth_append_in_set same_length
-        by (metis diff_zero length_upt)
-      then have "xs!(?\<pi> ! j) = 0" by (simp add: xs_length)
-      thus "?Ts ! (?\<pi> ! j) > 0" using j_bound pi_index zeros_chosen by blast
-    qed
+   
     (* every non_chosen job exceeds the deadline *)
     moreover have overdew:"\<And>j. j < length ?Ts \<and> j \<ge> ?n1 \<Longrightarrow> (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)"
     proof -
@@ -295,8 +286,17 @@ proof -
         by (metis Suc_eq_plus1 atLeast0LessThan atLeastAtMost_upt le0 le_SucI set_upt)
       moreover have "(\<Sum>i=?n1..j. ?Ts!(?\<pi>!i)) > 0"
       proof -
-        have "\<And>i. i \<in> {?n1..j} \<Longrightarrow> ?Ts!(?\<pi>!i) > 0"
-          using j_bound geq_n1_strict_pos by simp
+        have "\<And>i. i \<in> {?n1..j} \<Longrightarrow> ?Ts!(?\<pi>!i) > 0"  (* all non_chosen jobs have strictly positive job durations *) 
+        proof - 
+          fix i assume " i \<in> {?n1..j}"
+          then have i_bound: "i < length ?Ts \<and> i \<ge> ?n1" using j_bound by (meson atLeastAtMost_iff dual_order.strict_trans2)
+          then have i_non_chosen: "(?\<pi> ! i) \<in> set ?non_chosen" using nth_append_in_set same_length
+            using nth_append_in_set same_length by (metis diff_zero length_upt)
+          then have "xs!(?\<pi> ! i) = 0" by (simp add: xs_length)
+          thus "?Ts ! (?\<pi> ! i) > 0"  using i_bound pi_index zeros_chosen by blast
+          
+        qed
+          
         thus ?thesis 
            using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] j_bound  by fastforce
        qed
@@ -304,7 +304,7 @@ proof -
         by linarith
       then show "(\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)" using sum_chosen all_deadlines_B j_bound by presburger
     qed
-
+    (* therefore the non-chosen jobs cause penalty k *)
     moreover have sum_penalties_non_chosen: "(\<Sum>j = ?n1..<length ?Ts. (if (\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)
              then ?Ps!(?\<pi>!j)
              else 0))= ?k"
