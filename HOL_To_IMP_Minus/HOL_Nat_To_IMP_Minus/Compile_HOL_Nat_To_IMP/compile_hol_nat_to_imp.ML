@@ -274,7 +274,7 @@ val term_binding = Term.term_name #> Binding.name
 fun unconditional_nat lthy f_eq =
   let
     val (lhs, rhs) =
-      yield_singleton (Variable.import_terms false) f_eq lthy |> fst
+      yield_singleton (Variable.import_terms true) f_eq lthy |> fst
       |> Logic.strip_imp_concl |> dest_eq_equals_prop
     val f = lhs |> Term.head_of |> Term.dest_Const
 
