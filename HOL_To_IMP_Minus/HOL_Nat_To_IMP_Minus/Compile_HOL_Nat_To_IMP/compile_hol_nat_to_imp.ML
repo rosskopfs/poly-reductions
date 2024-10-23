@@ -149,10 +149,6 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
           if (g_name, g_typ) = (f_name, f_typ)
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
-        | Free (g_name, g_typ) =>
-          if (g_name, g_typ) = (f_name, f_typ)
-            then TailCall (map build_tc_ast (Term.args_of t))
-            else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
   in
     t |> build_tc_ast |> index_tc_ast 0 |> snd
