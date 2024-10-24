@@ -134,6 +134,7 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
+    val _ = Thm.pretty_thm lthy thm |> Pretty.writeln
   in register_thms binding [thm] lthy end
 
 fun function_compile_nat_cmd f_eq lthy =
