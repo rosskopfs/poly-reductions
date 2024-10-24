@@ -16,7 +16,7 @@ theory HOL_To_HOL_Nat_Base
   and "basename"
 begin
 
-unbundle no HOL_relation_syntax
+unbundle no converse_syntax
 unbundle lifting_syntax
 
 text \<open>Types with encodings as natural numbers.\<close>
