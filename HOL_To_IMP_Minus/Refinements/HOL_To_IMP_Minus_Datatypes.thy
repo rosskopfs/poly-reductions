@@ -17,14 +17,22 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
+thm Pair_nat_def
 compile_nat Pair_nat_def
 HOL_To_IMP_Minus_correct Pair_nat by cook
 
+(*
 lemmas fst_nat_eq_unfolded = HTHN.fst_nat_eq_unfolded[simplified case_prod_nat_def]
-unconditional_nat fst_nat_eq_unfolded
-declare fst_nat_unconditional.simps[simp del]
-compile_nat fst_nat_unconditional.simps
-HOL_To_IMP_Minus_correct fst_nat_unconditional by cook
+compile_nat fst_nat_eq_unfolded
+HOL_To_IMP_Minus_correct fst_nat
+  sorry
+
+
+lemmas snd_nat_eq_unfolded = HTHN.snd_nat_eq_unfolded[simplified case_prod_nat_def]
+compile_nat snd_nat_eq_unfolded
+HOL_To_IMP_Minus_correct snd_nat
+  sorry
+*)
 
 (* Problem: We have obtained an unconditional equation. However, we
 still have to prove it to be related to the original HOL function.
@@ -38,12 +46,6 @@ begin
   print_statement HTHN.fst_nat_eq_unfolded
   print_statement HTHN.fst_nat_eq_unfolded[OF rels, unfolded case_list_nat_def]
 end
-
-lemmas snd_nat_eq_unfolded = HTHN.snd_nat_eq_unfolded[simplified case_prod_nat_def]
-unconditional_nat snd_nat_eq_unfolded
-declare snd_nat_unconditional.simps[simp del]
-compile_nat snd_nat_unconditional.simps
-HOL_To_IMP_Minus_correct snd_nat_unconditional by cook
 
 end
 
@@ -72,15 +74,198 @@ compile_nat Cons_nat_def
 HOL_To_IMP_Minus_correct Cons_nat by cook
 
 compile_nat Nil_nat_def
-HOL_To_IMP_Minus_correct Nil_nat by cook
+HOL_To_IMP_Minus_correct Nil_nat
+  by cook
 
 (* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
 congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
-lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
+thm HTHN.rev_acc_nat_eq_unfolded
+lemmas rev_acc_nat_eq = HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
+compile_nat rev_acc_nat_eq
+
+thm rev_acc_nat_eq
+
+lemma fst_nat_natify_Nil: "fst_nat (natify []) = 0"
+  by (simp add: Nil_nat_def natify_list.simps)
+lemma fst_nat_natify_Cons: "fst_nat (natify (x#xs)) = 1"
+  by (simp add: Cons_nat_def natify_list.simps)
+
+lemma termin_unfold:
+  assumes "Premis s"
+   and    "Premis s \<Longrightarrow> terminates_with_res_IMP_Tailcall PCode PCode s ret res"
+   shows  "terminates_with_res_IMP_Tailcall PCode tTAIL s ret res"
+  using assms
+  by (simp add: terminates_with_res_tTailI)
+
+lemma Cons_snd: "snd_nat (snd_nat (natify (x#xs))) = natify xs"
+  by (simp add: Cons_nat_def natify_list.simps)
+lemma Cons_x_acc: "Cons_nat (fst_nat (snd_nat (natify (x#xs)))) (natify acc) = natify (x#acc)"
+  by (simp add: Cons_nat_def natify_list.simps)
+
+thm HTHN.rev_acc.induct
+lemma
+  assumes "s ''rev_acc_nat.args.x'' = natify x"
+    and   "s ''rev_acc_nat.args.xa'' = natify xa"
+   shows  "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus rev_acc_nat_IMP_tailcall) s
+     ''rev_acc_nat.ret''
+     (natify (HTHN.rev_acc x xa))"
+  using assms apply -
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+proof (induction x xa arbitrary: s rule: HTHN.rev_acc.induct)
+  case (1 acc)
+  show ?case apply -
+    apply (rule terminates_with_res_IMP_Tailcall_start)
+    apply (subst (2) rev_acc_nat_IMP_tailcall_def)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    using 1 apply -
+     apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    by (simp add: fst_nat_natify_Nil 1)
+next
+  case (2 x xs acc)
+  let ?S = "(STATE
+       (interp_state
+         (update_state
+           (update_state
+             (update_state
+               (update_state
+                 (update_state
+                   (update_state
+                     (update_state
+                       (update_state
+                         (update_state
+                           (update_state
+                             (update_state
+                               (update_state
+                                 (update_state
+                                   (update_state
+                                     (update_state
+                                       (update_state
+                                         (update_state
+                                           (update_state
+                                             (update_state (update_state (update_state (State s) ''.args.0'' (s ''rev_acc_nat.args.x'')) ''.args.1'' (s ''rev_acc_nat.args.xa'')) ''fst_nat.args.m'' (s ''rev_acc_nat.args.x''))
+                                             ''fst_nat.ret'' (fst_nat (s ''rev_acc_nat.args.x'')))
+                                           ''eq.args.x'' (fst_nat (s ''rev_acc_nat.args.x'')))
+                                         ''eq.args.y'' 0)
+                                       ''eq.ret'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0)))
+                                     ''.If.7'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0)))
+                                   ''snd_nat.args.m'' (s ''rev_acc_nat.args.x''))
+                                 ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x'')))
+                               ''snd_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
+                             ''snd_nat.ret'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+                           ''rev_acc_nat.args.x'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+                         ''snd_nat.args.m'' (s ''rev_acc_nat.args.x''))
+                       ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x'')))
+                     ''fst_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
+                   ''fst_nat.ret'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+                 ''Cons_nat.args.x'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+               ''Cons_nat.args.xa'' (s ''rev_acc_nat.args.xa''))
+             ''Cons_nat.ret'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))
+           ''rev_acc_nat.args.xa'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))))"
+  have x: "?S ''rev_acc_nat.args.x'' = natify xs"
+    using 2(2) Cons_snd by (auto simp: STATE_interp_update_retrieve_key_eq_if)
+  have xa: "?S ''rev_acc_nat.args.xa'' = natify (x#acc)"
+    using 2 Cons_x_acc[of x xs acc]
+    by (simp add: STATE_interp_update_retrieve_key_eq_if)
+  show ?case apply -
+    apply (rule terminates_with_res_IMP_Tailcall_start)
+    apply (subst (2) rev_acc_nat_IMP_tailcall_def)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (simp add: fst_nat_natify_Cons 2)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    using 2(1)[of ?S, OF x xa]
+    apply (subst termin_unfold)
+    by simp+
+qed
+
+declare Rel_nat_def[simp]
+
+definition "I x = x"
+thm rev_acc_nat_eq
+thm rel_funD
+
+lemma test: "\<exists>y. Rel_nat x y \<Longrightarrow>
+             \<exists>ya. Rel_nat xa ya \<Longrightarrow>
+  HTHN.rev_acc_nat TYPE('a::compile_nat) x xa =
+  (if fst_nat x = 0
+    then xa
+    else HTHN.rev_acc_nat TYPE('a) (snd_nat (snd_nat x)) (Cons_nat (fst_nat (snd_nat x)) xa))"
+  sorry
+
+thm rev_acc_nat_eq
+lemma
+  assumes "Rel_nat (s var_rev_acc_nat__args__x) x"
+    and   "Rel_nat (s var_rev_acc_nat__args__xa) xa"
+  shows   "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus rev_acc_nat_IMP_tailcall) s
+     ''rev_acc_nat.ret''
+     (HTHN.rev_acc_nat TYPE('a::compile_nat)
+       (s ''rev_acc_nat.args.x'')
+       (s ''rev_acc_nat.args.xa''))"
+  using assms apply -
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  
+  apply (induction "denatify (s var_rev_acc_nat__args__x) :: 'a list" "denatify (s var_rev_acc_nat__args__xa) :: 'a list"
+   arbitrary: s rule: HTHN.rev_acc.induct)
+
+  thm HTHN.rev_acc.induct
+  apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (subst test)
+      apply blast
+  apply blast
+
+  apply (tactic \<open>HT.finish_tac ((K o K) (SOME @{thms rev_acc_nat_eq})) @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac ((K o K) (SOME @{thms test})) @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+
+  apply (simp only: terminates_with_res_IMP_Minus_def terminates_with_IMP_Minus_def tailcall_to_IMP_Minus_def)
+  sorry
+
+term HOL_To_HOL_Nat.rev_acc_nat
+HOL_To_IMP_Minus_correct 
+
 unconditional_nat rev_acc_nat_eq
 declare rev_acc_nat_unconditional.simps[simp del]
 compile_nat rev_acc_nat_unconditional.simps
-HOL_To_IMP_Minus_correct rev_acc_nat_unconditional by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct rev_acc_nat_unconditional
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
+  apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
+   apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac (fn a => fn b => @{print} (HB.get_HOL_eqs a b)) @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  done
 
 (*Manual attempt to prove the relatedness to HOL function*)
 lemma natify_list_simps_Nil: "natify [] = Nil_nat"
