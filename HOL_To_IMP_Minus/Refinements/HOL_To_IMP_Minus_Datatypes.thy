@@ -90,18 +90,6 @@ lemma fst_nat_natify_Nil: "fst_nat (natify []) = 0"
 lemma fst_nat_natify_Cons: "fst_nat (natify (x#xs)) = 1"
   by (simp add: Cons_nat_def natify_list.simps)
 
-lemma termin_unfold:
-  assumes "Premis s"
-   and    "Premis s \<Longrightarrow> terminates_with_res_IMP_Tailcall PCode PCode s ret res"
-   shows  "terminates_with_res_IMP_Tailcall PCode tTAIL s ret res"
-  using assms
-  by (simp add: terminates_with_res_tTailI)
-
-lemma Cons_snd: "snd_nat (snd_nat (natify (x#xs))) = natify xs"
-  by (simp add: Cons_nat_def natify_list.simps)
-lemma Cons_x_acc: "Cons_nat (fst_nat (snd_nat (natify (x#xs)))) (natify acc) = natify (x#acc)"
-  by (simp add: Cons_nat_def natify_list.simps)
-
 thm HTHN.rev_acc.induct
 lemma
   assumes "s ''rev_acc_nat.args.x'' = natify x"
@@ -130,50 +118,22 @@ proof (induction x xa arbitrary: s rule: HTHN.rev_acc.induct)
     by (simp add: fst_nat_natify_Nil 1)
 next
   case (2 x xs acc)
-  let ?S = "(STATE
-       (interp_state
-         (update_state
-           (update_state
-             (update_state
-               (update_state
-                 (update_state
-                   (update_state
-                     (update_state
-                       (update_state
-                         (update_state
-                           (update_state
-                             (update_state
-                               (update_state
-                                 (update_state
-                                   (update_state
-                                     (update_state
-                                       (update_state
-                                         (update_state
-                                           (update_state
-                                             (update_state (update_state (update_state (State s) ''.args.0'' (s ''rev_acc_nat.args.x'')) ''.args.1'' (s ''rev_acc_nat.args.xa'')) ''fst_nat.args.m'' (s ''rev_acc_nat.args.x''))
-                                             ''fst_nat.ret'' (fst_nat (s ''rev_acc_nat.args.x'')))
-                                           ''eq.args.x'' (fst_nat (s ''rev_acc_nat.args.x'')))
-                                         ''eq.args.y'' 0)
-                                       ''eq.ret'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0)))
-                                     ''.If.7'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0)))
-                                   ''snd_nat.args.m'' (s ''rev_acc_nat.args.x''))
-                                 ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x'')))
-                               ''snd_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
-                             ''snd_nat.ret'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x''))))
-                           ''rev_acc_nat.args.x'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x''))))
-                         ''snd_nat.args.m'' (s ''rev_acc_nat.args.x''))
-                       ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x'')))
-                     ''fst_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
-                   ''fst_nat.ret'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))))
-                 ''Cons_nat.args.x'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))))
-               ''Cons_nat.args.xa'' (s ''rev_acc_nat.args.xa''))
-             ''Cons_nat.ret'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))
-           ''rev_acc_nat.args.xa'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))))"
+  (* Ugly but quite helpful *)
+  let ?S = "(STATE (interp_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (update_state (State s)
+        ''.args.0'' (s ''rev_acc_nat.args.x'')) ''.args.1'' (s ''rev_acc_nat.args.xa'')) ''fst_nat.args.m'' (s ''rev_acc_nat.args.x''))
+        ''fst_nat.ret'' (fst_nat (s ''rev_acc_nat.args.x''))) ''eq.args.x'' (fst_nat (s ''rev_acc_nat.args.x''))) ''eq.args.y'' 0)
+        ''eq.ret'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0))) ''.If.7'' (natify (fst_nat (s ''rev_acc_nat.args.x'') = 0)))
+        ''snd_nat.args.m'' (s ''rev_acc_nat.args.x'')) ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x''))) ''snd_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
+        ''snd_nat.ret'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x'')))) ''rev_acc_nat.args.x'' (snd_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+        ''snd_nat.args.m'' (s ''rev_acc_nat.args.x'')) ''snd_nat.ret'' (snd_nat (s ''rev_acc_nat.args.x''))) ''fst_nat.args.m'' (snd_nat (s ''rev_acc_nat.args.x'')))
+        ''fst_nat.ret'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))))
+        ''Cons_nat.args.x'' (fst_nat (snd_nat (s ''rev_acc_nat.args.x'')))) ''Cons_nat.args.xa'' (s ''rev_acc_nat.args.xa'')) ''Cons_nat.ret'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))
+        ''rev_acc_nat.args.xa'' (Cons_nat (fst_nat (snd_nat (s ''rev_acc_nat.args.x''))) (s ''rev_acc_nat.args.xa'')))))"
   have x: "?S ''rev_acc_nat.args.x'' = natify xs"
-    using 2(2) Cons_snd by (auto simp: STATE_interp_update_retrieve_key_eq_if)
+    using 2(2) by (auto simp: STATE_interp_update_retrieve_key_eq_if Cons_nat_def natify_list.simps)
   have xa: "?S ''rev_acc_nat.args.xa'' = natify (x#acc)"
-    using 2 Cons_x_acc[of x xs acc]
-    by (simp add: STATE_interp_update_retrieve_key_eq_if)
+    using 2
+    by (simp add: STATE_interp_update_retrieve_key_eq_if Cons_nat_def natify_list.simps)
   show ?case apply -
     apply (rule terminates_with_res_IMP_Tailcall_start)
     apply (subst (2) rev_acc_nat_IMP_tailcall_def)
@@ -201,8 +161,7 @@ next
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     using 2(1)[of ?S, OF x xa]
-    apply (subst termin_unfold)
-    by simp+
+    by (simp add: terminates_with_res_tTailI)
 qed
 
 declare Rel_nat_def[simp]
