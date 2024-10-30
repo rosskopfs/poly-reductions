@@ -1,28 +1,8 @@
 theory XC_To_ST_Karp72
-  imports Undirected_Graph_Theory.Undirected_Graphs_Root 
-          Tree_Enumeration.Tree_Graph
-           "../SAT_To_XC/XC_Definition"
+  imports "../SAT_To_XC/XC_Definition"
+          "../X3C_To_ST/ST_Definition"         
 begin
 
-
-(* Definition of the Steiner Tree problem *)
-
-type_synonym 'a steiner_tree_tuple = "('a set \<times> 'a edge set \<times> ('a edge \<Rightarrow> nat) \<times> 'a set \<times> nat)" 
-definition steiner_tree :: "'a steiner_tree_tuple set" where
-  "steiner_tree \<equiv> 
-    { (V, E, w, R, k). fin_ulgraph V E \<and> R \<subseteq> V \<and>
-      (\<exists> Tv Te. tree Tv Te  \<and> subgraph Tv Te V E \<and> R \<subseteq> Tv \<and> (\<Sum>e \<in> Te. w e) \<le> k) }"
-
-
-lemma steiner_tree_cert:
-  assumes "tree Tv Te"
-          "fin_ulgraph V E"
-          "R \<subseteq> V"
-          "subgraph Tv Te V E"
-          "R \<subseteq> Tv"
-          "(\<Sum>e \<in> Te. w e) \<le> k"
-  shows "(V, E, w, R, k) \<in> steiner_tree"
-  using assms steiner_tree_def by fastforce
 
 (* reduction from "Karp, R. M. (1972). Reducibility among combinatorial problems" *)
 
@@ -101,7 +81,6 @@ proof
         ultimately show ?thesis by auto
       qed
 
-      thm  T.vert_connected_neighbors[THEN T.vert_connected_trans[rotated] 
       have "T.vert_connected (a 2) (c {1, 2})"  using T.vert_connected_neighbors Te_def by blast
       moreover have "T.vert_connected (a 2) (c {2,3})" 
         using T.vert_connected_neighbors Te_def  by (simp add: insert_commute)
@@ -161,11 +140,11 @@ qed
     next
       case one23
       then have eq: "X = {2,3}" using \<open>\<Union>S' = X\<close> by auto
-      then show ?thesis  unfolding X_def by fastforce
+      then show ?thesis unfolding X_def by fastforce
     next
       case both
       then have "pairwise disjnt {{1::nat,2},{2,3}}" using \<open>pairwise disjnt S'\<close>  by blast
-      then show ?thesis    by (simp add: doubleton_eq_iff pairwise_insert)
+      then show ?thesis by (simp add: doubleton_eq_iff pairwise_insert)
     qed
  
    qed 
@@ -173,11 +152,11 @@ qed
 
 
 theorem is_not_reduction_XC_to_steiner_tree:
-  "\<not>is_reduction XC_to_steiner_tree exact_cover  steiner_tree"
+  "\<not>is_reduction XC_to_steiner_tree exact_cover steiner_tree"
 proof
   assume "is_reduction XC_to_steiner_tree exact_cover steiner_tree"
   then have reduction_property: "\<forall>a. (a \<in> exact_cover) = (XC_to_steiner_tree a \<in> steiner_tree)"
-    unfolding is_reduction_def sorry
+    unfolding is_reduction_def sorry (* why ? *)
   then show False using XC_to_steiner_tree_counterexample  by blast
 qed
 
