@@ -353,3 +353,4 @@ theorem is_reduction_ss_list_to_job_seq:
   unfolding is_reduction_def 
   using ss_list_to_job_seq_sound ss_list_to_job_seq_complete
   by auto
+end
