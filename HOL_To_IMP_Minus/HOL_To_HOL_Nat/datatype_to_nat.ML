@@ -114,6 +114,42 @@ fun register_ctr_Rel_thm ctr lthy =
 
 fun register_ctr_Rel_thms ctrs = fold_map (fn ctr => register_ctr_Rel_thm ctr #>> snd) ctrs
 
+fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
+  let
+    val typ = dest_Const_type ctr
+    val argT = strip_type typ |> fst
+    val dataT = strip_type typ |> snd
+    val ctr_nargs = length argT
+    val vars = Variable.variant_fixes (map (K "x") argT) lthy |> fst
+    val args = vars |> map2 (Free oo rpair) argT
+    val assump = mk_Rel_nat dataT $ Free ("n", @{typ "nat"}) $ list_comb (ctr, args)
+                 |> HOLogic.mk_Trueprop
+    val binding = TrpUtil.add_suffix
+        (TrpUtil.add_suffix Rel_nat_binding @{binding "destruct"})
+        (mk_ctr_binding ctr)
+    fun reg_ctr_des_Rel_thm_arg (i, arg) =
+      let
+        fun replVars (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
+          | replVars t = t
+        fun destruct_tac ctxt =
+          auto_tac (ctxt addsimps ((@{thm "Rel_nat_iff_eq_natify"})::ctrs_nat_def::natify_simps))
+        val thm = mk_Rel_nat (fastype_of arg) $ dest_ctr_arg ctr_nargs (Free ("n", @{typ "nat"})) i $ arg
+          |> HOLogic.mk_Trueprop
+          |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ assump) o single
+          |> map_types (map_atyps replVars)
+          |> Syntax.check_prop lthy
+          |> (fn t => Goal.prove lthy ("n"::vars) [] t
+                (#context #> (destruct_tac)))
+      in
+        thm
+      end
+  in
+    register_transfer_thms binding (map_index reg_ctr_des_Rel_thm_arg args) lthy
+      |>> snd
+  end
+fun register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_defs =
+  fold_map (register_ctr_destruct_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
+
 fun register_case T ctrs casex ctxt =
   let
     val case_args_Ts = fastype_of casex |> strip_type |> fst
@@ -244,10 +280,13 @@ fun datatype_compile_nat T ctrs casex thy =
     (*create relator theorems for constructors*)
     val (ctr_Rel_thms, lthy) = register_ctr_Rel_thms ctrs lthy
     val lthy = Local_Theory.end_nested lthy
+    (*create destructor theorems for constructors*)
+    val (dest_Rel_thms, lthy) = register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_def lthy
 
     (*create bundle of relatedness theorems*)
-    val lthy = register_thms (mk_Rel_nat_type_binding T) (flat (case_Rel_thm :: ctr_Rel_thms)) lthy
+    val lthy = register_thms (mk_Rel_nat_type_binding T) (flat (case_Rel_thm :: ctr_Rel_thms @ dest_Rel_thms)) lthy
       |> snd
+    
   in lthy end
 
 fun datatype_compile_nat_cmd T thy =
