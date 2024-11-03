@@ -67,6 +67,9 @@ lemma compile_nat_flip_partial_equivalence_rel_equivalence:
   flip.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
   by blast
 
+lemma natify_eq_eq: "natify x = natify y \<Longrightarrow> x = y"
+  using compile_nat_type_def.Rep_inject by simp
+
 end
 
 (*register PER*)
