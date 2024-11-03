@@ -105,7 +105,7 @@ fun has_call to (Call (_, ((f, _), es))) = (f = to) orelse exists (has_call to) 
   | has_call to (TailCall es) = exists (has_call to) es
   | has_call _ _ = false
 
-fun tc_ast_of_term (f_name, f_typ) f_args t =
+fun tc_ast_of_term head f_args t =
   let
     fun fold_step a (index, args_ast) =
         let val (index', a_ast) = index_tc_ast index a
@@ -145,8 +145,8 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
             if is_comb t then
               raise TERM ("Call to function given as argument is not allowed, got:", [t])
             else Arg (Library.find_index (fn v' => (n, typ) = v') f_args)
-        | Const (g_name, g_typ) =>
-          if (g_name, g_typ) = (f_name, f_typ)
+        | g as Const (g_name, g_typ) =>
+          if g = head
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
@@ -270,13 +270,12 @@ fun dest_eq_equals_prop t = case t of
     \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for lhs rhs\<close>\<close> => (lhs, rhs)
   | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
   | t => raise TERM ("Unknown equality:", [t])
-val term_binding = Term.term_name #> Binding.name
 fun unconditional_nat lthy f_eq =
   let
     val (lhs, rhs) =
       yield_singleton (Variable.import_terms true) f_eq lthy |> fst
       |> Logic.strip_imp_concl |> dest_eq_equals_prop
-    val f = lhs |> Term.head_of |> Term.dest_Const
+    val f = lhs |> Term.head_of
 
     fun is_typrep (Type (@{type_name itself}, [_])) = true
       | is_typrep _ = false
@@ -285,15 +284,13 @@ fun unconditional_nat lthy f_eq =
 
     val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
 
-    val base_binding = Const f |> term_binding
-    val f'_name = Binding.name_of base_binding
-    val f' = Free (f'_name, f'_typ)
+    val f' = f |> Term.map_types (K f'_typ)
 
     (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
     fun rewrite_rhs t =
       let
         val (head, args) = Term.strip_comb t
-        val is_rec_call = case head of Const g => f = g | _ => false
+        val is_rec_call = (f = head)
         val _ = (is_rec_call andalso length args < typrep_arg_count)
           andalso raise TERM ("Can't strip all '_ itself' arguments", [t])
       in
@@ -328,19 +325,12 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val (lhs, rhs) = f_def |> Thm.full_prop_of
       |> unconditional_nat lthy
 
-    val f_name = f_def
-      |> Thm.full_prop_of
-      |> Logic.strip_imp_concl
-      |> dest_eq_equals_prop |> fst
-      |> Term.head_of |> Term.dest_Const |> fst
-
-    val (f'_name, f_typ) = lhs |> strip_comb |> fst |> Term.dest_Free
-    val replace = map_aterms (fn t => if t = Free (f'_name, f_typ) then Const (f_name, f_typ) else t)
+    val f_head = lhs |> head_of
+    val f_name = f_head |> dest_Const_name
 
     val (args, def_body) =
       lhs |> strip_comb |> snd |> map Term.dest_Free
       |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
-      ||> replace
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
@@ -357,7 +347,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_IMP =
       def_body
       |> curry Term.subst_bounds (rev f_args_vars)
-      |> tc_ast_of_term (f_name, f_typ) f_args
+      |> tc_ast_of_term f_head f_args
       |> IMP_Minus_of_tc_ast
           (f_ret_name, map fst f_args)
           (get_compiled_const (Context.Proof lthy))
