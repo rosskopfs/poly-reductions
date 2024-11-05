@@ -149,7 +149,7 @@ fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
 fun register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_defs =
   fold_map (register_ctr_destruct_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
 
-fun register_fst_eq_case ctrs casex thms lthy =
+fun register_fst_eq_case ctrs casex thms split lthy =
   let
     fun replVars (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
       | replVars T = T
@@ -164,14 +164,14 @@ fun register_fst_eq_case ctrs casex thms lthy =
       |> List.foldr (uncurry absdummy) (mk_nat i)
     val rhs = list_comb (casex |> map_types (K dummyT), map_index create_lambdas ctrs) $ Free ("xs", dummyT)
 
-    fun destruct_tac ctxt =
-      auto_tac (ctxt addsimps (@{thm "Rel_nat_iff_eq_natify"}::thms))
+    fun fst_case_tac ctxt =
+      auto_tac (ctxt addsimps (@{thm "Rel_nat_iff_eq_natify"}::thms) |> Splitter.add_split split)
     val thm = HOLogic.mk_eq (lhs, rhs)
               |> HOLogic.mk_Trueprop
               |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ prem) o single
               |> Syntax.check_prop lthy
               |> (fn t => Goal.prove lthy ["n","xs"] [] t
-                  (#context #> (destruct_tac)))
+                  (#context #> (fst_case_tac)))
     val binding = type_suffix_binding @{binding "fst_nat_eq_if_Rel_nat"} typ
   in
     register_transfer_thms binding [thm] lthy
@@ -316,7 +316,7 @@ fun datatype_compile_nat T ctrs casex split thy =
       |> snd
 
     (*create relation fst to case*)
-    val (case_rel_thm, lthy) = register_fst_eq_case ctrs casex (split::natify_simps@ctrs_nat_def) lthy
+    val (case_rel_thm, lthy) = register_fst_eq_case ctrs casex (natify_simps@ctrs_nat_def) split lthy
   in lthy end
 
 fun datatype_compile_nat_cmd T thy =
