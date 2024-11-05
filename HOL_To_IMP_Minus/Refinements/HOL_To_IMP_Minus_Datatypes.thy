@@ -75,16 +75,15 @@ compile_nat Cons_nat_def
 HOL_To_IMP_Minus_correct Cons_nat by cook
                   
 compile_nat Nil_nat_def
-HOL_To_IMP_Minus_correct Nil_nat
-  by cook
+HOL_To_IMP_Minus_correct Nil_nat by cook
 
 (* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
 congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
 lemmas rev_acc_nat_eq = HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_acc_nat_eq
 
-thm HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
+  sorry
 
 term Cons_nat
 
@@ -283,135 +282,6 @@ next
     using 2(1)[of ?S, OF x xa]
     by (simp add: terminates_with_res_tTailI)
 qed
-
-declare Rel_nat_def[simp]
-
-definition "I x = x"
-thm rev_acc_nat_eq
-thm rel_funD
-
-lemma test: "\<exists>y. Rel_nat x y \<Longrightarrow>
-             \<exists>ya. Rel_nat xa ya \<Longrightarrow>
-  HTHN.rev_acc_nat TYPE('a::compile_nat) x xa =
-  (if fst_nat x = 0
-    then xa
-    else HTHN.rev_acc_nat TYPE('a) (snd_nat (snd_nat x)) (Cons_nat (fst_nat (snd_nat x)) xa))"
-  sorry
-
-thm rev_acc_nat_eq
-lemma
-  assumes "Rel_nat (s var_rev_acc_nat__args__x) x"
-    and   "Rel_nat (s var_rev_acc_nat__args__xa) xa"
-  shows   "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus rev_acc_nat_IMP_tailcall) s
-     ''rev_acc_nat.ret''
-     (HTHN.rev_acc_nat TYPE('a::compile_nat)
-       (s ''rev_acc_nat.args.x'')
-       (s ''rev_acc_nat.args.xa''))"
-  using assms apply -
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  
-  apply (induction "denatify (s var_rev_acc_nat__args__x) :: 'a list" "denatify (s var_rev_acc_nat__args__xa) :: 'a list"
-   arbitrary: s rule: HTHN.rev_acc.induct)
-
-  thm HTHN.rev_acc.induct
-  apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (subst test)
-      apply blast
-  apply blast
-
-  apply (tactic \<open>HT.finish_tac ((K o K) (SOME @{thms rev_acc_nat_eq})) @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac ((K o K) (SOME @{thms test})) @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-
-  apply (simp only: terminates_with_res_IMP_Minus_def terminates_with_IMP_Minus_def tailcall_to_IMP_Minus_def)
-  sorry
-
-term HOL_To_HOL_Nat.rev_acc_nat
-
-unconditional_nat rev_acc_nat_eq
-declare rev_acc_nat_unconditional.simps[simp del]
-compile_nat rev_acc_nat_unconditional.simps
-HOL_To_IMP_Minus_correct rev_acc_nat_unconditional
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
-  apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
-   apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac (fn a => fn b => @{print} (HB.get_HOL_eqs a b)) @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  done
-
-(*Manual attempt to prove the relatedness to HOL function*)
-lemma natify_list_simps_Nil: "natify [] = Nil_nat"
-  by (subst natify_list.simps) simp
-
-lemma natify_list_simps_Cons: "natify (x # xs) = Cons_nat (natify x) (natify xs)"
-  by (subst natify_list.simps) simp
-
-(* we would need these elimination/destruction lemmas to automate the proofs *)
-lemma Rel_nat_NilE:
-  assumes rel: "Rel_nat xs []"
-  obtains "xs = Nil_nat"
-  (* this proof is not "optimal", but can hopefully be mechanically derived for each constructor *)
-  apply standard
-  apply (subst rel[simplified Rel_nat_iff_eq_natify])
-    apply (subst natify_list_simps_Nil)
-    apply (rule refl)
-   apply ((rule Rel_nat_natify_self)+)?
-  done
-
-lemma Rel_nat_ConsE:
-  assumes rel: "Rel_nat xs (y # ys)"
-  obtains z zs where "xs = Cons_nat z zs" "Rel_nat z y" "Rel_nat zs ys"
-  apply standard
-  apply (subst rel[simplified Rel_nat_iff_eq_natify])
-    apply (subst natify_list_simps_Cons)
-    apply (rule refl)
-   apply ((rule Rel_nat_natify_self)+)?
-  done
-
-lemma Rel_nat_NilD:
-  assumes "Rel_nat xs []"
-  shows "xs = Nil_nat"
-  using assms Rel_nat_NilE by blast
-
-lemma Rel_nat_ConsD:
-  assumes "Rel_nat xs (y # ys)"
-  shows "\<exists>z zs. xs = Cons_nat z zs \<and> Rel_nat z y \<and> Rel_nat zs ys"
-  using assms Rel_nat_ConsE by blast
-
-(* probably(?) best approach: use induction on the original function's definition *)
-lemma related_rev_acc_nat_unconditional:
-  fixes xs acc and xs' acc' :: "('a :: compile_nat) list"
-  assumes rels: "Rel_nat xs xs'" "Rel_nat acc acc'"
-  shows "Rel_nat (rev_acc_nat_unconditional xs acc) (HTHN.rev_acc xs' acc')"
-  using assms
-  apply (induction xs' acc' arbitrary: xs acc rule: HTHN.rev_acc.induct)
-
-  apply (subst HTHN.rev_acc.simps)
-  apply (frule Rel_nat_NilD Rel_nat_ConsD; (elim exE)?)
-  apply hypsubst
-  apply (subst rev_acc_nat_unconditional.simps)
-  apply (simp (no_asm) add: Nil_nat_def Cons_nat_def,
-   (simp (no_asm) only: flip: Nil_nat_def Cons_nat_def)?)
-
-  apply (subst HTHN.rev_acc.simps)
-  apply (frule Rel_nat_NilD Rel_nat_ConsD; (elim conjE exE)?)
-  apply hypsubst
-  apply (subst rev_acc_nat_unconditional.simps)
-  apply (simp (no_asm) add: Nil_nat_def Cons_nat_def,
-   (simp (no_asm) only: flip: Nil_nat_def Cons_nat_def)?)
-  subgoal premises p
-    apply (urule p(1))
-    apply (insert p(2-))
-    apply (metis Rel_nat_Cons_nat rel_funD)
-    apply (metis Rel_nat_Cons_nat rel_funD)
-    done
-  done
 
 end
 
