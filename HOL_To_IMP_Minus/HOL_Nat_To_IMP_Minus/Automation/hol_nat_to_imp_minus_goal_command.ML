@@ -70,8 +70,11 @@ in
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let
+          fun deVar (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
+            | deVar T = T
           val stateT = \<^typ>\<open>AExp.state\<close>
           val const_term = Proof_Context.read_const {proper = false, strict = false} lthy const
+            |> map_types (map_atyps deVar)
           val compiled_const =
             Term.dest_Const const_term |> fst
             |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof lthy)
@@ -80,11 +83,30 @@ in
 
           val ret_reg = HTIU.mk_register (#ret_reg compiled_const)
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
-          val HOLt = Term.list_comb (const_term, map arg_from_reg (#arg_regs compiled_const))
+          fun isTYPE (Type ("itself", _)) = true
+            | isTYPE _ = false
+          val prems = (const_term
+            |> dest_Const_name |> (fn nm => nm ^ "_eq_unfolded")
+            |> Proof_Context.get_thm lthy |> Thm.prems_of
+            |> map (HOLogic.dest_Trueprop #> strip_comb #> snd #> tl #> hd #> dest_Var #>> fst
+                     ##> map_atyps deVar)
+            |> map2 (fn reg => fn (nm,T) =>
+              Const ("HOL_To_HOL_Nat_Base.compile_nat_class.Rel_nat", @{typ "nat"} --> T --> @{typ "bool"})
+              $ arg_from_reg reg $ Free (nm, T)) (#arg_regs compiled_const)
+            |> map HOLogic.mk_Trueprop
+             handle ERROR _ => [])
+
+          val TYPEs = const_term
+            |> dest_Const_type |> strip_type |> fst
+            |> filter isTYPE
+            |> map (map deVar o dest_Type_args)
+            |> map (fn types => Const (@{const_name Pure.type}, Type ("itself", types)))
+          val HOLt = Term.list_comb (const_term, TYPEs @ map arg_from_reg (#arg_regs compiled_const))
 
           (*TODO: move terminates_with_res stuff to utility module*)
           val goal = mk_terminates_with_res_IMP_Minus IMP_program s ret_reg HOLt
             |> HTIU.mk_Trueprop
+          val goal = Logic.list_implies (prems, goal)
           val goal_stmt = Element.Shows [(Binding.empty_atts, [(goal, [])])]
 
           val imp_minus_correct_attr =
