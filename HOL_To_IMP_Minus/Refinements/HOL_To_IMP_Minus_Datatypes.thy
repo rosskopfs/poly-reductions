@@ -82,37 +82,11 @@ congruence lemmas for case_list_nat (otherwise the function package cannot prove
 lemmas rev_acc_nat_eq = HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_acc_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
-  sorry
-
-term Cons_nat
-
-thm Cons_nat_def
-thm natify_list.simps
-
-thm fst_nat_pair_eq
-(*the following 3 theorems that should be auto-generated and will be needed below to discharge side-condition*)
-lemma "Rel_nat n (Cons x ys) \<Longrightarrow> Rel_nat (fst_nat (snd_nat n)) x"
-  apply (simp only: Rel_nat_iff_eq_natify)
-  apply (subst natify_list.simps)
-  apply simp
-  apply (subst Cons_nat_def)
-  apply (subst snd_nat_pair_eq)
-  apply (subst fst_nat_pair_eq)
-  by simp
-lemma "Rel_nat n (Cons x ys) \<Longrightarrow> Rel_nat (snd_nat (snd_nat n)) ys"
-  apply (simp only: Rel_nat_iff_eq_natify)
-  apply (subst natify_list.simps)
-  apply simp
-  apply (subst Cons_nat_def)
-  apply (subst snd_nat_pair_eq)
-  apply (subst snd_nat_pair_eq)
-  by simp
-lemma fst_nat_eq_if_Rel_nat_list:
-  assumes "Rel_nat n (xs :: ('a :: compile_nat) list)"
-  shows "fst_nat n = case_list 0 (\<lambda>_ _. 1) xs"
-  using assms unfolding Rel_nat_iff_eq_natify
-  by (simp add: natify_list.simps Nil_nat_def Cons_nat_def split: list.splits)
+thm natify_eq_eq
+(*automatically generated theorems*)
+thm Rel_nat_destruct_Cons_nat
+thm HOL_To_HOL_Nat_Basics.Rel_nat_list
+thm fst_nat_eq_if_Rel_nat_list
 
 lemma check_first_nat_ccontradictionE:
   assumes "fst_nat n = m"
@@ -126,6 +100,10 @@ lemma check_first_nat_ccontradictionE':
   obtains "fst_nat n \<noteq> m" "k \<noteq> m"
   using assms by simp
 
+(* manual does not work directly as "x" and "xs" are not available *)
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
+  sorry
+
 lemma
   assumes "Rel_nat (s ''rev_acc_nat.args.x'') (x :: 'a list)"
   assumes "Rel_nat (s ''rev_acc_nat.args.xa'') (xa :: 'a list)"
@@ -133,21 +111,13 @@ lemma
     (HTHN.rev_acc_nat TYPE('a :: compile_nat) (s ''rev_acc_nat.args.x'') (s ''rev_acc_nat.args.xa''))"
   using assms apply -
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
-  apply (subst rev_acc_nat_IMP_tailcall_def; simp)
+    apply (subst rev_acc_nat_IMP_tailcall_def; simp)
   apply (subst rev_acc_nat_IMP_tailcall_def; simp)
   apply (induction "x" "xa" arbitrary: s rule: HTHN.rev_acc.induct)
   (*case []*)
   apply (subst (2) rev_acc_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    (*check the retrievied condition for a contradiction (needs to be built into the IF tactic*)
+   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
+    (*check the retrieved condition for a contradiction (needs to be built into the IF tactic*)
     apply (erule check_first_nat_ccontradictionE check_first_nat_ccontradictionE')
     apply (rule fst_nat_eq_if_Rel_nat_list)
     apply assumption (*needs a smarter method*)
@@ -164,15 +134,7 @@ lemma
     apply simp
   (*case x#xs*)
   apply (subst (2) rev_acc_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
     (*we need to derive a contradiction*)
     apply (erule check_first_nat_ccontradictionE check_first_nat_ccontradictionE')
     apply (rule fst_nat_eq_if_Rel_nat_list)
@@ -183,25 +145,16 @@ lemma
     apply (rule fst_nat_eq_if_Rel_nat_list)
     apply assumption
     apply simp
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
   apply (subst HTHN.rev_acc_nat_eq_unfolded)
   apply (assumption, assumption)
   apply (subst case_list_nat_def)
   apply (split if_splits; intro impI conjI; simp)
   (*apply IH; prove side-conditions*)
   oops
+
+  thm HTHN.rev_acc_nat_eq_unfolded
+  thm Rel_nat_destruct_Cons_nat
 
 
 lemma fst_nat_natify_Nil: "fst_nat (natify []) = 0"
