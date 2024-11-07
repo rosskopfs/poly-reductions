@@ -38,7 +38,7 @@ lemma example_not_in_steiner_tree:
   unfolding NOT_STEINER_TREE_EXAMPLE_def 
 proof (rule ccontr)
   assume "\<not> ({}, {}, \<lambda>e. 1, {ROOT::'a red_vertex}, 0) \<notin> steiner_tree"
-  then obtain Tv Te  where "subgraph Tv Te {} {}" "{ROOT::'a red_vertex}  \<subseteq> Tv"  (* how/should? rmv warning *)
+  then obtain Tv Te  where "subgraph Tv Te {} {}" "{ROOT::'a red_vertex}  \<subseteq> Tv"  
     unfolding steiner_tree_def by blast
   then show False using subgraph.verts_ss by fast
 qed
@@ -63,13 +63,33 @@ proof (intro Disjoint_Sets.disjointI)
       by (simp add: \<open>a \<in> S\<close> \<open>b \<in> S\<close> assms(1) finite_UnionD sum.subset_diff)
     have "card (\<Union>S) \<le> card (\<Union>(S - {a,b}) \<union> (a \<union> b))" using \<open>a \<in> S\<close> \<open>b \<in> S\<close>
       by (intro arg_cong[THEN eq_imp_le, where ?f1 = card],blast)
-   also have  "...   \<le>  sum card (S- {a,b}) + card(a \<union> b)"
+    also have  "...   \<le>  sum card (S- {a,b}) + card(a \<union> b)"
       using add_le_mono1 card_Union_le_sum_card card_Un_le order_trans by meson
-    also have "...  < sum card (S- {a,b})  +  card a + card b" 
+    also have "...  < sum card (S- {a,b}) + card a + card b" 
       using caub by linarith
     finally show False  using "*"  assms by (simp add: neq)
   qed
 qed
+
+
+lemma card_red_V:
+  assumes "finite X" "finite S"
+  shows "card ({ROOT} \<union> (a ` X)  \<union> (c ` S)) = Suc(card X + card S)"
+proof -
+  have "card (a ` X \<union> c ` S) = card (a ` X) + card (c ` S)"
+    by (simp add: assms card_Un_disjoint disjoint_iff_not_equal)  
+  also have "... = card X + card  S"
+    by (intro Groups.add_mono_thms_linordered_semiring)
+       (meson card_image inj_onI red_vertex.inject)
+  finally have "card (a ` X \<union> c ` S) = card X + card  S".
+  then show ?thesis  by (simp add: assms image_iff)
+qed
+
+lemma card_Collect_mem:
+  assumes  "inj_on f P"
+  shows    "card {f x|x. x \<in> P} = card P"
+  by (simp add: assms card_image setcompr_eq_image)
+  
 
 lemma X3C_to_steiner_tree_sound:
   assumes "(X, S) \<in> three_exact_cover"
@@ -79,13 +99,13 @@ proof -
     "finite X" "\<Union>S \<subseteq> X" "S' \<subseteq> S" "\<Union>S' = X" "pairwise disjnt S'" "(\<forall>C \<in> S. card C = 3)"
     unfolding three_exact_cover_def by blast
 
-  let ?V = "(a ` X) \<union> {ROOT} \<union> (c ` S)"
+  let ?V = "{ROOT} \<union> (a ` X) \<union> (c ` S)"
   let ?E = "{{ROOT, c s} | s. s \<in> S} \<union> {{c s, a v} | s v. s \<in> S \<and> v \<in> s}"
   let ?R = "{ROOT} \<union> (a ` X)"
   let ?k = "4 * card X div 3"
   let ?w = "\<lambda>i. 1::nat"
 
-  have fS: "finite S'"
+  have finS': "finite S'"
     by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> finite_UnionD)
   have f: "finite s" if "s \<in> S'" for s
     using \<open>\<Union>S' = X\<close> \<open>finite X\<close> that rev_finite_subset by blast
@@ -104,70 +124,66 @@ proof -
          (use \<open>\<Union> S \<subseteq> X\<close>  finite_subset[of S' S]  \<open>S' \<subseteq> S\<close>
               \<open>finite X\<close> \<open>finite S\<close>  in auto)  
 
-   have card_Te:"card Te = card S' + card X "
-   proof -
-     have dis: "disjoint {{{c s, a v} | v. v \<in> s} |s. s \<in> S'}"
-       unfolding disjoint_def by (auto simp add: doubleton_eq_iff)
-     have  "card {{c s, a v} |s v. s \<in> S' \<and> v \<in> s} =
+  have card_Te:"card Te = card S' + card X "
+  proof -
+    have "card Te = card {{ROOT, c s} | s. s \<in> S'} + 
+                    card {{c s, a v} |s v. s \<in> S' \<and> v \<in> s}"
+      using T.fin_edges Te_def card_Un_disjoint by blast
+    moreover {
+      have dis: "disjoint {{{c s, a v} | v. v \<in> s} |s. s \<in> S'}"
+        unfolding disjoint_def by (auto simp add: doubleton_eq_iff)
+      have  "card {{c s, a v} |s v. s \<in> S' \<and> v \<in> s} =
              card  ( \<Union>  {{{c s, a v} | v. v \<in> s} |s. s \<in> S'})"
-       by (intro arg_cong[where ?f = "card"]) auto
-     also have "... = sum card ((\<lambda>s. {{c s, a v} | v. v \<in> s})  ` S')"
-       using f card_Union_disjoint[OF dis] by (auto simp add: Setcompr_eq_image)
-     also have "... = sum card S'"
-     proof - 
-       have inj: "inj_on (\<lambda>s. {{c s, a v} | v. v \<in> s}) S'" 
-       proof (intro inj_onCI)
-         fix x assume "x \<in> S'"
-         fix y assume "y \<in> S'"
-         assume eq: "{{c x, a v} |v. v \<in> x} = {{c y, a v} |v. v \<in> y}"
-         assume "x \<noteq> y"
-         moreover obtain s where s_def: "s \<in> {{c x, a v} |v. v \<in> x}" using eq \<open>x \<noteq> y\<close> by fastforce
-         moreover then obtain u where "s = {c x, a u}" by blast
-         moreover obtain v where "s = {c y, a v}" using eq s_def by blast
-         ultimately show False  by (simp add: doubleton_eq_iff)
-       qed
-       show ?thesis 
-         by (subst sum.reindex[OF inj], intro sum.cong)
-           (auto simp add: Setcompr_eq_image[of "(\<lambda>v. {c s, a v})" for s]
-             card_image doubleton_eq_iff inj_on_def)
-     qed
-     finally have "card Te = card {{ROOT, c s} | s. s \<in> S'} + card X"
-       using T.fin_edges Te_def card_Un_disjoint[where ?B = "{{c s, a v} |s v. s \<in> S' \<and> v \<in> s}"]
-         sum_card_S' by auto
-     moreover have "card {{ROOT, c s} | s. s \<in> S'} = card S'"
-       by (subst Setcompr_eq_image[of "\<lambda>s. {ROOT, c s}"],
-           auto simp add: doubleton_eq_iff inj_on_def card_image)
-     ultimately show "card Te = card S' + card X"   by presburger
-    qed
+        by (intro arg_cong[where ?f = "card"]) auto
+      also have "... = sum card ((\<lambda>s. {{c s, a v} | v. v \<in> s})  ` S')"
+        using f card_Union_disjoint[OF dis] by (auto simp add: Setcompr_eq_image)
+      also have "... = sum card S'"
+      proof - 
+        have inj: "inj_on (\<lambda>s. {{c s, a v} | v. v \<in> s}) S'" 
+        proof (intro inj_onCI)
+          fix x assume "x \<in> S'"
+          fix y assume "y \<in> S'"
+          assume eq: "{{c x, a v} |v. v \<in> x} = {{c y, a v} |v. v \<in> y}"
+          assume "x \<noteq> y"
+          moreover obtain s where s_def: "s \<in> {{c x, a v} |v. v \<in> x}"
+            using eq \<open>x \<noteq> y\<close> by fastforce
+          moreover then obtain u where "s = {c x, a u}" by blast
+          moreover obtain v where "s = {c y, a v}" using eq s_def by blast
+          ultimately show False  by (simp add: doubleton_eq_iff)
+        qed
+        show ?thesis by (subst sum.reindex[OF inj], intro sum.cong)
+            (auto simp add: Setcompr_eq_image[of "(\<lambda>v. {c s, a v})" for s]
+              card_image doubleton_eq_iff inj_on_def)
+      qed
+      finally have "card {{c s, a v} |s v. s \<in> S' \<and> v \<in> s} = card X" 
+        using sum_card_S' by presburger
+    }
+    moreover have "card {{ROOT, c s} | s. s \<in> S'} =  card S'"
+        by (intro card_Collect_mem) (simp add: doubleton_eq_iff inj_on_def)
+    ultimately show "card Te = card S' + card X" by presburger
+  qed
+
   have istree: "tree Tv Te"
   proof (intro card_E_treeI)
     show "card Tv = Suc (card Te)" 
-    proof -
-      have "card Tv = Suc(card (a ` X \<union> c ` S'))"
-        unfolding Tv_def  by (simp add: \<open>finite X\<close> fS image_iff)
-      moreover have "card (a ` X \<union> c ` S') =  card X + card  S'" (* split in 2 lines + find name *)
-        by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> card_Un_disjnt disjnt_def disjoint_iff_not_equal 
-                      finite_UnionD,
-            intro Groups.add_mono_thms_linordered_semiring,
-            meson card_image inj_onI red_vertex.inject)
-      ultimately show ?thesis using card_Te  by presburger
-    qed
+      using card_red_V[OF \<open>finite X\<close> finS'] card_Te Tv_def 
+      by presburger
     
     have "T.vert_connected ROOT v" if "v \<in> Tv" for v
     proof (cases v)
       case ROOT
-      then show ?thesis  using T.vert_connected_id that by blast
+      then show ?thesis using T.vert_connected_id that by blast
     next
       case (c s)
-      then show ?thesis  using that Tv_def Te_def 
+      then show ?thesis using that Tv_def Te_def 
         by(intro T.vert_connected_neighbors) blast 
     next
       case (a x) 
       have "x \<in> X" using that by (simp add: Tv_def a image_iff)
       then obtain s where "s \<in> S'" and "T.vert_connected (c s) (a x)"
         using \<open>\<Union>S' = X\<close> UnionE T.vert_connected_neighbors Te_def by blast
-      then show ?thesis  using T.vert_connected_neighbors T.vert_connected_trans Te_def a
-        by blast
+      then show ?thesis 
+        using T.vert_connected_neighbors T.vert_connected_trans Te_def a by blast
     qed
     then show "fin_connected_ulgraph Tv Te" using T.not_connected_set[of Tv ROOT] Tv_def
       by (unfold_locales) auto
@@ -195,7 +211,7 @@ lemma X3C_to_steiner_tree_complete:
   shows "(X, S) \<in> three_exact_cover"
 proof (cases "\<forall>C\<in>S. card C = 3")
   case True
-   let ?V = "(a ` X) \<union> {ROOT} \<union> (c ` S)"
+   let ?V = "{ROOT} \<union> (a ` X) \<union> (c ` S)"
    let ?E = "{{ROOT, c s} | s. s \<in> S} \<union> {{c s, a v} | s v. s \<in> S \<and> v \<in> s}"
    let ?R = "{ROOT} \<union> (a ` X)"
    let ?k = "4 * card X div 3"
@@ -223,6 +239,7 @@ proof (cases "\<forall>C\<in>S. card C = 3")
        then have "{c s,  a x} \<in> ?E" by blast
        then show "x \<in> X"  using G.wellformed_alt_snd by blast
      qed
+
      have "\<Union>S' \<subseteq> X"  using S'_def \<open>\<Union> S \<subseteq> X\<close> by blast 
      moreover have "X \<subseteq> \<Union> S'"
      proof(intro subsetI)
@@ -239,21 +256,22 @@ proof (cases "\<forall>C\<in>S. card C = 3")
        thus "x \<in> \<Union>S'"  using \<open>x \<in> s\<close> by blast
      qed
      ultimately show "\<Union> S' = X"  by blast
-     have "finite S'" by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> finite_UnionD)
-     have "Tv = ?R \<union> c ` S'" using sub.verts_ss \<open>?R\<subseteq>Tv\<close> S'_def  by auto
-     then have "card Tv = Suc (card (a ` X \<union> c ` S'))" by (simp add: \<open>finite X\<close> \<open>finite S'\<close> image_iff)
-     then have eq: "card Tv = Suc (card X + card S')"
-       by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> card_Un_disjnt disjnt_def disjoint_iff_not_equal  (* split *)
-           finite_UnionD,
-           intro Groups.add_mono_thms_linordered_semiring(4),
-           meson card_image inj_onI red_vertex.inject)
-     have "card Te \<le> 4* card X div 3" using \<open>(\<Sum>e \<in> Te. ?w e) \<le> ?k\<close>  by force
+
+
+     have "card Te \<le> 4*card X div 3" using \<open>(\<Sum>e \<in> Te. ?w e) \<le> ?k\<close>  by force
      then have "card Tv \<le> Suc(4* card X div 3)"  using Suc_le_mono T.card_V_card_E by presburger
-     then have "card S'  \<le> card X div 3" using eq by fastforce
+     moreover {
+       have "finite S'" by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> finite_UnionD)
+       have "Tv = ?R \<union> c ` S'" using sub.verts_ss \<open>?R\<subseteq>Tv\<close> S'_def by auto
+       then have "card Tv = Suc (card X + card S')" 
+         using \<open>finite S'\<close> \<open>finite X\<close> card_red_V by blast
+     }
+     ultimately have "card S' \<le> card X div 3" by fastforce
      moreover have "\<forall>C\<in>S'. card C = 3" using S'_def True by blast
-     ultimately have "sum card S' \<le> card X" by fastforce
-     then show "disjoint S'" 
-       using \<open>\<Union> S' = X\<close> \<open>finite X\<close> antisym card_Union_le_sum_card disjoint_if_sum_card_eq_card by blast
+     ultimately have "sum card S' = card (\<Union> S')" using card_Union_le_sum_card \<open>\<Union> S' = X\<close>
+       by (intro le_antisym) (force, fast)
+     then show "disjoint S'" using disjoint_if_sum_card_eq_card using \<open>\<Union> S' = X\<close> \<open>finite X\<close>
+       by blast
   qed  
   next
     case False

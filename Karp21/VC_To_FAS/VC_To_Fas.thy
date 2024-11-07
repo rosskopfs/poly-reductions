@@ -4,12 +4,18 @@ theory VC_To_Fas
            "../Three_Sat_To_Set_Cover" (* vertex cover is defined here *)
 begin
 
-(* helper lemmas *)         
+(* helper lemmas *)   
+
+lemma card_Collect_mem:
+  assumes  "inj_on f P"
+  shows    "card {f x|x. x \<in> P} = card P"
+  by (simp add: assms card_image setcompr_eq_image)
+(*
 lemma card_image_Collect:
   assumes  "inj_on f {x. P x} "
   shows    "card {f x|x. P x} = card {x. P x}"
   by (simp add: assms card_image setcompr_eq_image)
-
+*)
 lemma hd_distinct_not_in_tl:
   assumes "distinct xs"
   shows "hd xs \<notin> set (tl xs)"
@@ -76,7 +82,7 @@ proof -
     have "distinct (awalk_verts ?y es)"  using assms unfolding cycle_start_def by simp
     moreover then have "?y \<notin> set (tl (awalk_verts ?y es))" 
       using * hd_distinct_not_in_tl by fastforce
-     ultimately show ?thesis using **  by (simp add: distinct_tl)
+     ultimately show ?thesis using ** by (simp add: distinct_tl)
   qed
   then show ?thesis unfolding cycle_start_def 
     using calculation by fastforce
@@ -186,10 +192,10 @@ proof -
     then show "fin_digraph (H E)"  
       using finE wf_H unfolding H_def 
       by (intro wf_digraph.fin_digraphI) (auto simp add: Union_eq fin_f_doubleton_ss)
-     
-    have "card S = card {x. x \<in> V_C}" unfolding S_def
-      by (intro card_image_Collect, simp add: inj_on_def)  
-    then show "card S \<le> k"  using \<open>card V_C \<le> k\<close> by simp
+   
+    have "card S = card V_C" unfolding S_def
+      by (intro card_Collect_mem) (simp add: inj_on_def)
+    then show "card S \<le> k"  using \<open>card V_C \<le> k\<close>  by argo
 
     show "\<forall> p. pre_digraph.cycle (H E) p \<longrightarrow> (\<exists> e \<in> S. e \<in> set p)"
     proof (intro allI impI)

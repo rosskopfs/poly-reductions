@@ -23,7 +23,7 @@ definition XC_to_steiner_tree ::
 lemma total_w_is_sum_card:
   assumes "tree Tv Te"
   assumes "{x \<in> Te. \<exists>s. x = {ROOT, c s}} = {{ROOT, c s}|s. s \<in> S'}"
-  shows "(\<Sum>e \<in> Te. w_red e) =  sum card S'"
+  shows "(\<Sum>e \<in> Te. w_red e) = sum card S'"
 proof -
   interpret T: tree Tv Te using assms by auto
   have "(\<Sum>e \<in> Te. w_red e) = sum (\<lambda>e. card (THE s. e = {ROOT, c s})) {x \<in> Te. \<exists>s. x = {ROOT, c s}}" 
@@ -69,14 +69,13 @@ proof
     proof (intro card_E_treeI)
       show "card Tv = Suc (card Te)" 
       proof -
-        have peel: "finite A \<Longrightarrow> x \<notin> A 
-                    \<Longrightarrow> card A = (Suc k)  \<Longrightarrow> card (insert x A) = Suc (Suc k)" for x A k
+        have peel: "finite A \<Longrightarrow> (x::nat red_vertex set) \<notin> A  \<Longrightarrow> card A = (Suc k)  
+                \<Longrightarrow> card (insert x A) = Suc (Suc k)" for x A k
           using card_insert_disjoint[of A x] by fastforce
-        have peel2: "a \<noteq> b \<Longrightarrow> a \<notin> A2 \<Longrightarrow> a \<notin> (insert b A2)" for a b A2 
-          by simp
+        have peel2: "a \<noteq> b \<Longrightarrow> (a::nat red_vertex set) \<notin> A2 \<Longrightarrow> a \<notin> (insert b A2)" 
+          for a b A2  by simp
         have "card Tv = 6" unfolding Tv_def X_def S_def
-          by (code_simp)
-        
+          by (code_simp)        
         moreover have "card Te = 5" 
           unfolding Te_def numeral_nat
           by (intro peel peel2) (auto simp add: doubleton_eq_iff)
@@ -154,14 +153,12 @@ qed
  qed   
 
  
-(* cleanup *)
 theorem is_not_reduction_XC_to_steiner_tree:
   shows "\<not>is_reduction (XC_to_steiner_tree::nat set \<times> _  \<Rightarrow> _) exact_cover steiner_tree"
 proof
   assume "is_reduction (XC_to_steiner_tree::nat set \<times> _  \<Rightarrow> _) exact_cover steiner_tree"
   then show False using XC_to_steiner_tree_counterexample unfolding is_reduction_def by fast 
 qed
-
 
 
 end

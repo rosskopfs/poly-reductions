@@ -224,21 +224,19 @@ proof -
     (* every non_chosen job exceeds the deadline *)
     moreover have overdue: "(\<Sum>i<j+1. ?Ts!(?\<pi>!i)) > ?Ds!(?\<pi>!j)" 
                   if j_leq_len: "j < length ?Ts" and "j \<ge> ?n1" for j
-    proof -   
-      have "(\<Sum>i=?n1..<j+1. ?Ts!(?\<pi>!i)) > 0"
-      proof -
-        have "?Ts!(?\<pi>!i) > 0" if "i \<in> {?n1..j}" for i 
-        proof - 
-          from that have i_bound: "?n1 \<le> i \<and> i < length ?Ts" 
-            by (meson atLeastAtMost_iff j_leq_len order.strict_trans1)
-          then have "(?\<pi> ! i) \<in> set ?non_chosen" 
-            using nth_append_in_set[of "?chosen"] same_length by presburger
-          then have "xs!(?\<pi> ! i) = 0" by (simp add: xs_length)
-          thus ?thesis using i_bound nth_perm_less_less[OF pi_perm] zeros_chosen by blast
-        qed
-        thus ?thesis using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] that by fastforce
+    proof -
+      have "?Ts!(?\<pi>!i) > 0" if "i \<in> {?n1..j}" for i 
+      proof - 
+        from that have i_bound: "?n1 \<le> i \<and> i < length ?Ts" 
+          by (meson atLeastAtMost_iff j_leq_len order.strict_trans1)
+        then have "(?\<pi> ! i) \<in> set ?non_chosen" 
+          using nth_append_in_set[of "?chosen"] same_length by presburger
+        then have "xs!(?\<pi> ! i) = 0" by (simp add: xs_length)
+        thus ?thesis using i_bound nth_perm_less_less[OF pi_perm] zeros_chosen by blast
       qed
-      thus ?thesis  using sum_lt_split[of "?n1" "j + 1"] that(2) trans_le_add1
+      then have "(\<Sum>i=?n1..<j+1. ?Ts!(?\<pi>!i)) > 0"
+        using sum_pos[of "{?n1..j}" "\<lambda>i. ?Ts!(?\<pi>!i)"] that by fastforce
+      thus ?thesis using sum_lt_split[of "?n1" "j + 1"] that(2) trans_le_add1
         by (subst all_deadlines_B[OF that(1)], subst sum_chosen[symmetric], presburger)
     qed
     
@@ -289,10 +287,11 @@ next
     then show ?thesis by auto
   next
     case False
-    have "Max EARLY \<in> EARLY" using False 
-      by (metis EARLY_def Max_in finite_Collect_conjI finite_Collect_less_nat)
+    thm Max_in
+    have "Max EARLY \<in> EARLY" using False EARLY_def 
+      by (intro Max_in) fast 
     moreover then have "EARLY = {j. j \<le> Max EARLY}"
-      using C_increasing EARLY_def  by fastforce
+      using C_increasing EARLY_def by fastforce
     ultimately show ?thesis using C_increasing EARLY_def by (auto simp add: C_leq atMost_def)
   qed
 
