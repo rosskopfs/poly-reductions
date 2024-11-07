@@ -45,7 +45,7 @@ definition COUNTER_EXAMPLE   where
 
 lemma XC_to_steiner_tree_counterexample:
   shows  "XC_to_steiner_tree COUNTER_EXAMPLE \<in> steiner_tree"
-       and "COUNTER_EXAMPLE \<notin> exact_cover"
+  and    "COUNTER_EXAMPLE \<notin> exact_cover"
 proof
   define X where "X = {1::nat, 2 , 3}"
   define S where "S =  {{1::nat,2}, {2,3}}"
@@ -69,19 +69,22 @@ proof
     proof (intro card_E_treeI)
       show "card Tv = Suc (card Te)" 
       proof -
-        have peel: " finite A \<Longrightarrow> x \<notin> A 
+        have peel: "finite A \<Longrightarrow> x \<notin> A 
                     \<Longrightarrow> card A = (Suc k)  \<Longrightarrow> card (insert x A) = Suc (Suc k)" for x A k
           using card_insert_disjoint[of A x] by fastforce
         have peel2: "a \<noteq> b \<Longrightarrow> a \<notin> A2 \<Longrightarrow> a \<notin> (insert b A2)" for a b A2 
           by simp
         have "card Tv = 6" unfolding Tv_def X_def S_def
           by (code_simp)
-        moreover have "card Te = Suc (Suc (Suc (Suc (Suc 0))))" unfolding Te_def 
+        
+        moreover have "card Te = 5" 
+          unfolding Te_def numeral_nat
           by (intro peel peel2) (auto simp add: doubleton_eq_iff)
         ultimately show ?thesis by auto
       qed
 
-      have "T.vert_connected (a 2) (c {1, 2})"  using T.vert_connected_neighbors Te_def by blast
+      have "T.vert_connected (a 2) (c {1, 2})" 
+        using T.vert_connected_neighbors Te_def by blast
       moreover have "T.vert_connected (a 2) (c {2,3})" 
         using T.vert_connected_neighbors Te_def  by (simp add: insert_commute)
 
@@ -124,10 +127,10 @@ qed
     then have "S' \<in> {{}, {{1,2}}, {{2,3}}, {{1,2},{2,3}}}"
       unfolding S_def  by blast
     then consider
-      (empty)"S' = {}" |
+      (empty) "S' = {}" |
       (one12) "S' = {{1,2}}" |
       (one23) "S' = {{2,3}}" |
-      (both) "S' = {{1,2},{2,3}}"
+      (both)  "S' = {{1,2},{2,3}}"
       by blast
     then show False 
     proof (cases)
@@ -150,14 +153,13 @@ qed
    qed 
  qed   
 
-
+ 
+(* cleanup *)
 theorem is_not_reduction_XC_to_steiner_tree:
-  "\<not>is_reduction XC_to_steiner_tree exact_cover steiner_tree"
+  shows "\<not>is_reduction (XC_to_steiner_tree::nat set \<times> _  \<Rightarrow> _) exact_cover steiner_tree"
 proof
-  assume "is_reduction XC_to_steiner_tree exact_cover steiner_tree"
-  then have reduction_property: "\<forall>a. (a \<in> exact_cover) = (XC_to_steiner_tree a \<in> steiner_tree)"
-    unfolding is_reduction_def sorry (* why ? *)
-  then show False using XC_to_steiner_tree_counterexample  by blast
+  assume "is_reduction (XC_to_steiner_tree::nat set \<times> _  \<Rightarrow> _) exact_cover steiner_tree"
+  then show False using XC_to_steiner_tree_counterexample unfolding is_reduction_def by fast 
 qed
 
 

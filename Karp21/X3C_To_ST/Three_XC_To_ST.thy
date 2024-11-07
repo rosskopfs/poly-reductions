@@ -37,8 +37,8 @@ lemma example_not_in_steiner_tree:
   "NOT_STEINER_TREE_EXAMPLE \<notin> steiner_tree"
   unfolding NOT_STEINER_TREE_EXAMPLE_def 
 proof (rule ccontr)
-  assume "\<not> ({}, {}, \<lambda>e. 1, {ROOT}, 0) \<notin> steiner_tree"
-  then obtain Tv Te where "subgraph Tv Te {} {}" "{ROOT}  \<subseteq> Tv"  (* how/should? rmv warning *)
+  assume "\<not> ({}, {}, \<lambda>e. 1, {ROOT::'a red_vertex}, 0) \<notin> steiner_tree"
+  then obtain Tv Te  where "subgraph Tv Te {} {}" "{ROOT::'a red_vertex}  \<subseteq> Tv"  (* how/should? rmv warning *)
     unfolding steiner_tree_def by blast
   then show False using subgraph.verts_ss by fast
 qed
@@ -107,12 +107,12 @@ proof -
    have card_Te:"card Te = card S' + card X "
    proof -
      have dis: "disjoint {{{c s, a v} | v. v \<in> s} |s. s \<in> S'}"
-        unfolding disjoint_def by (auto simp add: doubleton_eq_iff)
+       unfolding disjoint_def by (auto simp add: doubleton_eq_iff)
      have  "card {{c s, a v} |s v. s \<in> S' \<and> v \<in> s} =
              card  ( \<Union>  {{{c s, a v} | v. v \<in> s} |s. s \<in> S'})"
-     by (intro arg_cong[where ?f = "card"]) auto
+       by (intro arg_cong[where ?f = "card"]) auto
      also have "... = sum card ((\<lambda>s. {{c s, a v} | v. v \<in> s})  ` S')"
-        using f card_Union_disjoint[OF dis] by (auto simp add: Setcompr_eq_image)
+       using f card_Union_disjoint[OF dis] by (auto simp add: Setcompr_eq_image)
      also have "... = sum card S'"
      proof - 
        have inj: "inj_on (\<lambda>s. {{c s, a v} | v. v \<in> s}) S'" 
@@ -125,30 +125,30 @@ proof -
          moreover then obtain u where "s = {c x, a u}" by blast
          moreover obtain v where "s = {c y, a v}" using eq s_def by blast
          ultimately show False  by (simp add: doubleton_eq_iff)
-        qed
-        show ?thesis 
-          by (subst sum.reindex[OF inj], intro sum.cong)
-             (auto simp add: Setcompr_eq_image[of "(\<lambda>v. {c s, a v})" for s]
-                             card_image doubleton_eq_iff inj_on_def)
+       qed
+       show ?thesis 
+         by (subst sum.reindex[OF inj], intro sum.cong)
+           (auto simp add: Setcompr_eq_image[of "(\<lambda>v. {c s, a v})" for s]
+             card_image doubleton_eq_iff inj_on_def)
      qed
      finally have "card Te = card {{ROOT, c s} | s. s \<in> S'} + card X"
        using T.fin_edges Te_def card_Un_disjoint[where ?B = "{{c s, a v} |s v. s \<in> S' \<and> v \<in> s}"]
-       sum_card_S' by auto
+         sum_card_S' by auto
      moreover have "card {{ROOT, c s} | s. s \<in> S'} = card S'"
        by (subst Setcompr_eq_image[of "\<lambda>s. {ROOT, c s}"],
            auto simp add: doubleton_eq_iff inj_on_def card_image)
      ultimately show "card Te = card S' + card X"   by presburger
-  qed
+    qed
   have istree: "tree Tv Te"
   proof (intro card_E_treeI)
     show "card Tv = Suc (card Te)" 
     proof -
       have "card Tv = Suc(card (a ` X \<union> c ` S'))"
         unfolding Tv_def  by (simp add: \<open>finite X\<close> fS image_iff)
-      moreover have "card (a ` X \<union> c ` S') =  card X + card  S'"
+      moreover have "card (a ` X \<union> c ` S') =  card X + card  S'" (* split in 2 lines + find name *)
         by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> card_Un_disjnt disjnt_def disjoint_iff_not_equal 
                       finite_UnionD,
-            intro Groups.add_mono_thms_linordered_semiring(4),
+            intro Groups.add_mono_thms_linordered_semiring,
             meson card_image inj_onI red_vertex.inject)
       ultimately show ?thesis using card_Te  by presburger
     qed
@@ -243,7 +243,7 @@ proof (cases "\<forall>C\<in>S. card C = 3")
      have "Tv = ?R \<union> c ` S'" using sub.verts_ss \<open>?R\<subseteq>Tv\<close> S'_def  by auto
      then have "card Tv = Suc (card (a ` X \<union> c ` S'))" by (simp add: \<open>finite X\<close> \<open>finite S'\<close> image_iff)
      then have eq: "card Tv = Suc (card X + card S')"
-       by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> card_Un_disjnt disjnt_def disjoint_iff_not_equal 
+       by (simp add: \<open>\<Union> S' = X\<close> \<open>finite X\<close> card_Un_disjnt disjnt_def disjoint_iff_not_equal  (* split *)
            finite_UnionD,
            intro Groups.add_mono_thms_linordered_semiring(4),
            meson card_image inj_onI red_vertex.inject)

@@ -10,7 +10,7 @@ section "The reduction from subset sum list to job sequence is polynomial"
 subsection "Algorithm Definition"
 
 definition mop_sum_list where
-  "mop_sum_list ws \<equiv> SPECT [sum_list ws \<mapsto> length ws]"
+  "mop_sum_list ws \<equiv> SPECT [sum_list ws \<mapsto>  length ws]"
                         
 definition mop_replicate_B  where
   "mop_replicate_B ws B \<equiv> SPECT [replicate (length ws) B \<mapsto> length ws]"
@@ -27,6 +27,7 @@ definition ss_list_to_job_seq_alg :: "(nat list \<times> nat) \<Rightarrow> (nat
       else RETURNT NOT_JOB_SEQ_EXAMPLE
     }"
 
+(* check phd thesis max *)
 subsection "Time and Space Definitions"
 
 definition ss_list_to_job_seq_time :: "nat \<Rightarrow> nat" where
@@ -55,6 +56,7 @@ lemma ss_list_to_job_seq_size:
             NOT_JOB_SEQ_EXAMPLE_def
   by force
 
+(* add intro rule *)
 theorem ss_list_to_job_seq_is_polyred:
   "ispolyred ss_list_to_job_seq_alg subset_sum_list job_sequencing size_ss_list size_job_seq"
   unfolding ispolyred_def
