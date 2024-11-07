@@ -158,8 +158,11 @@ ML_file \<open>hol_to_hol_nat_util.ML\<close>
 
 text \<open>Encoding of datatypes as natural numbers.
 Restrictions:
-(1) Recursive datatypes may not be nested inside of another datatype
-(2) recursive constructors must not be the first constructor (due to termination proofs).\<close>
+(1) (technical limitation) Recursive constructors must not be the first constructor (due to termination proofs).
+(2) Recursively used types must be compiled already (note: the function type cannot
+be made an instance of @{class compile_nat} and hence no higher-order arguments may be used).
+(3) As a consequence of (2): Recursive datatypes may not be nested inside of another datatype.
+\<close>
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>
