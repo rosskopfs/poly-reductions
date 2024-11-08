@@ -42,10 +42,10 @@ definition size_job_seq where
 subsection "Proofs"
 
 lemma ss_list_to_job_seq_refines:
-  "ss_list_to_job_seq_alg (ws, B) \<le> SPEC (\<lambda>y. y = ss_list_to_job_seq (ws, B)) (\<lambda>_. ss_list_to_job_seq_time (size_ss_list (ws, B)))"
-unfolding SPEC_def 
-unfolding ss_list_to_job_seq_alg_def ss_list_to_job_seq_def 
- mop_sum_list_def  mop_replicate_B_def
+  "ss_list_to_job_seq_alg P 
+\<le> SPEC (\<lambda>y. y = ss_list_to_job_seq P) (\<lambda>_. ss_list_to_job_seq_time (size_ss_list P))"
+unfolding SPEC_def ss_list_to_job_seq_alg_def ss_list_to_job_seq_def 
+          mop_sum_list_def  mop_replicate_B_def
 apply(rule T_specifies_I)
 apply(vcg' \<open>-\<close> rules: T_SPEC )
 by (auto simp add: ss_list_to_job_seq_time_def size_ss_list_def)
@@ -56,19 +56,14 @@ lemma ss_list_to_job_seq_size:
             NOT_JOB_SEQ_EXAMPLE_def
   by force
 
-(* add intro rule *)
+
 theorem ss_list_to_job_seq_is_polyred:
   "ispolyred ss_list_to_job_seq_alg subset_sum_list job_sequencing size_ss_list size_job_seq"
-  unfolding ispolyred_def
-  apply(rule exI[where x=ss_list_to_job_seq])
-  apply(rule exI[where x=ss_list_to_job_seq_time])
-  apply(rule exI[where x=ss_list_to_job_seq_space])
-  apply (safe)
-  subgoal by (simp add: ss_list_to_job_seq_refines)
-  subgoal by (simp add: ss_list_to_job_seq_size)
-  subgoal using poly_cmult poly_linear ss_list_to_job_seq_time_def by presburger
-  subgoal using ss_list_to_job_seq_space_def poly_add poly_cmult poly_const poly_linear
-    by presburger
-  using is_reduction_ss_list_to_job_seq by blast
+  using ss_list_to_job_seq_size  is_reduction_ss_list_to_job_seq  poly_cmult poly_linear
+        ss_list_to_job_seq_refines
+  by (intro ispolyredI[where ?time_f  = ss_list_to_job_seq_time  and
+                             ?space_f = ss_list_to_job_seq_space],
+      unfold ss_list_to_job_seq_time_def ss_list_to_job_seq_space_def) fast+
+ 
 
 end

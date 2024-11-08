@@ -10,6 +10,7 @@ lemma card_Collect_mem:
   assumes  "inj_on f P"
   shows    "card {f x|x. x \<in> P} = card P"
   by (simp add: assms card_image setcompr_eq_image)
+
 (*
 lemma card_image_Collect:
   assumes  "inj_on f {x. P x} "

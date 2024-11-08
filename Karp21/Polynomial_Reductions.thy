@@ -138,4 +138,15 @@ lemma ispolyred_trans:
     \<Longrightarrow> ispolyred (\<lambda>a. bind (c1 a) c2) A C ma mc"
   using ispolyredd_generalizes_ispolyred ispolyredd_trans by metis
 
+lemma ispolyredI:
+  assumes
+    "\<And>pi. alg pi \<le> SPEC (\<lambda>y. y = f pi) (\<lambda>_. time_f (size_from pi))"
+    "\<And>pi. size_to (f pi) \<le> space_f (size_from pi)"
+    "poly time_f"
+    "poly space_f"
+    "is_reduction f from to"
+  shows "ispolyred alg from to size_from size_to"
+  using assms ispolyred_def by blast
+  
+
 end
