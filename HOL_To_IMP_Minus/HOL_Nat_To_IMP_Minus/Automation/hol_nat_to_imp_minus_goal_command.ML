@@ -70,6 +70,12 @@ in
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let
+          (* 
+            Thm.instantiate' \<rightarrow> Theorem instantieren mit gewollten vars
+            Variable.importT \<rightarrow> Restliche vars instantieren
+            \<rightarrow> Thm.prems_of
+            *)
+          
           fun deVar (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
             | deVar T = T
           val stateT = \<^typ>\<open>AExp.state\<close>
@@ -85,9 +91,11 @@ in
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
           fun isTYPE (Type ("itself", _)) = true
             | isTYPE _ = false
-          val prems = (const_term
-            |> dest_Const_name |> (fn nm => nm ^ "_eq_unfolded")
-            |> Proof_Context.get_thm lthy |> Thm.prems_of
+          val prems = (const_term |> @{print}
+            |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy |> @{print}
+            |> Option.valOf
+            |> Thm.prems_of
+            (* FIXME *)
             |> map (HOLogic.dest_Trueprop #> strip_comb #> snd #> tl #> hd #> dest_Var #>> fst
                      ##> map_atyps deVar)
             |> map2 (fn reg => fn (nm,T) =>

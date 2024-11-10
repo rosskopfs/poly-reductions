@@ -5,6 +5,8 @@
 *)
 signature HOL_FUN_TO_HOL_NAT_FUN =
 sig
+  val mk_eq_unfolded_binding : term -> binding
+  val get_compiled_eq_unfolded : Proof.context -> Termtab.key -> thm option
 end
 
 structure HOL_Fun_To_HOL_Nat_Fun : HOL_FUN_TO_HOL_NAT_FUN =
@@ -14,6 +16,27 @@ structure HU = HOLogic
 structure TrpUtil = Transport_Util
 structure Trp = Transport
 open HOL_To_HOL_Nat_Util
+
+structure Compiled_Eq_Unfolded = Generic_Data(
+  type T = thm Symtab.table
+  val empty = Symtab.empty
+  val merge = Symtab.join (K fst)
+)
+fun get_compiled_eq_unfolded lthy =
+  (Symtab.lookup o Compiled_Eq_Unfolded.get o Context.Proof) lthy o (dest_Const_name)
+
+val compiled_const_from_eq_unfolded = Thm.concl_of
+      #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst
+      #> strip_comb #> fst
+
+fun update_compiled_eq_unfolded thm = Local_Theory.background_theory 
+     (Context.Theory
+     #> (compiled_const_from_eq_unfolded thm
+       |> dest_Const_name
+       |> rpair thm
+       |> Symtab.update_new
+       |> Compiled_Eq_Unfolded.map)
+     #> Context.the_theory)
 
 val mk_natT = map_fun_types (K natT)
 
@@ -134,7 +157,7 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
-    val _ = Thm.pretty_thm lthy thm |> Pretty.writeln
+    val lthy = update_compiled_eq_unfolded thm lthy
   in register_thms binding [thm] lthy end
 
 fun function_compile_nat_cmd f_eq lthy =
