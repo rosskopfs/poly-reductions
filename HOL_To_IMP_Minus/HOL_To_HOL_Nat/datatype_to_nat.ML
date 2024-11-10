@@ -126,19 +126,19 @@ fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
                  |> HOLogic.mk_Trueprop
     val binding = TrpUtil.add_suffix
         (TrpUtil.add_suffix Rel_nat_binding @{binding "destruct"})
-        (mk_ctr_binding ctr)
+        (term_binding ctr)
     fun reg_ctr_des_Rel_thm_arg (i, arg) =
       let
         fun replVars (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
           | replVars t = t
         fun destruct_tac ctxt =
-          auto_tac (ctxt addsimps ((@{thm "Rel_nat_iff_eq_natify"})::ctrs_nat_def::natify_simps))
+          asm_full_simp_tac (ctxt addsimps ((@{thm "Rel_nat_iff_eq_natify"})::ctrs_nat_def::natify_simps))
         val thm = mk_Rel_nat (fastype_of arg) $ dest_ctr_arg ctr_nargs (Free ("n", @{typ "nat"})) i $ arg
           |> HOLogic.mk_Trueprop
           |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ assump) o single
           |> map_types (map_atyps replVars)
           |> Syntax.check_prop lthy
-          |> (fn t => Goal.prove lthy ("n"::vars) [] t (#context #> (destruct_tac)))
+          |> (fn t => Goal.prove lthy ("n"::vars) [] t (#context #> HEADGOAL o (destruct_tac)))
       in
         thm
       end
@@ -165,13 +165,13 @@ fun register_fst_eq_case ctrs casex thms split lthy =
     val rhs = list_comb (casex |> map_types (K dummyT), map_index create_lambdas ctrs) $ Free ("xs", dummyT)
 
     fun fst_case_tac ctxt =
-      auto_tac (ctxt addsimps (@{thm "Rel_nat_iff_eq_natify"}::thms) |> Splitter.add_split split)
+      asm_full_simp_tac (ctxt addsimps (@{thm "Rel_nat_iff_eq_natify"}::thms) |> Splitter.add_split split)
     val thm = HOLogic.mk_eq (lhs, rhs)
               |> HOLogic.mk_Trueprop
               |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ prem) o single
               |> Syntax.check_prop lthy
               |> (fn t => Goal.prove lthy ["n","xs"] [] t
-                  (#context #> (fst_case_tac)))
+                  (#context #> HEADGOAL o (fst_case_tac)))
     val binding = type_suffix_binding @{binding "fst_nat_eq_if_Rel_nat"} typ
   in
     register_transfer_thms binding [thm] lthy
