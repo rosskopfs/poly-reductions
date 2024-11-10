@@ -70,11 +70,6 @@ in
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let
-          (* 
-            Thm.instantiate' \<rightarrow> Theorem instantieren mit gewollten vars
-            Variable.importT \<rightarrow> Restliche vars instantieren
-            \<rightarrow> Thm.prems_of
-            *)
           
           fun deVar (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
             | deVar T = T
@@ -91,18 +86,12 @@ in
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
           fun isTYPE (Type ("itself", _)) = true
             | isTYPE _ = false
-          val prems = (const_term |> @{print}
-            |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy |> @{print}
-            |> Option.valOf
-            |> Thm.prems_of
-            (* FIXME *)
-            |> map (HOLogic.dest_Trueprop #> strip_comb #> snd #> tl #> hd #> dest_Var #>> fst
-                     ##> map_atyps deVar)
-            |> map2 (fn reg => fn (nm,T) =>
-              Const ("HOL_To_HOL_Nat_Base.compile_nat_class.Rel_nat", @{typ "nat"} --> T --> @{typ "bool"})
-              $ arg_from_reg reg $ Free (nm, T)) (#arg_regs compiled_const)
-            |> map HOLogic.mk_Trueprop
-             handle ERROR _ => [])
+          val prems = const_term
+            |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy
+            |> Option.map (Thm.instantiate' [] (List.concat (map (fn x => [x |> arg_from_reg |> Thm.cterm_of lthy |> SOME, NONE]) (#arg_regs compiled_const)))
+                #> Variable.import_vars lthy
+                #> Thm.prems_of)
+            |> Option.getOpt o rpair []
 
           val TYPEs = const_term
             |> dest_Const_type |> strip_type |> fst

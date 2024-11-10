@@ -21,19 +21,6 @@ thm Pair_nat_def
 compile_nat Pair_nat_def
 HOL_To_IMP_Minus_correct Pair_nat by cook
 
-(*
-lemmas fst_nat_eq_unfolded = HTHN.fst_nat_eq_unfolded[simplified case_prod_nat_def]
-compile_nat fst_nat_eq_unfolded
-HOL_To_IMP_Minus_correct fst_nat
-  sorry
-
-
-lemmas snd_nat_eq_unfolded = HTHN.snd_nat_eq_unfolded[simplified case_prod_nat_def]
-compile_nat snd_nat_eq_unfolded
-HOL_To_IMP_Minus_correct snd_nat
-  sorry
-*)
-
 (* Problem: We have obtained an unconditional equation. However, we
 still have to prove it to be related to the original HOL function.
 TODO: how to prove the two functions to be related? Currently, we are
@@ -73,7 +60,7 @@ begin
 
 compile_nat Cons_nat_def
 HOL_To_IMP_Minus_correct Cons_nat by cook
-                  
+
 compile_nat Nil_nat_def
 HOL_To_IMP_Minus_correct Nil_nat by cook
 
@@ -84,7 +71,7 @@ compile_nat rev_acc_nat_eq
 
 thm natify_eq_eq
 (*automatically generated theorems*)
-thm Rel_nat_destruct_Cons_nat
+thm Rel_nat_destruct_Cons
 thm HOL_To_HOL_Nat_Basics.Rel_nat_list
 thm fst_nat_eq_if_Rel_nat_list
 
@@ -100,7 +87,12 @@ lemma check_first_nat_ccontradictionE':
   obtains "fst_nat n \<noteq> m" "k \<noteq> m"
   using assms by simp
 
-(* manual does not work directly as "x" and "xs" are not available *)
+(*
+Save reference to eq_unfolded in Symtab (\<rightarrow> under long name),
+When saving in Termtab the types are instantiated weirdly
+and the thm is not found
+*)
+
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
   sorry
 
