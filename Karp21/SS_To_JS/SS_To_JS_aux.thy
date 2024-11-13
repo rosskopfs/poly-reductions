@@ -3,7 +3,7 @@ theory  SS_To_JS_aux
 
 begin
 
-(* defintion from karp 1972 *)
+(* definition from Karp 1972 *)
 definition job_sequencing :: "((nat list) * (nat list) * (nat list) * nat) set" where
   "job_sequencing \<equiv> {(Ts, Ds, Ps, k). (length Ts = length Ds) \<and> (length Ts = length Ps) \<and>
     (\<exists>\<pi>::nat list. 

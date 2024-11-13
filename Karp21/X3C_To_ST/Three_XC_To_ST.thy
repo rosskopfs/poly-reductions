@@ -47,7 +47,7 @@ qed
 lemma disjoint_if_sum_card_eq_card:
   assumes "finite (\<Union>S)"
           "sum card S = card (\<Union>S)"
-        shows "disjoint S"
+  shows "disjoint S"
 proof (intro Disjoint_Sets.disjointI)
   fix a assume "a \<in> S"
   fix b assume "b \<in> S"
