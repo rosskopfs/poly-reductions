@@ -59,8 +59,8 @@ proof -
     using assms not_finite_existsD order_antisym_conv by fastforce
 qed
 
-(* needed for completness, 
-   prove that there is an inj from US to discrimnated union S *)
+(* needed for completeness, 
+   Proof: there is an inj from \<Union>S to discriminated union S *)
 lemma finite_discriminated_union_finite_union:
   assumes "finite {(x, s) | s x. s \<in> S \<and> x \<in> s}"
   shows "finite (\<Union>S)"
@@ -366,7 +366,7 @@ proof -
 qed
 
 
-section \<open>Completness\<close>
+section \<open>Completeness\<close>
 lemma xc_to_3dm_complete:
   assumes "xc_to_3dm (X, S) \<in> three_3d_matching"
   shows "(X, S) \<in> exact_cover"
@@ -394,6 +394,20 @@ proof -
     show "\<Union>S \<subseteq> X"  by (simp add: \<open>\<Union> S = X\<close>)
     show "finite X" using finite_discriminated_union_finite_union
                           \<open>finite ?T\<close> \<open>\<Union> S = X\<close> by blast
+
+    have "card X \<le> card ?T" 
+    proof -
+      have "finite s"  if "s \<in> S" for s
+        by (meson Sup_le_iff \<open>\<Union> S \<subseteq> X\<close> \<open>finite X\<close> finite_subset that)
+      then have "card ?T = sum card S"
+        using card_discriminated_union by blast
+      then show ?thesis  
+        using \<open>\<Union>S = X\<close> card_Union_le_sum_card le_trans by auto   
+     qed
+    then have inj_\<alpha>: "inj_on \<alpha> X \<and> \<alpha> ` X \<subseteq> ?T" 
+    unfolding \<alpha>_def using \<open>finite X\<close> \<open>finite ?T\<close>
+    by (intro someI_ex[of "\<lambda>f. inj_on f X \<and> f ` X \<subseteq> ?T"] inj_on_iff_card_le[THEN iffD2])
+    
     have "X \<subseteq>  \<Union>S'"
     proof 
       fix x assume "x \<in> X"
@@ -411,13 +425,32 @@ proof -
         ultimately have "fst ` M = ?T" 
           by (simp add: \<open>finite ?T\<close> card_subset_eq)
       }
-      ultimately have "\<alpha> x \<in> fst ` M" by blast
-      moreover have "\<alpha> x \<notin> fst ` ?U2" 
-        sorry
-      ultimately have "\<alpha> x \<in> fst ` ?U1"
-        sorry
-      oops
-
+      ultimately have  "\<alpha> x \<in> fst ` M" by blast
+      then have "\<alpha> x \<in> fst ` (M \<inter> ?U)"
+        using \<open>M \<subseteq> ?U\<close> by auto
+      moreover  have "\<alpha> x \<notin> fst ` ?U2" 
+        using image_iff \<open>x \<in> X\<close> by fastforce     
+      ultimately have "\<alpha> x \<in> fst ` (?U1 \<inter> M)"
+        by (smt (verit, ccfv_threshold) Int_iff Un_iff img_fst in_fst_imageE)
+        (* TODO: change smt *)
+      then obtain el where "el \<in> (?U1 \<inter> M)" and "fst el = \<alpha> x" and "el \<in> ?U1"
+        by (meson IntE fst_conv in_fst_imageE)
+      then obtain s' where "el = (\<alpha> x, (x,s'), (x,s'))"
+        by (auto, meson UnionI \<open>\<Union> S \<subseteq> X\<close> \<open>x \<in> X\<close> in_mono inj_\<alpha> inj_on_def)
+      moreover then have "s' \<in> S'"  unfolding S'_def 
+        using \<open>el \<in> ?U1 \<inter> M\<close> by blast
+      ultimately show "x \<in> \<Union>S'"  
+        using \<open>el \<in> ?U1\<close> by blast
+    qed
+    moreover have "disjoint S'" sorry
+    (* for all s \<in> S':
+            if x \<in> s then \<forall>u \<in> s. (\<alpha> u, (u,s),(u,s)) \<in> M
+            * since x was taken in ?U1 then it can't be taken from ?U2
+              but this makes us unable to get nxt((x,s)) on the 3rd row from ?U2
+              hence nxt((u,s)) is also in U1 and we can use induction to get 
+              the entire s.
+        now for two sets to be not disjoint they must share 
+        an element x *)              
       
         
         
