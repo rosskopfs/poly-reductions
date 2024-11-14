@@ -6,7 +6,8 @@
 signature HOL_FUN_TO_HOL_NAT_FUN =
 sig
   val mk_eq_unfolded_binding : term -> binding
-  val get_compiled_eq_unfolded : Proof.context -> Termtab.key -> thm option
+  val get_compiled_eq_unfolded : Proof.context -> term -> thm option
+  structure Compiled_Eq_Unfolded : GENERIC_DATA
 end
 
 structure HOL_Fun_To_HOL_Nat_Fun : HOL_FUN_TO_HOL_NAT_FUN =
@@ -18,25 +19,28 @@ structure Trp = Transport
 open HOL_To_HOL_Nat_Util
 
 structure Compiled_Eq_Unfolded = Generic_Data(
-  type T = thm Symtab.table
-  val empty = Symtab.empty
-  val merge = Symtab.join (K fst)
+  type T = thm Net.net
+  val empty = Net.empty
+  val merge = Net.merge (Thm.eq_thm)
 )
-fun get_compiled_eq_unfolded lthy =
-  (Symtab.lookup o Compiled_Eq_Unfolded.get o Context.Proof) lthy o (dest_Const_name)
+fun get_compiled_eq_unfolded ctxt term = 
+  case (Net.match_term o Compiled_Eq_Unfolded.get o Context.Proof) ctxt term of
+      [] => NONE
+    | [thm] => SOME thm
+    | thms => (Pretty.writeln (Pretty.block (map (Thm.pretty_thm ctxt) thms));
+        error "Found more than one compiled eq_unfolded thm")
 
 val compiled_const_from_eq_unfolded = Thm.concl_of
       #> HOLogic.dest_Trueprop #> HOLogic.dest_eq #> fst
-      #> strip_comb #> fst
+      #> Term.head_of
 
-fun update_compiled_eq_unfolded thm = Local_Theory.background_theory 
-     (Context.Theory
-     #> (compiled_const_from_eq_unfolded thm
-       |> dest_Const_name
-       |> rpair thm
-       |> Symtab.update_new
-       |> Compiled_Eq_Unfolded.map)
-     #> Context.the_theory)
+fun update_compiled_eq_unfolded thm =
+  let
+    val key = compiled_const_from_eq_unfolded thm
+  in
+    Compiled_Eq_Unfolded.map (Net.insert_term (K true) (key, thm))
+  end
+val update_compiled_eq_unfolded_attr = Thm.declaration_attribute update_compiled_eq_unfolded
 
 val mk_natT = map_fun_types (K natT)
 
@@ -157,8 +161,9 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
-    val lthy = update_compiled_eq_unfolded thm lthy
-  in register_thms binding [thm] lthy end
+    val attr = Attrib.internal (Binding.pos_of binding)
+      (Thm.declaration_attribute o (update_compiled_eq_unfolded oo Morphism.thm))
+  in register_attrs_thms [attr] binding [thm] lthy end
 
 fun function_compile_nat_cmd f_eq lthy =
   let
@@ -171,8 +176,7 @@ fun function_compile_nat_cmd f_eq lthy =
       |> register_transport_term f_with_sort
       |> register_related_transfer_thm f
     val (related_unfolded_thm, lthy) = register_related_unfolded_thm f_with_sort f_eq lthy
-    val lthy =
-      register_eq_unfolded_thm f_with_sort related_transfer_thm related_unfolded_thm lthy |> snd
+    val (_, lthy) = register_eq_unfolded_thm f_with_sort related_transfer_thm related_unfolded_thm lthy
   in lthy end
 
 val _ =
