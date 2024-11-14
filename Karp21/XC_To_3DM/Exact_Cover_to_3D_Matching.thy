@@ -14,7 +14,9 @@ lemma mod_SucE: " Suc a mod k = Suc b mod k
 lemma finite_Collect_mem:
   assumes  "inj_on f P" 
   shows    "finite {f x|x. x \<in> P} =  finite P"
-  by (simp add: Setcompr_eq_image assms finite_image_iff)
+  using assms  [[simproc add: finite_Collect]]
+  by (auto simp add: finite_image_iff)
+
 
 (* also in VC_to_Fas: move somewhere *)
 lemma card_Collect_mem:
@@ -76,6 +78,7 @@ section \<open>Definitions\<close>
 
 subsection \<open>3D Matching Problem\<close>
 
+(* distinct_components3 *)
 definition componentwise_different3 where
  "componentwise_different3 M1 M2 = (\<forall>(a, b, c) \<in> M1. 
                     \<forall>(a1, b1, c1) \<in> M2. 
@@ -114,6 +117,8 @@ definition "three_3d_matching \<equiv>
     {(U, T). U \<subseteq> (T \<times> T \<times> T) \<and> finite T \<and>
      (\<exists>M \<subseteq> U.  (card M = card T) \<and> self_componentwise_different3 M)}"
 
+(* more general version add *)
+
 lemma three_3d_matching_cert:
   assumes "M \<subseteq> U"
           "card M = card T"
@@ -129,7 +134,8 @@ lemma three_3d_matching_cert:
 section \<open>Reduction from Exact Cover to 3D Matching\<close>
 
 (* turns a set into a list *)
-
+thm Finite_Set.fold_def
+find_theorems name: Finite_Set (* check out *)
 definition to_list where
   "to_list s = (SOME l. set l = s \<and> distinct l)"
 
@@ -353,13 +359,7 @@ proof -
           by fastforce
         then show "x = y"  by (simp add: x'y'_def)
       qed
-
-(* how do I get rid of these *) 
-      thm inj_on_id
-      show "inj_on (\<lambda>x. x) A" by simp
-      show "inj_on (\<lambda>x. x) A" by simp
-      show "inj_on (\<lambda>x. x) ({(x, s) |s x. s \<in> S \<and> x \<in> s} - A)" by simp
-    qed
+    qed (simp_all)
   qed
   then show ?thesis  unfolding xc_to_3dm_def Let_def
     using \<alpha>_def by force
@@ -437,8 +437,8 @@ proof -
         by (meson IntE fst_conv in_fst_imageE)
       then obtain s' where "el = (\<alpha> x, (x,s'), (x,s'))"
         by (auto, meson UnionI \<open>\<Union> S \<subseteq> X\<close> \<open>x \<in> X\<close> in_mono inj_\<alpha> inj_on_def)
-      moreover then have "s' \<in> S'"  unfolding S'_def 
-        using \<open>el \<in> ?U1 \<inter> M\<close> by blast
+      moreover then have "s' \<in> S'" 
+        unfolding S'_def using \<open>el \<in> ?U1 \<inter> M\<close> by blast
       ultimately show "x \<in> \<Union>S'"  
         using \<open>el \<in> ?U1\<close> by blast
     qed
