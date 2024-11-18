@@ -6,6 +6,19 @@ section\<open>Set auxiliaries\<close>
 
 lemmas [trans] = finite_subset
 
+(** thesis Ala **)
+lemma card_Collect_mem:
+  assumes  "inj_on f P"
+  shows    "card {f x|x. x \<in> P} = card P"
+  by (simp add: assms card_image setcompr_eq_image)
+
+lemma finite_Collect_mem:
+  assumes  "inj_on f P" 
+  shows    "finite {f x|x. x \<in> P} = finite P"
+  using assms  [[simproc add: finite_Collect]]
+  by (auto simp add: finite_image_iff)
+(** **)
+
 lemma card_greater_1_contains_two_elements:
   assumes "card S > 1"
   shows "\<exists>u v. v \<in> S \<and> u \<in> S \<and> u \<noteq> v"
@@ -39,7 +52,7 @@ lemma finite_union_if_all_subset_fin:
   shows "finite (\<Union> S)"
   using assms by auto
 
-(* XXX Move to library *)
+(* XXX Move to library;  Groups_Big.card_Union_le_sum_card *)
 lemma card_UN_le_sum_cards:
   assumes "finite S"
   shows "card (\<Union> S) \<le> (\<Sum>S' \<in> S. card S')"
@@ -58,8 +71,10 @@ qed
 lemma card_union_if_all_subsets_card_i:
   assumes "\<forall>S' \<in> S. card S' \<le> i" "finite S"
   shows "card (\<Union> S) \<le> i * card S"
-  using assms
-  by (smt Groups.mult_ac(2) card_UN_le_sum_cards id_apply of_nat_eq_id order.trans sum_bounded_above)
+  using assms sum_bounded_above[of S card i]
+  by (intro card_Union_le_sum_card[THEN le_trans]) 
+     (simp add: mult.commute)
+ 
 
 lemma card_forall_for_elements:
   assumes "\<forall>j \<in> T. card {u. f u j} \<le> 1" "S = {{u. f u j}| j. j \<in> T}"

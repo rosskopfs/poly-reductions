@@ -3,22 +3,10 @@ theory VC_To_Fas
            FAS_Definition
            "../Three_Sat_To_Set_Cover" (* vertex cover is defined here *)
            NTIMES (* ntimes *)
+           "../../Lib/Auxiliaries/Set_Auxiliaries" (* card_Collect_mem *)
 begin
 
-
 (* helper lemmas *)   
-
-lemma card_Collect_mem:
-  assumes  "inj_on f P"
-  shows    "card {f x|x. x \<in> P} = card P"
-  by (simp add: assms card_image setcompr_eq_image)
-
-(*
-   lemma card_image_Collect:
-    assumes  "inj_on f {x. P x}"
-    shows    "card {f x|x. P x} = card {x. P x}"
-   by (simp add: assms card_image setcompr_eq_image)
-*)
 
 lemma hd_distinct_not_in_tl:
   assumes "distinct xs"
@@ -139,7 +127,7 @@ proof -
   moreover obtain e' es' where e'_def: "e'#es' = es@[e]"
     by (cases "es@[e]") auto
   ultimately show ?thesis 
-    by (intro exI[of _ v] exI[of _ e']  exI[of _ es'] conjI)
+    by (intro exI[of _ v] exI[of _ e'] exI[of _ es'] conjI)
        (meson list.set_intros | simp)+
 qed
 

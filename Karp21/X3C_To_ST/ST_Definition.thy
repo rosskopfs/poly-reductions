@@ -5,6 +5,7 @@ begin
 (* Definition of the Steiner Tree problem *)
 
 type_synonym 'a steiner_tree_tuple = "('a set \<times> 'a edge set \<times> ('a edge \<Rightarrow> nat) \<times> 'a set \<times> nat)" 
+
 definition steiner_tree :: "'a steiner_tree_tuple set" where
   "steiner_tree \<equiv> 
     { (V, E, w, R, k). fin_ulgraph V E \<and> R \<subseteq> V \<and>

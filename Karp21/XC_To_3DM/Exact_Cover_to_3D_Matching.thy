@@ -1,141 +1,29 @@
 theory Exact_Cover_to_3D_Matching
-  imports Main "HOL-Library.Disjoint_Sets" "List-Index.List_Index"
-          "../SAT_To_XC/XC_Definition"
+  imports Main 
+          "HOL-Library.Disjoint_Sets"
+          "List-Index.List_Index"
+          "../SAT_To_XC/XC_Definition" 
+          Three_DM_Definition
+          "../../Lib/Auxiliaries/discriminated_Union"
+          "../../Lib/Auxiliaries/Set_Auxiliaries" (* card_Collect_mem *)
         
 begin
 
+section \<open>Helper lemmas\<close>
 
-(* helper lemmas *)
+
 lemma mod_SucE: " Suc a mod k = Suc b mod k
                   \<Longrightarrow> a mod k = b mod k"
   using mod_Suc 
   by (metis nat.inject nat.simps(3))
 
-lemma finite_Collect_mem:
-  assumes  "inj_on f P" 
-  shows    "finite {f x|x. x \<in> P} =  finite P"
-  using assms  [[simproc add: finite_Collect]]
-  by (auto simp add: finite_image_iff)
+section \<open>Definition\<close>
 
 
-(* also in VC_to_Fas: move somewhere *)
-lemma card_Collect_mem:
-  assumes  "inj_on f P"
-  shows    "card {f x|x. x \<in> P} = card P"
-  by (simp add: assms card_image setcompr_eq_image)
+subsection "nxt"
+text "plays the role of \<pi> in karp72
+      it's a cyclic permutation of {(x,s)|x. \<in> s}"
 
-
-
-lemma card_discriminated_union:
-  assumes fin_s: "\<And>s. s \<in> S \<Longrightarrow> finite s" 
-  shows "card {(x, s) | s x. s \<in> S \<and> x \<in> s} = sum card S"
-proof -    
-  have dis: "disjoint {{(x,s) | x. x \<in> s} |s. s \<in> S}"
-    unfolding disjoint_def by auto
-  have  "card {(x,s) |s x. s \<in> S \<and> x \<in> s} =
-         card ( \<Union>  {{(x,s) | x. x \<in> s} |s. s \<in> S})"
-    by (intro arg_cong[where ?f = "card"]) auto
-  also have "... = sum card ((\<lambda>s. {(x,s) | x. x \<in> s})  ` S)"
-    using fin_s card_Union_disjoint[OF dis]
-    by (auto simp add: Setcompr_eq_image)
-  also have "... = sum card S"
-  proof - 
-    have inj: "inj_on (\<lambda>s. {(v,s) | v. v \<in> s}) S" 
-      unfolding inj_on_def by blast
-    show ?thesis       
-      by (subst sum.reindex[OF inj], intro sum.cong)
-         (auto simp add: Setcompr_eq_image card_image inj_on_def)
-  qed
-  finally show ?thesis .
-qed
-
-lemma finite_discriminated_union:
-  assumes "finite (\<Union>S)"
-  shows "finite {(x, s) | s x. s \<in> S \<and> x \<in> s}"
-proof -
-  have fin_s: "\<And>s. s \<in> S \<Longrightarrow> finite s"
-    using assms  by (meson Union_upper finite_subset)
-  then have "card {(x, s) | s x. s \<in> S \<and> x \<in> s}  \<ge> card (\<Union>S)"
-    by (simp add: card_Union_le_sum_card card_discriminated_union)
-  then show ?thesis 
-    using assms not_finite_existsD order_antisym_conv by fastforce
-qed
-
-(* needed for completeness, 
-   Proof: there is an inj from \<Union>S to discriminated union S *)
-lemma finite_discriminated_union_finite_union:
-  assumes "finite {(x, s) | s x. s \<in> S \<and> x \<in> s}"
-  shows "finite (\<Union>S)"
-  sorry 
-
-
-
-
-
-
-section \<open>Definitions\<close>
-
-
-subsection \<open>3D Matching Problem\<close>
-
-(* distinct_components3 *)
-definition componentwise_different3 where
- "componentwise_different3 M1 M2 = (\<forall>(a, b, c) \<in> M1. 
-                    \<forall>(a1, b1, c1) \<in> M2. 
-                     (a = a1 \<or> b = b1 \<or> c = c1) \<longrightarrow> (a, b, c) = (a1, b1, c1))"
-
-abbreviation self_componentwise_different3 where
- "self_componentwise_different3  M \<equiv> componentwise_different3 M M "
-
-lemma self_componentwise_different3_injI:
-  assumes "inj_on f S"
-          "inj_on g S"
-          "inj_on h S"
-  shows "self_componentwise_different3 {(f x, g x, h x)|x. x \<in> S}"
-  using assms unfolding inj_on_def componentwise_different3_def
-  by blast
-
-lemma self_componentwise_different3_unionI:
-  assumes "self_componentwise_different3 M1"
-          "self_componentwise_different3 M2"
-          "componentwise_different3 M1 M2"       
-  shows "self_componentwise_different3 (M1 \<union> M2)"
-  using assms unfolding inj_on_def componentwise_different3_def
-  by auto (* auto very slow *)
-
-lemma componentwise_different3I:
-  assumes "\<And> a b c a1 b1 c1.
-            (a,b,c) \<in> M1 \<Longrightarrow>
-            (a1,b1,c1) \<in> M2 \<Longrightarrow>
-            (a=a1 \<or> b=b1 \<or> c=c1) \<Longrightarrow> ((a,b,c) = (a1,b1,c1))"
-  shows "componentwise_different3  M1 M2"
-  using assms unfolding componentwise_different3_def
-  by blast
-        
-
-definition "three_3d_matching \<equiv> 
-    {(U, T). U \<subseteq> (T \<times> T \<times> T) \<and> finite T \<and>
-     (\<exists>M \<subseteq> U.  (card M = card T) \<and> self_componentwise_different3 M)}"
-
-(* more general version add *)
-
-lemma three_3d_matching_cert:
-  assumes "M \<subseteq> U"
-          "card M = card T"
-          "U \<subseteq> (T \<times> T \<times> T)"
-          "finite T"
-          "self_componentwise_different3 M"
-  shows "(U,T) \<in> three_3d_matching"
-  unfolding three_3d_matching_def using assms
-  by blast
-
-
-
-section \<open>Reduction from Exact Cover to 3D Matching\<close>
-
-(* turns a set into a list *)
-thm Finite_Set.fold_def
-find_theorems name: Finite_Set (* check out *)
 definition to_list where
   "to_list s = (SOME l. set l = s \<and> distinct l)"
 
@@ -145,59 +33,141 @@ lemma to_list_distinct:
   unfolding to_list_def using finite_distinct_list[OF assms]
   by (intro someI_ex[of "\<lambda>l.  set l = s \<and> distinct l"])
 
-(* gets the next element in an arbitrary but fixed order *)
 
+definition nxtk where 
+"nxtk k  = (\<lambda>(x, s). (let l = to_list s in
+                   l!(((index l x) + k) mod (length l)), s))"
 definition nxt where 
-"nxt = (\<lambda>(x, s). ((let l = to_list s in
-                   l!((Suc (index l x)) mod (length l)) ), s))"
+"nxt = nxtk 1"
+
+
+lemma nxt_nxtk:
+  assumes "x \<in> s" "finite s"
+  shows "nxt ((nxtk k) (x,s)) = nxtk (Suc k) (x,s)"
+  using assms to_list_distinct[OF \<open>finite s\<close>]  mod_Suc_eq
+        mod_less_divisor[of "length (to_list s)",
+        THEN index_nth_id[of "to_list s", rotated]]
+  unfolding nxtk_def nxt_def Let_def
+  by (cases "0 < length (to_list s)") auto
 
 lemma nxt_el:
   assumes "x \<in> s" "finite s"
   shows "\<exists>x'. nxt (x,s) = (x',s) \<and> x' \<in> s"
-  unfolding nxt_def Let_def
+  unfolding nxt_def Let_def nxtk_def
   using assms to_list_distinct[OF \<open>finite s\<close>] 
         mod_less_divisor[THEN nth_mem, of "to_list s"]
   by (cases "length (to_list s) > 0") force+
 
 
+lemma nxtk_induct : 
+  assumes f: "finite s" and el:"x \<in> s"
+     and "P (nxtk 0 (x, s))"
+     and "\<And>x. P (x,s) \<Longrightarrow> P (nxt (x,s))"
+  shows "P (nxtk k (x,s))"
+  using assms nxt_nxtk[OF el f, symmetric]
+  by (induction k)  (auto simp add: nxtk_def)
+
+
+lemma nxt_induct: 
+  assumes "finite s" "x \<in> s"
+          "P (x,s)"
+          "\<And>x. P (x,s) \<Longrightarrow> P (nxt (x,s))"
+  shows  "\<forall>y \<in> s. P (y,s)"
+proof (rule ballI)
+  fix y 
+  assume "y \<in> s"
+  let ?l = "to_list s"
+  let ?st = "index ?l x"
+  let ?fin = "index ?l y"
+  let ?d = "(length ?l - ?st) + ?fin"
+  have "(?st + ?d) mod (length ?l) = ?fin mod (length ?l)"
+    using index_le_size[of ?l x] index_le_size[of ?l y] by simp
+  then have "(y,s) = nxtk ?d (x,s)"
+    by (simp add: \<open>y \<in> s\<close> assms(1) nxtk_def to_list_distinct)
+  moreover have "P (nxtk ?d (x,s))"  
+    by (induction rule: nxtk_induct)
+       (auto simp add: assms nxtk_def to_list_distinct) 
+  ultimately show "P (y, s)" by auto
+qed
+
+lemma nxt_inj_on_discriminated_Union:
+  assumes "finite (\<Uplus>S)"
+  shows "inj_on nxt (\<Uplus>S)"
+proof (intro inj_on_diff inj_onI)
+  fix x y
+  assume "x \<in> (\<Uplus>S)" "y \<in> (\<Uplus>S)" "nxt x = nxt y"
+  then obtain x' y' s where x'y'_def:"x = (x',s)" "y = (y',s)"
+    unfolding nxt_def nxtk_def by fastforce
+  then have "finite s"  
+    using Union_upper \<open>y \<in> (\<Uplus>S)\<close> assms finite_subset 
+    finite_Union_if_finite_discriminated_Union by fastforce
+  let ?l = "to_list s"
+  have "?l ! ((index ?l x' + 1) mod length ?l) =
+        ?l ! ((index ?l y' + 1) mod length ?l) "
+    using \<open>nxt x = nxt y\<close>  unfolding nxt_def nxtk_def Let_def x'y'_def
+    by fastforce
+  then have "(Suc (index ?l x')) mod length ?l = (Suc (index ?l y')) mod length ?l"
+    using to_list_distinct[OF \<open>finite s\<close>]
+    by (cases ?l) (simp add: nth_eq_iff_index_eq)+
+  then have "index ?l x'  mod length ?l = index ?l y'  mod length ?l" 
+    by (rule mod_SucE)
+  then show "x = y" 
+    using \<open>finite s\<close> \<open>x \<in> (\<Uplus>S)\<close> \<open>y \<in> (\<Uplus>S)\<close> to_list_distinct x'y'_def
+    by fastforce
+qed
+
+
+subsection \<open>The reduction\<close>
+
+definition MALFORMED where
+  "MALFORMED = ({(undefined,undefined,undefined)},{})"
+
+lemma MALFROMED_not_in_3DM:
+  "MALFORMED \<notin> three_d_matching"
+  unfolding MALFORMED_def three_d_matching_def
+  by blast
+  
 definition xc_to_3dm where
-  "xc_to_3dm = (\<lambda>(X, S). 
+  "xc_to_3dm = (\<lambda>(X, S). if \<Union>S = X then
     let 
-      T = {(x, s) | s x. s \<in> S \<and> x \<in> s};
+      T = \<Uplus>S;
       \<alpha> = (SOME f. inj_on f X \<and> f ` X \<subseteq> T );
       U1 = { (\<alpha> x, (x, s), (x, s)) | s x. s \<in> S \<and> x \<in> s };
       U2 = \<Union> { {(\<beta>, (x,s), nxt (x,s)) | s x. s \<in> S \<and> x \<in> s } 
                 | \<beta>. \<beta> \<notin> (\<alpha> ` X) \<and> \<beta> \<in> T }
     in 
-      (U1 \<union> U2, T)
+      (U1 \<union> U2, T) else MALFORMED
   )"
 
 
-  
-section \<open>Soundness\<close>
+section \<open>Proof\<close> 
+
+subsection \<open>Soundness\<close>
 
 lemma xc_to_3dm_sound:
   assumes "(X, S) \<in> exact_cover"
-  shows "xc_to_3dm (X, S) \<in> three_3d_matching"
+  shows "xc_to_3dm (X, S) \<in> three_d_matching"
 proof -
   from assms obtain S' where
     "finite X" "\<Union>S \<subseteq> X" "S' \<subseteq> S" "\<Union>S' = X" "pairwise disjnt S'"
     unfolding exact_cover_def by blast
 
-  have "finite (\<Union>S)"  using \<open>\<Union> S \<subseteq> X\<close> \<open>finite X\<close> infinite_super by blast
-  then have "finite S"  using finite_UnionD by blast
+  have "finite (\<Union>S)" 
+    using \<open>\<Union> S \<subseteq> X\<close> \<open>finite X\<close> infinite_super by blast
+  then have "finite S"  
+    using finite_UnionD by blast
   have fin_s: "s \<in> S \<Longrightarrow> finite s" for s
     by (meson Sup_upper \<open>finite (\<Union> S)\<close> infinite_super)
 
-  let ?T = "{(x, s) | s x. s \<in> S \<and> x \<in> s}"
+  let ?T = "\<Uplus>S"
   have fin_T: "finite ?T"
-     using \<open>finite (\<Union> S)\<close> finite_discriminated_union by blast
+     using \<open>finite (\<Union> S)\<close> finite_discriminated_Union by blast
  
   define \<alpha> where "\<alpha> = (SOME f.  inj_on f X \<and> f ` X \<subseteq> ?T)"
   have "card X \<le> card ?T" 
   proof -
     have "card ?T = sum card S"
-      using card_discriminated_union fin_s by blast
+      using card_discriminated_Union fin_s by blast
     also have "\<dots> \<ge> sum card S'" using \<open>finite S\<close> \<open>S' \<subseteq> S\<close>
       by (intro sum_mono2) auto
     finally show ?thesis  
@@ -213,9 +183,7 @@ proof -
                 | s x. s \<in> S \<and> x \<in> s } 
                 | \<beta>. \<beta> \<notin> (\<alpha> ` X) \<and> \<beta> \<in> ?T }"
   let ?U = "?U1 \<union> ?U2"
-
   
-
   define A where "A = {(x, s) | s x. s \<in> S' \<and> x \<in> s}"
   have "A \<subseteq> ?T" unfolding A_def using \<open>S' \<subseteq> S\<close> by blast
   then have "finite A" using fin_T rev_finite_subset by blast
@@ -230,7 +198,7 @@ proof -
       have fin_s': "s \<in> S' \<Longrightarrow> finite s" for s
         using \<open>S' \<subseteq> S\<close> fin_s by blast
       then have "card  A = sum card S'"
-        using A_def card_discriminated_union by blast
+        using A_def card_discriminated_Union by blast
       also have "... = card (\<Union>S')"
         using fin_s' \<open>disjoint S'\<close>
         by (intro card_Union_disjoint[symmetric]) auto
@@ -251,8 +219,8 @@ proof -
   let ?M2 = "{ (\<beta> u, u, nxt u)|u. u \<in> (?T - A)}"
   let ?M = "?M1 \<union> ?M2"
   
-  have "(?U, ?T) \<in> three_3d_matching"
-  proof (intro three_3d_matching_cert[of ?M])
+  have "(?U, ?T) \<in> three_d_matching"
+  proof (intro three_d_matching_cert[of ?M])
     show "finite ?T" using fin_T.
     show  "?U \<subseteq> ?T \<times> ?T \<times> ?T"  using inj_\<alpha> \<open>\<Union>S \<subseteq> X\<close> nxt_el fin_s
       by (auto, blast, meson) 
@@ -297,18 +265,19 @@ proof -
       ultimately show ?thesis by argo
     qed
 
-    show  "self_componentwise_different3 ?M" using inj_on_id
-    proof (intro self_componentwise_different3_unionI 
-                 self_componentwise_different3_injI)
-      show "componentwise_different3 ?M1 ?M2"
-      proof(intro componentwise_different3I) 
+    show  "self_distinct_components3 ?M" using inj_on_id
+    proof (intro self_distinct_components3_unionI 
+                 self_distinct_components3_injI)
+      show "distinct_components3 ?M1 ?M2"
+      proof(intro distinct_components3I) 
         fix a b c a1 b1 c1
         assume in_M1: "(a, b, c) \<in> ?M1"
         assume in_M2: "(a1, b1, c1) \<in> ?M2"
         have "b \<noteq> b1" using in_M1 in_M2 by blast
         moreover {
           have "c1 = nxt b1" using in_M2 by blast
-          then have "snd c1 = snd b1" by (simp add: case_prod_unfold nxt_def)  
+          then have "snd c1 = snd b1" 
+            by (simp add: case_prod_unfold nxt_def nxtk_def)
           then have "snd c1 \<noteq> snd b" 
             using \<open>b \<noteq> b1\<close>  A_def in_M1 in_M2 by force
           then have "c \<noteq> c1" using in_M1 by blast
@@ -338,39 +307,27 @@ proof -
           by (meson "*" UnionI \<open>S' \<subseteq> S\<close> \<open>\<Union> S \<subseteq> X\<close> in_mono inj_\<alpha> inj_on_def)
       qed
       show "inj_on \<beta> (?T - A)" using \<beta>_bij bij_betw_def by blast
-      show "inj_on nxt (?T-A)"
-      proof (intro inj_on_diff inj_onI)  
-        fix x y
-        assume "x \<in>?T" "y \<in> ?T" "nxt x = nxt y"
-        then obtain x' y' s where x'y'_def:"x = (x',s)" "y = (y',s)"
-          unfolding nxt_def by fastforce
-        then have "finite s"  using Union_upper \<open>finite (\<Union> S)\<close> \<open>y \<in> ?T\<close> infinite_super
-          by fastforce
-        let ?l = "to_list s"
-        have "?l ! ((Suc (index ?l x')) mod length ?l) =
-            ?l ! ((Suc (index ?l y')) mod length ?l) "
-          using \<open>nxt x = nxt y\<close> x'y'_def unfolding nxt_def Let_def by fast
-        then have "(Suc (index ?l x')) mod length ?l = (Suc (index ?l y')) mod length ?l"
-          using to_list_distinct[OF \<open>finite s\<close>]
-          by (cases ?l) (simp add: nth_eq_iff_index_eq)+
-        then have "index ?l x'  mod length ?l = index ?l y'  mod length ?l" 
-          by (rule mod_SucE)
-        then have "x' = y'"  using \<open>finite s\<close> \<open>x \<in> ?T\<close> \<open>y \<in> ?T\<close> to_list_distinct x'y'_def
-          by fastforce
-        then show "x = y"  by (simp add: x'y'_def)
-      qed
+      show "inj_on nxt (?T - A)"
+        using nxt_inj_on_discriminated_Union fin_T
+        by (intro inj_on_diff) 
     qed (simp_all)
   qed
-  then show ?thesis  unfolding xc_to_3dm_def Let_def
-    using \<alpha>_def by force
+  moreover have "\<Union>S = X" 
+    using \<open>S' \<subseteq> S\<close> \<open>\<Union> S \<subseteq> X\<close> \<open>\<Union> S' = X\<close> by blast
+  ultimately show ?thesis  unfolding xc_to_3dm_def Let_def
+    using \<alpha>_def by simp
 qed
 
 
-section \<open>Completeness\<close>
+
+
+subsection \<open>Completeness\<close>
+
 lemma xc_to_3dm_complete:
-  assumes "xc_to_3dm (X, S) \<in> three_3d_matching"
+  assumes "xc_to_3dm (X, S) \<in> three_d_matching"
   shows "(X, S) \<in> exact_cover"
-proof -
+proof (cases "\<Union>S = X")
+  case True
   let ?T = "{(x, s) | s x. s \<in> S \<and> x \<in> s}"
   define \<alpha> where "\<alpha> = (SOME f.  inj_on f X \<and> f ` X \<subseteq> ?T)"
   let ?U1 = "{ (\<alpha> x, (x, s), (x, s)) | s x. s \<in> S \<and> x \<in> s }"
@@ -378,87 +335,142 @@ proof -
                 | s x. s \<in> S \<and> x \<in> s } 
                 | \<beta>. \<beta> \<notin> (\<alpha> ` X) \<and> \<beta> \<in> ?T }"
   let ?U = "?U1 \<union> ?U2"
- 
-  obtain M where "M\<subseteq>?U" "card M = card ?T"  "self_componentwise_different3 M"
-                 "finite ?T" "?U \<subseteq> ?T \<times> ?T \<times> ?T"
-    using assms unfolding three_3d_matching_def xc_to_3dm_def Let_def \<alpha>_def
-    by auto
 
+  obtain M where "M\<subseteq>?U" "card M = card ?T"  "self_distinct_components3 M"
+    "finite ?T" "?U \<subseteq> ?T \<times> ?T \<times> ?T"
+    using assms True unfolding three_d_matching_def xc_to_3dm_def Let_def \<alpha>_def
+    by auto
+  define f where "f = (\<lambda>(x, (s::'a set)). \<alpha> x)"
   define S' where "S' = {s |s x. (\<alpha> x, (x, s), (x, s)) \<in> (?U1 \<inter> M)}"
-                                 
-  
-  have "(X, S) \<in> exact_cover"
+
+
+  show "(X, S) \<in> exact_cover"
   proof (intro exact_cover_I[of S'])
     show "S' \<subseteq> S"  unfolding S'_def by blast
-    have "\<Union>S = X" sorry (* force it later by changing the reduction*)
-    show "\<Union>S \<subseteq> X"  by (simp add: \<open>\<Union> S = X\<close>)
-    show "finite X" using finite_discriminated_union_finite_union
-                          \<open>finite ?T\<close> \<open>\<Union> S = X\<close> by blast
+    show "\<Union>S \<subseteq> X"  by (simp add: True)
+    show "finite X" 
+      using finite_Union_if_finite_discriminated_Union
+            \<open>finite ?T\<close> \<open>\<Union>S = X\<close> by blast
 
     have "card X \<le> card ?T" 
     proof -
       have "finite s"  if "s \<in> S" for s
         by (meson Sup_le_iff \<open>\<Union> S \<subseteq> X\<close> \<open>finite X\<close> finite_subset that)
       then have "card ?T = sum card S"
-        using card_discriminated_union by blast
+        using card_discriminated_Union by blast
       then show ?thesis  
         using \<open>\<Union>S = X\<close> card_Union_le_sum_card le_trans by auto   
-     qed
+    qed
     then have inj_\<alpha>: "inj_on \<alpha> X \<and> \<alpha> ` X \<subseteq> ?T" 
-    unfolding \<alpha>_def using \<open>finite X\<close> \<open>finite ?T\<close>
-    by (intro someI_ex[of "\<lambda>f. inj_on f X \<and> f ` X \<subseteq> ?T"] inj_on_iff_card_le[THEN iffD2])
-    
+      unfolding \<alpha>_def using \<open>finite X\<close> \<open>finite ?T\<close>
+      by (intro someI_ex[of "\<lambda>f. inj_on f X \<and> f ` X \<subseteq> ?T"]
+          inj_on_iff_card_le[THEN iffD2])
+
+    have "M \<subseteq> ?T \<times> ?T \<times> ?T"
+      using \<open>M \<subseteq> ?U\<close> \<open>?U \<subseteq> ?T \<times> ?T \<times> ?T\<close> 
+      by order 
+    have M_decomp: "M = (?U1 \<inter> M) \<union> (?U2 \<inter> M)" using \<open>M \<subseteq>?U\<close>
+      by auto
+
     have "X \<subseteq>  \<Union>S'"
     proof 
       fix x assume "x \<in> X"
       then obtain s where "x \<in> s" and "s \<in> S" 
         using \<open>\<Union>S = X\<close> by fast
-      then have "\<alpha> x \<in> ?T" using \<open>?U \<subseteq> ?T \<times> ?T \<times> ?T\<close>
-        by blast
-      moreover {
-        have "fst ` M \<subseteq> ?T" using \<open>M \<subseteq> ?U\<close> \<open>?U \<subseteq> ?T \<times> ?T \<times> ?T\<close>
-          by fastforce 
-        moreover have "card (fst ` M) = card ?T" 
-          using \<open>self_componentwise_different3 M\<close> \<open>card M = card ?T\<close>
-          by (intro card_image[THEN trans]) 
-            (auto simp add: inj_on_def componentwise_different3_def fst_def)
-        ultimately have "fst ` M = ?T" 
-          by (simp add: \<open>finite ?T\<close> card_subset_eq)
-      }
-      ultimately have  "\<alpha> x \<in> fst ` M" by blast
-      then have "\<alpha> x \<in> fst ` (M \<inter> ?U)"
-        using \<open>M \<subseteq> ?U\<close> by auto
-      moreover  have "\<alpha> x \<notin> fst ` ?U2" 
-        using image_iff \<open>x \<in> X\<close> by fastforce     
-      ultimately have "\<alpha> x \<in> fst ` (?U1 \<inter> M)"
-        by (smt (verit, ccfv_threshold) Int_iff Un_iff img_fst in_fst_imageE)
-        (* TODO: change smt *)
+      then have "\<alpha> x \<in> ?T"  using \<open>x \<in> X\<close> inj_\<alpha> by blast
+      moreover have "fst ` M = ?T" 
+        using \<open>card M = card ?T\<close> \<open>self_distinct_components3 M\<close>
+              \<open>finite ?T\<close> \<open>M \<subseteq> ?T \<times> ?T \<times> ?T\<close> 
+        by (intro fstM_T) 
+      ultimately have  "\<alpha> x \<in> fst ` M" by blast 
+      moreover have "\<alpha> x \<notin> fst ` (?U2 \<inter> M)" 
+        using image_iff \<open>x \<in> X\<close> by fastforce  
+      moreover have  "fst ` M  = fst ` (?U1 \<inter> M) \<union>  fst ` (?U2 \<inter> M)" 
+        by (metis M_decomp image_Un)
+      ultimately have "\<alpha> x \<in> fst ` (?U1 \<inter> M)"  by simp
       then obtain el where "el \<in> (?U1 \<inter> M)" and "fst el = \<alpha> x" and "el \<in> ?U1"
         by (meson IntE fst_conv in_fst_imageE)
       then obtain s' where "el = (\<alpha> x, (x,s'), (x,s'))"
         by (auto, meson UnionI \<open>\<Union> S \<subseteq> X\<close> \<open>x \<in> X\<close> in_mono inj_\<alpha> inj_on_def)
       moreover then have "s' \<in> S'" 
-        unfolding S'_def using \<open>el \<in> ?U1 \<inter> M\<close> by blast
+        using S'_def \<open>el \<in> ?U1 \<inter> M\<close> by blast
       ultimately show "x \<in> \<Union>S'"  
         using \<open>el \<in> ?U1\<close> by blast
     qed
-    moreover have "disjoint S'" sorry
-    (* for all s \<in> S':
-            if x \<in> s then \<forall>u \<in> s. (\<alpha> u, (u,s),(u,s)) \<in> M
-            * since x was taken in ?U1 then it can't be taken from ?U2
-              but this makes us unable to get nxt((x,s)) on the 3rd row from ?U2
-              hence nxt((u,s)) is also in U1 and we can use induction to get 
-              the entire s.
-        now for two sets to be not disjoint they must share 
-        an element x *)              
-      
-        
-        
-      
-        
+    moreover{
 
+      have next_in: "(f (nxt (y,s)), nxt (y, s), nxt (y, s)) \<in> (?U1 \<inter> M)"
+        if  "y \<in> s" "(f (y,s), (y, s), (y, s)) \<in> (?U1 \<inter> M)" for y s
+      proof (cases  "nxt (y,s) \<noteq> (y,s)")
+        case True
+        have in_T: "(y,s) \<in> ?T" using that by auto
+        have "(\<beta>, (y,s), nxt (y,s)) \<notin> (?U2 \<inter> M)" for \<beta>
+          using that True \<open>self_distinct_components3 M\<close> 
+          unfolding distinct_components3_def
+          by fastforce
+        then have "nxt (y,s) \<notin> (t3_thrd ` (?U2 \<inter> M))" 
+          using inj_onD[OF nxt_inj_on_discriminated_Union[OF \<open>finite ?T\<close>] _ in_T]  
+          by (auto, blast)
+        moreover have "nxt (y,s) \<in> (t3_thrd ` M)"
+        proof -
+          have "nxt (y,s) \<in> ?T" 
+            using Union_upper \<open>\<Union> S = X\<close> \<open>finite X\<close> finite_subset in_T nxt_el 
+            by fastforce
+          moreover have "t3_thrd ` M = ?T" 
+            using \<open>card M = card ?T\<close> \<open>self_distinct_components3 M\<close>
+              \<open>finite ?T\<close> \<open>M \<subseteq> ?T \<times> ?T \<times> ?T\<close> 
+            by (intro thrdM_T) 
+          ultimately show ?thesis by blast
+        qed
+        ultimately have "nxt (y,s) \<in> (t3_thrd ` (?U1 \<inter> M))" 
+          using image_Un[of t3_thrd "?U1 \<inter> M" "?U2 \<inter> M"] M_decomp  
+          by auto
+        then show ?thesis unfolding f_def by force
+      qed (use that in force)           
 
-     
+      then have one_in_all_in: "\<forall>x \<in> s. (f (x,s), (x, s), (x, s)) \<in> (?U1 \<inter> M)"
+        if  "y \<in> s" "(f (y,s), (y, s), (y, s)) \<in> (?U1 \<inter> M)" for y s
+        using Union_upper \<open>\<Union> S = X\<close> \<open>finite X\<close> finite_subset that     
+        by (intro nxt_induct[of s y]) fastforce+                
+
+      have "disjoint S'" 
+      proof (intro disjointI, rule ccontr) 
+        fix a b
+        assume "a \<in> S'" and "b \<in> S'" and "a \<noteq> b" and "a \<inter> b \<noteq> {}"
+        obtain w1 w2 where witnesses: "w1 \<in> a" "(f (w1,a), (w1, a), (w1, a)) \<in> M" 
+          "w2 \<in> b" "(f (w2,b), (w2, b), (w2, b)) \<in> M" 
+          using \<open>a \<in> S'\<close> \<open>b \<in> S'\<close> f_def S'_def  by fast
+
+        obtain x where "x \<in> a \<inter> b"  using \<open>a \<inter> b \<noteq> {}\<close> by blast
+        have "(f (x,a), (x, a), (x, a)) \<in> M" and "(f (x,b), (x, b), (x, b)) \<in> M"
+          using witnesses one_in_all_in \<open>S' \<subseteq> S\<close> \<open>a \<in> S'\<close>  \<open>b \<in> S'\<close> \<open>x \<in> a \<inter> b\<close>  f_def 
+          by auto
+        moreover have "f (x,a) = f (x,b)" using f_def by simp
+        ultimately show False
+          using \<open>self_distinct_components3 M\<close> \<open>a \<noteq> b\<close> unfolding distinct_components3_def 
+          by fast
+      qed
+
+    } 
+    ultimately show "cover S' X"
+      using \<open>S' \<subseteq> S\<close> \<open>\<Union> S = X\<close> cover_def
+      by fastforce
+  qed
+  next
+  case False
+  then show ?thesis 
+    using assms MALFROMED_not_in_3DM unfolding xc_to_3dm_def 
+    by auto
+qed
+
+subsection "Theorem"
+
+theorem is_reduction_xc_to_3dm:
+  "is_reduction xc_to_3dm exact_cover three_d_matching"
+  unfolding is_reduction_def 
+  using xc_to_3dm_sound xc_to_3dm_complete
+  by auto
+   
 
    
 end

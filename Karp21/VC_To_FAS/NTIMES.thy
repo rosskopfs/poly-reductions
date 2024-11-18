@@ -1,5 +1,5 @@
 theory NTIMES                                                          
-  imports NREST.Refine_Foreach (* just to get Eisbach*)
+  imports NREST.Refine_Foreach (* just to get Eisbach, I didn't know how*)
 begin
 
 (* code from: https://stackoverflow.com/a/58216879 
