@@ -35,16 +35,16 @@ sig
   structure Seq :
   sig
     include SEQ
-    structure A : APPLICATIVE where type 'a t = 'a seq
-    structure M : MONAD where type 'a t = 'a seq
+    structure A : APPLICATIVE where type ('p1, 'a) t = 'a seq
+    structure M : MONAD where type ('p1, 'a) t = 'a seq
   end
 
   structure List :
   sig
     include LIST
     structure T_Seq : TRAVERSABLE
-    where type 'a f = 'a list
-    where type 'a A.t = 'a Seq.A.t
+    where type ('p1, 'a) f = 'a list
+    where type ('p1, 'a) A.t = ('p1, 'a) Seq.A.t
   end
 end
 
