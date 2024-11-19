@@ -15,6 +15,8 @@ sig
   val fun_nargs: term -> int
   val read_const: Proof.context -> string -> term
   val const_from_binding: Proof.context -> binding -> term
+  val is_itself : typ -> bool
+  val is_TYPE : term -> bool
 
   val get_fun_simps: Proof.context -> term -> thm list option list
 
@@ -26,12 +28,14 @@ sig
 
   val register_def: term -> local_theory -> (term * (string * thm)) * local_theory
   val register_fun: binding -> term -> term -> local_theory -> Proof.context
-  val register_thms: binding -> thm list -> local_theory -> (string * thm list) * local_theory
-  val register_transfer_thms: binding -> thm list -> local_theory ->
-    (string * thm list) * local_theory
-  val del_simps: thm list -> local_theory -> local_theory
   val register_attrs_thms: Token.src list -> binding -> thm list -> local_theory ->
     (string * thm list) * local_theory
+  val register_thms: binding -> thm list -> local_theory -> (string * thm list) * local_theory
+  val register_attrs_transfer_thms : Token.src list -> binding -> thm list -> local_theory ->
+    (string * thm list) * local_theory
+  val register_transfer_thms : binding -> thm list -> local_theory ->
+    (string * thm list) * local_theory
+  val del_simps: thm list -> local_theory -> local_theory
 
   val binding_from_long_name: string -> binding
   val const_binding: string -> binding
@@ -102,6 +106,11 @@ val fun_nargs = fastype_of #> binder_types #> length
 val read_const = Proof_Context.read_const {proper = false, strict = false};
 fun const_from_binding ctxt = Binding.name_of #> read_const ctxt
 
+fun is_itself (Type (@{type_name itself}, _)) = true
+  | is_itself _ = false
+fun is_TYPE (Const (@{const_name Pure.type}, _)) = true
+  | is_TYPE _ = false
+
 fun get_fun_simps ctxt = Function_Common.retrieve_function_data ctxt #> map (snd #> #simps)
 
 fun induction_var_tac ctxt var =
@@ -127,7 +136,8 @@ val register_thms = register_attrs_thms @{attributes []}
 
 fun del_simps simps = register_attrs_thms @{attributes [simp del]} Binding.empty simps #> snd
 
-val register_transfer_thms = register_attrs_thms @{attributes [transfer_rule]}
+fun register_attrs_transfer_thms attrs = register_attrs_thms (@{attributes [transfer_rule]} @ attrs)
+val register_transfer_thms = register_attrs_transfer_thms []
 
 (*bindings*)
 val binding_from_long_name = Long_Name.base_name #> Binding.name

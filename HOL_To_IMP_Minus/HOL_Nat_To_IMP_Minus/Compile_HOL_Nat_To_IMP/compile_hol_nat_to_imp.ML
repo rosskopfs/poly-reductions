@@ -24,6 +24,8 @@ end
 structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
 struct
 
+structure HTHNU = HOL_To_HOL_Nat_Util
+
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
 fun foldr_index f z = map_index I #> List.foldr (uncurry f) z
@@ -266,44 +268,6 @@ fun define_compiled compiled_binding compiled lthy =
     lthy'
   end
 
-fun dest_eq_equals_prop t = case t of
-    \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for lhs rhs\<close>\<close> => (lhs, rhs)
-  | \<^Const>\<open>Pure.eq _ for lhs rhs\<close> => (lhs, rhs)
-  | t => raise TERM ("Unknown equality:", [t])
-fun unconditional_nat lthy f_eq =
-  let
-    val (lhs, rhs) =
-      yield_singleton (Variable.import_terms true) f_eq lthy |> fst
-      |> Logic.strip_imp_concl |> dest_eq_equals_prop
-    val f = lhs |> Term.head_of
-
-    fun is_typrep (Type (@{type_name itself}, [_])) = true
-      | is_typrep _ = false
-    val (typrep_arg_count, rem_args) =
-      lhs |> Term.args_of |> chop_prefix (is_typrep o Term.fastype_of) |>> List.length
-
-    val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
-
-    val f' = f |> Term.map_types (K f'_typ)
-
-    (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
-    fun rewrite_rhs t =
-      let
-        val (head, args) = Term.strip_comb t
-        val is_rec_call = (f = head)
-        val _ = (is_rec_call andalso length args < typrep_arg_count)
-          andalso raise TERM ("Can't strip all '_ itself' arguments", [t])
-      in
-        (if is_rec_call then (f', drop typrep_arg_count args) else (head, args))
-        ||> map rewrite_rhs |> Term.list_comb
-      end
-
-    val lhs' = Term.list_comb (f', rem_args)
-    val rhs' = rewrite_rhs rhs
-  in
-    (lhs', rhs')
-  end
-
 fun reflect_eq thm =
   case Thm.concl_of thm of
     \<^Const>\<open>Trueprop for \<^Const>\<open>HOL.eq _ for _ _\<close>\<close> => @{thm eq_reflection} OF [thm]
@@ -322,8 +286,9 @@ fun compile_cmd f_def basenamepos_opt lthy =
 
     val f_def = reflect_eq f_def
 
-    val (lhs, rhs) = f_def |> Thm.full_prop_of
-      |> unconditional_nat lthy
+    val (lhs, rhs) = f_def |> Thm.prop_of
+      |> (fn t => yield_singleton (Variable.import_terms true) t lthy) |> fst
+      |> HOL_Fun_To_HOL_Nat_Fun.mk_unconditional_eq
 
     val f_head = lhs |> head_of
     val f_name = f_head |> dest_Const_name
@@ -361,7 +326,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const =
       Binding.name_of f_IMP_binding
-      |> Proof_Context.read_const {proper = false, strict = false} lthy'
+      |> HTHNU.read_const lthy'
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
@@ -396,7 +361,7 @@ in
     (parser >> (fn (((const, ret_reg), arg_regs), compiled) => fn lthy =>
       let
         val (const_name, const_ty) =
-          Proof_Context.read_const {proper = false, strict = false} lthy const
+          HTHNU.read_const lthy const
           |> Term.dest_Const
         val compiled_term = Syntax.read_term lthy compiled
 
@@ -473,7 +438,7 @@ in
               ]
           end
         fun pretty_compiled_const (name, {ret_reg, arg_regs, compiled}) =
-          let val const = Proof_Context.read_const {proper = false, strict = false} lthy name
+          let val const = HTHNU.read_const lthy name
           in
             Syntax.pretty_term lthy const ::
             Pretty.fbrk ::

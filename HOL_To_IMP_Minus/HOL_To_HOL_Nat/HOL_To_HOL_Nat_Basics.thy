@@ -22,16 +22,18 @@ lemma Rel_nat_nat_self [transfer_rule]: "Rel_nat n n"
 lemma Rel_nat_nat_eq_eq: "Rel_nat = ((=) :: nat \<Rightarrow> nat \<Rightarrow> bool)"
   by (intro ext) (auto iff: Rel_nat_iff_eq_natify simp: natify_nat_def)
 
-lemma Rel_nat_zero_nat [transfer_rule]: "Rel_nat (0 :: nat) (0 :: nat)"
+lemma Rel_nat_zero_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat (0 :: nat) (0 :: nat)"
   unfolding Rel_nat_iff_eq_natify natify_nat_def by (auto simp: natify_nat_def)
 
-lemma Rel_nat_suc_nat [transfer_rule]: "(Rel_nat ===> Rel_nat) Suc Suc"
+lemma Rel_nat_suc_nat [transfer_rule, Rel_nat_compile_nat]: "(Rel_nat ===> Rel_nat) Suc Suc"
   unfolding Rel_nat_iff_eq_natify natify_nat_def
   by (auto simp: natify_nat_def)
 
-lemma Rel_nat_case_nat [transfer_rule]:
+lemma Rel_nat_case_nat [transfer_rule, Rel_nat_compile_nat]:
   "(R ===> (Rel_nat ===> R) ===> Rel_nat ===> R) case_nat case_nat"
   by (fact case_nat_transfer[folded Rel_nat_nat_eq_eq])
+
+lemmas Rel_nat_nat = Rel_nat_nat_self Rel_nat_zero_nat Rel_nat_suc_nat Rel_nat_case_nat
 
 text\<open>We instantiate @{typ bool} by hand to make sure that True gets mapped to a positive value and
 False to zero. This is due to the fact that the compiler from HOL-Nat to IMP assumes such an
@@ -74,18 +76,20 @@ lemma natify_neq_zero_iff [iff]: "natify b \<noteq> 0 \<longleftrightarrow> b"
 lemma Rel_nat_bool_iff: "Rel_nat n b \<longleftrightarrow> (b \<longrightarrow> n = True_nat) \<and> (\<not>b \<longrightarrow> n = False_nat)"
   by (cases b) (auto simp: Rel_nat_iff_eq_natify natify_bool_def)
 
-lemma Rel_nat_True_nat [transfer_rule]: "Rel_nat True_nat True"
+lemma Rel_nat_True_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat True_nat True"
   using Rel_nat_bool_iff by simp
 
-lemma Rel_nat_False_nat [transfer_rule]: "Rel_nat False_nat False"
+lemma Rel_nat_False_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat False_nat False"
   using Rel_nat_bool_iff by simp
 
-lemma Rel_nat_case_bool_nat [transfer_rule]:
+lemma Rel_nat_case_bool_nat [transfer_rule, Rel_nat_compile_nat]:
   "(R ===> R ===> Rel_nat ===> R) case_bool_nat case_bool"
   by (intro rel_funI) (auto simp: Rel_nat_bool_iff case_bool_nat_def)
 
-datatype_compile_nat list
+lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 
+datatype_compile_nat list
+print_theorems
 datatype_compile_nat char
 
 datatype_compile_nat prod

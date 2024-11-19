@@ -65,11 +65,11 @@ congruence lemmas for case_list_nat (otherwise the function package cannot prove
 lemmas rev_acc_nat_eq = HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_acc_nat_eq
 
-thm natify_eq_eq
+thm eq_if_natify_eq
 (*automatically generated theorems*)
 thm Rel_nat_destruct_Cons
 thm HOL_To_HOL_Nat_Basics.Rel_nat_list
-thm fst_nat_eq_if_Rel_nat_list
+lemmas fst_nat_eq_if_Rel_nat_list = rel_funD[OF Rel_nat_eq_fst_nat_case_list]
 
 lemma check_first_nat_ccontradictionE:
   assumes "fst_nat n = m"
@@ -300,7 +300,7 @@ lemma "Rel_nat (s ''zip_acc_nat.args.x'') (y::'a list) \<Longrightarrow>
     apply (rule fst_nat_eq_if_Rel_nat_list)
     apply assumption
     apply simp
-  
+
   (*case x#xs*)
   apply (subst (2) zip_acc_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+

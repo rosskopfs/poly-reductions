@@ -12,19 +12,18 @@ context
   and transport_eq_restrict_id.partial_equivalence_rel_equivalence[per_intro del]
 begin
 
-lemma If_eq_case: "If = (\<lambda>b x y. (case b of True \<Rightarrow> x | False \<Rightarrow> y))"
-  by (intro ext) simp
-
-function_compile_nat If_eq_case
-print_theorems
-
 fun elemof :: "'a \<Rightarrow> 'a list \<Rightarrow> bool" where
   "elemof _ [] = False"
 | "elemof y (x#xs) = (if (y = x) then True else elemof y xs)"
 
 case_of_simps elemof_eq_case : elemof.simps
-
 function_compile_nat elemof_eq_case
+print_theorems
+
+lemma If_eq_case: "If = (\<lambda>b x y. (case b of True \<Rightarrow> x | False \<Rightarrow> y))"
+  by (intro ext) simp
+
+function_compile_nat If_eq_case
 print_theorems
 
 fun takeWhile :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> 'a list" where

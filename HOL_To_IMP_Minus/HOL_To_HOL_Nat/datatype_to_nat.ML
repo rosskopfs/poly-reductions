@@ -51,7 +51,7 @@ fun mk_ctr_condition t i = HU.mk_eq (fst_nat $ t, mk_ctr_tag i)
 fun register_ctr ctrs ctr lthy =
   let
     val (binders, _) = Binders.fix_binders (map (K ("x", natT)) (term_binder_types ctr)) lthy
-    val args = map snd binders       
+    val args = map snd binders
     val rhs = mk_ctr_rhs (find_mk_ctr_tag ctrs lthy ctr) args
     val lhs = Free (mk_ctr_binding ctr |> Binding.name_of, map (snd o fst) binders ---> natT)
     val eq = BU.mk_Trueprop_eq (list_comb (lhs, args), rhs)
@@ -114,69 +114,52 @@ fun register_ctr_Rel_thm ctr lthy =
 
 fun register_ctr_Rel_thms ctrs = fold_map (fn ctr => register_ctr_Rel_thm ctr #>> snd) ctrs
 
+fun mk_Rel_nat_destruct_ctr_binding ctr = TrpUtil.add_suffix
+  (TrpUtil.add_suffix Rel_nat_binding @{binding "destruct"}) (term_binding ctr)
+
 fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
   let
-    val typ = dest_Const_type ctr
-    val argT = strip_type typ |> fst
-    val dataT = strip_type typ |> snd
-    val ctr_nargs = length argT
-    val vars = Variable.variant_fixes (map (K "x") argT) lthy |> fst
-    val args = vars |> map2 (Free oo rpair) argT
-    val assump = mk_Rel_nat dataT $ Free ("n", @{typ "nat"}) $ list_comb (ctr, args)
-                 |> HOLogic.mk_Trueprop
-    val binding = TrpUtil.add_suffix
-        (TrpUtil.add_suffix Rel_nat_binding @{binding "destruct"})
-        (term_binding ctr)
+    val (argTs, headT) = dest_Const_type ctr |> strip_type
+    val ctr_nargs = length argTs
+    val (args, lthy) =
+      Variable.variant_fixes (map (K "x") argTs) lthy
+      |>> (fn vars => map2 (curry Free) vars argTs)
+    val (prem_freet, lthy) = yield_singleton Variable.variant_fixes "n" lthy |>> (rpair natT #> Free)
+    val prem = mk_Rel_nat headT $ prem_freet $ list_comb (ctr, args) |> HOLogic.mk_Trueprop
     fun reg_ctr_des_Rel_thm_arg (i, arg) =
       let
-        fun replVars (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
-          | replVars t = t
-        fun destruct_tac ctxt =
-          asm_full_simp_tac (ctxt addsimps ((@{thm "Rel_nat_iff_eq_natify"})::ctrs_nat_def::natify_simps))
-        val thm = mk_Rel_nat (fastype_of arg) $ dest_ctr_arg ctr_nargs (Free ("n", @{typ "nat"})) i $ arg
+        fun tac ctxt = solve_Rel_nat_tac transfer_fun_RelD
+          (ctxt addsimps (ctrs_nat_def :: natify_simps))
+        val (goal, lthy) = mk_Rel_nat (fastype_of arg) $ dest_ctr_arg ctr_nargs prem_freet i $ arg
           |> HOLogic.mk_Trueprop
-          |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ assump) o single
-          |> map_types (map_atyps replVars)
-          |> Syntax.check_prop lthy
-          |> (fn t => Goal.prove lthy ("n"::vars) [] t (#context #> HEADGOAL o (destruct_tac)))
-      in
-        thm
-      end
-  in
-    register_transfer_thms binding (map_index reg_ctr_des_Rel_thm_arg args) lthy
-      |>> snd
-  end
+          |> curry Logic.mk_implies prem
+          |> map_types add_compile_nat_sort
+          |> (fn t => yield_singleton (Variable.import_terms false) t lthy)
+      in Goal.prove lthy [] [] goal (#context #> tac #> HEADGOAL) end
+    val binding = mk_Rel_nat_destruct_ctr_binding ctr
+  (*since these theorems make transfer loop in most cases, they are not registered by default to transfer*)
+  in register_thms binding (map_index reg_ctr_des_Rel_thm_arg args) lthy |>> snd end
+
 fun register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_defs =
   fold_map (register_ctr_destruct_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
 
-fun register_fst_eq_case ctrs casex thms split lthy =
+val mk_Rel_nat_eq_fst_nat_case_binding = type_suffix_binding @{binding "Rel_nat_eq_fst_nat_case"}
+
+fun register_Rel_nat_eq_fst_nat_case_thm ctrs casex simps split lthy =
   let
-    fun replVars (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
-      | replVars T = T
-    val typ = ctrs |> hd |> fastype_of |> strip_type |> snd
-      |> map_atyps replVars
-    val prem = mk_Rel_nat dummyT $ Free ("n", @{typ "nat"}) $ Free ("xs", dummyT)
-                |> HOLogic.mk_Trueprop
-
-    val lhs = @{term "fst_nat"} $ Free ("n", @{typ "nat"})
-    fun create_lambdas (i,ctr) =
-      fastype_of ctr |> strip_type |> fst |> map (map_atyps replVars)
+    val rel = mk_transfer_rel_fun_dummyT $ mk_Rel_nat dummyT $ Trp.map_dummyT @{term "(=)"}
+    fun create_lambdas (i, ctr) =
+      fastype_of ctr |> strip_type |> fst |> map (map_atyps add_compile_nat_sort)
       |> List.foldr (uncurry absdummy) (mk_nat i)
-    val rhs = list_comb (casex |> map_types (K dummyT), map_index create_lambdas ctrs) $ Free ("xs", dummyT)
-
-    fun fst_case_tac ctxt =
-      asm_full_simp_tac (ctxt addsimps (@{thm "Rel_nat_iff_eq_natify"}::thms) |> Splitter.add_split split)
-    val thm = HOLogic.mk_eq (lhs, rhs)
-              |> HOLogic.mk_Trueprop
-              |> curry list_comb (\<^const>\<open>Pure.imp\<close> $ prem) o single
-              |> Syntax.check_prop lthy
-              |> (fn t => Goal.prove lthy ["n","xs"] [] t
-                  (#context #> HEADGOAL o (fst_case_tac)))
-    val binding = type_suffix_binding @{binding "fst_nat_eq_if_Rel_nat"} typ
-  in
-    register_transfer_thms binding [thm] lthy
-      |>> snd
-  end
+    val caset = list_comb (casex |> map_types (K dummyT), map_index create_lambdas ctrs)
+    val (goal, lthy) = rel $ fst_nat $ caset |> HOLogic.mk_Trueprop
+      |> (fn goal => yield_singleton (Variable.import_terms false) goal lthy)
+      |>> Syntax.check_prop lthy
+    fun tac ctxt =
+      solve_Rel_nat_tac transfer_fun_RelD (ctxt addsimps simps |> Splitter.add_split split)
+    val thm = Goal.prove lthy [] [] goal (#context #> tac #> HEADGOAL)
+    val binding = ctrs |> hd |> fastype_of |> strip_type |> snd |> mk_Rel_nat_eq_fst_nat_case_binding
+  in register_transfer_thms binding [thm] lthy |>> snd end
 
 fun register_case T ctrs casex ctxt =
   let
@@ -308,15 +291,15 @@ fun datatype_compile_nat T ctrs casex split thy =
     (*create relator theorems for constructors*)
     val (ctr_Rel_thms, lthy) = register_ctr_Rel_thms ctrs lthy
     val lthy = Local_Theory.end_nested lthy
-    (*create destructor theorems for constructors*)
+    (*create destructor relatedness theorems*)
     val (dest_Rel_thms, lthy) = register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_def lthy
+    val (Rel_nat_eq_fst_nat_case_thm, lthy) =
+      register_Rel_nat_eq_fst_nat_case_thm ctrs casex (natify_simps @ ctrs_nat_def) split lthy
 
     (*create bundle of relatedness theorems*)
-    val lthy = register_thms (mk_Rel_nat_type_binding T) (flat (case_Rel_thm :: ctr_Rel_thms @ dest_Rel_thms)) lthy
+    val lthy = register_attrs_thms (@{attributes [Rel_nat_compile_nat]}) (mk_Rel_nat_type_binding T)
+      (flat (Rel_nat_eq_fst_nat_case_thm :: case_Rel_thm :: ctr_Rel_thms @ dest_Rel_thms)) lthy
       |> snd
-
-    (*create relation fst to case*)
-    val (case_rel_thm, lthy) = register_fst_eq_case ctrs casex (natify_simps@ctrs_nat_def) split lthy
   in lthy end
 
 fun datatype_compile_nat_cmd T thy =

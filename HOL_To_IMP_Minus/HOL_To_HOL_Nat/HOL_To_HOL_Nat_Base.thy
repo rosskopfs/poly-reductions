@@ -67,7 +67,7 @@ lemma compile_nat_flip_partial_equivalence_rel_equivalence:
   flip.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
   by blast
 
-lemma natify_eq_eq: "natify x = natify y \<Longrightarrow> x = y"
+lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
   using compile_nat_type_def.Rep_inject by simp
 
 end
@@ -166,6 +166,9 @@ Restrictions:
 be made an instance of @{class compile_nat} and hence no higher-order arguments may be used).
 (3) As a consequence of (2): Recursive datatypes may not be nested inside of another datatype.
 \<close>
+
+named_theorems "Rel_nat_compile_nat"
+  "relatedness theorems for terms compiled from HOL to HOL on natural numbers."
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>

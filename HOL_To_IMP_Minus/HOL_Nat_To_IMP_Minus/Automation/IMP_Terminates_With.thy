@@ -68,7 +68,7 @@ context
     terminates_with_res_IMP_TailcallI[intro] terminates_with_IMP_TailcallI[intro]
 begin
 
-(* TODO rule for IF for terminates_with_res_IMP_Tailcall*)
+(*TODO: rule for IF for terminates_with_res_IMP_Tailcall*)
 lemma terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI:
   assumes "invar c"
   and "r \<in> set (vars c)"

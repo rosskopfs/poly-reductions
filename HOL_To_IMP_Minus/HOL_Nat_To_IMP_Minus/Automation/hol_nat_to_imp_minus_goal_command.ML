@@ -20,6 +20,7 @@ structure HOL_Nat_To_IMP_Minus_Goal_Command : HOL_NAT_TO_IMP_MINUS_GOAL_COMMAND 
 struct
 
 structure HTIU = HOL_Nat_To_IMP_Util
+structure HTHNU = HOL_To_HOL_Nat_Util
 
 fun mk_terminates_with_res_IMP_Minus c s r v = \<^Const>\<open>terminates_with_res_IMP_Minus for c s r v\<close>
 val dest_terminates_with_res_IMP_Minus =
@@ -70,36 +71,35 @@ in
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
         let
-          
-          fun deVar (TVar ((nm,_),T)) = TFree (nm,"HOL_To_HOL_Nat_Base.compile_nat"::T)
-            | deVar T = T
           val stateT = \<^typ>\<open>AExp.state\<close>
-          val const_term = Proof_Context.read_const {proper = false, strict = false} lthy const
-            |> map_types (map_atyps deVar)
+          val const_term = HTHNU.read_const lthy const
           val compiled_const =
             Term.dest_Const const_term |> fst
             |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof lthy)
-          val IMP_program = #compiled compiled_const
-          val s = yield_singleton Variable.variant_fixes "s" lthy |> fst |> (rpair stateT #> Free)
 
-          val ret_reg = HTIU.mk_register (#ret_reg compiled_const)
+          val (s, lthy) = yield_singleton Variable.variant_fixes "s" lthy |>> (rpair stateT #> Free)
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
-          fun isTYPE (Type ("itself", _)) = true
-            | isTYPE _ = false
-          val prems = const_term
+          val arg_regs = #arg_regs compiled_const
+
+          val opt_eq_unfolded_thm = const_term
             |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy
-            |> Option.map (Thm.instantiate' [] (List.concat (map (fn x => [x |> arg_from_reg |> Thm.cterm_of lthy |> SOME, NONE]) (#arg_regs compiled_const)))
-                #> Variable.import_vars lthy
-                #> Thm.prems_of)
-            |> Option.getOpt o rpair []
+            |> Option.map (
+                Thm.instantiate' [] (List.concat
+                  (map (fn x => [x |> arg_from_reg |> Thm.cterm_of lthy |> SOME, NONE]) arg_regs))
+                #> Variable.import_vars lthy)
 
-          val TYPEs = const_term
-            |> dest_Const_type |> strip_type |> fst
-            |> filter isTYPE
-            |> map (map deVar o dest_Type_args)
-            |> map (fn types => Const (@{const_name Pure.type}, Type ("itself", types)))
-          val HOLt = Term.list_comb (const_term, TYPEs @ map arg_from_reg (#arg_regs compiled_const))
+          val base_args = map arg_from_reg arg_regs
+          val (prems, args) = case opt_eq_unfolded_thm of
+              NONE => ([], base_args)
+            | SOME eq_unfolded_thm =>
+                let val TYPEs = Thm.concl_of eq_unfolded_thm |> HTHNU.dest_eq_equals_prop |> fst
+                  |> strip_comb |> snd |> filter HTHNU.is_TYPE
+                in (Thm.prems_of eq_unfolded_thm, TYPEs @ base_args) end
+          val HOLt = Term.list_comb (Transport.map_dummyT const_term, args)
+            |> Syntax.check_term lthy
 
+          val IMP_program = #compiled compiled_const
+          val ret_reg = HTIU.mk_register (#ret_reg compiled_const)
           (*TODO: move terminates_with_res stuff to utility module*)
           val goal = mk_terminates_with_res_IMP_Minus IMP_program s ret_reg HOLt
             |> HTIU.mk_Trueprop
