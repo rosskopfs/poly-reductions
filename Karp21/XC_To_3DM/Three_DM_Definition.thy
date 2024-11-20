@@ -66,6 +66,8 @@ lemma three_d_matching_cert:
   unfolding three_d_matching_def using assms
   by blast
 
+text "these lemmas show each column of the matching covers T"
+
 lemma fM_T:
   assumes  "f ` M  \<subseteq> T" 
            "inj_on f M"
@@ -176,10 +178,11 @@ proof -
     using assms unfolding three_d_matching_alt1_def three_dm_to_alt1_def
     by (auto simp add:card_tagged)
   define M where " M = (\<lambda>(a,b,c). (fst a, fst b, fst c)) ` M'"
-  have "M \<subseteq> U"  using M_def M'_def  by force
+  have "M \<subseteq> U" 
+    using M_def M'_def  by force
   moreover have "card M = card M'" 
     using M'_def unfolding M_def
-     by (intro card_image) (auto simp add: inj_on_def)
+    by (intro card_image) (auto simp add: inj_on_def)
   moreover {
     have *: "M' = {((a, 0::nat), (b, Suc 0), (c, 2::nat)) |a b c. (a, b, c) \<in> M}"
       using M'_def unfolding M_def by force
