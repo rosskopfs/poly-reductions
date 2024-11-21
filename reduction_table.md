@@ -29,7 +29,7 @@
 | 27    | **partition_to_max_cut**          | *Missing*        | Partition   | Max Cut                    | *Missing*        |
 | 28    | **chromatic_number_to_clique_cover**           | *Missing*       | Chromatic Number       | Clique Cover                   | *Missing*    |
 | 29    | **clique_to_set_packing**             | *Missing*              | Clique       | set packing                      | *Missing*    |
-| 30    | **set_to_3sat**             | ??             | SAT       |      3-CNF-SAT                  | ??    |
+| 30    | **sat_to_3sat**             | ??             | SAT       |      3-CNF-SAT                  | ??    |
 
 notes:
 - karp reduces XC to ST but the reduction does not not work so we reduce X3C to it.
