@@ -31,3 +31,10 @@
 | 29    | **clique_to_set_packing**             | *Missing*              | Clique       | set packing                      | *Missing*    |
 | 30    | **set_to_3sat**             | ??             | SAT       |      3-CNF-SAT                  | ??    |
 
+notes:
+- karp reduces XC to ST but the reduction does not not work so we reduce X3C to it.
+- Subset Sum (List) is what karp calls knapsack.
+- Karp reduces SAT to 0-1 but we reduce subset to 0-1 (I haven't checked if there is an issue in the reduction from SAT *)
+- we reduce SAT to exact cover, while Karp reduces Chromatic Number to it
+- Node Cover (Vertex Cover) is done through SAT -> IS -> VC instead of through CLIQUE
+  
