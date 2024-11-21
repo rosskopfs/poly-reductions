@@ -1,0 +1,25 @@
+session Poly_Reductions_Lib = "HOL-Analysis" +
+  sessions
+    "HOL-Eisbach"
+    "HOL-ex"
+    "HOL-Real_Asymp"
+    Akra_Bazzi
+    Automatic_Refinement
+    DigitsInBase
+    Landau_Symbols
+    Graph_Theory
+    Tree_Enumeration
+  directories
+    Auxiliaries
+    Graph_Extensions
+  theories
+    Graph_Auxiliaries
+    Landau_Auxiliaries
+    List_Auxiliaries
+    Set_Auxiliaries
+    Discriminated_Union
+    Vwalk_Cycle
+    Discrete_Extensions
+    Polynomial_Growth_Functions
+    SAT_Definition
+    Triangle_Extensions

@@ -1,7 +1,7 @@
 theory XC_Definition
   imports "../Polynomial_Reductions"
           "HOL-Library.Disjoint_Sets"
-          "../../Lib/SAT_Definition"
+          "Poly_Reductions_Lib.SAT_Definition"
 begin
 
 subsection "Exact cover definitions"

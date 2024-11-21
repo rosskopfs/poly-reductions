@@ -1,4 +1,4 @@
-theory discriminated_Union
+theory Discriminated_Union
   imports "HOL-Library.Disjoint_Sets" 
           Automatic_Refinement.Misc (* for img_fst [intro] which proves fst_discr_Un *)
 begin           
