@@ -1,0 +1,23 @@
+session Karp21 = Poly_Reductions_Lib +
+  sessions
+    NREST
+  directories
+    "3DM_To_X3C"
+    "CNF_SAT_To_Clique"
+    "CNF_SAT_To_TC"
+    "HC_To_UHC"
+    "SAT_To_XC"
+    "SS_To_JS"
+    "TC_To_ChrN"
+    "VC_Set_To_VC_List"
+    "VC_To_FAS"
+    "VC_To_FNS"
+    "VC_To_HC"
+    "weight_problems"
+    "X3C_To_ST"
+    "XC_To_3DM"
+    "XC_To_EHS"
+    "XC_To_SS"
+    "XC_To_ST"
+  theories
+    All_Reductions

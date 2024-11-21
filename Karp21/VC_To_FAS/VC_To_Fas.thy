@@ -1,9 +1,9 @@
-theory VC_To_Fas                                                          
+theory VC_To_FAS                                                         
   imports  "../Reductions"
            FAS_Definition
            "../Three_Sat_To_Set_Cover" (* vertex cover is defined here *)
            NTIMES (* ntimes *)
-           "../../Lib/Auxiliaries/Set_Auxiliaries" (* card_Collect_mem *)
+           "Poly_Reductions_Lib.Set_Auxiliaries" (* card_Collect_mem *)
 begin
 
 (* helper lemmas *)   

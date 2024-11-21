@@ -1,5 +1,5 @@
 theory Three_DM_Definition
-  imports "HOL-Library.Disjoint_Sets"  "../Reductions"  "../../Lib/Auxiliaries/Set_Auxiliaries"
+  imports "HOL-Library.Disjoint_Sets" "../Reductions" "Poly_Reductions_Lib.Set_Auxiliaries"
 begin
 
 section \<open>Triplets with distinct components\<close>

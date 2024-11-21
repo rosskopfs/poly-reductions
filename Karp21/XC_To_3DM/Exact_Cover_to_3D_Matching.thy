@@ -1,12 +1,10 @@
-theory Exact_Cover_to_3D_Matching
+theory Exact_Cover_To_3D_Matching
   imports Main 
           "HOL-Library.Disjoint_Sets"
           "List-Index.List_Index"
           "../SAT_To_XC/XC_Definition" 
           Three_DM_Definition
-          "../../Lib/Auxiliaries/discriminated_Union"
-          "../../Lib/Auxiliaries/Set_Auxiliaries" (* card_Collect_mem *)
-        
+          "Poly_Reductions_Lib.Discriminated_Union"        
 begin
 
 section \<open>Helper lemmas\<close>
