@@ -2,7 +2,7 @@
 theory HOL_To_IMP_Minus_Arithmetics
   imports
     HOL_To_IMP_Minus_Primitives
-    "HOL-Library.Discrete"
+    "HOL-Library.Discrete_Functions"
 begin
 
 paragraph \<open>Squaring\<close>
