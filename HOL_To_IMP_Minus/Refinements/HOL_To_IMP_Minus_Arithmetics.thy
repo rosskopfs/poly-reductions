@@ -53,9 +53,9 @@ lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"
 lemma lt_square_Suc_sqrt_nat: "x < (Suc (sqrt_nat x))\<^sup>2"
   using lt_square_Suc_sqrt_aux_nat unfolding sqrt_nat_def by (simp add: power2_eq_square)
 
-corollary sqrt_nat_eq_sqrt [simp]: "sqrt_nat y = Discrete.sqrt y"
+corollary sqrt_nat_eq_sqrt [simp]: "sqrt_nat y = floor_sqrt y"
   using square_sqrt_nat_le lt_square_Suc_sqrt_nat
-  by (intro sqrt_unique[symmetric]) auto
+  by (intro floor_sqrt_unique[symmetric]) auto
 
 end
 
@@ -80,7 +80,7 @@ HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by (cook mode = tailcall)
 
 compile_nat HTHN.sqrt_nat_def basename sqrt
 
-declare_compiled_const Discrete.sqrt
+declare_compiled_const floor_sqrt
   return_register "sqrt.ret"
   argument_registers "sqrt.args.x"
   compiled "tailcall_to_IMP_Minus sqrt_IMP_tailcall"
