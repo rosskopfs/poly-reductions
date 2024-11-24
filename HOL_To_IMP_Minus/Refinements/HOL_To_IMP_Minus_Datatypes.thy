@@ -69,7 +69,9 @@ thm eq_if_natify_eq
 (*automatically generated theorems*)
 thm Rel_nat_destruct_Cons
 thm HOL_To_HOL_Nat_Basics.Rel_nat_list
+thm Rel_nat_compile_nat
 lemmas fst_nat_eq_if_Rel_nat_list = rel_funD[OF Rel_nat_eq_fst_nat_case_list]
+thm Rel_nat_eq_fst_nat_case_list
 
 lemma check_first_nat_ccontradictionE:
   assumes "fst_nat n = m"
@@ -148,6 +150,48 @@ lemma rev_acc_cor:
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
   using rev_acc_cor by blast
+
+end
+
+context HOL_To_HOL_Nat
+begin
+definition "rev2 xs \<equiv> rev_acc xs []"
+function_compile_nat rev2_def
+
+lemma rev_acc_Nil_Nil: "rev_acc [] [] = []"
+  by simp
+
+fun rev_test :: "'a list \<Rightarrow> nat list" where
+  "rev_test [] = (if rev_acc [] ([]::'a list) = [] then [] else [1])"
+| "rev_test xs = (if rev_acc xs [] = [] then [] else [2])"
+declare rev_acc.simps[simp del]
+(* Try around with this function *)
+
+case_of_simps rev_test_eq : rev_test.simps
+function_compile_nat rev_test_eq *)
+print_theorems
+
+end
+
+context HOL_Nat_To_IMP_Minus
+begin
+
+compile_nat HOL_To_HOL_Nat.rev2_nat_eq_unfolded
+
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
+  apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
+    apply (subst rev2_nat_IMP_tailcall_def; simp)
+   apply (subst rev2_nat_IMP_tailcall_def; simp)
+    (* No induction for defs *)
+  apply (subst (2) rev2_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
+  sorry
+
+(* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
+congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
+thm HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded
+lemmas rev_test_nat_eq = HOL_To_HOL_Nat.rev_test_nat_eq_unfolded[simplified case_list_nat_def]
+compile_nat rev_test_nat_eq
 
 end
 
