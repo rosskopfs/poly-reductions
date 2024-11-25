@@ -2,12 +2,20 @@ theory Three_DM_To_X3C_Poly
   imports "../Polynomial_Reductions" Three_DM_To_X3C "HOL-Library.Disjoint_Sets" 
 begin
 
+text "assumptions"
 
 definition "size_TDM = (\<lambda>(U, T). card T + 3 * card U + 1)" 
 definition "size_X3C = (\<lambda>(X, S). card X + 3 * card S + 1)"
 
 definition "mop_set_image_const_cost f S f_cost  = SPECT [f ` S \<mapsto> f_cost * card S]"
 definition "mop_set_union S1 S2 = SPECT [S1 \<union> S2 \<mapsto> card S1 + card S2]"
+
+text "Bounds to be proven"
+definition "tdm_to_x3c_time n = 8 * n"  (* 8 * card T + 3 * card U \<le> 8 * size_TDM (U,T) *)
+definition "tdm_to_x3c_space n = 3 * n"
+
+
+text "implementation"
 
 definition tdm_to_x3c_alg where
   "tdm_to_x3c_alg = (\<lambda>(U, T). do {
@@ -19,10 +27,6 @@ definition tdm_to_x3c_alg where
     S \<leftarrow> mop_set_image_const_cost (\<lambda>(x, y, z). {a x, b y, c z}) U 3;
     RETURNT (X, S)
   })"
-
-
-definition "tdm_to_x3c_time n = 8 * n"  (* 8 * card T + 3 * card U \<le> 8 * size_TDM (U,T) *)
-definition "tdm_to_x3c_space n = 3 * n"
 
 
 lemma tdm_to_x3c_refines:

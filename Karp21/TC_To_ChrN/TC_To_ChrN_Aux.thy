@@ -27,109 +27,13 @@ proof -
 qed
 
 
-
 lemma card_one_para: "card {{(ca, cb), (cc, k)} |k. k \<in> {1..x}} = x" 
-proof (induction x)
-  case 0
-  then show ?case
-    by simp
-next
-  case (Suc x)
-  define nodes where nodes_def:"nodes={{(ca, cb), (cc, k)} |k. k \<in> {1..Suc x}}"
-  define split1 where split1_def:"split1 = {{(ca, cb), (cc, k)} |k. k \<in> {1..x}}"
-  define split2 where split2_def:"split2 = {{(ca, cb), (cc, Suc x)}}"
-  have "\<forall>k. k \<in> {1..x} \<longrightarrow> k \<noteq> Suc x"
-    by auto
-  from this split1_def split2_def have split_dis:"split1 \<inter> split2 = {}"
-    by (smt Pair_inject disjoint_iff_not_equal doubleton_eq_iff mem_Collect_eq singletonD)
-  from split1_def have fin1:"finite split1"
-    by auto
-  from split2_def have fin2:"finite split2"
-    by auto
-  have
-        "{{(ca, cb), (cc, k)} |k. k \<in> {1..Suc x}} =
-          {{(ca, cb), (cc, k)} |k. k \<in> {1..x}} \<union>
-          {{(ca, cb), (cc, Suc x)}} "
-    by fastforce
-  from this split1_def split2_def nodes_def have "nodes = split1 \<union> split2" 
-    by fastforce
-  from this split_dis card_Un_disjoint fin1 fin2 have "card nodes = card split1 + card split2"
-    by blast
-  from this Suc show ?case 
-    by (simp add:  nodes_def split1_def split2_def) 
-qed
-
-
-lemma card_one_para2: "finite (\<Union>E) \<Longrightarrow> card {{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E)} = card (\<Union>E)" 
-proof (induction "card (\<Union>E)"  arbitrary: E)
-  case 0
-  from this have "(\<Union>E) = {}"
-    by simp
-  then show ?case
-    by (simp add: card_eq_0_iff equals0D)
-next
-  case (Suc x)
-  from Suc(2) have "\<Union>E \<noteq> {}"
-    by fastforce
-  from this Suc(2) Suc(3) obtain E' v where E'_def:
-    "\<Union>E = \<Union>E' \<union> {v} \<and> \<Union>E' \<inter> {v} = {}"
-    unfolding ugraph_def 
-    by (metis Int_empty_right Int_insert_right_if0
-        Un_empty_right Un_insert_right all_not_in_conv 
-        ccpo_Sup_singleton mk_disjoint_insert)
-  from E'_def Suc(2) have E'_card:"x = card (\<Union>E')"
-    using Suc.prems by auto 
-  from E'_def Suc(3) have finE':"finite (\<Union>E')"
-    by auto
-
-  define nodes where nodes_def:"nodes={{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E)}"
-  define split1 where split1_def:"split1 = {{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E')}"
-  define split2 where split2_def:"split2 = {{(ca, cb), (v, cc)}}"
+  by (subst Setcompr_eq_image[of "\<lambda>k. {(ca, cb), (cc, k)}"],
+      intro card_image[THEN trans],auto simp add:  inj_on_def doubleton_eq_iff)
   
-  from E'_def have "\<forall>x\<in>E'. v \<notin> x"
-    by blast
-  from this have split_dis:"split1 \<inter> split2 = {}"
-    unfolding split1_def split2_def
-    by(fastforce simp add: doubleton_eq_iff)
-
-  from Suc(1) finE' E'_card have card1:"card split1 = card (\<Union> E')"
-    unfolding split1_def
-    by blast
-  from this have fin1:"finite split1"
-  proof (cases "card split1 = 0")
-    case True
-    from this card1 have "card (\<Union> E') = 0"
-      by argo
-    from this finE' have "\<Union>E' = {}"
-      by simp
-    then show ?thesis 
-      unfolding split1_def
-      by (simp add: \<open>\<Union> E' = {}\<close>)
-  next
-    case False
-    then show ?thesis
-      by (simp add: card_eq_0_iff)
-  qed
-
-
-  from split2_def have fin2:"finite split2"
-    by auto
-
-  from E'_def have 
-        "{{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E)} =
-         {{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E')} \<union>
-         {{(ca, cb), (v, cc)}} "
-    by auto
-  from this split1_def split2_def nodes_def have "nodes = split1 \<union> split2" 
-    by fastforce
-  from this split_dis card_Un_disjoint fin1 fin2 have "card nodes = card split1 + card split2"
-    by blast
-  from this card1 Suc(2) E'_card show ?case 
-    unfolding nodes_def split2_def
-    by simp
-qed
-
-
+lemma card_one_para2: "finite (\<Union>E) \<Longrightarrow> card {{(ca, cb), (v, cc)} |v. v \<in> (\<Union>E)} = card (\<Union>E)"
+  by (subst Setcompr_eq_image[of "\<lambda>v. {(ca, cb), (v, cc)}"],
+      intro card_image ,auto simp add:  inj_on_def doubleton_eq_iff)
 
 lemma chromatik_card1:"ugraph E \<Longrightarrow> 
   card {{(v1, 0::nat), (v2, 0)} |v1 v2. {v1, v2} \<in> E} =  card E" 

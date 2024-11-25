@@ -300,7 +300,7 @@ lemma vc_to_hc_refines:
   apply(auto simp: vc_hc_time_def one_enat_def size_vc_def time_ugraph_to_hc)
   by (simp add: card_length mult_le_mono trans_le_add1)+
 
-theorem cnf_sat_to_clique_ispolyred: "ispolyred vc_hc_alg vertex_cover_list hc size_vc size_hc"
+theorem vc_to_hc_ispolyred: "ispolyred vc_hc_alg vertex_cover_list hc size_vc size_hc"
   unfolding ispolyred_def
   apply(rule exI[where x=vc_hc])
   apply(rule exI[where x=vc_hc_time])

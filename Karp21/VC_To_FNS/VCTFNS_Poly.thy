@@ -84,7 +84,7 @@ lemma vc_to_fns_reifnes:
   by(auto simp: vc_fns_time_def size_VC_def set_set_to_list distinct_set_to_list
       one_enat_def)
 
-theorem cnf_sat_to_clique_ispolyred: "ispolyred vc_to_fns_alg vertex_cover fns size_VC size_fns"
+theorem  vc_to_fns_ispolyred: "ispolyred vc_to_fns_alg vertex_cover fns size_VC size_fns"
   unfolding ispolyred_def
   apply(rule exI[where x=vc_to_fns])
   apply(rule exI[where x=vc_fns_time])

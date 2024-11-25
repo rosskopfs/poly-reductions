@@ -1,7 +1,7 @@
 theory X3C_To_ST
-  imports ST_Definition "Reductions" 
+  imports ST_Definition "../Reductions" 
           "Poly_Reductions_Lib.Discriminated_Union"
-          "X3C_Definition" 
+          "../3DM_To_X3C/X3C_Definition" 
           "Poly_Reductions_Lib.Set_Auxiliaries" (* card_Collect_mem *)
 begin
 

@@ -8,6 +8,11 @@ begin
 
 (* helper lemmas *)   
 
+lemma distinct_append1:
+  assumes "y \<notin> set xs" "distinct xs"
+  shows "distinct (xs@[y])"
+  using assms by simp
+
 lemma hd_distinct_not_in_tl:
   assumes "distinct xs"
   shows "hd xs \<notin> set (tl xs)"
@@ -47,7 +52,7 @@ lemma (in wf_digraph) awalk_verts_appendI:
 definition (in pre_digraph) cycle_start   where
   "cycle_start p x \<equiv> awalk x p x  \<and> distinct (tl (awalk_verts x p)) \<and> p \<noteq> []"
 
-lemma (in wf_digraph) rotateTrue_cycle_start:
+lemma (in wf_digraph) rotate1_cycle_start:
   assumes  "cycle_start (e#es) x"
   shows    "cycle_start (es@[e]) (head G e)" 
 proof -
@@ -60,10 +65,13 @@ proof -
                    (auto simp add: cycle_start_def awalk_Cons_iff)
   moreover have "distinct (tl (awalk_verts ?y (es @ [e])))"
   proof -
-    have "distinct (awalk_verts ?y es)"  using assms unfolding cycle_start_def by simp
+    have "distinct (awalk_verts ?y es)" using assms unfolding cycle_start_def by simp
     moreover then have "?y \<notin> set (tl (awalk_verts ?y es))" 
       using * hd_distinct_not_in_tl by fastforce
-     ultimately show ?thesis using ** by simp
+    moreover have ***: "tl (awalk_verts ?y (es @ [e])) = tl (awalk_verts ?y es) @ [?y]"
+      by (simp add: "**")
+    ultimately show ?thesis
+      using distinct_tl unfolding *** by auto
   qed
   then show ?thesis unfolding cycle_start_def 
     using calculation by fastforce
@@ -119,7 +127,7 @@ proof -
   moreover then have "b2 = (\<not> b)" using e_edge unfolding H_def
     by (cases b) auto
   moreover then have "pre_digraph.cycle_start (H E) (es @ [e]) (v,\<not> b)"
-    using wf_digraph.rotateTrue_cycle_start[OF wf_H] e_content assms 
+    using wf_digraph.rotate1_cycle_start[OF wf_H] e_content assms 
     unfolding pre_digraph.cycle_start_def
     by fastforce
   moreover have "\<not> b \<Longrightarrow> u = v"

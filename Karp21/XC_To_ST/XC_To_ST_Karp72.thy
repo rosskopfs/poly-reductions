@@ -89,7 +89,7 @@ proof
       ultimately have "T.vert_connected (a 2) v" if "v \<in> Tv" for v
         using that Tv_def Te_def X_def S_def 
           T.vert_connected_neighbors[THEN T.vert_connected_trans[rotated]]
-        by (simp add: doubleton_eq_iff) presburger
+        by (auto simp add: doubleton_eq_iff) 
       then show "fin_connected_ulgraph Tv Te" using T.not_connected_set[of Tv "(a 2)" ] Tv_def
           T.vert_connected_wf
         by (unfold_locales,blast+) 
