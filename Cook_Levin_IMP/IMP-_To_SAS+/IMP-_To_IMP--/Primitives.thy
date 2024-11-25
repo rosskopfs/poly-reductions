@@ -11,7 +11,6 @@ theory Primitives
     "HOL-Library.Mapping"
     SAS_Plus_Plus_To_SAS_Plus
     IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
-    "Poly_Reductions_Lib.Encode_Nat"
 begin
 
 
@@ -736,7 +735,7 @@ next
     apply(subst restrict_acc_nat.simps)
     apply(simp only: h1 if_False)
     apply(simp only: h2 h3 h4 Let_def)
-    
+
     apply(subst Pair_nat_equiv[OF assms(1) assms(3), of x y])
     apply(subst elemof_nat_equiv[OF assms(3), of x s])
     apply(subst Nil_nat_equiv[OF encoding_prod_wellbehaved, OF assms(3) assms(1)])
