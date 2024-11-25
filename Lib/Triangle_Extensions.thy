@@ -20,10 +20,10 @@ proof-
   have "sqrt (8*(n*(n+1) / 2)+1) = 2*n + 1" if "n\<ge>0"
     using that by (simp add: s sqrt_power2_iff_eq) algebra
   then show ?thesis if "n\<ge>0"
-    using that by auto 
+    using that by auto
 qed
 
-lemma sqrt_Discrete_sqrt: "nat (floor (sqrt n)) = Discrete.sqrt n"
+lemma sqrt_Discrete_sqrt: "nat (floor (sqrt n)) = floor_sqrt n"
   apply (rule antisym)
   apply (rule le_sqrtI)
   apply (smt (verit, ccfv_threshold) of_int_floor_le of_nat_0_le_iff of_nat_le_of_nat_power_cancel_iff
@@ -36,7 +36,7 @@ lemma divide2_div2: "nat (floor (n/2)) = n div 2"
 lemma divide2_div2': "nat (floor (n/2)) = nat (floor (n::real)) div 2"
   by linarith
 
-lemma triangular_part_real: "nat (floor (((sqrt (8*n + 1)) -1) /2)) = (Discrete.sqrt (8*n + 1) -1) div 2"
+lemma triangular_part_real: "nat (floor (((sqrt (8*n + 1)) -1) /2)) = (floor_sqrt (8*n + 1) -1) div 2"
   apply (simp add: divide2_div2' nat_diff_distrib')
   by (metis add.commute of_nat_Suc of_nat_mult of_nat_numeral sqrt_Discrete_sqrt)
 
@@ -48,7 +48,7 @@ lemma triangle_invert_real_typ': "nat (floor ((sqrt (8*(n*(n+1) / 2)+1) - 1) / 2
 
 text \<open>Triangular root\<close>
 
-definition "tsqrt n \<equiv> (Discrete.sqrt (8*n + 1) - 1) div 2"
+definition "tsqrt n \<equiv> (floor_sqrt (8*n + 1) - 1) div 2"
 
 lemma tsqrt_0[simp]: "tsqrt 0 = 0"
   by code_simp
@@ -60,24 +60,24 @@ lemma tsqrt_2[simp]: "tsqrt 2 = 1"
 lemma tsqrt_correct[simp]: "tsqrt (triangle n) = n"
 proof(unfold triangle_def tsqrt_def)
   have s: "real (n * Suc n div 2) = real n * (real n + 1) / 2"
-    by (smt (verit, del_insts) Multiseries_Expansion.intyness_1 add.commute double_gauss_sum gauss_sum 
+    by (smt (verit, del_insts) Multiseries_Expansion.intyness_1 add.commute double_gauss_sum gauss_sum
         id_apply nat_1_add_1 nonzero_mult_div_cancel_left of_nat_Suc of_nat_eq_id of_nat_mult plus_1_eq_Suc)
-  show "(Discrete.sqrt (8 * (n * Suc n div 2) + 1) - 1) div 2 = n"
+  show "(floor_sqrt (8 * (n * Suc n div 2) + 1) - 1) div 2 = n"
     apply (subst triangular_part_real[symmetric]) apply (subst s)
     using triangle_invert_real_typ' by simp
 qed
 
 lemma mono_tsqrt: "mono tsqrt"
   unfolding tsqrt_def
-  apply (rule monoI) 
-  unfolding tsqrt_def 
+  apply (rule monoI)
+  unfolding tsqrt_def
   by simp (meson Suc_le_mono diff_le_mono div_le_mono le_less mono_sqrt' mult_le_mono)
 
 lemma mono_tsqrt': "x\<le>y \<Longrightarrow> tsqrt x \<le> tsqrt y"
   using mono_tsqrt by (drule monoD)
 
-text \<open>Alternative triangular root definition, based on how \<^const>\<open>Discrete.sqrt\<close> is defined
-  Copied lemmas/proofs as well and modified them for some free properties. 
+text \<open>Alternative triangular root definition, based on how \<^const>\<open>floor_sqrt\<close> is defined
+  Copied lemmas/proofs as well and modified them for some free properties.
 
   General way of this construction might be a student project?
 \<close>
@@ -122,11 +122,11 @@ lemma triangle_nat_le_imp_le:
   shows "m \<le> n"
 proof (cases m)
   case 0
-  then show ?thesis 
+  then show ?thesis
     by simp
 next
   case (Suc nat)
-  then show ?thesis 
+  then show ?thesis
     using assms by auto
 qed
 
@@ -223,7 +223,7 @@ next
      apply auto
     apply (metis le0 mult_0_right)
     done
-  with * show ?thesis 
+  with * show ?thesis
     using tsqrt_alt_aux Max_in by (auto simp add: tsqrt_alt_def)
 qed
 
@@ -236,7 +236,7 @@ lemma Suc_tsqrt_alt_triangle_gt: "n < triangle (Suc (tsqrt_alt n))"
 
 lemma le_tsqrt_alt_iff: "x \<le> tsqrt_alt y \<longleftrightarrow> triangle x \<le> y"
 proof -
-  have "x \<le> tsqrt_alt y \<longleftrightarrow> (\<exists>z. triangle z \<le> y \<and> x \<le> z)"    
+  have "x \<le> tsqrt_alt y \<longleftrightarrow> (\<exists>z. triangle z \<le> y \<and> x \<le> z)"
     using Max_ge_iff[OF tsqrt_alt_aux, of x y] by (simp add: tsqrt_alt_def)
   also have "\<dots> \<longleftrightarrow> triangle x \<le> y"
   proof safe
@@ -245,7 +245,7 @@ proof -
   qed auto
   finally show ?thesis .
 qed
-  
+
 lemma le_tsqrt_altI: "triangle x \<le> y \<Longrightarrow> x \<le> tsqrt_alt y"
   by (simp add: le_tsqrt_alt_iff)
 
@@ -255,7 +255,7 @@ lemma tsqrt_alt_le_iff: "tsqrt_alt y \<le> x \<longleftrightarrow> (\<forall>z. 
 lemma sqrt_leI:
   "(\<And>z. triangle z \<le> y \<Longrightarrow> z \<le> x) \<Longrightarrow> tsqrt_alt y \<le> x"
   by simp
-    
+
 lemma triangle_less_imp_less: "triangle x < triangle y \<Longrightarrow> 0 \<le> y \<Longrightarrow> x < y"
   by (simp add: less_le_not_le triangle_nat_le_eq_le)
 lemma tsqrt_alt_Suc:
@@ -264,7 +264,7 @@ proof cases
   assume "\<exists> m. Suc n = triangle m"
   then obtain m where m_def: "Suc n = triangle m" by blast
   then have lhs: "tsqrt_alt (Suc n) = m" by simp
-  from m_def tsqrt_alt_triangle_le[of n] 
+  from m_def tsqrt_alt_triangle_le[of n]
     have "triangle (tsqrt_alt n) < triangle m" by linarith
   with triangle_less_imp_less have lt_m: "tsqrt_alt n < m" by blast
   from m_def Suc_tsqrt_alt_triangle_gt[of "n"]
@@ -276,7 +276,7 @@ proof cases
 next
   assume asm: "\<not> (\<exists> m. Suc n = triangle m)"
   hence "Suc n \<noteq> triangle (tsqrt_alt (Suc n))" by simp
-  with tsqrt_alt_triangle_le[of "Suc n"] 
+  with tsqrt_alt_triangle_le[of "Suc n"]
     have "tsqrt_alt (Suc n) \<le> tsqrt_alt n" by (intro le_tsqrt_altI) linarith
   moreover have "tsqrt_alt (Suc n) \<ge> tsqrt_alt n"
     by (intro monoD[OF mono_tsqrt_alt]) simp_all
@@ -285,7 +285,7 @@ qed
 
 (* Continue with direct definition, once again by moving to reals*)
 
-lemma triangle_tsqrt_le_real: 
+lemma triangle_tsqrt_le_real:
   "nat (floor (((sqrt (8 * n + 1) - 1) / 2) * ((1 + ((sqrt (8 * n + 1) - 1) / 2)) / 2))) \<le> n"
   by (auto simp add: triangle_def field_simps)
 
@@ -308,7 +308,7 @@ lemma triangle_tsqrt_le: "triangle (tsqrt n) \<le> n"
   unfolding triangle_tsqrt_real_pre
   using triangle_tsqrt_le_real triangle_tsqrt_le_real_bound
   by (meson le_trans)
-  
+
 lemma tsqrt_unique:
   assumes "triangle m \<le> n" "n < triangle (Suc m)"
   shows "tsqrt n = m"

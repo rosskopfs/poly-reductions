@@ -15,7 +15,7 @@ theory Inversion
 begin
 
 lemma "\<not> surj (power2 :: nat \<Rightarrow> nat)"
-  by (metis (full_types) One_nat_def lessI less_exp mult.right_neutral nat_less_le numerals(2) power2_eq_square sqrt_inverse_power2 sqrt_unique surj_def)
+  by (metis (full_types) One_nat_def lessI less_exp mult.right_neutral nat_less_le numerals(2) power2_eq_square sqrt_inverse_power2 floor_sqrt_unique surj_def)
 (*
   Could probably generalize from nat
   assumptions in no collections so I see exactly where I need them

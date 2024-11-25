@@ -1,7 +1,7 @@
-text \<open>Extensions to Discrete.thy, in particular an implementation of square root by bisection\<close>
+text \<open>Extensions to \<^theory>\<open>HOL-Library.Discrete_Functions\<close>, in particular an implementation of square root by bisection\<close>
 
 theory Discrete_Extensions
-  imports "HOL-Library.Discrete" "HOL-Eisbach.Eisbach"
+  imports "HOL-Library.Discrete_Functions" "HOL-Eisbach.Eisbach"
 begin
 
 (* Internal 'loop' for the algorithm, takes lower and upper bound for root, returns root *)
@@ -23,7 +23,7 @@ definition dsqrt :: "nat \<Rightarrow> nat" where
   "dsqrt y = dsqrt' y 0 (Suc y)"
 
 (* I am still not sure if there is a better way to state multiple simultaneous goals for induction*)
-lemma dsqrt'_correct': 
+lemma dsqrt'_correct':
   "(0::nat) \<le> L \<Longrightarrow> L < R \<Longrightarrow> L\<^sup>2 \<le> y \<Longrightarrow> y < R\<^sup>2 \<Longrightarrow> (dsqrt' y L R)\<^sup>2 \<le> y \<and> y < (Suc (dsqrt' y L R))\<^sup>2"
 proof (induction y L R rule: dsqrt'.induct)
   case (1 y L R)
@@ -32,10 +32,10 @@ proof (induction y L R rule: dsqrt'.induct)
     case True
     then show ?thesis
       (*Real proof needed*)
-      by (smt (verit, ccfv_threshold) "1.IH"(1) "1.IH"(2) "1.prems"(3) "1.prems"(4) dsqrt'_simps(1) 
+      by (smt (verit, ccfv_threshold) "1.IH"(1) "1.IH"(2) "1.prems"(3) "1.prems"(4) dsqrt'_simps(1)
           dsqrt'_simps(2) le_sqrt_iff less_eq_nat.simps(1) linorder_not_le order_trans power2_eq_square)
   next
-    case False 
+    case False
     hence "Suc L = R"
       using 1 by linarith
     then show ?thesis
@@ -44,16 +44,16 @@ proof (induction y L R rule: dsqrt'.induct)
 qed
 
 (* This is what I would like *)
-lemma dsqrt'_correct'': 
-  assumes "(0::nat) \<le> L" "L < R" "L\<^sup>2 \<le> y" "y < R\<^sup>2" 
+lemma dsqrt'_correct'':
+  assumes "(0::nat) \<le> L" "L < R" "L\<^sup>2 \<le> y" "y < R\<^sup>2"
   shows "(dsqrt' y L R)\<^sup>2 \<le> y" "y < (Suc (dsqrt' y L R))\<^sup>2"
   using assms dsqrt'_correct' by blast+
 
-lemma dsqrt_correct': 
+lemma dsqrt_correct':
   "(dsqrt y)\<^sup>2 \<le> y" "y < (Suc (dsqrt y))\<^sup>2"
   unfolding dsqrt_def by (all \<open>rule dsqrt'_correct''\<close>) (simp_all add: power2_eq_square)
 
-corollary dsqrt_correct: "dsqrt y = Discrete.sqrt y"
-  by (intro sqrt_unique[symmetric] dsqrt_correct')
+corollary dsqrt_correct: "dsqrt y = floor_sqrt y"
+  by (intro floor_sqrt_unique[symmetric] dsqrt_correct')
 
 end

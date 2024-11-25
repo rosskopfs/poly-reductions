@@ -691,7 +691,7 @@ fun dsqrt_imp :: "dsqrt_state \<Rightarrow> dsqrt_state" where
 declare dsqrt_imp.simps [simp del]
 
 lemma dsqrt_imp_correct[let_function_correctness]:
-  "dsqrt_state_ret (dsqrt_imp s) = Discrete.sqrt (dsqrt_state_y s)"
+  "dsqrt_state_ret (dsqrt_imp s) = floor_sqrt (dsqrt_state_y s)"
   by (subst dsqrt_imp.simps) (simp add: dsqrt'_imp_correct dsqrt_def dsqrt_imp_state_upd_def
       dsqrt_correct[symmetric])
 
