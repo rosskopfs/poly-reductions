@@ -157,18 +157,19 @@ context HOL_To_HOL_Nat
 begin
 definition "rev2 xs \<equiv> rev_acc xs []"
 function_compile_nat rev2_def
+print_theorems
 
 lemma rev_acc_Nil_Nil: "rev_acc [] [] = []"
   by simp
 
 fun rev_test :: "'a list \<Rightarrow> nat list" where
-  "rev_test [] = (if rev_acc [] ([]::'a list) = [] then [] else [1])"
-| "rev_test xs = (if rev_acc xs [] = [] then [] else [2])"
+  "rev_test [] = (if rev_acc [] ([]::'a list) = [] then [] else [Suc 0])"
+| "rev_test xs = (if rev_acc xs [] = [] then [] else [Suc (Suc 0)])"
 declare rev_acc.simps[simp del]
 (* Try around with this function *)
 
 case_of_simps rev_test_eq : rev_test.simps
-function_compile_nat rev_test_eq *)
+function_compile_nat rev_test_eq
 print_theorems
 
 end
@@ -178,20 +179,210 @@ begin
 
 compile_nat HOL_To_HOL_Nat.rev2_nat_eq_unfolded
 
+lemma "Rel_nat Nil_nat Nil"
+  by (rule Rel_nat_Nil_nat)
+thm Rel_nat_Nil_nat
+
+lemma "(STATE
+       (interp_state
+         (update_state
+           (update_state
+             (update_state
+               (update_state (State s) ''.args.0''
+                 (s ''rev2_nat.args.x''))
+               ''rev_acc_nat.args.x'' (s ''rev2_nat.args.x''))
+             ''Nil_nat.ret'' Nil_nat)
+           ''rev_acc_nat.args.xa'' Nil_nat))
+       ''rev_acc_nat.args.xa'') = Nil_nat"
+  by (simp add: STATE_interp_update_retrieve_key_eq_if)
+thm STATE_interp_update_retrieve_key_eq_if
+
+declare HTHN.rev2_related_transfer[transfer_rule]
+declare HTHN.rev2_nat_related'[transfer_rule]
+
+declare HTHN.rev_acc_related_transfer[transfer_rule]
+declare HTHN.rev_acc_nat_related'[transfer_rule]
+
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
     apply (subst rev2_nat_IMP_tailcall_def; simp)
    apply (subst rev2_nat_IMP_tailcall_def; simp)
     (* No induction for defs *)
   apply (subst (2) rev2_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
-  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+
+  (* Do step tac for tCall manually *)
+
+  (* Split tSeq *)
+  apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
+
+  (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
+  apply (rule terminates_with_tCallI)
+  apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+
+  (* Always need to evaluate state, works more or less automatically *)
+  apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+  using Rel_nat_Nil_nat (* Basic relations in simpset? *)
+  apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+
+  apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
+  
+  apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+
+  (*
+  using HTHN.rev2_nat_eq_unfolded HTHN.rev_acc_nat_eq_unfolded
+  by fastforce *)
+
+  apply transfer
+  apply simp
   sorry
 
 (* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
 congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
-thm HOL_To_HOL_Nat.rev_acc_nat_eq_unfolded
 lemmas rev_test_nat_eq = HOL_To_HOL_Nat.rev_test_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_test_nat_eq
+
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
+  apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
+    apply (subst rev_test_nat_IMP_tailcall_def; simp)
+   apply (subst rev_test_nat_IMP_tailcall_def; simp)
+  apply (induction y arbitrary: s rule: HTHN.rev_test.induct)
+  (* case [] *)
+  apply (subst (2) rev_test_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  subgoal for s
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+
+    (* Do step tac for tCall manually *)
+    (* Split tSeq *)
+    apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
+  
+    (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
+    apply (rule terminates_with_tCallI)
+    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+  
+    (* Always need to evaluate state, works more or less automatically *)
+    using Rel_nat_Nil_nat (* Basic relations in simpset? *)
+    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+    using Rel_nat_Nil_nat (* Basic relations in simpset? *)
+    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+  
+    apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
+
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    (* Apply transfer here *)
+    subgoal
+      sorry
+
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    (* First apply transfer then find a contradiction *)
+
+    (* stupid sledgehammer: *)
+    using Rel_nat_Nil_nat fst_nat_eq_if_Rel_nat_list rev_acc_nat_eq
+    by force
+
+    (* Find contradiction *)
+    apply (erule check_first_nat_ccontradictionE check_first_nat_ccontradictionE')
+    apply (rule fst_nat_eq_if_Rel_nat_list)
+    apply assumption (*needs a smarter method*)
+   apply simp
+  (* case (_#_) *)
+  apply (subst (2) rev_test_nat_IMP_tailcall_def, rule terminates_with_res_IMP_Tailcall_start)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
+    (* Find contradiction *)
+    apply (erule check_first_nat_ccontradictionE check_first_nat_ccontradictionE')
+    apply (rule fst_nat_eq_if_Rel_nat_list)
+    apply assumption (*needs a smarter method*)
+    apply simp
+  subgoal for x xs s
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+
+    (* Do step tac for tCall manually *)
+    (* Split tSeq *)
+    apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
+  
+    (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
+    apply (rule terminates_with_tCallI)
+    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+  
+    (* Always need to evaluate state, works more or less automatically *)
+    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+    subgoal sorry
+
+    using Rel_nat_Nil_nat (* Basic relations in simpset? *)
+    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+  
+    apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
+
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    (* Apply transfer \<rightarrow> find contradiction *)
+    subgoal
+      sorry
+
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    (* Apply transfer *)
+
+    (* Stupid sledgehammer proof *)
+    by (smt (z3) Rel_nat_destruct_Cons(1) Rel_nat_suc_nat
+        \<open>\<And>ya. Rel_nat (s ''rev_test_nat.args.x'') (x # xs) \<Longrightarrow> fst_nat (s ''rev_test_nat.args.x'') \<noteq> 0 \<Longrightarrow> Rel_nat (Cons_nat (fst_nat (snd_nat (s ''rev_test_nat.args.x''))) (snd_nat (snd_nat (s ''rev_test_nat.args.x'')))) ya\<close>
+        left_uniqueD left_unique_Rel_nat n_not_Suc_n rel_funD)
+  sorry
+
+  
 
 end
 
