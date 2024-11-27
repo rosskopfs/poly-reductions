@@ -129,6 +129,9 @@ fun size\<^sub>c :: "com' \<Rightarrow> nat" where
   "size\<^sub>c (CALL c RETURN r) = 2 * length (vars c) + 5" |
   "size\<^sub>c _ = 0"
 
+lemma size\<^sub>c_bound: "size\<^sub>c c \<le> length (vars c) * (2 * length (vars c) + 3)"
+  by (induction c)  (auto simp: numeral_eq_Suc algebra_simps)
+
 unbundle no com'_syntax and com_syntax
 
 fun ssubst where
