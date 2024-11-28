@@ -20,6 +20,7 @@ theory All_Reductions
     "Three_Sat_To_Set_Cover"
     "XC_To_SS/SS_To_SS_List"
     "ChrN_To_CC/ChrN_To_CC"
+    "Clique_To_SP/Clique_To_SP"
 begin
 
 section \<open>Overview of reductions\<close>
@@ -49,7 +50,7 @@ text \<open>
       \<^item> Feedback Arc Set @{thm is_reduction_vc_to_fas}
       \<^item> Feedback Node Set @{thm is_reduction_vc_to_fns}
   \<^item> Clique @{thm is_reduction_cnf_sat_to_clique}
-    \<^item> Set Packing (missing)
+    \<^item> Set Packing @thm{is_reduction_clique_to_set_packing}
 \<close>
 
 text \<open> * Karp's knapsack corresponds to the modern Subset Sum.
@@ -87,7 +88,7 @@ text \<open>
       \<^item> Feedback Arc Set @{thm is_reduction_vc_to_fas}
       \<^item> Feedback Node Set @{thm is_reduction_vc_to_fns}
   \<^item> Clique @{thm is_reduction_cnf_sat_to_clique}
-    \<^item> Set Packing (missing)
+    \<^item> Set Packing  @thm{is_reduction_clique_to_set_packing}
 \<close>
 
 end
