@@ -213,6 +213,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
       | go _ bounds cont (Call (idx, ((g_name, _), es))) =
         let
           val g_compiled = lookup_fn g_name
+          (* remove all type itself arguments *)
           val es = filter (fn e => case e
               of Call (_, ((_, T), _)) => not (HTHNU.is_itself T)
                | _ => true) es
