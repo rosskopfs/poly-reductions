@@ -42,6 +42,7 @@ val arg_parsers : (thm context_parser, thm list context_parser, thm list context
   thm list context_parser, mode parser) PA.entries
 
 val transfer_foc_tac : Proof.context -> int -> tactic
+val transfer_foc_rev_tac : Proof.context -> int -> tactic
 val rel_condition_tac : Proof.context -> int -> tactic
 end
 
@@ -141,7 +142,9 @@ val context_arg_parsers = {
   get_fun_inducts = SOME (PU.nonempty_code (K "retrieval for induction rules may not be empty"))
 }
 
-fun transfer_foc_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
+fun transfer_foc_tac ctxt = Tactic_Util.FOCUS_PREMS' (K (Transfer.transfer_prover_tac ctxt)) ctxt
+
+fun transfer_foc_rev_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
   let (* Do not use Tactic_Util.FOCUS_PREMS' directily as it fixes schematic types in the conclusion *)
     val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE thm
     (* Add prems as transfer rules *)
@@ -159,13 +162,13 @@ fun transfer_foc_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
     (* Plugin in the result *)
     val inst_tac = Drule.infer_instantiate' ctxt [SOME rhsct] |> Tactical.PRIMITIVE
   in
-    (inst_tac THEN Tactic_Util.FOCUS_PREMS' (K (Transfer.transfer_prover_tac ctxt)) ctxt i) thm
+    (inst_tac THEN transfer_foc_tac ctxt i) thm
   end)
 
 fun rel_condition_tac ctxt =
   resolve_tac ctxt @{thms Rel_nat_rewrite_lhs}
   THEN' SUT.STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
-  THEN' transfer_foc_tac ctxt
+  THEN' transfer_foc_rev_tac ctxt
 
 end
 
