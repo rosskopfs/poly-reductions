@@ -18,6 +18,8 @@ sig
   val if_tac: thm -> Proof.context -> int -> tactic
   val run_step_tac: ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> 'a -> tactic
   val run_tac: (int -> tactic) -> int -> tactic
+
+  val simp_update_tac: Proof.context -> int -> tactic
 end
 
 structure HOL_Nat_To_IMP_Tactics_Base : HOL_NAT_TO_IMP_TACTICS_BASE =

@@ -183,25 +183,47 @@ lemma "Rel_nat Nil_nat Nil"
   by (rule Rel_nat_Nil_nat)
 thm Rel_nat_Nil_nat
 
-lemma "(STATE
-       (interp_state
-         (update_state
-           (update_state
-             (update_state
-               (update_state (State s) ''.args.0''
-                 (s ''rev2_nat.args.x''))
-               ''rev_acc_nat.args.x'' (s ''rev2_nat.args.x''))
-             ''Nil_nat.ret'' Nil_nat)
-           ''rev_acc_nat.args.xa'' Nil_nat))
-       ''rev_acc_nat.args.xa'') = Nil_nat"
-  by (simp add: STATE_interp_update_retrieve_key_eq_if)
 thm STATE_interp_update_retrieve_key_eq_if
 
-declare HTHN.rev2_related_transfer[transfer_rule]
-declare HTHN.rev2_nat_related'[transfer_rule]
+lemma Rel_nat_rewrite_lhs:
+  assumes "lhs = lhs'" and "Rel_nat lhs' rhs"
+  shows "Rel_nat lhs rhs"
+  using assms by simp
 
-declare HTHN.rev_acc_related_transfer[transfer_rule]
-declare HTHN.rev_acc_nat_related'[transfer_rule]
+lemma transfer_inst: "x = y \<Longrightarrow> y = y"
+  by simp
+
+lemma test:
+  assumes "Rel_nat n (y::'a)"
+  shows "\<exists>x. Rel_nat n (x::'a::compile_nat)"
+  using assms by (rule HOL.exI)
+
+declare [[show_types]]
+
+ML \<open>
+fun transfer_foc_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
+  let
+    val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE thm
+    (* Add prems as transfer rules *)
+    val ctxt = fold (snd oo Thm.apply_attribute Transfer.transfer_add) prems (Context.Proof context)
+      |> Context.proof_of
+    (* Get element we need to find relation for *)
+    val lhsct = concl |> Thm.dest_arg |> Thm.dest_arg1
+    (* Instantiate transfer_inst *)
+    val inst_thm = @{thm "transfer_inst"} |> Drule.infer_instantiate' ctxt [SOME lhsct]
+    (* Abuse alternative form to get transferred form *)
+    val thm' = Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt) |> fst
+      |> Thm.varifyT_global
+    (* Select transferred result *)
+    val rhsct = Thm.cprems_of thm' |> hd |> Thm.dest_arg |> Thm.dest_arg1
+    (* Plugin in the result *)
+    val inst_tac = Drule.infer_instantiate' ctxt [SOME rhsct] |> Tactical.PRIMITIVE
+  in
+    (inst_tac THEN Tactic_Util.FOCUS_PREMS' (K (Transfer.transfer_prover_tac ctxt)) ctxt i) thm
+  end)
+\<close>
+
+(* STATE_interp_retreive_key_eq_tac *)
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
@@ -221,12 +243,21 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
 
   (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
   apply (rule terminates_with_tCallI)
-  apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
 
-  (* Always need to evaluate state, works more or less automatically *)
-  apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-  using Rel_nat_Nil_nat (* Basic relations in simpset? *)
-  apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+  (* First rewrite state to actually result, afterwards use focused transfer prover *)
+  apply (rule Rel_nat_rewrite_lhs)
+  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
+  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>)
+
+  apply (rule Rel_nat_rewrite_lhs)
+  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
+  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>)
+
+     apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+  using Rel_nat_Nil_nat
+    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
+(*  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>) *)
 
   apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
   
@@ -360,7 +391,7 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+     apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
     (* Apply transfer \<rightarrow> find contradiction *)
     subgoal
       sorry
