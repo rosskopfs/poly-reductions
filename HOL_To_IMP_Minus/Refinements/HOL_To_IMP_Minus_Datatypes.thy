@@ -185,44 +185,6 @@ thm Rel_nat_Nil_nat
 
 thm STATE_interp_update_retrieve_key_eq_if
 
-lemma Rel_nat_rewrite_lhs:
-  assumes "lhs = lhs'" and "Rel_nat lhs' rhs"
-  shows "Rel_nat lhs rhs"
-  using assms by simp
-
-lemma transfer_inst: "x = y \<Longrightarrow> y = y"
-  by simp
-
-lemma test:
-  assumes "Rel_nat n (y::'a)"
-  shows "\<exists>x. Rel_nat n (x::'a::compile_nat)"
-  using assms by (rule HOL.exI)
-
-declare [[show_types]]
-
-ML \<open>
-fun transfer_foc_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
-  let
-    val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE thm
-    (* Add prems as transfer rules *)
-    val ctxt = fold (snd oo Thm.apply_attribute Transfer.transfer_add) prems (Context.Proof context)
-      |> Context.proof_of
-    (* Get element we need to find relation for *)
-    val lhsct = concl |> Thm.dest_arg |> Thm.dest_arg1
-    (* Instantiate transfer_inst *)
-    val inst_thm = @{thm "transfer_inst"} |> Drule.infer_instantiate' ctxt [SOME lhsct]
-    (* Abuse alternative form to get transferred form *)
-    val thm' = Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt) |> fst
-      |> Thm.varifyT_global
-    (* Select transferred result *)
-    val rhsct = Thm.cprems_of thm' |> hd |> Thm.dest_arg |> Thm.dest_arg1
-    (* Plugin in the result *)
-    val inst_tac = Drule.infer_instantiate' ctxt [SOME rhsct] |> Tactical.PRIMITIVE
-  in
-    (inst_tac THEN Tactic_Util.FOCUS_PREMS' (K (Transfer.transfer_prover_tac ctxt)) ctxt i) thm
-  end)
-\<close>
-
 (* STATE_interp_retreive_key_eq_tac *)
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
@@ -248,16 +210,10 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   (* First rewrite state to actually result, afterwards use focused transfer prover *)
   apply (rule Rel_nat_rewrite_lhs)
   apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
-  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>)
+  apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.transfer_foc_tac @{context} 1\<close>)
 
-  apply (rule Rel_nat_rewrite_lhs)
-  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
-  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>)
-
-     apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-  using Rel_nat_Nil_nat
-    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-(*  apply (tactic \<open>transfer_foc_tac @{context} 1\<close>) *)
+  (* Short version *)
+  apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.rel_condition_tac @{context} 1\<close>)
 
   apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
   
