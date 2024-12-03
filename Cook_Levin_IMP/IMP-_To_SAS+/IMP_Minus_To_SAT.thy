@@ -43,7 +43,7 @@ lemma valid_problem: "is_valid_problem_sas_plus (IMP_Minus_to_SAS_Plus c I r G t
   by (auto simp: IMP_Minus_to_SAS_Plus_def Let_def)
 
 lemma while_program_has_model:
-  assumes 
+  assumes
     "I \<subseteq>\<^sub>m Some \<circ> s1"
     "finite (range s1)"
     (*Mohammad: The next assumption has to be fixed in IMP_Minus_to_SAS_Plus_correctness*)
@@ -51,7 +51,7 @@ lemma while_program_has_model:
     "G \<subseteq>\<^sub>m Some \<circ> s2"
     "(c, s1) \<Rightarrow>\<^bsup> t \<^esup> s2"
     "t \<le> t'"
-  shows 
+  shows
   (*Mohammad: there is still a problem with this theorem, namely, the generated formula is still
               parameterised by the specific running time 't'.
               This can only be fixed by generalising IMP_Minus_to_SAS_Plus_correctness *)
@@ -72,11 +72,11 @@ proof-
 qed
 
 lemma if_there_is_model_then_program_terminates:
-  assumes 
+  assumes
     "dom I \<subseteq> set (Max_Constant.all_variables c)"
     "dom G \<subseteq> set (Max_Constant.all_variables c)"
     "Max (ran G) < 2 ^ (t + max_input_bits c I r)"
-    (* Mohammad: The following assumption cannot be true for many verifiers. s1 has to depend on I 
+    (* Mohammad: The following assumption cannot be true for many verifiers. s1 has to depend on I
                  , otherwise the assumption is vacuous.*)
     "\<And>s1. I \<subseteq>\<^sub>m Some \<circ> s1 \<Longrightarrow> \<exists>s2. \<exists>t' \<le> t. (c, s1) \<Rightarrow>\<^bsup>t'\<^esup> s2"
     "\<A> \<Turnstile> \<Phi>\<^sub>\<forall> (\<phi> prob_with_noop (IMP_Minus_to_SAS_Plus c I r G t))
@@ -87,7 +87,7 @@ lemma if_there_is_model_then_program_terminates:
 proof-
   obtain plan
     where "SAS_Plus_Semantics.is_serial_solution_for_problem (IMP_Minus_to_SAS_Plus c I r G t) plan"
-    using sas_plus_problem_has_serial_solution_iff_i'[OF valid_problem assms(5)]    
+    using sas_plus_problem_has_serial_solution_iff_i'[OF valid_problem assms(5)]
     by rule
   thus ?thesis
     using assms
@@ -99,7 +99,7 @@ definition t' ::"(nat \<Rightarrow> nat) \<Rightarrow> (nat\<Rightarrow> nat) \<
 
  definition imp_to_sat :: "Com.com \<Rightarrow> (nat \<Rightarrow> nat) \<Rightarrow> (nat\<Rightarrow> nat) \<Rightarrow> nat \<Rightarrow> sat_plan_formula" where
     "imp_to_sat c pt p_cer x =
-      (let I = (Map.empty)(''input'' \<mapsto> x); 
+      (let I = (Map.empty)(''input'' \<mapsto> x);
           G = (Map.empty)(''input'' \<mapsto> 0);
           guess_range = x + 1 + 2 * 2 ^ (p_cer (bit_length x));
           max_bits = max_input_bits c I guess_range
@@ -117,7 +117,7 @@ lemma main_lemma_hol:
               is bounded by input length.*)
     "\<And>s. \<exists>t s'. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<and>
                    t \<le> pt (bit_length (s ''input''))"
-  assumes verifier_terminates: 
+  assumes verifier_terminates:
           (*"\<And>x z. \<forall>s. s ''input'' = x \<and> s ''certificate'' = z \<longrightarrow>
                          (\<exists>t s'. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<and> s' ''input'' = in_lang x)"*)
           (*Mohammad: The TM needs no access to the certificate since it is non-deterministic, i.e. it can
@@ -134,7 +134,7 @@ lemma main_lemma_hol:
   assumes verifier_has_registers:
     "''input'' \<in> set (Max_Constant.all_variables c)"
   shows "\<exists>t_red s_red.
-         poly t_red 
+         poly t_red
        \<and> poly s_red
        \<and> (\<forall>x. \<exists>f.  bit_length (encode_sat f) \<le> s_red ( bit_length x ) \<and> imp_to_sat c pt p_cer x = f
                    \<and> (Sema.sat {f}  \<longleftrightarrow> in_lang x = 0))"
@@ -153,8 +153,8 @@ proof -
   have t_bound_2: "\<exists>s' t. t \<le> t' pt p_cer  x \<and> (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'"
     if "s ''input'' = x"
     for s x
-  proof-    
-    obtain t s' where 
+  proof-
+    obtain t s' where
       "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s'"
       "t \<le> pt (bit_length (s ''input''))"
       using verifier_tbounded
@@ -193,7 +193,7 @@ proof -
       by (auto simp: s_def map_le_def)
     moreover have "finite (range (s(''certificate'' := z)))"
       by (auto simp: image_def s_def)
-    moreover have "z \<le> 2 * 2 ^ p_cer (Discrete.log x)"
+    moreover have "z \<le> 2 * 2 ^ p_cer (floor_log x)"
       using \<open>bit_length z \<le> p_cer (bit_length x)\<close>
       apply(simp add: bit_length_def)
       by (metis le_iff_add log_exp2_ge mult.commute not_less power_of_two_increase_exponent_le)
@@ -214,11 +214,11 @@ proof -
       by (auto simp: Sema.sat_def)
     hence "\<exists>s1 s2 t''. t'' \<le> t' pt p_cer  x \<and> [''input'' \<mapsto> x] \<subseteq>\<^sub>m Some \<circ> s1 \<and>
                        [''input'' \<mapsto> 0] \<subseteq>\<^sub>m Some \<circ> s2 \<and> (c, s1) \<Rightarrow>\<^bsup> t'' \<^esup> s2"
-      apply(intro if_there_is_model_then_program_terminates 
+      apply(intro if_there_is_model_then_program_terminates
                     [where \<A> = \<A> and r = "x + 1 + 2 * 2 ^ (p_cer (bit_length x))"])
       using verifier_has_registers
       by (auto simp: map_le_def imp_to_sat_def Let_def intro: t_bound_2 )
-    then obtain s1 s2 t'' 
+    then obtain s1 s2 t''
       where "t'' \<le> t' pt p_cer x" "[''input'' \<mapsto> x] \<subseteq>\<^sub>m Some \<circ> s1"
             "[''input'' \<mapsto> 0] \<subseteq>\<^sub>m Some \<circ> s2" "(c, s1) \<Rightarrow>\<^bsup> t'' \<^esup> s2"
       by auto
@@ -241,25 +241,25 @@ interpretation encode_decode_sat encode_sat decode_sat
 
 subsubsection \<open>Synthesizing the IMP- Program\<close>
 
-lemma main_lemma_synth : 
+lemma main_lemma_synth :
   fixes c pt p_cer
   assumes "poly pt"
   assumes "poly p_cer"
-  assumes "\<forall>s. \<exists>t. Ex (big_step_t (c, s) t) \<and> t \<le> 
+  assumes "\<forall>s. \<exists>t. Ex (big_step_t (c, s) t) \<and> t \<le>
                       pt (bit_length (s ''input'') + bit_length (s ''certificate''))"
   assumes "\<forall>x z. \<exists>r. \<forall>s. s ''input'' = x \<and> s ''certificate'' = z \<longrightarrow>
                          (\<exists>t s'. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<and> s' ''input'' = r)"
   shows "\<exists>imp_to_sat t_red s_red.
-         poly t_red 
+         poly t_red
        \<and> poly s_red
        \<and> (\<forall>s t s'. (imp_to_sat,s) \<Rightarrow>\<^bsup> t \<^esup> s' \<longrightarrow> s ''certificate'' = s' ''certificate'')
        \<and> (\<forall>x. \<exists>f.    bit_length f \<le> s_red ( bit_length x )
-                   \<and> (\<forall>s. s ''input'' = x \<longrightarrow> (\<exists>t s'. (imp_to_sat,s) \<Rightarrow>\<^bsup> t \<^esup> s' \<and> 
+                   \<and> (\<forall>s. s ''input'' = x \<longrightarrow> (\<exists>t s'. (imp_to_sat,s) \<Rightarrow>\<^bsup> t \<^esup> s' \<and>
                                           s' ''input'' = f \<and> t \<le> t_red(bit_length x)))
                    \<and> ( f \<in> IMP_SAT \<longleftrightarrow>
                                         (\<exists>z. bit_length z \<le> p_cer (bit_length x) \<and>
-                                                      (\<forall>s t s'. s ''input'' = x 
-                                                      \<and> s ''certificate'' = z 
+                                                      (\<forall>s t s'. s ''input'' = x
+                                                      \<and> s ''certificate'' = z
                                                       \<and>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<longrightarrow> s' ''input'' = 0))
                                         )
                       )"
@@ -270,8 +270,8 @@ subsubsection \<open>Instantiating the Cook_Levin locale\<close>
 
 (*interpretation Cook_Levin_assumes_Main_lemma encode_sat decode_sat
   apply standard
-  by (fact main_lemma_synth) 
-   
+  by (fact main_lemma_synth)
+
 term strict_sorted*)
 
 end
