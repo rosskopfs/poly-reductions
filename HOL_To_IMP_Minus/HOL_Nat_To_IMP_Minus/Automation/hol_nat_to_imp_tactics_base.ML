@@ -107,6 +107,7 @@ fun call_tac call_thmI ctxt correctness =
   resolve_tac ctxt [call_thmI]
   (*solve correctness assumption*)
   THEN' resolve_tac ctxt correctness
+  THEN_ALL_NEW (K (TRY (rel_condition_tac ctxt 1)))
   (*solve state update assumption*)
   THEN' SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_update_tac ctxt) ctxt
 

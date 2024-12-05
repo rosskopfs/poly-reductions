@@ -179,13 +179,7 @@ begin
 
 compile_nat HOL_To_HOL_Nat.rev2_nat_eq_unfolded
 
-lemma "Rel_nat Nil_nat Nil"
-  by (rule Rel_nat_Nil_nat)
-thm Rel_nat_Nil_nat
-
-thm STATE_interp_update_retrieve_key_eq_if
-
-(* STATE_interp_retreive_key_eq_tac *)
+declare [[show_types]]
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
@@ -197,40 +191,20 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
 
-  (* Do step tac for tCall manually *)
-
-  (* Split tSeq *)
-  apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
-
-  (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
-  apply (rule terminates_with_tCallI)
-    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
-
-  (* First rewrite state to actually result, afterwards use focused transfer prover *)
-  apply (rule Rel_nat_rewrite_lhs)
-  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
-  apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.transfer_foc_tac @{context} 1\<close>)
-
-  (* Short version *)
-  apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.rel_condition_tac @{context} 1\<close>)
-
-  apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
-  
   apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
 
-  (*
-  using HTHN.rev2_nat_eq_unfolded HTHN.rev_acc_nat_eq_unfolded
-  by fastforce *)
-
-  apply transfer
-  apply simp
-  sorry
+  apply (subst HTHN.rev2_nat_eq_unfolded)
+  apply (tactic \<open>HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac @{context} 1\<close>)
+  by simp
 
 (* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
 congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
 lemmas rev_test_nat_eq = HOL_To_HOL_Nat.rev_test_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_test_nat_eq
+
+definition "f (a::'a) (b::'a) \<equiv> b"
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
@@ -252,31 +226,35 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
+     apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
 
-    (* Do step tac for tCall manually *)
-    (* Split tSeq *)
-    apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
-  
-    (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
-    apply (rule terminates_with_tCallI)
-    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
-  
-    (* Always need to evaluate state, works more or less automatically *)
-    using Rel_nat_Nil_nat (* Basic relations in simpset? *)
-    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-    using Rel_nat_Nil_nat (* Basic relations in simpset? *)
-    apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-  
-    apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
 
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
-    apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+    apply (subst HTHN.rev_test_nat_eq_unfolded)
+      apply (tactic \<open>HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac @{context} 1\<close>)
+
+     apply (subst case_list_nat_def)
+     apply (simp only: split: if_splits)
+     apply (intro conjI impI)
+            apply simp
+    apply simp
+    apply simp
+         apply simp
+    defer
+        apply simp
+    subgoal
+      sorry
+    apply auto[]
+    apply simp
+  
+
     (* Apply transfer here *)
     subgoal
       sorry
@@ -329,7 +307,12 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
   
     (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
     apply (rule terminates_with_tCallI)
-    apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+      apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+
+
+  apply (rule Rel_nat_rewrite_lhs)
+  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
+  apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.transfer_foc_rev_tac @{context} 1\<close>)
   
     (* Always need to evaluate state, works more or less automatically *)
     apply (simp add: STATE_interp_update_retrieve_key_eq_if)
