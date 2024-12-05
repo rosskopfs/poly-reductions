@@ -180,6 +180,40 @@ begin
 compile_nat HOL_To_HOL_Nat.rev2_nat_eq_unfolded
 
 declare [[show_types]]
+declare HTHN.rev2_nat_eq_unfolded[]
+
+lemma A: "B \<Longrightarrow> C"
+  sorry
+
+ML \<open>
+fun eq_unfolded_retrieval thm ctxt i =
+  let
+    val ({concl, ...}, _) = Subgoal.focus_prems ctxt i NONE thm
+  in
+    concl
+      |> Thm.term_of
+      |> HOLogic.dest_Trueprop
+      |> HOLogic.dest_eq |> snd
+      |> Term.head_of
+      |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded ctxt
+  end;
+
+fun subst_eq_unfolded_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
+  let
+    (* Try to find eq_unfolded theorem *)
+    val subs = eq_unfolded_retrieval thm ctxt i
+  in
+    if Option.isSome subs
+      then (EqSubst.eqsubst_tac ctxt [1] [Option.valOf subs]
+          THEN_ALL_NEW (K (TRY (HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt 1)))) i thm
+      else all_tac thm
+  end)
+
+fun finish_subst_eq ctxt =
+  subst_eq_unfolded_tac ctxt
+  THEN' (safe_asm_simp_tac ctxt)
+
+\<close>
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (rule terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI)
@@ -193,11 +227,21 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev2_nat
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
 
+  apply (tactic \<open>HT.terminates_with_res_tAssign_tac @{context} 1\<close>)
+
+  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (finish_subst_eq @{context}) @{context} 1\<close>)
+
+  apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
+  apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (K all_tac) @{context} 1\<close>)
+
+  apply (tactic \<open>subst_eq_unfolded_tac @{context} 1\<close>)
+
+  apply (tactic \<open>fn thm => (eq_unfolded_retrieval thm @{context} 1 |> @{print}; Seq.single thm)\<close>)
+
   apply (tactic \<open>HT.finish_non_tail_tac @{context} 1\<close>)
 
-  apply (subst HTHN.rev2_nat_eq_unfolded)
   apply (tactic \<open>HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac @{context} 1\<close>)
-  by simp
+  by (rule refl)
 
 (* FIXME: we could use the equation without unfolding case_list_nat_def if we prove
 congruence lemmas for case_list_nat (otherwise the function package cannot prove termination) *)
