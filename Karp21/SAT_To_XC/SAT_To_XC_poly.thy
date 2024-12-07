@@ -1,5 +1,5 @@
 theory SAT_To_XC_poly
-  imports  "../TSTSC_Poly" "../../Lib/Auxiliaries/Set_Auxiliaries" SAT_To_XC
+  imports  "../TSAT_To_SC/TSTSC_Poly" "../../Lib/Auxiliaries/Set_Auxiliaries" SAT_To_XC
 begin
 
 section "the reduction from sat to xc is polynomial"
