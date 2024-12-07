@@ -1,5 +1,5 @@
 theory CSTC_Poly
-  imports "../TSTSC_Poly" CNF_SAT_To_Clique
+  imports "../TSAT_To_SC/TSTSC_Poly" CNF_SAT_To_Clique
 begin
 
 subsection\<open>The reduction from \<open>CNF_Sat\<close> to \<open>Clique\<close> is polynomial\<close>

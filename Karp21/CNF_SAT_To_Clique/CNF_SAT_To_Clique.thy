@@ -1,7 +1,7 @@
 section\<open>CNF Sat to Clique\<close>
 
 theory CNF_SAT_To_Clique
-  imports Main "../Three_Sat_To_Set_Cover"
+  imports Main "../TSAT_To_SC/TSAT_To_SC"
 begin
 
 subsection \<open>Preliminaries\<close>
@@ -59,7 +59,7 @@ lemma E_def: "E = {{(l1, i), (l2, j)} | l1 l2 i j. i < length F
   by (metis (mono_tags, lifting) fst_eqD)
 
 
-text\<open>Similar to the proof in Three_Sat_To_Set_Cover\<close>
+text\<open>Similar to the proof in TSAT_To_SC\<close>
 lemma cnf_sat_to_clique_ugraph: "ugraph E"
 proof -
   let ?S = "((\<Union> (set F)) \<times> {0..<length F}) \<times> ((\<Union> (set F)) \<times> {0..<length F})"
