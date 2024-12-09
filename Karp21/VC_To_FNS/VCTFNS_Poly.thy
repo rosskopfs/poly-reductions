@@ -1,5 +1,5 @@
 theory VCTFNS_Poly
-  imports "../TSTSC_Poly" VC_To_FNS
+  imports "../TSAT_To_SC/TSTSC_Poly" VC_To_FNS
 begin
 
 subsection\<open>The reduction from VC to FNS is polynomial\<close>
