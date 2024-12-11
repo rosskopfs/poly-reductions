@@ -14,7 +14,7 @@ sig
 
   val seq_tac: thm -> Proof.context -> int -> tactic
   val assign_tac: thm -> Proof.context -> int -> tactic
-  val call_tac: thm -> Proof.context -> thm list -> int -> tactic
+  val call_tac: thm -> (int -> tactic) -> Proof.context -> thm list -> int -> tactic
   val if_tac: thm -> Proof.context -> int -> tactic
   val run_step_tac: ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> 'a -> tactic
   val run_tac: (int -> tactic) -> int -> tactic
@@ -22,8 +22,8 @@ sig
   val simp_update_tac: Proof.context -> int -> tactic
 
   val transfer_foc_tac : Proof.context -> int -> tactic
-  val transfer_foc_rev_tac : Proof.context -> int -> tactic
-  val rel_condition_tac : Proof.context -> int -> tactic
+  val transfer_foc_rev_tac : Proof.context -> int -> int -> tactic
+  val rel_condition_tac : Proof.context -> int -> int -> tactic
 end
 
 structure HOL_Nat_To_IMP_Tactics_Base : HOL_NAT_TO_IMP_TACTICS_BASE =
@@ -43,9 +43,9 @@ fun transfer_foc_tac ctxt = Tactic_Util.FOCUS_PREMS' (fn ({prems, context, ...})
     (Transfer.transfer_prover_tac ctxt')
   end) ctxt
 
-fun transfer_foc_rev_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
+fun transfer_foc_rev_tac ctxt vari i = Tactical.PRIMSEQ (fn state =>
   let (* Do not use Tactic_Util.FOCUS_PREMS' directily as it fixes schematic types in the conclusion *)
-    val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE thm
+    val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE state
     (* Add prems as transfer rules *)
     val ctxt' = fold (snd oo Thm.apply_attribute Transfer.transfer_add) prems (Context.Proof context)
       |> Context.proof_of
@@ -55,19 +55,19 @@ fun transfer_foc_rev_tac ctxt i = Tactical.PRIMSEQ (fn thm =>
     val inst_thm = @{thm "transfer_inst"} |> Drule.infer_instantiate' ctxt' [SOME lhsct]
     (* Abuse alternative form to get transferred form *)
     val thm' = Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt') |> fst
-      |> Thm.varifyT_global
+      |> Thm.varifyT_global |> Drule.incr_indexes state
     (* Select transferred result *)
     val rhsct = Thm.cprems_of thm' |> hd |> Thm.dest_arg |> Thm.dest_arg1
     (* Plugin in the result *)
-    val inst_tac = Drule.infer_instantiate' ctxt [SOME rhsct] |> Tactical.PRIMITIVE
+    val inst_tac = Drule.infer_instantiate' ctxt (replicate (vari-1) NONE @ [SOME rhsct]) |> Tactical.PRIMITIVE
   in
-    (inst_tac THEN transfer_foc_tac ctxt' i) thm
+    (inst_tac THEN transfer_foc_tac ctxt i) state
   end)
 
-fun rel_condition_tac ctxt =
+fun rel_condition_tac ctxt vari =
   resolve_tac ctxt @{thms Rel_nat_rewrite_lhs}
   THEN' SUT.STATE_interp_retrieve_key_eq_tac (simp_tac ctxt) ctxt
-  THEN' transfer_foc_rev_tac ctxt
+  THEN' transfer_foc_rev_tac ctxt vari
 
 (*find theorems of the form "f x = ...", given f possibly applied to some arguments*)
 type HOL_eqs_retrieval = Proof.context -> term -> thm list option
@@ -103,11 +103,10 @@ fun assign_tac assign_thmI ctxt =
   (*solve state update assumption*)
   THEN' SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_update_tac ctxt) ctxt
 
-fun call_tac call_thmI ctxt correctness =
+fun call_tac call_thmI solve_sideconditions_tac ctxt correctness =
   resolve_tac ctxt [call_thmI]
   (*solve correctness assumption*)
-  THEN' resolve_tac ctxt correctness
-  THEN_ALL_NEW (K (TRY (rel_condition_tac ctxt 1)))
+  THEN' (resolve_tac ctxt correctness THEN_ALL_NEW (SOLVED' solve_sideconditions_tac))
   (*solve state update assumption*)
   THEN' SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_update_tac ctxt) ctxt
 

@@ -176,7 +176,7 @@ fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
               Syntax.pretty_term ctxt c
             ] |> Pretty.string_of);
             K no_tac)
-        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI} ctxt cs)
+        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI} (fn i => TRY (HTITB.rel_condition_tac ctxt i i)) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 
