@@ -3,7 +3,7 @@
 section "Binary Arithmetic"
 
 theory Binary_Arithmetic
-  imports Main IMP_Minus_Minus_Small_StepT "HOL-Library.Discrete_Functions"
+  imports Main "../IMP_Minus_Minus_Small_StepT" "HOL-Library.Discrete_Functions"
 
 begin
 
@@ -178,7 +178,7 @@ proof(rule ccontr)
     assume "\<forall>b. nth_bit x b = Zero"
     hence "nth_bit x (floor_log x) = Zero" by auto
     moreover have "x div 2 ^ floor_log x = 1"
-      using floor_log_exp2_gt log_exp2_le[OF \<open>x > 0\<close>]
+      using floor_log_exp2_gt floor_log_exp2_le[OF \<open>x > 0\<close>]
       by (metis Euclidean_Rings.div_eq_0_iff One_nat_def leD less_2_cases_iff
           less_mult_imp_div_less power_not_zero zero_neq_numeral)
     ultimately show False by(auto simp: nth_bit_def nth_bit_nat_is_right_shift nat_to_bit_cases)
@@ -535,13 +535,13 @@ qed
 definition bit_length where "bit_length x \<equiv>  floor_log x + 1"
 
 lemma bit_length_monotonic: "x \<le> y \<Longrightarrow> bit_length x \<le> bit_length y"
-  by(auto simp: bit_length_def log_le_iff)
+  by(auto simp: bit_length_def floor_log_le_iff)
 
 lemma mod_2_of_zero_is_zero_intro: "x = (0 :: nat) \<Longrightarrow> x mod 2 = 0" by auto
 
 lemma bit_geq_bit_length_is_Zero: "i \<ge> bit_length x \<Longrightarrow> nth_bit x i = Zero"
   apply(auto simp: nth_bit_def nat_to_bit_cases nth_bit_nat_is_right_shift bit_length_def)
   apply(rule mod_2_of_zero_is_zero_intro)
-  by (metis div_less leI log_exp log_mono monoD not_less_eq_eq)
+  by (metis div_less floor_log_le_iff floor_log_power linorder_not_le not_less_eq_eq)
 
 end

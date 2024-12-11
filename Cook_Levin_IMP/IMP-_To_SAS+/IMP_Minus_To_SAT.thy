@@ -196,7 +196,7 @@ proof -
     moreover have "z \<le> 2 * 2 ^ p_cer (floor_log x)"
       using \<open>bit_length z \<le> p_cer (bit_length x)\<close>
       apply(simp add: bit_length_def)
-      by (metis le_iff_add log_exp2_ge mult.commute not_less power_of_two_increase_exponent_le)
+      by (metis le_iff_add floor_log_exp2_ge mult.commute not_less power_of_two_increase_exponent_le)
     ultimately have "\<exists>\<A>. \<A> \<Turnstile> imp_to_sat c pt p_cer x"
       unfolding Sema.sat_def imp_to_sat_def Let_def
       by (fastforce simp add: s_def bit_length_def map_le_def init

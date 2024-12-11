@@ -17,7 +17,7 @@ type_synonym SAS_problem = "(IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
   IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations.domain_element) problem" 
 
 lemma le_two_to_the_bit_length_intro: "x \<le> y \<Longrightarrow> x \<le> 2 ^ (bit_length y)"
-  using log_exp2_gt[of y]
+  using floor_log_exp2_gt[of y]
   by (auto simp: bit_length_def)
 
 text \<open> We give a definition to compute the upper bound on the number of bits needed to represent
@@ -46,12 +46,12 @@ lemma bit_at_index_geq_max_input_bits_is_zero_in_initial_state:
 
 lemma max_constant_less_two_to_the_max_input_bits:
   "max_constant c < 2 ^ (max_input_bits c I r)"
-  using log_exp2_gt max_less_iff_conj
+  using floor_log_exp2_gt max_less_iff_conj
   by(fastforce simp: max_input_bits_def bit_length_def)
 
 lemma initial_state_element_less_two_to_the_max_input_bits: 
   "\<lbrakk>finite (ran I); I x = Some y\<rbrakk> \<Longrightarrow> y < (2 :: nat) ^ (max_input_bits c I r)" 
-  by(force intro: log_exp2_gt Max_ge ranI order.strict_trans1[of y "Max (ran I)"]
+  by(force intro: floor_log_exp2_gt Max_ge ranI order.strict_trans1[of y "Max (ran I)"]
                   order.strict_trans1[of _ "(max (max (Max (ran I)) r) (max_constant c))"]
            simp: algebra_simps max_input_bits_def bit_length_def)
 
@@ -146,7 +146,7 @@ proof -
   have "?n > 0" by simp
 
   have "Suc 0 < 2 ^ t'"
-    using \<open>(c, s1) \<Rightarrow>\<^bsup> t \<^esup> s2\<close> \<open>t \<le> t'\<close> log_Suc_zero
+    using \<open>(c, s1) \<Rightarrow>\<^bsup> t \<^esup> s2\<close> \<open>t \<le> t'\<close> floor_log_Suc_zero
     by (fastforce intro: Suc_lessI dest: bigstep_progress)
   moreover have "2 ^ t * max (Max (range s1)) (max_constant c) \<le> 2 ^ t' * 2 ^ max_input_bits c I r"
            (is "?max_bits_t \<le> _")
