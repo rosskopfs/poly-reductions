@@ -3,14 +3,14 @@ theory Primitives
     Main
     "HOL-Library.Nat_Bijection"
     IMP_Minus.Com
-    IMP_Minus_Minus_Com
+    "IMP-_To_SAS+_HOL.IMP_Minus_Minus_Com"
     "HOL.String"
     "Verified_SAT_Based_AI_Planning.SAT_Plan_Base"
     "Verified_SAT_Based_AI_Planning.STRIPS_Representation"
-    SAS_Plus_Plus
+    "IMP-_To_SAS+_HOL.SAS_Plus_Plus"
     "HOL-Library.Mapping"
-    SAS_Plus_Plus_To_SAS_Plus
-    IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations
+    "IMP-_To_SAS+_HOL.SAS_Plus_Plus_To_SAS_Plus"
+    "IMP-_To_SAS+_HOL.IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations"
 begin
 
 

@@ -1,5 +1,5 @@
-theory IMP_Minus_To_IMP_Minus_Minus_State_Translations_nat
-  imports IMP_Minus_To_IMP_Minus_Minus_State_Translations Primitives Binary_Arithmetic_Nat
+theory IMP_Minus_To_IMP_Minus_Minus_State_Translations_Nat
+  imports "IMP-_To_SAS+_HOL.IMP_Minus_To_IMP_Minus_Minus_State_Translations" Primitives Binary_Arithmetic_Nat
 begin
 
 fun dropWhile_char:: "nat \<Rightarrow> nat" where

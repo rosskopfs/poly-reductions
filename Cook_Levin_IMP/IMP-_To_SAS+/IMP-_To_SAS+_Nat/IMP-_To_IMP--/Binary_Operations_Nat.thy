@@ -1,6 +1,6 @@
-theory Binary_Operations_Nat
-  imports Binary_Operations Primitives Binary_Arithmetic_Nat
-          IMP_Minus_To_IMP_Minus_Minus_State_Translations_nat
+theory Binary_Operations_Nat                                    
+  imports "IMP-_To_SAS+_HOL.Binary_Operations" Primitives Binary_Arithmetic_Nat
+          IMP_Minus_To_IMP_Minus_Minus_State_Translations_Nat
           IMP_Minus_Max_Constant_Nat
 begin
 

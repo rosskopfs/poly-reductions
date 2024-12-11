@@ -1,5 +1,5 @@
 theory Binary_Arithmetic_Nat
-  imports Binary_Arithmetic  Primitives
+  imports "IMP-_To_SAS+_HOL.Binary_Arithmetic"  Primitives
 begin
 
 
