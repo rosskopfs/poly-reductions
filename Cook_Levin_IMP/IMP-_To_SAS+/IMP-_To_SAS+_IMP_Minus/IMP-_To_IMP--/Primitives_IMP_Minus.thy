@@ -3,9 +3,9 @@
 theory Primitives_IMP_Minus
   imports
     "HOL-Library.Nat_Bijection"
-    Primitives IMP_Minus.Call_By_Prefixes
+    "IMP-_To_SAS+_Nat.Primitives" IMP_Minus.Call_By_Prefixes
     "HOL-Library.Sublist"
-    Utilities
+    "IMP-_To_SAS+_HOL.Utilities"
     (* Merge those *)
     "Poly_Reductions_Lib.Triangle_Extensions"
     "Poly_Reductions_Lib.Discrete_Extensions"
