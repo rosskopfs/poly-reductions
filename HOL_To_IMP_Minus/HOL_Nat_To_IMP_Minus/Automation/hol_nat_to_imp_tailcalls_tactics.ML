@@ -40,6 +40,8 @@ sig
   val run_step_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
   val run_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
 
+  val subst_eq_unfolded_tac: thm list -> Proof.context -> int -> tactic
+
   val finish_non_tail_tac: Proof.context -> int -> tactic
   val finish_tail_tac: Proof.context -> int -> tactic
 
@@ -281,9 +283,11 @@ fun finish_tail_tac ctxt =
       (#context focus) (prems_tac focus)) ctxt
   end
 
-fun subst_eq_unfolded_tac thms ctxt = 
+fun subst_eq_unfolded_tac thms ctxt =
   HTIU.subst_first_tac ctxt thms
-  THEN_ALL_NEW (fn i => (TRY (HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt i i)))
+  THEN_ALL_NEW (fn i => (TRY (fn state =>
+    HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt i i state
+      handle CTERM _ => Seq.empty)))
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
