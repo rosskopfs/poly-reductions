@@ -3,7 +3,9 @@
 section "Small step semantics of IMP-- "
 
 subsection "IMP-- Small step semantics definition"
-theory IMP_Minus_Minus_Small_StepT  imports Main IMP_Minus_Minus_Com "IMP_Minus.Rel_Pow" begin
+theory IMP_Minus_Minus_Small_StepT
+  imports Main IMP_Minus_Minus_Com "IMP_Minus.Rel_Pow" 
+begin
 
 paragraph "Summary"
 text\<open>We give small step semantics with time for IMP--.
