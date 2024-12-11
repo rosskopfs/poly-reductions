@@ -1,9 +1,9 @@
-theory Binary_Operations_IMP
+theory Binary_Operations_IMP_Minus
   imports
     Primitives_IMP_Minus
-    Binary_Arithmetic_IMP
-    IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
-    Binary_Operations_Nat
+    Binary_Arithmetic_IMP_Minus
+    IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP_Minus
+    "IMP-_To_SAS+_Nat.Binary_Operations_Nat"
     IMP_Minus.Com
     Utilities
 begin

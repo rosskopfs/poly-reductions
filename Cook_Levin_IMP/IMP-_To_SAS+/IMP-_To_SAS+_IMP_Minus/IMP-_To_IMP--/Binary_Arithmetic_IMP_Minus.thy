@@ -1,7 +1,7 @@
-theory Binary_Arithmetic_IMP
+theory Binary_Arithmetic_IMP_Minus
   imports
     Primitives_IMP_Minus
-    Binary_Arithmetic_Nat
+    "IMP-_To_SAS+_Nat.Binary_Arithmetic_Nat"
     IMP_Minus.Com
     Utilities
 begin
