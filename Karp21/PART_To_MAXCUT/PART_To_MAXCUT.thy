@@ -58,15 +58,9 @@ qed
 
 lemma square_diff_square_factored_nat:
   "(x::nat)*x - y*y = (x+y)*(x-y)"
-proof(cases "x \<ge> y")
-  case True
-  then show ?thesis
-    by (simp add: distrib_left mult.commute right_diff_distrib')
-next
-  case False
-  then show ?thesis 
-    using mult_le_mono by force
-qed
+  using mult_le_mono
+  by (cases "x \<ge> y") 
+     (force simp add: distrib_left mult.commute right_diff_distrib')+
 
 
 lemma sq_sum_ge_4xy1_if_ge:
