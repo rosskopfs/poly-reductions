@@ -42,9 +42,9 @@ lemma fin_f_doubleton_ss:
 (* graphs *)
 
 lemma (in wf_digraph) awalk_verts_appendI:
-  assumes "awalk u (pTrue @ p2) v"
+  assumes "awalk u (p1 @ p2) v"
           "w = last (awalk_verts u pTrue)"
-  shows "awalk_verts u (pTrue @ p2) = awalk_verts u pTrue @ tl (awalk_verts w p2)"
+  shows "awalk_verts u (p1 @ p2) = awalk_verts u p1 @ tl (awalk_verts w p2)"
   using awalk_verts_append assms 
   by blast
 

@@ -1,5 +1,5 @@
 theory SAT_To_AT_MOST_3SAT
-imports "SAT_To_SATL" "../Reductions"
+  imports "SAT_To_SATL" "../Reductions"
 begin
 
 section "AT_MOST_3SAT Definition"
@@ -8,8 +8,8 @@ definition AT_MOST_3SAT where
   "AT_MOST_3SAT  = {F. sat\<^sub>l F \<and> (\<forall>cls \<in> set F. length cls \<le> 3)}"
 
 
-section "The Reduction
-"
+section "The Reduction"
+
 datatype 'a red = v 'a | u "nat \<times> nat"
 
 fun to_at_most_3_clause where
@@ -31,15 +31,17 @@ definition sat_to_at_most_3sat where
 section "reduction helper lemmas"
 
 lemma vars_to_at_most_3_clause:
-    "vars (to_at_most_3_clause cls i j) \<subseteq> (vars_cls cls \<union> {u (i,k) |k. True})"
+  "vars (to_at_most_3_clause cls i j) \<subseteq> (vars_cls cls \<union> {u (i,k) |k. True})"
   by (induction j rule: to_at_most_3_clause.induct)
      (auto simp add: vars_cls_def vars_def)
 
 lemma vars_sat_to_at_most_3sat_aux:
-    "vars (sat_to_at_most_3sat_aux F i) \<subseteq> (vars F \<union> {u (k,j) |k j. k \<ge> i})"
+  "vars (sat_to_at_most_3sat_aux F i) \<subseteq> (vars F \<union> {u (k,j) |k j. k \<ge> i})"
   by (induction rule: sat_to_at_most_3sat_aux.induct)
      (auto intro!: vars_to_at_most_3_clause[THEN subset_trans] 
            simp: vars_cons vars_append)
+
+
 
 lemma models_V:
   shows "sat\<^sub>l (V F) \<longleftrightarrow> sat\<^sub>l F"
@@ -64,12 +66,12 @@ next
   then have "?\<sigma> \<Turnstile>\<^sub>l V F"
     using \<open>\<sigma> \<Turnstile>\<^sub>l F\<close> 
     by (auto simp add: models_def)
- then show "\<exists>\<sigma>. \<sigma> \<Turnstile>\<^sub>l  V F" 
+  then show "\<exists>\<sigma>. \<sigma> \<Turnstile>\<^sub>l  V F" 
     by blast
 qed
 
 section "Soundness"
-  
+
 lemma to_at_most_3_clause_sound:
   assumes  "\<sigma> \<Turnstile>\<^sub>l [cls]"
            "vars_cls cls \<inter> {u (i, k)|k. k \<ge> j} = {}"          
@@ -78,30 +80,30 @@ lemma to_at_most_3_clause_sound:
   using assms
 proof (induction arbitrary: \<sigma> rule: to_at_most_3_clause.induct )
   case (1 a b c d rest i j)
-  (* we create an assignment that satisfies the IH *)
-  define \<sigma>1 where "\<sigma>1 = \<sigma>(u (i,j) := \<sigma> \<Turnstile>\<^sub>l [c#d#rest])"
-  
-  have "\<sigma>1 \<Turnstile>\<^sub>l [c#d#rest]" if "\<sigma> \<Turnstile>\<^sub>l[c#d#rest]"
+  let ?tail = "c#d#rest"
+  define \<sigma>1 where "\<sigma>1 = \<sigma>(u (i,j) := \<sigma> \<Turnstile>\<^sub>l [?tail])"
+
+  have "\<sigma>1 \<Turnstile>\<^sub>l [?tail]" if "\<sigma> \<Turnstile>\<^sub>l[?tail]"
     using that 1(3) 
     by (intro models_cong[of _ \<sigma>1 \<sigma>])
        (auto simp add: \<sigma>1_def vars_def vars_cls_def)
-  then have "\<sigma>1 \<Turnstile>\<^sub>l [Neg (u (i, j)) # c # d # rest]"
-       by (cases "\<sigma> \<Turnstile>\<^sub>l [c#d#rest]")
-          (auto simp add: models_def \<sigma>1_def lift_def)
-   moreover have "vars_cls (Neg (u (i, j)) # c # d # rest) \<inter> {u (i, k) |k. j + 1 \<le> k} = {}"
+  then have "\<sigma>1 \<Turnstile>\<^sub>l [Neg (u (i, j)) # ?tail]"
+    by (cases "\<sigma> \<Turnstile>\<^sub>l [?tail]")
+      (auto simp add: models_def \<sigma>1_def lift_def)
+  moreover have "vars_cls (Neg (u (i, j)) # ?tail) \<inter> {u (i, k) |k. j + 1 \<le> k} = {}"
     using 1(3)
     by (auto simp add: vars_cls_def)
   ultimately obtain \<sigma>' where  
     \<sigma>'_def: "(\<forall>x\<in>- {u (i, k) |k. j + 1 \<le> k}. \<sigma>' x = \<sigma>1 x) \<and>
-                    \<sigma>' \<Turnstile>\<^sub>l to_at_most_3_clause (Neg (u (i, j)) # c # d # rest) i (j + 1)"
+                    \<sigma>' \<Turnstile>\<^sub>l to_at_most_3_clause (Neg (u (i, j)) # ?tail) i (j + 1)"
     using 1 by fastforce
   moreover then have "\<sigma>' x = \<sigma> x" if "x \<in>- {u (i, k) |k. j \<le> k}" for x
     using that
     by (cases "x = u (i,j)", auto simp add: \<sigma>1_def) force  
-  moreover have "\<sigma>' \<Turnstile>\<^sub>l [[Pos (u(i,j)), flip l]]" if "l \<in> set (c # d # rest)" for l
+  moreover have "\<sigma>' \<Turnstile>\<^sub>l [[Pos (u(i,j)), flip l]]" if "l \<in> set (?tail)" for l
   proof (intro models_cong[of _ \<sigma>' \<sigma>1])
-    show"\<sigma>1 \<Turnstile>\<^sub>l [[Pos (u(i,j)), flip l]]" 
-    proof (cases "\<sigma> \<Turnstile>\<^sub>l [c#d#rest]")
+    show "\<sigma>1 \<Turnstile>\<^sub>l [[Pos (u(i,j)), flip l]]" 
+    proof (cases "\<sigma> \<Turnstile>\<^sub>l [?tail]")
       case False
       then have "\<not> (\<sigma>\<up>) l"
         using that
@@ -122,21 +124,21 @@ proof (induction arbitrary: \<sigma> rule: to_at_most_3_clause.induct )
 
   moreover have "\<sigma>' \<Turnstile>\<^sub>l [[a, b, Pos (u (i, j))]]" 
   proof (intro models_cong[of _ \<sigma>' \<sigma>1])
-    have "\<sigma>1 \<Turnstile>\<^sub>l [[a,b]]" if "\<not>\<sigma> \<Turnstile>\<^sub>l[c#d#rest]"
+    have "\<sigma>1 \<Turnstile>\<^sub>l [[a,b]]" if "\<not>\<sigma> \<Turnstile>\<^sub>l[?tail]"
       using 1(3) that 1(2) 
       by (intro models_cong[of _ \<sigma>1 \<sigma>])
-        (auto simp add: models_def \<sigma>1_def vars_def vars_cls_def)
+         (auto simp add: models_def \<sigma>1_def vars_def vars_cls_def)
     then show "\<sigma>1 \<Turnstile>\<^sub>l [[a, b, Pos (u (i, j))]]"
-       by (cases "\<sigma> \<Turnstile>\<^sub>l [c#d#rest]")
-          (auto simp add: models_def \<sigma>1_def lift_def)
-    
-     have "vars [[a, b, Pos (u (i, j))]]  \<subseteq> -{u (i, k) |k. j + 1 \<le> k}"
+      by (cases "\<sigma> \<Turnstile>\<^sub>l [?tail]")
+         (auto simp add: models_def \<sigma>1_def lift_def)
+
+    have "vars [[a, b, Pos (u (i, j))]]  \<subseteq> -{u (i, k) |k. j + 1 \<le> k}"
       using 1(3)
       by(auto simp add: vars_def vars_cls_def)
-     then show "\<forall>x\<in>vars[[a, b, Pos (u (i, j))]]. \<sigma>' x = \<sigma>1 x"
+    then show "\<forall>x\<in>vars[[a, b, Pos (u (i, j))]]. \<sigma>' x = \<sigma>1 x"
       using \<sigma>'_def  by blast
   qed
-  
+
   ultimately show ?case
     using \<sigma>'_def unfolding models_def
     by (intro exI[of _ \<sigma>']) auto
@@ -145,14 +147,14 @@ qed(auto)
 
 lemma sat_to_at_most_3sat_aux_sound:
   assumes "\<sigma> \<Turnstile>\<^sub>l F"
-          "vars F \<inter> u ` UNIV = {}"
+    "vars F \<inter> u ` UNIV = {}"
   shows "\<exists>\<sigma>'. \<sigma>' \<Turnstile>\<^sub>l (sat_to_at_most_3sat_aux F i)
              \<and> (\<forall>x \<in> -{u (k,j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x)"
   using assms 
 proof (induct F i  rule: sat_to_at_most_3sat_aux.induct )
   case (1 x xs i)
   then obtain \<sigma>ih where \<sigma>ih_models: "\<sigma>ih \<Turnstile>\<^sub>l sat_to_at_most_3sat_aux xs (i + 1)"
-                  and   \<sigma>ih_\<sigma>:  "(\<forall>x \<in> -{u (k,j) |k j. k \<ge> (i+1)}. \<sigma>ih x = \<sigma> x)"
+    and   \<sigma>ih_\<sigma>:  "(\<forall>x \<in> -{u (k,j) |k j. k \<ge> (i+1)}. \<sigma>ih x = \<sigma> x)"
     unfolding models_def 
     by (auto simp add: vars_cons)
   moreover have "vars_cls x \<subseteq>  -{u (k,j) |k j. k \<ge> (i+1)}"
@@ -171,7 +173,7 @@ proof (induct F i  rule: sat_to_at_most_3sat_aux.induct )
   moreover have "vars (sat_to_at_most_3sat_aux xs (i + 1)) \<subseteq>  -{u (i,k) |k. True}"
     using 1
     by (intro vars_sat_to_at_most_3sat_aux[THEN subset_trans])
-       (auto simp add: vars_cons)
+      (auto simp add: vars_cons)
   ultimately have "\<sigma>' \<Turnstile>\<^sub>l sat_to_at_most_3sat_aux xs (i + 1)" using \<sigma>ih_models
     by (intro models_cong[of _ \<sigma>' \<sigma>ih]) auto
   moreover have "\<forall>x \<in> -{u (k,j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x"
