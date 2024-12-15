@@ -1,4 +1,5 @@
 \<^marker>\<open>creator Florian Keßler\<close>
+\<^marker>\<open>contributor Mohammad Abdulaziz, Bilel Ghorbel\<close>
 
 section "IMP- to SAS+"
 
@@ -287,19 +288,18 @@ proof -
       hence "s1 v = ?I v" using \<open>(?I|` set (enumerate_variables ?c')) \<subseteq>\<^sub>m s1\<close> 
         by(auto simp: map_le_def)
       thus ?thesis using \<open>v \<in> set (enumerate_variables ?c')\<close> 
-          apply(auto simp: IMP_Minus_State_To_IMP_Minus_Minus_partial_def  
-              IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b_def var_to_var_bit_eq_Some_iff
+          using \<open>v \<in> dom ?I\<close> 
+          by(auto simp: map_comp_def IMP_Minus_State_To_IMP_Minus_Minus_partial_def  
+              IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b_def
+              var_to_var_bit_eq_Some_iff
+              var_bit_to_var_neq_operand_bit_to_var[symmetric]
               var_to_operand_bit_eq_Some_iff 
               IMP_Minus_State_To_IMP_Minus_Minus_partial_of_operand_bit_to_var
               IMP_Minus_State_To_IMP_Minus_Minus_def
               nth_bit_of_IMP_Minus_Minus_State_To_IMP_Minus 
-              split: option.splits)
-        using \<open>v \<in> dom ?I\<close> by(auto simp: map_comp_def 
-            IMP_Minus_State_To_IMP_Minus_Minus_partial_def
-            IMP_Minus_State_To_IMP_Minus_Minus_partial_of_operand_bit_to_var 
-            var_bit_to_var_neq_operand_bit_to_var[symmetric]
-            dest!: set_mp[OF IMP_Minus_To_IMP_Minus_Minus_variables[OF \<open>?n > 0\<close>, simplified]] 
-            split: option.splits char.splits bool.splits)
+              split: option.splits
+              dest!: set_mp[OF IMP_Minus_To_IMP_Minus_Minus_variables[OF \<open>?n > 0\<close>, simplified]] 
+              split: option.splits char.splits bool.splits)
     next
       case False
       then obtain v' i where "v = var_bit_to_var (v', i) \<and> i < ?guess_range" using \<open>\<not>(v \<in> dom ?I)\<close>
@@ -404,26 +404,44 @@ proof -
     moreover hence "i < ?n \<longrightarrow> s2' (var_bit_to_var (v, i)) = ?G (var_bit_to_var (v, i))" for i 
       using \<open>s2' |` set (enumerate_variables ?c') = s2\<close> 
         \<open>\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')\<close> by auto
-    ultimately have "i < ?n \<longrightarrow> map_option (\<lambda>x. nth_bit x i) (G v) = Some (nth_bit (s2'' v) i)" for i 
+    ultimately have "i < ?n \<Longrightarrow> map_option (\<lambda>x. nth_bit x i) (G v) = Some (nth_bit (s2'' v) i)" for i 
       using  \<open>s2' = IMP_Minus_State_To_IMP_Minus_Minus s2'' ?n\<close> \<open>G v = Some y\<close>
       by(auto simp: IMP_Minus_State_To_IMP_Minus_Minus_def 
           IMP_Minus_State_To_IMP_Minus_Minus_partial_def
           IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b_def)
-    thus "s2'' v = y"
-      apply - apply(rule all_bits_equal_then_equal[where ?n = "?n"])
-      apply(insert IMP_Minus_space_growth[OF \<open>(c, ?s1') \<Rightarrow>\<^bsup>t''\<^esup> s2''\<close> 
-          \<open>finite (range (IMP_Minus_Minus_State_To_IMP_Minus s1 ?n))\<close>, where ?k="?guess_range"])
-      using \<open>Max (range (IMP_Minus_Minus_State_To_IMP_Minus s1 ?n)) < 2 ^ ?guess_range\<close>
-        max_constant_less_two_to_the_max_input_bits \<open>t'' \<le> t\<close>
-        apply simp
+    show "s2'' v = y"
+    proof(rule all_bits_equal_then_equal[where ?n = "?n"], goal_cases)
+      case 1
+      find_theorems "_ \<and> _ \<Longrightarrow> _"
+      have "Max (range s2'') < 2 ^ (max_input_bits c I r + t'')"
+        apply(rule 
+                conjunct2[OF IMP_Minus_space_growth[OF \<open>(c, ?s1') \<Rightarrow>\<^bsup>t''\<^esup> s2''\<close> 
+                                                       \<open>finite (range (IMP_Minus_Minus_State_To_IMP_Minus s1 ?n))\<close>, where ?k="?guess_range"]])
+        using \<open>Max (range (IMP_Minus_Minus_State_To_IMP_Minus s1 ?n)) < 2 ^ ?guess_range\<close> max_constant_less_two_to_the_max_input_bits 
+        by auto
+      also have "... \<le> 2 ^ (t + max_input_bits c I r)" 
+        using \<open>t'' \<le> t\<close>
+        by auto
+      finally have "s2'' v < 2 ^ (t + max_input_bits c I r)"
+        using \<open>(c, IMP_Minus_Minus_State_To_IMP_Minus s1 (t + max_input_bits c I r + 1)) \<Rightarrow>\<^bsup> t'' \<^esup> s2''\<close>
+          \<open>finite (range (IMP_Minus_Minus_State_To_IMP_Minus s1 (t + max_input_bits c I r + 1)))\<close>
+          finite_range_stays_finite
+        by auto
+      thus ?case
         apply(rule less_le_trans[where ?y="2 ^ (t + max_input_bits c I r)"])
-         apply(auto simp: algebra_simps)
-        apply(rule less_le_trans[where ?y="2 ^ (t'' + max_input_bits c I r)"])
-      using \<open>G v = Some y\<close>  apply(auto)
-      apply(rule less_le_trans[where ?y="2 ^ (t + max_input_bits c I r)"])
-       apply (meson ran_def Max_ge \<open>finite (ran G)\<close> \<open>Max (ran G) < 2 ^ (t + max_input_bits c I r)\<close> 
-          le_less_trans ranI)
-      by simp
+        by auto
+    next
+      case 2
+      then show ?case
+        by (smt (verit, del_insts) Max_ge Nat.add_0_right \<open>G v = Some y\<close> \<open>finite (ran G)\<close> assms(3) less_exp less_nat_zero_code
+            linorder_not_less nat_add_left_cancel_less order_le_less_trans power_one_right power_strict_increasing_iff ranI)
+    next
+      case (3 i)
+      then show ?case
+        using \<open>G v = Some y\<close>
+              \<open>\<And>i. i < t + max_input_bits c I r + 1 \<Longrightarrow> map_option (\<lambda>x. nth_bit x i) (G v) = Some (nth_bit (s2'' v) i)\<close>
+        by auto 
+    qed
   qed
   hence "G \<subseteq>\<^sub>m Some \<circ> s2''" by(auto simp: map_le_def)
 

@@ -154,19 +154,26 @@ lemma applicable_in_imp_minus_then[simp]:
   \<longleftrightarrow> (x = PCV c1 \<and> map_option EV (is v) = Some y)"
   by (auto simp: map_le_def imp_minus_state_to_sas_plus_def option.case_eq_if map_comp_def)
 
-lemma [simp]: "op \<in> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+) 
-  \<Longrightarrow> is_operator_applicable_in s op 
-  \<Longrightarrow> op \<in> set (com_to_operators (fst (sas_plus_state_to_imp_minus s)))"
-  apply(auto simp: imp_minus_minus_to_sas_plus_def Let_def coms_to_operators_def 
-      sas_plus_state_to_imp_minus_def)
-proof -
+lemma op_in_com_operators[simp]:
+  "\<lbrakk>op \<in> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+);
+    is_operator_applicable_in s op\<rbrakk> 
+    \<Longrightarrow> op \<in> set (com_to_operators (fst (sas_plus_state_to_imp_minus s)))"
+proof (goal_cases)
+  case 1
+  {
   fix x
   assume  "map_of (precondition_of op) \<subseteq>\<^sub>m s"
     "op \<in> set (com_to_operators x)"
   moreover then have "(map_of (precondition_of op)) PC = Some (PCV x)" by auto
   ultimately have "the (s PC) = PCV x" by (metis domI map_le_def option.sel)
-  then show "op \<in> set (com_to_operators (case the (s PC) of PCV c \<Rightarrow> c))" 
+  then have "op \<in> set (com_to_operators (case the (s PC) of PCV c \<Rightarrow> c))" 
     by (simp add: \<open>op \<in> set (com_to_operators x)\<close>)
+  }
+  thus ?thesis
+    using 1
+  by(auto simp: imp_minus_minus_to_sas_plus_def Let_def coms_to_operators_def 
+      sas_plus_state_to_imp_minus_def)
+
 qed
 
 lemma PC_map_le_iff[simp]: "[PC \<mapsto> x] \<subseteq>\<^sub>m (imp_minus_state_to_sas_plus (c1, is)) 
@@ -427,8 +434,9 @@ proof -
     and "((?\<Psi>)\<^sub>I\<^sub>+) \<subseteq>\<^sub>m ?I'"
     using assms plan_def c_in_all_subprograms_c
     apply(auto simp: imp_minus_minus_to_sas_plus_def Let_def 
-        range_of'_def imp_minus_state_to_sas_plus_def map_comp_def map_le_def)
-        apply (auto split: option.splits variable.splits)
+                     range_of'_def imp_minus_state_to_sas_plus_def map_comp_def map_le_def
+               split: option.splits variable.splits)
+        apply (auto )
     by (metis domIff option.distinct option.inject)+
   ultimately have "is_serial_solution_for_problem_sas_plus_plus ?\<Psi> plan" 
     using assms
@@ -453,12 +461,14 @@ proof -
   let ?ss2 = "execute_serial_plan_sas_plus I' plan"
   let ?is1 = "snd (sas_plus_state_to_imp_minus I')"
   let ?is2 = "snd (sas_plus_state_to_imp_minus ?ss2)"
-  have "\<forall>v\<in>set (enumerate_variables c). (\<exists>y \<in> set domain. I' (VN v) = Some y)" using I'_def 
-    apply (auto simp: imp_minus_minus_to_sas_plus_def Let_def range_of'_def)
+  have "\<forall>v\<in>set (enumerate_variables c). (\<exists>y \<in> set domain. I' (VN v) = Some y)" 
+    using I'_def 
+    apply (auto simp: imp_minus_minus_to_sas_plus_def Let_def range_of'_def)[1]
     by (metis domIff image_insert insertI1 insertI2 mk_disjoint_insert option.collapse)
-  then have "sane_sas_plus_state I'" using I'_def assms
-    apply (auto simp: sane_sas_plus_state_def imp_minus_minus_to_sas_plus_def Let_def map_le_def 
-         range_of'_def)
+  then have "sane_sas_plus_state I'"
+    using I'_def assms
+    apply(auto simp: domIff sane_sas_plus_state_def imp_minus_minus_to_sas_plus_def Let_def map_le_def 
+                     range_of'_def)[1]
     by (metis domIff insertI1 option.collapse)
   then obtain t where t_def: "t \<le> length plan \<and> sas_plus_state_to_imp_minus I' 
     \<rightarrow>\<^bsup>t\<^esup> sas_plus_state_to_imp_minus ?ss2"
@@ -467,12 +477,12 @@ proof -
     by(auto simp: is_serial_solution_for_problem_sas_plus_plus_def Let_def list_all_def ListMem_iff)
     
   moreover have "fst (sas_plus_state_to_imp_minus I') = c"
-    and "fst (sas_plus_state_to_imp_minus ?ss2) = SKIP"
-    using assms I'_def apply(auto simp: imp_minus_minus_to_sas_plus_def Let_def 
-         sas_plus_state_to_imp_minus_def map_le_def imp_minus_state_to_sas_plus_def
-        sane_sas_plus_state_def)
-    by (metis (no_types, lifting) domain_element.inject domain_element.simps option.sel 
-        option.inject variable.simps)+
+                "fst (sas_plus_state_to_imp_minus ?ss2) = SKIP"
+    using assms(3) I'_def  
+   by(clarsimp simp: imp_minus_minus_to_sas_plus_def Let_def 
+                     sas_plus_state_to_imp_minus_def map_le_def imp_minus_state_to_sas_plus_def
+                     sane_sas_plus_state_def
+                   split: option.splits if_splits domain_element.splits)+
   ultimately have "((c, ?is1) \<rightarrow>\<^bsup>t\<^esup> (SKIP, ?is2))" 
     using I'_def by (metis prod.collapse)
   moreover have "(I|` set (enumerate_variables c)) \<subseteq>\<^sub>m ?is1"

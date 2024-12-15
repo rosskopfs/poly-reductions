@@ -13,7 +13,7 @@ locale HOL_To_HOL_Nat =
 begin
 
 definition "eq_nat (n :: nat) m \<equiv> if (n - m) + (m - n) = 0 then True_nat else False_nat"
-
+                        
 lemma eq_nat_eq [simp]:"eq_nat n m = natify (n = m)"
   unfolding eq_nat_def natify_bool_def by simp
 

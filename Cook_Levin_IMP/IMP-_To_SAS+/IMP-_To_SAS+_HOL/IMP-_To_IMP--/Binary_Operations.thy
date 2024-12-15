@@ -604,8 +604,10 @@ definition assignment_to_binary:: "nat \<Rightarrow> vname \<Rightarrow> AExp.ae
 
 lemma assignment_to_binary_correct:
   assumes "n > 0"  "AExp.aval a s < 2 ^ n" "\<forall>v. s v < 2 ^ n" "aexp_max_constant a < 2 ^ n"
-  shows "t_small_step_fun (50 * (n + 1)) (assignment_to_binary n v a,
-  IMP_Minus_State_To_IMP_Minus_Minus s n)
+  shows 
+    "t_small_step_fun (50 * (n + 1)) 
+       (assignment_to_binary n v a, 
+        IMP_Minus_State_To_IMP_Minus_Minus s n)
   = (SKIP, IMP_Minus_State_To_IMP_Minus_Minus (s(v := AExp.aval a s)) n)"
 using assms binary_adder_correct  proof(cases a)
   case (Sub x31 x32)

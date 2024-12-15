@@ -482,16 +482,15 @@ next
   qed
 qed
 
-lemma all_bits_equal_then_equal: "x < 2 ^ n \<Longrightarrow> y < 2 ^ n \<Longrightarrow> (\<forall>i < n. nth_bit x i = nth_bit y i)
-  \<Longrightarrow> x = y"
-proof(rule ccontr)
-  assume "x < 2 ^ n" "y < 2 ^ n" "(\<forall>i < n. nth_bit x i = nth_bit y i)"
+lemma all_bits_equal_then_equal: "x < 2 ^ n \<Longrightarrow> y < 2 ^ n \<Longrightarrow> (\<And>i. i < n \<Longrightarrow> nth_bit x i = nth_bit y i) \<Longrightarrow> x = y"
+proof(rule ccontr, goal_cases)
+  case 1
   hence "i > n \<longrightarrow> x div 2 ^ i = 0" "i > n \<longrightarrow> y div 2 ^ i = 0" for i
     by (meson div_greater_zero_iff gr0I le_less_trans nat_power_less_imp_less order.asym pos2)+
   hence all_bits_equal: "nth_bit x i = nth_bit y i" for i
     apply(cases "i < n")
-    using \<open>\<forall>i < n. nth_bit x i = nth_bit y i\<close>
-     apply(auto simp add: nth_bit_def nth_bit_nat_is_right_shift)
+    using 1
+     apply(simp_all add: nth_bit_def nth_bit_nat_is_right_shift)
     by (metis \<open>x < 2 ^ n\<close> \<open>y < 2 ^ n\<close> div_less linorder_neqE_nat)
   assume "x \<noteq> y"
   have "x \<noteq> 0" apply - apply(rule ccontr)

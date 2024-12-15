@@ -1,10 +1,10 @@
 \<^marker>\<open>creator Florian Keßler\<close>
+\<^marker>\<open>contributors Mohammad Abdulaziz, Bilel Ghorbel\<close>
 
 section "IMP- to IMP--"
 
-theory IMP_Minus_To_IMP_Minus_Minus imports Binary_Operations 
-  "IMP_Minus.Big_StepT" "IMP_Minus.Max_Constant"
-  
+theory IMP_Minus_To_IMP_Minus_Minus
+  imports Binary_Operations "IMP_Minus.Big_StepT" "IMP_Minus.Max_Constant"
 begin
 
 text \<open> We give a reduction from IMP- to IMP--. The reduction works by bit blasting each register
@@ -41,21 +41,30 @@ lemma finite_range_stays_finite: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<L
   apply auto
   by (metis Un_infinite image_Un sup_top_right)
 
-lemma Max_insert_le_when: "finite (range (s :: vname \<Rightarrow> nat)) \<Longrightarrow> y < r \<Longrightarrow>  Max (range s) < r 
-  \<Longrightarrow> Max (range (s(x := y))) < r"
-  apply auto
-  apply(subst Max_insert)
-    apply(metis Un_infinite image_Un sup_top_right)
-   apply(auto simp: )
-  apply(subst Max_less_iff)
-    apply(metis Un_infinite image_Un sup_top_right)
-  by auto
+lemma Max_insert_le_when: 
+  "\<lbrakk>finite (range (s :: vname \<Rightarrow> nat)); y < r;  Max (range s) < r\<rbrakk> \<Longrightarrow> Max (range (s(x := y))) < r"
+proof(goal_cases)
+  case 1
+  hence "finite (s ` {xa. xa \<noteq> x})"
+    using finite_nat_set_iff_bounded
+    by auto
+  moreover have "s ` {xa. xa \<noteq> x} \<noteq> {}"
+    using 1
+    by auto
+  moreover have "max y (Max (s ` {xa. xa \<noteq> x})) < r"
+    using 1
+    apply(subst max_less_iff_conj)
+    apply(subst Max_less_iff)
+    using finite_nat_set_iff_bounded
+    by auto
+  ultimately show ?case
+    by simp
+qed
 
-lemma IMP_Minus_space_growth: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<Longrightarrow> finite (range s1)
-  \<Longrightarrow> max (Max (range s1)) (Max_Constant.max_constant c1) < 2 ^ k 
-  \<Longrightarrow> (finite (range s2) \<and> Max (range s2) < (2 :: nat) ^ (k + t))" 
-  apply(frule finite_range_stays_finite)
-  apply simp
+lemma IMP_Minus_space_growth: 
+  "\<lbrakk>(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2; finite (range s1);
+    max (Max (range s1)) (Max_Constant.max_constant c1) < 2 ^ k\<rbrakk> \<Longrightarrow> 
+    (finite (range s2) \<and> Max (range s2) < (2 :: nat) ^ (k + t))"
 proof(induction c1 s1 t s2 arbitrary: k rule: big_step_t_induct)
   case (Skip s)
   thus ?case 
@@ -64,39 +73,53 @@ proof(induction c1 s1 t s2 arbitrary: k rule: big_step_t_induct)
 next
   case (Assign x a s)
   hence "AExp.aval a s < 2 * 2 ^ k"
-    apply - apply(rule aval_le_when) by auto 
+    by (auto intro!: aval_le_when) 
   hence "Max (range (s(x := aval a s))) < 2 ^ (k + Suc (Suc 0))"
-    apply -
-    apply(rule Max_insert_le_when)
-    using Assign apply auto 
-    by (smt Assign.prems Max_ge Suc_lessI add_lessD1 le_less_trans max.strict_boundedE 
-        n_less_m_mult_n nat_zero_less_power_iff not_le_imp_less numeral_1_eq_Suc_0 numeral_eq_iff 
-        order.asym range_eqI semiring_norm(85) zero_less_numeral)
-  thus ?case using Assign by simp
+    using Assign 
+    by (fastforce simp: eval_nat_numeral intro!: trans_less_add2 Max_insert_le_when)
+  thus ?case using Assign
+    using finite_range_stays_finite
+    by blast
 next
   case (Seq c1 s1 x s2 c2 y s3 z)
-  hence "finite (range s2)" using finite_range_stays_finite by blast
-  hence "\<forall>a. s2 a < 2 ^ (k + x)" using Seq \<open>finite (range s1)\<close> \<open>finite (range s2)\<close> by auto
-  have "max_constant c2  < 2 ^ k" using Seq by simp
-  hence "max_constant c2 < (2 :: nat) ^ (k + x)" 
-    apply(auto simp: power_add numeral_2_eq_2) 
-    by (metis One_nat_def bigstep_progress le_less_trans lessI less_imp_le_nat Seq
-        n_less_n_mult_m one_less_power zero_less_power)
-  hence "\<forall>a. s3 a < (2 :: nat) ^ (k + x + y)" using Seq \<open>finite (range s2)\<close> by auto 
-  thus ?case using Seq \<open>z = x + y\<close> \<open>finite (range s3)\<close> by (auto simp: group_cancel.add1)
+  hence "finite (range s2)"
+    using finite_range_stays_finite 
+    by blast
+  hence "s2 a < 2 ^ (k + x)" for a
+    using Seq \<open>finite (range s1)\<close> \<open>finite (range s2)\<close>
+    by auto
+  have "max_constant c2  < 2 ^ k"
+    using Seq
+    by simp
+  hence "max_constant c2 < (2 :: nat) ^ (k + x)"
+    using bigstep_progress Seq 
+    by (auto simp: eval_nat_numeral intro: le_less_trans less_imp_le_nat  n_less_n_mult_m)
+  hence "s3 a < (2 :: nat) ^ (k + x + y)" for a using Seq \<open>finite (range s2)\<close>
+    by fastforce
+  moreover have "finite (range s3)"
+    using Seq.hyps(2) \<open>finite (range s2)\<close> finite_range_stays_finite 
+    by blast
+  ultimately show ?case using Seq
+    by (auto simp: add.assoc eval_nat_numeral)
 next
   case (WhileTrue s1 b c x s2 y s3 z)
   hence "finite (range s2)" using finite_range_stays_finite by blast
-  hence "\<forall>a. s2 a < 2 ^ (k + x)" 
-    using WhileTrue \<open>finite (range s1)\<close> \<open>finite (range s2)\<close> by auto
-  have "max_constant (WHILE b\<noteq>0 DO c)  < 2 ^ k" using WhileTrue by simp
-  hence "max_constant (WHILE b\<noteq>0 DO c) < (2 :: nat) ^ (k + x)" 
+  hence "s2 a < 2 ^ (k + x)" for a 
+    using WhileTrue \<open>finite (range s1)\<close> \<open>finite (range s2)\<close>
+    by auto
+  have "max_constant (WHILE b\<noteq>0 DO c)  < 2 ^ k"
+    using WhileTrue
+    by simp
+  hence "max_constant (WHILE b\<noteq>0 DO c) < (2 :: nat) ^ (k + x)"
     by (metis One_nat_def WhileTrue.hyps(2) bigstep_progress le_less_trans lessI 
         less_add_same_cancel1 less_imp_le_nat numeral_2_eq_2 power_strict_increasing_iff) 
   hence "\<forall>a. s3 a < (2 :: nat) ^ (k + x + y)"
     using WhileTrue \<open>finite (range s2)\<close> 
-    by auto 
-  thus ?case using WhileTrue \<open>finite (range s3)\<close> 
+    by fastforce
+  moreover have "finite (range s3)"
+    using WhileTrue.hyps(3) \<open>finite (range s2)\<close> finite_range_stays_finite 
+    by blast
+  ultimately show ?case using WhileTrue 
     by (auto simp: group_cancel.add1 mult_2 trans_less_add2)
 qed (auto simp: numeral_2_eq_2 trans_less_add1) 
 
@@ -104,10 +127,9 @@ lemma power_of_two_minus: "2 ^ a * c < 2 ^ b \<Longrightarrow> c < (2 :: nat) ^ 
 proof(induction a arbitrary: c)
   case (Suc a)
   hence "2 * c < 2 ^ (b - a)" by auto
-  thus ?case by (smt One_nat_def Suc_diff_Suc diff_is_0_eq less_Suc0 
-        linordered_comm_semiring_strict_class.comm_mult_strict_left_mono nat_neq_iff not_le 
-        order.asym plus_1_eq_Suc power.simps(1) power_Suc0_right power_add zero_less_numeral 
-        zero_less_power)
+  thus ?case
+    by (metis One_nat_def Suc_diff_Suc bot_nat_0.not_eq_extremum less_Suc0 
+              nat_mult_less_cancel_disj numeral_2_eq_2 power_0 power_Suc zero_less_diff zero_less_power)
 qed auto
 
 lemma power_of_two_increase_exponent_le: "(2 :: nat) ^ (a + b) * c < r \<Longrightarrow> 2 ^ a * c < r"
@@ -143,38 +165,46 @@ proof(induction c1 s1 t s2 rule: big_step_t_induct)
     using Max_range_le_then_element_le[where ?s=s and ?x="2^n" and ?y=v] by fastforce
   ultimately show ?case
     apply(subst t_small_step_fun_increase_time[where ?t="50 * (n + 1)"])
-    apply(clarsimp | safe)+
-    apply(subst assignment_to_binary_correct[simplified])
-    by (auto simp: aval_le_when IMP_Minus_State_To_IMP_Minus_Minus_def fun_eq_iff 
-        split!: option.splits)
+    by (auto simp: aval_le_when IMP_Minus_State_To_IMP_Minus_Minus_def fun_eq_iff
+             intro!: assignment_to_binary_correct[simplified] 
+             split!: option.splits)
 next
   case (Seq c1 s1 x s2 c2 y s3 z)
   hence "(2 :: nat) ^ x \<le> 2 ^ z" by simp
-  hence "((2 :: nat) ^ x) * max (Max (range s1)) (max_constant (c1 ;; c2)) < 2 ^ n" using Seq(8)
+  hence "((2 :: nat) ^ x) * max (Max (range s1)) (max_constant (c1 ;; c2)) < 2 ^ n"
+    using Seq(8)
     by (meson leD leI less_le_trans mult_less_cancel2)
-  hence "2 ^ x * max (Max (range s1)) (max_constant c1) < 2 ^ n" by (simp add: nat_mult_max_right)
+  hence "2 ^ x * max (Max (range s1)) (max_constant c1) < 2 ^ n"
+    by (simp add: nat_mult_max_right)
   have "max (Max (range s1)) (max_constant (c1)) < 2 ^ (n - z)" 
-    using power_of_two_minus Seq.prems(3) by fastforce
+    using power_of_two_minus Seq.prems(3) 
+    by fastforce
   have "Max (range s2) < 2 ^ (n - y)" 
-    using IMP_Minus_space_growth[OF \<open>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2\<close> \<open>finite (range s1)\<close> 
-        \<open>max (Max (range s1)) (max_constant (c1)) < 2 ^ (n - z)\<close>] \<open>z = x + y\<close> \<open>n > z \<close> by auto
+    using 
+      IMP_Minus_space_growth[OF \<open>(c1, s1) \<Rightarrow>\<^bsup> x \<^esup> s2\<close> \<open>finite (range s1)\<close> 
+                                \<open>max (Max (range s1)) (max_constant (c1)) < 2 ^ (n - z)\<close>]
+      \<open>z = x + y\<close> \<open>n > z \<close>
+    by auto
   hence "2 ^ y * Max (range s2) < 2 ^ n"
-    by (smt Seq.hyps Seq.prems diff_is_0_eq gr_implies_not0 less_diff_conv 
-        linordered_comm_semiring_strict_class.comm_mult_strict_left_mono 
-        linordered_semidom_class.add_diff_inverse not_le not_less_iff_gr_or_eq power_add 
-        zero_less_numeral zero_less_power)
-  moreover have "2 ^ y * max_constant c2 < 2 ^ n" 
+    using move_exponent_to_rhs
+    by blast
+ moreover have "2 ^ y * max_constant c2 < 2 ^ n" 
     using \<open>z = x + y\<close> \<open>2 ^ z * max (Max (range s1)) (max_constant (c1;; c2)) < 2 ^ n\<close>
-      power_of_two_increase_exponent_le[where ?b=x]
+          power_of_two_increase_exponent_le[where ?b=x]
     by(auto simp: add.commute nat_mult_max_right)
-  ultimately have "2 ^ y * max (Max (range s2)) (max_constant c2) < 2 ^ n" by simp
-  moreover have "finite (range s2)" using finite_range_stays_finite Seq by simp
+  ultimately have "2 ^ y * max (Max (range s2)) (max_constant c2) < 2 ^ n"
+    by simp
+  moreover have "finite (range s2)" using finite_range_stays_finite Seq
+    by simp
   ultimately show ?case using Seq \<open>2 ^ x * max (Max (range s1)) (max_constant c1) < 2 ^ n\<close> 
-    apply simp 
+    apply (subst IMP_Minus_To_IMP_Minus_Minus.simps)
     apply(rule seq_terminates_when[where ?t1.0="100 * n * (x - Suc 0) + 50" and
           ?t2.0="100 * n * (y - Suc 0) + 50"])
-      apply auto apply(cases x) apply(cases y) prefer 3 apply(cases y)
-    using bigstep_progress by(auto simp: algebra_simps)
+      apply (drule bigstep_progress[where p = x] bigstep_progress[where p = y])+
+      apply(cases x)
+       apply simp_all
+    apply(cases y)
+    by (auto simp: algebra_simps)
 next
   case (IfTrue s b c1 x t y c2)
   hence "(2 ^ y) * Max (range s) < 2 ^ n" 
@@ -183,18 +213,23 @@ next
   thus ?case apply(simp only: t_small_step_fun_terminate_iff) 
     using IfTrue apply(simp add: t_small_step_fun_small_step_fun exists_non_zero_in_var_bit_list_iff)
     apply(rule t_small_step_fun_increase_time[where ?t="100 * n * (x - 1) + 50"])
-     apply(cases x) using bigstep_progress apply (auto simp: algebra_simps)
-    using IfTrue.IH bigstep_progress by(fastforce simp: nat_mult_max_right)+
+     apply(cases x)
+      using bigstep_progress IfTrue.IH bigstep_progress 
+    by(fastforce simp: nat_mult_max_right)+
 next
   case (IfFalse s b c2 x t y c1)
   hence "(2 ^ y) * Max (range s) < 2 ^ n" 
     by (meson le_less_trans max.cobounded1 move_exponent_to_rhs power_of_two_minus)
   hence "Max (range s) < 2 ^ n" by(auto intro: le_less_trans[OF _ \<open>2 ^ y * Max (range s) < 2 ^ n\<close>])
-  then show ?case apply(simp only: t_small_step_fun_terminate_iff) 
-    using IfFalse apply(simp add: t_small_step_fun_small_step_fun exists_non_zero_in_var_bit_list_iff)
+  then show ?case            
+    apply(subst t_small_step_fun_terminate_iff) 
+    using IfFalse
+    using t_small_step_fun_small_step_fun exists_non_zero_in_var_bit_list_iff
+    apply simp
     apply(rule t_small_step_fun_increase_time[where ?t="100 * n * (x - 1) + 50"])
-     apply(cases x) using bigstep_progress apply (auto simp: algebra_simps)
-    using IfFalse.IH bigstep_progress by(fastforce simp: nat_mult_max_right)+
+     apply(cases x) 
+    using bigstep_progress IfFalse.IH bigstep_progress 
+    by(fastforce simp: nat_mult_max_right)+
 next
   case (WhileFalse s b c)
   hence "(2 ^ Suc (Suc 0)) * Max (range s) < 2 ^ n" 
