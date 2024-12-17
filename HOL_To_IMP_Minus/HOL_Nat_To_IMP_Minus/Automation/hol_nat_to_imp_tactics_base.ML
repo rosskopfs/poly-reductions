@@ -74,13 +74,17 @@ type HOL_eqs_retrieval = Proof.context -> term -> thm list option
 
 (*FIXME: create a more robust filter*)
 fun get_HOL_eqs ctxt t =
-  let val thms = Find_Theorems.find_theorems ctxt NONE NONE true [
+  let
+    val thm = HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded ctxt t
+    val thms = Find_Theorems.find_theorems ctxt NONE NONE true [
       (*search for the head constant*)
       (true, Find_Theorems.Pattern (head_of t)),
       (*ignore conditional rules*)
       (false, Find_Theorems.Pattern @{term "(\<Longrightarrow>)"})
     ] |> snd |> map snd
-  in if null thms then NONE else SOME thms end
+  in case thm 
+      of NONE => if null thms then NONE else SOME thms
+       | SOME thm => SOME [thm] end
 
 (* tactics for assign, seq, and if that run one step of the program, given the appropriate theorems *)
 

@@ -67,7 +67,7 @@ ML\<open>
     and more_args = \<open>val init_args = {
       get_IMP_def = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_IMP_def,
       get_imp_minus_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_minus_correct,
-      get_HOL_eqs = SOME (Option.map single oo HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded),
+      get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Base.get_HOL_eqs,
       get_fun_inducts = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_fun_inducts
     }\<close>}
 \<close>
