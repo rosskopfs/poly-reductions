@@ -189,17 +189,22 @@ next
   thus ?case by auto
 qed
 
-corollary 
-  assumes "(subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t"
+corollary neat_subst:
   assumes "inj m"
-  shows "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t o m"
+  shows "(subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> (c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t o m"
 proof -
-  from subst_complete[where S = UNIV] assms obtain t' where 
+  assume "(subst m c, s) \<Rightarrow>\<^bsup> z \<^esup> t"
+  with subst_complete[where S = UNIV] assms obtain t' where 
     1: "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t'" "t' = t o m on UNIV"
     by blast
   hence "t' = t o m" by auto
-  with 1 show ?thesis by simp
+  with 1 show "(c, s \<circ> m) \<Rightarrow>\<^bsup> z \<^esup> t \<circ> m" by simp
 qed
+
+corollary neat_subst_2:
+  assumes "inj m"
+  shows "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> \<exists>t'. (subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m"
+  using subst_sound[where S = UNIV] assms by fast
 
 lemma noninterference: 
   "(c,s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow> set (vars c) \<subseteq> S \<Longrightarrow> s = s' on S \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>\<^bsup> x \<^esup> t' \<and> t = t' on S"
