@@ -283,11 +283,14 @@ fun finish_tail_tac ctxt =
       (#context focus) (prems_tac focus)) ctxt
   end
 
+fun THEN_ALL_NEW' offset tac1 tac2 i st =
+  st |> (tac1 i THEN (fn st' =>
+    st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
+
 fun subst_eq_unfolded_tac thms ctxt =
-  HTIU.subst_first_tac ctxt thms
-  THEN_ALL_NEW (fn i => (TRY (fn state =>
-    HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt i i state
-      handle CTERM _ => Seq.empty)))
+  THEN_ALL_NEW' 1 (HTIU.subst_first_tac ctxt thms)
+  (fn i => (TRY (fn state =>
+    HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt i i state)))
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
