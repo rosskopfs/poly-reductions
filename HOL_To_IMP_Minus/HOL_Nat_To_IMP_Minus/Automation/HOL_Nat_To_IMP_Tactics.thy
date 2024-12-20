@@ -2,6 +2,8 @@
 theory HOL_Nat_To_IMP_Tactics
   imports
     HOL_Nat_To_IMP_Minus_Goal_Commands
+    ML_Unification.ML_Unifiers
+    ML_Unification.Unify_Resolve_Tactics
 begin
 
 paragraph \<open>Summary\<close>
