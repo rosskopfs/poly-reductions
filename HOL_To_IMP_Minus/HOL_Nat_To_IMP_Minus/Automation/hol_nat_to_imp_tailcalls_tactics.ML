@@ -31,11 +31,13 @@ sig
   val start_case_tac : IMP_def_retrieval -> Proof.context -> int -> tactic
 
   val terminates_with_res_tSeq_tac : Proof.context -> int -> tactic
-  val terminates_with_tAssign_tac : Proof.context -> int -> tactic
-  val terminates_with_tCall_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
-  val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
   val terminates_with_res_tAssign_tac : Proof.context -> int -> tactic
+  val terminates_with_tAssign_tac : Proof.context -> int -> tactic
+
+  val terminates_with_tCall_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
+
+  val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
   val run_step_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
   val run_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
@@ -164,24 +166,22 @@ fun start_case_tac get_IMP_def ctxt =
 (* tactics for tAssign, tSeq, and tIf that run one step of the tailcall program *)
 
 val terminates_with_res_tSeq_tac = HTITB.seq_tac @{thm terminates_with_res_tSeqI}
+
 val terminates_with_res_tAssign_tac = HTITB.assign_tac @{thm terminates_with_res_tAssignI}
-
-(* tactics for tAssign and tCall that handle terminates_with (instead of terminates_with_res) *)
-
 val terminates_with_tAssign_tac = HTITB.assign_tac @{thm terminates_with_tAssignI}
 
 val solve_Rel_nat_condition_tac = SOLVED' oo HTITB.Rel_nat_condition_tac
 
 fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
   let fun tac {c,...} = case c of
-      \<^Const_>\<open>tCall for c _\<close> => case get_imp_minus_correct ctxt c of
+      \<^Const_>\<open>tCall for c _\<close> => (case get_imp_minus_correct ctxt c of
           NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
               Pretty.str "Could not find correctness theorem for ",
               Syntax.pretty_term ctxt c
             ] |> Pretty.string_of);
             K no_tac)
         | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI}
-            (fn i => solve_Rel_nat_condition_tac ctxt i i) ctxt cs
+            (fn i => solve_Rel_nat_condition_tac ctxt i i) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 

@@ -6,6 +6,12 @@ begin
 context HOL_To_HOL_Nat
 begin
 
+(* nested ifs in non-final positions *)
+definition "ift (n :: nat) :: nat \<equiv>
+  let m = if n + 1 = 0 then if n = n then 0 else 1 else let y :: nat = 3 in y + 1 in let k :: nat = 0 in m"
+compile_nat ift_def
+HOL_To_IMP_Minus_correct ift by cook
+
 paragraph \<open>Pairs\<close>
 
 function_compile_nat fst_def

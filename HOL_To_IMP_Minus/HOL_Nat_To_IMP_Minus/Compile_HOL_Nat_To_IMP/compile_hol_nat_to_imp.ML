@@ -309,7 +309,8 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_args_vars = map (Var o @{apply 2 (1)} (fn n => (n, 0))) f_args
 
     val simp_thy = empty_simpset lthy |> Proof_Context.theory_of
-    val simp_thms = map reflect_eq @{thms assoc_right_tSeq.simps tseq.simps rm_tSKIP.simps}
+    val simp_thms = map reflect_eq
+      @{thms assoc_right_tSeq.simps rm_tSkip_tseq.simps rm_tSKIP.simps pull_tIf.simps}
     val rewrite = Raw_Simplifier.rewrite_term simp_thy simp_thms []
     val f_IMP =
       def_body
@@ -319,7 +320,12 @@ fun compile_cmd f_def basenamepos_opt lthy =
           (f_ret_name, map fst f_args)
           (get_compiled_const (Context.Proof lthy))
           register_sep
-      |> (fn t => rewrite \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>)
+      (*FIXME: write a HOL function that achieves the normalisation and prove it correct*)
+      |> (fn t => \<^Const>\<open>rm_tSKIP for t\<close>
+        |> perhaps_loop (fn t =>
+          let val t' = rewrite \<^Const>\<open>pull_tIf for \<^Const>\<open>assoc_right_tSeq for t\<close>\<close>
+          in if t = t' then NONE else SOME t' end)
+        |> the_default t)
 
     val f_IMP_binding =
       f_IMP_namepos
