@@ -50,6 +50,14 @@ ML\<open>
 \<close>
 local_setup \<open>HOL_To_IMP_Unification_Combine.setup_attribute NONE\<close>
 
+lemma Rel_nat_rewrite_lhs:
+  assumes "lhs = lhs'" and "Rel_nat lhs' rhs"
+  shows "Rel_nat lhs rhs"
+  using assms by simp
+
+lemma transfer_inst: "x = y \<Longrightarrow> y = y"
+  by simp
+
 ML_file \<open>hol_nat_to_imp_tactics_base.ML\<close>
 ML_file \<open>hol_nat_to_imp_tailcalls_tactics.ML\<close>
 ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
