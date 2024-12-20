@@ -24,6 +24,8 @@ end
 structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
 struct
 
+structure HTHNU = HOL_To_HOL_Nat_Util
+
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
 fun foldr_index f z = map_index I #> List.foldr (uncurry f) z
@@ -105,7 +107,7 @@ fun has_call to (Call (_, ((f, _), es))) = (f = to) orelse exists (has_call to) 
   | has_call to (TailCall es) = exists (has_call to) es
   | has_call _ _ = false
 
-fun tc_ast_of_term (f_name, f_typ) f_args t =
+fun tc_ast_of_term head f_args t =
   let
     fun fold_step a (index, args_ast) =
         let val (index', a_ast) = index_tc_ast index a
@@ -145,8 +147,8 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
             if is_comb t then
               raise TERM ("Call to function given as argument is not allowed, got:", [t])
             else Arg (Library.find_index (fn v' => (n, typ) = v') f_args)
-        | Const (g_name, g_typ) =>
-          if (g_name, g_typ) = (f_name, f_typ)
+        | g as Const (g_name, g_typ) =>
+          if g = head
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
@@ -211,6 +213,8 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
       | go _ bounds cont (Call (idx, ((g_name, _), es))) =
         let
           val g_compiled = lookup_fn g_name
+          (* remove all type itself arguments *)
+          val es = es |> filter_out (fn Call (_, ((_, T), _)) => HTHNU.is_itself T | _ => false)
           val _ = List.length (#arg_regs g_compiled) = List.length es
             orelse raise PARTIAL ("Call must occur fully applied", g_name)
           val g_ret = #ret_reg g_compiled
@@ -283,11 +287,17 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val pos = Position.thread_data ()
 
     val f_def = reflect_eq f_def
-    val (args, def_body) =
-      Local_Defs.abs_def_rule lthy f_def
-      |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
 
-    val (f_name, f_typ) = f_def |> Thm.lhs_of |> Thm.term_of |> Term.head_of |> Term.dest_Const
+    val (lhs, rhs) = f_def |> Thm.prop_of
+      |> (fn t => yield_singleton (Variable.import_terms true) t lthy) |> fst
+      |> HOL_Fun_To_HOL_Nat_Fun.mk_unconditional_eq
+
+    val f_head = lhs |> head_of
+    val f_name = f_head |> dest_Const_name
+
+    val (args, def_body) =
+      lhs |> strip_comb |> snd |> map Term.dest_Free
+      |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
@@ -304,7 +314,7 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_IMP =
       def_body
       |> curry Term.subst_bounds (rev f_args_vars)
-      |> tc_ast_of_term (f_name, f_typ) f_args
+      |> tc_ast_of_term f_head f_args
       |> IMP_Minus_of_tc_ast
           (f_ret_name, map fst f_args)
           (get_compiled_const (Context.Proof lthy))
@@ -318,11 +328,11 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const =
       Binding.name_of f_IMP_binding
-      |> Proof_Context.read_const {proper = false, strict = false} lthy'
+      |> HTHNU.read_const lthy'
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
-    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
-                     , compiled = f_IMP_const }
+    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
+                       compiled = f_IMP_const }
   in
     lthy'
     |> declare_compiled_const f_name f_compiled
@@ -339,6 +349,7 @@ in
       in compile_cmd thm namepos_opt lthy end))
 end
 
+
 local
   val parser =
     Parse.const --
@@ -352,7 +363,7 @@ in
     (parser >> (fn (((const, ret_reg), arg_regs), compiled) => fn lthy =>
       let
         val (const_name, const_ty) =
-          Proof_Context.read_const {proper = false, strict = false} lthy const
+          HTHNU.read_const lthy const
           |> Term.dest_Const
         val compiled_term = Syntax.read_term lthy compiled
 
@@ -429,7 +440,7 @@ in
               ]
           end
         fun pretty_compiled_const (name, {ret_reg, arg_regs, compiled}) =
-          let val const = Proof_Context.read_const {proper = false, strict = false} lthy name
+          let val const = HTHNU.read_const lthy name
           in
             Syntax.pretty_term lthy const ::
             Pretty.fbrk ::
