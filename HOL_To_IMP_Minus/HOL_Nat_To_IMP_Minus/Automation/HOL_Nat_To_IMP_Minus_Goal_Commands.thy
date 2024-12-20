@@ -3,7 +3,6 @@ theory HOL_Nat_To_IMP_Minus_Goal_Commands
   imports
     HOL_Nat_To_IMP_Utils
     Compile_HOL_Nat_To_IMP
-    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Base
   keywords "HOL_To_IMP_Minus_correct" :: thy_goal_defn
 begin
 

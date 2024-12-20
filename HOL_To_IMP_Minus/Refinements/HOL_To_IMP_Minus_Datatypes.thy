@@ -255,7 +255,7 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
       sorry
     apply auto[]
     apply simp
-  
+
 
     (* Apply transfer here *)
     subgoal
@@ -306,23 +306,23 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
     (* Do step tac for tCall manually *)
     (* Split tSeq *)
     apply (tactic \<open>HOL_Nat_To_IMP_Tailcalls_Tactics.terminates_with_res_tSeq_tac @{context} 1\<close>)
-  
+
     (* Apply tCall rule and apply correctness \<rightarrow> need to proof Rel_nat(s) *)
     apply (rule terminates_with_tCallI)
-      apply (rule rev_acc_nat_IMP_Minus_imp_minus_correct)
+      apply (rule rev_acc_nat_IMP_Minus_correct)
 
 
   apply (rule Rel_nat_rewrite_lhs)
   apply (tactic \<open>SUT.STATE_interp_retrieve_key_eq_tac (simp_tac @{context}) @{context} 1\<close>)
   apply (tactic \<open>HOL_Nat_To_IMP_Minus_Tactics_Base.transfer_foc_rev_tac @{context} 1\<close>)
-  
+
     (* Always need to evaluate state, works more or less automatically *)
     apply (simp add: STATE_interp_update_retrieve_key_eq_if)
     subgoal sorry
 
     using Rel_nat_Nil_nat (* Basic relations in simpset? *)
     apply (simp add: STATE_interp_update_retrieve_key_eq_if)
-  
+
     apply (tactic \<open>SUT.STATE_interp_update_eq_STATE_interp_fun_upd (HOL_Nat_To_IMP_Tactics_Base.simp_update_tac @{context}) @{context} 1\<close>)
 
     apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)
@@ -354,7 +354,7 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
         left_uniqueD left_unique_Rel_nat n_not_Suc_n rel_funD)
   sorry
 
-  
+
 
 end
 

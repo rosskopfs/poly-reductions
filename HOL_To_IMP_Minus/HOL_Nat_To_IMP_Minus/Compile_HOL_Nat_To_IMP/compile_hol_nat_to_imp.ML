@@ -214,9 +214,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
         let
           val g_compiled = lookup_fn g_name
           (* remove all type itself arguments *)
-          val es = filter (fn e => case e
-              of Call (_, ((_, T), _)) => not (HTHNU.is_itself T)
-               | _ => true) es
+          val es = es |> filter_out (fn Call (_, ((_, T), _)) => HTHNU.is_itself T | _ => false)
           val _ = List.length (#arg_regs g_compiled) = List.length es
             orelse raise PARTIAL ("Call must occur fully applied", g_name)
           val g_ret = #ret_reg g_compiled

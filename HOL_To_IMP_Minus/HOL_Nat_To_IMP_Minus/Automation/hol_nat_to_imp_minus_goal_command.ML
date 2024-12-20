@@ -51,7 +51,7 @@ fun delete_imp_minus_correct thm = compiled_const_from_thm thm
   |> HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.map
 val delete_imp_minus_correct_attr = Thm.declaration_attribute delete_imp_minus_correct
 
-val imp_minus_correct_binding = \<^binding>\<open>IMP_Minus_imp_minus_correct\<close>
+val imp_minus_correct_binding = \<^binding>\<open>IMP_Minus_correct\<close>
 
 val setup_imp_minus_correct_attr = Attrib.add_del
   update_imp_minus_correct_attr delete_imp_minus_correct_attr
@@ -69,7 +69,7 @@ in
     Outer_Syntax.local_theory_to_proof'
       \<^command_keyword>\<open>HOL_To_IMP_Minus_correct\<close>
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
-      (parser >> (fn (binding, (const, pos)) => fn b => fn lthy =>
+      (parser >> (fn (binding_attrs, (const, pos)) => fn b => fn lthy =>
         let
           val stateT = \<^typ>\<open>AExp.state\<close>
           val const_term = HTHNU.read_const lthy const
@@ -79,16 +79,15 @@ in
 
           val (s, lthy) = yield_singleton Variable.variant_fixes "s" lthy |>> (rpair stateT #> Free)
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
-          val arg_regs = #arg_regs compiled_const
+          val base_args = #arg_regs compiled_const |> map arg_from_reg
 
           val opt_eq_unfolded_thm = const_term
             |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy
             |> Option.map (
                 Thm.instantiate' [] (List.concat
-                  (map (fn x => [x |> arg_from_reg |> Thm.cterm_of lthy |> SOME, NONE]) arg_regs))
+                  (map (fn x => [x |> Thm.cterm_of lthy |> SOME, NONE]) base_args))
                 #> Variable.import_vars lthy)
 
-          val base_args = map arg_from_reg arg_regs
           val (prems, args) = case opt_eq_unfolded_thm of
               NONE => ([], base_args)
             | SOME eq_unfolded_thm =>
@@ -108,15 +107,14 @@ in
 
           val imp_minus_correct_attr =
             Attrib.internal pos (K update_imp_minus_correct_attr)
-          val binding = binding |> Binding.is_empty (fst binding) ?
-            apfst (fn _ => [Term.term_name const_term, "IMP_Minus_imp_minus_correct"]
-              |> map Binding.name
-              |> Binding.conglomerate
-              |> Binding.set_pos pos)
+          val binding_attrs = binding_attrs
+            |>> (fn binding => if Binding.is_empty binding
+              then Transport_Util.add_suffix (HTHNU.term_binding const_term)
+                imp_minus_correct_binding |> Binding.set_pos pos
+              else binding)
+            ||> cons imp_minus_correct_attr
         in
-          lthy
-          |> Specification.theorem false Thm.theoremK NONE (K I)
-              (binding ||> (fn atts => imp_minus_correct_attr :: atts)) [] [] goal_stmt b
+          Specification.theorem false Thm.theoremK NONE (K I) binding_attrs [] [] goal_stmt b lthy
         end
       ))
 end

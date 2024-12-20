@@ -33,6 +33,9 @@ declare compile_nat_type_def.Rep_induct[induct del] compile_nat_type_def.Abs_ind
 lemma inj_natify: "inj natify"
   by (rule inj_on_inverseI[where ?g=denatify]) simp
 
+lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
+  using inj_natify by (blast dest: injD)
+
 definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "Rel_nat n x \<equiv> n = natify x"
 
@@ -66,9 +69,6 @@ lemma compile_nat_flip_partial_equivalence_rel_equivalence:
   using compile_nat_type_def.partial_equivalence_rel_equivalenceI
   flip.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right
   by blast
-
-lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
-  using compile_nat_type_def.Rep_inject by simp
 
 end
 

@@ -50,6 +50,7 @@ session HOL_To_HOL_Nat in "HOL_To_IMP_Minus/HOL_To_HOL_Nat" = Transport +
 session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Minus +
   sessions
     HOL_To_HOL_Nat
+    ML_Typeclasses
     ML_Unification
   directories
     "Automation"

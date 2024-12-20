@@ -19,25 +19,6 @@ structure TrpUtil = Transport_Util
 structure Trp = Transport
 open HOL_To_HOL_Nat_Util
 
-structure Compiled_Eq_Unfolded = Generic_Data(
-  type T = thm Net.net
-  val empty = Net.empty
-  val merge = Net.merge (Thm.eq_thm)
-)
-
-fun get_compiled_eq_unfolded ctxt term =
-  case (Net.match_term o Compiled_Eq_Unfolded.get o Context.Proof) ctxt term of
-    [] => NONE
-  | [thm] => SOME thm
-  | thms => (Pretty.writeln (Pretty.block (map (Thm.pretty_thm ctxt) thms));
-      error "Found more than one compiled eq_unfolded thm")
-
-val compiled_const_from_eq_unfolded = Thm.concl_of #> dest_eq_equals_prop #> fst #> Term.head_of
-
-fun update_compiled_eq_unfolded thm =
-  let val key = compiled_const_from_eq_unfolded thm
-  in Compiled_Eq_Unfolded.map (Net.insert_term (K true) (key, thm)) end
-
 val mk_natT = map_fun_types (K natT)
 
 val related_self_binding = @{binding related_self}
@@ -140,6 +121,29 @@ fun register_related_unfolded_thm f f_eq lthy =
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
   in (thm, lthy) end
+
+structure Compiled_Eq_Unfolded = Generic_Data(
+  type T = thm Net.net
+  val empty = Net.empty
+  val merge = Net.merge Thm.eq_thm
+)
+
+fun get_compiled_eq_unfolded ctxt term =
+  case Net.match_term (Compiled_Eq_Unfolded.get (Context.Proof ctxt)) term of
+    [] => NONE
+  | [thm] => SOME thm
+  | thms => let val msg = "Found more than one compiled eq_unfolded thm"
+      in
+        (Pretty.str msg
+          :: map (Thm.pretty_thm ctxt) thms |> Pretty.block |> Pretty.writeln;
+        error msg)
+      end
+
+val compiled_const_from_eq_unfolded = Thm.concl_of #> dest_eq_equals_prop #> fst #> Term.head_of
+
+fun update_compiled_eq_unfolded thm =
+  let val key = compiled_const_from_eq_unfolded thm
+  in Compiled_Eq_Unfolded.map (Net.insert_term (K true) (key, thm)) end
 
 fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
   let
