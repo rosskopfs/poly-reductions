@@ -51,7 +51,6 @@ session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Mi
   sessions
     HOL_To_HOL_Nat
     ML_Unification
-    "SpecCheck"
   directories
     "Automation"
     "Compile_HOL_Nat_To_IMP"

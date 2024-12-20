@@ -78,6 +78,7 @@ lemma no_tails_invar[simp]: "\<not>tails c \<Longrightarrow> invar c"
 
 
 section \<open>Semantics for small-step-ish reasoning (loops)\<close>
+text \<open>Big-step semantics that just returns true for Tail\<close>
 inductive
   tail_step :: "(tcom \<times> state) \<Rightarrow> nat \<Rightarrow> (state \<times> bool) \<Rightarrow> bool" ("\<turnstile>_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
 where
@@ -103,6 +104,7 @@ inductive_cases tailCall_tE[elim!]: "\<turnstile> (CALL C RETURN v,s) \<Rightarr
 
 inductive_cases tailTail_tE[elim]: "\<turnstile> (tTAIL,s) \<Rightarrow>\<^bsup>x \<^esup> (t,b)"
 
+text \<open>Closure of tails\<close>
 inductive
   tail_steps :: "tcom \<Rightarrow> tcom \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool" ("_ \<turnstile>''_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55) for d
 where
@@ -212,7 +214,7 @@ next
     by (meson noninterference' tail_steps.tTrue)
 qed
 
-section \<open>Translation between tail-call program and while continuation\<close>
+section \<open>Translation between tail-call program and while\<close>
 
 fun translate1 :: "vname \<Rightarrow> tcom \<Rightarrow> com'" where
   "translate1 CONT tTAIL = (CONT ::= A (N 1))" |
