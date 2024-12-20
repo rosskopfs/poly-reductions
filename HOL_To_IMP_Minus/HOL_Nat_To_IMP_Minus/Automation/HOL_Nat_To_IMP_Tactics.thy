@@ -50,10 +50,11 @@ ML\<open>
 \<close>
 local_setup \<open>HOL_To_IMP_Unification_Combine.setup_attribute NONE\<close>
 
-lemma Rel_nat_rewrite_lhs:
-  assumes "lhs = lhs'" and "Rel_nat lhs' rhs"
+lemma rewrite_Rel_nat_lhs:
+  assumes "PROP SIMPS_TO_UNIF lhs lhs'"
+  and "Rel_nat lhs' rhs"
   shows "Rel_nat lhs rhs"
-  using assms by simp
+  using assms unfolding SIMPS_TO_UNIF_eq by simp
 
 lemma transfer_inst: "x = y \<Longrightarrow> y = y"
   by simp
