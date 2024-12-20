@@ -40,6 +40,8 @@ sig
   val run_step_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
   val run_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
 
+  val subst_eq_unfolded_tac: thm list -> Proof.context -> int -> tactic
+
   val finish_non_tail_tac: Proof.context -> int -> tactic
   val finish_tail_tac: Proof.context -> int -> tactic
 
@@ -176,7 +178,7 @@ fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
               Syntax.pretty_term ctxt c
             ] |> Pretty.string_of);
             K no_tac)
-        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI} ctxt cs)
+        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI} (fn i => TRY (HTITB.rel_condition_tac ctxt i i)) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 
@@ -202,6 +204,7 @@ fun finish_tail_tac ctxt =
       (*v is of the form f t1 t2 ..., where f is the relevant HOL function; extract the head f,
       and the terms t1, t2, ... *)
       Term.strip_comb v
+        ||> filter (Term.fastype_of #> HOL_To_HOL_Nat_Util.is_itself #> not)
       LET (fn (head, arg_terms) =>
         (* fetch the compiled constant *)
         Basics.try (dest_Const #> fst #> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof ctxt)) head
@@ -280,6 +283,15 @@ fun finish_tail_tac ctxt =
       (#context focus) (prems_tac focus)) ctxt
   end
 
+fun THEN_ALL_NEW' offset tac1 tac2 i st =
+  st |> (tac1 i THEN (fn st' =>
+    st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
+
+fun subst_eq_unfolded_tac thms ctxt =
+  THEN_ALL_NEW' 1 (HTIU.subst_first_tac ctxt thms)
+  (fn i => (TRY (fn state =>
+    HOL_Nat_To_IMP_Tactics_Base.transfer_foc_rev_tac ctxt i i state)))
+
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
   THEN' SUT.STATE_interp_retrieve_key_eq_tac (safe_asm_simp_tac ctxt) ctxt
@@ -299,7 +311,7 @@ fun run_hol_fun_tac get_HOL_eqs ctxt =
         ] |> Pretty.string_of);
         K no_tac)
     | SOME thms => simp_value_tac (
-          HTIU.subst_first_tac ctxt thms
+          subst_eq_unfolded_tac thms ctxt
           THEN' TRY o safe_asm_simp_tac (ctxt delsimps thms addsimps [@{thm Let_def}])
         ) ctxt
   in with_dest_terminates_with_res_IMP_Tailcall_prop ctxt tac end
