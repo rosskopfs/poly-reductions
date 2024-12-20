@@ -108,7 +108,7 @@ fun register_related_unfolded_thm f f_eq lthy =
     val (concl :: assms, lthy) = Syntax.check_terms lthy (concl :: assms)
       |> (fn ts => Variable.importT_terms ts lthy)
     val thm = Goal.prove lthy [] assms concl (fn {prems = prems, context = ctxt,...} =>
-      let val ctxt = fold (snd oo Thm.apply_attribute Transfer.transfer_add) prems (Context.Proof ctxt)
+      let val ctxt = fold (Thm.attribute_declaration Transfer.transfer_add) prems (Context.Proof ctxt)
         |> Context.proof_of
       in
         (EqSubst.eqsubst_tac ctxt [1] [f_eq]

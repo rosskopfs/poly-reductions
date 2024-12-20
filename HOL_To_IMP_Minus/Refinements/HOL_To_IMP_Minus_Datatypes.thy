@@ -34,7 +34,6 @@ context
   fixes xs and xs' :: "'a :: compile_nat * 'b :: compile_nat"
   assumes rels: "Rel_nat xs xs'"
 begin
-  term HTHN.fst_nat
   print_statement HTHN.fst_nat_eq_unfolded
   print_statement HTHN.fst_nat_eq_unfolded[OF rels, unfolded case_list_nat_def]
 end
