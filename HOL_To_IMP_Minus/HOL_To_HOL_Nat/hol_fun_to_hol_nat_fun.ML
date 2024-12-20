@@ -5,6 +5,10 @@
 *)
 signature HOL_FUN_TO_HOL_NAT_FUN =
 sig
+  val mk_eq_unfolded_binding : term -> binding
+  val get_compiled_eq_unfolded : Proof.context -> term -> thm option
+  val mk_unconditional_eq : term -> term * term
+  structure Compiled_Eq_Unfolded : GENERIC_DATA
 end
 
 structure HOL_Fun_To_HOL_Nat_Fun : HOL_FUN_TO_HOL_NAT_FUN =
@@ -78,7 +82,10 @@ fun register_related_transfer_thm f lthy =
     val related_thm = get_transport_related_thm f lthy
       |> Local_Defs.fold lthy
         @{thms rel_inv_Fun_Rel_rel_eq rel_inv_iff_rel[symmetric]  rel_fun_eq_Fun_Rel_rel}
-  in register_transfer_thms binding [related_thm] lthy |>> apsnd the_single end
+  in
+    register_attrs_transfer_thms @{attributes [Rel_nat_compile_nat]} binding [related_thm] lthy
+    |>> apsnd the_single
+  end
 
 fun mk_related_unfolded_assms Ts ctxt =
   let
@@ -115,6 +122,29 @@ fun register_related_unfolded_thm f f_eq lthy =
     val thm = Morphism.thm phi thm
   in (thm, lthy) end
 
+structure Compiled_Eq_Unfolded = Generic_Data(
+  type T = thm Net.net
+  val empty = Net.empty
+  val merge = Net.merge Thm.eq_thm
+)
+
+fun get_compiled_eq_unfolded ctxt term =
+  case Net.match_term (Compiled_Eq_Unfolded.get (Context.Proof ctxt)) term of
+    [] => NONE
+  | [thm] => SOME thm
+  | thms => let val msg = "Found more than one compiled eq_unfolded thm"
+      in
+        (Pretty.str msg
+          :: map (Thm.pretty_thm ctxt) thms |> Pretty.block |> Pretty.writeln;
+        error msg)
+      end
+
+val compiled_const_from_eq_unfolded = Thm.concl_of #> dest_eq_equals_prop #> fst #> Term.head_of
+
+fun update_compiled_eq_unfolded thm =
+  let val key = compiled_const_from_eq_unfolded thm
+  in Compiled_Eq_Unfolded.map (Net.insert_term (K true) (key, thm)) end
+
 fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
   let
     val lthy = Local_Theory.begin_nested lthy |> snd |> TrpUtil.set_proof_mode_schematic
@@ -134,7 +164,9 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
-  in register_thms binding [thm] lthy end
+    val attr = Attrib.internal (Binding.pos_of binding)
+      (Thm.declaration_attribute o (update_compiled_eq_unfolded oo Morphism.thm))
+  in register_attrs_thms [attr] binding [thm] lthy end
 
 fun function_compile_nat_cmd f_eq lthy =
   let
@@ -147,8 +179,7 @@ fun function_compile_nat_cmd f_eq lthy =
       |> register_transport_term f_with_sort
       |> register_related_transfer_thm f
     val (related_unfolded_thm, lthy) = register_related_unfolded_thm f_with_sort f_eq lthy
-    val lthy =
-      register_eq_unfolded_thm f_with_sort related_transfer_thm related_unfolded_thm lthy |> snd
+    val (_, lthy) = register_eq_unfolded_thm f_with_sort related_transfer_thm related_unfolded_thm lthy
   in lthy end
 
 val _ =
@@ -161,41 +192,44 @@ val _ =
 val unconditional_nat_binding = @{binding "unconditional"}
 fun mk_unconditional_nat_binding b = TrpUtil.add_suffix b unconditional_nat_binding
 
-fun unconditional_nat_command f_eq basename lthy =
+fun mk_unconditional_eq f_eq =
   let
-    val (lhs, rhs) =
-      yield_singleton (Variable.import_terms false) (Thm.prop_of f_eq) lthy |> fst
-      |> Logic.strip_imp_concl |> dest_eq_equals_prop
-    val f = lhs |> Term.head_of |> Term.dest_Const
-
-    fun is_typrep (Type (@{type_name itself}, [_])) = true
-      | is_typrep _ = false
+    val (lhs, rhs) = f_eq |> Logic.strip_imp_concl |> dest_eq_equals_prop
+    val f = lhs |> Term.head_of
     val (typrep_arg_count, rem_args) =
-      lhs |> Term.args_of |> chop_prefix (is_typrep o Term.fastype_of) |>> List.length
-
+      lhs |> Term.args_of |> chop_prefix (is_itself o Term.fastype_of) |>> List.length
     val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
-
-    val base_binding = case basename of
-        SOME (name, _) => Binding.name name
-      | NONE => Const f |> term_binding
-    val f'_name = mk_unconditional_nat_binding base_binding |> Binding.name_of
-    val f' = Free (f'_name, f'_typ)
-
-    (* at each recursive call f TYPE('a) ... TYPE('b) x1 ... xn, strip the leading TYPE arguments *)
+    val f' = f |> Term.map_types (K f'_typ)
     fun rewrite_rhs t =
       let
         val (head, args) = Term.strip_comb t
-        val is_rec_call = case head of Const g => f = g | _ => false
+        val is_rec_call = (f = head)
         val _ = (is_rec_call andalso length args < typrep_arg_count)
           andalso raise TERM ("Can't strip all '_ itself' arguments", [t])
       in
         (if is_rec_call then (f', drop typrep_arg_count args) else (head, args))
         ||> map rewrite_rhs |> Term.list_comb
       end
-
     val lhs' = Term.list_comb (f', rem_args)
     val rhs' = rewrite_rhs rhs
-  in register_fun (Binding.name f'_name) lhs' rhs' lthy end
+  in (lhs', rhs') end
+
+fun unconditional_nat_command f_eq basename lthy =
+  let
+    val (f_eq, _) =
+      Thm.prop_of f_eq |> (fn t => yield_singleton (Variable.import_terms false) t lthy)
+
+    val eq as (lhs, _) = mk_unconditional_eq f_eq
+    val f = Term.head_of lhs
+
+    val base_binding = case basename of
+        SOME (name, _) => Binding.name name
+      | NONE => term_binding f
+    val f'_binding = mk_unconditional_nat_binding base_binding
+    val f' = Free (Binding.name_of f'_binding, fastype_of f)
+    val f_to_f' = Term.map_aterms (fn t => if t = f then f' else t)
+    val (lhs, rhs) = apply2 f_to_f' eq
+  in register_fun (f'_binding) lhs rhs lthy end
 
 local
   val parser = Parse.thm -- Scan.option (\<^keyword>\<open>basename\<close> |-- Parse.name_position)

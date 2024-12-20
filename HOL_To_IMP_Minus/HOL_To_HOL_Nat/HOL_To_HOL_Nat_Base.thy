@@ -33,6 +33,9 @@ declare compile_nat_type_def.Rep_induct[induct del] compile_nat_type_def.Abs_ind
 lemma inj_natify: "inj natify"
   by (rule inj_on_inverseI[where ?g=denatify]) simp
 
+lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
+  using inj_natify by (blast dest: injD)
+
 definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "Rel_nat n x \<equiv> n = natify x"
 
@@ -163,6 +166,9 @@ Restrictions:
 be made an instance of @{class compile_nat} and hence no higher-order arguments may be used).
 (3) As a consequence of (2): Recursive datatypes may not be nested inside of another datatype.
 \<close>
+
+named_theorems "Rel_nat_compile_nat"
+  "relatedness theorems for terms compiled from HOL to HOL on natural numbers."
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>

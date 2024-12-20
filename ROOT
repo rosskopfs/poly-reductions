@@ -1,12 +1,5 @@
 chapter Poly_Reductions
 
-session HOL_To_HOL_Nat in "HOL_To_IMP_Minus/HOL_To_HOL_Nat" = Transport +
-  sessions
-    "HOL-Library"
-    "ML_Unification"
-  theories
-    HOL_To_HOL_Nat_Base
-
 session Poly_Reductions_Base = HOL +
   sessions
     "HOL-Real_Asymp"
@@ -47,8 +40,16 @@ session Expressions in "Expressions" = HOL +
   theories
     Expression_Tail_Call_Whiles_Plus_Minus
 
+session HOL_To_HOL_Nat in "HOL_To_IMP_Minus/HOL_To_HOL_Nat" = Transport +
+  sessions
+    "HOL-Library"
+    "ML_Unification"
+  theories
+    HOL_To_HOL_Nat_Base
+
 session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Minus +
   sessions
+    HOL_To_HOL_Nat
     ML_Typeclasses
     ML_Unification
   directories
@@ -59,8 +60,6 @@ session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Mi
     HOL_Nat_To_IMP_Tactics
 
 session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = HOL_Nat_To_IMP_Minus +
-  sessions
-    HOL_To_HOL_Nat
   directories
     "Refinements"
   theories
