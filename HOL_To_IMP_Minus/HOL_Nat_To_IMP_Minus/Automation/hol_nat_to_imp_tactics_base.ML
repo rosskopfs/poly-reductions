@@ -125,9 +125,10 @@ val transfer_focus_prems_tac = Tactic_Util.FOCUS_PREMS' (fn ({prems, context, ..
     |> Context.proof_of
   in Transfer.transfer_prover_tac ctxt end)
 
+(*invariant: schematic variable at vari is applied exactly to all distinct, bound variables in order*)
 fun rev_transfer_focus_prems_tac ctxt vari i = Tactical.PRIMSEQ (fn state =>
   let (*do not use Tactic_Util.FOCUS_PREMS' directily as it fixes schematic types in the conclusion*)
-    val ({prems, context, concl, ...}, _) = Subgoal.focus_prems ctxt i NONE state
+    val ({prems, context, concl, params, ...}, _) = Subgoal.focus_prems ctxt i NONE state
     (* add prems as transfer rules *)
     val ctxt' = fold (Thm.attribute_declaration Transfer.transfer_add) prems (Context.Proof context)
       |> Context.proof_of
@@ -135,10 +136,16 @@ fun rev_transfer_focus_prems_tac ctxt vari i = Tactical.PRIMSEQ (fn state =>
     val lhsct = concl |> Thm.dest_arg |> Thm.dest_arg1
     (*abuse a theorem to get the partner*)
     val inst_thm = Drule.infer_instantiate' ctxt' [SOME lhsct] @{thm "transfer_inst"}
-    val thm' = Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt')
-      |> fst |> Thm.varifyT_global |> Drule.incr_indexes state
+    val inst_thm =
+      Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt')
+      |> fst |> Assumption.export ctxt' ctxt
+      |> fold_rev (snd #> Thm.forall_intr) params
+      |> Thm.varifyT_global |> Drule.incr_indexes state
     (*retrieve the partner*)
-    val rhsct = Thm.cprems_of thm' |> hd |> Thm.dest_arg |> Thm.dest_arg1
+    val rhsct = Thm.prop_of inst_thm |> Term_Util.strip_subgoal
+      ||> (fst #> split_last #> snd #> HOL_To_HOL_Nat_Util.dest_eq_equals_prop #> fst)
+      |> Logic.rlist_abs
+      |> Thm.cterm_of ctxt
     (*plug in in the result*)
     val inst_tac = Drule.infer_instantiate' ctxt (replicate (vari - 1) NONE @ [SOME rhsct])
       |> Tactical.PRIMITIVE
@@ -146,7 +153,8 @@ fun rev_transfer_focus_prems_tac ctxt vari i = Tactical.PRIMSEQ (fn state =>
 
 fun Rel_nat_condition_tac ctxt vari =
   resolve_tac ctxt [@{thm rewrite_Rel_nat_lhs}]
-  THEN' simp_state_update_val_tac ctxt
+  THEN' (fn i => fn state => Simps_To_Unif.SIMPS_TO_UNIF_refl_tac (simp_state_update_val_tac ctxt)
+    (Thm.maxidx_of state) ctxt i state)
   THEN' rev_transfer_focus_prems_tac ctxt vari
 
 end
