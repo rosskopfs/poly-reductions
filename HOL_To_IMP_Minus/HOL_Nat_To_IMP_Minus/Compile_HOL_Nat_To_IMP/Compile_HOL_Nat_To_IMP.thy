@@ -23,6 +23,9 @@ function (sequential) assoc_right_tSeq where
   by pat_completeness auto
 termination by (relation "measure measure_assoc") auto
 
+lemma size_assoc_right_tSeq [termination_simp]: "size (assoc_right_tSeq t) = size t"
+  by (induction t rule: assoc_right_tSeq.induct) auto
+
 lemma tbig_step_t_tSeq_assoc:
   includes tcom_syntax
   shows "C \<turnstile> ((c1 ;; c2) ;; c3, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (c1 ;; (c2 ;; c3), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
@@ -104,13 +107,23 @@ qed auto
 
 (*input: right-associated program*)
 (*output: all ifs are pulled out + right-associated*)
-fun pull_tIf where
-  "pull_tIf (tSeq (tIf v c1 c2) c3) = tIf v (pull_tIf (tSeq c1 c3)) (pull_tIf (tSeq c2 c3))"
-  (* "pull_tIf (tSeq (tIf v c1 c2) c3) =
-    tIf v (pull_tIf (tSeq c1 c3)) (pull_tIf (tSeq c2 c3))" *)
-| "pull_tIf (tSeq c1 c2) = tSeq c1 (pull_tIf c2)"
-| "pull_tIf (tIf v c1 c2) = tIf v (pull_tIf c1) (pull_tIf c2)"
-| "pull_tIf c = c"
+fun pull_tIf_assoc_right where
+  "pull_tIf_assoc_right (tSeq (tIf v c1 c2) c3) = tIf v
+    (pull_tIf_assoc_right (assoc_right_tSeq (tSeq c1 c3)))
+    (pull_tIf_assoc_right (assoc_right_tSeq (tSeq c2 c3)))"
+| "pull_tIf_assoc_right (tSeq c1 c2) = tSeq c1 (pull_tIf_assoc_right c2)"
+| "pull_tIf_assoc_right (tIf v c1 c2) = tIf v (pull_tIf_assoc_right c1) (pull_tIf_assoc_right c2)"
+| "pull_tIf_assoc_right c = c"
+
+lemma tbig_step_pull_tIf_iff_aux:
+  includes tcom_syntax
+  shows "C \<turnstile> (tSeq (tIf v c1 c2) c3, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (tIf v (tSeq c1 c3) (tSeq c2 c3), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  by auto
+
+lemma tbig_step_pull_tIf_iff:
+  shows "C \<turnstile> (pull_tIf_assoc_right c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  by (induction c arbitrary: s t s' rule: pull_tIf_assoc_right.induct)
+  (fastforce simp: tbig_step_t_assoc_right_tSeq tbig_step_pull_tIf_iff_aux)+
 
 ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 
