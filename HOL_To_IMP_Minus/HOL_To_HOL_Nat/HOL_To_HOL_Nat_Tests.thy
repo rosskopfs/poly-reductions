@@ -38,12 +38,16 @@ fun head :: "bool list \<Rightarrow> bool" where
   "head [] = undefined" |
   "head (x # _) = x"
 
+lemma Rel_nat_undefined [Rel_nat_related]:
+  "Rel_nat (natify (undefined :: 'a :: compile_nat)) (undefined :: 'a)"
+  by (rule Rel_nat_natify_self)
+
 case_of_simps head_eq_case : head.simps
 function_compile_nat head_eq_case
 
 fun plus :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "plus m 0 = m" |
-  "plus m (Suc n) = Suc (plus m n)"
+  "plus m (Suc n) = plus (Suc (plus m n)) 0"
 
 case_of_simps plus_eq_case : plus.simps
 function_compile_nat plus_eq_case

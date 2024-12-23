@@ -42,9 +42,7 @@ fun is_state_state_retrieval state s_app = dest_state_retrieval s_app |> fst |> 
 (* interpretation of state *)
 val interp_reflect_thm = @{thm STATE_interp_state_State_eq}
 
-fun SIMPS_TO_UNIF_simp_refl_tac simp_tac = Simps_To_Unif.SIMPS_TO_UNIF_refl_tac simp_tac ~1
-
-fun SIMPS_TO_UNIF_STATE_interp_retrieve_key_tac ctxt = SIMPS_TO_UNIF_simp_refl_tac
+fun SIMPS_TO_UNIF_STATE_interp_retrieve_key_tac ctxt = HTIU.SIMPS_TO_UNIF_refl_tac
   (safe_simp_tac (ctxt addsimps @{thm STATE_interp_update_retrieve_key_eq_if} :: [interp_reflect_thm]))
   ctxt
 
@@ -62,6 +60,6 @@ val subst_all_STATE_interp_retrieve_key_tac = REPEAT oo subst_STATE_interp_retri
 
 fun STATE_interp_update_eq_STATE_interp_fun_upd simp_tac ctxt =
   resolve_tac ctxt [@{thm STATE_interp_update_eq_STATE_interp_fun_updI}]
-  THEN' SIMPS_TO_UNIF_simp_refl_tac simp_tac ctxt
+  THEN' HTIU.SIMPS_TO_UNIF_refl_tac simp_tac ctxt
 
 end

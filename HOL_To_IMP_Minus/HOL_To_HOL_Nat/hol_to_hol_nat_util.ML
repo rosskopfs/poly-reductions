@@ -26,19 +26,22 @@ sig
   val prove_goal: (Proof.context -> tactic) -> Proof.context -> term -> thm
   val prove_goals : (Proof.context -> tactic) -> Proof.context -> term list -> thm list
 
-  val register_def: term -> local_theory -> (term * (string * thm)) * local_theory
+  val register_def: Token.src list -> term -> local_theory -> (term * (string * thm)) * local_theory
   val register_fun: binding -> term -> term -> local_theory -> Proof.context
   val register_attrs_thms: Token.src list -> binding -> thm list -> local_theory ->
     (string * thm list) * local_theory
   val register_thms: binding -> thm list -> local_theory -> (string * thm list) * local_theory
-  val register_attrs_transfer_thms : Token.src list -> binding -> thm list -> local_theory ->
+
+  val get_Rel_nat_related_thms : Proof.context -> thm list
+
+  val register_attrs_Rel_nat_related_thms : Token.src list -> binding -> thm list -> local_theory ->
     (string * thm list) * local_theory
-  val register_transfer_thms : binding -> thm list -> local_theory ->
+  val register_Rel_nat_related_thms : binding -> thm list -> local_theory ->
     (string * thm list) * local_theory
   val del_simps: thm list -> local_theory -> local_theory
 
   val binding_from_long_name: string -> binding
-  val const_binding: string -> binding
+  val const_binding: term -> binding
   val term_binding: term -> binding
   val type_binding: typ -> binding
   val type_suffix_binding: binding -> typ -> binding
@@ -68,7 +71,10 @@ sig
 
   val fun_rel_intro_tac: thm -> Proof.context -> int -> tactic
   val solve_fun_rel_tac : thm -> Proof.context -> int -> tactic
-  val solve_Rel_nat_tac : thm -> Proof.context -> int -> tactic
+  val solve_compiled_Rel_nat_tac : thm -> Proof.context -> int -> tactic
+
+  val add_Rel_nat_transfer_rules : Proof.context -> Proof.context
+  val Rel_nat_transfer_prover : Proof.context -> int -> tactic
 
   val mk_Rel_fun_from_type : ('a -> 'a -> 'a) -> (typ -> 'a) -> typ -> 'a
 
@@ -104,7 +110,7 @@ val term_binder_types = fastype_of #> binder_types
 val fun_nargs = fastype_of #> binder_types #> length
 
 val read_const = Proof_Context.read_const {proper = false, strict = false};
-fun const_from_binding ctxt = Binding.name_of #> read_const ctxt
+fun const_from_binding ctxt = Binding.long_name_of #> read_const ctxt
 
 fun is_itself (Type (@{type_name itself}, _)) = true
   | is_itself _ = false
@@ -123,7 +129,8 @@ val prove_goal = prove_goal_schematics []
 fun prove_goals tac ctxt ts = Goal.prove_common ctxt NONE [] [] ts (#context #> tac)
 
 (*registrations*)
-fun register_def eq = Specification.definition NONE [] [] (Binding.empty_atts, eq)
+fun register_def attrs eq =
+  Specification.definition NONE [] [] ((Binding.empty, attrs), eq)
 
 fun register_fun binding_name lhs rhs lthy =
   let
@@ -136,13 +143,17 @@ val register_thms = register_attrs_thms @{attributes []}
 
 fun del_simps simps = register_attrs_thms @{attributes [simp del]} Binding.empty simps #> snd
 
-fun register_attrs_transfer_thms attrs = register_attrs_thms (@{attributes [transfer_rule]} @ attrs)
-val register_transfer_thms = register_attrs_transfer_thms []
+fun get_Rel_nat_related_thms ctxt = Named_Theorems.get ctxt @{named_theorems Rel_nat_related}
+  |> rev
+
+fun register_attrs_Rel_nat_related_thms attrs =
+  register_attrs_thms (@{attributes [Rel_nat_related]} @ attrs)
+val register_Rel_nat_related_thms = register_attrs_Rel_nat_related_thms []
 
 (*bindings*)
 val binding_from_long_name = Long_Name.base_name #> Binding.name
-val type_binding = dest_Type #> fst #> binding_from_long_name
-val const_binding = binding_from_long_name
+val type_binding = dest_Type_name #> binding_from_long_name
+val const_binding = dest_Const_name #> Binding.qualified_name
 val term_binding = Term.term_name #> Binding.name
 
 fun type_suffix_binding base_binding = type_binding #> TrpU.add_suffix base_binding
@@ -159,7 +170,7 @@ val add_compile_nat_sort = map_sort (fn \<^sort>\<open>type\<close> => compile_n
 
 val Rel_nat_iff_thm = @{thm Rel_nat_iff_eq_natify}
 fun mk_Rel_nat T = \<^Const>\<open>Rel_nat T\<close>
-val Rel_nat_binding  = const_binding @{const_name Rel_nat}
+val Rel_nat_binding  = const_binding @{term Rel_nat}
 val mk_Rel_nat_type_binding  = type_suffix_binding Rel_nat_binding
 
 (*function relator*)
@@ -176,7 +187,13 @@ val transport_fun_RelD = @{thm Fun_Rel_relD}
 
 fun fun_rel_intro_tac fun_RelI ctxt = REPEAT_ALL_NEW (resolve_tac ctxt [fun_RelI])
 fun solve_fun_rel_tac fun_RelD ctxt = force_tac (ctxt addDs [fun_RelD] addsimps [@{thm rel_fun_eq}])
-fun solve_Rel_nat_tac fun_RelD ctxt = solve_fun_rel_tac fun_RelD (ctxt addsimps [Rel_nat_iff_thm])
+fun solve_compiled_Rel_nat_tac fun_RelD ctxt = solve_fun_rel_tac fun_RelD (ctxt addsimps [Rel_nat_iff_thm])
+
+fun add_Rel_nat_transfer_rules ctxt = ctxt
+  |> Context.proof_map (fold (Thm.attribute_declaration Transfer.transfer_add)
+    (@{thms typedef_Rel_nat_transfer} @ get_Rel_nat_related_thms ctxt))
+
+fun Rel_nat_transfer_prover ctxt = Transfer.transfer_prover_tac (add_Rel_nat_transfer_rules ctxt)
 
 fun mk_Rel_fun_from_type mk_rel_fun base T = case T of
     \<^Type>\<open>fun A B\<close> =>

@@ -73,9 +73,8 @@ in
         let
           val stateT = \<^typ>\<open>AExp.state\<close>
           val const_term = HTHNU.read_const lthy const
-          val compiled_const =
-            Term.dest_Const const_term |> fst
-            |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof lthy)
+          val compiled_const = const_term
+            |> Compile_HOL_Nat_To_IMP.get_compiled_const lthy
 
           val (s, lthy) = yield_singleton Variable.variant_fixes "s" lthy |>> (rpair stateT #> Free)
           fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
@@ -108,7 +107,7 @@ in
           val imp_minus_correct_attr = Attrib.internal pos (K update_imp_minus_correct_attr)
           val binding_attrs = binding_attrs
             |>> (fn binding => if Binding.is_empty binding
-              then Transport_Util.add_suffix (HTHNU.term_binding const_term)
+              then Transport_Util.add_suffix (HTHNU.const_binding const_term)
                 imp_minus_correct_binding |> Binding.set_pos pos
               else binding)
             ||> cons imp_minus_correct_attr

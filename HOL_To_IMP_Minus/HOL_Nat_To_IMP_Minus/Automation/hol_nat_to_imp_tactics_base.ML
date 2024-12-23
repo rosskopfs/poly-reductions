@@ -12,20 +12,24 @@ sig
   type HOL_eqs_retrieval = Proof.context -> term -> thm list option
   val get_HOL_eqs : HOL_eqs_retrieval
 
-  val seq_tac : thm -> Proof.context -> int -> tactic
-  val assign_tac : thm -> Proof.context -> int -> tactic
-  val call_tac : thm -> (int -> tactic) -> Proof.context -> thm list -> int -> tactic
-  val if_tac : thm -> Proof.context -> int -> tactic
-  val run_step_tac : ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> 'a ->
-    tactic
-  val run_tac : (int -> tactic) -> int -> tactic
+  val get_HOL_To_IMP_finish_simps : Proof.context -> thm list
 
   val simp_state_update_val_tac : Proof.context -> int -> tactic
 
-  val transfer_focus_prems_tac : Proof.context -> int -> tactic
-  (*reverse transfer; needed when meta variables are on the rhs of the relatedness goal*)
-  val rev_transfer_focus_prems_tac : Proof.context -> int -> int -> tactic
-  val Rel_nat_condition_tac : Proof.context -> int -> int -> tactic
+  (* Rel_nat side condition tactics *)
+  val Rel_nat_step_tac : Proof.context -> int -> tactic
+  val solve_Rel_nat_tac : Proof.context -> int -> tactic
+  val simp_lhs_solve_Rel_nat_tac : Proof.context -> int -> tactic
+
+  val rewrite_ne_zero_if_Rel_nat_tac : Proof.context -> int -> tactic
+
+  val seq_tac : thm -> Proof.context -> int -> tactic
+  val assign_tac : thm -> Proof.context -> int -> tactic
+  val call_tac : thm -> (int -> tactic) -> Proof.context -> thm list -> int -> tactic
+  val if_tac : (Proof.context -> thm list) -> thm -> Proof.context -> int -> tactic
+  val run_step_tac : ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> 'a ->
+    tactic
+  val run_tac : (int -> tactic) -> int -> tactic
 end
 
 structure HOL_Nat_To_IMP_Tactics_Base : HOL_NAT_TO_IMP_TACTICS_BASE =
@@ -34,8 +38,9 @@ struct
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger
   "HOL_Nat_To_IMP_Tactics_Base"
 
-structure TU = Tactic_Util
 structure SUT = State_Update_Tracking
+structure HTIU = HOL_Nat_To_IMP_Util
+structure HTHNU = HOL_To_HOL_Nat_Util
 
 (*find theorems of the form "f x = ...", given f possibly applied to some arguments*)
 type HOL_eqs_retrieval = Proof.context -> term -> thm list option
@@ -59,10 +64,8 @@ fun get_HOL_eqs ctxt t = case HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded ct
   | NONE => find_unconditional_eqs ctxt (t |> head_of |> Logic.varify_global) |> map snd
       |> (fn [] => NONE | xs => SOME xs)
 
-(* tactics for assign, seq, and if that run one step of the program, given the appropriate theorems *)
-
-(*applies a theorem of the form: assumes "?P1 c1" and "?P2 c2" shows "?P (Seq c1 c2)" *)
-fun seq_tac seq_thmI ctxt = resolve_tac ctxt [seq_thmI]
+fun get_HOL_To_IMP_finish_simps ctxt =
+  Named_Theorems.get ctxt @{named_theorems HOL_To_IMP_finish_simps}
 
 fun simp_state_update_val_tac ctxt =
   (*simplify expression*)
@@ -71,6 +74,32 @@ fun simp_state_update_val_tac ctxt =
   THEN' TRY o SUT.subst_all_STATE_interp_retrieve_key_tac ctxt
   (*final simplification with assumptions*)
   THEN' TRY o safe_asm_simp_tac ctxt
+
+fun Rel_nat_step_tac ctxt =
+  assume_tac ctxt
+  ORELSE' Unify_Resolve_Base.unify_resolve_any_tac
+    HOL_To_IMP_Unification.norms_first_higherp_decomp_comb_higher_unify
+    HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify
+    (HOL_To_HOL_Nat_Util.get_Rel_nat_related_thms ctxt @ [@{thm refl}, @{thm rel_fun_appI}])
+    ctxt
+
+fun solve_Rel_nat_tac ctxt =
+  SOLVED' (Rel_nat_step_tac ctxt
+    THEN' (K all_tac APPEND' (fn i => solve_Rel_nat_tac ctxt i)))
+
+fun simp_lhs_solve_Rel_nat_tac ctxt =
+  resolve_tac ctxt [@{thm rewrite_Rel_nat_lhs}]
+  THEN' HTIU.SIMPS_TO_UNIF_refl_tac (simp_state_update_val_tac ctxt) ctxt
+  THEN' solve_Rel_nat_tac ctxt
+
+fun rewrite_ne_zero_if_Rel_nat_tac ctxt =
+  HTIU.subst_first_tac ctxt [@{thm rewrite_ne_zero_if_Rel_nat}]
+  THEN' simp_lhs_solve_Rel_nat_tac ctxt
+
+(* tactics for assign, seq, and if that run one step of the program, given the appropriate theorems *)
+
+(*applies a theorem of the form: assumes "?P1 c1" and "?P2 c2" shows "?P (Seq c1 c2)" *)
+fun seq_tac seq_thmI ctxt = resolve_tac ctxt [seq_thmI]
 
 (*applies a theorem of the following form and solves the premise:
 assumes "s' = (STATE (interp_state st))(k := eval exp s)"
@@ -90,22 +119,21 @@ fun call_tac call_thmI solve_side_conditions_tac ctxt correctness =
 
 (*
 assumes "s vb = v"
-and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b1"
-and "PROP SIMPS_TO_UNIF (\<not>b1) b2"
-and "b1 \<Longrightarrow> ?P c c1 s"
-and "b2 \<Longrightarrow> ?P c c2 s"
+and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b"
+and "b \<Longrightarrow> ?P c c1 s"
+and "\<not>b \<Longrightarrow> ?P c c2 s"
 shows "?P s (If vb c1 c2)"
 *)
-fun if_tac if_thmI ctxt =
+fun if_tac get_finish_simps if_thmI ctxt =
   let
-    fun SIMP_TO_UNIF_condition_tac ctxt = Simps_To_Unif.SIMPS_TO_UNIF_refl_tac
-      (TRY o safe_asm_simp_tac ctxt) ~1 ctxt
-    val finish_contradictory_branch = SOLVED' (safe_asm_full_simp_tac ctxt)
+    val SIMP_TO_UNIF_condition_tac = HTIU.SIMPS_TO_UNIF_refl_tac
+      (rewrite_ne_zero_if_Rel_nat_tac ctxt) ctxt
+    val finish_contradictory_branch =
+      SOLVED' (safe_asm_full_simp_tac (ctxt addsimps get_finish_simps ctxt))
   in
     resolve_tac ctxt [if_thmI]
-    THEN' SUT.STATE_interp_retrieve_key_eq_tac (HOL_Nat_To_IMP_Util.refl_tac ctxt) ctxt
-    THEN' SIMP_TO_UNIF_condition_tac ctxt
-    THEN' SIMP_TO_UNIF_condition_tac ctxt
+    THEN' SUT.STATE_interp_retrieve_key_eq_tac (HTIU.refl_tac ctxt) ctxt
+    THEN' SIMP_TO_UNIF_condition_tac
     (*close possibly contradictory branches*)
     THEN' TRY o (fn i => finish_contradictory_branch i ORELSE finish_contradictory_branch (i + 1))
   end
@@ -117,44 +145,5 @@ fun run_step_tac seq_tac assign_tac call_tac if_tac =
 
 (*usage: run_tac (run_step_tac ...)*)
 val run_tac = TRY oo REPEAT_ALL_NEW
-
-(*Rel_nat side condition tactics*)
-val transfer_focus_prems_tac = Tactic_Util.FOCUS_PREMS' (fn ({prems, context, ...}) =>
-  let val ctxt = context |> Context.Proof
-    |> fold (Thm.attribute_declaration Transfer.transfer_add) prems
-    |> Context.proof_of
-  in Transfer.transfer_prover_tac ctxt end)
-
-(*invariant: schematic variable at vari is applied exactly to all distinct, bound variables in order*)
-fun rev_transfer_focus_prems_tac ctxt vari i = Tactical.PRIMSEQ (fn state =>
-  let (*do not use Tactic_Util.FOCUS_PREMS' directily as it fixes schematic types in the conclusion*)
-    val ({prems, context, concl, params, ...}, _) = Subgoal.focus_prems ctxt i NONE state
-    (* add prems as transfer rules *)
-    val ctxt' = fold (Thm.attribute_declaration Transfer.transfer_add) prems (Context.Proof context)
-      |> Context.proof_of
-    (*get the term we need to find a partner for*)
-    val lhsct = concl |> Thm.dest_arg |> Thm.dest_arg1
-    (*abuse a theorem to get the partner*)
-    val inst_thm = Drule.infer_instantiate' ctxt' [SOME lhsct] @{thm "transfer_inst"}
-    val inst_thm =
-      Thm.apply_attribute (Transfer.transferred_attribute []) inst_thm (Context.Proof ctxt')
-      |> fst |> Assumption.export ctxt' ctxt
-      |> fold_rev (snd #> Thm.forall_intr) params
-      |> Thm.varifyT_global |> Drule.incr_indexes state
-    (*retrieve the partner*)
-    val rhsct = Thm.prop_of inst_thm |> Term_Util.strip_subgoal
-      ||> (fst #> split_last #> snd #> HOL_To_HOL_Nat_Util.dest_eq_equals_prop #> fst)
-      |> Logic.rlist_abs
-      |> Thm.cterm_of ctxt
-    (*plug in in the result*)
-    val inst_tac = Drule.infer_instantiate' ctxt (replicate (vari - 1) NONE @ [SOME rhsct])
-      |> Tactical.PRIMITIVE
-  in (inst_tac THEN transfer_focus_prems_tac ctxt i) state end)
-
-fun Rel_nat_condition_tac ctxt vari =
-  resolve_tac ctxt [@{thm rewrite_Rel_nat_lhs}]
-  THEN' (fn i => fn state => Simps_To_Unif.SIMPS_TO_UNIF_refl_tac (simp_state_update_val_tac ctxt)
-    (Thm.maxidx_of state) ctxt i state)
-  THEN' rev_transfer_focus_prems_tac ctxt vari
 
 end

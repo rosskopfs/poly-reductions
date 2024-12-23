@@ -26,6 +26,7 @@ sig
   val refl_tac : Proof.context -> int -> tactic
   val subst_first_tac : Proof.context -> thm list -> int -> tactic
   val simp_only_tac : Proof.context -> thm list -> int -> tactic
+  val SIMPS_TO_UNIF_refl_tac : (int -> tactic) -> Proof.context -> int -> tactic
 
   (* pretty printing *)
   val pretty_prems : Proof.context -> term list -> Pretty.T
@@ -75,6 +76,8 @@ fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
 
 fun subst_first_tac ctxt = EqSubst.eqsubst_tac ctxt [1]
 fun simp_only_tac ctxt thms = safe_simp_tac (set_simps ctxt thms)
+fun SIMPS_TO_UNIF_refl_tac simp_tac ctxt i state =
+  Simps_To_Unif.SIMPS_TO_UNIF_refl_tac simp_tac (Thm.maxidx_of state + 1) ctxt i state
 
 (* pretty printing *)
 fun pretty_prems ctxt = SpecCheck_Show.list (Syntax.pretty_term ctxt)

@@ -209,49 +209,6 @@ function_compile_nat length_acc_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
-begin
-
-lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[simplified case_list_nat_def]
-unconditional_nat length_acc_nat_eq
-declare length_acc_nat_unconditional.simps[simp del]
-compile_nat length_acc_nat_unconditional.simps
-HOL_To_IMP_Minus_correct length_acc_nat_unconditional by (cook mode = tailcall)
-
-lemma related_length_acc_nat_unconditional [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) length_acc_nat_unconditional HTHN.length_acc"
-  sorry
-
-end
-
-context HOL_To_HOL_Nat
-begin
-
-(*introduce a definition because List.length is just an abbreviation*)
-definition length where "length xs \<equiv> length_acc xs 0"
-
-lemma length_eq_length [simp]: "length = List.length"
-  unfolding length_def by simp
-
-declare HNTIM.related_length_acc_nat_unconditional[transfer_rule]
-function_compile_nat length_def
-
-end
-
-context HOL_Nat_To_IMP_Minus
-begin
-
-unconditional_nat HTHN.length_nat_eq_unfolded
-declare length_nat_unconditional.simps[simp del]
-compile_nat length_nat_unconditional.simps
-HOL_To_IMP_Minus_correct length_nat_unconditional by cook
-
-lemma related_length_nat_unconditional [transfer_rule]:
-  "(Rel_nat ===> Rel_nat) length_nat_unconditional length"
-  sorry
-
-end
-
 context HOL_To_HOL_Nat
 begin
 

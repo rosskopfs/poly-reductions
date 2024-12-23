@@ -16,20 +16,20 @@ begin
   instance by standard (simp add: natify_nat_def denatify_nat_def)
 end
 
-lemma Rel_nat_nat_self [transfer_rule]: "Rel_nat n n"
+lemma Rel_nat_nat_self [Rel_nat_related]: "Rel_nat n n"
   unfolding Rel_nat_iff_eq_natify natify_nat_def by simp
 
 lemma Rel_nat_nat_eq_eq: "Rel_nat = ((=) :: nat \<Rightarrow> nat \<Rightarrow> bool)"
   by (intro ext) (auto iff: Rel_nat_iff_eq_natify simp: natify_nat_def)
 
-lemma Rel_nat_zero_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat (0 :: nat) (0 :: nat)"
-  unfolding Rel_nat_iff_eq_natify natify_nat_def by (auto simp: natify_nat_def)
+lemma Rel_nat_zero_nat [Rel_nat_related, Rel_nat_compile_nat]: "Rel_nat (0 :: nat) (0 :: nat)"
+  by (fact Rel_nat_nat_self)
 
-lemma Rel_nat_suc_nat [transfer_rule, Rel_nat_compile_nat]: "(Rel_nat ===> Rel_nat) Suc Suc"
+lemma Rel_nat_suc_nat [Rel_nat_related, Rel_nat_compile_nat]: "(Rel_nat ===> Rel_nat) Suc Suc"
   unfolding Rel_nat_iff_eq_natify natify_nat_def
   by (auto simp: natify_nat_def)
 
-lemma Rel_nat_case_nat [transfer_rule, Rel_nat_compile_nat]:
+lemma Rel_nat_case_nat [Rel_nat_related, Rel_nat_compile_nat]:
   "(R ===> (Rel_nat ===> R) ===> Rel_nat ===> R) case_nat case_nat"
   by (fact case_nat_transfer[folded Rel_nat_nat_eq_eq])
 
@@ -42,14 +42,17 @@ encoding of booleans as natural numbers.\<close>
 definition "True_nat \<equiv> 1 :: nat"
 definition "False_nat \<equiv> 0 :: nat"
 
-lemma True_nat_neq_zero [iff]: "True_nat \<noteq> 0"
+lemma True_nat_neq_zero: "True_nat \<noteq> 0"
   unfolding True_nat_def by simp
 
-lemma zero_lt_True_nat [iff]: "0 < True_nat"
+lemma zero_lt_True_nat: "0 < True_nat"
   unfolding True_nat_def by simp
 
-lemma False_nat_eq_zero [simp]: "False_nat = 0"
+lemma False_nat_eq_zero: "False_nat = 0"
   unfolding False_nat_def by simp
+
+lemma True_nat_ne_False_nat: "True_nat \<noteq> False_nat"
+  using True_nat_neq_zero False_nat_eq_zero by simp
 
 definition "case_bool_nat \<equiv> \<lambda>x y n. if n = False_nat then y else x"
 
@@ -61,30 +64,31 @@ begin
     (simp add: natify_bool_def denatify_bool_def True_nat_def False_nat_def case_bool_nat_def)
 end
 
-lemma natify_True_eq [simp]: "natify True = True_nat"
+lemma natify_True_eq: "natify True = True_nat"
   unfolding natify_bool_def by simp
 
-lemma natify_False_eq [simp]: "natify False = False_nat"
+lemma natify_False_eq: "natify False = False_nat"
   unfolding natify_bool_def by simp
 
-lemma natify_eq_zero_iff_not [iff]: "natify b = 0 \<longleftrightarrow> \<not>b"
-  unfolding natify_bool_def by (cases b) auto
+lemma natify_eq_zero_iff_not: "natify b = 0 \<longleftrightarrow> \<not>b"
+  unfolding natify_bool_def using True_nat_neq_zero False_nat_eq_zero by (cases b) auto
 
-lemma natify_neq_zero_iff [iff]: "natify b \<noteq> 0 \<longleftrightarrow> b"
-  unfolding natify_bool_def by (cases b) auto
+lemma natify_neq_zero_iff: "natify b \<noteq> 0 \<longleftrightarrow> b"
+  unfolding natify_bool_def using True_nat_neq_zero False_nat_eq_zero by (cases b) auto
 
 lemma Rel_nat_bool_iff: "Rel_nat n b \<longleftrightarrow> (b \<longrightarrow> n = True_nat) \<and> (\<not>b \<longrightarrow> n = False_nat)"
   by (cases b) (auto simp: Rel_nat_iff_eq_natify natify_bool_def)
 
-lemma Rel_nat_True_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat True_nat True"
+lemma Rel_nat_True_nat [Rel_nat_related, Rel_nat_compile_nat]: "Rel_nat True_nat True"
   using Rel_nat_bool_iff by simp
 
-lemma Rel_nat_False_nat [transfer_rule, Rel_nat_compile_nat]: "Rel_nat False_nat False"
+lemma Rel_nat_False_nat [Rel_nat_related, Rel_nat_compile_nat]: "Rel_nat False_nat False"
   using Rel_nat_bool_iff by simp
 
-lemma Rel_nat_case_bool_nat [transfer_rule, Rel_nat_compile_nat]:
+lemma Rel_nat_case_bool_nat [Rel_nat_related, Rel_nat_compile_nat]:
   "(R ===> R ===> Rel_nat ===> R) case_bool_nat case_bool"
-  by (intro rel_funI) (auto simp: Rel_nat_bool_iff case_bool_nat_def)
+  by (intro rel_funI)
+  (auto simp: Rel_nat_bool_iff case_bool_nat_def True_nat_neq_zero False_nat_eq_zero)
 
 lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 

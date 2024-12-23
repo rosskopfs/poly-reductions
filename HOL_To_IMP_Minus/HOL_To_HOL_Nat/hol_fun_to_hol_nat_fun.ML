@@ -22,16 +22,16 @@ open HOL_To_HOL_Nat_Util
 val mk_natT = map_fun_types (K natT)
 
 val related_self_binding = @{binding related_self}
-fun mk_related_self_binding t = TrpUtil.add_suffix (term_binding t) related_self_binding
+fun mk_related_self_binding f = TrpUtil.add_suffix (const_binding f) related_self_binding
 
 val related_transfer_binding = @{binding related_transfer}
-fun mk_related_transfer_binding t = TrpUtil.add_suffix (term_binding t) related_transfer_binding
+fun mk_related_transfer_binding f = TrpUtil.add_suffix (const_binding f) related_transfer_binding
 
-fun mk_fun_nat_binding t = type_suffix_binding (term_binding t) natT
+fun mk_fun_nat_binding f = type_suffix_binding (const_binding f) natT
 
 val unfolded_binding = @{binding unfolded}
-fun mk_related_unfolded_binding t =
-  TrpUtil.add_suffix (TrpUtil.add_suffix Rel_nat_binding (mk_fun_nat_binding t)) unfolded_binding
+fun mk_related_unfolded_binding f =
+  TrpUtil.add_suffix (TrpUtil.add_suffix Rel_nat_binding (mk_fun_nat_binding f)) unfolded_binding
 
 val eq_binding = @{binding eq}
 fun mk_eq_unfolded_binding t =
@@ -68,10 +68,10 @@ fun register_transport_term f lthy =
   in wrapper_trp_api binding ct yT lthy end
 
 (*TODO: not super stable; needs better transport API*)
-fun get_transport_related_thm t lthy =
-  let val t_binding = mk_fun_nat_binding t
+fun get_transport_related_thm f lthy =
+  let val f_binding = mk_fun_nat_binding f
   in
-    TrpUtil.add_suffix t_binding Trp.binding_related_rewritten
+    TrpUtil.add_suffix f_binding Trp.binding_related_rewritten
     |> Binding.name_of
     |> Proof_Context.get_thm lthy
   end
@@ -83,7 +83,7 @@ fun register_related_transfer_thm f lthy =
       |> Local_Defs.fold lthy
         @{thms rel_inv_Fun_Rel_rel_eq rel_inv_iff_rel[symmetric]  rel_fun_eq_Fun_Rel_rel}
   in
-    register_attrs_transfer_thms @{attributes [Rel_nat_compile_nat]} binding [related_thm] lthy
+    register_attrs_Rel_nat_related_thms @{attributes [Rel_nat_compile_nat]} binding [related_thm] lthy
     |>> apsnd the_single
   end
 
@@ -108,11 +108,11 @@ fun register_related_unfolded_thm f f_eq lthy =
     val (concl :: assms, lthy) = Syntax.check_terms lthy (concl :: assms)
       |> (fn ts => Variable.importT_terms ts lthy)
     val thm = Goal.prove lthy [] assms concl (fn {prems = prems, context = ctxt,...} =>
-      let val ctxt = fold (Thm.attribute_declaration Transfer.transfer_add) prems (Context.Proof ctxt)
-        |> Context.proof_of
+      let val ctxt = ctxt
+        |> Context.proof_map (fold (Thm.attribute_declaration Transfer.transfer_add) prems)
       in
         (EqSubst.eqsubst_tac ctxt [1] [f_eq]
-        THEN' Transfer.transfer_prover_tac ctxt)
+        THEN' Rel_nat_transfer_prover ctxt)
         |> HEADGOAL
       end)
     val binding = mk_related_unfolded_binding f
@@ -128,8 +128,8 @@ structure Compiled_Eq_Unfolded = Generic_Data(
   val merge = Net.merge Thm.eq_thm
 )
 
-fun get_compiled_eq_unfolded ctxt term =
-  case Net.match_term (Compiled_Eq_Unfolded.get (Context.Proof ctxt)) term of
+fun get_compiled_eq_unfolded ctxt t =
+  case Net.match_term (Compiled_Eq_Unfolded.get (Context.Proof ctxt)) t of
     [] => NONE
   | [thm] => SOME thm
   | thms => let val msg = "Found more than one compiled eq_unfolded thm"
@@ -186,7 +186,7 @@ val _ =
   Outer_Syntax.local_theory \<^command_keyword>\<open>function_compile_nat\<close>
     "Compile HOL equation to HOL equation on natural numbers"
     (Parse.thm >> (fn (thm_ref, _) => fn lthy =>
-      let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
+      let val thm = Proof_Context.get_fact_single lthy thm_ref
       in function_compile_nat_cmd thm lthy end))
 
 val unconditional_nat_binding = @{binding "unconditional"}
@@ -224,7 +224,7 @@ fun unconditional_nat_command f_eq basename lthy =
 
     val base_binding = case basename of
         SOME (name, _) => Binding.name name
-      | NONE => term_binding f
+      | NONE => const_binding f
     val f'_binding = mk_unconditional_nat_binding base_binding
     val f' = Free (Binding.name_of f'_binding, fastype_of f)
     val f_to_f' = Term.map_aterms (fn t => if t = f then f' else t)
@@ -238,7 +238,7 @@ in
     \<^command_keyword>\<open>unconditional_nat\<close>
     "create function without Rel_nat/rel_fun assumptions and TYPE(_) args"
     (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
-      let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
+      let val thm = Proof_Context.get_fact_single lthy thm_ref
       in unconditional_nat_command thm namepos_opt lthy end))
 end
 

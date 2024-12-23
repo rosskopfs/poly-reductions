@@ -1,4 +1,4 @@
-theory Playground
+theory HOL_To_IMP_Minus_Conditional_Datatypes
   imports
     HOL_To_IMP_Minus_Arithmetics
 begin
@@ -16,6 +16,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
+thm Pair_nat_def
 compile_nat Pair_nat_def
 HOL_To_IMP_Minus_correct Pair_nat by cook
 
