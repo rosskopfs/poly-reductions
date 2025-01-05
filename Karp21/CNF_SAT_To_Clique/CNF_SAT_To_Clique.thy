@@ -1,7 +1,7 @@
 section\<open>CNF Sat to Clique\<close>
 
 theory CNF_SAT_To_Clique
-  imports Main "../Three_Sat_To_Set_Cover"
+  imports Main "../THREE_SAT_To_SC/Three_Sat_To_Set_Cover"
 begin
 
 subsection \<open>Preliminaries\<close>

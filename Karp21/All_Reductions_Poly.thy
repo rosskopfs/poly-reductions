@@ -12,7 +12,6 @@ theory All_Reductions_Poly
     "XC_To_EHS/XC_To_EHS_poly"
     "XC_To_SS/XC_To_SS_poly"
     "SS_To_JS/SS_List_To_Job_Seq_Poly"
-    "weight_problems/weighted_problems_poly"
     "XC_To_SS/SS_To_SS_List_poly"
 begin
 

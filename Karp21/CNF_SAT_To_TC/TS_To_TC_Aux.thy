@@ -1,5 +1,5 @@
 theory TS_To_TC_Aux
-  imports Main "../Three_Sat_To_Set_Cover" 
+  imports Main "../THREE_SAT_To_SC/Three_Sat_To_Set_Cover" 
 begin
 
 

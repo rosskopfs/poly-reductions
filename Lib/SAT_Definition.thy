@@ -26,7 +26,6 @@ definition SAT where
   "SAT = {F. sat F \<and> (\<forall>cls \<in> set F. finite cls)}"
 
 
-
 (* this is three cnf sat *)
 definition
   "three_cnf_sat \<equiv> {F. sat F \<and> (\<forall>cls \<in> set F. card cls = 3)}"

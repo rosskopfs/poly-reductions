@@ -1,7 +1,83 @@
-theory weighted_problems
-  imports weighted_problems_aux
-
+theory SS_To_PART
+  imports "../XC_To_SS/XC_To_SS_aux"  "../Reductions"
 begin
+
+subsection "number_partition"
+
+definition "part \<equiv> {as::nat list. \<exists>xs. (\<forall>i < length xs. xs!i \<in> {0, 1}) \<and> length as = length xs 
+  \<and> 2 * (\<Sum>i < length as. as ! i * xs ! i) =( \<Sum>i < length as. as ! i)}"
+
+definition "part_alter \<equiv> {as::nat list. \<exists>xs. (\<forall>i < length xs. xs!i \<in> {0, 1}) \<and> length as = length xs 
+  \<and> (\<Sum>i < length as. as ! i * xs ! i) =(\<Sum>i < length as. as ! i * (1 - xs ! i))}"
+
+definition ss_list_to_part :: "nat list * nat \<Rightarrow> nat list" where
+"ss_list_to_part \<equiv> \<lambda>(as, s). (if s \<le> (\<Sum> i < length as. as ! i) then ((\<Sum>i < length as. as ! i) + 1 - s) # (s + 1) # as else [1])"
+
+definition "size_part \<equiv> length"
+
+subsection "the two definitions of number partition are equivalent"
+
+lemma sum_binary_part: 
+assumes  "(\<forall>i < length xs. xs!i = (0::nat) \<or> xs!i = 1)" "length as = length xs" 
+shows  "(\<Sum>i < length as. as ! i * xs ! i) + (\<Sum>i < length as. as ! i * (1 - xs ! i)) = (\<Sum>i < length as. as ! i)"
+proof -
+  have "(\<Sum>i < length as. as ! i * xs ! i) + (\<Sum>i < length as. as ! i * (1 - xs ! i)) 
+    = (\<Sum>i < length as. as ! i * xs ! i + as ! i * (1 - xs ! i))"
+    by (simp add: sum.distrib)
+  also have "... = (\<Sum>i < length as. as ! i * (xs ! i + 1 - xs ! i))"
+    proof -
+      from assms have "\<forall>i < length as. as ! i * xs ! i + as ! i * (1 - xs ! i) 
+          = as ! i * (xs ! i + 1 - xs ! i)"
+        by fastforce
+      then show ?thesis 
+        by auto
+    qed 
+  finally show ?thesis
+    by auto
+qed 
+
+lemma part_subseteq_part_alter:
+"as \<in> part \<Longrightarrow> as \<in> part_alter"
+proof -
+  assume "as \<in> part"
+  then obtain xs where xs_def: "(\<forall>i < length xs. xs!i \<in> {0, 1})" "length as = length xs "
+    "2 * (\<Sum>i < length as. as ! i * xs ! i) = (\<Sum>i < length as. as ! i)"
+    unfolding part_def 
+    by blast 
+  then have "(\<Sum>i < length as. as ! i * xs ! i) + (\<Sum>i < length as. as ! i * (1 - xs ! i))
+   = (\<Sum>i < length as. as ! i)"
+   using sum_binary_part 
+   by blast 
+  with xs_def show "as \<in> part_alter"
+    unfolding part_alter_def
+    by auto
+qed
+
+lemma part_alter_subseteq_part:
+"as \<in> part_alter \<Longrightarrow> as \<in> part"
+proof -
+  assume "as \<in> part_alter"
+  then obtain xs where xs_def: "(\<forall>i < length xs. xs!i \<in> {0, 1})" "length as = length xs "
+    "(\<Sum>i<length as. as ! i * xs ! i) = (\<Sum>i<length as. as ! i * (1 - xs ! i))"
+    unfolding part_alter_def
+    by blast 
+  moreover then have "(\<Sum>i<length as. as ! i * xs ! i) + (\<Sum>i<length as. as ! i * (1 - xs ! i)) 
+    = (\<Sum>i < length as. as ! i)"
+    using sum_binary_part
+    by blast 
+  ultimately have "2 * (\<Sum>i < length as. as ! i * xs ! i) = (\<Sum>i < length as. as ! i)"
+    by linarith
+  with xs_def show "as \<in> part"
+    unfolding part_def 
+    by blast 
+qed
+
+theorem part_eq_part_alter:
+"part = part_alter"
+using part_alter_subseteq_part part_subseteq_part_alter 
+  by blast
+
+
 
 subsection "the reduction from subset sum to number partition is correct"
 
@@ -291,41 +367,5 @@ theorem is_reduction_ss_list_to_part:
   unfolding is_reduction_def 
   using ss_list_to_part_sound ss_list_to_part_complete
   by fast
-
-subsection "the reduction from subset sum to knapsack is correct"
-
-lemma ss_to_ks_sound:
-"(S, w, B) \<in> subset_sum \<Longrightarrow> (S, w, w, B, B) \<in> knapsack"
-  unfolding subset_sum_def is_subset_sum_def knapsack_def 
-  by blast
-
-lemma ss_to_ks_complete:
-"(S, w, w, B, B) \<in> knapsack \<Longrightarrow> (S, w, B) \<in> subset_sum"
-  unfolding subset_sum_def is_subset_sum_def knapsack_def 
-  by auto 
-
-theorem is_reduction_ss_to_ks:
-"is_reduction ss_to_ks subset_sum knapsack"
-  unfolding is_reduction_def ss_to_ks_def
-  using ss_to_ks_sound ss_to_ks_complete 
-  by fast
-
-subsection "the reduction from subset sum int list to zero one integer programming is correct"
-
-lemma ss_int_list_to_zero_one_int_prog_sound:
-"(as, s) \<in> subset_sum_int_list \<Longrightarrow> ({(as, s)}, as, s) \<in> zero_one_int_prog"
-unfolding subset_sum_int_list_def zero_one_int_prog_def 
-by blast 
-
-lemma ss_int_list_to_zero_one_int_prog_complete:
-"({(as, s)}, as, s) \<in> zero_one_int_prog \<Longrightarrow> (as, s) \<in> subset_sum_int_list"
-unfolding subset_sum_int_list_def zero_one_int_prog_def 
-by auto
-
-theorem is_reduction_ss_int_list_to_zero_one_int_prog:
-"is_reduction ss_int_list_to_zero_one_int_prog subset_sum_int_list zero_one_int_prog"
-unfolding is_reduction_def ss_int_list_to_zero_one_int_prog_def 
-using ss_int_list_to_zero_one_int_prog_sound ss_int_list_to_zero_one_int_prog_complete 
-by auto
 
 end

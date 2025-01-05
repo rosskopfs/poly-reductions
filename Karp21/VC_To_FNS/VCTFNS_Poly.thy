@@ -1,5 +1,5 @@
 theory VCTFNS_Poly
-  imports "../TSTSC_Poly" VC_To_FNS
+  imports "../THREE_SAT_To_SC/TSTSC_Poly" VC_To_FNS
 begin
 
 subsection\<open>The reduction from VC to FNS is polynomial\<close>
@@ -7,8 +7,8 @@ subsection\<open>The reduction from VC to FNS is polynomial\<close>
 definition "size_fns = (\<lambda>(G,k). card (verts G)+ card (arcs G))"
 definition "vc_to_fns_space n  = 2*n+2*n"
 
-definition "mop_get_verts_fns E =SPECT [ {v. v \<in> \<Union> E} \<mapsto> 2*(card E)]"
-definition "mop_get_arcs_fns E =SPECT [{(u, v)| u v. {u, v} \<in> E} \<mapsto> (2*(card E))]"
+definition "mop_get_verts_fns E = SPECT [ {v. v \<in> \<Union> E} \<mapsto> 2*(card E)]"
+definition "mop_get_arcs_fns E = SPECT [{(u, v)| u v. {u, v} \<in> E} \<mapsto> (2*(card E))]"
 
 definition "vc_to_fns_alg = (\<lambda>(E,k).
   do {

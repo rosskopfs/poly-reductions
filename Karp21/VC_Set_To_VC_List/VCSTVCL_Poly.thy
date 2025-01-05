@@ -1,5 +1,5 @@
 theory VCSTVCL_Poly
-  imports "../TSTSC_Poly" VC_Set_To_VC_List
+  imports "../THREE_SAT_To_SC/TSTSC_Poly" VC_Set_To_VC_List
 begin
 
 subsection\<open>The reduction from \<open>VC_Set\<close> to \<open>VC_List\<close> is polynomial\<close>

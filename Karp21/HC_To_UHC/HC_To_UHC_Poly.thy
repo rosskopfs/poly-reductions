@@ -1,5 +1,5 @@
 theory HC_To_UHC_Poly
-  imports "../TSTSC_Poly" HC_To_UHC
+  imports "../THREE_SAT_To_SC/TSTSC_Poly" HC_To_UHC
 begin
 
 subsection\<open>The reduction from \<open>HC\<close> to \<open>UHC\<close> is polynomial\<close>

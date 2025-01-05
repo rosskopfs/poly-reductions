@@ -1,11 +1,13 @@
 theory PART_To_MAXCUT
-  imports Undirected_Graph_Theory.Undirected_Graphs_Root
+  imports Undirected_Graph_Theory.Undirected_Graphs_Root  "HOL.Quotient"
 begin
 
 definition max_cut  where
   "max_cut \<equiv> {((V,E), w, W).
                        fin_sgraph V E \<and>
                        (\<exists>S. S \<subseteq> V  \<and> sum w {{u, v}|u v. u \<in> S \<and> v \<in> (V - S)} \<ge> W)}" 
+find_consts name:comm_semiring 
+
 
 lemma max_cut_cert:
   assumes "S \<subseteq> V"
@@ -56,13 +58,27 @@ proof -
 qed
 
 
-lemma square_diff_square_factored_nat:
-  "(x::nat)*x - y*y = (x+y)*(x-y)"
-  using mult_le_mono
-  by (cases "x \<ge> y") 
-     (force simp add: distrib_left mult.commute right_diff_distrib')+
 
 
+lemma square_diff_square_factored':
+  "(x::'a::comm_semiring_1_cancel)*x - y*y = (x+y)*(x-y)"
+proof -
+  have "(x+y)*(x-y) = (x+y)*x - (x+y)*y"
+    by (simp add: right_diff_distrib')
+  also have "... = (x*x + x*y) - (x*y + y*y)"
+    by (simp add: distrib_left mult.commute)
+  also have "... = x*x - y*y"
+    by (metis add_diff_cancel_right' diff_diff_eq)
+  finally show ?thesis 
+    by argo
+qed
+
+
+
+lemma  power2_sum: "((x::('a::comm_semiring_1_cancel)) - y)\<^sup>2 = x\<^sup>2 + y\<^sup>2 - 2 * x * y"
+proof -
+  have  "(x - y)\<^sup>2  =  x(x-y) -y*(x-y)"
+ 
 lemma sq_sum_ge_4xy1_if_ge:
   assumes "(x::nat) > y"
   shows "(x + y)^2 \<ge> 4*x*y + 1"
@@ -70,7 +86,7 @@ proof -
   have "4*x*y + 1 \<le> 4*x*y + (x-y)*(x-y)"
     using assms by auto
   also have *: "\<dots>  = (x+y)*(x+y) - (x-y)*(x-y) + (x-y)*(x-y)"
-    by (auto simp add: square_diff_square_factored_nat[of "x+y" "x-y"] 
+    by (auto simp add: square_diff_square_factored'[of "x+y" "x-y"] 
         ,simp add: assms distrib_left less_or_eq_imp_le mult.commute)
   also have "...  = (x+y)*(x+y)"
     by (metis diff_le_self le_add_diff_inverse2 mult_le_mono trans_le_add1)
@@ -220,7 +236,13 @@ proof -
     by blast
 qed
 
+section "Conclusion"
 
+theorem is_reduction_part_to_maxcut:
+  "is_reduction part_to_max_cut part_alter max_cut"
+  unfolding is_reduction_def 
+  using  part_to_max_cut_sound  part_to_max_cut_complete
+  by auto
 
 
 end 
