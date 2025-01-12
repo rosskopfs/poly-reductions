@@ -2,7 +2,7 @@
 
 section "IMP-- to SAS++ Reduction"
 
-theory IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction 
+theory IMP_Minus_Minus_To_SAS_Plus_Plus_Reduction                             
   imports IMP_Minus_Minus_To_SAS_Plus_Plus_State_Translations IMP_Minus_Minus_Subprograms
 begin
 
