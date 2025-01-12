@@ -13,10 +13,10 @@ sig
   val delete_compiled_const_def_attr : attribute
 
   type compiled_const = {arg_regs: string list, compiled: term, ret_reg: string}
-  val get_compiled_const : Context.generic -> string -> compiled_const
+  val get_compiled_const : Proof.context -> term -> compiled_const
 
   val compiled_const_suffix_cfg : string Config.T
-  val declare_compiled_const : bstring -> compiled_const -> local_theory -> local_theory
+  val declare_compiled_const : term -> compiled_const -> local_theory -> local_theory
 
   val register_sep_cfg : string Config.T
 end
@@ -24,29 +24,41 @@ end
 structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
 struct
 
+structure HTHNU = HOL_To_HOL_Nat_Util
+
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
 fun foldr_index f z = map_index I #> List.foldr (uncurry f) z
 
 structure Compiled_Const_Defs = Generic_Data(
-  type T = thm Termtab.table;
-  val empty = Termtab.empty
-  val merge = Termtab.join (K fst)
+  type T = thm Net.net;
+  val empty = Net.empty
+  val merge = Net.merge Thm.eq_thm
 )
 
-val get_compiled_const_def = Termtab.lookup o Compiled_Const_Defs.get o Context.Proof
+fun get_compiled_const_def ctxt t =
+  case Net.match_term (Compiled_Const_Defs.get (Context.Proof ctxt)) t of
+    [] => NONE
+  | [thm] => SOME thm
+  | thms => let val msg = "Found more than one compiled constant"
+      in
+        (Pretty.str msg
+          :: map (Thm.pretty_thm ctxt) thms |> Pretty.block |> Pretty.writeln;
+        error msg)
+      end
 
 val compiled_const_from_def = Thm.lhs_of #> Thm.term_of #> Term.head_of
 
-fun update_compiled_const_def thm = compiled_const_from_def thm
-  |> rpair thm
-  |> Termtab.update_new
-  |> Compiled_Const_Defs.map
+fun update_compiled_const_def thm =
+  let val key = compiled_const_from_def thm
+  in Compiled_Const_Defs.map (Net.insert_term (K true) (key, thm)) end
+
 val update_compiled_const_def_attr = Thm.declaration_attribute update_compiled_const_def
 
-fun delete_compiled_const_def thm = compiled_const_from_def thm
-  |> Termtab.delete
-  |> Compiled_Const_Defs.map
+fun delete_compiled_const_def thm =
+  let val key = compiled_const_from_def thm
+  in Compiled_Const_Defs.map (Net.delete_term (K true) (key, thm)) end
+
 val delete_compiled_const_def_attr = Thm.declaration_attribute delete_compiled_const_def
 
 val compiled_const_def_binding = \<^binding>\<open>compiled_IMP_Minus_const_def\<close>
@@ -63,30 +75,75 @@ type compiled_const = { ret_reg : string, arg_regs : string list, compiled : ter
 fun map_compiled f (c : compiled_const) =
   { ret_reg = #ret_reg c, arg_regs = #arg_regs c, compiled = f (#compiled c) }
 
+val pretty_reg = Pretty.quote o Pretty.str
+
+fun pretty_ret_reg ret_reg = Pretty.block
+  [ Pretty.keyword2 "return_register", Pretty.brk 1
+  , pretty_reg ret_reg
+  ]
+
+fun pretty_arg_regs arg_regs =
+  [Pretty.keyword2 "argument_registers"] @
+  map pretty_reg arg_regs
+  |> Pretty.breaks
+  |> Pretty.block
+
+fun pretty_compiled verbose ctxt compiled =
+  let
+    fun unfold1_term thms =
+      Thm.cterm_of ctxt
+      #> Thm.reflexive
+      #> Conv.fconv_rule (Conv.try_conv (Conv.arg_conv (Conv.rewrs_conv thms)))
+      #> Thm.cprop_of #> Thm.dest_equals #> snd #> Thm.term_of
+    val compiled = (verbose ? (Compiled_Const_Defs.get (Context.Proof ctxt)
+      |> Net.content |> unfold1_term))
+      compiled
+  in
+    Pretty.block
+      [ Pretty.keyword2 "compiled", Pretty.brk 1
+      , Pretty.cartouche (Syntax.pretty_term ctxt compiled)
+      ]
+  end
+
+fun pretty_compiled_const verbose ctxt {ret_reg, arg_regs, compiled} =
+  Pretty.breaks
+    [ pretty_ret_reg ret_reg
+    , pretty_arg_regs arg_regs
+    , pretty_compiled verbose ctxt compiled
+    ]
+
+fun pretty_compiled_const' verbose ctxt (const , compiled_const) =
+  Syntax.pretty_term ctxt const ::
+  Pretty.fbrk ::
+  pretty_compiled_const verbose ctxt compiled_const
+  |> Pretty.item
+
 structure Compiled_Consts = Generic_Data
 (
-  type T = compiled_const Symtab.table;
-  val empty = Symtab.empty
-  val merge = Symtab.join (K fst)
+  type T = compiled_const Net.net;
+  val empty = Net.empty
+  val merge = Net.merge (op =)
 );
 
-fun declare_compiled_const name compiled_const =
+fun declare_compiled_const const compiled_const =
   Local_Theory.declaration {syntax = false, pervasive = false, pos = Position.thread_data ()}
     (fn phi =>
       let
-        val name' =
-          name
-          |> Binding.name
-          |> Morphism.binding phi
-          |> Binding.name_of
+        val const' = Morphism.term phi const
         val compiled_const' = map_compiled (Morphism.term phi) compiled_const
-      in Compiled_Consts.map (Symtab.update_new (name', compiled_const')) end)
+      in Compiled_Consts.map (Net.insert_term (K true) (const', compiled_const')) end)
 
-fun get_compiled_const context f_name =
-  Compiled_Consts.get context
-  |> (fn tab => Symtab.lookup tab f_name)
-  |> the
-  handle Option.Option => error ("Unknown compiled constant: " ^ quote f_name)
+fun get_compiled_const ctxt f =
+  case Net.match_term (Compiled_Consts.get (Context.Proof ctxt)) f of
+    [] => error ("Unknown compiled constant: " ^ quote (@{make_string} f))
+  | [compiled_const] => compiled_const
+  | compiled_consts => let val msg = "Found more than one compiled constant"
+      in
+        (Pretty.str msg
+          :: map (pair f #> pretty_compiled_const' false ctxt) compiled_consts
+        |> Pretty.block |> Pretty.writeln;
+        error msg)
+      end
 
 (* We index Ifs, Lets, Calls with unique numbers such that we can easily
    invent new register names without passing a context around *)
@@ -105,7 +162,7 @@ fun has_call to (Call (_, ((f, _), es))) = (f = to) orelse exists (has_call to) 
   | has_call to (TailCall es) = exists (has_call to) es
   | has_call _ _ = false
 
-fun tc_ast_of_term (f_name, f_typ) f_args t =
+fun tc_ast_of_term head f_args t =
   let
     fun fold_step a (index, args_ast) =
         let val (index', a_ast) = index_tc_ast index a
@@ -145,8 +202,8 @@ fun tc_ast_of_term (f_name, f_typ) f_args t =
             if is_comb t then
               raise TERM ("Call to function given as argument is not allowed, got:", [t])
             else Arg (Library.find_index (fn v' => (n, typ) = v') f_args)
-        | Const (g_name, g_typ) =>
-          if (g_name, g_typ) = (f_name, f_typ)
+        | g as Const (g_name, g_typ) =>
+          if g = head
             then TailCall (map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
@@ -208,9 +265,11 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
         in
           mk_Seq (es_IMP @ [\<^Const>\<open>tTAIL\<close>])
         end
-      | go _ bounds cont (Call (idx, ((g_name, _), es))) =
+      | go _ bounds cont (Call (idx, ((g_name, g_type), es))) =
         let
-          val g_compiled = lookup_fn g_name
+          val g_compiled = lookup_fn (Const (g_name, g_type))
+          (* remove all type itself arguments *)
+          val es = es |> filter_out (fn Call (_, ((_, T), _)) => HTHNU.is_itself T | _ => false)
           val _ = List.length (#arg_regs g_compiled) = List.length es
             orelse raise PARTIAL ("Call must occur fully applied", g_name)
           val g_ret = #ret_reg g_compiled
@@ -283,11 +342,17 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val pos = Position.thread_data ()
 
     val f_def = reflect_eq f_def
-    val (args, def_body) =
-      Local_Defs.abs_def_rule lthy f_def
-      |> Thm.rhs_of |> Thm.term_of |> Term.strip_abs
 
-    val (f_name, f_typ) = f_def |> Thm.lhs_of |> Thm.term_of |> Term.head_of |> Term.dest_Const
+    val (lhs, rhs) = f_def |> Thm.prop_of
+      |> (fn t => yield_singleton (Variable.import_terms true) t lthy) |> fst
+      |> HOL_Fun_To_HOL_Nat_Fun.mk_unconditional_eq
+
+    val f_head = lhs |> head_of
+    val f_name = f_head |> dest_Const_name
+
+    val (args, def_body) =
+      lhs |> strip_comb |> snd |> map Term.dest_Free
+      |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
@@ -299,33 +364,34 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_args_vars = map (Var o @{apply 2 (1)} (fn n => (n, 0))) f_args
 
     val simp_thy = empty_simpset lthy |> Proof_Context.theory_of
-    val simp_thms = map reflect_eq @{thms assoc_right_tSeq.simps tseq.simps rm_tSKIP.simps}
+    val simp_thms = map reflect_eq
+      @{thms assoc_right_tSeq.simps rm_tSkip_tseq.simps rm_tSKIP.simps pull_tIf_assoc_right.simps}
     val rewrite = Raw_Simplifier.rewrite_term simp_thy simp_thms []
     val f_IMP =
       def_body
       |> curry Term.subst_bounds (rev f_args_vars)
-      |> tc_ast_of_term (f_name, f_typ) f_args
+      |> tc_ast_of_term f_head f_args
       |> IMP_Minus_of_tc_ast
           (f_ret_name, map fst f_args)
-          (get_compiled_const (Context.Proof lthy))
+          (get_compiled_const lthy)
           register_sep
-      |> (fn t => rewrite \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>)
+      |> (fn t => \<^Const>\<open>pull_tIf_assoc_right for
+        \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>\<close>)
+      |> rewrite
 
-    val f_IMP_binding =
-      f_IMP_namepos
-      |>> suffix ("_" ^ Config.get lthy compiled_const_suffix_cfg)
-      |> Binding.make
+    val f_IMP_binding = Config.get lthy compiled_const_suffix_cfg
+      |> Binding.name
+      |> Transport_Util.add_suffix (f_IMP_namepos |> fst |> Binding.name)
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
-    val f_IMP_const =
-      Binding.name_of f_IMP_binding
-      |> Proof_Context.read_const {proper = false, strict = false} lthy'
+    val f_IMP_const = Binding.name_of f_IMP_binding
+      |> HTHNU.read_const lthy'
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
 
-    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args
-                     , compiled = f_IMP_const }
+    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
+                       compiled = f_IMP_const }
   in
     lthy'
-    |> declare_compiled_const f_name f_compiled
+    |> declare_compiled_const f_head f_compiled
   end
 
 local
@@ -339,6 +405,7 @@ in
       in compile_cmd thm namepos_opt lthy end))
 end
 
+
 local
   val parser =
     Parse.const --
@@ -351,19 +418,17 @@ in
     "declare an already compiled constant"
     (parser >> (fn (((const, ret_reg), arg_regs), compiled) => fn lthy =>
       let
-        val (const_name, const_ty) =
-          Proof_Context.read_const {proper = false, strict = false} lthy const
-          |> Term.dest_Const
-        val compiled_term = Syntax.read_term lthy compiled
+        val const = HTHNU.read_const lthy const
+        val compiled_term = Proof_Context.read_term_pattern lthy compiled
 
-        val n_const_ty_args = Term.strip_type const_ty |> fst |> length
+        val n_const_ty_args = Term.strip_type (dest_Const_type const) |> fst |> length
         val n_arg_regs = length arg_regs
         val pretty_int = Pretty.str o Int.toString
         val _ =
           if n_const_ty_args <> n_arg_regs
             then
               [ Pretty.str "The constant"
-              , Pretty.quote (Syntax.pretty_term lthy (Const (const_name, const_ty)))
+              , Pretty.quote (Syntax.pretty_term lthy const)
               , Pretty.str "takes", pretty_int n_const_ty_args, Pretty.str "arguments."
               , Pretty.str "Number of argument registers: ", pretty_int n_arg_regs
               ]
@@ -372,12 +437,13 @@ in
             else ()
 
         val compiled_ty = Term.fastype_of compiled_term
+        val com_ty = \<^typ>\<open>com\<close>
         val _ =
-          if compiled_ty <> \<^typ>\<open>com\<close>
+          if compiled_ty <> com_ty
             then
               Pretty.breaks
                 [ Pretty.keyword2 "compiled", Pretty.str "must have type"
-                , Pretty.quote (Syntax.pretty_typ lthy \<^typ>\<open>com\<close>)
+                , Pretty.quote (Syntax.pretty_typ lthy com_ty)
                 ] @ Pretty.str "." ::
               [ Pretty.brk 1, Pretty.str "Got type:", Pretty.brk 1
               , Pretty.quote (Syntax.pretty_typ lthy compiled_ty)
@@ -390,7 +456,7 @@ in
                               compiled = Syntax.read_term lthy compiled}
       in
         lthy
-        |> declare_compiled_const const_name compiled_const
+        |> declare_compiled_const const compiled_const
       end))
 end
 
@@ -402,47 +468,9 @@ in
     "print all declared compiled constants"
     (parser >> (fn verbose => fn lthy =>
       let
-        val pretty_reg = Pretty.quote o Pretty.str
-        fun pretty_ret_reg ret_reg = Pretty.block
-          [ Pretty.keyword2 "return_register", Pretty.brk 1
-          , pretty_reg ret_reg
-          ]
-        fun pretty_arg_regs arg_regs =
-          [Pretty.keyword2 "argument_registers"] @
-          map pretty_reg arg_regs
-          |> Pretty.breaks
-          |> Pretty.block
-        fun pretty_compiled compiled =
-          let
-            fun unfold1_term thms =
-              Thm.cterm_of lthy
-              #> Thm.reflexive
-              #> Conv.fconv_rule (Conv.try_conv (Conv.arg_conv (Conv.rewrs_conv thms)))
-              #> Thm.cprop_of #> Thm.dest_equals #> snd #> Thm.term_of
-            val compiled = (verbose ? (Compiled_Const_Defs.get (Context.Proof lthy)
-              |> Termtab.dest |> map snd |> unfold1_term))
-              compiled
-          in
-            Pretty.block
-              [ Pretty.keyword2 "compiled", Pretty.brk 1
-              , Pretty.cartouche (Syntax.pretty_term lthy compiled)
-              ]
-          end
-        fun pretty_compiled_const (name, {ret_reg, arg_regs, compiled}) =
-          let val const = Proof_Context.read_const {proper = false, strict = false} lthy name
-          in
-            Syntax.pretty_term lthy const ::
-            Pretty.fbrk ::
-            Pretty.breaks
-              [ pretty_ret_reg ret_reg
-              , pretty_arg_regs arg_regs
-              , pretty_compiled compiled
-              ]
-            |> Pretty.item
-          end
         val _ = @{log Logger.INFO} lthy (fn _ => Compiled_Consts.get (Context.Proof lthy)
-          |> Symtab.dest
-          |> map pretty_compiled_const
+          |> Net.content
+          |> map (pretty_compiled_const verbose lthy #> Pretty.item)
           |> Pretty.big_list "Compiled constants:"
           |> Pretty.string_of)
       in lthy end))

@@ -4,7 +4,7 @@ theory HOL_Nat_To_IMP_Minus_Base
     HOL.HOL
     ML_Unification.ML_Tactic_Utils
     ML_Unification.Setup_Result_Commands
-    SpecCheck.SpecCheck_Show
+    ML_Unification.Simps_To
     ML_Typeclasses.ML_Typeclasses
 begin
 

@@ -77,16 +77,33 @@ lemma terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI:
     compile_sound inline_sound[where ?s=s and ?s'=s for s])
   (force simp: set_vars_compile tailcall_to_IMP_Minus_eq)+
 
+lemma terminates_with_tSeqI:
+  assumes "terminates_with_IMP_Tailcall c c1 s s'"
+  and "terminates_with_IMP_Tailcall c c2 s' s''"
+  shows "terminates_with_IMP_Tailcall c (tSeq c1 c2) s s''"
+  using assms by blast
+
 lemma terminates_with_tAssignI:
   assumes "s' = s(k := aval aexp s)"
   shows "terminates_with_IMP_Tailcall c (tAssign k aexp) s s'"
   using assms by blast
+
+lemma terminates_with_tIfI:
+  assumes "s vb \<noteq> 0 \<Longrightarrow> terminates_with_IMP_Tailcall c c1 s s'"
+  and "s vb = 0 \<Longrightarrow> terminates_with_IMP_Tailcall c c2 s s'"
+  shows "terminates_with_IMP_Tailcall c (tIf vb c1 c2) s s'"
+  using assms by (cases "s vb = 0") blast+
 
 lemma terminates_with_tCallI:
   assumes "terminates_with_res_IMP_Minus c s r val"
   and "s' = s(r := val)"
   shows "terminates_with_IMP_Tailcall tc (tCall c r) s s'"
   using assms by blast
+
+lemma terminates_with_tTailI:
+  assumes "terminates_with_IMP_Tailcall c c s s'"
+  shows "terminates_with_IMP_Tailcall c tTAIL s s'"
+  using assms by blast+
 
 lemma terminates_with_res_tSeqI:
   assumes "terminates_with_IMP_Tailcall c c1 s s'"
@@ -105,6 +122,12 @@ lemma terminates_with_res_tIfI:
   and "s vb = 0 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c2 s r val"
   shows "terminates_with_res_IMP_Tailcall c (tIf vb c1 c2) s r val"
   using assms by (cases "s vb = 0") blast+
+
+lemma terminates_with_res_tCallI:
+  assumes "terminates_with_res_IMP_Minus c s r val"
+  and "(s(r := val)) r' = val"
+  shows "terminates_with_res_IMP_Tailcall tc (tCall c r) s r' val"
+  using assms by blast
 
 lemma terminates_with_res_tTailI:
   assumes "terminates_with_res_IMP_Tailcall c c s r val"

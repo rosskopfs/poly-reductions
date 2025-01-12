@@ -20,33 +20,40 @@ sig
   type terminates_with_IMP_Tailcall_args = {c: term, s: term, s': term, tc: term}
   type terminates_with_res_IMP_Tailcall_args = {c: term, r: term, s: term, tc: term, v: term}
 
-  val dest_terminates_with_res_IMP_Tailcall: term -> terminates_with_res_IMP_Tailcall_args
-  val dest_terminates_with_res_IMP_Tailcall_prop: term -> terminates_with_res_IMP_Tailcall_args
-  val dest_terminates_with_IMP_Tailcall: term -> terminates_with_IMP_Tailcall_args
-  val dest_terminates_with_IMP_Tailcall_prop: term -> terminates_with_IMP_Tailcall_args
+  val dest_terminates_with_res_IMP_Tailcall : term -> terminates_with_res_IMP_Tailcall_args
+  val dest_terminates_with_res_IMP_Tailcall_prop : term -> terminates_with_res_IMP_Tailcall_args
+  val dest_terminates_with_IMP_Tailcall : term -> terminates_with_IMP_Tailcall_args
+  val dest_terminates_with_IMP_Tailcall_prop : term -> terminates_with_IMP_Tailcall_args
 
-  val rewrite_eq_state_retrieval_sym_tac: Proof.context -> int -> tactic
-  val setup_induction_tac: fun_inducts_retrieval -> Proof.context -> int -> tactic
+  val rewrite_eq_state_retrieval_sym_tac : Proof.context -> int -> tactic
+  val setup_induction_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
 
-  val start_case_tac: IMP_def_retrieval -> Proof.context -> int -> tactic
+  val start_case_tac : IMP_def_retrieval -> Proof.context -> int -> tactic
 
-  val terminates_with_res_tSeq_tac: Proof.context -> int -> tactic
-  val terminates_with_tAssign_tac: Proof.context -> int -> tactic
-  val terminates_with_tCall_tac: fun_inducts_retrieval -> Proof.context -> int -> tactic
-  val terminates_with_res_tIf_tac: Proof.context -> int -> tactic
+  val terminates_with_res_tSeq_tac : Proof.context -> int -> tactic
 
-  val terminates_with_res_tAssign_tac: Proof.context -> int -> tactic
+  val terminates_with_res_tAssign_tac : Proof.context -> int -> tactic
+  val terminates_with_tAssign_tac : Proof.context -> int -> tactic
 
-  val run_step_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
-  val run_tac: imp_minus_correct_retrieval -> Proof.context -> int -> tactic
+  val terminates_with_tCall_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
 
-  val finish_non_tail_tac: Proof.context -> int -> tactic
-  val finish_tail_tac: Proof.context -> int -> tactic
+  val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
-  val run_hol_fun_tac: HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
-  val finish_tac: HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val run_step_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
+  val run_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
 
-  val start_run_finish_tac: bool -> fun_inducts_retrieval -> IMP_def_retrieval ->
+  val subst_HOL_fun_eq_tac : thm list -> Proof.context -> int -> tactic
+
+  val finish_non_tail_tac : Proof.context -> int -> tactic
+  val finish_tail_tac : Proof.context -> int -> tactic
+
+  val run_HOL_fun_tac : HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val finish_tac : HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+
+  val start_run_finish_case_tac : IMP_def_retrieval -> imp_minus_correct_retrieval ->
+    HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+
+  val start_run_finish_tac : bool -> fun_inducts_retrieval -> IMP_def_retrieval ->
     imp_minus_correct_retrieval -> HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context ->
     int -> tactic
 end
@@ -134,9 +141,8 @@ fun setup_induction_tac get_fun_inducts =
     let
       (*v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after*)
       val head = head_of v
-      val instantiations =
-        head |> dest_Const |> fst
-        |> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof ctxt) |> #arg_regs
+      val instantiations = head
+        |> Compile_HOL_Nat_To_IMP.get_compiled_const ctxt |> #arg_regs
         |> map (HOL_Nat_To_IMP_Util.mk_state_register_retrieval s)
         |> map (fn t => SOME (NONE, (t, false)))
       val arbitrary = [dest_Free s]
@@ -162,10 +168,8 @@ fun start_case_tac get_IMP_def ctxt =
 (* tactics for tAssign, tSeq, and tIf that run one step of the tailcall program *)
 
 val terminates_with_res_tSeq_tac = HTITB.seq_tac @{thm terminates_with_res_tSeqI}
+
 val terminates_with_res_tAssign_tac = HTITB.assign_tac @{thm terminates_with_res_tAssignI}
-
-(* tactics for tAssign and tCall that handle terminates_with (instead of terminates_with_res) *)
-
 val terminates_with_tAssign_tac = HTITB.assign_tac @{thm terminates_with_tAssignI}
 
 fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
@@ -176,11 +180,13 @@ fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
               Syntax.pretty_term ctxt c
             ] |> Pretty.string_of);
             K no_tac)
-        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI} ctxt cs)
+        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI}
+            (HTITB.simp_lhs_solve_Rel_nat_tac ctxt) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 
-val terminates_with_res_tIf_tac = HTITB.if_tac @{thm terminates_with_res_tIf_processedI}
+val terminates_with_res_tIf_tac =
+  HTITB.if_tac HTITB.get_HOL_To_IMP_finish_simps @{thm terminates_with_res_tIf_processedI}
 
 fun run_step_tac get_imp_minus_correct ctxt = HTITB.run_step_tac
   (terminates_with_res_tSeq_tac ctxt)
@@ -202,9 +208,10 @@ fun finish_tail_tac ctxt =
       (*v is of the form f t1 t2 ..., where f is the relevant HOL function; extract the head f,
       and the terms t1, t2, ... *)
       Term.strip_comb v
+        ||> filter (Term.fastype_of #> HOL_To_HOL_Nat_Util.is_itself #> not)
       LET (fn (head, arg_terms) =>
         (* fetch the compiled constant *)
-        Basics.try (dest_Const #> fst #> Compile_HOL_Nat_To_IMP.get_compiled_const (Context.Proof ctxt)) head
+        Basics.try (Compile_HOL_Nat_To_IMP.get_compiled_const ctxt) head
         |> HTIU.seq_of_opt (fn _ => @{log Logger.WARN} ctxt (fn _ => Pretty.block [
             Pretty.str "Could not load compiled constant for ",
             Syntax.pretty_term ctxt head
@@ -232,7 +239,7 @@ fun finish_tail_tac ctxt =
       let
         (* each argument is first drawn out into a separate subgoal t_i = ?v s
            to prevent substitution from occurring inside s *)
-        fun rewrite_args_tac [] = Simps_To_Unif.SIMPS_TO_UNIF_refl_tac (K all_tac) ~1 ctxt
+        fun rewrite_args_tac [] = HTIU.SIMPS_TO_UNIF_refl_tac (K all_tac) ctxt
           | rewrite_args_tac (thm :: thms) =
               (*splitting the arguments needs a special unifier*)
               Unify_Resolve_Base.unify_resolve_tac
@@ -280,17 +287,25 @@ fun finish_tail_tac ctxt =
       (#context focus) (prems_tac focus)) ctxt
   end
 
+fun THEN_ALL_NEW_OFFSET offset tac1 tac2 i st =
+  st |> (tac1 i THEN (fn st' =>
+    st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
+
+fun subst_HOL_fun_eq_tac thms ctxt = THEN_ALL_NEW_OFFSET 1 (HTIU.subst_first_tac ctxt thms)
+  (HTITB.solve_Rel_nat_tac ctxt)
+
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
-  THEN' SUT.STATE_interp_retrieve_key_eq_tac (safe_asm_simp_tac ctxt) ctxt
+  THEN' SUT.STATE_interp_retrieve_key_eq_tac
+    (asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt)) ctxt
 
 (*shared tail/non-tail finish tactics*)
-fun simp_value_tac simp_tac ctxt =
+fun simp_res_value_tac simp_tac ctxt =
   resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
-  THEN' Simps_To_Unif.SIMPS_TO_UNIF_refl_tac simp_tac ~1 ctxt
+  THEN' HTIU.SIMPS_TO_UNIF_refl_tac simp_tac ctxt
 
 (*run the HOL function to its return value or to a recursive call*)
-fun run_hol_fun_tac get_HOL_eqs ctxt =
+fun run_HOL_fun_tac get_HOL_eqs ctxt =
   let fun tac {v,...} = case get_HOL_eqs ctxt (head_of v) of
       NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
           Pretty.str "Could not find HOL equality for term ",
@@ -298,24 +313,26 @@ fun run_hol_fun_tac get_HOL_eqs ctxt =
           Pretty.str " in conclusion."
         ] |> Pretty.string_of);
         K no_tac)
-    | SOME thms => simp_value_tac (
-          HTIU.subst_first_tac ctxt thms
+    | SOME thms => simp_res_value_tac (
+          subst_HOL_fun_eq_tac thms ctxt
           THEN' TRY o safe_asm_simp_tac (ctxt delsimps thms addsimps [@{thm Let_def}])
         ) ctxt
   in with_dest_terminates_with_res_IMP_Tailcall_prop ctxt tac end
 
 fun finish_tac get_HOL_eqs ctxt =
-  run_hol_fun_tac get_HOL_eqs ctxt
+  run_HOL_fun_tac get_HOL_eqs ctxt
   THEN' (finish_non_tail_tac ctxt ORELSE' finish_tail_tac ctxt)
+
+fun start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt =
+  start_case_tac get_IMP_def ctxt
+  THEN' run_tac get_imp_minus_correct ctxt
+  THEN_ALL_NEW (
+    finish_tac get_HOL_eqs ctxt
+    ORELSE' K all_tac)
 
 fun start_run_finish_tac is_tailcall get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
   ctxt =
   (if is_tailcall then setup_induction_tac get_fun_inducts ctxt else K all_tac)
-  THEN_ALL_NEW (
-    start_case_tac get_IMP_def ctxt
-    THEN' run_tac get_imp_minus_correct ctxt
-    THEN_ALL_NEW (
-      finish_tac get_HOL_eqs ctxt
-      ORELSE' K all_tac))
+  THEN_ALL_NEW (start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt)
 
 end

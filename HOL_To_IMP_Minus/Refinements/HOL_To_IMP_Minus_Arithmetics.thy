@@ -5,16 +5,44 @@ theory HOL_To_IMP_Minus_Arithmetics
     "HOL-Library.Discrete_Functions"
 begin
 
-paragraph \<open>Squaring\<close>
+paragraph \<open>Power\<close>
 
 context HOL_To_HOL_Nat
 begin
 
-definition square_nat :: "nat \<Rightarrow> nat" where
-  "square_nat x \<equiv> mul_nat x x"
+fun power_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
+"power_acc_nat x 0 acc = acc" |
+"power_acc_nat x (Suc n) acc = power_acc_nat x n (x * acc)"
+declare power_acc_nat.simps[simp del]
 
-lemma square_nat_eq_square [simp]: "square_nat x = x\<^sup>2"
-  unfolding square_nat_def by (simp add: power2_eq_square)
+lemma power_acc_nat_eq_power_mul: "power_acc_nat x y z = x^y * z"
+  by (induction x y z arbitrary: z rule: power_acc_nat.induct)
+  (auto simp: power_acc_nat.simps)
+
+lemma power_eq_power_acc_nat_one: "x^y = power_acc_nat x y 1"
+  using power_acc_nat_eq_power_mul by simp
+
+lemma Rel_nat_power [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) power (power :: nat \<Rightarrow> _)"
+  by (auto simp: Rel_nat_nat_eq_eq)
+
+end
+
+context HOL_Nat_To_IMP_Minus
+begin
+
+case_of_simps power_acc_nat_eq[simplified case_nat_eq_if] : HTHN.power_acc_nat.simps
+compile_nat power_acc_nat_eq basename power_acc
+
+HOL_To_IMP_Minus_correct HTHN.power_acc_nat by (cook mode = tailcall)
+
+compile_nat HTHN.power_eq_power_acc_nat_one basename power
+HOL_To_IMP_Minus_correct power by cook
+
+end
+
+context HOL_To_HOL_Nat
+begin
 
 (*takes lower and upper bound for root*)
 function sqrt_aux_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -22,7 +50,7 @@ function sqrt_aux_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> 
     then
       let M = (L + R) div 2
       in
-        if square_nat M \<le> x
+        if M\<^sup>2 \<le> x
         then sqrt_aux_nat x M R
         else sqrt_aux_nat x L M
     else L)"
@@ -53,17 +81,21 @@ lemma square_sqrt_nat_le: "(sqrt_nat x)\<^sup>2 \<le> x"
 lemma lt_square_Suc_sqrt_nat: "x < (Suc (sqrt_nat x))\<^sup>2"
   using lt_square_Suc_sqrt_aux_nat unfolding sqrt_nat_def by (simp add: power2_eq_square)
 
-corollary sqrt_nat_eq_sqrt [simp]: "sqrt_nat y = floor_sqrt y"
+corollary sqrt_nat_eq: "sqrt_nat y = floor_sqrt y"
   using square_sqrt_nat_le lt_square_Suc_sqrt_nat
   by (intro floor_sqrt_unique[symmetric]) auto
+
+corollary floor_sqrt_eq_sqrt_aux_nat: "floor_sqrt x = sqrt_aux_nat x 0 (Suc x)"
+  using sqrt_nat_eq sqrt_nat_def by simp
+
+lemma Rel_nat_floor_sqrt [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat) floor_sqrt floor_sqrt"
+  by (auto simp: Rel_nat_nat_eq_eq)
 
 end
 
 context HOL_Nat_To_IMP_Minus
 begin
-
-compile_nat HTHN.square_nat_def basename square
-HOL_To_IMP_Minus_correct HTHN.square_nat by cook
 
 compile_nat HTHN.sqrt_aux_nat.simps basename sqrt_aux
 

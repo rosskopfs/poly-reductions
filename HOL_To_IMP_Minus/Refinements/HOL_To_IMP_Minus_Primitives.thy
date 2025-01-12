@@ -2,7 +2,6 @@
 theory HOL_To_IMP_Minus_Primitives
   imports
     HOL_Nat_To_IMP_Minus.HOL_Nat_To_IMP_Tactics
-    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
 begin
 
 paragraph \<open>Equality\<close>
@@ -13,18 +12,16 @@ locale HOL_To_HOL_Nat =
 begin
 
 definition "eq_nat (n :: nat) m \<equiv> if (n - m) + (m - n) = 0 then True_nat else False_nat"
-                        
-lemma eq_nat_eq [simp]:"eq_nat n m = natify (n = m)"
+
+lemma eq_nat_eq [HOL_To_IMP_finish_simps]: "eq_nat n m = natify (n = m)"
   unfolding eq_nat_def natify_bool_def by simp
 
-lemma Rel_nat_eq_nat [transfer_rule]: "(Rel_nat ===> Rel_nat ===> Rel_nat) eq_nat (=)"
+lemma Rel_nat_eq_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat ===> Rel_nat) eq_nat (=)"
 proof (intro rel_funI)
   fix x x' and y y' :: 'a
   assume "Rel_nat x y" "Rel_nat x' y'"
   then show "Rel_nat (eq_nat x x') (y = y')"
-  by (cases "y = y'")
-  (metis Rel_nat_False_nat Rel_nat_True_nat Rel_nat_iff_eq_natify
-    add_is_0 compile_nat_type_def.Rep_inject diff_self_eq_0 diffs0_imp_equal eq_nat_def)
+  by (cases "y = y'") (simp add: Rel_nat_iff_eq_natify compile_nat_type_def.Rep_inject eq_nat_eq)
 qed
 
 end
@@ -72,18 +69,13 @@ begin
 
 sublocale HNTIM : HOL_Nat_To_IMP_Minus .
 
-definition "add_nat (x :: nat) y \<equiv> x + y"
-definition "sub_nat (x :: nat) y \<equiv> x - y"
+lemma Rel_nat_add [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) (+) ((+) :: nat \<Rightarrow> _)"
+  by (auto simp: Rel_nat_nat_eq_eq)
 
-lemma add_nat_eq [simp]: "add_nat x y = x + y" unfolding add_nat_def by simp
-lemma sub_nat_eq [simp]: "sub_nat x y = x - y" unfolding sub_nat_def by simp
-
-lemma Rel_nat_add_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) add_nat ((+) :: nat \<Rightarrow> _)"
-  unfolding add_nat_eq by (auto simp: Rel_nat_nat_eq_eq)
-lemma Rel_nat_sub_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) sub_nat ((-) :: nat \<Rightarrow> _)"
-  unfolding sub_nat_eq by (auto simp: Rel_nat_nat_eq_eq)
+lemma Rel_nat_sub [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) (-) ((-) :: nat \<Rightarrow> _)"
+  by (auto simp: Rel_nat_nat_eq_eq)
 
 end
 
@@ -100,32 +92,22 @@ definition [compiled_IMP_Minus_const_def]:
 
 end
 
-declare_compiled_const HTHN.add_nat
-  return_register "add.ret"
-  argument_registers "add.args.x" "add.args.y"
-  compiled "add_IMP"
 declare_compiled_const "Groups.plus"
   return_register "add.ret"
   argument_registers "add.args.x" "add.args.y"
   compiled "add_IMP"
 
-declare_compiled_const HTHN.sub_nat
-  return_register "sub.ret"
-  argument_registers "sub.args.x" "sub.args.y"
-  compiled "sub_IMP"
 declare_compiled_const "Groups.minus"
   return_register "sub.ret"
   argument_registers "sub.args.x" "sub.args.y"
   compiled "sub_IMP"
 
-HOL_To_IMP_Minus_correct HTHN.add_nat
+HOL_To_IMP_Minus_correct Groups.plus
   unfolding add_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI
-    simp: HTHN.add_nat_def)
-HOL_To_IMP_Minus_correct HTHN.sub_nat
+  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+HOL_To_IMP_Minus_correct Groups.minus
   unfolding sub_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI
-    simp: HTHN.sub_nat_def)
+  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
 
 end
 
@@ -139,19 +121,16 @@ fun mul_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" w
 "mul_acc_nat (Suc x) y z = mul_acc_nat x y (y + z)"
 declare mul_acc_nat.simps[simp del]
 
-lemma mul_acc_nat_eq_mul_add [simp]: "mul_acc_nat x y z = x * y + z"
+lemma mul_acc_nat_eq_mul_add: "mul_acc_nat x y z = x * y + z"
   by (induction x y z arbitrary: z rule: mul_acc_nat.induct)
   (auto simp: mul_acc_nat.simps mult_eq_if)
 
-definition mul_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "mul_nat x y = mul_acc_nat x y 0"
+lemma mul_eq_mul_acc_nat_zero: "x * y = mul_acc_nat x y 0"
+  using mul_acc_nat_eq_mul_add by simp
 
-lemma mul_nat_eq [simp]: "mul_nat x y = x * y"
-  unfolding mul_nat_def using mul_acc_nat_eq_mul_add by simp
-
-lemma Rel_nat_mul_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) mul_nat ((*) :: nat \<Rightarrow> _)"
-  unfolding mul_nat_def by (auto simp: Rel_nat_nat_eq_eq mul_acc_nat_eq_mul_add)
+lemma Rel_nat_mul [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) (*) ((*) :: nat \<Rightarrow> _)"
+  by (auto simp: Rel_nat_nat_eq_eq)
 
 end
 
@@ -166,14 +145,9 @@ compile_nat mul_acc_nat_eq basename mul_acc
 
 HOL_To_IMP_Minus_correct HTHN.mul_acc_nat by (cook mode = tailcall)
 
-compile_nat HTHN.mul_nat_def basename mul
+compile_nat HTHN.mul_eq_mul_acc_nat_zero basename mul
 
-declare_compiled_const "times"
-  return_register "mul.ret"
-  argument_registers "mul.args.x" "mul.args.y"
-  compiled "tailcall_to_IMP_Minus mul_IMP_tailcall"
-
-HOL_To_IMP_Minus_correct HTHN.mul_nat by cook
+HOL_To_IMP_Minus_correct Groups.times by cook
 
 end
 
@@ -207,13 +181,13 @@ begin
 
 definition "not_nat (n :: nat) \<equiv> eq_nat n False_nat"
 
-lemma not_nat_eq [simp]: "not_nat n = natify (n = False_nat)"
-  unfolding not_nat_def by simp
+lemma not_nat_eq [HOL_To_IMP_finish_simps]: "not_nat n = natify (n = False_nat)"
+  unfolding not_nat_def eq_nat_eq by simp
 
-lemma Rel_nat_not_nat [transfer_rule]:
+lemma Rel_nat_not_nat [Rel_nat_related]:
   "(Rel_nat ===> Rel_nat) not_nat Not"
-  unfolding not_nat_eq
-  by (intro rel_funI) (auto simp: Rel_nat_bool_iff)
+  unfolding not_nat_eq by (intro rel_funI)
+  (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
 
 end
 
@@ -236,48 +210,32 @@ paragraph \<open>Orders\<close>
 context HOL_To_HOL_Nat
 begin
 
-definition max_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "max_nat x y \<equiv> if x - y \<noteq> 0 then x else y"
+lemma max_nat_eq_if: "max (x :: nat) y = (if x - y \<noteq> 0 then x else y)"
+  by simp
 
-lemma max_nat_eq[simp]: "max_nat x y = max x y"
-  unfolding max_nat_def by simp
+lemma Rel_nat_max [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) max (max :: nat \<Rightarrow> _)"
+  by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
 
-lemma Rel_nat_max_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) max_nat (max :: nat \<Rightarrow> _)"
-  unfolding max_nat_eq by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
+lemma min_nat_eq_if: "min (x :: nat) y = (if x - y \<noteq> 0 then y else x)"
+  by simp
 
-definition min_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "min_nat x y \<equiv> if x - y \<noteq> 0 then y else x"
-
-lemma min_nat_eq[simp]: "min_nat x y = min x y"
-  unfolding min_nat_def by simp
-
-lemma Rel_nat_min_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) min_nat (min :: nat \<Rightarrow> _)"
-  unfolding min_nat_eq by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
+lemma Rel_nat_min [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) min (min :: nat \<Rightarrow> _)"
+  by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
 
 end
 
 context HOL_Nat_To_IMP_Minus
 begin
 
-compile_nat HTHN.max_nat_def basename max
+compile_nat HTHN.max_nat_eq_if basename max
 
-declare_compiled_const max
-  return_register "max.ret"
-  argument_registers "max.args.x" "max.args.y"
-  compiled "tailcall_to_IMP_Minus max_IMP_tailcall"
+HOL_To_IMP_Minus_correct max by cook
 
-HOL_To_IMP_Minus_correct HTHN.max_nat by cook
+compile_nat HTHN.min_nat_eq_if basename min
 
-compile_nat HTHN.min_nat_def basename min
-
-declare_compiled_const min
-  return_register "min.ret"
-  argument_registers "min.args.x" "min.args.y"
-  compiled "tailcall_to_IMP_Minus min_IMP_tailcall"
-
-HOL_To_IMP_Minus_correct HTHN.min_nat by cook
+HOL_To_IMP_Minus_correct min by cook
 
 end
 
@@ -288,21 +246,23 @@ begin
 
 definition "conj_nat (x :: nat) y \<equiv> min (min x y) True_nat"
 
-lemma conj_nat_eq [simp]: "conj_nat x y = natify (x \<noteq> False_nat \<and> y \<noteq> False_nat)"
-  unfolding conj_nat_def by (auto simp: natify_bool_def True_nat_def)
+lemma conj_nat_eq [HOL_To_IMP_finish_simps]: "conj_nat x y = natify (x \<noteq> False_nat \<and> y \<noteq> False_nat)"
+  unfolding conj_nat_def by (auto simp: natify_bool_def False_nat_eq_zero True_nat_def)
 
-lemma Rel_nat_conj_nat [transfer_rule]:
+lemma Rel_nat_conj_nat [Rel_nat_related]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) conj_nat (\<and>)"
-  unfolding conj_nat_eq by (intro rel_funI) (auto simp: Rel_nat_bool_iff)
+  unfolding conj_nat_eq by (intro rel_funI)
+  (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
 
 definition "disj_nat (x :: nat) y \<equiv> min (max x y) True_nat"
 
-lemma disj_nat_eq [simp]: "disj_nat x y = natify (x \<noteq> False_nat \<or> y \<noteq> False_nat)"
-  unfolding disj_nat_def by (auto simp: natify_bool_def True_nat_def)
+lemma disj_nat_eq [HOL_To_IMP_finish_simps]: "disj_nat x y = natify (x \<noteq> False_nat \<or> y \<noteq> False_nat)"
+  unfolding disj_nat_def by (auto simp: natify_bool_def False_nat_eq_zero True_nat_def)
 
-lemma Rel_nat_disj_nat [transfer_rule]:
+lemma Rel_nat_disj_nat [Rel_nat_related]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) disj_nat (\<or>)"
-  unfolding disj_nat_eq by (intro rel_funI) (auto simp: Rel_nat_bool_iff)
+  unfolding disj_nat_eq by (intro rel_funI)
+  (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
 
 end
 
@@ -336,21 +296,23 @@ begin
 
 definition "le_nat (x :: nat) y \<equiv> eq_nat (x - y) 0"
 
-lemma le_nat_eq [simp]: "le_nat x y = natify (x \<le> y)"
-  unfolding le_nat_def by simp
+lemma le_nat_eq [HOL_To_IMP_finish_simps]: "le_nat x y = natify (x \<le> y)"
+  unfolding le_nat_def eq_nat_eq by simp
 
-lemma Rel_nat_le_nat [transfer_rule]:
+lemma Rel_nat_le_nat [Rel_nat_related]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) le_nat ((\<le>) :: nat \<Rightarrow> _)"
-  by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff)
+  by (intro rel_funI)
+  (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff le_nat_eq natify_True_eq natify_False_eq)
 
 definition "lt_nat (x :: nat) y \<equiv> conj_nat (le_nat x y) (not_nat (eq_nat x y))"
 
-lemma lt_nat_eq [simp]: "lt_nat x y = natify (x < y)"
-  unfolding lt_nat_def by (auto simp: natify_bool_def)
+lemma lt_nat_eq [HOL_To_IMP_finish_simps]: "lt_nat x y = natify (x < y)"
+  unfolding lt_nat_def by (auto simp: natify_bool_def le_nat_eq conj_nat_eq not_nat_eq eq_nat_eq)
 
-lemma Rel_nat_lt_nat [transfer_rule]:
+lemma Rel_nat_lt_nat [Rel_nat_related]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) lt_nat ((<) :: nat \<Rightarrow> _)"
-  by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff)
+  by (intro rel_funI)
+  (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff lt_nat_eq natify_True_eq natify_False_eq)
 
 end
 
@@ -386,18 +348,15 @@ fun div_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" w
   "div_acc_nat x y z = (if y = 0 then z else if x < y then z else div_acc_nat (x - y) y (z + 1))"
 declare div_acc_nat.simps[simp del]
 
-lemma div_acc_nat_eq_div_add [simp]: "div_acc_nat x y z = x div y + z"
+lemma div_acc_nat_eq_div_add: "div_acc_nat x y z = x div y + z"
   by (induction x y z rule: div_acc_nat.induct) (auto simp: div_acc_nat.simps div_if)
 
-definition div_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
-  "div_nat x y = div_acc_nat x y 0"
+lemma div_eq_div_acc_nat_zero: "x div y = div_acc_nat x y 0"
+  using div_acc_nat_eq_div_add by simp
 
-lemma div_nat_eq_div [simp]: "div_nat x y = x div y"
-  unfolding div_nat_def by simp
-
-lemma Rel_nat_div_nat [transfer_rule]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) div_nat (divide :: nat \<Rightarrow> _)"
-  unfolding div_nat_def by (auto simp: Rel_nat_nat_eq_eq div_acc_nat_eq_div_add)
+lemma Rel_nat_div [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) Rings.divide (divide :: nat \<Rightarrow> _)"
+  by (auto simp: Rel_nat_nat_eq_eq div_acc_nat_eq_div_add)
 
 end
 
@@ -408,14 +367,9 @@ compile_nat HTHN.div_acc_nat.simps basename div_acc
 
 HOL_To_IMP_Minus_correct HTHN.div_acc_nat by (cook mode = tailcall)
 
-compile_nat HTHN.div_nat_def basename div
+compile_nat HTHN.div_eq_div_acc_nat_zero basename div
 
-declare_compiled_const "divide"
-  return_register "div.ret"
-  argument_registers "div.args.x" "div.args.y"
-  compiled "tailcall_to_IMP_Minus div_IMP_tailcall"
-
-HOL_To_IMP_Minus_correct HTHN.div_nat by cook
+HOL_To_IMP_Minus_correct Rings.divide by cook
 
 end
 
@@ -444,6 +398,12 @@ begin
 lemma pair_nat_eq_triangle_add: "pair_nat a b = triangle (a + b) + a"
   unfolding pair_nat_eq prod_encode_def by simp
 
+lemma Rel_nat_triangle [Rel_nat_related]: "(Rel_nat ===> Rel_nat) triangle triangle"
+  by (auto simp: Rel_nat_nat_eq_eq)
+lemma Rel_nat_pair_nat [Rel_nat_related]:
+  "(Rel_nat ===> Rel_nat ===> Rel_nat) pair_nat pair_nat"
+  by (auto simp: Rel_nat_nat_eq_eq)
+
 fun fst_acc_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
   "fst_acc_nat k m = (if m \<le> k then m else fst_acc_nat (Suc k) (m - Suc k))"
 fun snd_nat_acc :: "nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -470,9 +430,15 @@ lemma fst_nat_eq_fst_acc_nat: "fst_nat m = fst_acc_nat 0 m"
   unfolding fst_nat_eq unpair_nat_eq prod_decode_def
   by (subst fst_acc_nat_eq_fst_prod_decode_aux) simp
 
+lemma Rel_nat_fst_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat) fst_nat fst_nat"
+  by (auto simp: Rel_nat_nat_eq_eq)
+
 lemma snd_nat_eq_snd_nat_acc: "snd_nat m = snd_nat_acc 0 m"
   unfolding snd_nat_eq unpair_nat_eq prod_decode_def
   by (subst snd_nat_acc_eq_snd_prod_decode_aux) simp
+
+lemma Rel_nat_snd_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat) snd_nat snd_nat"
+  by (auto simp: Rel_nat_nat_eq_eq)
 
 end
 

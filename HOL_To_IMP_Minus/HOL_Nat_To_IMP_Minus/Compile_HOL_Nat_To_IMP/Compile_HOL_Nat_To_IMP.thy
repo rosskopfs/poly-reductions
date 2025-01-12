@@ -1,7 +1,8 @@
 theory Compile_HOL_Nat_To_IMP
   imports
-    "../Automation/IMP_Terminates_With"
-    "../HOL_Nat_To_IMP_Minus_Base"
+    IMP_Terminates_With
+    HOL_Nat_To_IMP_Minus_Base
+    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Base
   keywords
     "compile_nat" :: thy_decl and "basename" and
     "declare_compiled_const" :: thy_decl and
@@ -22,6 +23,9 @@ function (sequential) assoc_right_tSeq where
   by pat_completeness auto
 termination by (relation "measure measure_assoc") auto
 
+lemma size_assoc_right_tSeq [termination_simp]: "size (assoc_right_tSeq t) = size t"
+  by (induction t rule: assoc_right_tSeq.induct) auto
+
 lemma tbig_step_t_tSeq_assoc:
   includes tcom_syntax
   shows "C \<turnstile> ((c1 ;; c2) ;; c3, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (c1 ;; (c2 ;; c3), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
@@ -35,19 +39,19 @@ proof(induction c arbitrary: s t s' rule: assoc_right_tSeq.induct)
     using tIfFalse by fastforce
 qed(auto simp: tbig_step_t_tSeq_assoc intro!: Suc_eq_plus1)
 
-fun tseq where
-  "tseq tSKIP c = c"
-| "tseq c tSKIP = c"
-| "tseq c1 c2 = tSeq c1 c2"
+fun rm_tSkip_tseq where
+  "rm_tSkip_tseq tSKIP c = c"
+| "rm_tSkip_tseq c tSKIP = c"
+| "rm_tSkip_tseq c1 c2 = tSeq c1 c2"
 
 fun rm_tSKIP where
-  "rm_tSKIP (tSeq c1 c2) = tseq (rm_tSKIP c1) (rm_tSKIP c2)"
+  "rm_tSKIP (tSeq c1 c2) = rm_tSkip_tseq (rm_tSKIP c1) (rm_tSKIP c2)"
 | "rm_tSKIP (tIf v c1 c2) = tIf v (rm_tSKIP c1) (rm_tSKIP c2)"
 | "rm_tSKIP c = c"
 
-lemma tbig_step_t_tseq:
+lemma tbig_step_t_rm_tSkip_tseq:
   assumes "C \<turnstile> (c1, s0) \<Rightarrow>\<^bsup>t1\<^esup> s1" "C \<turnstile> (c2, s1) \<Rightarrow>\<^bsup>t2\<^esup> s2"
-  shows "\<exists>t'. C \<turnstile> (tseq c1 c2, s0) \<Rightarrow>\<^bsup>t'\<^esup> s2 \<and> t' \<le> t1 + t2"
+  shows "\<exists>t'. C \<turnstile> (rm_tSkip_tseq c1 c2, s0) \<Rightarrow>\<^bsup>t'\<^esup> s2 \<and> t' \<le> t1 + t2"
 proof -
   consider
     "c1 = tSKIP" | "c1 \<noteq> tSKIP" "c2 = tSKIP" | "c1 \<noteq> tSKIP" "c2 \<noteq> tSKIP"
@@ -63,7 +67,7 @@ proof -
       using tSkip by (cases c1) auto
   next
     case 3
-    then have "tseq c1 c2 = tSeq c1 c2"
+    then have "rm_tSkip_tseq c1 c2 = tSeq c1 c2"
       by (cases c1; cases c2) simp_all
     with assms show ?thesis
       using tSeq by auto
@@ -80,7 +84,7 @@ proof(induction c arbitrary: s t s' rule: rm_tSKIP.induct)
     "C \<turnstile> (rm_tSKIP c1, s) \<Rightarrow>\<^bsup>t1\<^esup> s1" "C \<turnstile> (rm_tSKIP c2, s1) \<Rightarrow>\<^bsup>t2\<^esup> s'"
     "t1 + t2 \<le> t"
     by (metis add_mono tSeq_tE)
-  with 1 show ?case using tbig_step_t_tseq by fastforce
+  with 1 show ?case using tbig_step_t_rm_tSkip_tseq by fastforce
 next
   case (2 v c1 c2)
   then show ?case
@@ -100,6 +104,26 @@ next
       unfolding rm_tSKIP.simps by force
   qed
 qed auto
+
+(*input: right-associated program*)
+(*output: all ifs are pulled out + right-associated*)
+fun pull_tIf_assoc_right where
+  "pull_tIf_assoc_right (tSeq (tIf v c1 c2) c3) = tIf v
+    (pull_tIf_assoc_right (assoc_right_tSeq (tSeq c1 c3)))
+    (pull_tIf_assoc_right (assoc_right_tSeq (tSeq c2 c3)))"
+| "pull_tIf_assoc_right (tSeq c1 c2) = tSeq c1 (pull_tIf_assoc_right c2)"
+| "pull_tIf_assoc_right (tIf v c1 c2) = tIf v (pull_tIf_assoc_right c1) (pull_tIf_assoc_right c2)"
+| "pull_tIf_assoc_right c = c"
+
+lemma tbig_step_pull_tIf_iff_aux:
+  includes tcom_syntax
+  shows "C \<turnstile> (tSeq (tIf v c1 c2) c3, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (tIf v (tSeq c1 c3) (tSeq c2 c3), s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  by auto
+
+lemma tbig_step_pull_tIf_iff:
+  shows "C \<turnstile> (pull_tIf_assoc_right c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  by (induction c arbitrary: s t s' rule: pull_tIf_assoc_right.induct)
+  (fastforce simp: tbig_step_t_assoc_right_tSeq tbig_step_pull_tIf_iff_aux)+
 
 ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 

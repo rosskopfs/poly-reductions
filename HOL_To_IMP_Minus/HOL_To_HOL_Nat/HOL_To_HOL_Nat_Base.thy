@@ -19,6 +19,9 @@ begin
 unbundle no converse_syntax
 unbundle lifting_syntax
 
+named_theorems "Rel_nat_related"
+  "Rel_nat relatedness theorems"
+
 text \<open>Types with encodings as natural numbers.\<close>
 class compile_nat =
   fixes natify :: "'a \<Rightarrow> nat"
@@ -33,6 +36,9 @@ declare compile_nat_type_def.Rep_induct[induct del] compile_nat_type_def.Abs_ind
 lemma inj_natify: "inj natify"
   by (rule inj_on_inverseI[where ?g=denatify]) simp
 
+lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
+  using inj_natify by (blast dest: injD)
+
 definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
   "Rel_nat n x \<equiv> n = natify x"
 
@@ -40,20 +46,22 @@ lemma Rel_nat_iff_eq_natify: "Rel_nat n x \<longleftrightarrow> n = natify x"
   unfolding Rel_nat_def by simp
 
 lemmas
-  typedef_nat_transfer[OF compile_nat_type_def.type_definition_axioms,
-    OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify, transfer_rule] =
+  typedef_Rel_nat_transfer[OF compile_nat_type_def.type_definition_axioms,
+    OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
 lemma right_unique_Rel_nat: "Transfer.right_unique Rel_nat"
-  by (fact typedef_nat_transfer)
+  by (fact typedef_Rel_nat_transfer)
 
 lemma left_unique_Rel_nat: "left_unique Rel_nat"
-  by (fact typedef_nat_transfer)
+  by (fact typedef_Rel_nat_transfer)
 
-lemma Rel_nat_natify_self [transfer_rule]: "Rel_nat (natify x) x"
+(*not registered by default since terms should not be transferred to their
+natify blackbox partner but their whitebox-transfer parnter*)
+lemma Rel_nat_natify_self: "Rel_nat (natify x) x"
   by (simp add: Rel_nat_iff_eq_natify)
 
-lemma Rel_nat_denatify_natify [transfer_rule]: "(Rel_nat ===> Rel_nat\<inverse>) denatify natify"
+lemma Rel_nat_denatify_natify [Rel_nat_related]: "(Rel_nat ===> Rel_nat\<inverse>) denatify natify"
   by (intro rel_funI) (auto iff: Rel_nat_iff_eq_natify)
 
 interpretation flip : transport compile_nat_type_def.R compile_nat_type_def.L natify denatify .
@@ -163,6 +171,9 @@ Restrictions:
 be made an instance of @{class compile_nat} and hence no higher-order arguments may be used).
 (3) As a consequence of (2): Recursive datatypes may not be nested inside of another datatype.
 \<close>
+
+named_theorems "Rel_nat_compile_nat"
+  "Rel_nat relatedness theorems for terms compiled from HOL to HOL on natural numbers"
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>
