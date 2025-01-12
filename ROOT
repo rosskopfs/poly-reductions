@@ -35,6 +35,12 @@ session IMP_Minus in "IMP-" = "HOL-Eisbach" +
     Big_Step_Small_Step_Equivalence
     IMP_Tailcalls_Dynamic
 
+session Complexity_Basics in "Cook_Levin_IMP/Complexity_Classes" = Poly_Reductions_Lib +
+  sessions
+    IMP_Minus
+  theories
+    Cook_Levin
+
 session Expressions in "Expressions" = HOL +
   directories
     Basics
@@ -49,7 +55,7 @@ session Expressions in "Expressions" = HOL +
 
 session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Minus +
   sessions
-    ML_Typeclasses
+    ML_Typeclasses 
     ML_Unification
     "SpecCheck"
   directories
@@ -57,7 +63,7 @@ session HOL_Nat_To_IMP_Minus in "HOL_To_IMP_Minus/HOL_Nat_To_IMP_Minus" = IMP_Mi
     "Compile_HOL_Nat_To_IMP"
     "States"
   theories
-    HOL_Nat_To_IMP_Tactics
+   "Automation/HOL_Nat_To_IMP_Tactics"
 
 session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = HOL_Nat_To_IMP_Minus +
   sessions
@@ -67,10 +73,50 @@ session HOL_To_IMP_Minus in "HOL_To_IMP_Minus" = HOL_Nat_To_IMP_Minus +
   theories
     HOL_To_IMP_Minus_Arithmetics
 
-session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
-  sessions
+session "IMP-_To_SAS+_HOL" in "Cook_Levin_IMP/IMP-_To_SAS+/IMP-_To_SAS+_HOL" = "HOL-Analysis" +
+  sessions    
+    Verified_SAT_Based_AI_Planning
+    Complexity_Basics
+  directories
+    "IMP-_To_IMP--"
+    "IMP--_To_SAS++"
+    "SAS++_To_SAS+"
+  theories
+    "IMP_Minus_To_SAS_Plus"
+    "IMP_Minus_To_SAT"
+
+(*The following two sessions need to be redone using the automation*)
+
+(*
+session "IMP-_To_SAS+_Nat" in "Cook_Levin_IMP/IMP-_To_SAS+/IMP-_To_SAS+_Nat" = "HOL-Analysis" +
+  sessions    
+    "IMP-_To_SAS+_HOL"
+  directories
+    "IMP-_To_IMP--"
+    "IMP--_To_SAS++"
+    "SAS++_To_SAS+"
+  theories
+    "IMP_Minus_To_SAS_Plus_Nat"
+    "IMP_Minus_To_SAT_Nat"
+
+session "IMP-_To_SAS+_IMP_Minus" in "Cook_Levin_IMP/IMP-_To_SAS+/IMP-_To_SAS+_IMP_Minus" = "HOL-Analysis" +
+  sessions    
+    "IMP-_To_SAS+_Nat"
+  directories
+    "IMP-_To_IMP--"
+    "IMP--_To_SAS++"
+    "SAS++_To_SAS+"
+  theories
+    "Primitives_IMP_Minus"
+    "Binary_Operations_IMP_Minus"
+    "Binary_Arithmetic_IMP_Minus"
+    "IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP_Minus"
+*)
+(*session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
+  sessions    
     Poly_Reductions_Lib
-    HOL_To_IMP_Minus
+    (*HOL_To_IMP_Minus*)
+    "IMP_Minus"
     "HOL-Real_Asymp"
     Landau_Symbols
     Verified_SAT_Based_AI_Planning
@@ -82,8 +128,8 @@ session Cook_Levin_IMP in Cook_Levin_IMP = "HOL-Analysis" +
     "IMP-_To_SAS+/IMP--_To_SAS++"
     "IMP-_To_SAS+/SAS++_To_SAS+"
   theories
-    Cook_Levin
-    IMP_Minus_To_SAS_Plus
-    Primitives_IMP_Minus
-    IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP
-    Binary_Arithmetic_IMP
+    "Complexity_classes/Cook_Levin"
+    "IMP-_To_SAS+/IMP_Minus_To_SAS_Plus"
+    "IMP-_To_SAS+/IMP-_To_IMP--/Primitives_IMP_Minus"
+    "IMP-_To_SAS+/IMP-_To_IMP--/IMP_Minus_To_IMP_Minus_Minus_State_Translations_IMP"
+    "IMP-_To_SAS+/IMP-_To_IMP--/Binary_Arithmetic_IMP"*)

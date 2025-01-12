@@ -1,6 +1,6 @@
 theory IMP_Minus_To_SAT_Nat 
-  imports IMP_Minus_To_SAS_Plus_Nat IMP_Minus_To_SAT SAT_Plan_Base_Nat SAS_Plus_Strips_Nat
-          Cook_Levin_IMP.Primitives
+  imports IMP_Minus_To_SAS_Plus_Nat "IMP-_To_SAS+_HOL.IMP_Minus_To_SAT" SAT_Plan_Base_Nat SAS_Plus_Strips_Nat
+          Primitives
 begin
 
 fun poly_of :: "nat*nat \<Rightarrow> nat \<Rightarrow> nat" where 

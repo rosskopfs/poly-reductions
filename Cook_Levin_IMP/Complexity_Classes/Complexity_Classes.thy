@@ -11,7 +11,7 @@ theory Complexity_Classes
   imports   
     "Poly_Reductions_Lib.Polynomial_Growth_Functions"
     "Poly_Reductions_Lib.SAT_Definition" Bounds Abstractions
-        "IMP-_Reductions"
+    "IMP-_Reductions"
 
 begin
 paragraph \<open>Conventions\<close>
