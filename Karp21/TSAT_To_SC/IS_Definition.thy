@@ -1,4 +1,4 @@
-theory IS_Definitions
+theory IS_Definition
   imports Main
 begin
 

@@ -1,93 +1,15 @@
 theory TSAT_To_IS_exec
-  imports TSAT_To_IS "../Tr_Fun_Defs_exec"
+  imports TSAT_To_IS Poly_Reductions_Lib.SAT_Definition_exec IS_Definition_exec Poly_Reductions_Lib.Tr_Fun_Defs
 begin
 
-subsection \<open>Preliminaries\<close>
-
-subsubsection \<open>relators between sets and lists, lists of sets and lists of lists etc.\<close>
-
-definition
-  "Set_List_rel r s xs \<equiv> rel_set r s (set xs)"
-
-lemma Set_List_relI[intro]: 
-  assumes "rel_set r s (set xs)"
-  shows "Set_List_rel r s xs"
-  unfolding Set_List_rel_def using assms .
-
-lemma Set_List_relD[dest]:
-  assumes "Set_List_rel r s xs"
-  shows "rel_set r s (set xs)" 
-  using assms unfolding Set_List_rel_def .
-
-lemma Set_List_rel_iff[simp]: "Set_List_rel r s xs \<longleftrightarrow> rel_set r s (set xs)"
-  by blast
-
-definition
-  "Set_List_rel_eq \<equiv> Set_List_rel (=)"
-
-lemma Set_List_rel_eqI[intro]: 
-  assumes "s = set xs"
-  shows "Set_List_rel_eq s xs"
-  unfolding Set_List_rel_eq_def using assms by (auto simp: rel_set_eq)
-
-lemma Set_List_rel_eqD[dest]:
-  assumes "Set_List_rel_eq s xs"
-  shows "s = set xs"
-  using assms unfolding Set_List_rel_eq_def by (auto simp: rel_set_eq)
-
-lemma Set_List_rel_eq_iff[simp]: "Set_List_rel_eq = Set_List_rel (=)"
-  unfolding Set_List_rel_eq_def by simp
-
-definition
-  "n_Set_List_rel_eq n s xs \<equiv> Set_List_rel_eq s xs \<and> card s = n"
-
-lemma n_Set_List_rel_eqI[intro]:
-  assumes "Set_List_rel_eq s xs" "card s = n"
-  shows "n_Set_List_rel_eq n s xs"
-  unfolding n_Set_List_rel_eq_def using assms by simp
-
-lemma n_Set_List_rel_eqE[elim]:
-  assumes "n_Set_List_rel_eq n s xs"
-  obtains "Set_List_rel_eq s xs" "card s = n"
-  using assms unfolding n_Set_List_rel_eq_def by simp
-
-type_synonym 'a sat_list = "'a lit list list"
-
-definition
-  "n_Sat_List_rel n s xs \<equiv> list_all2 (n_Set_List_rel_eq n) s xs"
-
-lemma n_Sat_List_rel_iff[simp]:
-    "n_Sat_List_rel n = list_all2 (n_Set_List_rel_eq n)"
-  unfolding n_Sat_List_rel_def by simp
-
-lemma n_Sat_List_relI:
-  assumes "list_all2 Set_List_rel_eq sat_set sat_list"
-          "\<And>s. s \<in> set sat_set \<Longrightarrow> card s = n"
-  shows "n_Sat_List_rel n sat_set sat_list"
-  using assms by (auto elim!: list.rel_mono_strong)
-
-lemma n_Sat_List_relE:
-  assumes "n_Sat_List_rel n sat_set sat_list"
-  obtains "list_all2 Set_List_rel_eq sat_set sat_list"
-          "\<And>s. s \<in> set sat_set \<Longrightarrow> card s = n"
-  using assms by (fastforce simp: in_set_conv_nth list_all2_conv_all_nth)
-
-definition
-  "IS_List_rel \<equiv> rel_prod (Set_List_rel (n_Set_List_rel_eq 2)) (=)"
-
-lemma IS_List_rel_iff[simp]: "IS_List_rel = rel_prod (Set_List_rel (n_Set_List_rel_eq 2)) (=)"
-  unfolding IS_List_rel_def by simp
-
-
-subsubsection \<open>basic relations of functions on sets and lists\<close>
+subsection \<open>Executable Three Sat to Independent Set\<close>
 
 unbundle lifting_syntax
 
 lemma map_image_rel[transfer_rule]: "((r ===> s) ===> Set_List_rel r ===> Set_List_rel s) image map"
-  unfolding rel_fun_def Set_List_rel_iff rel_set_def by fastforce
+  by (fastforce simp: rel_set_def dest: rel_funD)
 
-lemma Sprod_Lprod_rel[transfer_rule]: "(n_Set_List_rel_eq n ===> n_Set_List_rel_eq m ===> n_Set_List_rel_eq (m * n))
-  (\<times>) List.product"
+lemma Sprod_Lprod_rel[transfer_rule]: "(Set_List_rel_eq ===> Set_List_rel_eq ===> Set_List_rel_eq) (\<times>) List.product"
   by fastforce
 
 lemma UN_set_concat_rel[transfer_rule]: "(list_all2 (Set_List_rel r) ===> (Set_List_rel r)) (\<lambda>s. \<Union> (set s)) concat"
@@ -99,8 +21,14 @@ lemma filter_pred_rel[transfer_rule]: "(Set_List_rel_eq ===> Set_List_rel (\<lam
 lemma union_append_rel[transfer_rule]: "(Set_List_rel r ===> Set_List_rel r ===> Set_List_rel r) (\<union>) (@)"
   by (fastforce simp: rel_set_def)
 
+lemma Ball_set_list_all_rel[transfer_rule]: "((r ===> (=)) ===> list_all2 r ===> (=)) (\<lambda>p F. Ball (set F) p) list_all"
+  by (fastforce simp: in_set_conv_nth list_all2_conv_all_nth list_all_length dest: rel_funD)
 
-subsection \<open>executable definition of \<open>sat_is_un_1\<close>\<close>
+lemma id_set_rel[transfer_rule]: "(Set_List_rel r ===> rel_set r) (\<lambda>x. x) set"
+  by blast
+
+
+subsubsection \<open>executable definition of \<open>sat_is_un_1\<close>\<close>
 
 definition
   "sat_is_un_1_exec F \<equiv>
@@ -128,22 +56,17 @@ definition
   "sat_is_un_1' F \<equiv> (\<lambda>(a, b). {a, b}) ` (sat_is_un_1'_prod F)"
 
 lemma sat_is_un_1'_eq: "sat_is_un_1 F = sat_is_un_1' F"
-proof -
-  have "sat_is_un_1'_prod F = {((l1, i), (l2, i)) | l1 l2 i.
-      i < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! i \<and> l1 \<noteq> l2}"
-    by (fastforce simp: in_set_enumerate_eq sat_is_un_1'_prod_def)
-  then show ?thesis
-    unfolding sat_is_un_1_def sat_is_un_1'_def by auto
-qed
+  unfolding sat_is_un_1_def sat_is_un_1'_def sat_is_un_1'_prod_def
+  by (fastforce simp: in_set_enumerate_eq)
 lemmas sat_is_un_1'_eq_unfold = sat_is_un_1'_eq[unfolded sat_is_un_1'_def sat_is_un_1'_prod_def]
 
 text \<open>\<open>sat_is_un_1_exec\<close> is related to \<open>sat_is_un_1\<close>\<close>
-lemma sat_is_un_1_rel[transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> Set_List_rel (n_Set_List_rel_eq 2)) sat_is_un_1 sat_is_un_1_exec"
+lemma sat_is_un_1_rel[transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> Set_List_rel Set_List_rel_eq) sat_is_un_1 sat_is_un_1_exec"
 proof -
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> list_all2 (rel_prod (=) (n_Set_List_rel_eq 3)))
+  have [transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> list_all2 (rel_prod (=) (Set_List_rel_eq)))
       (enumerate 0) (enumerate 0)"
     by (auto simp: list_all2_conv_all_nth nth_enumerate_eq)
-  have [transfer_rule]: "(list_all2 (rel_prod (=) (n_Set_List_rel_eq 3)) ===> list_all2 (n_Set_List_rel_eq 3))
+  have [transfer_rule]: "(list_all2 (rel_prod (=) (Set_List_rel_eq)) ===> list_all2 (Set_List_rel_eq))
     (map (\<lambda>(a, b). (\<lambda>x. (x, a)) ` b))
     (map (\<lambda>(a, b). map (\<lambda>x. (x, a)) b))" (is "(list_all2 ?A2 ===> list_all2 ?B2) (map ?fs2) (map ?fl2)")
   proof -
@@ -153,10 +76,10 @@ proof -
     show ?thesis
       unfolding def[symmetric] by transfer_prover
   qed
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> list_all2 (n_Set_List_rel_eq (3 * 3)))
+  have [transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> list_all2 (Set_List_rel_eq))
       (map (\<lambda>s. s \<times> s)) (map (\<lambda>l. List.product l l))"
     by transfer_prover
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq (3 * 3)) ===> list_all2 (Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a))))
+  have [transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> list_all2 (Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a))))
     (map (Set.filter (\<lambda>((a, _), (b, _)). a \<noteq> b)))
     (map (filter (\<lambda>((a, _), (b, _)). a \<noteq> b)))"
     (is "(list_all2 _ ===> list_all2 (Set_List_rel ?B4)) (map (Set.filter ?f4)) (map (filter ?f4))")
@@ -168,15 +91,15 @@ proof -
       using filter_pred_rel by auto
     have aux: "(list_all2 Set_List_rel_eq ===> list_all2 (Set_List_rel B)) (map (Set.filter f)) (map (filter f))"
       by transfer_prover
-    then show "list_all2 (n_Set_List_rel_eq (3 * 3)) x y \<Longrightarrow> list_all2 (Set_List_rel ?B4)
+    then show "list_all2 (Set_List_rel_eq) x y \<Longrightarrow> list_all2 (Set_List_rel ?B4)
         (map (Set.filter ?f4) x) (map (filter ?f4) y)"
-      using rel_fun_mono[OF aux, where Y="list_all2 (n_Set_List_rel_eq (3 * 3))" and B="list_all2 (Set_List_rel B)"] list_all2_mono
+      using rel_fun_mono[OF aux, where Y="list_all2 Set_List_rel_eq" and B="list_all2 (Set_List_rel B)"] list_all2_mono
       unfolding def[symmetric] rel_fun_def by blast
   qed
   have [transfer_rule]: "(list_all2 (Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a))) ===>
         Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a))) (\<lambda>s. \<Union> (set s)) concat"
     by transfer_prover
-  have [transfer_rule]: "(Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a)) ===> Set_List_rel (n_Set_List_rel_eq 2))
+  have [transfer_rule]: "(Set_List_rel (\<lambda>a b. a = b \<and> fst (fst a) \<noteq> fst (snd a)) ===> Set_List_rel Set_List_rel_eq)
     (image (\<lambda>(a, b). {a, b}))
     (map (\<lambda>(a, b). [a, b]))" (is "(Set_List_rel ?A6 ===> Set_List_rel ?B6) (image ?fs6) (map ?fl6)")
   proof -
@@ -192,7 +115,7 @@ proof -
 qed
 
 
-subsection \<open>executable definition of \<open>sat_is_un_2\<close>\<close>
+subsubsection \<open>executable definition of \<open>sat_is_un_2\<close>\<close>
 
 text \<open>executable definition of \<open>conflict\<close>\<close>
 definition
@@ -231,22 +154,17 @@ definition
   "sat_is_un_2' F \<equiv> (\<lambda>(a, b). {a, b}) ` sat_is_un_2'_prod F"
 
 lemma sat_is_un_2'_eq: "sat_is_un_2 F = sat_is_un_2' F"
-proof -
-  have "sat_is_un_2'_prod F = {((l1, i), (l2, j)) | l1 l2 i j.
-      i < length F \<and> j < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j \<and> conflict l1 l2}"
-    by (fastforce simp: in_set_enumerate_eq sat_is_un_2'_prod_def Let_def)
-  then show ?thesis
-    unfolding sat_is_un_2_def sat_is_un_2'_def by auto
-qed
+  unfolding sat_is_un_2_def sat_is_un_2'_def sat_is_un_2'_prod_def Let_def
+  by (fastforce simp: in_set_enumerate_eq)
 lemmas sat_is_un_2'_eq_unfold = sat_is_un_2'_eq[unfolded sat_is_un_2'_def sat_is_un_2'_prod_def]
 
 text \<open>\<open>sat_is_un_2_exec\<close> is related to \<open>sat_is_un_2\<close>\<close>
-lemma sat_is_un_2_rel[transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> Set_List_rel (n_Set_List_rel_eq 2)) sat_is_un_2 sat_is_un_2_exec"
+lemma sat_is_un_2_rel[transfer_rule]: "(list_all2 Set_List_rel_eq ===> Set_List_rel Set_List_rel_eq) sat_is_un_2 sat_is_un_2_exec"
 proof -
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> list_all2 (rel_prod (=) (n_Set_List_rel_eq 3)))
+  have [transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> list_all2 (rel_prod (=) (Set_List_rel_eq)))
       (enumerate 0) (enumerate 0)"
     by (auto simp: list_all2_conv_all_nth nth_enumerate_eq)
-  have [transfer_rule]: "(list_all2 (rel_prod (=) (n_Set_List_rel_eq 3)) ===> list_all2 (n_Set_List_rel_eq 3))
+  have [transfer_rule]: "(list_all2 (rel_prod (=) (Set_List_rel_eq)) ===> list_all2 (Set_List_rel_eq))
       (map (\<lambda>(a, b). (\<lambda>x. (x, a)) ` b))
       (map (\<lambda>(a, b). map (\<lambda>x. (x, a)) b))" (is "(list_all2 ?A2 ===> list_all2 ?B2) (map ?fs2) (map ?fl2)")
   proof -
@@ -256,21 +174,18 @@ proof -
     show ?thesis
       unfolding def[symmetric] by transfer_prover
   qed
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> list_all2 (rel_prod (n_Set_List_rel_eq 3) (n_Set_List_rel_eq 3)))
+  have [transfer_rule]: "(list_all2 (Set_List_rel_eq) ===> list_all2 (rel_prod (Set_List_rel_eq) (Set_List_rel_eq)))
       (\<lambda>x. List.product x x) (\<lambda>x. List.product x x)"
     by transfer_prover
-  have [transfer_rule]: "(list_all2 (rel_prod (n_Set_List_rel_eq 3) (n_Set_List_rel_eq 3)) ===> list_all2 (n_Set_List_rel_eq (3 * 3)))
+  have [transfer_rule]: "(list_all2 (rel_prod (Set_List_rel_eq) (Set_List_rel_eq)) ===> list_all2 (Set_List_rel_eq))
       (map (\<lambda>(a, b). a \<times> b)) (map (\<lambda>(a, b). List.product a b))"
     by transfer_prover
-  have rel5_aux: "(list_all2 Set_List_rel_eq ===> Set_List_rel_eq) (\<lambda>s. \<Union> (set s)) concat"
-    unfolding Set_List_rel_eq_def by transfer_prover
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq (3 * 3)) ===> Set_List_rel_eq) (\<lambda>s. \<Union> (set s)) concat"
-    using rel_fun_mono[OF rel5_aux, where Y="list_all2 (n_Set_List_rel_eq (3 * 3))" and B=Set_List_rel_eq]
-      list_all2_mono[where P="n_Set_List_rel_eq (3 * 3)" and Q=Set_List_rel_eq] by fast
+  have [transfer_rule]: "(list_all2 Set_List_rel_eq ===> Set_List_rel_eq) (\<lambda>s. \<Union> (set s)) concat"
+    by transfer_prover
   have [transfer_rule]: "(Set_List_rel_eq ===> Set_List_rel (\<lambda>a b. a = b \<and> conflict (fst (fst a)) (fst (snd a))))
       (Set.filter (\<lambda>((a, _), (b, _)). conflict a b)) (filter (\<lambda>((a, _), (b, _)). conflict a b))"
-    unfolding Set_List_rel_eq_iff using filter_pred_rel by (fastforce simp: case_prod_beta')
-  have [transfer_rule]: "(Set_List_rel (\<lambda>a b. a = b \<and> conflict (fst (fst a)) (fst (snd a))) ===> Set_List_rel (n_Set_List_rel_eq 2))
+    using filter_pred_rel by (fastforce simp: case_prod_beta')
+  have [transfer_rule]: "(Set_List_rel (\<lambda>a b. a = b \<and> conflict (fst (fst a)) (fst (snd a))) ===> Set_List_rel Set_List_rel_eq)
       (image (\<lambda>(a, b). {a, b})) (map (\<lambda>(a, b). [a, b]))" (is "(Set_List_rel ?A7 ===> Set_List_rel ?B7) (image ?fs7) (map ?fl7)")
   proof -
     define fs fl where def: "fs = ?fs7" "fl = ?fl7"
@@ -287,34 +202,26 @@ proof -
 qed
 
 
-subsection \<open>executable definition of \<open>sat_is\<close>\<close>
+subsubsection \<open>executable definition of \<open>sat_is\<close>\<close>
 
 definition
   "sat_is_exec F \<equiv> if list_all (\<lambda>xs. length (remdups xs) = 3) F
     then (sat_is_un_1_exec F @ sat_is_un_2_exec F, length F)
     else ([], 1)"
+lemmas sat_is_exec_unfold = sat_is_exec_def[unfolded sat_is_un_1_exec_def sat_is_un_2_exec_def]
 
 text \<open>\<open>sat_is_exec\<close> is related to \<open>sat_is\<close>\<close>
-lemma "(n_Sat_List_rel 3 ===> IS_List_rel) sat_is sat_is_exec"
+lemma sat_is_exec_rel[transfer_rule]: "(list_all2 Set_List_rel_eq ===> IS_List_rel) sat_is sat_is_exec"
 proof -
-  have [transfer_rule]: "(n_Set_List_rel_eq 3 ===> (=))(\<lambda>s. card s = 3) (\<lambda>xs. length (remdups xs) = 3)"
-    by (auto simp: length_remdups_card_conv rel_set_eq)
-  have [transfer_rule]: "(list_all2 (n_Set_List_rel_eq 3) ===> (=))
-    (\<lambda>F. \<forall>cls \<in> set F. card cls = 3) (list_all (\<lambda>xs. length (remdups xs) = 3))"
-  proof fix x::"'b set list" and y::"'b list list" 
-    show "list_all2 (n_Set_List_rel_eq 3) x y \<Longrightarrow>
-        (\<forall>cls\<in>set x. card cls = 3) = list_all (\<lambda>xs. length (remdups xs) = 3) y"
-      by (induction x y rule: list_all2_induct) (auto simp: length_remdups_card_conv)
-  qed
-  have [transfer_rule]: "rel_prod (Set_List_rel (n_Set_List_rel_eq 2)) (=) ({}, 1) ([], 1)"
+  have [transfer_rule]: "rel_prod (Set_List_rel Set_List_rel_eq) (=) ({}, 1) ([], 1)"
     by (simp add: rel_set_def)
   show ?thesis
-    unfolding sat_is_def sat_is_exec_def n_Sat_List_rel_iff IS_List_rel_iff
+    unfolding sat_is_def sat_is_exec_def IS_List_rel_iff
     by transfer_prover
 qed
 
 
-subsection \<open>tail recursive definition of \<open>sat_is_exec\<close>\<close>
+subsubsection \<open>tail recursive definition of \<open>sat_is_exec\<close>\<close>
 
 text \<open>tail recursive definition of \<open>sat_is_un_1_exec\<close>\<close>
 definition
@@ -349,7 +256,6 @@ lemma sat_is_un_2_exec_tr_eq: "sat_is_un_2_exec_tr = sat_is_un_2_exec"
   unfolding sat_is_un_2_exec_tr_def sat_is_un_2_exec_def tr_simps
   by (rule refl)
 
-
 definition
   "sat_is_exec_tr F \<equiv> if list_all_tr (\<lambda>xs. length_tr (remdups_tr xs) = 3) F
     then (sat_is_un_1_exec_tr F @tr sat_is_un_2_exec_tr F, length_tr F)
@@ -358,5 +264,41 @@ definition
 lemma "sat_is_exec_tr = sat_is_exec"
   unfolding sat_is_exec_tr_def sat_is_exec_def sat_is_un_1_exec_tr_eq sat_is_un_2_exec_tr_eq tr_simps
   by (rule refl)
+
+
+subsection \<open>\<open>sat_is_exec\<close> is a reduction from \<open>three_cnf_sat\<close> to \<open>independent_set\<close>\<close>
+
+lemma IS_p_exec_sat_is_exec_if_TSAT_p_exec:
+  assumes "three_cnf_sat_pred_exec F"
+  shows "independent_set_pred_exec (sat_is_exec F)"
+proof -
+  have [transfer_rule]: "list_all2 Set_List_rel_eq (transl_SAT_list_set F) F"
+    using transl_SAT_list_set_rel .
+  from assms have "three_cnf_sat_pred (transl_SAT_list_set F)"
+    using TSAT_p_exec_TSAT_p_transl_iff by blast
+  then have "independent_set_pred (sat_is (transl_SAT_list_set F))"
+    using is_reduction_sat_is[unfolded is_reduction_def three_cnf_sat_unfold_pred independent_set_unfold_pred] by blast
+  show "independent_set_pred_exec (sat_is_exec F)"
+    by transfer (fact \<open>independent_set_pred (sat_is (transl_SAT_list_set F))\<close>)
+qed
+
+lemma TSAT_p_exec_if_IS_p_exec_sat_is_exec:
+  assumes "independent_set_pred_exec (sat_is_exec x)" (is ?asm)
+  shows "three_cnf_sat_pred_exec x"
+proof -
+  have [transfer_rule]: "list_all2 Set_List_rel_eq (transl_SAT_list_set x) x"
+    using transl_SAT_list_set_rel .
+  have "independent_set_pred (sat_is (transl_SAT_list_set x)) \<longleftrightarrow> ?asm"
+    by transfer_prover
+  with assms have "independent_set_pred (sat_is (transl_SAT_list_set x))" by simp
+  then have "three_cnf_sat_pred (transl_SAT_list_set x)"
+    using is_reduction_sat_is[unfolded is_reduction_def three_cnf_sat_unfold_pred independent_set_unfold_pred] by blast
+  then show ?thesis
+    using TSAT_p_exec_TSAT_p_transl_iff by blast
+qed
+
+lemma is_reduction_sat_is_exec: "is_reduction sat_is_exec three_cnf_sat_exec independent_set_exec"
+  unfolding is_reduction_def three_cnf_sat_exec_def independent_set_exec_def
+  using IS_p_exec_sat_is_exec_if_TSAT_p_exec TSAT_p_exec_if_IS_p_exec_sat_is_exec by blast
 
 end

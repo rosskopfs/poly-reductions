@@ -1,7 +1,7 @@
 section \<open>\<open>Independent Set\<close> To \<open>Set Cover\<close>\<close>
 
 theory IS_To_SC
-  imports "../Reductions" IS_Definitions
+  imports "../Reductions" IS_Definition
 begin
 
 subsection \<open>Preliminaries\<close>

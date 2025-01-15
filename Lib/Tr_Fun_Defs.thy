@@ -1,11 +1,11 @@
-theory Tr_Fun_Defs_exec
+theory Tr_Fun_Defs
   imports HOL.List
 begin
 
-section \<open>Equivalent tail recursive definitions of standard HOL list functions\<close>
+section \<open>tail recursive definitions of HOL list functions\<close>
 
 
-paragraph \<open>Tail recursive reverse\<close>
+paragraph \<open>Tail recursive \<open>rev\<close>\<close>
 
 fun rev_tr_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"  where
   "rev_tr_acc acc [] = acc"
@@ -21,7 +21,7 @@ lemma rev_tr_eq_rev[simp]: "rev_tr = rev"
   by (simp add: fun_eq_iff rev_tr_def rev_tr_acc)
 
 
-paragraph \<open>Tail recursive enumerate\<close>
+paragraph \<open>Tail recursive \<open>enumerate\<close>\<close>
 
 fun enumerate_tr_acc :: "(nat \<times> 'a) list \<Rightarrow> nat \<Rightarrow> 'a list \<Rightarrow> (nat \<times> 'a) list"  where
   "enumerate_tr_acc acc i [] = rev_tr acc"
@@ -37,7 +37,7 @@ lemma enumerate_tr_eq_enumerate[simp]: "enumerate_tr = enumerate"
   by (simp add: fun_eq_iff enumerate_tr_def enumerate_tr_acc)
 
 
-paragraph \<open>Tail recursive map\<close>
+paragraph \<open>Tail recursive \<open>map\<close>\<close>
 
 fun map_tr_acc :: "'b list \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> 'a list \<Rightarrow> 'b list"  where
   "map_tr_acc acc f [] = rev_tr acc"
@@ -53,7 +53,7 @@ lemma map_tr_eq_map[simp]: "map_tr = map"
   by (simp add: fun_eq_iff map_tr_def map_tr_acc)
 
 
-paragraph \<open>Tail recursive filter\<close>
+paragraph \<open>Tail recursive \<open>filter\<close>\<close>
 
 fun filter_tr_acc :: "'a list \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> 'a list"  where
   "filter_tr_acc acc p [] = rev_tr acc"
@@ -69,7 +69,7 @@ lemma filter_tr_eq_filter[simp]: "filter_tr = filter"
   by (simp add: fun_eq_iff filter_tr_def filter_tr_acc)
 
 
-paragraph \<open>Tail recursive append\<close>
+paragraph \<open>Tail recursive \<open>append\<close>\<close>
 
 fun append_tr_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"  where
   "append_tr_acc acc [] = acc"
@@ -85,7 +85,7 @@ lemma append_tr_eq_append[simp]: "append_tr = append"
   by (simp add: fun_eq_iff append_tr_def append_tr_acc)
 
 
-paragraph \<open>Tail recursive concat\<close>
+paragraph \<open>Tail recursive \<open>concat\<close>\<close>
 
 fun concat_tr_acc :: "'a list \<Rightarrow> 'a list list \<Rightarrow> 'a list"  where
   "concat_tr_acc acc [] = acc"
@@ -101,12 +101,12 @@ lemma concat_tr_eq_concat[simp]: "concat_tr = concat"
   by (simp add: fun_eq_iff concat_tr_def concat_tr_acc)
 
 
-paragraph \<open>Tail recursive List.product\<close>
+paragraph \<open>Tail recursive \<open>product\<close>\<close>
 
 fun product_tr_acc :: "('a \<times> 'b) list \<Rightarrow> 'a list \<Rightarrow> 'b list \<Rightarrow> ('a \<times> 'b) list"  where
   "product_tr_acc acc [] _ = acc"
 | "product_tr_acc acc (x#xs) ys =  product_tr_acc (acc @ map_tr (Pair x) ys) xs ys"
-
+                                                          
 lemma product_tr_acc: "product_tr_acc acc xs ys = acc @ List.product xs ys"
   by(induction xs arbitrary: acc) simp_all
 
@@ -117,29 +117,27 @@ lemma product_tr_eq_product[simp]: "product_tr = List.product"
   by (simp add: fun_eq_iff product_tr_def product_tr_acc)
 
 
-paragraph \<open>Tail recursive '\<lambda>x xs. x \<in> set xs'\<close>
+paragraph \<open>Tail recursive \<open>ListMem\<close>\<close>
 
-fun isin_tr :: "'a \<Rightarrow> 'a list \<Rightarrow> bool"  where
-  "isin_tr a [] = False"
-| "isin_tr a (x#xs) = (if a = x then True else isin_tr a xs)"
+fun ListMem_tr :: "'a \<Rightarrow> 'a list \<Rightarrow> bool"  where
+  "ListMem_tr a [] = False"
+| "ListMem_tr a (x#xs) = (if a = x then True else ListMem_tr a xs)"
 
-lemma isin_tr_eq_in_set[simp]: "isin_tr = (\<lambda>a xs. a \<in> set xs)"
-proof -
-  have "isin_tr a xs \<longleftrightarrow> a \<in> set xs" for a::'a and xs::"'a list"
-    by (induction xs) simp_all
-  then show ?thesis
-    by (simp add: fun_eq_iff)
+lemma ListMem_tr_eq_ListMem[simp]: "ListMem_tr = ListMem"
+proof (intro ext) fix x::'a and xs::"'a list"
+  show "ListMem_tr x xs = ListMem x xs"
+    by (induction xs) (simp_all add: ListMem_iff)
 qed
 
 
-paragraph \<open>Tail recursive remdups\<close>
+paragraph \<open>Tail recursive \<open>remdups\<close>\<close>
 
 fun remdups_tr_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"  where
   "remdups_tr_acc acc [] = rev acc"
-| "remdups_tr_acc acc (x#xs) = remdups_tr_acc (if \<not>(isin_tr x xs) then x # acc else acc) xs"
+| "remdups_tr_acc acc (x#xs) = remdups_tr_acc (if \<not>(ListMem_tr x xs) then x # acc else acc) xs"
 
 lemma remdups_tr_acc: "remdups_tr_acc acc xs = rev acc @ remdups xs"
-  by (induction xs arbitrary: acc) simp_all
+  by (induction xs arbitrary: acc) (simp_all add: ListMem_iff)
 
 definition
   "remdups_tr \<equiv> remdups_tr_acc []"
@@ -148,22 +146,20 @@ lemma remdups_tr_eq_remdups[simp]: "remdups_tr = remdups"
   by (simp add: fun_eq_iff remdups_tr_def remdups_tr_acc)
 
 
-paragraph \<open>Tail recursive list_all\<close>
+paragraph \<open>Tail recursive \<open>list_all\<close>\<close>
 
 fun list_all_tr :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> bool"  where
   "list_all_tr p [] = True"
 | "list_all_tr p (x#xs) = (if p x then list_all_tr p xs else False)"
 
 lemma list_all_tr_eq_list_all[simp]: "list_all_tr = list_all"
-proof -
-  have "list_all_tr p xs = list_all p xs" for p::"'a \<Rightarrow> bool" and xs::"'a list"
+proof (intro ext) fix p::"'a \<Rightarrow> bool" and xs::"'a list"
+  show "list_all_tr p xs = list_all p xs"
     by (induction xs) simp_all
-  then show ?thesis
-    by (simp add: fun_eq_iff)
 qed
 
 
-paragraph \<open>Tail recursive length\<close>
+paragraph \<open>Tail recursive \<open>length\<close>\<close>
 
 fun length_tr_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> nat"  where
   "length_tr_acc acc [] = acc"
@@ -182,8 +178,8 @@ lemma length_tr_eq_length[simp]: "length_tr = length"
 
 lemmas tr_simps =
   rev_tr_eq_rev enumerate_tr_eq_enumerate map_tr_eq_map filter_tr_eq_filter
-  append_tr_eq_append concat_tr_eq_concat product_tr_eq_product isin_tr_eq_in_set
-  remdups_tr_eq_remdups list_all_tr_eq_list_all length_tr_eq_length
+  append_tr_eq_append concat_tr_eq_concat product_tr_eq_product ListMem_tr_eq_ListMem
+  remdups_tr_eq_remdups list_all_tr_eq_list_all length_tr_eq_length ListMem_tr.simps
 
 declare tr_simps[simp del]
 

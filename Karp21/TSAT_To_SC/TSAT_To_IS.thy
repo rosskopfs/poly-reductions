@@ -1,7 +1,7 @@
 section \<open>\<open>3CNF-SAT\<close> To \<open>Independent Set\<close>\<close>
 
 theory TSAT_To_IS
-  imports "../Reductions" "Poly_Reductions_Lib.SAT_Definition" "IS_Definitions"
+  imports "../Reductions" "Poly_Reductions_Lib.SAT_Definition" IS_Definition
 begin
 
 subsection \<open>Three Sat to Independent Set\<close>
