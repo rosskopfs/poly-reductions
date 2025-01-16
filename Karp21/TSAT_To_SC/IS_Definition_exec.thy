@@ -51,6 +51,9 @@ lemma IS_List_rel_iff[simp]: "IS_List_rel = rel_prod (Set_List_rel (Set_List_rel
 
 unbundle lifting_syntax
 
+lemma id_set_rel[transfer_rule]: "(Set_List_rel r ===> rel_set r) (\<lambda>x. x) set"
+  by blast
+
 lemma Ball_list_all_rel[transfer_rule]: "((r ===> (=)) ===> Set_List_rel r ===> (=)) (\<lambda>p F. Ball F p) list_all"
   by (auto 0 4 simp: in_set_conv_nth list_all_length rel_set_def rel_fun_def)
 
@@ -104,38 +107,26 @@ lemma is_independent_set_exec_rel[transfer_rule]:
 lemma independent_set_pred_exec_rel[transfer_rule]: "(IS_List_rel ===> (=)) independent_set_pred independent_set_pred_exec"
   unfolding independent_set_pred_def independent_set_pred_exec_def IS_List_rel_iff by transfer_prover
 
-lemma independent_set_exec_rel: "rel_set IS_List_rel independent_set independent_set_exec"
+lemma independent_set_exec_rel[transfer_rule]: "rel_set IS_List_rel independent_set independent_set_exec"
   unfolding independent_set_def independent_set_exec_def independent_set_pred_exec_def
-proof (intro rel_setI, goal_cases)
-  case (1 S)
-  then have ugraph: "ugraph (fst S)"
-    by auto
-  then have finite: "finite (fst S)" "\<forall>e \<in> (fst S). finite e"
+proof (safe intro!: rel_setI, goal_cases)
+  case (1 S k V)
+  from 1(1) have "finite S" "\<forall>e \<in> S. finite e"
     unfolding ugraph_def using card_gt_0_iff by fastforce+
-  then have "\<exists>L'. fst S = set L'" "\<forall>e \<in> (fst S). \<exists>xs. e = set xs"
-    using finite_list by fast+
-  then obtain El where El_obt: "fst S = set ` set El"
-    by (metis List.finite_set finite_list finite_subset_image rangeI subset_eq)
-  with ugraph[unfolded ugraph_def] have fst_S_El_rel: "Set_List_rel Set_List_rel_eq (fst S) El" "Set_List_rel Set_List_rel_eq (fst S) El"
-    by (auto simp: rel_set_def)
-  then have "IS_List_rel S (El, snd S)"
-    by (simp add: rel_prod_sel)
-  moreover from this 1 have "(El, snd S) \<in> {(E, k). ugraph_exec E \<and> list_ex (\<lambda>V. length (remdups V) \<ge> k \<and> is_independent_set_exec E V) (subseqs (concat E))}"
-    unfolding independent_set_def[symmetric] independent_set_unfold_pred independent_set_pred_exec_def[symmetric]
-    using independent_set_pred_exec_rel by (blast dest: rel_funD)
-  ultimately show ?case by blast
+  then obtain L where "S = set ` set L"
+    by (metis finite_list finite_subset_image rangeI subset_eq)
+  then have [transfer_rule]: "Set_List_rel Set_List_rel_eq S L" by (auto simp: rel_set_def)
+  moreover from 1(1) have "ugraph_exec L" by transfer
+  moreover from 1(2,3,4) have "list_ex (λV. k ≤ length (remdups V) ∧ is_independent_set_exec L V) (subseqs (concat L))"
+    by transfer blast
+  ultimately show ?case by auto
 next
-  case (2 L)
-  define Es where "Es = set ` set (fst L)"
-  with 2 have "\<forall>s \<in> Es. card s = 2"
-    by (simp add: case_prod_beta' length_remdups_card_conv list.pred_set ugraph_exec_def )
-  with Es_def have Es_fst_L_rel: "Set_List_rel Set_List_rel_eq Es (fst L)" "Set_List_rel Set_List_rel_eq Es (fst L)"
+  case (2 L k)
+  then obtain S where "S = set ` set L" by blast
+  then have [transfer_rule]: "Set_List_rel Set_List_rel_eq S L"
     by (auto simp: rel_set_def)
-  then have "IS_List_rel (Es, snd L) (fst L, snd L)"
-    by (simp add: rel_prod_sel)
-  moreover from this 2 have "(Es, snd L) \<in> {(E, k). ugraph E \<and> (\<exists>V\<in>Pow (\<Union> E). k \<le> card V \<and> is_independent_set E V)}"
-    unfolding independent_set_pred_def[symmetric] independent_set_pred_exec_def[symmetric]
-    using independent_set_pred_exec_rel by (auto dest: rel_funD)
+  moreover from 2(1) have "ugraph S" by transfer
+  moreover from 2(2) have "∃V∈Pow (⋃ S). k ≤ card V ∧ is_independent_set S V" by transfer
   ultimately show ?case by auto
 qed
 

@@ -78,32 +78,27 @@ lemma three_cnf_sat_pred_exec_rel[transfer_rule]:
     "(list_all2 Set_List_rel_eq ===> (=)) three_cnf_sat_pred three_cnf_sat_pred_exec"
   unfolding three_cnf_sat_pred_def three_cnf_sat_pred_exec_def by transfer_prover
 
-lemma three_cnf_sat_exec_rel:
-    "rel_set (list_all2 Set_List_rel_eq) three_cnf_sat three_cnf_sat_exec"
-proof -
-  have all_card_n_list_rel: "(list_all2 Set_List_rel_eq ===> (=)) (\<lambda>F. \<forall>cls\<in>set F. card cls = n) (\<lambda>F. list_all (\<lambda>xs. length (remdups xs) = n) F)" for n
-    by transfer_prover
-  show ?thesis
-    unfolding three_cnf_sat_def three_cnf_sat_exec_def[unfolded three_cnf_sat_pred_exec_def]
-  proof (intro rel_setI, goal_cases)
-    case (1 Fs)
-    then have "\<forall>s \<in> set Fs. finite s"
-      using card_eq_0_iff by fastforce
-    then have "\<forall>s \<in> set Fs. \<exists>xs. s = set xs"
-      using finite_list by fast
-    then obtain Fl where "list_all2 Set_List_rel_eq Fs Fl"
-      by (induction Fs) (fastforce simp: rel_set_eq)+
-    with 1 show ?case
-      using sat_exec_rel all_card_n_list_rel by (blast dest: rel_funD)
-  next
-    case (2 Fl)
-    then have "\<forall>xs \<in> set Fl. \<exists>s. s = set xs"
-      by simp
-    then obtain Fs where obt: "list_all2 Set_List_rel_eq Fs Fl"
-      by (induction Fl) (fastforce simp: rel_set_eq)+
-    with 2 show ?case
-      using sat_exec_rel all_card_n_list_rel by (blast dest: rel_funD)
-  qed
+lemma three_cnf_sat_exec_rel[transfer_rule]:
+  "rel_set (list_all2 Set_List_rel_eq) three_cnf_sat three_cnf_sat_exec"
+  unfolding three_cnf_sat_def three_cnf_sat_exec_def three_cnf_sat_pred_exec_def
+proof (safe intro!: rel_setI, goal_cases)
+  case (1 Fs)
+  from 1(2) card_gt_0_iff have "∀cls \<in> set Fs. finite cls" by fastforce
+  then obtain Fl where "Fs = map set Fl"
+    by (metis ex_map_conv finite_list)
+  then have [transfer_rule]: "list_all2 Set_List_rel_eq Fs Fl"
+    by (auto simp: rel_set_eq list_all2_conv_all_nth)
+  moreover from 1(1) have "sat_exec Fl" by transfer
+  moreover from 1(2) have "list_all (\<lambda>cls. length (remdups cls) = 3) Fl" by transfer
+  ultimately show ?case by blast
+next
+  case (2 Fl)
+  obtain Fs where "Fs = map set Fl" by blast
+  then have [transfer_rule]: "list_all2 Set_List_rel_eq Fs Fl"
+    by (auto simp: rel_set_eq list_all2_conv_all_nth)
+  moreover from 2(1) have "sat Fs" by transfer
+  moreover from 2(2) have "∀cls∈set Fs. card cls = 3" by transfer
+  ultimately show ?case by blast
 qed
 
 
@@ -139,7 +134,7 @@ proof (induction F)
   next
     case False
     then have "(transl_SAT_list_set (transl_SAT_set_list (f # F)) = f # F) \<Longrightarrow> False"
-      by (metis Cons_eq_map_conv List.finite_set transl_sat_list_set_iff)
+      using finite_set[of "SOME xs. set xs = f"] by simp
     with False show ?thesis by auto
   qed
 qed simp

@@ -24,9 +24,6 @@ lemma union_append_rel[transfer_rule]: "(Set_List_rel r ===> Set_List_rel r ===>
 lemma Ball_set_list_all_rel[transfer_rule]: "((r ===> (=)) ===> list_all2 r ===> (=)) (\<lambda>p F. Ball (set F) p) list_all"
   by (fastforce simp: in_set_conv_nth list_all2_conv_all_nth list_all_length dest: rel_funD)
 
-lemma id_set_rel[transfer_rule]: "(Set_List_rel r ===> rel_set r) (\<lambda>x. x) set"
-  by blast
-
 
 subsubsection \<open>executable definition of \<open>sat_is_un_1\<close>\<close>
 
@@ -290,7 +287,7 @@ proof -
     using transl_SAT_list_set_rel .
   have "independent_set_pred (sat_is (transl_SAT_list_set x)) \<longleftrightarrow> ?asm"
     by transfer_prover
-  with assms have "independent_set_pred (sat_is (transl_SAT_list_set x))" by simp
+  with assms have "independent_set_pred (sat_is (transl_SAT_list_set x))" by blast
   then have "three_cnf_sat_pred (transl_SAT_list_set x)"
     using is_reduction_sat_is[unfolded is_reduction_def three_cnf_sat_unfold_pred independent_set_unfold_pred] by blast
   then show ?thesis
