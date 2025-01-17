@@ -15,4 +15,10 @@ definition
 definition
   "independent_set \<equiv> {(E, k). \<exists>V. ugraph E \<and> V \<subseteq> \<Union> E \<and> card V \<ge> k \<and> is_independent_set E V}"
 
+definition
+  "independent_set_pred \<equiv> \<lambda>(E, k). ugraph E \<and> (\<exists>V \<in> Pow (\<Union> E). card V \<ge> k \<and> is_independent_set E V)"
+
+lemma independent_set_unfold_pred: "independent_set = {E. independent_set_pred E}"
+  unfolding independent_set_def independent_set_pred_def by blast
+
 end

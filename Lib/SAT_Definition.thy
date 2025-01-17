@@ -22,4 +22,10 @@ definition sat :: "'a three_sat \<Rightarrow> bool" where
 definition
   "three_cnf_sat \<equiv> {F. sat F \<and> (\<forall>cls \<in> set F. card cls = 3)}"
 
+definition
+  "three_cnf_sat_pred F \<equiv> sat F \<and> (\<forall>cls \<in> set F. card cls = 3)"
+
+lemma three_cnf_sat_unfold_pred: "three_cnf_sat = {F. three_cnf_sat_pred F}"
+  unfolding three_cnf_sat_def three_cnf_sat_pred_def by (rule refl)
+
 end

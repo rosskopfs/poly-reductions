@@ -13,12 +13,6 @@ definition sat_exec :: "'a sat_list \<Rightarrow> bool"  where
   "sat_exec F \<equiv> \<exists>\<sigma>. models_exec \<sigma> F"
 
 definition
-  "three_cnf_sat_pred F \<equiv> sat F \<and> (\<forall>cls \<in> set F. card cls = 3)"
-
-lemma three_cnf_sat_unfold_pred: "three_cnf_sat = {F. three_cnf_sat_pred F}"
-  unfolding three_cnf_sat_def three_cnf_sat_pred_def by (rule refl)
-
-definition
   "three_cnf_sat_pred_exec F \<equiv> sat_exec F \<and> (list_all (\<lambda>xs. length (remdups xs) = 3) F)"
 
 definition
@@ -80,24 +74,23 @@ lemma three_cnf_sat_pred_exec_rel[transfer_rule]:
 
 lemma three_cnf_sat_exec_rel[transfer_rule]:
   "rel_set (list_all2 Set_List_rel_eq) three_cnf_sat three_cnf_sat_exec"
-  unfolding three_cnf_sat_def three_cnf_sat_exec_def three_cnf_sat_pred_exec_def
+  unfolding three_cnf_sat_unfold_pred three_cnf_sat_exec_def
 proof (safe intro!: rel_setI, goal_cases)
   case (1 Fs)
-  from 1(2) card_gt_0_iff have "∀cls \<in> set Fs. finite cls" by fastforce
+  with card_gt_0_iff have "∀cls \<in> set Fs. finite cls"
+    unfolding three_cnf_sat_pred_def by fastforce
   then obtain Fl where "Fs = map set Fl"
     by (metis ex_map_conv finite_list)
   then have [transfer_rule]: "list_all2 Set_List_rel_eq Fs Fl"
     by (auto simp: rel_set_eq list_all2_conv_all_nth)
-  moreover from 1(1) have "sat_exec Fl" by transfer
-  moreover from 1(2) have "list_all (\<lambda>cls. length (remdups cls) = 3) Fl" by transfer
+  moreover from 1 have "three_cnf_sat_pred_exec Fl" by transfer
   ultimately show ?case by blast
 next
   case (2 Fl)
   obtain Fs where "Fs = map set Fl" by blast
   then have [transfer_rule]: "list_all2 Set_List_rel_eq Fs Fl"
     by (auto simp: rel_set_eq list_all2_conv_all_nth)
-  moreover from 2(1) have "sat Fs" by transfer
-  moreover from 2(2) have "∀cls∈set Fs. card cls = 3" by transfer
+  moreover from 2 have "three_cnf_sat_pred Fs" by transfer
   ultimately show ?case by blast
 qed
 
@@ -110,11 +103,8 @@ definition
 lemma transl_sat_list_set_iff[simp]: "transl_SAT_list_set = map set"
   unfolding transl_SAT_list_set_def by simp
 
-lemma transl_SAT_list_set_rel[transfer_rule]: "list_all2 Set_List_rel_eq (transl_SAT_list_set L) L"
-  by (induction L) (simp_all add: rel_set_eq)
-
-lemma TSAT_p_exec_TSAT_p_transl_iff: "three_cnf_sat_pred_exec F \<longleftrightarrow> three_cnf_sat_pred (transl_SAT_list_set F)"
-  using transl_SAT_list_set_rel three_cnf_sat_pred_exec_rel by (blast dest: rel_funD)
+lemma transl_SAT_list_set_rel: "list_all2 Set_List_rel_eq (transl_SAT_list_set L) L"
+  by (auto simp: rel_set_eq list_all2_conv_all_nth)
 
 definition
   "transl_SAT_set_list \<equiv> map (\<lambda>s. (SOME xs. set xs = s))"
@@ -139,7 +129,7 @@ proof (induction F)
   qed
 qed simp
 
-lemma transl_SAT_set_list_rel[transfer_rule]: "list_all finite F \<Longrightarrow> list_all2 Set_List_rel_eq F (transl_SAT_set_list F)"
+lemma transl_SAT_set_list_rel: "list_all finite F \<Longrightarrow> list_all2 Set_List_rel_eq F (transl_SAT_set_list F)"
   using transl_SAT_id[of F] transl_SAT_list_set_rel[of "transl_SAT_set_list F"] by presburger
 
 lemma transl_SAT_set_list_finite:

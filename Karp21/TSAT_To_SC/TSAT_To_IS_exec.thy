@@ -1,3 +1,5 @@
+section \<open>\<open>3CNF-SAT\<close> To \<open>Independent Set\<close> on lists\<close>
+
 theory TSAT_To_IS_exec
   imports TSAT_To_IS Poly_Reductions_Lib.SAT_Definition_exec IS_Definition_exec Poly_Reductions_Lib.Tr_Fun_Defs
 begin
@@ -6,7 +8,7 @@ subsection \<open>Executable Three Sat to Independent Set\<close>
 
 unbundle lifting_syntax
 
-lemma map_image_rel[transfer_rule]: "((r ===> s) ===> Set_List_rel r ===> Set_List_rel s) image map"
+lemma image_map_rel[transfer_rule]: "((r ===> s) ===> Set_List_rel r ===> Set_List_rel s) image map"
   by (fastforce simp: rel_set_def dest: rel_funD)
 
 lemma Sprod_Lprod_rel[transfer_rule]: "(Set_List_rel_eq ===> Set_List_rel_eq ===> Set_List_rel_eq) (\<times>) List.product"
@@ -258,44 +260,16 @@ definition
     then (sat_is_un_1_exec_tr F @tr sat_is_un_2_exec_tr F, length_tr F)
     else ([], 1)"
 
-lemma "sat_is_exec_tr = sat_is_exec"
+lemma sat_is_exec_tr_eq: "sat_is_exec_tr = sat_is_exec"
   unfolding sat_is_exec_tr_def sat_is_exec_def sat_is_un_1_exec_tr_eq sat_is_un_2_exec_tr_eq tr_simps
   by (rule refl)
 
 
 subsection \<open>\<open>sat_is_exec\<close> is a reduction from \<open>three_cnf_sat\<close> to \<open>independent_set\<close>\<close>
 
-lemma IS_p_exec_sat_is_exec_if_TSAT_p_exec:
-  assumes "three_cnf_sat_pred_exec F"
-  shows "independent_set_pred_exec (sat_is_exec F)"
-proof -
-  have [transfer_rule]: "list_all2 Set_List_rel_eq (transl_SAT_list_set F) F"
-    using transl_SAT_list_set_rel .
-  from assms have "three_cnf_sat_pred (transl_SAT_list_set F)"
-    using TSAT_p_exec_TSAT_p_transl_iff by blast
-  then have "independent_set_pred (sat_is (transl_SAT_list_set F))"
-    using is_reduction_sat_is[unfolded is_reduction_def three_cnf_sat_unfold_pred independent_set_unfold_pred] by blast
-  show "independent_set_pred_exec (sat_is_exec F)"
-    by transfer (fact \<open>independent_set_pred (sat_is (transl_SAT_list_set F))\<close>)
-qed
-
-lemma TSAT_p_exec_if_IS_p_exec_sat_is_exec:
-  assumes "independent_set_pred_exec (sat_is_exec x)" (is ?asm)
-  shows "three_cnf_sat_pred_exec x"
-proof -
-  have [transfer_rule]: "list_all2 Set_List_rel_eq (transl_SAT_list_set x) x"
-    using transl_SAT_list_set_rel .
-  have "independent_set_pred (sat_is (transl_SAT_list_set x)) \<longleftrightarrow> ?asm"
-    by transfer_prover
-  with assms have "independent_set_pred (sat_is (transl_SAT_list_set x))" by blast
-  then have "three_cnf_sat_pred (transl_SAT_list_set x)"
-    using is_reduction_sat_is[unfolded is_reduction_def three_cnf_sat_unfold_pred independent_set_unfold_pred] by blast
-  then show ?thesis
-    using TSAT_p_exec_TSAT_p_transl_iff by blast
-qed
-
-lemma is_reduction_sat_is_exec: "is_reduction sat_is_exec three_cnf_sat_exec independent_set_exec"
-  unfolding is_reduction_def three_cnf_sat_exec_def independent_set_exec_def
-  using IS_p_exec_sat_is_exec_if_TSAT_p_exec TSAT_p_exec_if_IS_p_exec_sat_is_exec by blast
+theorem is_reduction_sat_is_exec: "is_reduction sat_is_exec three_cnf_sat_exec independent_set_exec"
+  unfolding three_cnf_sat_exec_def independent_set_exec_def
+  by (rule transfer_is_reduction[OF is_reduction_sat_is[unfolded three_cnf_sat_unfold_pred independent_set_unfold_pred]])
+    (fact three_cnf_sat_pred_exec_rel independent_set_pred_exec_rel sat_is_exec_rel transl_SAT_list_set_rel)+
 
 end

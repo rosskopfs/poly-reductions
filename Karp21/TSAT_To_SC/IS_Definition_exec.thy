@@ -14,12 +14,6 @@ definition
   "is_independent_set_exec E V \<equiv> list_all (\<lambda>u. list_all (\<lambda>v. \<not> list_member [u, v] E) V) V"
 
 definition
-  "independent_set_pred \<equiv> \<lambda>(E, k). ugraph E \<and> (\<exists>V \<in> Pow (\<Union> E). card V \<ge> k \<and> is_independent_set E V)"
-
-lemma independent_set_unfold_pred: "independent_set = {E. independent_set_pred E}"
-  unfolding independent_set_def independent_set_pred_def by blast
-
-definition
   "independent_set_pred_exec \<equiv> \<lambda>(E, k). ugraph_exec E \<and> list_ex (\<lambda>V. length (remdups V) \<ge> k \<and> is_independent_set_exec E V) (subseqs (concat E))"
 
 definition
@@ -39,9 +33,9 @@ lemma IS_List_relI[intro]:
 lemma IS_List_relE[elim]:
   assumes "IS_List_rel (S, k1) (L, k2)"
   obtains "S = set ` set L" "k1 = k2"
-  using assms unfolding IS_List_rel_def by (fastforce simp: rel_set_eq dest: rel_setD1 rel_setD2)
+  using assms unfolding IS_List_rel_def by (fastforce dest: rel_setD1 rel_setD2)
 
-lemma IS_List_relD[dest!]:
+lemma IS_List_relD[dest]:
   assumes "IS_List_rel (S, k) (L, k)"
   obtains "S = set ` set L"
   using assms by (rule IS_List_relE)
@@ -108,25 +102,21 @@ lemma independent_set_pred_exec_rel[transfer_rule]: "(IS_List_rel ===> (=)) inde
   unfolding independent_set_pred_def independent_set_pred_exec_def IS_List_rel_iff by transfer_prover
 
 lemma independent_set_exec_rel[transfer_rule]: "rel_set IS_List_rel independent_set independent_set_exec"
-  unfolding independent_set_def independent_set_exec_def independent_set_pred_exec_def
+  unfolding independent_set_unfold_pred independent_set_exec_def
 proof (safe intro!: rel_setI, goal_cases)
-  case (1 S k V)
-  from 1(1) have "finite S" "\<forall>e \<in> S. finite e"
-    unfolding ugraph_def using card_gt_0_iff by fastforce+
+  case (1 S k)
+  then have "finite S" "\<forall>e \<in> S. finite e"
+    unfolding independent_set_pred_def ugraph_def using card_gt_0_iff by fastforce+
   then obtain L where "S = set ` set L"
     by (metis finite_list finite_subset_image rangeI subset_eq)
-  then have [transfer_rule]: "Set_List_rel Set_List_rel_eq S L" by (auto simp: rel_set_def)
-  moreover from 1(1) have "ugraph_exec L" by transfer
-  moreover from 1(2,3,4) have "list_ex (λV. k ≤ length (remdups V) ∧ is_independent_set_exec L V) (subseqs (concat L))"
-    by transfer blast
+  then have [transfer_rule]: "IS_List_rel (S, k) (L, k)" by (auto simp: rel_set_def)
+  moreover from 1 have "independent_set_pred_exec (L, k)" by transfer
   ultimately show ?case by auto
 next
   case (2 L k)
   then obtain S where "S = set ` set L" by blast
-  then have [transfer_rule]: "Set_List_rel Set_List_rel_eq S L"
-    by (auto simp: rel_set_def)
-  moreover from 2(1) have "ugraph S" by transfer
-  moreover from 2(2) have "∃V∈Pow (⋃ S). k ≤ card V ∧ is_independent_set S V" by transfer
+  then have [transfer_rule]: "IS_List_rel (S, k) (L, k)" by (auto simp: rel_set_def)
+  moreover from 2 have "independent_set_pred (S, k)" by transfer
   ultimately show ?case by auto
 qed
 
@@ -139,11 +129,8 @@ definition
 lemma transl_IS_list_set_iff[simp]: "transl_IS_list_set = (\<lambda>(L, k). (set ` set L, k))"
   unfolding transl_IS_list_set_def by simp
 
-lemma transl_IS_list_set_rel[transfer_rule]: "IS_List_rel (transl_IS_list_set x) x"
-  by (induction "fst x") (auto simp: rel_set_def split: prod.split)
-
-lemma IS_p_exec_IS_p_transl_iff: "independent_set_pred_exec x \<longleftrightarrow> independent_set_pred (transl_IS_list_set x)"
-  using transl_IS_list_set_rel independent_set_pred_exec_rel by (blast dest: rel_funD)
+lemma transl_IS_list_set_rel: "IS_List_rel (transl_IS_list_set x) x"
+  by (auto simp: rel_set_def split: prod.split)
 
 definition
   "transl_IS_set_list \<equiv> \<lambda>(S, k). (SOME L. set ` set L = S , k)"
@@ -174,8 +161,7 @@ lemma transl_IS_set_list_finite:
 proof -
   have "IS_List_rel (S, k) (transl_IS_set_list (S, k)) \<Longrightarrow> \<exists>S'. set ` set S' = S"
     by (rule IS_List_relD) auto
-  with assms show "finite S" "\<And>s. s \<in> S \<Longrightarrow> finite s"
-    by blast+
+  with assms show "finite S" "\<And>s. s \<in> S \<Longrightarrow> finite s" by blast+
 qed
 
 end
