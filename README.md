@@ -28,7 +28,7 @@ A work plan is summarized [here](doc/PLAN.md).
 ## Index
 ### Polynomial-Time Reductions
 So far the following classic reductions between NP-hard problems have been formalized:
-- `Three_Sat_To_Set_Cover.thy`: 3CNF-SAT <= Independent Set <= Vertex Cover <= Set Cover
+- `TSAT_To_SC.thy`: 3CNF-SAT <= Independent Set <= Vertex Cover <= Set Cover
 - `CNF_SAT_To_Clique.thy`: 3CNF-SAT <= Clique
 - `HC_To_UHC.thy`: Hamiltonian Cycle <= Undicrected Hamiltonian Cycle
 - `VC_To_FNS.thy`: Vertex Cover <= Feedback Node Set

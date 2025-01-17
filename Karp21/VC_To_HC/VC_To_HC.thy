@@ -1,5 +1,5 @@
 theory VC_To_HC
-  imports  Main "../Three_Sat_To_Set_Cover" Graph_Theory.Digraph  Graph_Theory.Arc_Walk
+  imports  Main "../TSAT_To_SC/TSAT_To_SC" Graph_Theory.Digraph  Graph_Theory.Arc_Walk
     Graph_Theory.Vertex_Walk
     "Poly_Reductions_Lib.List_Auxiliaries" "VC_To_HC_1" "VC_To_HC_2"
     Definitions_HC

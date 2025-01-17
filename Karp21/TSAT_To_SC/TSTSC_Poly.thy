@@ -1,7 +1,7 @@
 subsection\<open>The reduction from \<open>3CNF-SAT\<close> To \<open>Set Cover\<close> is polynomial\<close>
 
 theory TSTSC_Poly
-  imports Polynomial_Reductions Three_Sat_To_Set_Cover
+  imports "../Polynomial_Reductions" TSAT_To_SC
 begin
 
 definition "size_IS = (\<lambda>(E,k). card E)"
@@ -488,7 +488,7 @@ definition "sat_to_is_time n = 3 + 3 * n + 3 * n * n"
 lemma sat_to_is_refines:
   "sat_to_is F \<le> SPEC (\<lambda>y. y = sat_is F) (\<lambda>_. sat_to_is_time (size_SAT F))"
   unfolding SPEC_def
-  unfolding sat_to_is_def sat_is_def   
+  unfolding sat_to_is_def sat_is_unfold
       mop_list_length_def mop_set_empty_set_def add_first_part_def
       add_second_part_def
   apply(rule T_specifies_I) 
@@ -543,7 +543,7 @@ lemma upperbounding_card3: "\<forall>x\<in>X. card x = 3 \<Longrightarrow> x\<in
 
 
 lemma sat_to_is_size: "size_IS (sat_is p) \<le> sat_to_is_space (size_SAT p)" 
-  apply(auto simp: size_IS_def sat_is_def sat_to_is_space_def size_SAT_def)
+  apply(auto simp: size_IS_def sat_is_unfold sat_to_is_space_def size_SAT_def)
   apply(rule order.trans[OF card_Un_le])
   apply(rule add_mono)
   subgoal
