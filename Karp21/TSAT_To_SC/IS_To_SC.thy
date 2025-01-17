@@ -1,21 +1,8 @@
 section \<open>\<open>Independent Set\<close> To \<open>Set Cover\<close>\<close>
 
 theory IS_To_SC
-  imports "../Reductions" IS_Definition
+  imports "../Reductions" VC_SC_Definition
 begin
-
-subsection \<open>Preliminaries\<close>
-
-definition
-  "is_vertex_cover E V \<equiv> \<forall> e \<in> E. \<exists> v \<in> V. v \<in> e"
-
-definition
-  "vertex_cover \<equiv>
-  {(E, k). \<exists>V. ugraph E \<and> V \<subseteq> \<Union> E \<and> k \<le> card (\<Union> E) \<and> card V \<le> k \<and> is_vertex_cover E V}"
-
-definition
-  (* "set_cover \<equiv> {(T, k). \<exists> S \<subseteq> T. \<Union> S = \<Union> T \<and> card S \<le> k \<and> finite T \<and> finite (\<Union> T)}" *)
-  "set_cover \<equiv> {(T, k). \<exists> S \<subseteq> T. \<Union> S = \<Union> T \<and> card S \<le> k}"
 
 definition
   "is_vc \<equiv> \<lambda>(E, k). if k > card (\<Union> E) then (E, k) else (E, card (\<Union> E) - k)"
