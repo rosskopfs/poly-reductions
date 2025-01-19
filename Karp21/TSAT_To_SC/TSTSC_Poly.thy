@@ -20,7 +20,7 @@ definition "mop_get_vertices_card E = REST [(card (\<Union> E)) \<mapsto> 2 * ca
 
 text \<open>Then we can easily give an abstract algorithm for the reduction:\<close>
 
-definition "is_to_vc = (\<lambda>(E,k). 
+definition "is_to_vc = (\<lambda>(E,k).
           do {
             s \<leftarrow> mop_get_vertices_card E;
             if k > s  then
@@ -29,8 +29,8 @@ definition "is_to_vc = (\<lambda>(E,k).
               RETURNT (E, s-k)
           })"
 
-definition "vc_time n = 2 * n + 2" 
-definition "vc_space n = n" 
+definition "vc_time n = 2 * n + 2"
+definition "vc_space n = n"
 
 
 lemma is_to_vc_refines:
@@ -38,26 +38,26 @@ lemma is_to_vc_refines:
   unfolding is_to_vc_def is_vc_def SPEC_def mop_get_vertices_card_def
   apply(rule T_specifies_I)
   apply(vcg' \<open>-\<close>)
-  by (auto simp: size_IS_def size_VC_def vc_time_def vc_space_def) 
+  by (auto simp: size_IS_def size_VC_def vc_time_def vc_space_def)
 
 lemma is_to_vc_size:
   "size_VC (is_vc a) \<le> vc_space (size_IS a)"
   apply(cases a)
-  by (auto simp: is_vc_def size_IS_def size_VC_def vc_time_def vc_space_def) 
+  by (auto simp: is_vc_def size_IS_def size_VC_def vc_time_def vc_space_def)
 
 thm is_reduction_is_vc
 
 
 text \<open>And we show that it actually is a polynomial reduction:\<close>
 
-theorem is_to_vc_ispolyred: "ispolyred is_to_vc independent_set vertex_cover size_IS size_VC" 
+theorem is_to_vc_ispolyred: "ispolyred is_to_vc independent_set vertex_cover size_IS size_VC"
   unfolding ispolyred_def
   apply(rule exI[where x=is_vc])
   apply(rule exI[where x=vc_time])
   apply(rule exI[where x=vc_space])
   apply(safe)
   subgoal using is_to_vc_refines by blast
-  subgoal using is_to_vc_size  by blast 
+  subgoal using is_to_vc_size  by blast
   subgoal unfolding poly_def vc_time_def apply(rule exI[where x=1]) by auto
   subgoal unfolding poly_def vc_space_def apply(rule exI[where x=1]) by simp
   subgoal using is_reduction_is_vc .
@@ -86,7 +86,7 @@ definition "R_edge_set_tuple_list = {(xs,E) |xs E. ((\<lambda>(a,b). {a,b}) ` (s
            \<and> inj_on (\<lambda>(a,b). {a,b}) (set xs)  )}"
 text \<open>here the constraint @{term inj_on} means, that the edge list xs
        does not contain any loops ( (a,a) ),
-        or both symmetric edges ( (a,b)\<in>set xs \<and> (b,a)\<in>set xs )\<close> 
+        or both symmetric edges ( (a,b)\<in>set xs \<and> (b,a)\<in>set xs )\<close>
 
 
 text \<open>we can restate the specification to get the cardinality of the set of vertices given
@@ -94,16 +94,16 @@ text \<open>we can restate the specification to get the cardinality of the set o
 
 definition "mop_get_vertices_card' xs = REST [(card (\<Union> ((\<lambda>(a,b). {a,b}) ` (set xs)))) \<mapsto> 2 * length xs + 2]"
 
-lemma mop_get_vertices_card_data_refine:  
+lemma mop_get_vertices_card_data_refine:
   assumes "(xs,E)\<in>R_edge_set_tuple_list"
   shows "mop_get_vertices_card' xs \<le> mop_get_vertices_card E"
 proof -
   from assms have E: "E = (\<lambda>(a,b). {a,b}) ` (set xs)"
      and *: "distinct xs""inj_on (\<lambda>(a,b). {a,b}) (set xs)"
     unfolding R_edge_set_tuple_list_def by auto
-  have **: "card E = length xs" 
+  have **: "card E = length xs"
     by(simp add: card_image distinct_card E *)
-  show ?thesis    
+  show ?thesis
     unfolding mop_get_vertices_card'_def mop_get_vertices_card_def
     unfolding ** by(simp add: E)
 qed
@@ -113,16 +113,16 @@ text \<open>now let's implement getting the cardinality of V with the basic set 
 definition "mop_get_vertices' es = SPECT [\<Union> ((\<lambda>(a,b). {a,b}) ` (set es)) \<mapsto> 2 * length es + 1]"
 
 definition get_vertices where
-  "get_vertices es = 
+  "get_vertices es =
     do { S \<leftarrow> mop_set_empty_set;
-      S' \<leftarrow> nfoldli es (\<lambda>_. True) 
+      S' \<leftarrow> nfoldli es (\<lambda>_. True)
             (\<lambda>(a,b) S. do {
                   S \<leftarrow> mop_set_insert S a;
                   S \<leftarrow> mop_set_insert S b;
-                  RETURNT S }) 
+                  RETURNT S })
 
         S;
-      RETURNT S' 
+      RETURNT S'
   }"
 
 
@@ -136,10 +136,10 @@ proof -
   apply(rule T_specifies_I)
   apply(subst nfoldliIE_def[symmetric, where I="?I" and E=2])
   unfolding mop_set_empty_set_def
-  apply(vcg' -) 
+  apply(vcg' -)
   apply(rule nfoldliIE_rule[THEN T_specifies_rev, THEN T_conseq4, where P2="?I xs []" ])
        apply simp
-  subgoal 
+  subgoal
     apply(rule T_specifies_I)
     unfolding mop_set_insert_def
     apply(vcg' -)
@@ -150,8 +150,8 @@ proof -
   apply (rule order.refl)
   unfolding mop_set_card_def
   apply (vcg' -) apply auto unfolding Some_le_emb'_conv Some_eq_emb'_conv
-   apply (auto simp add: one_enat_def)    
-  done 
+   apply (auto simp add: one_enat_def)
+  done
 qed
 
 definition get_vertices_card :: "('b*'b) list \<Rightarrow> nat nrest" where
@@ -160,32 +160,32 @@ definition get_vertices_card :: "('b*'b) list \<Rightarrow> nat nrest" where
       n \<leftarrow> mop_set_card V;
       RETURNT n
     }"
- 
+
 thm get_vertices_refine[unfolded mop_get_vertices'_def,
                 THEN T_specifies_rev, THEN T_conseq4]
 
 lemma get_vertices_card_refine:
-  "get_vertices_card xs \<le> mop_get_vertices_card' xs" 
+  "get_vertices_card xs \<le> mop_get_vertices_card' xs"
   unfolding get_vertices_card_def mop_get_vertices_card'_def
-  apply(rule T_specifies_I) 
+  apply(rule T_specifies_I)
   apply(vcg' - rules: get_vertices_refine[unfolded mop_get_vertices'_def,
-                THEN T_specifies_rev, THEN T_conseq4]) 
+                THEN T_specifies_rev, THEN T_conseq4])
   unfolding mop_set_card_def
   apply (vcg' -) unfolding Some_le_emb'_conv Some_eq_emb'_conv
-  by (auto simp add: one_enat_def split: if_splits)    
- 
+  by (auto simp add: one_enat_def split: if_splits)
+
 
 lemma get_vertices_card_data_refine:
   assumes "(xs,E)\<in>R_edge_set_tuple_list"
   shows "get_vertices_card xs \<le>  (mop_get_vertices_card E)"
-  apply(rule order.trans) 
+  apply(rule order.trans)
   apply(rule   get_vertices_card_refine)
   apply(rule mop_get_vertices_card_data_refine)
   by fact
 
 text \<open>now we can give a refined algorithm, only using the fine grained operations:\<close>
 
-definition "is_to_vc2 = (\<lambda>(xs,k). 
+definition "is_to_vc2 = (\<lambda>(xs,k).
           do {
             s \<leftarrow> get_vertices_card xs;
             if k > s  then
@@ -223,15 +223,15 @@ lemma is_to_vc2_refines':
 thm ispolyredd_refine[OF is_to_vc_ispolyred[THEN ispolyredd_generalizes_ispolyredD] is_to_vc2_refines' ]
     is_to_vc2_refines
 
-text \<open>Finally we can show that the new algorithm also is a polynomial reduction acting on 
+text \<open>Finally we can show that the new algorithm also is a polynomial reduction acting on
       lists of tuples instead of an abstract edge set\<close>
 
 theorem "ispolyredd is_to_vc2
        (R_edge_set_tuple_list \<times>\<^sub>r nat_rel) (R_edge_set_tuple_list \<times>\<^sub>r nat_rel)
         independent_set vertex_cover size_IS size_VC"
+  unfolding independent_set_def vertex_cover_def
   apply(rule ispolyredd_refine[OF is_to_vc_ispolyred[THEN ispolyredd_generalizes_ispolyredD], simplified])
-  apply(rule is_to_vc2_refines' ) .
-
+  by (rule is_to_vc2_refines')
 
 subsubsection \<open>\<open>Vertex Cover\<close> To \<open>Set Cover\<close>\<close>
 
@@ -246,7 +246,7 @@ definition "innerset = (\<lambda>v es.
  do {
   Rv \<leftarrow> mop_set_empty_set;
   Rv \<leftarrow> nfoldli es (\<lambda>_. True)
-          (\<lambda>e Rv. do { 
+          (\<lambda>e Rv. do {
                     b \<leftarrow> mop_set_member e v;
                     if b then mop_set_insert Rv e
                        else RETURNT Rv})
@@ -267,18 +267,18 @@ proof -
     apply(rule T_specifies_I)
     apply(vcg' \<open>-\<close> rules: T_SPEC )
     unfolding mop_set_empty_set_def
-    apply(vcg' -) 
+    apply(vcg' -)
     apply(rule nfoldliIE_rule[THEN T_specifies_rev, THEN T_conseq4, where P2="?I es []" ])
     subgoal apply simp done
     subgoal unfolding mop_set_insert_def
       apply(rule T_specifies_I)
       apply(vcg' \<open>-\<close> rules:  ) unfolding Some_le_emb'_conv Some_eq_emb'_conv
-      by (auto simp add: one_enat_def split: if_splits)    
-    subgoal by auto 
-    subgoal by auto 
-     apply (rule order.refl) 
+      by (auto simp add: one_enat_def split: if_splits)
+    subgoal by auto
+    subgoal by auto
+     apply (rule order.refl)
     subgoal apply(vcg' -) unfolding Some_le_emb'_conv Some_eq_emb'_conv
-      by (auto simp add: one_enat_def split: if_splits) 
+      by (auto simp add: one_enat_def split: if_splits)
     done
 qed
 
@@ -292,7 +292,7 @@ definition "outerset = (\<lambda>es vs.
                RETURNT R })
          R;
     RETURNT R
-  })" 
+  })"
 
 definition "outerset_spec es vs
        = SPECT [  {{e. e \<in> set es \<and> v \<in> e} | v. v \<in> set vs} \<mapsto> 1 + ( 2 + (1+1) * length es) * length vs]"
@@ -311,23 +311,23 @@ proof -
     apply(rule T_specifies_I)
     apply(vcg' \<open>-\<close> rules: T_SPEC )
     unfolding mop_set_empty_set_def
-    apply(vcg' -) 
+    apply(vcg' -)
     apply(rule nfoldliIE_rule[THEN T_specifies_rev, THEN T_conseq4, where P2="?I vs []" ])
     subgoal apply simp done
     subgoal unfolding mop_set_insert_def
       apply(rule T_specifies_I)
       apply(vcg' \<open>-\<close> rules: aha) unfolding Some_le_emb'_conv Some_eq_emb'_conv
-      by (auto simp add: one_enat_def split: if_splits)    
-    subgoal by auto 
-    subgoal by auto 
-     apply (rule order.refl) 
+      by (auto simp add: one_enat_def split: if_splits)
+    subgoal by auto
+    subgoal by auto
+     apply (rule order.refl)
     subgoal apply(vcg' -) unfolding Some_le_emb'_conv Some_eq_emb'_conv
-      by (auto simp add: one_enat_def split: if_splits) 
+      by (auto simp add: one_enat_def split: if_splits)
     done
 qed
 
 
-definition "vc_to_sc = (\<lambda>(E,k).   
+definition "vc_to_sc = (\<lambda>(E,k).
   do {
     b \<leftarrow> mop_check_ugraph E;
     V  \<leftarrow> mop_get_vertices E;
@@ -346,50 +346,50 @@ definition "vc_to_sc = (\<lambda>(E,k).
 
 
 
-definition "sc_time n = 1+1+ (2 * n + 1) + 1 + 1 + (1 + ( 1 + (1+1) * n) * (4*n))" 
+definition "sc_time n = 1+1+ (2 * n + 1) + 1 + 1 + (1 + ( 1 + (1+1) * n) * (4*n))"
 
 
 lemmas aha2 = outerset_refines[unfolded outerset_spec_def,
                 THEN T_specifies_rev, THEN T_conseq4]
 
-lemma pf: "a\<le>b \<Longrightarrow> enat a \<le> enat b" by auto 
+lemma pf: "a\<le>b \<Longrightarrow> enat a \<le> enat b" by auto
 lemma k: "enat a + enat b = enat (a+b)" by auto
- 
+
 
 lemma card_Un: "finite E \<Longrightarrow> card (\<Union>E) \<le> sum card E"
-  by(induct  rule: finite_induct) (auto intro: order.trans[OF card_Un_le]) 
+  by(induct  rule: finite_induct) (auto intro: order.trans[OF card_Un_le])
 
 lemma vc_to_sc_refines:
   "vc_to_sc (E,k) \<le> SPEC (\<lambda>y. y = vc_sc (E,k)) (\<lambda>_. sc_time (size_VC (E,k)))"
   unfolding SPEC_def
-  unfolding vc_to_sc_def vc_sc_def   
+  unfolding vc_to_sc_def vc_sc_def
       mop_set_to_list_def mop_get_vertices_def mop_set_card_def
       mop_check_ugraph_def
   apply(rule T_specifies_I)
   apply(vcg' \<open>-\<close> rules: T_SPEC aha2)
   subgoal apply simp  apply safe
-       apply(auto split: if_splits) 
+       apply(auto split: if_splits)
     subgoal premises prems apply(auto simp: sc_time_def size_VC_def)
       unfolding one_enat_def apply simp
-      apply(rule add_mono)   
+      apply(rule add_mono)
       subgoal using prems(8,9) by auto
       subgoal using prems(8,9) apply(intro mult_mono) by auto
       done
-    done 
+    done
   subgoal
     by(auto simp: distinct_card)
   subgoal    for a b x xa
     unfolding ugraph_def apply auto
     subgoal premises prems
     proof -
-      have "length x = card (\<Union> a)" 
+      have "length x = card (\<Union> a)"
         apply(subst distinct_card[symmetric])
         using prems  by auto
       also have "\<dots> \<le> sum card a"
         apply(rule card_Un) using prems by simp
       also have "\<dots> = sum card (set xa)" using prems by auto
       also have "\<dots> = 2 * card (set xa)" using prems by simp
-      also have "\<dots> = 2 * length xa" 
+      also have "\<dots> = 2 * length xa"
         apply(subst distinct_card[symmetric])using prems by auto
       finally show ?thesis .
     qed
@@ -397,20 +397,20 @@ lemma vc_to_sc_refines:
   subgoal
     apply auto
     unfolding Some_le_emb'_conv Some_eq_emb'_conv
-    by (auto simp: size_IS_def size_VC_def sc_time_def  one_enat_def) 
+    by (auto simp: size_IS_def size_VC_def sc_time_def  one_enat_def)
   done
 
 
 
 definition "size_SC = (\<lambda>(E,k). sum card E)"
 
-definition "sc_space n = 1 + 2 * (n * n)" 
-  
+definition "sc_space n = 1 + 2 * (n * n)"
+
 
 lemma sum_Un: "finite E \<Longrightarrow> (\<And>e. e\<in>E \<Longrightarrow> finite e) \<Longrightarrow> (\<And>x. f x \<ge> (0::nat))
      \<Longrightarrow> sum f (\<Union>E) \<le> sum (\<lambda>x. sum f x) E"
-  by (induct  rule: finite_induct) 
-    (simp_all add: sum_Un_nat) 
+  by (induct  rule: finite_induct)
+    (simp_all add: sum_Un_nat)
 
 
 lemma vc_to_sc_size:
@@ -425,13 +425,13 @@ lemma vc_to_sc_size:
     also have "\<dots> \<le> sum (card o (\<lambda>v. {e \<in> E. v \<in> e})) (\<Union> E)"
       apply(rule sum_image_le) using prems(2) ugraph_vertex_set_finite by auto
     also have "\<dots> \<le> sum (\<lambda>x. sum (card o (\<lambda>v. {e \<in> E. v \<in> e})) x) E " apply(rule sum_Un)
-      using prems unfolding ugraph_def apply auto  
-      by (meson finite_subset le_cSup_finite prems(2) ugraph_vertex_set_finite)  
+      using prems unfolding ugraph_def apply auto
+      by (meson finite_subset le_cSup_finite prems(2) ugraph_vertex_set_finite)
     also have "\<dots> \<le> sum (\<lambda>x. sum (\<lambda>_. card E) x) E"
       apply(rule sum_mono)
-      apply(rule sum_mono) apply auto  
-      by (metis (no_types, lifting) card_mono mem_Collect_eq prems(2) subsetI ugraph_def)   
-    also have "\<dots> = sum (\<lambda>x. 2 * card E) E" 
+      apply(rule sum_mono) apply auto
+      by (metis (no_types, lifting) card_mono mem_Collect_eq prems(2) subsetI ugraph_def)
+    also have "\<dots> = sum (\<lambda>x. 2 * card E) E"
       apply(rule sum.cong) using prems(2) unfolding ugraph_def by simp_all
     also have "\<dots> = 2* (card E) * (card E)" by simp
     finally show ?thesis by simp
@@ -439,14 +439,14 @@ lemma vc_to_sc_size:
   done
 
 
-theorem vc_to_sc_ispolyred: "ispolyred vc_to_sc vertex_cover set_cover size_VC size_SC" 
+theorem vc_to_sc_ispolyred: "ispolyred vc_to_sc vertex_cover set_cover size_VC size_SC"
   unfolding ispolyred_def
   apply(rule exI[where x=vc_sc])
   apply(rule exI[where x=sc_time])
   apply(rule exI[where x=sc_space])
   apply(safe)
   subgoal using vc_to_sc_refines by blast
-  subgoal using vc_to_sc_size  by blast 
+  subgoal using vc_to_sc_size  by blast
   subgoal unfolding poly_def sc_time_def apply(rule exI[where x=2]) by auto
   subgoal unfolding poly_def sc_space_def apply(rule exI[where x=2]) by auto
   subgoal using is_reduction_vc_sc .
@@ -457,23 +457,23 @@ subsubsection \<open>\<open>3CNF-SAT\<close> To \<open>Independent Set\<close>\<
 
 definition "mop_list_length xs = SPECT [ length xs \<mapsto> 1 ]"
 
-definition "add_first_part F S = 
+definition "add_first_part F S =
   SPECT [ S \<union> {{(l1, i), (l2, i)} | l1 l2 i. i < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! i \<and> l1 \<noteq> l2} \<mapsto> 3 * length F]"
 
-      
-definition "add_second_part F S = 
+
+definition "add_second_part F S =
   SPECT [ S \<union> {{(l1, i), (l2, j)} | l1 l2 i j.
-      i < length F \<and> j < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j \<and> conflict l1 l2}
+      i < length F \<and> j < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j \<and> conflict_lit l1 l2}
        \<mapsto> 3 * length F * length F]"
 
 
 
-definition sat_to_is :: "'a lit set list \<Rightarrow> (('a lit \<times> nat) set set \<times> nat) nrest" where 
+definition sat_to_is :: "'a lit set list \<Rightarrow> (('a lit \<times> nat) set set \<times> nat) nrest" where
   "sat_to_is = (\<lambda>F. do {
       b \<leftarrow> SPECT [ (\<forall>cls \<in> set F. card cls = 3) \<mapsto> 1];
       if b then
         do {
-          l \<leftarrow> mop_list_length F; 
+          l \<leftarrow> mop_list_length F;
           S \<leftarrow> mop_set_empty_set;
           S \<leftarrow> add_first_part F S;
           S \<leftarrow> add_second_part F S;
@@ -491,20 +491,20 @@ lemma sat_to_is_refines:
   unfolding sat_to_is_def sat_is_unfold
       mop_list_length_def mop_set_empty_set_def add_first_part_def
       add_second_part_def
-  apply(rule T_specifies_I) 
+  apply(rule T_specifies_I)
   apply(vcg' \<open>-\<close> rules: T_SPEC )
   by (auto simp: sat_to_is_time_def size_SAT_def one_enat_def)
 
 definition "sat_to_is_space n = 9 * n + 9 * n * n"
 
 
-lemma paf2: "{f l1 l2 i j |l1 l2 i j. i < k \<and> g l1 l2 i j} 
+lemma paf2: "{f l1 l2 i j |l1 l2 i j. i < k \<and> g l1 l2 i j}
     = (\<Union>i \<in> {..<k::nat}. {f l1 l2 i j |l1 l2 j. g l1 l2 i j}) "
   by auto
 
-lemma paf: "{f l1 l2 i |l1 l2 i. i < j \<and> g l1 l2 i} 
+lemma paf: "{f l1 l2 i |l1 l2 i. i < j \<and> g l1 l2 i}
     = (\<Union>i \<in> {..<j::nat}. {f l1 l2 i |l1 l2. g l1 l2 i})"
-  by auto 
+  by auto
 
 lemma brr:
   shows "{{f l1, g l2} |l1 l2. l1 \<in> X \<and> l2 \<in> Y \<and> h l1 l2} \<subseteq> (\<Union>x \<in> X. \<Union>y \<in> Y. {{f x, g y}})"
@@ -517,32 +517,32 @@ proof -
 qed
 
 
-lemma aaa: "\<forall>x\<in>X. card x = 3 \<Longrightarrow> x\<in>X \<Longrightarrow> finite x" 
-  using zero_neq_numeral by fastforce  
+lemma aaa: "\<forall>x\<in>X. card x = 3 \<Longrightarrow> x\<in>X \<Longrightarrow> finite x"
+  using zero_neq_numeral by fastforce
 
-lemma upperbounding_card3: "\<forall>x\<in>X. card x = 3 \<Longrightarrow> x\<in>X \<Longrightarrow> y\<in>X \<Longrightarrow> 
+lemma upperbounding_card3: "\<forall>x\<in>X. card x = 3 \<Longrightarrow> x\<in>X \<Longrightarrow> y\<in>X \<Longrightarrow>
         card {{f l1, g l2} |l1 l2. l1 \<in> x \<and> l2 \<in> y \<and> h l1 l2} \<le> 9"
 
       apply(rule order.trans)
        apply(rule card_mono) defer
         apply(rule brr)
-       apply(rule order.trans) apply(rule card_Un) 
+       apply(rule order.trans) apply(rule card_Un)
       subgoal apply (rule finite_imageI) using aaa by auto
        apply(rule order.trans) apply(rule sum_image_le)
       subgoal using aaa by auto
         apply simp  apply(rule order.trans)
-      apply(rule sum_mono[where g="\<lambda>_. 3"]) apply simp 
+      apply(rule sum_mono[where g="\<lambda>_. 3"]) apply simp
         apply(rule order.trans) apply(rule card_Un)
       subgoal apply (rule finite_imageI) using aaa by auto
-       apply(rule order.trans) apply(rule sum_image_le) 
+       apply(rule order.trans) apply(rule sum_image_le)
       subgoal using aaa by auto
-         apply simp apply simp apply simp 
+         apply simp apply simp apply simp
       apply(rule finite_Union)
-       apply (rule finite_imageI) using aaa by auto 
+       apply (rule finite_imageI) using aaa by auto
 
 
 
-lemma sat_to_is_size: "size_IS (sat_is p) \<le> sat_to_is_space (size_SAT p)" 
+lemma sat_to_is_size: "size_IS (sat_is p) \<le> sat_to_is_space (size_SAT p)"
   apply(auto simp: size_IS_def sat_is_unfold sat_to_is_space_def size_SAT_def)
   apply(rule order.trans[OF card_Un_le])
   apply(rule add_mono)
@@ -554,7 +554,7 @@ lemma sat_to_is_size: "size_IS (sat_is p) \<le> sat_to_is_space (size_SAT p)"
      apply simp
     apply(rule order.trans) apply(rule sum_mono[where g="(\<lambda>_. 9)"] )
     subgoal for i apply simp
-      apply(rule upperbounding_card3) by auto
+      apply(rule upperbounding_card3) unfolding is_n_sat_def by auto
     apply simp
     done
 
@@ -573,22 +573,22 @@ lemma sat_to_is_size: "size_IS (sat_is p) \<le> sat_to_is_space (size_SAT p)"
       apply(rule order.trans)
        apply(rule sum_mono[where g="\<lambda>_. 9"])
       subgoal
-        apply simp apply(rule upperbounding_card3) by auto  
-      apply simp done  
+        apply simp apply(rule upperbounding_card3) unfolding is_n_sat_def by auto
+      apply simp done
     subgoal apply simp done
     done
   done
-  
 
 
-theorem sat_to_is_ispolyred: "ispolyred sat_to_is three_cnf_sat independent_set size_SAT size_IS" 
+
+theorem sat_to_is_ispolyred: "ispolyred sat_to_is three_cnf_sat independent_set size_SAT size_IS"
   unfolding ispolyred_def
   apply(rule exI[where x=sat_is])
   apply(rule exI[where x=sat_to_is_time])
   apply(rule exI[where x=sat_to_is_space])
   apply(safe)
   subgoal using sat_to_is_refines by blast
-  subgoal using sat_to_is_size  by blast 
+  subgoal using sat_to_is_size  by blast
   subgoal unfolding poly_def sat_to_is_time_def apply(rule exI[where x=2]) by auto
   subgoal unfolding poly_def sat_to_is_space_def apply(rule exI[where x=2]) by auto
   subgoal using is_reduction_sat_is .
@@ -598,13 +598,13 @@ theorem sat_to_is_ispolyred: "ispolyred sat_to_is three_cnf_sat independent_set 
 
 subsubsection \<open>Combination\<close>
 
-theorem is_to_sc_ispolyred: 
+theorem is_to_sc_ispolyred:
   "ispolyred (\<lambda>a. (is_to_vc a) \<bind> vc_to_sc) independent_set set_cover size_IS size_SC"
-  by(rule sat_to_is_ispolyred is_to_vc_ispolyred vc_to_sc_ispolyred  
+  by(rule sat_to_is_ispolyred is_to_vc_ispolyred vc_to_sc_ispolyred
       ispolyred_trans[OF is_to_vc_ispolyred vc_to_sc_ispolyred])
 
 
-theorem sat_to_sc_ispolyred: 
+theorem sat_to_sc_ispolyred:
   "ispolyred (\<lambda>a. (sat_to_is a \<bind> is_to_vc) \<bind> vc_to_sc) three_cnf_sat set_cover size_SAT size_SC"
   by (rule ispolyred_trans [OF ispolyred_trans
         [OF sat_to_is_ispolyred is_to_vc_ispolyred] vc_to_sc_ispolyred])

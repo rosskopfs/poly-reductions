@@ -1,9 +1,10 @@
-theory Tr_Fun_Defs
+\<^marker>\<open>contributor "Nico Lintner"\<close>
+\<^marker>\<open>contributor "Kevin Kappelmann"\<close>
+theory Tail_Rec_Funs
   imports HOL.List
 begin
 
-section \<open>tail recursive definitions of HOL list functions\<close>
-
+subsection \<open>Tail Recursive Definitions of HOL List Functions\<close>
 
 paragraph \<open>Tail recursive \<open>rev\<close>\<close>
 
@@ -78,8 +79,8 @@ fun append_tr_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"  wher
 lemma append_tr_acc: "append_tr_acc acc xs = rev xs @ acc"
   by (induction xs arbitrary: acc) simp_all
 
-definition append_tr (infixr \<open>@tr\<close> 65) where 
-  "xs @tr ys \<equiv> append_tr_acc ys (rev_tr xs)" 
+definition append_tr (infixr \<open>@tr\<close> 65) where
+  "xs @tr ys \<equiv> append_tr_acc ys (rev_tr xs)"
 
 lemma append_tr_eq_append[simp]: "append_tr = append"
   by (simp add: fun_eq_iff append_tr_def append_tr_acc)
@@ -106,7 +107,7 @@ paragraph \<open>Tail recursive \<open>product\<close>\<close>
 fun product_tr_acc :: "('a \<times> 'b) list \<Rightarrow> 'a list \<Rightarrow> 'b list \<Rightarrow> ('a \<times> 'b) list"  where
   "product_tr_acc acc [] _ = acc"
 | "product_tr_acc acc (x#xs) ys =  product_tr_acc (acc @ map_tr (Pair x) ys) xs ys"
-                                                          
+
 lemma product_tr_acc: "product_tr_acc acc xs ys = acc @ List.product xs ys"
   by(induction xs arbitrary: acc) simp_all
 
@@ -173,8 +174,6 @@ definition
 
 lemma length_tr_eq_length[simp]: "length_tr = length"
   by (simp add: fun_eq_iff length_tr_acc length_tr_def)
-
-
 
 lemmas tr_simps =
   rev_tr_eq_rev enumerate_tr_eq_enumerate map_tr_eq_map filter_tr_eq_filter

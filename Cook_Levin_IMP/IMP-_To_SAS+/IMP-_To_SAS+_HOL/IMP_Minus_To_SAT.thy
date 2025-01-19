@@ -233,7 +233,7 @@ proof -
     sorry
 qed
 
-definition decode_sat :: "nat \<Rightarrow> nat three_sat" where
+definition decode_sat :: "nat \<Rightarrow> nat sat" where
   "decode_sat n = undefined"
 
 interpretation encode_decode_sat encode_sat decode_sat

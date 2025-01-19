@@ -5,7 +5,7 @@ theory Expression_Tail_Call_Whiles_Plus_Minus
     Expression_Tail_Calls_Hom
 begin
 
-text\<open>Tail vecursive WHILE programs with plus, minus, and atomic values\<close>
+text\<open>Tail recursive WHILE programs with plus, minus, and atomic values\<close>
 datatype ('si, 'sv, 'eic, 'ewc) exp_tail_call_while_plus_minus = ETCWPM
   "(('si, 'sv, 'eic, 'ewc) exp_while_plus_minus) exp_tcall_hom"
 

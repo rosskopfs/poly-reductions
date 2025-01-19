@@ -1,7 +1,7 @@
 section \<open>HC to UHC\<close>
 
 theory Definitions_UHC
-  imports Main "../TSAT_To_SC/TSAT_To_SC" Graph_Theory.Digraph  Graph_Theory.Arc_Walk
+  imports Main Graph_Theory.Digraph Graph_Theory.Arc_Walk
     Graph_Theory.Vertex_Walk
     "../VC_To_HC/Definitions_HC"
     "Poly_Reductions_Lib.Vwalk_Cycle"

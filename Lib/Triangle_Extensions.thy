@@ -2,7 +2,7 @@
 text \<open>Stuff about triangle numbers, in particular triangular root \<close>
 
 theory Triangle_Extensions
-  imports "Poly_Reductions_Lib.Landau_Auxiliaries"
+  imports "Landau_Auxiliaries"
 begin
 
 lemma triangle_Sum: "triangle n = (\<Sum>x\<in>{1..n}. x)"

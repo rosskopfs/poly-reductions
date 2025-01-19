@@ -1,5 +1,5 @@
 theory VC_To_FNS
-  imports Main "../TSAT_To_SC/TSAT_To_SC" Graph_Theory.Digraph Graph_Theory.Arc_Walk
+  imports Main Graph_Theory.Digraph Graph_Theory.Arc_Walk
     "../VC_Set_To_VC_List/VC_Set_To_VC_List" "Poly_Reductions_Lib.Graph_Auxiliaries"
 begin
 

@@ -7,16 +7,9 @@ The theories in this repository are developed with the current development versi
 
 For checking and browsing the theories, the following additional sessions are needed:
 - [ML-Typeclasses](https://github.com/kappelmann/ml-typeclasses-isabelle): make it available in the same way as the AFP, i.e., with `isabelle components -u /path/to/ml-typeclasses`.
-- [NREST](https://github.com/hydrogenoxide/NREST): make it available in the same way as the AFP, i.e., with `isabelle components -u /path/to/NREST`.
 
 You have to tell Isabelle about the multiple sessions the project defines: `isabelle components -u /path/to/this/repository`.
 Now, you can use `isabelle build -D .` in the root folder of this repository to check all sessions.
-
-For browsing the theories, we recommend `isabelle jedit -l HOL-Analysis Poly_Reductions.thy &`.
-The first startup will pre-build `HOL-Analysis`---which will take a while. All following invocations of Isabelle/JEdit will be quick.
-
-If you want to look only at Karp's Reductions: `isabelle jedit -l HOL-Analysis Karp21/All_Reductions_Poly.thy &`.
-If you want to look only at Cook Levin's Theorem: `isabelle jedit -l HOL-Analysis Cook_Levin_IMP/Complexity_classes/Cook_Levin.thy &`.
 
 ## Overview
 The following reductions are currently formalized:
@@ -42,5 +35,3 @@ So far the following classic reductions between NP-hard problems have been forma
 - `Vwalk_Cycle.thy` contains a new definition of a cycle in a graph based on `vwalk`.
    The standard definition is based on `awalk`.
 
-## NREST
-For reasoning about the runtime complexity of the reductions, we use an [updated fork](https://github.com/hydrogenoxide/NREST) of [NREST](https://github.com/maxhaslbeck/NREST).
