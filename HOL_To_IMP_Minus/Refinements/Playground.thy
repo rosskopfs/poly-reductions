@@ -61,6 +61,7 @@ HOL_To_IMP_Minus_correct Nil_nat by cook
 lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_acc_nat_eq
 
+thm HTHN.rev_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 lemma rev_acc_cor:
   assumes "Rel_nat (s ''rev_acc_nat.args.x'') (x :: 'a list)"
   assumes "Rel_nat (s ''rev_acc_nat.args.xa'') (xa :: 'a list)"
@@ -81,7 +82,9 @@ lemma rev_acc_cor:
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   (*apply IH*)
-  sorry
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
+  apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
+  done
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat
   using rev_acc_cor by auto
@@ -191,7 +194,9 @@ lemma length_acc_nat_cor: "Rel_nat (s ''length_acc_nat.args.x'') (y::'a list) \<
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   (*apply IH*)
-  sorry
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
+  apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
+  done
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat
   using length_acc_nat_cor by blast
@@ -250,7 +255,9 @@ lemma zip_acc_nat_cor: "Rel_nat (s ''zip_acc_nat.args.x'') (y::'a list) \<Longri
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
   (*apply the IH*)
-  sorry
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
+  apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
+  done
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat
   using zip_acc_nat_cor by blast
@@ -267,7 +274,7 @@ declare count_acc.simps[simp del]
 
 case_of_simps count_acc_eq : count_acc.simps
 function_compile_nat count_acc_eq
-
+print_theorems
 lemma count_acc_nat_eq_unfolded':
   assumes "Rel_nat (x::nat) (y::'a::compile_nat)"
   assumes "Rel_nat (xa::nat) (ya::'a::compile_nat list)"
@@ -306,20 +313,27 @@ lemma count_acc_cor: "Rel_nat (s ''count_acc_nat.args.x'') (y::'a) \<Longrightar
     (fn _ => fn _ => SOME @{thms HTHN.count_acc_nat_eq_unfolded'}) @{context} 1\<close>)
   (* case x#xs *)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
-  apply (tactic \<open>HT.run_HOL_fun_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.run_HOL_fun_tac (fn _ => fn _ => SOME ([@{thm HTHN.count_acc_nat_eq_unfolded'}])) @{context} 1\<close>)
   apply ((split if_split | succeed); intro conjI impI)
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
+  apply ((split if_split | succeed); intro conjI impI)
+  (* apply the IH *)
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
+  apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
-  (*apply the IH*)
-  defer
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
   apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
-  apply (tactic \<open>HT.run_HOL_fun_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.run_HOL_fun_tac (fn _ => fn _ => SOME ([@{thm HTHN.count_acc_nat_eq_unfolded'}])) @{context} 1\<close>)
   apply ((split if_split | succeed); intro conjI impI)
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
+  apply ((split if_split | succeed); intro conjI impI)
   apply ((simp add: HOL_To_IMP_finish_simps | succeed); ((elim notE; assumption) | succeed))
-  (*apply the IH*)
-  sorry
+  (* apply the IH *)
+  supply Rel_nat_destruct_Cons[Rel_nat_related]
+  apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
+  done
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat
   using count_acc_cor by blast
