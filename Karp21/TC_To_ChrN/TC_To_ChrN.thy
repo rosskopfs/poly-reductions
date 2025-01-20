@@ -1,5 +1,5 @@
 theory TC_To_ChrN
-  imports Main "HOL-ex.Sketch_and_Explore" "HOL-Eisbach.Eisbach" "../CNF_SAT_To_TC/TS_To_TC" "TC_To_ChrN_Aux"
+  imports Main "TC_To_ChrN_Aux"
 begin
 
 
@@ -35,11 +35,11 @@ next
     "con_nodes = {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}}"
   define E'nodes where E'nodes_def:
     "E'nodes = {{(0::nat,k),(0,k')}|k k'. k \<in> {1..(card (\<Union>E))} \<and> k' \<in> {1..(card (\<Union>E))} \<and> k \<noteq> k'}"
-  from asms(1) E'_def2 have E'_def: "E' = E_nodes \<union> con_nodes \<union> E'nodes" 
+  from asms(1) E'_def2 have E'_def: "E' = E_nodes \<union> con_nodes \<union> E'nodes"
     unfolding TC_chrN_def
     by (simp add: E_nodes_def con_nodes_def E'nodes_def)
   from E'_def2 asms(2) have v1v2inE':"{(v1, 0), (v2, 0)} \<in> E'"
-    by blast  
+    by blast
   from E'nodes_def have notin1:"{(v1, 0), (v2, 0)} \<notin> E'nodes"
     by fastforce
   have notZeroNode:"\<And>e. e\<in>con_nodes \<Longrightarrow> \<exists> a b. (a,b) \<in> e \<and> b \<noteq> 0"
@@ -57,7 +57,7 @@ next
     by (smt doubleton_eq_iff mem_Collect_eq prod_set_simps(1))
 qed
 
-lemma nodesChromGraph: 
+lemma nodesChromGraph:
     "(E',k) = TC_chrN E \<Longrightarrow> ugraph E \<Longrightarrow> \<Union>E' = \<Union>{{(v,0)}|v. v\<in>\<Union>E} \<union> \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
 proof -
   fix E E' k
@@ -66,52 +66,52 @@ proof -
     by blast
   from asms have E'_def2:"E' =
     {{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} \<union>
-    {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union> 
+    {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union>
     {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'}"
   unfolding TC_chrN_def
-  by auto  
+  by auto
   from E'_def2 have "\<Union>E' = \<Union> ({{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} \<union>
-      {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union> 
-      {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'})" 
+      {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union>
+      {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'})"
     by fastforce
   from E'_def2 have nodes_split1:"\<Union>E' = ( \<Union> {{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} \<union>
-       \<Union> {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union> 
-       \<Union> {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'})" 
+       \<Union> {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union>
+       \<Union> {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'})"
     by simp
   from this have nodes_split2:"\<Union> {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}} =
                   \<Union> {{(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}} \<union>
-                  \<Union> {{(v1,0)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}}" 
+                  \<Union> {{(v1,0)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}}"
     by blast
   define node_split1 where node_split1_def:"node_split1= \<Union> ({{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E})"
   define node_split2 where node_split2_def:"node_split2= \<Union> {{(0::nat,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}}"
   define node_split3 where node_split3_def:"node_split3= \<Union> {{(v1,0::nat)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}}"
-  define node_split4 where node_split4_def:"node_split4= 
+  define node_split4 where node_split4_def:"node_split4=
             \<Union> {{(0::nat, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'}"
 
   from nodes_split2 nodes_split1 have nodes_split:"\<Union>E' = node_split1 \<union>  node_split2 \<union>  node_split3 \<union>  node_split4"
     apply (simp add: node_split1_def node_split2_def node_split3_def node_split4_def)
     by auto
   have node_split_eq2':"\<Union>{{(v1,0)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))}} =
-        \<Union>{{(v1,0)}|v1. v1\<in> (\<Union> E)}" 
+        \<Union>{{(v1,0)}|v1. v1\<in> (\<Union> E)}"
   proof safe
-    show "\<And>a b X v1 k Xa. k \<in> {1..card (\<Union> E)} \<Longrightarrow> v1 \<in> Xa \<Longrightarrow> Xa \<in> E \<Longrightarrow> 
-          (v1, 0) \<in> \<Union> {{(v1, 0)} |v1. v1 \<in> \<Union> E}" 
+    show "\<And>a b X v1 k Xa. k \<in> {1..card (\<Union> E)} \<Longrightarrow> v1 \<in> Xa \<Longrightarrow> Xa \<in> E \<Longrightarrow>
+          (v1, 0) \<in> \<Union> {{(v1, 0)} |v1. v1 \<in> \<Union> E}"
       by blast
   next
     fix e
     fix v
     assume asms: "v\<in> e" "e: E"
-    from asms(2) have "card e = 2" 
+    from asms(2) have "card e = 2"
       using E_ugraph
       unfolding ugraph_def
       by blast
     from this asms(2) have "card (\<Union> E) \<noteq> 0"
-      by (metis E_ugraph Sup_upper card.infinite card_mono finite_Union 
-          not_numeral_le_zero ugraph_def zero_neq_numeral) 
+      by (metis E_ugraph Sup_upper card.infinite card_mono finite_Union
+          not_numeral_le_zero ugraph_def zero_neq_numeral)
     from this asms show "(v, 0) \<in> \<Union> {u. \<exists>v1 k. u = {(v1, 0)} \<and> v1 \<in> \<Union> E \<and> k \<in> {1..card (\<Union> E)}}"
       using Icc_eq_insert_lb_nat by auto
   qed
-  have node_split_eq3':"\<Union> {{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}" 
+  have node_split_eq3':"\<Union> {{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}"
   proof safe
     show "\<And>a b X v1 v2. {v1, v2} \<in> E \<Longrightarrow> (v1, 0) \<in> \<Union> {{(v, 0)} |v. v \<in> \<Union> E}" by blast
   next
@@ -122,14 +122,14 @@ proof -
     assume asms:"e \<in> E" "v\<in>e"
     from E_ugraph asms(1) have "card e = 2"
       unfolding ugraph_def
-      by blast 
+      by blast
     from this obtain v' where "e = {v, v'}"
       by (metis asms(2) card_2_iff doubleton_eq_iff insertE singleton_iff)
     from this asms(1) have "{v,v'} \<in> E"
       by blast
     from this show "(v, 0) \<in> \<Union> {{(v1, 0), (v2, 0)} |v1 v2. {v1, v2} \<in> E}"
       by blast
-  qed   
+  qed
   have node_split_eq4':"\<Union> {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'} =
         \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
   proof safe
@@ -148,7 +148,7 @@ proof -
     from asms have asm2:"n\<le>card (\<Union> E)"
       by simp
     from asm1 asm2 have card1:"1 \<le> card (\<Union> E)"
-      by linarith 
+      by linarith
     from this obtain e where e_def: "e\<in> E"
       by fastforce
     from this E_ugraph have "card e = 2"
@@ -162,46 +162,46 @@ proof -
                                                          k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'}"
       by blast
   qed
-  have node_split_eq1:"node_split2 = 
+  have node_split_eq1:"node_split2 =
                   \<Union> {{(0,k)}|k. k \<in> {1..(card (\<Union>E))}}"
     apply (simp add: node_split2_def)
-    by (metis (mono_tags, opaque_lifting) Sup_bot_conv(2) 
+    by (metis (mono_tags, opaque_lifting) Sup_bot_conv(2)
         all_not_in_conv card.empty not_less_eq_eq)
   from node_split_eq2' have node_split_eq2: "node_split3 = \<Union>{{(v,0)}|v. v\<in> (\<Union> E)}"
-    by (simp add: node_split3_def) 
-  from node_split_eq3' have node_split_eq3: "node_split1 = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}" 
-    by (simp add: node_split1_def) 
+    by (simp add: node_split3_def)
+  from node_split_eq3' have node_split_eq3: "node_split1 = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}"
+    by (simp add: node_split1_def)
   from node_split_eq4' have node_split_eq4:"node_split4 = \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
     by (simp add: node_split4_def)
-  from node_split_eq1 node_split_eq2 node_split_eq3 node_split_eq4 nodes_split have node_split_eq5: 
+  from node_split_eq1 node_split_eq2 node_split_eq3 node_split_eq4 nodes_split have node_split_eq5:
     "\<Union>E' = \<Union>{{(v,0)}|v. v\<in>\<Union>E} \<union> \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
     by auto
   from this show "\<Union> E' = \<Union> {{(v, 0)} |v. v \<in> \<Union> E} \<union> \<Union> {{(0, n) |n. n \<in> {1..card (\<Union> E)}}}"
     by blast
-qed  
+qed
 
 
 subsection "Three colorability to chromatic number"
 
-lemma threeColToChroN:"\<And>E. E \<in> three_colorability \<Longrightarrow> TC_chrN E \<in> chromaticNumber" 
+lemma threeColToChroN:"\<And>E. E \<in> three_colorability \<Longrightarrow> TC_chrN E \<in> chromaticNumber"
 proof -
   fix E :: "nat set set"
   assume asms:"E \<in> three_colorability"
-  from asms obtain c1 c2 c3 where c_Sets_def:"is_k_colorable E 3 {c1,c2,c3} \<and> c1 \<noteq> c2  \<and> c1 \<noteq> c3  \<and> c2 \<noteq> c3 "  
+  from asms obtain c1 c2 c3 where c_Sets_def:"is_k_colorable E 3 {c1,c2,c3} \<and> c1 \<noteq> c2  \<and> c1 \<noteq> c3  \<and> c2 \<noteq> c3 "
     unfolding three_colorability_def
     by (smt card_dif_elements choice3 insert_commute is_k_colorable_def mem_Collect_eq)
-  from asms have E_ugraph:"ugraph E" 
+  from asms have E_ugraph:"ugraph E"
     unfolding three_colorability_def is_k_colorable_def is_colorable_def
     by blast
   obtain E' k where E'_def:"(E', k) = TC_chrN E"
     by (metis surj_pair)
-  from E'_def E_ugraph have E'_def2:"E' = 
+  from E'_def E_ugraph have E'_def2:"E' =
       {{(v1,0::nat),(v2,0)}|v1 v2. {v1,v2}\<in> E} \<union>
-      {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union> 
+      {{(v1,0),(0,k)}|v1 k. v1\<in> (\<Union> E) \<and> k \<in> {1..(card (\<Union>E))} } \<union>
       {{(0, k), (0, k')} |k k'. k \<in> {1..card (\<Union> E)} \<and> k' \<in> {1..card (\<Union> E)} \<and> k \<noteq> k'}"
     unfolding TC_chrN_def
     by auto
-  from E'_def E_ugraph have k_def:"k = (card (\<Union> E)+3)" 
+  from E'_def E_ugraph have k_def:"k = (card (\<Union> E)+3)"
     unfolding TC_chrN_def
     by simp
 
@@ -211,58 +211,58 @@ proof -
     from E'_def2 E_ugraph have "finite E'"
       unfolding ugraph_def
       using chromatik_finite1 chromatik_finite2 chromatik_finite3
-      by (smt E'_def E_ugraph card_eq_0_iff finite_UnI finite_Union 
+      by (smt E'_def E_ugraph card_eq_0_iff finite_UnI finite_Union
           prod.inject TC_chrN_def zero_neq_numeral)
     moreover from E'_def2 E_ugraph have "(\<forall>e\<in>{{(v1::nat, 0::nat), (v2, 0)} |v1 v2. {v1, v2} \<in> E}. card e = 2)"
       using chromatik_card2
       by blast
     moreover from E'_def2 E_ugraph have "(\<forall>e\<in>{{(v1, 0), (0, k)} |v1 k. v1 \<in> \<Union> E \<and> k \<in> {1..card (\<Union> E)}}. card e = 2)"
       by force
-    ultimately show "ugraph E'"  
+    ultimately show "ugraph E'"
       unfolding ugraph_def
-      by (auto simp: E'_def2) 
+      by (auto simp: E'_def2)
   qed
 
   obtain c_Sets' where c_Sets'_def: "c_Sets'={\<Union>{{(v,0)}|v. v:c1} , \<Union>{{(v,0)}|v. v:c2} , \<Union>{{(v,0)}|v. v:c3}}
                                             \<union> {{(0,n)}|n. n \<in> {1..card (\<Union> E)}}"
-    by blast 
+    by blast
 
-  from E'_def E_ugraph have node_split_eq5: 
+  from E'_def E_ugraph have node_split_eq5:
     "\<Union>E' = \<Union>{{(v,0)}|v. v\<in>\<Union>E} \<union> \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
     using nodesChromGraph
-    by presburger 
+    by presburger
 
-  have node_split_eq6:"\<Union>{{(v,0::nat)}|v. v\<in>\<Union>E} = 
+  have node_split_eq6:"\<Union>{{(v,0::nat)}|v. v\<in>\<Union>E} =
     \<Union>{\<Union> {{(v, 0::nat)} |v. v \<in> c1}, \<Union> {{(v, 0)} |v. v \<in> c2}, \<Union> {{(v, 0)} |v. v \<in> c3}}"
   proof -
     define step1 where step1_def:"step1= \<Union> {{(v, 0::nat)} |v. v \<in> \<Union> E}"
     define step2 where step2_def:"step2= \<Union>({{(v,0::nat)}|v. v\<in>c1 \<or> v\<in> c2 \<or> v\<in> c3 })"
-    define step3 where step3_def:"step3= \<Union> {\<Union> {{(v, 0::nat)} |v. v \<in> c1}, 
-                                            \<Union> {{(v, 0)} |v. v \<in> c2}, 
+    define step3 where step3_def:"step3= \<Union> {\<Union> {{(v, 0::nat)} |v. v \<in> c1},
+                                            \<Union> {{(v, 0)} |v. v \<in> c2},
                                             \<Union> {{(v, 0)} |v. v \<in> c3}}"
     from c_Sets_def have "\<Union>E = \<Union>{c1,c2,c3}"
       unfolding is_k_colorable_def is_colorable_def
       by linarith
-    from this step2_def step1_def have step1:"step1 =step2" 
+    from this step2_def step1_def have step1:"step1 =step2"
       by auto
-    have "\<Union>({{(v,0)}|v. v\<in>c1 \<or> v\<in> c2 \<or> v\<in> c3 }) = 
+    have "\<Union>({{(v,0)}|v. v\<in>c1 \<or> v\<in> c2 \<or> v\<in> c3 }) =
                     \<Union>{\<Union> {{(v, 0::nat)} |v. v \<in> c1}, \<Union> {{(v, 0)} |v. v \<in> c2}, \<Union> {{(v, 0)} |v. v \<in> c3}}"
-      by blast   
+      by blast
     from this step2_def step3_def have step2:"step2 = step3"
       by simp
     from step1 step2 have "step1 = step3"
-      by simp     
-    from this show ?thesis 
+      by simp
+    from this show ?thesis
       by (simp add: step1_def step3_def)
   qed
-    
-  from node_split_eq5 node_split_eq6 c_Sets'_def have c_Sets'_complete:"\<Union>E' = \<Union>c_Sets'" 
+
+  from node_split_eq5 node_split_eq6 c_Sets'_def have c_Sets'_complete:"\<Union>E' = \<Union>c_Sets'"
   proof -
     define step1 where step1_def:"step1= \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}"
     define step2 where step2_def:"step2= \<Union>{{(0::nat,n)|n. n\<in>{1..card (\<Union>E)}}}"
-    define step3 where step3_def:"step3= \<Union>{\<Union> {{(v, 0::nat)} |v. v \<in> c1}, \<Union> {{(v, 0)} |v. v \<in> c2}, 
+    define step3 where step3_def:"step3= \<Union>{\<Union> {{(v, 0::nat)} |v. v \<in> c1}, \<Union> {{(v, 0)} |v. v \<in> c2},
                                             \<Union> {{(v, 0)} |v. v \<in> c3}}"
-    from node_split_eq5 have E'eq: 
+    from node_split_eq5 have E'eq:
       "\<Union>E' =step1 \<union> step2"
       by (simp add: step1_def step2_def)
     from node_split_eq6 have "step1 =  step3"
@@ -278,25 +278,25 @@ proof -
                                             \<inter> {{(0,n)}|n. n \<in> {1..card (\<Union> E)}} = {}"
     by fastforce
 
-  from c_Sets_def have c1c2_empty:"c1\<inter> c2 = {}" 
-    unfolding is_k_colorable_def is_colorable_def 
+  from c_Sets_def have c1c2_empty:"c1\<inter> c2 = {}"
+    unfolding is_k_colorable_def is_colorable_def
     by auto
 
-  from c_Sets_def have c1c3_empty:"c1\<inter> c3 = {}" 
-    unfolding is_k_colorable_def is_colorable_def 
+  from c_Sets_def have c1c3_empty:"c1\<inter> c3 = {}"
+    unfolding is_k_colorable_def is_colorable_def
     by auto
-  
+
   from c_Sets_def have c2c3_empty:"c2\<inter> c3 = {}"
-    unfolding is_k_colorable_def is_colorable_def 
+    unfolding is_k_colorable_def is_colorable_def
     by auto
 
-  from c1c2_empty have c1c2_empty':"\<Union>{{(v,0)}|v. v:c1} \<inter> \<Union>{{(v,0)}|v. v:c2} = {}" 
+  from c1c2_empty have c1c2_empty':"\<Union>{{(v,0)}|v. v:c1} \<inter> \<Union>{{(v,0)}|v. v:c2} = {}"
     by auto
 
-  from c1c3_empty have c1c3_empty':"\<Union>{{(v,0)}|v. v:c1} \<inter> \<Union>{{(v,0)}|v. v:c3} = {}" 
+  from c1c3_empty have c1c3_empty':"\<Union>{{(v,0)}|v. v:c1} \<inter> \<Union>{{(v,0)}|v. v:c3} = {}"
     by auto
 
-  from c2c3_empty have c2c3_empty':"\<Union>{{(v,0)}|v. v:c2} \<inter> \<Union>{{(v,0)}|v. v:c3} = {}" 
+  from c2c3_empty have c2c3_empty':"\<Union>{{(v,0)}|v. v:c2} \<inter> \<Union>{{(v,0)}|v. v:c3} = {}"
     by auto
 
   have c1E'nodes_empty':"\<Union>{{(v,0)}|v. v:c1} \<inter> \<Union>{{(0,n)}|n. n \<in> {1..card (\<Union> E)}} = {}"
@@ -309,21 +309,21 @@ proof -
     by auto
 
   from c1c2_empty' c1c3_empty' c1E'nodes_empty' c1c3_empty have c1Csets_empty:
-    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c1} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c1} = {}" 
+    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c1} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c1} = {}"
     by (auto simp: c_Sets'_def)
 
-  from c1c2_empty' c2c3_empty' c2E'nodes_empty' c2c3_empty have c2Csets_empty: 
-    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c2} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c2} = {}" 
+  from c1c2_empty' c2c3_empty' c2E'nodes_empty' c2c3_empty have c2Csets_empty:
+    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c2} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c2} = {}"
     by (auto simp: c_Sets'_def)
 
   from c1c3_empty' c2c3_empty' c3E'nodes_empty' c2c3_empty have c3Csets_empty:
-    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c3} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c3} = {}" 
+    "\<forall>c\<in>c_Sets'. c \<noteq> \<Union> {{(v, 0)} |v. v \<in> c3} \<longrightarrow> c \<inter> \<Union> {{(v, 0)} |v. v \<in> c3} = {}"
     by (auto simp: c_Sets'_def)
-   
-  have E'nodesCsets_empty: 
-    "\<forall>c\<in>c_Sets'. \<forall>c'\<in>{{(0,n)}|n. n \<in> {1..card (\<Union> E)}}. c \<noteq> c' \<longrightarrow> c \<inter> c' = {}" 
+
+  have E'nodesCsets_empty:
+    "\<forall>c\<in>c_Sets'. \<forall>c'\<in>{{(0,n)}|n. n \<in> {1..card (\<Union> E)}}. c \<noteq> c' \<longrightarrow> c \<inter> c' = {}"
     by (auto simp: c_Sets'_def)
-    
+
   from c1Csets_empty c2Csets_empty c3Csets_empty E'nodesCsets_empty have color_disjoint:
     "\<forall>c\<in>c_Sets'. \<forall>c'\<in>c_Sets'. c \<noteq> c' \<longrightarrow> c \<inter> c' = {}"
     by (auto simp: c_Sets'_def)
@@ -334,7 +334,7 @@ proof -
 
   from this E_ugraph have edge_preserve:"\<forall> v1 v2. {v1,v2} \<in> E  \<longleftrightarrow> {(v1::nat,0::nat),(v2,0)} \<in>E'"
     using TC_chrN_edge_in_E_iff[where E = E]
-    by auto 
+    by auto
 
 
   from c_Sets_def have "\<forall>v\<in>c1. \<forall>v'\<in>c1. {v, v'} \<notin> E"
@@ -358,12 +358,12 @@ proof -
   from this edge_preserve have c3'sound:"\<forall>v\<in>\<Union> {{(v, 0)} |v. v \<in> c3}. \<forall>v'\<in>\<Union> {{(v, 0)} |v. v \<in> c3}. {v, v'} \<notin> E'"
     by blast
 
-  from E'_ugraph have E'nodes_sound:"\<forall>c\<in>{{(0,n)}|n. n \<in> {1..card (\<Union> E)}}. \<forall>v\<in>c. \<forall>v'\<in>c. {v, v'} \<notin> E'" 
+  from E'_ugraph have E'nodes_sound:"\<forall>c\<in>{{(0,n)}|n. n \<in> {1..card (\<Union> E)}}. \<forall>v\<in>c. \<forall>v'\<in>c. {v, v'} \<notin> E'"
     unfolding ugraph_def
     by auto
 
 
-  from c1'sound c2'sound c3'sound E'nodes_sound have c_Sets_sound:"\<forall>c\<in>c_Sets'. \<forall>v\<in>c. \<forall>v'\<in>c. {v, v'} \<notin> E'" 
+  from c1'sound c2'sound c3'sound E'nodes_sound have c_Sets_sound:"\<forall>c\<in>c_Sets'. \<forall>v\<in>c. \<forall>v'\<in>c. {v, v'} \<notin> E'"
     by (simp add: c_Sets'_def)
 
 
@@ -373,10 +373,10 @@ proof -
 
   have c_Sets'fin2:"finite {{(0,n)}|n. n \<in> {1..card (\<Union> E)}}"
     by simp
-  
+
 
   from EgraphE'nodesdisjoint c_Sets'fin1 c_Sets'fin2 c_Sets'_def have c_Sets'_split:
-                      "card c_Sets' = 
+                      "card c_Sets' =
                        card {\<Union>{{(v,0::nat)}|v. v:c1} , \<Union>{{(v,0)}|v. v:c2} , \<Union>{{(v,0)}|v. v:c3}} +
                        card {{(0::nat,n)}|n. n \<in> {1..card (\<Union> E)}}"
     using card_Un_disjoint [where A = "{\<Union>{{(v,0::nat)}|v. v:c1} , \<Union>{{(v,0)}|v. v:c2} , \<Union>{{(v,0)}|v. v:c3}}"
@@ -388,7 +388,7 @@ proof -
 
   from c_Sets_def have c1c3_noteq:"c1 \<noteq> c3"
     by blast
-  
+
   from c_Sets_def have c2c3_noteq:"c2 \<noteq> c3"
     by blast
 
@@ -398,20 +398,20 @@ proof -
     case True
     from this c1c2_noteq have "c2 \<noteq> {}"
       by blast
-    from this True obtain v where "v\<in>c2 \<and> v \<notin> c1" 
+    from this True obtain v where "v\<in>c2 \<and> v \<notin> c1"
       by blast
-    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and> 
+    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and>
                     (v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c2}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   next
     case False
-    from this obtain v where "v\<in>c1 \<and> v \<notin> c2" 
+    from this obtain v where "v\<in>c1 \<and> v \<notin> c2"
       using c1c2_empty by auto
-    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and> 
+    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and>
                     (v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c2}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   qed
@@ -421,20 +421,20 @@ from this have c1'c3'_noteq:"\<Union>{{(v,0::nat)}|v. v:c1} \<noteq> \<Union>{{(
     case True
     from this c1c3_noteq have "c3 \<noteq> {}"
       by blast
-    from this True obtain v where "v\<in>c3 \<and> v \<notin> c1" 
+    from this True obtain v where "v\<in>c3 \<and> v \<notin> c1"
       by blast
-    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and> 
+    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and>
                     (v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c3}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   next
     case False
-    from this obtain v where "v\<in>c1 \<and> v \<notin> c3" 
+    from this obtain v where "v\<in>c1 \<and> v \<notin> c3"
       using c1c3_empty by auto
-    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and> 
+    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c1} \<and>
                     (v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c3}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   qed
@@ -444,20 +444,20 @@ from this have c2'c3'_noteq:"\<Union>{{(v,0::nat)}|v. v:c2} \<noteq> \<Union>{{(
     case True
     from this c2c3_noteq have "c3 \<noteq> {}"
       by blast
-    from this True obtain v where "v\<in>c3 \<and> v \<notin> c2" 
+    from this True obtain v where "v\<in>c3 \<and> v \<notin> c2"
       by blast
-    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c2} \<and> 
+    from this have "(v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c2} \<and>
                     (v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c3}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   next
     case False
-    from this obtain v where "v\<in>c2 \<and> v \<notin> c3" 
+    from this obtain v where "v\<in>c2 \<and> v \<notin> c3"
       using c2c3_empty by auto
-    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c2} \<and> 
+    from this have "(v,0::nat) \<in> \<Union> {{(v, 0::nat)} |v. v \<in> c2} \<and>
                     (v,0::nat) \<notin> \<Union> {{(v, 0::nat)} |v. v \<in> c3}"
-      by blast 
+      by blast
     then show ?thesis
       by metis
   qed
@@ -468,14 +468,14 @@ from this have c2'c3'_noteq:"\<Union>{{(v,0::nat)}|v. v:c2} \<noteq> \<Union>{{(
   have card_c_Sets2:"card {{(0::nat, n)} |n. n \<in> {1..card (\<Union> E)}} = card (\<Union> E)"
     using card_additional_nodes[where x= "card (\<Union>E)"]
     by blast
-  
+
   from card_c_Sets1 card_c_Sets2 c_Sets'_split have k_card: "card c_Sets' = k"
     by (simp add:  k_def c_Sets'_def)
 
   from k_def have kgreaterThr:"3 \<le> k"
     by simp
 
-  from E'_def have "(E', k) \<in> chromaticNumber" 
+  from E'_def have "(E', k) \<in> chromaticNumber"
     unfolding chromaticNumber_def is_k_colorable_def is_colorable_def
     using c_Sets'_complete E'_ugraph color_disjoint c_Sets_sound k_card kgreaterThr
     by blast
@@ -484,7 +484,7 @@ from this have c2'c3'_noteq:"\<Union>{{(v,0::nat)}|v. v:c2} \<noteq> \<Union>{{(
 qed
 
 
-lemma chroNToThreeCol_ugraph:"\<And>E. ugraph E \<Longrightarrow> TC_chrN E \<in> chromaticNumber \<Longrightarrow> E \<in> three_colorability" 
+lemma chroNToThreeCol_ugraph:"\<And>E. ugraph E \<Longrightarrow> TC_chrN E \<in> chromaticNumber \<Longrightarrow> E \<in> three_colorability"
 proof -
   fix E :: "nat set set"
   assume asms:"TC_chrN E \<in> chromaticNumber" "ugraph E"
@@ -505,11 +505,11 @@ proof -
   from E'def_2 asms have k_def: "k =card (\<Union> E)+3"
     unfolding TC_chrN_def
     by simp
-  from E'chrN obtain c_Sets' where c_Sets'_def:"is_k_colorable E' k c_Sets'" 
+  from E'chrN obtain c_Sets' where c_Sets'_def:"is_k_colorable E' k c_Sets'"
     unfolding chromaticNumber_def
     by blast
 
-  from c_Sets'_def k_def have c_Sets'_card:"card c_Sets' = card (\<Union> E)+3" 
+  from c_Sets'_def k_def have c_Sets'_card:"card c_Sets' = card (\<Union> E)+3"
     unfolding is_k_colorable_def
     by blast
 
@@ -520,11 +520,11 @@ proof -
     unfolding is_k_colorable_def is_colorable_def
     by argo
 
-  define E_nodes where E_nodes_def:"E_nodes = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}" 
+  define E_nodes where E_nodes_def:"E_nodes = \<Union>{{(v,0::nat)}|v. v\<in>\<Union>E}"
 
-  define E'_nodes where E'_nodes_def:"E'_nodes = \<Union>{{(0::nat,n)|n. n\<in>{1..card (\<Union>E)}}}" 
+  define E'_nodes where E'_nodes_def:"E'_nodes = \<Union>{{(0::nat,n)|n. n\<in>{1..card (\<Union>E)}}}"
 
-  from E'def_2 asms(2) E_nodes_def E'_nodes_def have node_split_eq: 
+  from E'def_2 asms(2) E_nodes_def E'_nodes_def have node_split_eq:
     "\<Union>E' = E_nodes \<union> E'_nodes"
     using nodesChromGraph
     by presburger
@@ -535,12 +535,12 @@ proof -
 
 
 
-  from this have E'nodesOwnColor:"\<And>v. v \<in> {(0,n)|n. n\<in>{1..card (\<Union>E)}} \<Longrightarrow> {v}\<in> c_Sets'" 
+  from this have E'nodesOwnColor:"\<And>v. v \<in> {(0,n)|n. n\<in>{1..card (\<Union>E)}} \<Longrightarrow> {v}\<in> c_Sets'"
   proof -
     fix v
     assume asms: "v \<in> {(0::nat,n)|n. n\<in>{1..card (\<Union>E)}}"
     from asms obtain n where n_def:"v = (0::nat,n) \<and> 1 \<le> n \<and> n \<le> card(\<Union>E)"
-      by auto  
+      by auto
     show "{v} \<in> c_Sets'"
     proof (cases "{v} \<in> c_Sets'")
       case True
@@ -558,11 +558,11 @@ proof -
         by meson
       from this color_def have vv'notinE':"{v,v'}\<notin> E'"
         by blast
-      then show ?thesis 
+      then show ?thesis
       proof (cases "v' \<in> \<Union>{{(v,0)}|v. v\<in>\<Union>E}")
-        case True 
+        case True
         from this asms E'_def have "{v,v'}\<in> E'"
-          by auto   
+          by auto
         from this vv'notinE' show ?thesis
           by simp
       next
@@ -570,7 +570,7 @@ proof -
         from this v'inE' node_split_eq have "v' \<in> \<Union>{{(0,n)|n. n\<in>{1..card (\<Union>E)}}}"
           by (auto simp: E_nodes_def E'_nodes_def)
         from this asms E'_def color_def have "{v,v'}\<in> E'"
-          by blast       
+          by blast
         from this vv'notinE' show ?thesis by simp
       qed
     qed
@@ -587,21 +587,21 @@ proof -
     by blast
   from E_colors_def c_Sets'fin have fin2:"finite {{(0, n)} |n. n \<in> {1..card (\<Union> E)}}"
     by simp
-  
+
   from E_colors_def fin1 fin2  have c_Sets'_card_split:
-    "card c_Sets' = card E_colors + card {{(0::nat, n)} |n. n \<in> {1..card (\<Union> E)}}" 
+    "card c_Sets' = card E_colors + card {{(0::nat, n)} |n. n \<in> {1..card (\<Union> E)}}"
     using card_Un_disjoint[where A= E_colors and B = "{{(0::nat, n)} |n. n \<in> {1..card (\<Union> E)}}" ]
     by blast
 
   have card_c_Sets2:"card {{(0::nat, n)} |n. n \<in> {1..card (\<Union> E)}} = card (\<Union> E)"
     using card_additional_nodes[where x= "card (\<Union>E)"]
-    by blast 
+    by blast
 
   from this c_Sets'_card c_Sets'_card_split have "card E_colors = 3"
     by linarith
 
   from this obtain c1' c2' c3' where E_colors_def':
-    "E_colors = {c1',c2',c3'} \<and> c1' \<noteq> c2' \<and> c1' \<noteq> c3' \<and> c2' \<noteq> c3'" 
+    "E_colors = {c1',c2',c3'} \<and> c1' \<noteq> c2' \<and> c1' \<noteq> c3' \<and> c2' \<noteq> c3'"
     using choice3
     by (metis (no_types, lifting) card_dif_elements insert_commute)
 
@@ -637,8 +637,8 @@ proof -
 
   have "\<And>v. v\<in> \<Union>E_colors \<Longrightarrow> v \<notin>E'_nodes"
   proof -
-    fix v 
-    assume asms: "v\<in> \<Union>E_colors" 
+    fix v
+    assume asms: "v\<in> \<Union>E_colors"
     show "v \<notin>E'_nodes"
     proof (cases "v \<notin>E'_nodes")
       case True
@@ -668,17 +668,16 @@ proof -
 
   from this have E_colorNodesDisjoint:"\<Union>E_colors \<inter> E'_nodes = {}"
     by blast
-  from node_split_eq c_Sets'_complete c_Sets'unioneq have 
-    " E_nodes \<union> E'_nodes =  
+  from node_split_eq c_Sets'_complete c_Sets'unioneq have
+    " E_nodes \<union> E'_nodes =
       \<Union> E_colors \<union> E'_nodes"
     by argo
   from this E_colorNodesDisjoint E'disjointparts have "\<Union>E_colors = E_nodes "
-    using seteqUniondiff[where C = "\<Union>E_colors" and B= E_nodes and A = E'_nodes] 
     by auto
 
 
   from this E_colors_def' have colorseteqnodes:"c1'\<union>c2'\<union>c3' =E_nodes"
-    by auto  
+    by auto
 
 
   from colorseteqnodes have c1'subset:"c1' \<subseteq> E_nodes"
@@ -710,9 +709,9 @@ proof -
     from this c2'subset E_nodes_def obtain v where "(v,0::nat)\<in> c2' \<and> v\<in>\<Union>E"
       by blast
     from this c2_def have "v\<in> c2"
-      by blast 
+      by blast
     from this T show ?thesis
-      by blast 
+      by blast
   next
     case False
     from this c1_def c1'subset E_nodes_def have "c1' \<noteq> {}"
@@ -735,9 +734,9 @@ proof -
     from this c3'subset E_nodes_def obtain v where "(v,0::nat)\<in> c3' \<and> v\<in>\<Union>E"
       by blast
     from this c3_def have "v\<in> c3"
-      by blast 
+      by blast
     from this T show ?thesis
-      by blast 
+      by blast
   next
     case False
     from this c1_def c1'subset E_nodes_def have "c1' \<noteq> {}"
@@ -760,9 +759,9 @@ proof -
     from this c3'subset E_nodes_def obtain v where "(v,0::nat)\<in> c3' \<and> v\<in>\<Union>E"
       by blast
     from this c3_def have "v\<in> c3"
-      by blast 
+      by blast
     from this T show ?thesis
-      by blast 
+      by blast
   next
     case False
     from this c2_def c2'subset E_nodes_def have "c2' \<noteq> {}"
@@ -774,26 +773,26 @@ proof -
     then show ?thesis
       by blast
   qed
-    
-    
+
+
   from c1c2Noteq c1c3Noteq c2c3Noteq have colorNoteq:"c1 \<noteq> c2 \<and> c1 \<noteq> c3 \<and> c2 \<noteq> c3"
     by blast
 
   have color_complete:"\<Union> E = \<Union> {c1, c2, c3}"
   proof -
-    define step1 where step1_def: 
+    define step1 where step1_def:
       "step1 = \<Union> ({{v} |v. (v, 0) \<in> c1'} \<union> {{v} |v. (v, 0) \<in> c2'} \<union>  {{v} |v. (v, 0) \<in> c3'})"
-    define step2 where step2_def: 
+    define step2 where step2_def:
       "step2 = \<Union>({{v} |v. (v, 0) \<in> c1' \<or>  (v, 0) \<in> c2' \<or>  (v, 0) \<in> c3' })"
-    define step3 where step3_def: 
+    define step3 where step3_def:
       "step3 = \<Union>({{v} |v. (v, 0) \<in> E_nodes })"
 
     have "\<Union> {c1, c2, c3} = c1 \<union> c2 \<union> c3"
       by force
     from this c1_def c2_def c3_def have st1:
-        "\<Union> {c1, c2, c3} = 
+        "\<Union> {c1, c2, c3} =
         step1"
-      by (auto simp: step1_def) 
+      by (auto simp: step1_def)
     from step1_def step2_def have st2:
       " step1 =  step2"
       by blast
@@ -814,7 +813,7 @@ proof -
   from c1c2disjoint c1c3disjoint c2c3disjoint have colordisjoint:
     "\<forall>c\<in>{c1, c2, c3}. \<forall>c'\<in>{c1, c2, c3}. c \<noteq> c' \<longrightarrow> c \<inter> c' = {}"
     by blast
-  
+
   have c1_iscolor:"\<And>v. \<And>v'. v\<in>c1 \<Longrightarrow> v'\<in>c1 \<Longrightarrow> {v, v'} \<notin> E"
   proof -
     fix v v'
@@ -823,8 +822,8 @@ proof -
       by blast
     from this c1'_color have "{(v,0),(v',0)}\<notin>E'"
       by blast
-    from this asms(2) E'_def_3 show "{v,v'}\<notin> E" 
-      using TC_chrN_edge_in_E_iff 
+    from this asms(2) E'_def_3 show "{v,v'}\<notin> E"
+      using TC_chrN_edge_in_E_iff
       by blast
   qed
 
@@ -836,8 +835,8 @@ proof -
       by blast
     from this c2'_color have "{(v,0),(v',0)}\<notin>E'"
       by blast
-    from this asms(2) E'_def_3 show "{v,v'}\<notin> E" 
-      using TC_chrN_edge_in_E_iff 
+    from this asms(2) E'_def_3 show "{v,v'}\<notin> E"
+      using TC_chrN_edge_in_E_iff
       by blast
   qed
 
@@ -849,24 +848,24 @@ proof -
       by blast
     from this c3'_color have "{(v,0),(v',0)}\<notin>E'"
       by blast
-    from this asms(2) E'_def_3 show "{v,v'}\<notin> E" 
-      using TC_chrN_edge_in_E_iff 
+    from this asms(2) E'_def_3 show "{v,v'}\<notin> E"
+      using TC_chrN_edge_in_E_iff
       by blast
   qed
-  
+
   from c1_iscolor c2_iscolor c3_iscolor have is_color:"\<forall>c\<in>{c1, c2, c3}. \<forall>v\<in>c. \<forall>v'\<in>c. {v, v'} \<notin> E"
     by blast
-  
 
-  from asms(2) color_complete colordisjoint is_color have "is_colorable E {c1, c2, c3}" 
+
+  from asms(2) color_complete colordisjoint is_color have "is_colorable E {c1, c2, c3}"
     unfolding is_colorable_def
     by blast
 
   from this colorNoteq have "is_k_colorable E 3 {c1,c2,c3}"
-    unfolding is_k_colorable_def 
+    unfolding is_k_colorable_def
     by simp
 
-  then show "E \<in> three_colorability" 
+  then show "E \<in> three_colorability"
     unfolding three_colorability_def
     by blast
 qed
@@ -874,17 +873,17 @@ qed
 
 
 
-lemma chroNToThreeCol_notugraph:"\<And>E. \<not>ugraph E \<Longrightarrow> TC_chrN E \<in> chromaticNumber \<Longrightarrow> E \<in> three_colorability" 
+lemma chroNToThreeCol_notugraph:"\<And>E. \<not>ugraph E \<Longrightarrow> TC_chrN E \<in> chromaticNumber \<Longrightarrow> E \<in> three_colorability"
 proof -
   fix E :: "nat set set"
-  assume asms:"TC_chrN E \<in> chromaticNumber" "\<not> ugraph E" 
+  assume asms:"TC_chrN E \<in> chromaticNumber" "\<not> ugraph E"
   obtain E' k  where E'_def:"(E',k) =TC_chrN E"
     by (metis surj_pair)
   from this asms have E'_chrN:"(E',k) \<in> chromaticNumber"
     by simp
-  from asms E'_def have "k = (0::nat)" 
+  from asms E'_def have "k = (0::nat)"
     unfolding TC_chrN_def
-    by auto 
+    by auto
   from this E'_chrN have "(E',0::nat) \<in> chromaticNumber"
     by auto
   from this have "False"
@@ -898,23 +897,23 @@ lemma chroNToThreeCol:"\<And>E. TC_chrN E \<in> chromaticNumber \<Longrightarrow
 proof -
   fix E :: "nat set set"
   assume asms:"TC_chrN E \<in> chromaticNumber"
-  show "E \<in> three_colorability" 
+  show "E \<in> three_colorability"
   proof (cases "ugraph E")
     case True
-    then show ?thesis 
+    then show ?thesis
       using chroNToThreeCol_ugraph asms
-      by blast 
+      by blast
   next
     case False
     then show ?thesis
       using chroNToThreeCol_notugraph asms
-      by blast 
+      by blast
   qed
 qed
 
 
 theorem is_reduction_threeC_chrN:
-  "is_reduction TC_chrN three_colorability chromaticNumber" 
+  "is_reduction TC_chrN three_colorability chromaticNumber"
   unfolding is_reduction_def
   apply  safe
   subgoal using threeColToChroN

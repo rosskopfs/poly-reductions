@@ -1,5 +1,7 @@
 theory Vwalk_Cycle
-  imports "../Auxiliaries/List_Auxiliaries" "../Auxiliaries/Graph_Auxiliaries"
+  imports
+    List_Auxiliaries
+    Graph_Auxiliaries
 begin
 
 section\<open>Vwalk_Cycle\<close>

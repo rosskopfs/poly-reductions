@@ -2,6 +2,7 @@
 theory HOL_Nat_To_IMP_Utils
   imports
     State_Update_Tracking
+    ML_Unification.Unify_Resolve_Tactics
 begin
 
 paragraph \<open>Summary\<close>

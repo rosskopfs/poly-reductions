@@ -4,7 +4,7 @@ begin
 
 section\<open>Set auxiliaries\<close>
 
-lemmas [trans] = finite_subset
+declare finite_subset[trans]
 
 lemma card_greater_1_contains_two_elements:
   assumes "card S > 1"

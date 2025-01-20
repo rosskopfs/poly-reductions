@@ -1,5 +1,5 @@
 theory CSTC_Poly
-  imports "../TSTSC_Poly" CNF_SAT_To_Clique
+  imports "../TSAT_To_SC/TSTSC_Poly" CNF_SAT_To_Clique
 begin
 
 subsection\<open>The reduction from \<open>CNF_Sat\<close> to \<open>Clique\<close> is polynomial\<close>
@@ -10,7 +10,7 @@ definition "max_size_clauses xs = card (\<Union> (set xs))"
 
 definition "add_edges_cstc F S =
   SPECT [ S \<union> {{(l1, i), (l2, j)} | l1 l2 i j.
-      i < length F \<and> j < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j \<and> \<not> conflict l1 l2 \<and> i \<noteq> j}
+      i < length F \<and> j < length F \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j \<and> \<not> conflict_lit l1 l2 \<and> i \<noteq> j}
        \<mapsto> max_size_clauses F * max_size_clauses F * length F * length F]"
 
 definition "add_nodes_cstc F V =
@@ -162,7 +162,7 @@ qed
 lemma card_E2:
   assumes "finite (\<Union> (set F))"
   shows "card {{(l1, i), (l2, j)} |l1 l2 i j. i < length F \<and> j < length F
-      \<and> i \<noteq> j \<and> \<not> conflict l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
+      \<and> i \<noteq> j \<and> \<not> conflict_lit l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
             \<le> length F * card (\<Union> (set F)) * length F * card (\<Union> (set F))"
   apply(subst paf2)
   apply(subst paf)
@@ -186,14 +186,14 @@ lemma card_E2:
 lemma card_E3:
   assumes "finite (\<Union> (set F))"
   shows "card {{(l1, i), (l2, j)} |l1 l2 i j. i < length F \<and> j < length F
-    \<and> i \<noteq> j \<and> \<not> conflict l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
+    \<and> i \<noteq> j \<and> \<not> conflict_lit l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
             \<le> length F * card (\<Union> (set F)) * (length F * card (\<Union> (set F)))"
 proof -
   have "card {{(l1, i), (l2, j)} |l1 l2 i j. i < length F \<and> j < length F
-    \<and> i \<noteq> j \<and> \<not> conflict l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
+    \<and> i \<noteq> j \<and> \<not> conflict_lit l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
     \<le> length F * card (\<Union> (set F)) * length F * card (\<Union> (set F))" using assms by(rule card_E2)
   then have "card {{(l1, i), (l2, j)} |l1 l2 i j. i < length F \<and> j < length F
-    \<and> i \<noteq> j \<and> \<not> conflict l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
+    \<and> i \<noteq> j \<and> \<not> conflict_lit l1 l2 \<and> l1 \<in> F ! i \<and> l2 \<in> F ! j}
     \<le> length F * card (\<Union> (set F)) * (length F * card (\<Union> (set F)))"  by(auto)
   then show ?thesis .
 qed

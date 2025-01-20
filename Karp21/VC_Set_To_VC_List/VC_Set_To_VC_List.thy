@@ -1,6 +1,8 @@
 theory VC_Set_To_VC_List
-  imports Main "../Three_Sat_To_Set_Cover"  "Poly_Reductions_Lib.Graph_Auxiliaries"
+  imports Main "../TSAT_To_SC/TSAT_To_SC"  "Poly_Reductions_Lib.Graph_Auxiliaries"
 begin
+
+(*FIXME: should be subsumed by VC_Definition_List*)
 
 section\<open>VC Set to VC List\<close>
 
@@ -116,9 +118,8 @@ qed
 
 lemma in_vc_list: "vc_set_to_vc_list (E, k) \<in> vertex_cover_list"
 proof -
-  have "\<exists>V. ugraph E \<and> V \<subseteq> \<Union> E \<and> k \<le> card (\<Union> E) \<and> card V \<le> k \<and> is_vertex_cover E V"
-    using in_vc
-    by(auto simp add: vertex_cover_def)
+  have "\<exists>V \<in> Pow (\<Union>E). ugraph E \<and> k \<le> card (\<Union> E) \<and> card V \<le> k \<and> is_vertex_cover E V"
+    using in_vc by auto
   then obtain V where V_def: "ugraph E" "V \<subseteq> \<Union> E" "k \<le> card (\<Union> E)"
     "card V \<le> k" "is_vertex_cover E V"
     by auto

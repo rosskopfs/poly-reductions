@@ -1,5 +1,5 @@
 theory VCHC_Poly
-  imports "../TSTSC_Poly" "Poly_Reductions_Lib.Set_Auxiliaries" VC_To_HC
+  imports "../TSAT_To_SC/TSTSC_Poly" "Poly_Reductions_Lib.Set_Auxiliaries" VC_To_HC
 begin
 
 subsection \<open>The reduction from \<open>VC\<close> to \<open>HC\<close> is polynomial\<close>
