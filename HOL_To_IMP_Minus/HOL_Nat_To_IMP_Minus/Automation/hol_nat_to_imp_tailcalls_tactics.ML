@@ -271,8 +271,9 @@ fun finish_tail_tac ctxt =
           |> flat2
         val solve_ih_prem_tac =
           safe_simp_tac (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (clear_simpset ctxt))
-          THEN_ALL_NEW (Tactic_Util.insert_tac prems ctxt THEN' safe_asm_simp_tac ctxt)
-          |> SOLVED'
+          THEN_ALL_NEW (Tactic_Util.insert_tac prems ctxt
+              THEN' TRY o safe_asm_simp_tac ctxt
+              THEN' TRY o HTITB.solve_Rel_nat_tac ctxt)
       in instantiate_apply_ih_tac THEN_ALL_NEW solve_ih_prem_tac end
     fun prems_tac {context = ctxt, prems,...} {s, v,...} =
       get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
