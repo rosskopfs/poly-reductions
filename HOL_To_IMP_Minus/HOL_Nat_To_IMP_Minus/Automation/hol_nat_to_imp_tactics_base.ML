@@ -80,7 +80,7 @@ fun Rel_nat_step_tac ctxt =
   ORELSE' Unify_Resolve_Base.unify_resolve_any_tac
     HOL_To_IMP_Unification.norms_first_higherp_decomp_comb_higher_unify
     HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify
-    (HOL_To_HOL_Nat_Util.get_Rel_nat_related_thms ctxt @ [@{thm refl}, @{thm rel_fun_appI}])
+    (HOL_To_HOL_Nat_Util.get_Rel_nat_thms ctxt @ [@{thm refl}, @{thm rel_fun_appI}])
     ctxt
 
 fun solve_Rel_nat_tac ctxt =

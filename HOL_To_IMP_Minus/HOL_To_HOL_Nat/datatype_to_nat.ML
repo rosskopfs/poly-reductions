@@ -111,7 +111,7 @@ fun register_ctr_Rel_thm ctr lthy =
   let
     val ctrl_Rel_thm = mk_ctrl_Rel_thm ctr lthy
     val binding = TrpUtil.add_suffix Rel_nat_binding (mk_ctr_binding ctr)
-  in register_Rel_nat_related_thms binding [ctrl_Rel_thm] lthy end
+  in register_Rel_nat_thms binding [ctrl_Rel_thm] lthy end
 
 fun register_ctr_Rel_thms ctrs = fold_map (fn ctr => register_ctr_Rel_thm ctr #>> snd) ctrs
 
@@ -161,7 +161,7 @@ fun register_Rel_nat_eq_fst_nat_case_thm ctrs casex simps split lthy =
       solve_compiled_Rel_nat_tac transfer_fun_RelD (ctxt addsimps simps |> Splitter.add_split split)
     val thm = Goal.prove lthy [] [] goal (#context #> tac #> HEADGOAL)
     val binding = ctrs |> hd |> fastype_of |> strip_type |> snd |> mk_Rel_nat_eq_fst_nat_case_binding
-  in register_Rel_nat_related_thms binding [thm] lthy |>> snd end
+  in register_Rel_nat_thms binding [thm] lthy |>> snd end
 
 fun register_case T ctrs casex ctxt =
   let
@@ -216,7 +216,7 @@ fun register_case_Rel_thm T casex case_nat case_nat_def lthy =
   let
     val case_Rel_thm = mk_case_Rel_thm casex case_nat case_nat_def lthy
     val binding = TrpUtil.add_suffix Rel_nat_binding (mk_case_binding T)
-  in register_Rel_nat_related_thms binding [case_Rel_thm] lthy end
+  in register_Rel_nat_thms binding [case_Rel_thm] lthy end
 
 fun datatype_compile_nat T ctrs casex split thy =
   let

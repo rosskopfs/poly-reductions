@@ -38,7 +38,7 @@ fun head :: "bool list \<Rightarrow> bool" where
   "head [] = undefined" |
   "head (x # _) = x"
 
-lemma Rel_nat_undefined [Rel_nat_related]:
+lemma Rel_nat_undefined [Rel_nat]:
   "Rel_nat (natify (undefined :: 'a :: compile_nat)) (undefined :: 'a)"
   by (rule Rel_nat_natify_self)
 

@@ -44,6 +44,10 @@ sig
 
   val subst_HOL_fun_eq_tac : thm list -> Proof.context -> int -> tactic
 
+  val SIMPS_TO_if_assumption_tac : Proof.context -> int -> tactic
+  val SIMPS_TO_if_assumption_loop : string * (Proof.context -> int -> tactic)
+  val add_SIMPS_TO_if_assumption_loop : Context.generic -> Context.generic
+
   val finish_non_tail_tac : Proof.context -> int -> tactic
   val finish_tail_tac : Proof.context -> int -> tactic
 
@@ -137,8 +141,9 @@ val rewrite_eq_state_retrieval_sym_tac =
   end
 
 fun setup_induction_tac get_fun_inducts =
-  let fun focused_tac ctxt {s, v,...} =
+  let fun focused_tac {context = ctxt, ...} {s, v,...} =
     let
+      (*TODO: set up induction differently for Rel_nat theorems*)
       (*v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after*)
       val head = head_of v
       val instantiations = head
@@ -154,8 +159,8 @@ fun setup_induction_tac get_fun_inducts =
       THEN_ALL_NEW (TRY o rewrite_eq_state_retrieval_sym_tac ctxt)
     end
   in
-    TU.FOCUS_PARAMS_CTXT' (fn ctxt => with_dest_terminates_with_res_IMP_Tailcall_prop ctxt
-      (focused_tac ctxt))
+    TU.FOCUS_PARAMS' (fn (f as {context = ctxt,...}) =>
+      with_dest_terminates_with_res_IMP_Tailcall_prop ctxt (focused_tac f))
   end
 
 fun start_case_tac get_IMP_def ctxt =
@@ -272,8 +277,8 @@ fun finish_tail_tac ctxt =
         val solve_ih_prem_tac =
           safe_simp_tac (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (clear_simpset ctxt))
           THEN_ALL_NEW (Tactic_Util.insert_tac prems ctxt
-              THEN' TRY o safe_asm_simp_tac ctxt
-              THEN' TRY o HTITB.solve_Rel_nat_tac ctxt)
+            THEN' TRY o safe_asm_full_simp_tac ctxt
+            THEN_ALL_NEW TRY o HTITB.solve_Rel_nat_tac ctxt)
       in instantiate_apply_ih_tac THEN_ALL_NEW solve_ih_prem_tac end
     fun prems_tac {context = ctxt, prems,...} {s, v,...} =
       get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
@@ -305,6 +310,14 @@ fun simp_res_value_tac simp_tac ctxt =
   resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
   THEN' HTIU.SIMPS_TO_UNIF_refl_tac simp_tac ctxt
 
+(*SIMPS_TO looper needed for if conditions containing meta variables*)
+fun SIMPS_TO_if_assumption_tac ctxt =
+  resolve_tac ctxt @{thms SIMPS_TO_if_TrueI SIMPS_TO_if_FalseI}
+  THEN' assume_tac ctxt
+val SIMPS_TO_if_assumption_loop = ("SIMPS_TO_if_assumption", SIMPS_TO_if_assumption_tac)
+val add_SIMPS_TO_if_assumption_loop = Simplifier.map_ss
+  (fn ctxt => ctxt addloop SIMPS_TO_if_assumption_loop)
+
 (*run the HOL function to its return value or to a recursive call*)
 fun run_HOL_fun_tac get_HOL_eqs ctxt =
   let fun tac {v,...} = case get_HOL_eqs ctxt (head_of v) of
@@ -316,7 +329,8 @@ fun run_HOL_fun_tac get_HOL_eqs ctxt =
         K no_tac)
     | SOME thms => simp_res_value_tac (
           subst_HOL_fun_eq_tac thms ctxt
-          THEN' TRY o safe_asm_simp_tac (ctxt delsimps thms addsimps [@{thm Let_def}])
+          THEN' TRY o safe_asm_full_simp_tac (ctxt delsimps thms addsimps
+            @{thm Let_def} :: HTITB.get_HOL_To_IMP_finish_simps ctxt)
         ) ctxt
   in with_dest_terminates_with_res_IMP_Tailcall_prop ctxt tac end
 

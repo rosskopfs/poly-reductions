@@ -70,7 +70,7 @@ lemma rel_fun_appI:
   shows "S (f x) gy"
   using rel_funD using assms by auto
 
-lemma Rel_nat_fst_nat_app_if_Rel_nat_eqI [Rel_nat_related]:
+lemma Rel_nat_fst_nat_app_if_Rel_nat_eqI [Rel_nat]:
   assumes "Rel_nat x y"
   and "(Rel_nat ===> (=)) fst_nat f"
   and "fy = f y"
@@ -85,6 +85,19 @@ declare natify_neq_zero_iff[HOL_To_IMP_finish_simps]
   natify_eq_zero_iff_not[HOL_To_IMP_finish_simps]
 
 ML_file \<open>hol_nat_to_imp_tactics_base.ML\<close>
+
+lemma SIMPS_TO_if_TrueI:
+  assumes "b"
+  and "PROP SIMPS_TO x z"
+  shows "PROP SIMPS_TO (if b then x else y) z"
+  using assms unfolding SIMPS_TO_eq by simp
+
+lemma SIMPS_TO_if_FalseI:
+  assumes "\<not>b"
+  and "PROP SIMPS_TO y z"
+  shows "PROP SIMPS_TO (if b then x else y) z"
+  using assms unfolding SIMPS_TO_eq by simp
+
 ML_file \<open>hol_nat_to_imp_tailcalls_tactics.ML\<close>
 ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
 

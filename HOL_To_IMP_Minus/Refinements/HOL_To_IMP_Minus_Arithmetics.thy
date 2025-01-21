@@ -22,7 +22,7 @@ lemma power_acc_nat_eq_power_mul: "power_acc_nat x y z = x^y * z"
 lemma power_eq_power_acc_nat_one: "x^y = power_acc_nat x y 1"
   using power_acc_nat_eq_power_mul by simp
 
-lemma Rel_nat_power [Rel_nat_related]:
+lemma Rel_nat_power [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) power (power :: nat \<Rightarrow> _)"
   by (auto simp: Rel_nat_nat_eq_eq)
 
@@ -88,7 +88,7 @@ corollary sqrt_nat_eq: "sqrt_nat y = floor_sqrt y"
 corollary floor_sqrt_eq_sqrt_aux_nat: "floor_sqrt x = sqrt_aux_nat x 0 (Suc x)"
   using sqrt_nat_eq sqrt_nat_def by simp
 
-lemma Rel_nat_floor_sqrt [Rel_nat_related]:
+lemma Rel_nat_floor_sqrt [Rel_nat]:
   "(Rel_nat ===> Rel_nat) floor_sqrt floor_sqrt"
   by (auto simp: Rel_nat_nat_eq_eq)
 
@@ -99,16 +99,18 @@ begin
 
 compile_nat HTHN.sqrt_aux_nat.simps basename sqrt_aux
 
-HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by (cook mode = tailcall)
+(*FIXME: make work with cook method (but without adding SOLVED' to finish_tac)*)
+HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat
+(* by (cook mode = tailcall) *)
   (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
-  (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
-  oops *)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
+  done
 
 compile_nat HTHN.sqrt_nat_def basename sqrt
 

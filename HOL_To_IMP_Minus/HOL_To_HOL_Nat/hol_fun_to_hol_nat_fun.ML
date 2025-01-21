@@ -83,7 +83,7 @@ fun register_related_transfer_thm f lthy =
       |> Local_Defs.fold lthy
         @{thms rel_inv_Fun_Rel_rel_eq rel_inv_iff_rel[symmetric]  rel_fun_eq_Fun_Rel_rel}
   in
-    register_attrs_Rel_nat_related_thms @{attributes [Rel_nat_compile_nat]} binding [related_thm] lthy
+    register_attrs_Rel_nat_thms @{attributes [Rel_nat_compile_nat]} binding [related_thm] lthy
     |>> apsnd the_single
   end
 
@@ -108,13 +108,9 @@ fun register_related_unfolded_thm f f_eq lthy =
     val (concl :: assms, lthy) = Syntax.check_terms lthy (concl :: assms)
       |> (fn ts => Variable.importT_terms ts lthy)
     val thm = Goal.prove lthy [] assms concl (fn {prems = prems, context = ctxt,...} =>
-      let val ctxt = ctxt
-        |> Context.proof_map (fold (Thm.attribute_declaration Transfer.transfer_add) prems)
-      in
-        (EqSubst.eqsubst_tac ctxt [1] [f_eq]
-        THEN' Rel_nat_transfer_prover ctxt)
-        |> HEADGOAL
-      end)
+      (EqSubst.eqsubst_tac ctxt [1] [f_eq]
+      THEN' Rel_nat_transfer_prover prems ctxt)
+      |> HEADGOAL)
     val binding = mk_related_unfolded_binding f
     val ([thm], lthy) = register_thms binding [thm] lthy |>> snd
     val (lthy, old_lthy) = `Local_Theory.end_nested lthy

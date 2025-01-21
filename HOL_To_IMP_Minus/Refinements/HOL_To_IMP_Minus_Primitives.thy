@@ -16,7 +16,7 @@ definition "eq_nat (n :: nat) m \<equiv> if (n - m) + (m - n) = 0 then True_nat 
 lemma eq_nat_eq [HOL_To_IMP_finish_simps]: "eq_nat n m = natify (n = m)"
   unfolding eq_nat_def natify_bool_def by simp
 
-lemma Rel_nat_eq_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat ===> Rel_nat) eq_nat (=)"
+lemma Rel_nat_eq_nat [Rel_nat]: "(Rel_nat ===> Rel_nat ===> Rel_nat) eq_nat (=)"
 proof (intro rel_funI)
   fix x x' and y y' :: 'a
   assume "Rel_nat x y" "Rel_nat x' y'"
@@ -27,10 +27,14 @@ qed
 end
 
 locale HOL_Nat_To_IMP_Minus =
+  (*remove simplification rules interfering with refinement proofs*)
   notes neq0_conv[iff del, symmetric, iff] Nat.One_nat_def[simp del]
+  and de_Morgan_disj[simp del] de_Morgan_conj[simp del] not_imp[simp del] disj_not1[simp del]
 begin
 
 sublocale HTHN : HOL_To_HOL_Nat .
+
+declaration \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
 
 context includes com_syntax and no com'_syntax
 begin
@@ -69,11 +73,11 @@ begin
 
 sublocale HNTIM : HOL_Nat_To_IMP_Minus .
 
-lemma Rel_nat_add [Rel_nat_related]:
+lemma Rel_nat_add [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) (+) ((+) :: nat \<Rightarrow> _)"
   by (auto simp: Rel_nat_nat_eq_eq)
 
-lemma Rel_nat_sub [Rel_nat_related]:
+lemma Rel_nat_sub [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) (-) ((-) :: nat \<Rightarrow> _)"
   by (auto simp: Rel_nat_nat_eq_eq)
 
@@ -128,7 +132,7 @@ lemma mul_acc_nat_eq_mul_add: "mul_acc_nat x y z = x * y + z"
 lemma mul_eq_mul_acc_nat_zero: "x * y = mul_acc_nat x y 0"
   using mul_acc_nat_eq_mul_add by simp
 
-lemma Rel_nat_mul [Rel_nat_related]:
+lemma Rel_nat_mul [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) (*) ((*) :: nat \<Rightarrow> _)"
   by (auto simp: Rel_nat_nat_eq_eq)
 
@@ -184,7 +188,7 @@ definition "not_nat (n :: nat) \<equiv> eq_nat n False_nat"
 lemma not_nat_eq [HOL_To_IMP_finish_simps]: "not_nat n = natify (n = False_nat)"
   unfolding not_nat_def eq_nat_eq by simp
 
-lemma Rel_nat_not_nat [Rel_nat_related]:
+lemma Rel_nat_not_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat) not_nat Not"
   unfolding not_nat_eq by (intro rel_funI)
   (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
@@ -213,14 +217,14 @@ begin
 lemma max_nat_eq_if: "max (x :: nat) y = (if x - y \<noteq> 0 then x else y)"
   by simp
 
-lemma Rel_nat_max [Rel_nat_related]:
+lemma Rel_nat_max [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) max (max :: nat \<Rightarrow> _)"
   by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
 
 lemma min_nat_eq_if: "min (x :: nat) y = (if x - y \<noteq> 0 then y else x)"
   by simp
 
-lemma Rel_nat_min [Rel_nat_related]:
+lemma Rel_nat_min [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) min (min :: nat \<Rightarrow> _)"
   by (intro rel_funI) (auto simp: Rel_nat_nat_eq_eq)
 
@@ -249,7 +253,7 @@ definition "conj_nat (x :: nat) y \<equiv> min (min x y) True_nat"
 lemma conj_nat_eq [HOL_To_IMP_finish_simps]: "conj_nat x y = natify (x \<noteq> False_nat \<and> y \<noteq> False_nat)"
   unfolding conj_nat_def by (auto simp: natify_bool_def False_nat_eq_zero True_nat_def)
 
-lemma Rel_nat_conj_nat [Rel_nat_related]:
+lemma Rel_nat_conj_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) conj_nat (\<and>)"
   unfolding conj_nat_eq by (intro rel_funI)
   (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
@@ -259,7 +263,7 @@ definition "disj_nat (x :: nat) y \<equiv> min (max x y) True_nat"
 lemma disj_nat_eq [HOL_To_IMP_finish_simps]: "disj_nat x y = natify (x \<noteq> False_nat \<or> y \<noteq> False_nat)"
   unfolding disj_nat_def by (auto simp: natify_bool_def False_nat_eq_zero True_nat_def)
 
-lemma Rel_nat_disj_nat [Rel_nat_related]:
+lemma Rel_nat_disj_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) disj_nat (\<or>)"
   unfolding disj_nat_eq by (intro rel_funI)
   (auto simp: Rel_nat_bool_iff natify_True_eq natify_False_eq True_nat_ne_False_nat)
@@ -299,7 +303,7 @@ definition "le_nat (x :: nat) y \<equiv> eq_nat (x - y) 0"
 lemma le_nat_eq [HOL_To_IMP_finish_simps]: "le_nat x y = natify (x \<le> y)"
   unfolding le_nat_def eq_nat_eq by simp
 
-lemma Rel_nat_le_nat [Rel_nat_related]:
+lemma Rel_nat_le_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) le_nat ((\<le>) :: nat \<Rightarrow> _)"
   by (intro rel_funI)
   (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff le_nat_eq natify_True_eq natify_False_eq)
@@ -309,7 +313,7 @@ definition "lt_nat (x :: nat) y \<equiv> conj_nat (le_nat x y) (not_nat (eq_nat 
 lemma lt_nat_eq [HOL_To_IMP_finish_simps]: "lt_nat x y = natify (x < y)"
   unfolding lt_nat_def by (auto simp: natify_bool_def le_nat_eq conj_nat_eq not_nat_eq eq_nat_eq)
 
-lemma Rel_nat_lt_nat [Rel_nat_related]:
+lemma Rel_nat_lt_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) lt_nat ((<) :: nat \<Rightarrow> _)"
   by (intro rel_funI)
   (auto simp: Rel_nat_nat_eq_eq Rel_nat_bool_iff lt_nat_eq natify_True_eq natify_False_eq)
@@ -354,7 +358,7 @@ lemma div_acc_nat_eq_div_add: "div_acc_nat x y z = x div y + z"
 lemma div_eq_div_acc_nat_zero: "x div y = div_acc_nat x y 0"
   using div_acc_nat_eq_div_add by simp
 
-lemma Rel_nat_div [Rel_nat_related]:
+lemma Rel_nat_div [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) Rings.divide (divide :: nat \<Rightarrow> _)"
   by (auto simp: Rel_nat_nat_eq_eq div_acc_nat_eq_div_add)
 
@@ -398,9 +402,9 @@ begin
 lemma pair_nat_eq_triangle_add: "pair_nat a b = triangle (a + b) + a"
   unfolding pair_nat_eq prod_encode_def by simp
 
-lemma Rel_nat_triangle [Rel_nat_related]: "(Rel_nat ===> Rel_nat) triangle triangle"
+lemma Rel_nat_triangle [Rel_nat]: "(Rel_nat ===> Rel_nat) triangle triangle"
   by (auto simp: Rel_nat_nat_eq_eq)
-lemma Rel_nat_pair_nat [Rel_nat_related]:
+lemma Rel_nat_pair_nat [Rel_nat]:
   "(Rel_nat ===> Rel_nat ===> Rel_nat) pair_nat pair_nat"
   by (auto simp: Rel_nat_nat_eq_eq)
 
@@ -430,14 +434,14 @@ lemma fst_nat_eq_fst_acc_nat: "fst_nat m = fst_acc_nat 0 m"
   unfolding fst_nat_eq unpair_nat_eq prod_decode_def
   by (subst fst_acc_nat_eq_fst_prod_decode_aux) simp
 
-lemma Rel_nat_fst_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat) fst_nat fst_nat"
+lemma Rel_nat_fst_nat [Rel_nat]: "(Rel_nat ===> Rel_nat) fst_nat fst_nat"
   by (auto simp: Rel_nat_nat_eq_eq)
 
 lemma snd_nat_eq_snd_nat_acc: "snd_nat m = snd_nat_acc 0 m"
   unfolding snd_nat_eq unpair_nat_eq prod_decode_def
   by (subst snd_nat_acc_eq_snd_prod_decode_aux) simp
 
-lemma Rel_nat_snd_nat [Rel_nat_related]: "(Rel_nat ===> Rel_nat) snd_nat snd_nat"
+lemma Rel_nat_snd_nat [Rel_nat]: "(Rel_nat ===> Rel_nat) snd_nat snd_nat"
   by (auto simp: Rel_nat_nat_eq_eq)
 
 end

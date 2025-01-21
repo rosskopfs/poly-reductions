@@ -19,13 +19,14 @@ begin
 unbundle no converse_syntax
 unbundle lifting_syntax
 
-named_theorems "Rel_nat_related"
+named_theorems "Rel_nat"
   "Rel_nat relatedness theorems"
 
 text \<open>Types with encodings as natural numbers.\<close>
 class compile_nat =
   fixes natify :: "'a \<Rightarrow> nat"
   and denatify :: "nat \<Rightarrow> 'a"
+  (*natify is injective*)
   assumes denatify_natify_eq_self [simp]: "\<And>x. denatify (natify x) = x"
 begin
 
@@ -61,7 +62,7 @@ natify blackbox partner but their whitebox-transfer parnter*)
 lemma Rel_nat_natify_self: "Rel_nat (natify x) x"
   by (simp add: Rel_nat_iff_eq_natify)
 
-lemma Rel_nat_denatify_natify [Rel_nat_related]: "(Rel_nat ===> Rel_nat\<inverse>) denatify natify"
+lemma Rel_nat_denatify_natify [Rel_nat]: "(Rel_nat ===> Rel_nat\<inverse>) denatify natify"
   by (intro rel_funI) (auto iff: Rel_nat_iff_eq_natify)
 
 interpretation flip : transport compile_nat_type_def.R compile_nat_type_def.L natify denatify .
