@@ -26,7 +26,7 @@ sig
   val seq_tac : thm -> Proof.context -> int -> tactic
   val assign_tac : thm -> Proof.context -> int -> tactic
   val call_tac : thm -> (int -> tactic) -> Proof.context -> thm list -> int -> tactic
-  val if_tac : (Proof.context -> thm list) -> thm -> Proof.context -> int -> tactic
+  val if_tac : thm -> (int -> tactic) -> Proof.context -> int -> tactic
   val run_step_tac : ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> ('a -> tactic) -> 'a ->
     tactic
   val run_tac : (int -> tactic) -> int -> tactic
@@ -124,12 +124,9 @@ and "b \<Longrightarrow> ?P c c1 s"
 and "\<not>b \<Longrightarrow> ?P c c2 s"
 shows "?P s (If vb c1 c2)"
 *)
-fun if_tac get_finish_simps if_thmI ctxt =
-  let
-    val SIMP_TO_UNIF_condition_tac = HTIU.SIMPS_TO_UNIF_refl_tac
-      (rewrite_ne_zero_if_Rel_nat_tac ctxt) ctxt
-    val finish_contradictory_branch =
-      SOLVED' (safe_asm_full_simp_tac (ctxt addsimps get_finish_simps ctxt))
+fun if_tac if_thmI finish_contradictory_branch ctxt =
+  let val SIMP_TO_UNIF_condition_tac = HTIU.SIMPS_TO_UNIF_refl_tac
+    (rewrite_ne_zero_if_Rel_nat_tac ctxt) ctxt
   in
     resolve_tac ctxt [if_thmI]
     THEN' SUT.STATE_interp_retrieve_key_eq_tac (HTIU.refl_tac ctxt) ctxt

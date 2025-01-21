@@ -99,18 +99,19 @@ begin
 
 compile_nat HTHN.sqrt_aux_nat.simps basename sqrt_aux
 
+
 (*FIXME: make work with cook method (but without adding SOLVED' to finish_tac)*)
-HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat
-(* by (cook mode = tailcall) *)
+HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by (cook mode = tailcall)
   (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
-  done
+  oops *)
+
 
 compile_nat HTHN.sqrt_nat_def basename sqrt
 

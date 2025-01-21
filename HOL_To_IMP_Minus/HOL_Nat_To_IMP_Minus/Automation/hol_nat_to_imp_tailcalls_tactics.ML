@@ -37,6 +37,9 @@ sig
 
   val terminates_with_tCall_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
 
+  val delete_IH_prems : int -> tactic
+
+  val finish_contradictory_branch : Proof.context -> int -> tactic
   val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
   val run_step_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
@@ -190,8 +193,21 @@ fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 
-val terminates_with_res_tIf_tac =
-  HTITB.if_tac HTITB.get_HOL_To_IMP_finish_simps @{thm terminates_with_res_tIf_processedI}
+val is_ih = can (Term_Util.strip_subgoal #> snd #> snd #> dest_terminates_with_res_IMP_Tailcall_prop)
+
+val delete_IH_prems =
+  let fun tac prems i state =
+    let val ih_prems = fold_index (fn (i, prem) => if is_ih prem then cons (i + 1) else I) prems []
+    in TU.thin_tacs ih_prems i state end
+  in TU.SUBGOAL_STRIPPED (snd #> fst) tac end
+
+fun finish_contradictory_branch ctxt =
+  (delete_IH_prems
+  THEN' safe_asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt))
+  |> SOLVED'
+
+fun terminates_with_res_tIf_tac ctxt =
+  HTITB.if_tac @{thm terminates_with_res_tIf_processedI} (finish_contradictory_branch ctxt) ctxt
 
 fun run_step_tac get_imp_minus_correct ctxt = HTITB.run_step_tac
   (terminates_with_res_tSeq_tac ctxt)
@@ -260,7 +276,6 @@ fun finish_tail_tac ctxt =
       end
     fun solve_with_ih_tac ctxt prems s arg_reg_eq_thms =
       let
-        val is_ih = Thm.concl_of #> can dest_terminates_with_res_IMP_Tailcall_prop
         val s_ct = Thm.cterm_of ctxt s
         val s_typ = Thm.typ_of_cterm s_ct
         (*induction hypotheses can have multiple free variables - find all of them that could be
@@ -269,6 +284,8 @@ fun finish_tail_tac ctxt =
           #> (fn t => Term.add_vars t [])
           #> List.filter (fn (_, typ) => typ = s_typ)
           #> rev (*right state is probably at the front*)
+        val is_ih = Thm.prop_of #> is_ih
+        val non_ih_prems = filter_out is_ih prems
         val instantiate_apply_ih_tac = filter is_ih prems |> Seq.of_list
           >>= (fn ih => inst_vars ih |> Seq.of_list
           >>= (fn inst_var => Thm.instantiate (TVars.empty, Vars.make1 (inst_var, s_ct)) ih |> pure
@@ -276,7 +293,7 @@ fun finish_tail_tac ctxt =
           |> flat2
         val solve_ih_prem_tac =
           safe_simp_tac (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (clear_simpset ctxt))
-          THEN_ALL_NEW (Tactic_Util.insert_tac prems ctxt
+          THEN_ALL_NEW (Tactic_Util.insert_tac non_ih_prems ctxt
             THEN' TRY o safe_asm_full_simp_tac ctxt
             THEN_ALL_NEW TRY o HTITB.solve_Rel_nat_tac ctxt)
       in instantiate_apply_ih_tac THEN_ALL_NEW solve_ih_prem_tac end
@@ -302,6 +319,7 @@ fun subst_HOL_fun_eq_tac thms ctxt = THEN_ALL_NEW_OFFSET 1 (HTIU.subst_first_tac
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
+  THEN' delete_IH_prems
   THEN' SUT.STATE_interp_retrieve_key_eq_tac
     (asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt)) ctxt
 
@@ -329,6 +347,7 @@ fun run_HOL_fun_tac get_HOL_eqs ctxt =
         K no_tac)
     | SOME thms => simp_res_value_tac (
           subst_HOL_fun_eq_tac thms ctxt
+          THEN' delete_IH_prems
           THEN' TRY o safe_asm_full_simp_tac (ctxt delsimps thms addsimps
             @{thm Let_def} :: HTITB.get_HOL_To_IMP_finish_simps ctxt)
         ) ctxt
@@ -341,9 +360,7 @@ fun finish_tac get_HOL_eqs ctxt =
 fun start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt =
   start_case_tac get_IMP_def ctxt
   THEN' run_tac get_imp_minus_correct ctxt
-  THEN_ALL_NEW (
-    finish_tac get_HOL_eqs ctxt
-    ORELSE' K all_tac)
+  THEN_ALL_NEW SOLVED' (finish_tac get_HOL_eqs ctxt)
 
 fun start_run_finish_tac is_tailcall get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
   ctxt =
