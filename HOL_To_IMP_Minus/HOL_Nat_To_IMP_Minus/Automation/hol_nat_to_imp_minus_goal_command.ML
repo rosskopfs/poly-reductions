@@ -77,8 +77,7 @@ in
             |> Compile_HOL_Nat_To_IMP.get_compiled_const lthy
 
           val (s, lthy) = yield_singleton Variable.variant_fixes "s" lthy |>> (rpair stateT #> Free)
-          fun arg_from_reg reg = State_Update_Tracking.mk_state_retrieval s (HTIU.mk_register reg)
-          val base_args = #arg_regs compiled_const |> map arg_from_reg
+          val base_args = #arg_regs compiled_const |> map (HTIU.mk_state_register_retrieval s)
 
           val opt_eq_unfolded_thm = const_term
             |> HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded lthy

@@ -54,7 +54,8 @@ sig
   val add_compile_nat_sort: typ -> typ
 
   val Rel_nat_iff_thm: thm
-  val mk_Rel_nat: typ -> term
+  val mk_Rel_nat : typ -> term
+  val dest_Rel_nat : term -> typ * (term * term)
   val Rel_nat_binding: binding
   val mk_Rel_nat_type_binding: typ -> binding
 
@@ -171,6 +172,7 @@ val add_compile_nat_sort = map_sort (fn \<^sort>\<open>type\<close> => compile_n
 
 val Rel_nat_iff_thm = @{thm Rel_nat_iff_eq_natify}
 fun mk_Rel_nat T = \<^Const>\<open>Rel_nat T\<close>
+val dest_Rel_nat = \<^Const_fn>\<open>Rel_nat T for lhs rhs => \<open>(T, (lhs, rhs))\<close>\<close>
 val Rel_nat_binding  = const_binding @{term Rel_nat}
 val mk_Rel_nat_type_binding  = type_suffix_binding Rel_nat_binding
 

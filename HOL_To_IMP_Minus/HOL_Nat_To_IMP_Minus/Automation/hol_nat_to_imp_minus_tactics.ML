@@ -10,8 +10,8 @@ HOL to IMP tactics with arguments from context.
 @{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_ARGS
   [IMP_def, imp_minus_correct, HOL_eqs, fun_inducts, mode]}
 
-@{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_TAILCALLS_MODES
-  [tailcall, nontailcall]}
+@{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_PROOF_MODES
+  [induction, simple]}
 
 signature HOL_NAT_TO_IMP_MINUS_TACTICS_BASE =
 sig
@@ -20,7 +20,7 @@ include HAS_LOGGER
 structure PA : PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_ARGS
 structure PCA : PARSE_HOL_NAT_TO_IMP_MINUS_TACTICS_CONTEXT_ARGS
 
-structure PM : PARSE_HOL_NAT_TO_IMP_TAILCALLS_MODES
+structure PM : PARSE_HOL_NAT_TO_IMP_PROOF_MODES
 type mode = PM.key
 val parse_mode : mode parser
 
@@ -34,7 +34,7 @@ type args = (thm, thm list, thm list, thm list, mode) PA.entries
 val correct_if_IMP_tailcall_correct_tac : HOL_Nat_To_IMP_Tailcalls_Tactics.IMP_def_retrieval ->
   Proof.context -> int -> tactic
 
-val cook_tac : context_args -> mode -> Proof.context -> int -> tactic
+val cook_tac : context_args -> mode option -> Proof.context -> int -> tactic
 
 val context_arg_parsers : (ML_Code_Util.code parser, ML_Code_Util.code parser,
   ML_Code_Util.code parser, ML_Code_Util.code parser) PCA.entries
@@ -59,7 +59,7 @@ structure PU = Parse_Util
   [IMP_def, imp_minus_correct, HOL_eqs, fun_inducts, mode]}
 
 @{parse_entries (struct) PM
-  [tailcall, nontailcall]}
+  [induction, simple]}
 type mode = PM.key
 val parse_mode = PM.parse_key
 
@@ -105,18 +105,29 @@ fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
       dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop ctxt tac
   end
 
+val is_IMP_def_rec = Thm.concl_of
+  #> HOL_To_HOL_Nat_Util.dest_eq_equals_prop #> snd
+  #> Term.exists_subterm (curry (op aconv) @{term tTAIL})
+
 fun cook_tac context_args mode ctxt =
   let
     val get_fun_inducts = PCA.get_get_fun_inducts context_args
     val get_IMP_def = PCA.get_get_IMP_def context_args
     val get_imp_minus_correct = PCA.get_get_imp_minus_correct context_args
     val get_HOL_eqs = PCA.get_get_HOL_eqs context_args
-    val is_tailcall = (case mode of PM.tailcall _ => true | PM.nontailcall _ => false)
+    fun start_run_finish_tac {c,...}=
+      let val is_induction = case mode of
+          SOME (PM.induction _) => true
+        | SOME (PM.simple _) => false
+        | NONE => get_IMP_def ctxt c |> Option.map is_IMP_def_rec |> the_default false
+      in
+        HTIT.start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_minus_correct
+          get_HOL_eqs ctxt
+      end
   in
     (fn _ => fn st => (@{log Logger.INFO} ctxt (K "👨‍🍳 Cooking 👩‍🍳"); all_tac st))
     THEN' correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt
-    THEN' HTIT.start_run_finish_tac is_tailcall get_fun_inducts get_IMP_def get_imp_minus_correct
-      get_HOL_eqs ctxt
+    THEN' HTIT.with_dest_terminates_with_res_IMP_Tailcall_prop ctxt start_run_finish_tac
     THEN' (fn _ => fn st => if Thm.no_prems st
       then (@{log Logger.INFO} ctxt (K "Dinner served! 😍🍲😍"); all_tac st)
       else (@{log Logger.INFO} ctxt (K "Overcooked 🔥🤯"); all_tac st))
@@ -168,7 +179,7 @@ sig
   val map_get_fun_inducts : (HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval ->
     HOL_Nat_To_IMP_Tailcalls_Tactics.fun_inducts_retrieval) -> Context.generic -> Context.generic
 
-  val cook_tac : HOL_Nat_To_IMP_Minus_Tactics_Base.mode -> Proof.context -> int -> tactic
+  val cook_tac : HOL_Nat_To_IMP_Minus_Tactics_Base.mode option -> Proof.context -> int -> tactic
 
   val binding : binding
 
@@ -262,7 +273,7 @@ val parse_method_arg_entries =
 
 val parse_method =
   let
-    val default_entries = PA.empty_entries () |> fold PA.set_entry [PA.mode (PM.key PM.nontailcall)]
+    val default_entries = PA.empty_entries ()
     fun mk_retrieval t = Option.map (K o K o SOME) t
     fun merge_entries {IMP_def, imp_minus_correct, HOL_eqs, fun_inducts,...} =
       {get_IMP_def = mk_retrieval IMP_def, get_imp_minus_correct = mk_retrieval imp_minus_correct,
@@ -273,7 +284,7 @@ val parse_method =
   in
     (PU.optional' (parse_method_arg_entries |> Parse.!!!!) default_entries)
     >> (fn entries => merge_entries entries
-      #> SIMPLE_METHOD' o cook_tac (PA.get_mode entries))
+      #> SIMPLE_METHOD' o cook_tac (PA.get_mode_safe entries))
   end
 
 val setup_method = Method.local_setup binding parse_method o

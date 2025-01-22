@@ -1,4 +1,6 @@
-theory Playground
+\<^marker>\<open>creator "Kevin Kappelmann"\<close>
+\<^marker>\<open>creator "Jonas Stahl"\<close>
+theory HOL_To_IMP_Minus_Lists
   imports
     HOL_To_IMP_Minus_Pairs
 begin
@@ -55,30 +57,6 @@ end
 context HOL_To_HOL_Nat
 begin
 
-fun rev_test :: "'a list \<Rightarrow> nat list" where
-  "rev_test [] = (if rev_acc [] ([]::'a list) = [] \<and> rev_acc [] ([]:: nat list) = [] then [] else [Suc 0])"
-| "rev_test xs = (if rev_acc xs [] = [] then [] else [Suc (Suc 0)])"
-declare rev_acc.simps[simp del]
-
-case_of_simps rev_test_eq : rev_test.simps
-function_compile_nat rev_test_eq
-
-end
-
-context HOL_Nat_To_IMP_Minus
-begin
-
-lemmas rev_test_nat_eq = HOL_To_HOL_Nat.rev_test_nat_eq_unfolded[simplified case_list_nat_def]
-compile_nat rev_test_nat_eq
-
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_test_nat
-  supply Rel_nat_destruct_Cons[Rel_nat] by (cook mode = induction)
-
-end
-
-context HOL_To_HOL_Nat
-begin
-
 fun length_acc :: "'a list \<Rightarrow> nat \<Rightarrow> nat" where
   "length_acc [] acc = acc" |
   "length_acc (_ # xs) acc = length_acc xs (Suc acc)"
@@ -90,8 +68,13 @@ lemma length_acc_eq_length_add: "length_acc xs n = length xs + n"
 case_of_simps length_acc_eq : length_acc.simps
 function_compile_nat length_acc_eq
 
+definition length where "length (xs :: 'a list) \<equiv> List.length xs"
+
+lemma list_length_eq_length: "List.length = length"
+  unfolding length_def by simp
+
 lemma length_eq_length_acc_zero: "length xs = length_acc xs 0"
-  by (simp add: length_acc_eq_length_add)
+  by (simp add: length_acc_eq_length_add list_length_eq_length)
 
 function_compile_nat length_eq_length_acc_zero
 
@@ -102,9 +85,10 @@ begin
 
 lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat length_acc_nat_eq
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat supply Rel_nat_destruct_Cons[Rel_nat] by cook
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat] by cook
+compile_nat HTHN.length_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_nat by cook
 
 end
 
@@ -136,8 +120,10 @@ begin
 lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat zip_acc_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat supply Rel_nat_destruct_Cons[Rel_nat] by cook
+
+compile_nat HTHN.zip_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_nat by cook
 
 end
 
@@ -152,6 +138,9 @@ declare count_acc.simps[simp del]
 case_of_simps count_acc_eq : count_acc.simps
 function_compile_nat count_acc_eq
 
+definition "count x xs \<equiv> count_acc x xs 0"
+function_compile_nat count_def
+
 end
 
 context HOL_Nat_To_IMP_Minus
@@ -162,6 +151,9 @@ compile_nat count_acc_nat_eq
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat
   supply Rel_nat_destruct_Cons[Rel_nat] by cook
+
+compile_nat HTHN.count_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_nat by cook
 
 end
 
@@ -180,32 +172,6 @@ case_of_simps map_acc_eq : map_acc.simps
 
 lemma map_eq_map_acc_nil: "map f xs = map_acc f xs []"
   by (simp add: map_acc_eq_rev_append_map)
-
-definition "map_succ_acc \<equiv> map_acc Suc"
-
-lemmas map_succ_acc_eq = map_acc_eq[of Suc, folded map_succ_acc_def]
-function_compile_nat map_succ_acc_eq
-
-end
-
-context HOL_Nat_To_IMP_Minus
-begin
-
-lemmas map_succ_acc_nat_eq = HTHN.map_succ_acc_nat_eq_unfolded[simplified case_list_nat_def]
-compile_nat map_succ_acc_nat_eq
-
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_succ_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat]
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (induction Suc _ _ arbitrary: s rule: HTHN.map_acc.induct)
-  apply (tactic \<open>HT.start_run_finish_case_tac
-    HT.get_IMP_def HT.get_imp_minus_correct HB.get_HOL_eqs @{context} 1\<close>)+
-  done
-
-end
-
-context HOL_To_HOL_Nat
-begin
 
 fun enumerate_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> (nat \<times> 'a) list \<Rightarrow> (nat \<times> 'a) list"  where
   "enumerate_acc i [] acc = rev acc"
@@ -230,37 +196,11 @@ begin
 
 lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat enumerate_acc_nat_eq
-
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_acc_nat
   supply Rel_nat_destruct_Cons[Rel_nat] by cook
 
 compile_nat HTHN.enumerate_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_nat by cook
-
-end
-
-context HOL_To_HOL_Nat
-begin
-
-definition "map_rpair_acc y \<equiv> map_acc (rpair y)"
-lemmas map_rpair_acc_eq = map_acc_eq[of "rpair y" for y, folded map_rpair_acc_def]
-function_compile_nat map_rpair_acc_eq
-
-end
-
-context HOL_Nat_To_IMP_Minus
-begin
-
-lemmas map_rpair_acc_nat_eq = HTHN.map_rpair_acc_nat_eq_unfolded[simplified case_list_nat_def]
-compile_nat map_rpair_acc_nat_eq
-
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_rpair_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat]
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (induction "HTHN.rpair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HOL_To_HOL_Nat.map_acc.induct)
-  apply (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
-  done
 
 end
 

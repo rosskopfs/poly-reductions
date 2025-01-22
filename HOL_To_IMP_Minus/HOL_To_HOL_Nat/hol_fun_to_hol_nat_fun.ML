@@ -5,14 +5,21 @@
 *)
 signature HOL_FUN_TO_HOL_NAT_FUN =
 sig
+  include HAS_LOGGER
   val mk_eq_unfolded_binding : term -> binding
-  val get_compiled_eq_unfolded : Proof.context -> term -> thm option
+
+  type compiled_HOL_nat = {related_HOL : term, eq_unfolded : thm}
+  val get_compiled_HOL_nat : Proof.context -> term -> compiled_HOL_nat list
+  val get_compiled_eq_unfolded  : Proof.context -> term -> thm option
+  val get_compiled_related_HOL  : Proof.context -> term -> term option
+
   val mk_unconditional_eq : term -> term * term
-  structure Compiled_Eq_Unfolded : GENERIC_DATA
 end
 
 structure HOL_Fun_To_HOL_Nat_Fun : HOL_FUN_TO_HOL_NAT_FUN =
 struct
+
+val logger = Logger.setup_new_logger Logger.root "HOL_Fun_To_HOL_Nat_Fun"
 
 structure HU = HOLogic
 structure TrpUtil = Transport_Util
@@ -118,28 +125,55 @@ fun register_related_unfolded_thm f f_eq lthy =
     val thm = Morphism.thm phi thm
   in (thm, lthy) end
 
-structure Compiled_Eq_Unfolded = Generic_Data(
-  type T = thm Net.net
+type compiled_HOL_nat = {related_HOL : term, eq_unfolded : thm}
+
+fun eq_compiled_HOL_nat ({related_HOL = related_HOL1, eq_unfolded = eq_unfolded1},
+  {related_HOL = related_HOL2, eq_unfolded = eq_unfolded2}) =
+  related_HOL1 aconv related_HOL2
+  andalso Thm.eq_thm (eq_unfolded1, eq_unfolded2)
+
+fun morph_update_compiled_HOL_nat morph {related_HOL, eq_unfolded} = {
+  related_HOL = Morphism.term morph related_HOL,
+  eq_unfolded = Morphism.thm morph eq_unfolded}
+
+structure Compiled_HOL_Nat = Generic_Data(
+  type T = compiled_HOL_nat Net.net
   val empty = Net.empty
-  val merge = Net.merge Thm.eq_thm
+  val merge = Net.merge eq_compiled_HOL_nat
 )
 
-fun get_compiled_eq_unfolded ctxt t =
-  case Net.match_term (Compiled_Eq_Unfolded.get (Context.Proof ctxt)) t of
+fun get_compiled_HOL_nat ctxt = Net.match_term (Compiled_HOL_Nat.get (Context.Proof ctxt))
+
+fun get_compiled_eq_unfolded ctxt t = case get_compiled_HOL_nat ctxt t of
     [] => NONE
-  | [thm] => SOME thm
-  | thms => let val msg = "Found more than one compiled eq_unfolded thm"
-      in
-        (Pretty.str msg
-          :: map (Thm.pretty_thm ctxt) thms |> Pretty.block |> Pretty.writeln;
-        error msg)
-      end
+  | {eq_unfolded,...} :: xs =>
+      let val _ = if null xs then () else
+        @{log Logger.WARN} ctxt (fn _ => Pretty.block [
+            Pretty.str "Found multiple eq_unfolded theorems for ",
+            Syntax.pretty_term ctxt t,
+            Pretty.str ". Picking the first one.",
+            Thm.pretty_thm ctxt eq_unfolded
+        ] |> Pretty.string_of)
+      in SOME eq_unfolded end
 
-val compiled_const_from_eq_unfolded = Thm.concl_of #> dest_eq_equals_prop #> fst #> Term.head_of
+fun get_compiled_related_HOL ctxt t = case get_compiled_HOL_nat ctxt t of
+    [] => NONE
+  | {related_HOL,...} :: xs =>
+      let val _ = if null xs then () else
+        @{log Logger.WARN} ctxt (fn _ => Pretty.block [
+            Pretty.str "Found multiple related HOL terms for ",
+            Syntax.pretty_term ctxt t,
+            Pretty.str ". Picking the first one.",
+            Syntax.pretty_term ctxt related_HOL
+        ] |> Pretty.string_of)
+      in SOME related_HOL end
 
-fun update_compiled_eq_unfolded thm =
-  let val key = compiled_const_from_eq_unfolded thm
-  in Compiled_Eq_Unfolded.map (Net.insert_term (K true) (key, thm)) end
+val compiled_HOL_nat_term_from_eq_unfolded =
+  Thm.concl_of #> dest_eq_equals_prop #> fst #> Term.head_of
+
+fun update_compiled_HOL_nat (x as {eq_unfolded,...}) =
+  let val key = compiled_HOL_nat_term_from_eq_unfolded eq_unfolded
+  in Compiled_HOL_Nat.map (Net.insert_term eq_compiled_HOL_nat (key, x)) end
 
 fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
   let
@@ -160,8 +194,12 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy
     val thm = Morphism.thm phi thm
-    val attr = Attrib.internal (Binding.pos_of binding)
-      (Thm.declaration_attribute o (update_compiled_eq_unfolded oo Morphism.thm))
+    (*TODO: registration of compiled_HOL_nat at this point is not particularly pretty and should
+    be moved into a separate declaration*)
+    val attr = Attrib.internal (Binding.pos_of binding) (fn morph =>
+      Thm.declaration_attribute (fn thm => {eq_unfolded = thm, related_HOL = t}
+        |> morph_update_compiled_HOL_nat morph
+        |> update_compiled_HOL_nat))
   in register_attrs_thms [attr] binding [thm] lthy end
 
 fun function_compile_nat_cmd f_eq lthy =

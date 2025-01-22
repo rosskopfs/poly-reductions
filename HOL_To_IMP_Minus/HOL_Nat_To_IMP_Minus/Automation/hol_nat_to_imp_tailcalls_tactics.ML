@@ -24,6 +24,8 @@ sig
   val dest_terminates_with_res_IMP_Tailcall_prop : term -> terminates_with_res_IMP_Tailcall_args
   val dest_terminates_with_IMP_Tailcall : term -> terminates_with_IMP_Tailcall_args
   val dest_terminates_with_IMP_Tailcall_prop : term -> terminates_with_IMP_Tailcall_args
+  val with_dest_terminates_with_res_IMP_Tailcall_prop : Proof.context ->
+      (terminates_with_res_IMP_Tailcall_args -> int -> tactic) -> int -> tactic
 
   val rewrite_eq_state_retrieval_sym_tac : Proof.context -> int -> tactic
   val setup_induction_tac : fun_inducts_retrieval -> Proof.context -> int -> tactic
@@ -40,6 +42,9 @@ sig
   val delete_IH_prems : int -> tactic
 
   val finish_contradictory_branch : Proof.context -> int -> tactic
+  val SIMPS_TO_if_assumption_tac : Proof.context -> int -> tactic
+  val SIMPS_TO_if_assumption_loop : string * (Proof.context -> int -> tactic)
+  val add_SIMPS_TO_if_assumption_loop : Context.generic -> Context.generic
   val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
   val run_step_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
@@ -47,11 +52,9 @@ sig
 
   val subst_HOL_fun_eq_tac : thm list -> Proof.context -> int -> tactic
 
-  val SIMPS_TO_if_assumption_tac : Proof.context -> int -> tactic
-  val SIMPS_TO_if_assumption_loop : string * (Proof.context -> int -> tactic)
-  val add_SIMPS_TO_if_assumption_loop : Context.generic -> Context.generic
-
   val finish_non_tail_tac : Proof.context -> int -> tactic
+  val apply_IH_tac : Proof.context -> int -> tactic
+  val solve_IH_prem_tac : Proof.context -> int -> tactic
   val finish_tail_tac : Proof.context -> int -> tactic
 
   val run_HOL_fun_tac : HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
@@ -89,7 +92,9 @@ val get_imp_minus_correct =
 
 (*retrieve induction rule for HOL function*)
 type fun_inducts_retrieval = Proof.context -> term -> (thm list) option
-fun get_fun_inducts ctxt = try (Function.get_info ctxt #> #inducts) #> Option.join
+fun get_fun_inducts ctxt t = HOL_Fun_To_HOL_Nat_Fun.get_compiled_related_HOL ctxt t
+  |> the_default t
+  |> try (Function.get_info ctxt #> #inducts) |> Option.join
 
 (*destructors for IMP-Tailcalls*)
 type terminates_with_res_IMP_Tailcall_args = {tc: term, c: term, s: term, r: term, v: term}
@@ -144,26 +149,30 @@ val rewrite_eq_state_retrieval_sym_tac =
   end
 
 fun setup_induction_tac get_fun_inducts =
-  let fun focused_tac {context = ctxt, ...} {s, v,...} =
+  let fun focused_tac {context = ctxt, ...} {s, v,...} prems =
     let
-      (*TODO: set up induction differently for Rel_nat theorems*)
-      (*v is of the form f (s ''...'') (s ''...'') ..., where f is the HOL function we are after*)
       val head = head_of v
-      val instantiations = head
-        |> Compile_HOL_Nat_To_IMP.get_compiled_const ctxt |> #arg_regs
-        |> map (HOL_Nat_To_IMP_Util.mk_state_register_retrieval s)
+      val instantiations = prems
+        |> map_filter (try (HTIU.dest_Trueprop #> HOL_To_HOL_Nat_Util.dest_Rel_nat))
+        |> (fn
+            (*instantiations if there are no Rel_nat premises*)
+            [] => Compile_HOL_Nat_To_IMP.get_compiled_const ctxt head |> #arg_regs
+              |> map (HTIU.mk_state_register_retrieval s)
+            (*instantiations if there are Rel_nat premises*)
+          | xs => map (snd #> snd) xs)
         |> map (fn t => SOME (NONE, (t, false)))
       val arbitrary = [dest_Free s]
       val inducts = get_fun_inducts ctxt head
     in
       Induction.induction_tac ctxt true [instantiations] [arbitrary] [] inducts []
-      (* needed for inductions of functions defined on pattern matching; they create equalities of the
-         form "t = s ''<register>''", which have to be rewritten in the goal's conclusion" *)
+      (*needed for inductions of functions defined on pattern matching; they create equalities of the
+         form "t = s ''<register>''", which have to be rewritten in the goal's conclusion"*)
       THEN_ALL_NEW (TRY o rewrite_eq_state_retrieval_sym_tac ctxt)
     end
   in
-    TU.FOCUS_PARAMS' (fn (f as {context = ctxt,...}) =>
-      with_dest_terminates_with_res_IMP_Tailcall_prop ctxt (focused_tac f))
+    TU.FOCUS_PARAMS' (fn focus as {context = ctxt,...} =>
+      with_dest_terminates_with_res_IMP_Tailcall_prop ctxt
+      (TU.SUBGOAL_STRIPPED (fst o snd) o focused_tac focus))
   end
 
 fun start_case_tac get_IMP_def ctxt =
@@ -206,6 +215,14 @@ fun finish_contradictory_branch ctxt =
   THEN' safe_asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt))
   |> SOLVED'
 
+(*SIMPS_TO looper needed for if conditions containing meta variables*)
+fun SIMPS_TO_if_assumption_tac ctxt =
+  resolve_tac ctxt @{thms SIMPS_TO_if_TrueI SIMPS_TO_if_FalseI}
+  THEN' assume_tac ctxt
+val SIMPS_TO_if_assumption_loop = ("SIMPS_TO_if_assumption", SIMPS_TO_if_assumption_tac)
+val add_SIMPS_TO_if_assumption_loop = Simplifier.map_ss
+  (fn ctxt => ctxt addloop SIMPS_TO_if_assumption_loop)
+
 fun terminates_with_res_tIf_tac ctxt =
   HTITB.if_tac @{thm terminates_with_res_tIf_processedI} (finish_contradictory_branch ctxt) ctxt
 
@@ -221,7 +238,7 @@ fun run_tac get_imp_minus_correct = HTITB.run_tac o run_step_tac get_imp_minus_c
 
 (* finishing tactics *)
 
-fun finish_tail_tac ctxt =
+fun apply_IH_tac ctxt =
   let open Seq.M open HTIU.Let
     (*get a list of theorems of the form t_i = s ''reg_i'',
     one for each argument in the function application term v*)
@@ -274,7 +291,7 @@ fun finish_tail_tac ctxt =
         resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
         THEN' rewrite_args_tac (rev arg_reg_eq_thms)
       end
-    fun solve_with_ih_tac ctxt prems s arg_reg_eq_thms =
+    fun apply_with_IH_tac ctxt prems s arg_reg_eq_thms =
       let
         val s_ct = Thm.cterm_of ctxt s
         val s_typ = Thm.typ_of_cterm s_ct
@@ -285,23 +302,19 @@ fun finish_tail_tac ctxt =
           #> List.filter (fn (_, typ) => typ = s_typ)
           #> rev (*right state is probably at the front*)
         val is_ih = Thm.prop_of #> is_ih
-        val non_ih_prems = filter_out is_ih prems
         val instantiate_apply_ih_tac = filter is_ih prems |> Seq.of_list
           >>= (fn ih => inst_vars ih |> Seq.of_list
           >>= (fn inst_var => Thm.instantiate (TVars.empty, Vars.make1 (inst_var, s_ct)) ih |> pure
           >>= (fn ih_inst => resolve_tac ctxt [ih_inst] |> pure)))
           |> flat2
-        val solve_ih_prem_tac =
+        val prepare_ih_prem_goal_tac =
           safe_simp_tac (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (clear_simpset ctxt))
-          THEN_ALL_NEW (Tactic_Util.insert_tac non_ih_prems ctxt
-            THEN' TRY o safe_asm_full_simp_tac ctxt
-            THEN_ALL_NEW TRY o HTITB.solve_Rel_nat_tac ctxt)
-      in instantiate_apply_ih_tac THEN_ALL_NEW solve_ih_prem_tac end
+      in instantiate_apply_ih_tac THEN_ALL_NEW prepare_ih_prem_goal_tac end
     fun prems_tac {context = ctxt, prems,...} {s, v,...} =
       get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
       >>= (fn arg_reg_eq_thms =>
         rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms
-        THEN' solve_with_ih_tac ctxt prems s arg_reg_eq_thms
+        THEN' apply_with_IH_tac ctxt prems s arg_reg_eq_thms
         |> pure)
       |> flat2
   in
@@ -310,12 +323,14 @@ fun finish_tail_tac ctxt =
       (#context focus) (prems_tac focus)) ctxt
   end
 
-fun THEN_ALL_NEW_OFFSET offset tac1 tac2 i st =
-  st |> (tac1 i THEN (fn st' =>
-    st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
+fun solve_IH_prem_tac ctxt =
+  delete_IH_prems
+  THEN' TRY o safe_asm_full_simp_tac ctxt
+  THEN_ALL_NEW TRY o HTITB.solve_Rel_nat_tac ctxt
 
-fun subst_HOL_fun_eq_tac thms ctxt = THEN_ALL_NEW_OFFSET 1 (HTIU.subst_first_tac ctxt thms)
-  (HTITB.solve_Rel_nat_tac ctxt)
+fun finish_tail_tac ctxt =
+  apply_IH_tac ctxt
+  THEN_ALL_NEW solve_IH_prem_tac ctxt
 
 fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
@@ -328,13 +343,12 @@ fun simp_res_value_tac simp_tac ctxt =
   resolve_tac ctxt [@{thm rewrite_terminates_with_res_IMP_Tailcall_value}]
   THEN' HTIU.SIMPS_TO_UNIF_refl_tac simp_tac ctxt
 
-(*SIMPS_TO looper needed for if conditions containing meta variables*)
-fun SIMPS_TO_if_assumption_tac ctxt =
-  resolve_tac ctxt @{thms SIMPS_TO_if_TrueI SIMPS_TO_if_FalseI}
-  THEN' assume_tac ctxt
-val SIMPS_TO_if_assumption_loop = ("SIMPS_TO_if_assumption", SIMPS_TO_if_assumption_tac)
-val add_SIMPS_TO_if_assumption_loop = Simplifier.map_ss
-  (fn ctxt => ctxt addloop SIMPS_TO_if_assumption_loop)
+fun THEN_ALL_NEW_OFFSET offset tac1 tac2 i st =
+  st |> (tac1 i THEN (fn st' =>
+    st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
+
+fun subst_HOL_fun_eq_tac thms ctxt = THEN_ALL_NEW_OFFSET 1 (HTIU.subst_first_tac ctxt thms)
+  (HTITB.solve_Rel_nat_tac ctxt)
 
 (*run the HOL function to its return value or to a recursive call*)
 fun run_HOL_fun_tac get_HOL_eqs ctxt =
@@ -362,9 +376,9 @@ fun start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt
   THEN' run_tac get_imp_minus_correct ctxt
   THEN_ALL_NEW SOLVED' (finish_tac get_HOL_eqs ctxt)
 
-fun start_run_finish_tac is_tailcall get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
+fun start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
   ctxt =
-  (if is_tailcall then setup_induction_tac get_fun_inducts ctxt else K all_tac)
+  (if is_induction then setup_induction_tac get_fun_inducts ctxt else K all_tac)
   THEN_ALL_NEW (start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt)
 
 end

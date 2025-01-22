@@ -147,7 +147,7 @@ lemma case_nat_eq_if: "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) =
 case_of_simps mul_acc_nat_eq[simplified case_nat_eq_if] : HTHN.mul_acc_nat.simps
 compile_nat mul_acc_nat_eq basename mul_acc
 
-HOL_To_IMP_Minus_correct HTHN.mul_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.mul_acc_nat by cook
 
 compile_nat HTHN.mul_eq_mul_acc_nat_zero basename mul
 
@@ -369,7 +369,7 @@ begin
 
 compile_nat HTHN.div_acc_nat.simps basename div_acc
 
-HOL_To_IMP_Minus_correct HTHN.div_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.div_acc_nat by cook
 
 compile_nat HTHN.div_eq_div_acc_nat_zero basename div
 
@@ -457,13 +457,13 @@ compile_nat HTHN.pair_nat_eq_triangle_add
 HOL_To_IMP_Minus_correct pair_nat by cook
 
 compile_nat HTHN.fst_acc_nat.simps
-HOL_To_IMP_Minus_correct HTHN.fst_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.fst_acc_nat by cook
 
 compile_nat HTHN.fst_nat_eq_fst_acc_nat
 HOL_To_IMP_Minus_correct fst_nat by cook
 
 compile_nat HTHN.snd_nat_acc.simps
-HOL_To_IMP_Minus_correct HTHN.snd_nat_acc by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.snd_nat_acc by cook
 
 compile_nat HTHN.snd_nat_eq_snd_nat_acc
 HOL_To_IMP_Minus_correct snd_nat by cook

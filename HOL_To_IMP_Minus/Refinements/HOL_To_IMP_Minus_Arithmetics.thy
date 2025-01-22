@@ -34,7 +34,7 @@ begin
 case_of_simps power_acc_nat_eq[simplified case_nat_eq_if] : HTHN.power_acc_nat.simps
 compile_nat power_acc_nat_eq basename power_acc
 
-HOL_To_IMP_Minus_correct HTHN.power_acc_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.power_acc_nat by cook
 
 compile_nat HTHN.power_eq_power_acc_nat_one basename power
 HOL_To_IMP_Minus_correct power by cook
@@ -99,9 +99,7 @@ begin
 
 compile_nat HTHN.sqrt_aux_nat.simps basename sqrt_aux
 
-
-(*FIXME: make work with cook method (but without adding SOLVED' to finish_tac)*)
-HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by (cook mode = tailcall)
+HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by cook
   (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
   (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
@@ -111,7 +109,6 @@ HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by (cook mode = tailcall)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   oops *)
-
 
 compile_nat HTHN.sqrt_nat_def basename sqrt
 
