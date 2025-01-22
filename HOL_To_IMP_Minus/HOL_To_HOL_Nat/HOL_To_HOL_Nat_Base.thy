@@ -174,7 +174,9 @@ be made an instance of @{class compile_nat} and hence no higher-order arguments 
 \<close>
 
 named_theorems "Rel_nat_compile_nat"
-  "Rel_nat relatedness theorems for terms compiled from HOL to HOL on natural numbers"
+  "Rel_nat relatedness theorems for terms compiled from HOL to HOL-Nat"
+named_theorems "Rel_nat_compile_nat_destruct"
+  "Rel_nat relatedness theorems for destructors of terms compiled from HOL to HOL-Nat"
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>

@@ -7,6 +7,8 @@ begin
 context HOL_To_HOL_Nat
 begin
 
+declare Rel_nat_destruct_prod[Rel_nat]
+
 definition "map_rpair_acc y \<equiv> map_acc (rpair y)"
 lemmas map_rpair_acc_eq = map_acc_eq[of "rpair y" for y, folded map_rpair_acc_def]
 function_compile_nat map_rpair_acc_eq
@@ -30,7 +32,6 @@ begin
 lemmas map_rpair_acc_nat_eq = HTHN.map_rpair_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat map_rpair_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_rpair_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat]
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.rpair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HOL_To_HOL_Nat.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
@@ -38,14 +39,12 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_rpair_acc_nat
 
 lemmas case_prod_map_rpair_nat_eq = HTHN.case_prod_map_rpair_nat_eq_unfolded[simplified case_prod_nat_def]
 compile_nat case_prod_map_rpair_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.case_prod_map_rpair_nat
-  supply Rel_nat_destruct_Pair[Rel_nat] by (cook mode = induction)
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.case_prod_map_rpair_nat by (cook mode = induction)
 
 lemmas map_case_prod_map_rpair_acc_nat_eq =
   HTHN.map_case_prod_map_rpair_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat map_case_prod_map_rpair_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_case_prod_map_rpair_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat]
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.case_prod_map_rpair :: ('a \<times> 'b list) \<Rightarrow> _" _ _ arbitrary: s
     rule: HOL_To_HOL_Nat.map_acc.induct)

@@ -185,11 +185,9 @@ fun register_eq_unfolded_thm t related_transfer_thm related_unfolded_thm lthy =
       |> (fn ts => Variable.importT_terms ts lthy)
       |>> map (Thm.cterm_of lthy)
     val ((assms, lthy), old_lthy) = `(Assumption.add_assumes assms) lthy
-    val thm = @{thm left_uniqueD} OF [
-        @{thm left_unique_Rel_nat},
-        (funpow nargs (fn thm => transfer_fun_RelD OF [thm]) related_transfer_thm) OF assms,
-        related_unfolded_thm OF assms
-      ]
+    val thm = @{thm left_uniqueD} OF [@{thm left_unique_Rel_nat},
+      (funpow nargs (fn thm => transfer_fun_RelD OF [thm]) related_transfer_thm) OF assms]
+    val thm = thm OF [related_unfolded_thm OF assms]
     val thm = Assumption.export lthy old_lthy thm
     val (lthy, old_lthy) = `Local_Theory.end_nested old_lthy
     val phi = Proof_Context.export_morphism old_lthy lthy

@@ -115,8 +115,11 @@ fun register_ctr_Rel_thm ctr lthy =
 
 fun register_ctr_Rel_thms ctrs = fold_map (fn ctr => register_ctr_Rel_thm ctr #>> snd) ctrs
 
+val destruct_binding = @{binding "destruct"}
+val Rel_nat_destruct_binding = (TrpUtil.add_suffix Rel_nat_binding destruct_binding)
+val mk_Rel_nat_destruct_type_binding = type_suffix_binding Rel_nat_destruct_binding
 fun mk_Rel_nat_destruct_ctr_binding ctr = TrpUtil.add_suffix
-  (TrpUtil.add_suffix Rel_nat_binding @{binding "destruct"}) (const_binding ctr)
+  (TrpUtil.add_suffix Rel_nat_binding destruct_binding) (const_binding ctr)
 
 fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
   let
@@ -142,8 +145,11 @@ fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
   Rel_nat relatedness theorems*)
   in register_thms binding (map_index reg_ctr_des_Rel_thm_arg args) lthy |>> snd end
 
-fun register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_defs =
+fun register_ctr_destruct_Rel_thms T ctrs natify_simps ctrs_nat_defs =
   fold_map (register_ctr_destruct_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
+  #> (fn (thms, lthy) => register_attrs_thms @{attributes [Rel_nat_compile_nat_destruct]}
+      (mk_Rel_nat_destruct_type_binding T) (flat thms) lthy
+    |> snd |> pair thms)
 
 val mk_Rel_nat_eq_fst_nat_case_binding = type_suffix_binding @{binding "Rel_nat_eq_fst_nat_case"}
 
@@ -294,14 +300,13 @@ fun datatype_compile_nat T ctrs casex split thy =
     val (ctr_Rel_thms, lthy) = register_ctr_Rel_thms ctrs lthy
     val lthy = Local_Theory.end_nested lthy
     (*create destructor relatedness theorems*)
-    val (dest_Rel_thms, lthy) = register_ctr_destruct_Rel_thms ctrs natify_simps ctrs_nat_def lthy
+    val (dest_Rel_thms, lthy) = register_ctr_destruct_Rel_thms T ctrs natify_simps ctrs_nat_def lthy
     val (Rel_nat_eq_fst_nat_case_thm, lthy) =
       register_Rel_nat_eq_fst_nat_case_thm ctrs casex (natify_simps @ ctrs_nat_def) split lthy
 
     (*create bundle of relatedness theorems*)
-    val lthy = register_attrs_thms (@{attributes [Rel_nat_compile_nat]}) (mk_Rel_nat_type_binding T)
+    val (_, lthy) = register_attrs_thms (@{attributes [Rel_nat_compile_nat]}) (mk_Rel_nat_type_binding T)
       (flat (Rel_nat_eq_fst_nat_case_thm :: case_Rel_thm :: ctr_Rel_thms @ dest_Rel_thms)) lthy
-      |> snd
   in lthy end
 
 fun datatype_compile_nat_cmd T thy =

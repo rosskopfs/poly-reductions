@@ -93,7 +93,7 @@ lemma Rel_nat_case_bool_nat [Rel_nat, Rel_nat_compile_nat]:
 lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 
 datatype_compile_nat list
-print_theorems
+
 datatype_compile_nat char
 
 datatype_compile_nat prod

@@ -36,6 +36,8 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
+declare Rel_nat_destruct_list[Rel_nat]
+
 compile_nat Cons_nat_def
 HOL_To_IMP_Minus_correct Cons_nat by cook
 
@@ -44,7 +46,7 @@ HOL_To_IMP_Minus_correct Nil_nat by cook
 
 lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat rev_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat supply Rel_nat_destruct_Cons[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat by cook
 
 compile_nat HTHN.rev_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_nat by cook
@@ -85,7 +87,7 @@ begin
 
 lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat length_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat supply Rel_nat_destruct_Cons[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat by cook
 
 compile_nat HTHN.length_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_nat by cook
@@ -120,7 +122,7 @@ begin
 lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat zip_acc_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat supply Rel_nat_destruct_Cons[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat by cook
 
 compile_nat HTHN.zip_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_nat by cook
@@ -149,8 +151,7 @@ begin
 lemmas count_acc_nat_eq = HTHN.count_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat count_acc_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat by cook
 
 compile_nat HTHN.count_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_nat by cook
@@ -196,8 +197,8 @@ begin
 
 lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[simplified case_list_nat_def]
 compile_nat enumerate_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_acc_nat
-  supply Rel_nat_destruct_Cons[Rel_nat] by cook
+
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_acc_nat by cook
 
 compile_nat HTHN.enumerate_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_nat by cook
