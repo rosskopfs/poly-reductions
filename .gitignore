@@ -5,6 +5,7 @@
 *.out
 *.gz
 *.code-workspace
+.DS_Store
 Test.thy
 
 # Created by https://www.toptal.com/developers/gitignore/api/emacs,vim,visualstudiocode
