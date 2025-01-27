@@ -1,8 +1,8 @@
 theory VC_To_HC_2
   imports
-    Definitions_HC "Poly_Reductions_Lib.Graph_Auxiliaries"
+    HC_Definitions
+    VC_Set_To_VC_List
 begin
-
 
 subsection\<open>\<open>vc_hc (E, k) f \<in> hc \<longrightarrow> (E,k) \<in> VC\<close>\<close>
 

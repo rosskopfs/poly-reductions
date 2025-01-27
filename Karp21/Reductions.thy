@@ -17,6 +17,9 @@ lemma is_reductionE:
   obtains "\<And>a. a \<in> A \<Longrightarrow> f a \<in> B" "\<And>a. f a \<in> B \<Longrightarrow> a \<in> A"
   using assms unfolding is_reduction_def by auto
 
+lemma is_reduction_id: "is_reduction id A A"
+  by (intro is_reductionI) auto
+
 lemma is_reduction_trans:
   assumes "is_reduction f A B" "is_reduction g B C"
   shows "is_reduction (g o f) A C"

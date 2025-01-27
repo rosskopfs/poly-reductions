@@ -1,12 +1,14 @@
 subsection \<open>Polynomial Reductions\<close>
-
 theory Polynomial_Reductions
-  imports NREST.Refine_Foreach Reductions "Poly_Reductions_Lib.Polynomial_Growth_Functions"
+  imports
+    NREST.Refine_Foreach
+    Reductions
+    Polynomial_Growth_Functions
 begin
 
 text \<open>
 A program @{term_type "c :: 'a\<Rightarrow>'b nrest"}
-is a poly_reduction wrt to a reduction @{term_type "red :: 'a\<Rightarrow>'b\<Rightarrow>bool"} 
+is a poly_reduction wrt to a reduction @{term_type "red :: 'a\<Rightarrow>'b\<Rightarrow>bool"}
 and a measure for the size of the problem  @{term_type "m :: 'a \<Rightarrow> nat"}
 if there is a time funtion \<open>f\<close>, such that
   \<^item> \<open>f\<close> polynomial
@@ -14,11 +16,11 @@ if there is a time funtion \<open>f\<close>, such that
 \<close>
 definition "ispolyred c A B ma mb = (\<exists>f p ps. \<forall>pi. c pi \<le> SPEC (\<lambda>y. y = f pi) (\<lambda>_. p (ma pi))
                               \<and>  (\<forall>pi. mb (f pi) \<le> ps (ma pi))
-                                   \<and> poly p \<and> poly ps \<and> is_reduction f A B )" 
+                                   \<and> poly p \<and> poly ps \<and> is_reduction f A B )"
 
 definition "ispolyredd c RI RO A B ma mb = (\<exists>f p ps. \<forall>pi pi'. ((pi',pi):RI \<longrightarrow>  c pi' \<le> \<Down>RO (SPEC (\<lambda>y. y = f pi) (\<lambda>_. p (ma pi))))
                               \<and>  (\<forall>pi. mb (f pi) \<le> ps (ma pi))
-                                   \<and> poly p \<and> poly ps \<and> is_reduction f A B )" 
+                                   \<and> poly p \<and> poly ps \<and> is_reduction f A B )"
 
 lemma ispolyredd_generalizes_ispolyred:
   "ispolyred c A B ma mb = ispolyredd c Id Id A B ma mb"
@@ -27,15 +29,15 @@ lemma ispolyredd_generalizes_ispolyred:
 lemma ispolyredd_generalizes_ispolyredD:
   "ispolyred c A B ma mb \<Longrightarrow> ispolyredd c Id Id A B ma mb"
   using ispolyredd_generalizes_ispolyred ..
-  
 
-thm conc_fun_chain  
+
+thm conc_fun_chain
 
 lemma ispolyredd_refine:
-  assumes 
-    1: "ispolyredd c1 RA RB A B ma mb" 
+  assumes
+    1: "ispolyredd c1 RA RB A B ma mb"
       and 2: "\<And>pi' pi''. (pi'',pi')\<in>RA' \<Longrightarrow>  c' pi'' \<le> \<Down>RB' (c1 pi')"
-  shows 
+  shows
     "ispolyredd c' (RA' O RA) (RB' O RB) A B ma mb"
 proof -
   from 1 obtain f1 p1 ps1 where
@@ -53,14 +55,10 @@ proof -
     subgoal  apply(rule order.trans)
        apply(rule 2) apply simp
       apply(rule order.trans)
-       apply(rule nrest_Rel_mono) 
+       apply(rule nrest_Rel_mono)
       apply(rule spec1) apply simp
       apply(subst conc_fun_chain) by simp
-    subgoal by fact
-    subgoal by fact
-    subgoal by fact
-    subgoal by fact
-    done
+    by fact+
 qed
 
 
@@ -72,7 +70,7 @@ lemma poly_monoE:
 lemma ispolyredd_trans:
   assumes 1: "ispolyredd c1 RA RB A B ma mb"
     and 2: "ispolyredd c2 RB RC B C mb mc"
-  shows 
+  shows
       "ispolyredd (\<lambda>a. bind (c1 a) c2) RA RC A C ma mc"
 proof -
   from 1 obtain f1 p1 ps1 where
@@ -89,7 +87,7 @@ proof -
   thm spec2[unfolded SPEC_def ]
 
   from \<open>poly p2\<close> obtain p2' where p2'_ub: "\<And>x. p2 x \<le> p2' x" and p2'_poly: "poly p2'"
-    and   p2'_mono: "\<And>i j. i\<le>j \<Longrightarrow> p2' i \<le> p2' j" 
+    and   p2'_mono: "\<And>i j. i\<le>j \<Longrightarrow> p2' i \<le> p2' j"
     by - (erule poly_monoE, auto simp: mono_def)
 
   obtain ps2' where "\<And>x. ps2 x \<le> ps2' x" and ps2'_poly: "poly ps2'"
@@ -114,21 +112,21 @@ proof -
        apply(rule bindT_refine)
       apply (rule spec1) apply simp
        apply (rule spec2) apply simp
-      apply(rule nrest_Rel_mono)  
-  apply(rule T_specifies_I)  
+      apply(rule nrest_Rel_mono)
+  apply(rule T_specifies_I)
       apply(vcg' \<open>-\<close> rules: T_SPEC )
       apply (auto split: if_splits)
-      subgoal apply(rule order_trans[OF p2'_ub]) using size1 p2'_mono  
-        by auto   
+      subgoal apply(rule order_trans[OF p2'_ub]) using size1 p2'_mono
+        by auto
       done
     subgoal apply simp  apply(rule order_trans[OF size2])
-      apply(rule ps2'_mono) by(rule size1) 
+      apply(rule ps2'_mono) by(rule size1)
     subgoal
       using p1 p2'_poly by(auto intro: poly_compose[unfolded comp_def])
     subgoal
       using p1 ps2'_poly by(auto intro: poly_compose[unfolded comp_def])
     subgoal
-      apply(rule is_reduction_trans) by fact+ 
+      apply(rule is_reduction_trans) by fact+
     done
 qed
 
@@ -137,5 +135,16 @@ lemma ispolyred_trans:
   "ispolyred c1 A B ma mb \<Longrightarrow> ispolyred c2 B C mb mc
     \<Longrightarrow> ispolyred (\<lambda>a. bind (c1 a) c2) A C ma mc"
   using ispolyredd_generalizes_ispolyred ispolyredd_trans by metis
+
+lemma ispolyredI:
+  assumes
+    "\<And>pi. alg pi \<le> SPEC (\<lambda>y. y = f pi) (\<lambda>_. time_f (size_from pi))"
+    "\<And>pi. size_to (f pi) \<le> space_f (size_from pi)"
+    "poly time_f"
+    "poly space_f"
+    "is_reduction f from to"
+  shows "ispolyred alg from to size_from size_to"
+  using assms ispolyred_def by blast
+
 
 end

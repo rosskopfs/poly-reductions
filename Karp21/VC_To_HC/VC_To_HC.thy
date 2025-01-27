@@ -1,8 +1,7 @@
 theory VC_To_HC
-  imports  Main Graph_Theory.Digraph  Graph_Theory.Arc_Walk
-    Graph_Theory.Vertex_Walk
-    "Poly_Reductions_Lib.List_Auxiliaries" "VC_To_HC_1" "VC_To_HC_2"
-    Definitions_HC
+  imports
+    VC_To_HC_1
+    VC_To_HC_2
 begin
 
 subsection\<open>Main theorem\<close>
@@ -31,8 +30,7 @@ proof -
     by fastforce
 qed
 
-theorem is_reduction_vc_to_hc:
-  "is_reduction vc_hc vertex_cover_list hc"
+theorem is_reduction_vc_to_hc: "is_reduction vc_hc vertex_cover_list hc"
   unfolding is_reduction_def using vc_impl_hc hc_impl_vc by auto
 
 end

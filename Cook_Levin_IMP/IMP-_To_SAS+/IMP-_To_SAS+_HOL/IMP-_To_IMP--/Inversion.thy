@@ -6,12 +6,11 @@ text \<open>General definition of procedure for inverting certain functions f ::
 
 (* Clean up *)
 theory Inversion
-  imports Primitives "Poly_Reductions_Lib.Landau_Auxiliaries"
+  imports Primitives "Karp21.Landau_Auxiliaries"
     "HOL-Library.Rewrite" "HOL-Library.Sublist" "HOL-Eisbach.Eisbach"
 
     "HOL-Library.Nat_Bijection" IMP_Minus.Call_By_Prefixes
-    "Poly_Reductions_Lib.Triangle_Extensions"
-    "Poly_Reductions_Lib.Discrete_Extensions"
+    Triangle_Extensions
 begin
 
 lemma "\<not> surj (power2 :: nat \<Rightarrow> nat)"

@@ -1,6 +1,6 @@
 theory VC_To_FNS
-  imports Main Graph_Theory.Digraph Graph_Theory.Arc_Walk
-    "../VC_Set_To_VC_List/VC_Set_To_VC_List" "Poly_Reductions_Lib.Graph_Auxiliaries"
+  imports
+    VC_Set_To_VC_List
 begin
 
 section\<open>VC To FNS\<close>
@@ -186,7 +186,7 @@ lemma cardE_k:
   shows "k \<le> card (\<Union> E)"
   using Ek_def G_def by(auto split: if_split_asm simp: else_not_in_fns vc_to_fns_def)
 
-lemma ugraphE:
+lemma ugraph:
   shows "ugraph E"
   using Ek_def G_def unfolding vc_to_fns_def by(auto split: if_split_asm simp add: else_not_in_fns)
 
@@ -203,7 +203,7 @@ lemma wf_digraph_G_2:
 lemma e_in_E_e_explicit:
   assumes "e \<in> E"
   shows "\<exists>u v. e = {u ,v} \<and> u \<noteq> v"
-  using ugraphE assms unfolding ugraph_def by (simp add: e_in_E_e_explicit)
+  using ugraph assms unfolding ugraph_def using card_2_iff by blast
 
 lemma G_symmetric:
   assumes "(u, v) \<in> arcs G"
@@ -288,7 +288,7 @@ qed
 
 lemma in_vc_context:
   shows "(E, k) \<in> vertex_cover"
-  using vertex_cover_def ugraphE cardE_k Cov_properties by blast
+  using vertex_cover_def ugraph cardE_k Cov_properties by blast
 
 end
 
@@ -328,8 +328,7 @@ proof -
     by metis
 qed
 
-theorem is_reduction_vc_to_fns:
-  "is_reduction vc_to_fns vertex_cover fns"
+theorem is_reduction_vc_to_fns: "is_reduction vc_to_fns vertex_cover fns"
   unfolding is_reduction_def using in_vc in_fns by auto
 
 end

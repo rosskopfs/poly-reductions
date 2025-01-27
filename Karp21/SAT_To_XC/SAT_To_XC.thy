@@ -1,8 +1,8 @@
 theory SAT_To_XC
-  imports SAT_To_XC_aux
+  imports
+    Reductions
+    SAT_To_XC_Aux
 begin
-
-section "useful definitions and the reduction function"
 
 definition literal_sets :: "'a sat  \<Rightarrow> 'a xc_element set set" where
 "literal_sets F = {{l}| l. l \<in> (literals_of_sat F)}"
@@ -28,7 +28,6 @@ abbreviation "comp_S F \<equiv> literal_sets F \<union> clauses_with_literals F
 definition sat_xc :: "'a sat \<Rightarrow> 'a xc_element set * 'a xc_element set set" where
 "sat_xc F = (comp_X F, comp_S F)"
 
-
 lemma sat_xc_is_collection: "\<Union> (comp_S F) \<subseteq> (comp_X F)"
 proof -
   let ?vars = "vars_of_sat F"
@@ -52,9 +51,9 @@ proof -
   with x_part s_part show ?thesis by force
 qed
 
-section "the proof for the soundness"
+section "Soundness"
 
-subsection "the construction of the cover"
+subsection "Construction of the Cover"
 
 definition constr_cover_clause :: "'a lit set \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> 'a xc_element set set" where
   "constr_cover_clause c \<sigma> =
@@ -87,11 +86,9 @@ definition clause_sets
 definition constr_cover
   :: "'a sat \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> 'a xc_element set set" where
 "constr_cover F \<sigma> \<equiv>
-  (if F \<in> cnf_sat
+  (if F \<in> fin_sat
   then vars_sets F \<sigma> \<union> \<Union> (clause_sets F \<sigma>)
   else {})"
-
-subsubsection "The constructed set is a collection"
 
 lemma constr_cover_clause_is_collection:
 assumes "\<sigma> \<Turnstile> F" "c \<in> set F"
@@ -122,8 +119,6 @@ lemma constr_cover_is_collection:
   "\<sigma> \<Turnstile> F \<Longrightarrow> constr_cover F \<sigma> \<subseteq> (comp_S F)"
 unfolding constr_cover_def vars_sets_def clause_sets_def
 using constr_cover_clause_is_collection by auto
-
-subsubsection "The constructed set is a cover"
 
 paragraph "covers all variables"
 lemma vars_in_vars_set_aux1:
@@ -230,7 +225,7 @@ lemma true_literals_in_clause_sets:
 paragraph "Integration of all true and false literals"
 
 lemma literals_in_construction_aux:
-assumes "\<sigma> \<Turnstile> F" "x \<in> c" "c \<in> set F" "F \<in> cnf_sat"
+assumes "\<sigma> \<Turnstile> F" "x \<in> c" "c \<in> set F" "F \<in> fin_sat"
 shows "L x c \<in> \<Union>(constr_cover F \<sigma>)"
 proof (cases "(\<sigma>\<up>) x")
   case True
@@ -253,17 +248,12 @@ corollary literals_in_construction:
 "\<lbrakk>\<sigma> \<Turnstile> F; \<forall>cls\<in>set F. finite cls\<rbrakk> \<Longrightarrow> literals_of_sat F \<subseteq> \<Union>(constr_cover F \<sigma>)"
 proof -
   assume "\<sigma> \<Turnstile> F" "\<forall>cls\<in>set F. finite cls"
-  hence "F \<in> cnf_sat"
-    unfolding cnf_sat_def sat_def by blast
+  hence "F \<in> fin_sat" unfolding sat_def by auto
   with \<open>\<sigma> \<Turnstile> F\<close> have "\<forall>c\<in>set F. \<forall>x\<in>c.  L x c \<in> \<Union> (constr_cover F \<sigma>)"
     using literals_in_construction_aux by blast
   then show "literals_of_sat F \<subseteq> \<Union>(constr_cover F \<sigma>)"
     unfolding literals_of_sat_def by fastforce
 qed
-
-subsubsection "The constructed sets are pairwise disjoint"
-
-paragraph "clause_sets are disjoint"
 
 lemma clause_sets_disj:
 assumes "\<sigma> \<Turnstile> F"
@@ -274,8 +264,6 @@ shows  "disjoint (\<Union> (clause_sets F \<sigma>))"
   apply (smt (z3) constr_cover_clause_unfold[OF assms] Un_iff empty_iff
   insertE mem_Collect_eq xc_element.simps)+
   done
-
-paragraph "vars_sets are disjoint"
 
 abbreviation "true_literals v F \<equiv> {V v} \<union> {l. l \<in> (literals_of_sat F)
   \<and> (\<exists>c. C c\<in> (clauses_of_sat F) \<and> L (Neg v) c = l)}"
@@ -314,7 +302,6 @@ proof
     by blast+
 qed
 
-
 lemma false_literals_not_in_true:
   "v \<in> vars F \<Longrightarrow> \<forall>u\<in> vars F. false_literals v F \<noteq> true_literals u F"
 proof
@@ -329,7 +316,6 @@ proof
     using true_false_literals_noteq[OF \<open>v \<in> vars F\<close>]
     by blast+
 qed
-
 
 lemma vars_sets_true_assignment:
 "\<lbrakk>(\<sigma>\<up>) (Pos v); v \<in> vars F\<rbrakk> \<Longrightarrow> true_literals v F \<in> vars_sets F \<sigma> \<and> false_literals v F \<notin> vars_sets F \<sigma>"
@@ -484,31 +470,26 @@ lemma sat_xc_sound_aux:
       case 1
       have "constr_cover F \<sigma> \<subseteq> comp_S F"
         using constr_cover_is_collection prems by blast
-      moreover have "F \<in> cnf_sat"
-        unfolding cnf_sat_def sat_def
-        using prems by blast
+      moreover have "F \<in> fin_sat" using prems by auto
       ultimately show ?case
         using sat_xc_is_collection by blast
     next
       case 2
-      have "F \<in> cnf_sat"
-        unfolding cnf_sat_def sat_def
-        using prems by blast
+      have "F \<in> fin_sat"
+        using prems by auto
       have "vars_of_sat F \<subseteq> \<Union> (constr_cover F \<sigma>)"
         unfolding constr_cover_def
-        using vars_in_vars_set \<open>F \<in> cnf_sat\<close> by auto
+        using vars_in_vars_set \<open>F \<in> fin_sat\<close> by auto
       moreover have "clauses_of_sat F \<subseteq> \<Union> (constr_cover F \<sigma>)"
         unfolding constr_cover_def
-        using clause_in_clause_set[OF prems(1)] \<open>F \<in> cnf_sat\<close> by auto
+        using clause_in_clause_set[OF prems(1)] \<open>F \<in> fin_sat\<close> by auto
       moreover have "literals_of_sat F \<subseteq> \<Union> (constr_cover F \<sigma>)"
         using prems literals_in_construction by blast
       ultimately show ?case by blast
     qed
   next
     assume prems: "\<sigma> \<Turnstile> F" "\<forall>cls\<in>set F. finite cls"
-    have "F \<in> cnf_sat"
-      unfolding cnf_sat_def sat_def
-      using prems by blast
+    have "F \<in> fin_sat" using prems by auto
     show "disjoint (constr_cover F \<sigma>)"
       unfolding constr_cover_def
       using prems constr_cover_disj by auto
@@ -519,18 +500,17 @@ lemma finite_constr:
     using vars_of_sat_finite clauses_of_sat_finite literals_of_sat_finite by blast
 
 lemma sat_xc_sound:
-  "F \<in> cnf_sat \<Longrightarrow> sat_xc F \<in> exact_cover"
+  "F \<in> fin_sat \<Longrightarrow> sat_xc F \<in> exact_cover"
   proof (cases "\<forall>cls \<in> set F. finite cls")
     let ?X = "comp_X F"
     let ?S = "comp_S F"
   case True
-  assume "F \<in> cnf_sat"
-    hence prems: "\<exists>\<sigma>. \<sigma> \<Turnstile> F" "\<forall>cls \<in> set F. finite cls"
-      unfolding cnf_sat_def sat_def by blast+
+  assume "F \<in> fin_sat"
+    hence prems: "\<exists>\<sigma>. \<sigma> \<Turnstile> F" "\<forall>cls \<in> set F. finite cls" by auto
     then obtain \<sigma> where sig_def: "\<sigma> \<Turnstile> F"
       by blast
     have "(?X, ?S) \<in> exact_cover"
-      apply (rule exact_cover_I)
+      apply (rule exact_coverI)
       apply (rule constr_cover_is_collection[OF sig_def])
       apply (rule sat_xc_is_collection)
       apply (rule sat_xc_sound_aux[OF sig_def prems(2)])
@@ -540,10 +520,8 @@ lemma sat_xc_sound:
       unfolding sat_xc_def by presburger
   next
     case False
-    assume "F \<in> cnf_sat"
-    with False show ?thesis
-      unfolding cnf_sat_def
-      by blast
+    assume "F \<in> fin_sat"
+    with False show ?thesis by auto
   qed
 
 section "The proof of the completeness"
@@ -716,7 +694,7 @@ proof
 qed
 
 lemma sat_xc_complete:
-  "sat_xc F \<in> exact_cover \<Longrightarrow> F \<in> cnf_sat"
+  "sat_xc F \<in> exact_cover \<Longrightarrow> F \<in> fin_sat"
 proof (goal_cases)
   case 1
   let ?X = "comp_X F"
@@ -727,7 +705,7 @@ proof (goal_cases)
     unfolding sat_xc_def by simp
   with \<open>sat_xc F \<in> exact_cover\<close>
   have "\<exists>S' \<subseteq> ?S. cover S' ?X"
-    using exact_cover_D sat_xc_is_collection by metis
+    using exact_coverD sat_xc_is_collection by metis
   then obtain S' where S'_def: "cover S' ?X" "S' \<subseteq> ?S"
     by blast
   with \<open>sat_xc F = (?X, ?S)\<close>
@@ -770,16 +748,10 @@ proof (goal_cases)
        ultimately show ?thesis
          using finite_imageD by fastforce
      qed
-   ultimately show ?thesis
-     unfolding cnf_sat_def sat_def by blast
+   ultimately show ?thesis by auto
 qed
 
-
-theorem is_reduction_sat_xc:
-"is_reduction sat_xc cnf_sat exact_cover"
-  unfolding is_reduction_def
-  using sat_xc_sound sat_xc_complete by blast
-
-
+theorem is_reduction_sat_xc: "is_reduction sat_xc fin_sat exact_cover"
+  using sat_xc_sound sat_xc_complete by (intro is_reductionI) auto
 
 end

@@ -1,5 +1,7 @@
 theory HC_To_UHC_Poly
-  imports "../TSAT_To_SC/TSTSC_Poly" HC_To_UHC
+  imports
+    HC_To_UHC
+    VC_To_SC_Poly
 begin
 
 subsection\<open>The reduction from \<open>HC\<close> to \<open>UHC\<close> is polynomial\<close>
@@ -152,7 +154,7 @@ lemma vcs_to_vcl_refines:
   by (rule T_specifies_I, vcg' \<open>-\<close> rules: T_SPEC )
      (auto simp: hc_to_uhc_time_def one_enat_def size_hc_def numeral_eq_enat)
 
-theorem cnf_sat_to_clique_ispolyred: "ispolyred hc_to_uhc_alg hc uhc size_hc size_uhc"
+theorem hc_to_uhc_ispolyred: "ispolyred hc_to_uhc_alg hc uhc size_hc size_uhc"
   unfolding ispolyred_def
   apply(rule exI[where x=hc_to_uhc])
   apply(rule exI[where x=hc_to_uhc_time])

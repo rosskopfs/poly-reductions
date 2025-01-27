@@ -1,5 +1,5 @@
 theory HC_To_UHC_2
-  imports Definitions_UHC
+  imports UHC_Definitions
 begin
 
 subsection\<open>\<open>HC_to_UHC\<close>: \<open>G \<in> UHC \<longrightarrow> G \<in> HC\<close>\<close>

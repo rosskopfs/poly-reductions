@@ -1,9 +1,7 @@
 theory VC_To_HC_1
-  imports  Main
-    Graph_Theory.Digraph  Graph_Theory.Arc_Walk
-    Graph_Theory.Vertex_Walk
-    "Poly_Reductions_Lib.List_Auxiliaries" "Poly_Reductions_Lib.Graph_Auxiliaries"
-    Definitions_HC
+  imports
+    HC_Definitions
+    VC_Set_To_VC_List
 begin
 
 subsection\<open>\<open>(E,k) \<in> vc \<longrightarrow> vc_hc (E, k) f \<in> hc\<close>\<close>

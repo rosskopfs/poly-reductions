@@ -8,9 +8,9 @@ text \<open>
 \<bullet> Stating definitions of NP-Hard AND NP-complete using polyreductions
 \<close>
 theory Complexity_Classes
-  imports   
-    "Poly_Reductions_Lib.Polynomial_Growth_Functions"
-    "Poly_Reductions_Lib.SAT_Definition" Bounds Abstractions
+  imports
+    "Karp21.Polynomial_Growth_Functions"
+    "Karp21.SAT_Definition" Bounds Abstractions
     "IMP-_Reductions"
 
 begin
@@ -50,7 +50,7 @@ lemma p_sanity:
   assumes "D' \<in> P" "poly_reduces D D'"
   shows "D \<in> P"
   using assms apply (auto simp add: P_def poly_reduces_def)
-proof 
+proof
   fix g f
   assume assms: "is_polyreduction f D D'"
     "poly_time_bounded g [''input'']" "decides g D'"
@@ -58,9 +58,9 @@ proof
   proof
     show "poly_time_bounded (f;;g)[''input'']"
       using assms is_polyreduction_def reduction_poly by auto
-  next 
+  next
     show "decides (f;;g) D"
-      using assms(1) assms(3) reduction_decision_correct is_polyreduction_def by blast 
+      using assms(1) assms(3) reduction_decision_correct is_polyreduction_def by blast
   qed
 qed
 
@@ -79,10 +79,10 @@ proof -
     using NP_def is_poly_verif_def by blast
   from f_def(1) have cf:"cons_certif f" by (simp add: is_reduction_def)
   moreover from g_def(1) have "\<forall>y z. \<exists>r. verif g y z r " by (simp add: is_verif_def)
-  ultimately have "poly_certif_bounded (f;;g)" using f_def(3) g_def(3) 
+  ultimately have "poly_certif_bounded (f;;g)" using f_def(3) g_def(3)
       poly_result_bounded_poly_certif_bounded   by blast
   moreover from f_def(1) g_def(1) have "is_verif (f;;g) D" using reduction_verification_correct by simp
-  moreover from f_def(2) have p1: "poly_time_bounded f [''input'',''certificate'']" 
+  moreover from f_def(2) have p1: "poly_time_bounded f [''input'',''certificate'']"
     using extend_poly_time_bounded
     by fastforce
   from f_def(3) have p2:
@@ -94,7 +94,7 @@ proof -
 qed
 
 subsection \<open>NP-Hard AND NP-Complete Definitions\<close>
-definition NP_hard :: "lang set" where 
+definition NP_hard :: "lang set" where
 "NP_hard \<equiv> {L'. \<forall>L\<in>NP. poly_reduces L L'}"
 
 definition NP_complete :: "lang set" where
@@ -105,10 +105,10 @@ paragraph \<open>Idea AND Intuition\<close>
 text \<open>
 Disclaimer: This is not a proof of P = NP.
 
-Verifiers AND deciders are a lot a like. While within P, it's about the existence of polynomially 
-bounded decider, within NP it's about polynomially bounded verifiers. 
-Hence if we encode the input AND certificate in one value. We could do the work of a verifier 
-using a decider who's able to decode them. 
+Verifiers AND deciders are a lot a like. While within P, it's about the existence of polynomially
+bounded decider, within NP it's about polynomially bounded verifiers.
+Hence if we encode the input AND certificate in one value. We could do the work of a verifier
+using a decider who's able to decode them.
 \<close>
 
 paragraph \<open>Assumptions\<close>
@@ -125,16 +125,16 @@ The assumptions are:
 \<bullet> the entupling happens in polynomial time.
 \<bullet> the detupling happens in polynomial time AND produces a couple that's polynomially bounded w.r.t
 the bitsize of the encoded couple.
-\<bullet> The entupling AND detupling are both total and computable. The computation always gives a result 
-that is depending only the input. 
+\<bullet> The entupling AND detupling are both total and computable. The computation always gives a result
+that is depending only the input.
 \<bullet> entupling AND detupling are inverse operations.
 \<close>
-definition rev_verif:: "com \<Rightarrow> val \<Rightarrow> val \<Rightarrow> val \<Rightarrow> bool" where 
+definition rev_verif:: "com \<Rightarrow> val \<Rightarrow> val \<Rightarrow> val \<Rightarrow> bool" where
   "rev_verif c x z r \<equiv> comp c [(''input'',r)] [(''input'',x),(''certificate'',z)]"
 
 locale NP_using_P =
   fixes entuple::com
-  fixes detuple::com 
+  fixes detuple::com
   assumes en_bound:"poly_time_bounded entuple [''input'',''certificate'']"
                   "poly_result_bounded entuple [''input'',''certificate''] [''input'']"
    and de_bound:"poly_time_bounded detuple [''input'']"
@@ -147,10 +147,10 @@ begin
 paragraph \<open>Certificate language of a verifier\<close>
 text \<open>This is in the heart of the alternative definition.
 
-The certificate language of a verifier v is the set of encoded couples of input AND certificate that 
+The certificate language of a verifier v is the set of encoded couples of input AND certificate that
 are accepted by v.
 \<close>
-definition cert_lang_of :: "com \<Rightarrow> lang" where 
+definition cert_lang_of :: "com \<Rightarrow> lang" where
   "cert_lang_of v \<equiv> {tuple. \<exists>x z. verif entuple x z tuple \<and> verif v x z 0 }"
 
 
@@ -160,7 +160,7 @@ lemma verif_entuple_det:
   assumes "verif entuple x' z' r"
   shows "x=x' \<and> z=z'"
   using assms equiv_en_de rev_verif_def comp_comp verif_def
-  by (smt comp_det list.inject list.simps(9) prod.sel(1) prod.sel(2)) 
+  by (smt comp_det list.inject list.simps(9) prod.sel(1) prod.sel(2))
 
 text \<open>Proving that the certificate language of a polyverifier is decidable in polynomial time,
 we would obtain that an alternative definition for NP.\<close>
@@ -182,13 +182,13 @@ proof (auto simp add: decides_def)
     then have "x=x'" "z=z'" using entuple_rel verif_entuple_det by auto
     hence "verif v x z 0" using def'(2) by simp
     thus "0=r" using r_def verif_def comp_comp
-      by (smt comp_det list.inject list.map(2) prod.sel(1) prod.sel(2)) 
+      by (smt comp_det list.inject list.map(2) prod.sel(1) prod.sel(2))
   next
-    assume "0 = r" 
+    assume "0 = r"
     thus " tu \<in> cert_lang_of v" using r_def entuple_rel cert_lang_of_def by blast
   qed
   moreover have "comp' (detuple;; v) tu r" using r_def xz_def
-                      verif_def rev_verif_def comp'_def comp_comp by auto 
+                      verif_def rev_verif_def comp'_def comp_comp by auto
   ultimately show " \<exists>r. comp' (detuple;; v) tu r \<and> (tu \<in> cert_lang_of v) = (r = 0)"
     by blast
 qed
@@ -201,26 +201,26 @@ proof (auto simp add:is_verif_def)
   fix x z
   obtain tu where "verif entuple x z tu " using total_en by auto
   moreover obtain r where "comp' c tu r" using assms(1) decides_def by blast
-  ultimately have "verif (entuple;;c) x z r" using verif_def comp'_def comp_comp by simp 
+  ultimately have "verif (entuple;;c) x z r" using verif_def comp'_def comp_comp by simp
   thus "\<exists>r. verif (entuple;; c) x z r" by auto
 next
   fix x
   assume "x\<in>L"
   then obtain tu z where tu_z_def: "tu \<in> L'" "verif entuple x z tu"  using assms(2) by blast
   hence r_def:"comp' c tu 0"  using assms(1) decides_def by blast
-  from tu_z_def(2) r_def(1) have "verif (entuple;; c) x z 0" 
+  from tu_z_def(2) r_def(1) have "verif (entuple;; c) x z 0"
       using verif_def comp'_def comp_comp by simp
   thus "\<exists>z. verif (entuple;; c) x z 0" using r_def by blast
 next
   fix x z r
-  assume asm: "verif (entuple;; c) x z 0" 
+  assume asm: "verif (entuple;; c) x z 0"
   obtain tu where tu_def: "verif entuple x z tu" using total_en by blast
-  moreover obtain r' where r'_def:"comp' c tu r'" "(tu \<in> L') \<longleftrightarrow> (r' = 0)" 
-    using assms(1) decides_def by blast 
+  moreover obtain r' where r'_def:"comp' c tu r'" "(tu \<in> L') \<longleftrightarrow> (r' = 0)"
+    using assms(1) decides_def by blast
   ultimately have "verif (entuple;;c) x z r'" using verif_def comp'_def comp_comp by simp
   hence "r'= 0" using asm verif_def comp_det
-    by (smt fstI iszero_primfun_list.simps(1) iszero_primfun_list.simps(2) 
-                  iszero_primfun_list_iff list.simps(9)) 
+    by (smt fstI iszero_primfun_list.simps(1) iszero_primfun_list.simps(2)
+                  iszero_primfun_list_iff list.simps(9))
   hence "tu \<in> L'" using r'_def(2) by simp
   thus  "x\<in>L" using tu_def assms(2) by blast
 qed
@@ -228,13 +228,13 @@ paragraph \<open>NP alternative definition \<close>
 text \<open>A language is NP, iff. there EXISTS a  language of  (input,certifiate) tuples IN P, such that
 1) every input existing IN the language has at least one corresponding certificate that is
     polynomially bounded
-2) the set of inputs is  exactly the NP language. 
+2) the set of inputs is  exactly the NP language.
  \<close>
 theorem NP_alter_def:
-      "L \<in> NP \<longleftrightarrow> (\<exists>L' p. L' \<in> P \<and> poly p \<and> 
-                    certif_bounded_to_goal entuple p L' \<and> 
+      "L \<in> NP \<longleftrightarrow> (\<exists>L' p. L' \<in> P \<and> poly p \<and>
+                    certif_bounded_to_goal entuple p L' \<and>
                   (\<forall>x. x\<in>L \<longleftrightarrow> (\<exists>tu z. tu\<in>L' \<and> verif entuple x z tu)))"
-  
+
 proof safe
   assume " L \<in> NP"
   then obtain v where v_def: "is_poly_verif v L" using NP_def by blast
@@ -256,7 +256,7 @@ proof safe
     hence "tu \<in> ?L'" using zr_def cert_lang_of_def by blast
     thus "\<exists>tu. tu \<in> ?L' \<and> (\<exists>z. verif entuple x z tu)" using tu_def  by blast
   next
-    fix x tu z 
+    fix x tu z
     assume asm: "tu \<in> ?L'" "verif entuple x z tu"
     then obtain x' z' where defs: "verif entuple x' z' tu"  "verif v x' z' 0"
       using cert_lang_of_def by auto
@@ -267,24 +267,24 @@ proof safe
   moreover have "certif_bounded_to_goal entuple p ?L'"
     unfolding certif_bounded_to_goal_def
   proof safe
-    fix tu x z 
+    fix tu x z
     assume asm:"tu \<in> cert_lang_of v" " verif entuple x z tu"
-    then obtain x' z' where def': "verif entuple x' z' tu" "verif v x' z' 0" 
+    then obtain x' z' where def': "verif entuple x' z' tu" "verif v x' z' 0"
       using cert_lang_of_def by blast
     hence "x' =x " using asm(2)  verif_entuple_det by blast
     hence "verif v x z' 0" using def'(2) by blast
     then obtain z'' where def'':"verif v x z'' 0" "bit_length z'' \<le> p (bit_length x)"
-      using p_def certif_bounded_def def'(2) certif_bounded_to_goal_def by auto 
+      using p_def certif_bounded_def def'(2) certif_bounded_to_goal_def by auto
     obtain tu'' where tu''_def: "verif entuple x z'' tu''" using total_en by fast
-    moreover have "tu'' \<in> cert_lang_of v " 
+    moreover have "tu'' \<in> cert_lang_of v "
       using def''(1) def''(2) tu''_def cert_lang_of_def by blast
-    ultimately  show 
+    ultimately  show
       " \<exists>z' tu'. verif entuple x z' tu' \<and> bit_length z' \<le> p (bit_length x) \<and>  tu' \<in> cert_lang_of v"
       using def''(2) def''(2) by blast
   qed
   ultimately show "\<exists>L' p. L' \<in> P \<and> poly p \<and> certif_bounded_to_goal entuple p L'
-                       \<and> (\<forall>x. (x \<in> L) = (\<exists>tu z. tu \<in> L' \<and> verif entuple x z tu))" 
-    using p_def(1) by force  
+                       \<and> (\<forall>x. (x \<in> L) = (\<exists>tu z. tu \<in> L' \<and> verif entuple x z tu))"
+    using p_def(1) by force
 next
   fix L' p
   assume L'_def: "L' \<in> P" "poly p" "certif_bounded_to_goal entuple p L'"
@@ -301,20 +301,20 @@ next
     have "(\<forall>x. (\<exists>z r. verif (entuple;; c) x z 0) \<longrightarrow>
              (\<exists>z r. verif (entuple;; c) x z 0 \<and> bit_length z \<le> p (bit_length x)))"
     proof auto
-      fix x z 
+      fix x z
       assume asm: "verif (entuple;;c) x z 0"
       obtain tu where tu_def: "verif entuple x z tu" using total_en by blast
       obtain r' where r'_def:"comp' c tu r'" "tu \<in> L' \<longleftrightarrow> r'= 0" using c_def decides_def by blast
       from tu_def r'_def(1) have "verif (entuple;;c) x z r'"
         using comp_comp verif_def comp'_def by simp
-      hence "r' = 0" using asm(1) verif_def comp_det 
-                 by (smt fstI iszero_primfun_list.simps(1) iszero_primfun_list.simps(2) 
-                  iszero_primfun_list_iff list.simps(9)) 
+      hence "r' = 0" using asm(1) verif_def comp_det
+                 by (smt fstI iszero_primfun_list.simps(1) iszero_primfun_list.simps(2)
+                  iszero_primfun_list_iff list.simps(9))
       hence "tu \<in> L'" using r'_def(2)  asm by blast
-      then obtain tu' z' 
+      then obtain tu' z'
         where tuz'_def: "tu' \<in> L'" " verif entuple x z' tu'" "bit_length z' \<le> p (bit_length x)"
         using L'_def(3)[unfolded certif_bounded_to_goal_def] tu_def by blast
-      then obtain r'' 
+      then obtain r''
         where r''_def: "comp' c tu' r''" "tu' \<in> L' \<longleftrightarrow> r''=0" using c_def decides_def by blast
       have "verif (entuple;;c) x z' r''" using r''_def(1) tuz'_def(2) verif_def comp'_def comp_comp
         by blast
@@ -329,6 +329,6 @@ next
 qed
 
 end
-  
+
 end
 

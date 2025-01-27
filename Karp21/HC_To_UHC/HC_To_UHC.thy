@@ -1,5 +1,8 @@
 theory HC_To_UHC
-  imports  Main Definitions_UHC HC_To_UHC_1 HC_To_UHC_2
+  imports
+    HC_To_UHC_1
+    HC_To_UHC_2
+    Reductions
 begin
 
 subsection \<open>Main theorem\<close>
@@ -37,8 +40,7 @@ proof -
     by blast
 qed
 
-theorem is_reduction_hc_uhc:
-  "is_reduction hc_to_uhc hc uhc"
-  unfolding is_reduction_def using in_uhc_implies_in_hc hc_implies_uhc  by auto
+theorem is_reduction_hc_uhc: "is_reduction hc_to_uhc hc uhc"
+  using in_uhc_implies_in_hc hc_implies_uhc by (intro is_reductionI) auto
 
 end

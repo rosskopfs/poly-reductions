@@ -7,8 +7,7 @@ theory Primitives_IMP_Minus
     "HOL-Library.Sublist"
     "IMP-_To_SAS+_HOL.Utilities"
     (* Merge those *)
-    "Poly_Reductions_Lib.Triangle_Extensions"
-    "Poly_Reductions_Lib.Discrete_Extensions"
+    Triangle_Extensions
 begin
 
 

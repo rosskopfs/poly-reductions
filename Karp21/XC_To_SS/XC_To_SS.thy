@@ -1,6 +1,8 @@
 theory XC_To_SS
-  imports XC_To_SS_aux "DigitsInBase.DigitsInBase"
-
+  imports
+    DigitsInBase.DigitsInBase
+    Subset_Sum_Definitions
+    XC_Definition
 begin
 
 subsection "definition of reduction functions"
@@ -17,10 +19,10 @@ proof -
     unfolding map_to_nat_def
     apply (rule someI_ex[of "\<lambda>f. (if X = {} then bij_betw f X {} else bij_betw f X {1..card X})"])
     using bij_exist[OF assms] .
-  thus ?thesis 
+  thus ?thesis
     unfolding bij_betw_def
     by presburger
-qed 
+qed
 
 lemma weight_eq_poly:
 fixes X:: "nat set" and p::nat
@@ -42,15 +44,15 @@ shows  "weight p X = \<Sum>{p ^ x | x . x \<in> X}"
             unfolding inj_on_def
             by linarith
          have "\<forall>x\<in>X. \<forall>y\<in>X. Suc p ^ x = Suc p ^ y \<longrightarrow> x = y"
-            proof auto 
-              fix x y 
+            proof auto
+              fix x y
               assume "x \<in> X" "y \<in> X" "Suc p ^ x = Suc p ^ y"
               with prem have "p ^ x = p ^ y \<longrightarrow> x = y" "p ^ x = p ^ y"
-                using Suc(2) 
+                using Suc(2)
                 by fastforce+
               then show "x = y"
                 by blast
-            qed 
+            qed
           then show ?thesis
             unfolding inj_on_def .
         qed
@@ -62,20 +64,20 @@ shows  "weight p X = \<Sum>{p ^ x | x . x \<in> X}"
       unfolding weight_def
       using sum.image_eq[of "(\<lambda>x. p ^ x)" "X"]
       by presburger
-  qed 
+  qed
 
 
 
-definition 
-"xc_to_ss XC \<equiv> 
-  (case XC of (X, S) \<Rightarrow> 
+definition
+"xc_to_ss XC \<equiv>
+  (case XC of (X, S) \<Rightarrow>
     (if infinite X \<or> (\<not> \<Union>S \<subseteq> X) then ({}, card, 1::nat)
-    else 
+    else
       (let f = map_to_nat X;
-           p = max 2 (card S + 1) 
+           p = max 2 (card S + 1)
         in
-      (S, 
-      (\<lambda>A.  (weight p (f ` A))), 
+      (S,
+      (\<lambda>A.  (weight p (f ` A))),
        (weight p (f ` X)))
       )
     )
@@ -91,15 +93,15 @@ by force
 lemma xc_to_subset_sum_sound_aux:
 assumes "cover S X" "finite X" "xc_to_ss (X, S0) = (S', w, B)" "S \<subseteq> S'" "\<Union>S0 \<subseteq> X"
 shows "is_subset_sum (S, w, B)"
-proof - 
+proof -
   let ?f = "(map_to_nat X)"
   let ?p = "max 2 (card S0 + 1)"
-  from assms have prems: "disjoint S" "\<Union>S = X" 
-    unfolding cover_def 
+  from assms have prems: "disjoint S" "\<Union>S = X"
+    unfolding cover_def
     by blast+
 
-  from assms have "finite (\<Union>S)" 
-    using prems 
+  from assms have "finite (\<Union>S)"
+    using prems
     by blast
   hence *:"finite S"
     using finite_UnionD
@@ -117,11 +119,11 @@ proof -
   with prems have "disjoint ((`) ?f ` S)"
     by (simp add: disjoint_image)
   hence ***:"\<forall>i\<in>S. \<forall>j\<in>S. i \<noteq> j \<longrightarrow> map_to_nat X ` i \<inter> map_to_nat X ` j = {}"
-    unfolding disjoint_def  
-    by (metis Sup_upper \<open>inj_on (map_to_nat X) X\<close> disjointD image_empty 
+    unfolding disjoint_def
+    by (metis Sup_upper \<open>inj_on (map_to_nat X) X\<close> disjointD image_empty
     inj_on_image_Int prems(1) prems(2))
 
-  from * ** *** have 
+  from * ** *** have
   "(\<Sum>x\<in>\<Union> ((`) ?f ` S). ?p ^ x) = (\<Sum>x\<in>S. \<Sum>x\<in>?f ` x. ?p ^ x)"
     using sum.UNION_disjoint[of S "(`) ?f" "(\<lambda>x. ?p ^ x)"]
     by blast
@@ -139,27 +141,27 @@ proof -
   then show ?thesis
     unfolding is_subset_sum_def
     by force
-qed 
+qed
 
 subsubsection "the proof of the completeness"
 
 
-lemma distr_aux: 
+lemma distr_aux:
 fixes a::nat
 assumes "a \<le> b"
 shows "a * c + (b - a) * c = b * c"
-using assms 
+using assms
 by (metis add_mult_distrib le_add_diff_inverse)
 
 lemma   sum_distr:
 fixes X :: "'a set" and f :: "'a \<Rightarrow> nat"
-assumes "finite S" "finite X" "\<Union>S \<subseteq> X" 
+assumes "finite S" "finite X" "\<Union>S \<subseteq> X"
 shows "(\<Sum>i\<in>S. sum f i) = (\<Sum>i \<in> X. (card {A \<in> S. i \<in> A}) * f i)"
 using assms proof (induction S)
   case (insert x F)
   hence "x \<subseteq> X"
-    by blast  
-  from sum.subset_diff[OF this insert(4)] have "(\<Sum>i\<in>X. (if i \<in> x then 1 else 0) * f i) 
+    by blast
+  from sum.subset_diff[OF this insert(4)] have "(\<Sum>i\<in>X. (if i \<in> x then 1 else 0) * f i)
     = (\<Sum>i\<in>X - x. (if i \<in> x then 1 else 0) * f i) + (\<Sum>i\<in>x. (if i \<in> x then 1 else 0) * f i)"
     by blast
   also have "... = (\<Sum>i\<in>x. (if i \<in> x then 1 else 0) * f i)"
@@ -170,30 +172,30 @@ using assms proof (induction S)
     by presburger
 
   have "({A \<in> insert x F. i \<in> A} - {A \<in> F. i \<in> A}) = (if i \<in> x then {x} else {})" for i
-    using insert 
+    using insert
     by auto
-  hence "card ({A \<in> insert x F. i \<in> A} - {A \<in> F. i \<in> A}) = (if i \<in> x then 1 else 0)" for i 
+  hence "card ({A \<in> insert x F. i \<in> A} - {A \<in> F. i \<in> A}) = (if i \<in> x then 1 else 0)" for i
     by simp
   moreover have "finite {A \<in> F. i \<in> A}" for i
     using insert
     by fastforce
-  moreover have "{A \<in> F. i \<in> A} \<subseteq> {A \<in> insert x F. i \<in> A}" for i 
-    by blast 
-  ultimately have "card {A \<in> insert x F. i \<in> A} - card {A \<in> F. i \<in> A} = (if i \<in> x then 1 else 0)" for i 
+  moreover have "{A \<in> F. i \<in> A} \<subseteq> {A \<in> insert x F. i \<in> A}" for i
+    by blast
+  ultimately have "card {A \<in> insert x F. i \<in> A} - card {A \<in> F. i \<in> A} = (if i \<in> x then 1 else 0)" for i
     using card_Diff_subset[of "{A \<in> F. i \<in> A}" "{A \<in> insert x F. i \<in> A}"]
     by algebra
   with * have sum_distr: "sum f x = (\<Sum>i\<in>X. (card {A \<in> insert x F. i \<in> A} - card {A \<in> F. i \<in> A}) * f i)"
     by presburger
-    
+
   have "\<forall>i \<in> X. {A \<in> F. i \<in> A} \<le> {A \<in> insert x F. i \<in> A}"
-    by blast 
+    by blast
   moreover with insert have "\<forall>i \<in> X. finite {A \<in> insert x F. i \<in> A}"
     by fastforce
   ultimately have "\<forall>i \<in> X. card {A \<in> F. i \<in> A} \<le> card {A \<in> insert x F. i \<in> A}"
     using card_mono
     by meson
-  then have "(\<Sum>i\<in>X. card {A \<in> insert x F. i \<in> A} * f i) = 
-      (\<Sum>i\<in>X. card {A \<in> F. i \<in> A} * f i) 
+  then have "(\<Sum>i\<in>X. card {A \<in> insert x F. i \<in> A} * f i) =
+      (\<Sum>i\<in>X. card {A \<in> F. i \<in> A} * f i)
     + (\<Sum>i\<in>X. (card {A \<in> insert x F. i \<in> A} - card {A \<in> F. i \<in> A}) * f i)"
       using sum.distrib[of "(\<lambda>i. card {A \<in> F. i \<in> A} * f i)"
              "(\<lambda>i. (card {A \<in> insert x F. i \<in> A} - card {A \<in> F. i \<in> A}) * f i)" X]
@@ -204,7 +206,7 @@ using assms proof (induction S)
     by argo
   also have "... = sum (sum f) F + sum f x"
     using insert
-    by auto 
+    by auto
   also have "... = sum (sum f) (insert x F)"
     using insert
     by auto
@@ -222,10 +224,10 @@ proof -
   let ?m = "weight ?p (?f ` X)"
   let ?D = "\<lambda>x. if x \<in> ?f ` X then card {A. A \<in> S \<and> x \<in> ?f ` A} else 0"
       let ?E = "(\<lambda>x. if x \<in> ?f ` X then 1 else 0)"
-  from assms have S_prop: 
+  from assms have S_prop:
   "finite S" "(\<Sum>A\<in>S.  (weight ?p (?f ` A))) =  (weight ?p (?f ` X))" "\<Union>S \<subseteq> X" "S' = S0"
-    unfolding xc_to_ss_def is_subset_sum_def Let_def 
-    using finite_subset 
+    unfolding xc_to_ss_def is_subset_sum_def Let_def
+    using finite_subset
     by auto
 
   have "finite S0"
@@ -254,15 +256,15 @@ proof -
   finally have sum_of_poly_E: "?m = (\<Sum>i. ?E i * ?p ^ i)"
     by simp
 
-  have "bij_betw (map_to_nat X) A (map_to_nat X ` A)" if "A \<in> S" for A 
+  have "bij_betw (map_to_nat X) A (map_to_nat X ` A)" if "A \<in> S" for A
     proof (simp add: bij_betw_def)
       from \<open>A \<in> S\<close> S_prop(3) have "A \<subseteq> X"
         by blast
       with f_dom(2) show "inj_on (map_to_nat X) A"
         unfolding inj_on_def
         by blast
-    qed 
-  hence **: "\<forall>A \<in> S. sum (\<lambda>i. ?p ^ i) (?f ` A) = (sum (\<lambda>x. ?p ^ ?f x)) A" 
+    qed
+  hence **: "\<forall>A \<in> S. sum (\<lambda>i. ?p ^ i) (?f ` A) = (sum (\<lambda>x. ?p ^ ?f x)) A"
     using sum.reindex_bij_betw[of ?f _ _ "\<lambda>x. ?p ^ x", symmetric] bij_betwE
     by blast
   from f_dom have ***: "bij_betw ?f X (?f` X)"
@@ -272,12 +274,12 @@ proof -
     using S_prop(3)
     by blast
   hence ****:"\<forall>i \<in> X. {A \<in> S. i \<in> A} = {A \<in> S. ?f i \<in> ?f ` A}"
-   using f_dom(2) 
-   unfolding inj_on_def 
+   using f_dom(2)
+   unfolding inj_on_def
    by auto
 
   from assms have "?m = (\<Sum>i\<in>S.  (weight ?p (?f ` i)))"
-    unfolding is_subset_sum_def xc_to_ss_def Let_def 
+    unfolding is_subset_sum_def xc_to_ss_def Let_def
     by auto
   also have "... =  (\<Sum>A\<in>S. sum (\<lambda>i. ?p ^ i) (?f ` A))"
     unfolding weight_def
@@ -286,13 +288,13 @@ proof -
     using **
     by simp
   also have "... =  (\<Sum>i\<in>X. card {A \<in> S. i \<in> A} * ?p ^ (?f i))"
-    using sum_distr[OF S_prop(1) f_dom(3) S_prop(3), of "\<lambda>i. ?p ^ (?f i)"] 
+    using sum_distr[OF S_prop(1) f_dom(3) S_prop(3), of "\<lambda>i. ?p ^ (?f i)"]
     by argo
   also have "... =  (\<Sum>x\<in>X. card {A \<in> S. ?f x \<in> ?f ` A} * ?p ^ ?f x)"
-    using **** 
+    using ****
     by simp
   also have "... =  (\<Sum>i\<in>?f ` X. card {A \<in> S. i \<in> ?f ` A} * ?p ^ i)"
-    using sum.reindex_bij_betw[OF ***,of "\<lambda>i. card {A \<in> S. i \<in> ?f ` A} * ?p ^ i"] 
+    using sum.reindex_bij_betw[OF ***,of "\<lambda>i. card {A \<in> S. i \<in> ?f ` A} * ?p ^ i"]
     by argo
   also have "... =  (\<Sum>i \<in> (?f ` X). ?D i * ?p ^ i)"
     by simp
@@ -318,7 +320,7 @@ proof -
         using S_prop(1)
         by auto
       with b_def(5) have card_ge_2: "2 \<le> card {A \<in> S. b \<in> A}"
-        using card_le_Suc0_iff_eq 
+        using card_le_Suc0_iff_eq
         by fastforce
       have *****:"b \<in> X"
         using b_def S_prop(3)
@@ -332,17 +334,17 @@ proof -
         by blast
       ultimately have D_ge_2: "?D (?f b) \<ge> 2"
         by presburger
-      
+
       have "eventually_zero ?E"
         proof (unfold eventually_zero_char, standard)
           show "\<forall>i\<ge>card X + 1. (if i \<in> ?f ` X then 1 else 0) = 0"
             unfolding f_dom
             by force
-        qed 
+        qed
       moreover have "(\<And>i. ?E i < ?p)"
         by fastforce
       ultimately have jth_bit_1: "?E (?f b) = ?m div ?p ^ (?f b) mod ?p"
-        using digits_in_base.seq_uniqueness[OF base(1) _ sum_of_poly_E] 
+        using digits_in_base.seq_uniqueness[OF base(1) _ sum_of_poly_E]
         by blast
 
       have "eventually_zero ?D"
@@ -357,50 +359,50 @@ proof -
           have "{A \<in> S. i \<in> ?f ` A} \<subseteq> S"
             by blast
           then have "card {A \<in> S. i \<in> ?f ` A} \<le> card S"
-            using S_prop card_mono 
+            using S_prop card_mono
             by meson
           then show "?D i < ?p"
             using S_card
             by force
-        qed 
+        qed
       ultimately have "?D (?f b) = ?m div ?p ^ (?f b) mod ?p"
-        using digits_in_base.seq_uniqueness[OF base(1) _ sum_of_poly_D] 
+        using digits_in_base.seq_uniqueness[OF base(1) _ sum_of_poly_D]
         by blast
       with jth_bit_1 have "?D (?f b) = ?E (?f b)"
         by argo
       with D_ge_2 show "False"
         by (auto split: if_splits)
-    qed 
+    qed
 qed
 
 lemma xc_to_subset_sum_complete_aux:
 assumes "xc_to_ss (X, S0) = (S', w, B)" "S \<subseteq> S'" "is_subset_sum (S, w, B)"
   "finite S" "finite X" "\<Union>S0 \<subseteq> X"
-shows "cover S X" 
+shows "cover S X"
 proof -
   let ?f = "map_to_nat X"
   let ?p = "max 2 (card S' + 1)"
   have S_prop: "finite S" "(\<Sum>A\<in>S.  (weight ?p (?f ` A))) =  (weight ?p (?f ` X))" "S0 = S'"
-      using assms 
+      using assms
       unfolding xc_to_ss_def is_subset_sum_def Let_def
       by auto
   have f_unfold:
-    "?f ` X = (if X = {} then {} else {1..card X})" 
+    "?f ` X = (if X = {} then {} else {1..card X})"
     "inj_on ?f X"
       using map_to_nat_unfold assms
       by blast+
 
   have "?p \<ge> 2"
-    by auto 
+    by auto
   hence weight_unfold:
   "weight ?p (?f ` X) = \<Sum>{?p ^ x | x . x \<in> (?f ` X)}"
   "\<forall>A\<in>S. weight ?p (?f ` A) = \<Sum>{?p ^ x | x . x \<in> (?f ` A)}"
-    using weight_eq_poly[of ?p] 
+    using weight_eq_poly[of ?p]
     by blast+
   hence "(\<Sum>A\<in>S.  (weight ?p (?f ` A))) = \<Sum>{?p ^ x | x . x \<in> (?f ` X)}"
     using S_prop(2)
     by argo
-  moreover from weight_unfold(2) have 
+  moreover from weight_unfold(2) have
   "(\<Sum>A\<in>S.  (weight ?p (?f ` A))) = (\<Sum>A\<in>S. \<Sum>{?p ^ x | x . x \<in> (?f ` A)})"
     by simp
   ultimately have Sum_eq: "(\<Sum>A\<in>S. \<Sum>{?p ^ x | x . x \<in> (?f ` A)}) = \<Sum>{?p ^ x | x . x \<in> (?f ` X)}"
@@ -414,7 +416,7 @@ proof -
   proof (rule ccontr)
     assume "\<Union>S \<noteq> X"
     moreover from assms have "\<Union>S' \<subseteq> X" "finite (\<Union>S')"
-      using finite_subset S_prop(3) 
+      using finite_subset S_prop(3)
       by blast+
     moreover have "\<Union>S \<subseteq> \<Union>S'"
       using assms(2)
@@ -427,21 +429,21 @@ proof -
       by blast
 
     with f_unfold prems have "inj_on ?f (\<Union>S)"
-      unfolding inj_on_def 
+      unfolding inj_on_def
       by blast
     with \<open>disjoint S\<close> have "disjoint ((`) ?f ` S)"
       by (simp add: disjoint_image)
     hence **:"\<forall>i\<in>S. \<forall>j\<in>S. i \<noteq> j \<longrightarrow> map_to_nat X ` i \<inter> map_to_nat X ` j = {}"
-      unfolding disjoint_def 
-      by (metis Sup_upper \<open>disjoint S\<close> \<open>inj_on ?f (\<Union> S)\<close> disjointD 
+      unfolding disjoint_def
+      by (metis Sup_upper \<open>disjoint S\<close> \<open>inj_on ?f (\<Union> S)\<close> disjointD
          image_empty inj_on_image_Int)
-    
+
     have strict_subset: "\<Union> ((`) ?f ` S) \<subset> ?f ` X"
       using prems(1)
       by (metis \<open>inj_on ?f X\<close> image_Union image_strict_mono)
     hence "(\<Sum>x\<in>\<Union> ((`) ?f ` S). ?p ^ x) < (\<Sum>x\<in>?f ` X. ?p ^ x)"
       proof-
-        from strict_subset obtain b where b_def: "b \<in> ?f ` X - \<Union> ((`) ?f ` S)" 
+        from strict_subset obtain b where b_def: "b \<in> ?f ` X - \<Union> ((`) ?f ` S)"
           by blast
         hence "b \<in> ?f ` X"
           by blast
@@ -456,11 +458,11 @@ proof -
           by blast
         thm sum_strict_mono2[of "?f ` X" "\<Union> ((`) ?f ` S)" b "(\<lambda>x. ?p ^ x)"]
         ultimately show ?thesis
-          using b_def strict_subset 
+          using b_def strict_subset
             sum_strict_mono2[of "?f ` X" "\<Union> ((`) ?f ` S)" b "(\<lambda>x. ?p ^ x)"]
           by fastforce
-      qed 
-    moreover from \<open>finite S\<close> * ** have 
+      qed
+    moreover from \<open>finite S\<close> * ** have
       "(\<Sum>x\<in>\<Union> ((`) ?f ` S). ?p ^ x) = (\<Sum>x\<in>S. \<Sum>x\<in>?f ` x. ?p ^ x)"
       using sum.UNION_disjoint[of S "(`) ?f" "(\<lambda>x. ?p ^ x)"]
       by blast
@@ -468,18 +470,18 @@ proof -
       by argo
     with S_prop
     show "False"
-      unfolding weight_def 
-      by (metis (no_types, lifting) Sum_eq nat_neq_iff sum.cong weight_def 
+      unfolding weight_def
+      by (metis (no_types, lifting) Sum_eq nat_neq_iff sum.cong weight_def
       weight_unfold(1) weight_unfold(2))
-  qed 
-    
+  qed
+
   ultimately show ?thesis
-    unfolding cover_def 
+    unfolding cover_def
     by blast
 qed
 
 subsection "the final theorem"
-  
+
 
 lemma xc_to_subset_sum_sound:
 "(X, S) \<in> exact_cover \<Longrightarrow> (xc_to_ss (X, S)) \<in> subset_sum"
@@ -487,7 +489,7 @@ proof (cases "infinite X \<or> (\<not> \<Union>S \<subseteq> X)")
   case True
   assume "(X, S) \<in> exact_cover"
   with True show ?thesis
-    unfolding exact_cover_def xc_to_ss_def 
+    unfolding exact_cover_def xc_to_ss_def
     by fastforce
 next
   case False
@@ -503,8 +505,8 @@ next
     using xc_to_subset_sum_sound_aux False
     by blast
   moreover from prems have "finite S"
-    unfolding exact_cover_def 
-    by (meson False finite_UnionD rev_finite_subset) 
+    unfolding exact_cover_def
+    by (meson False finite_UnionD rev_finite_subset)
   ultimately show ?thesis
     using \<open>S' \<subseteq> S\<close> \<open>xc_to_ss (X, S) = (S, w, B)\<close>
     unfolding subset_sum_def
@@ -530,15 +532,12 @@ next
   moreover with False have "finite S'" "cover S' X"
     using xc_to_subset_sum_complete_aux
     by (metis finite_UnionD infinite_super)+
-  ultimately show ?thesis 
-    using exact_cover_I[of S' S] False 
+  ultimately show ?thesis
+    using exact_coverI[of S' S] False
     by blast
-qed 
+qed
 
-theorem is_reduction_xc_to_ss:
-  "is_reduction xc_to_ss exact_cover subset_sum"
-unfolding is_reduction_def
-using xc_to_subset_sum_sound xc_to_subset_sum_complete
-by auto
+theorem is_reduction_xc_to_ss: "is_reduction xc_to_ss exact_cover subset_sum"
+  using xc_to_subset_sum_sound xc_to_subset_sum_complete by (intro is_reductionI) auto
 
-end 
+end

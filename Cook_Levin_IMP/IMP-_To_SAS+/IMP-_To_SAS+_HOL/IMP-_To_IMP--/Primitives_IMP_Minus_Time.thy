@@ -2,7 +2,7 @@
 subsection \<open>Timing\<close>
 
 theory Primitives_IMP_Minus_Time
-  imports Primitives_IMP_Minus "Poly_Reductions_Lib.Landau_Auxiliaries" "Poly_Reductions_Lib.Polynomial_Growth_Functions"
+  imports Primitives_IMP_Minus "Landau_Auxiliaries" "Karp21.Polynomial_Growth_Functions"
     "HOL-Library.Rewrite"
 begin
 
