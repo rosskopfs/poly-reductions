@@ -22,7 +22,7 @@ theory All_Reductions_Poly
     XC_To_SS_Poly
 begin
 
-section \<open>Overview of polynomial Reductions\<close>
+section \<open>Overview of Polynomial Reductions\<close>
 
 text \<open>
   \<^item> SAT
