@@ -1,4 +1,6 @@
-theory IMP_Tailcalls_Dynamic imports IMP_Calls begin
+theory IMP_Tailcall
+  imports IMP_Calls
+begin
 
 unbundle no com_syntax and com'_syntax
 declare [[syntax_ambiguity_warning=false]]

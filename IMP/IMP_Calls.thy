@@ -1,6 +1,7 @@
 \<^marker>\<open>creator Fabian Huch\<close>
-
-theory IMP_Calls imports Vars begin
+theory IMP_Calls
+  imports Vars
+begin
 
 section "IMP"
 

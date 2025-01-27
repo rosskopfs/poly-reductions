@@ -4,4 +4,4 @@ session IMP_Minus = "HOL-Eisbach" +
     Big_StepT
     Small_StepT
     Big_Step_Small_Step_Equivalence
-    IMP_Tailcalls_Dynamic
+    IMP_Tailcall

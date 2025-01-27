@@ -1,6 +1,6 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory IMP_Terminates_With
-  imports IMP_Minus.IMP_Tailcalls_Dynamic
+  imports IMP_Minus.IMP_Tailcall
 begin
 
 definition "tailcall_to_IMP_Minus \<equiv> inline o compile"

@@ -98,6 +98,8 @@ proof -
   qed
 qed
 
+(*FIXME: this approach does not work; instead, one needs to pre-compute suitable c, n by taking the
+all c_i, n_i of all contained subprograms (+ some constant for assignments, etc.)*)
 lemma linear_in_add_tSeqI:
   assumes "linear_in c1 n1 x y"
   and "linear_in c2 n2 x y'"

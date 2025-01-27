@@ -1,6 +1,9 @@
 \<^marker>\<open>creator Fabian Huch\<close>
 (* todo merge with existing vars *)
-theory Vars imports Big_StepT Eq_On
+theory Vars
+  imports
+    Big_StepT
+    Eq_On
 begin
 
 class vars =
@@ -76,7 +79,7 @@ lemma atomVal_eq_if_eq_on_vars[simp]:
 lemma aval_eq_if_eq_on_vars [simp]:
   "s\<^sub>1 = s\<^sub>2 on set (vars a) \<Longrightarrow> aval a s\<^sub>1 = aval a s\<^sub>2"
   apply (induction a)
-  apply auto 
+  apply auto
   using atomVal_eq_if_eq_on_vars eq_on_subset
   apply (metis sup.cobounded1 sup.cobounded2)+
   done
@@ -194,7 +197,7 @@ corollary neat_subst:
   shows "(subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> (c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t o m"
 proof -
   assume "(subst m c, s) \<Rightarrow>\<^bsup> z \<^esup> t"
-  with subst_complete[where S = UNIV] assms obtain t' where 
+  with subst_complete[where S = UNIV] assms obtain t' where
     1: "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t'" "t' = t o m on UNIV"
     by blast
   hence "t' = t o m" by auto
@@ -206,11 +209,11 @@ corollary neat_subst_2:
   shows "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> \<exists>t'. (subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m"
   using subst_sound[where S = UNIV] assms by fast
 
-lemma noninterference: 
+lemma noninterference:
   "(c,s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow> set (vars c) \<subseteq> S \<Longrightarrow> s = s' on S \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>\<^bsup> x \<^esup> t' \<and> t = t' on S"
 proof (induction c s x t arbitrary: s' rule: big_step_t_induct)
   case (Assign x a s)
-  then show ?case 
+  then show ?case
     using aval_eq_if_eq_on_vars big_step_t.Assign eq_on_def eq_on_subset fun_upd_apply set_subset_Cons vars_com.simps(2) by fastforce
 next
   case (WhileTrue s1 b c x s2 y s3 z)
