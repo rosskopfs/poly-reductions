@@ -1,6 +1,6 @@
+\<^marker>\<open>creator "Kevin Kappelmann"\<close>
 \<^marker>\<open>creator "Jay Neubrand"\<close>
 \<^marker>\<open>creator "Andreas Vollert"\<close>
-\<^marker>\<open>creator "Kevin Kappelmann"\<close>
 subsection \<open>Basic Datatypes and Functions\<close>
 theory HOL_To_HOL_Nat_Basics
   imports
@@ -93,7 +93,7 @@ lemma Rel_nat_case_bool_nat [Rel_nat, Rel_nat_compile_nat]:
 lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 
 datatype_compile_nat list
-
+print_theorems
 datatype_compile_nat char
 
 datatype_compile_nat prod

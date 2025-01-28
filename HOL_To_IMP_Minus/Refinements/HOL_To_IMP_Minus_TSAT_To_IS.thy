@@ -7,7 +7,7 @@ begin
 context HOL_To_HOL_Nat
 begin
 
-declare Rel_nat_destruct_prod[Rel_nat]
+declare Rel_nat_selector_prod[Rel_nat]
 
 definition "map_rpair_acc y \<equiv> map_acc (rpair y)"
 lemmas map_rpair_acc_eq = map_acc_eq[of "rpair y" for y, folded map_rpair_acc_def]

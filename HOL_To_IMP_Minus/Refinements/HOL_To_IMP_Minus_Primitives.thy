@@ -470,4 +470,39 @@ HOL_To_IMP_Minus_correct snd_nat by cook
 
 end
 
+context HOL_To_HOL_Nat
+begin
+
+lemma fun_pow_eq: "(f^^n) x = (case n of 0 => x | Suc n => (f^^n) (f x))"
+  by (simp add: HOL_Nat_To_IMP_Minus.case_nat_eq_if)
+
+lemma nat_selector_eq: "nat_selector arg nargs n =
+  (let x = (snd_nat ^^ (arg + 1)) n in if arg + 1 < nargs then fst_nat x else x)"
+  unfolding nat_selector_eq by simp
+
+definition "fun_pow_snd_nat n \<equiv> snd_nat^^n"
+lemmas fun_pow_snd_nat_eq = fun_pow_eq[of _ "snd_nat", folded fun_pow_snd_nat_def]
+
+end
+
+context HOL_Nat_To_IMP_Minus
+begin
+lemmas fun_pow_snd_nat_eq = HTHN.fun_pow_snd_nat_eq[simplified case_nat_eq_if]
+
+lemma eq_sub_one_if_suc_eq: "Suc n = m \<Longrightarrow> n = m - 1" by simp
+
+compile_nat fun_pow_snd_nat_eq
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.fun_pow_snd_nat
+  supply eq_sub_one_if_suc_eq[simp]
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  by (induction "s ''fun_pow_snd_nat.args.n''" arbitrary: s rule: nat.induct)
+  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
+    HB.get_HOL_eqs @{context} 1\<close>)+
+
+lemmas nat_selector_eq = HTHN.nat_selector_eq[folded HTHN.fun_pow_snd_nat_def]
+compile_nat nat_selector_eq
+HOL_To_IMP_Minus_correct nat_selector by cook
+
+end
+
 end

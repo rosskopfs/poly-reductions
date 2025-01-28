@@ -24,7 +24,6 @@ fun mk_natify T = \<^Const>\<open>natify T\<close>
 val mk_natify_binding = type_suffix_binding (const_binding @{term natify})
 
 val fst_nat = \<^Const>\<open>fst_nat\<close>
-val snd_nat = \<^Const>\<open>snd_nat\<close>
 val pair_nat = \<^Const>\<open>pair_nat\<close>
 
 fun mk_ctr_binding ctr = type_suffix_binding (const_binding ctr) natT
@@ -44,7 +43,7 @@ fun mk_ctr_rhs ctr_tag [] = mk_ctr_rhs ctr_tag [mk_nat 0] (*arbitrary number for
           | mk_arg (t :: ts) = pair_nat $ t $ mk_arg ts
     in pair_nat $ ctr_tag $ mk_arg args end
 
-fun dest_ctr_arg ctr_nargs t i = funpow (i + 1) (app snd_nat) t |> (i <> ctr_nargs - 1 ? app fst_nat)
+fun nat_selector ctr_nargs t i = \<^Const>\<open>nat_selector for \<open>mk_nat i\<close> \<open>mk_nat ctr_nargs\<close> t\<close>
 
 fun mk_ctr_condition t i = HU.mk_eq (fst_nat $ t, mk_ctr_tag i)
 
@@ -115,13 +114,13 @@ fun register_ctr_Rel_thm ctr lthy =
 
 fun register_ctr_Rel_thms ctrs = fold_map (fn ctr => register_ctr_Rel_thm ctr #>> snd) ctrs
 
-val destruct_binding = @{binding "destruct"}
-val Rel_nat_destruct_binding = (TrpUtil.add_suffix Rel_nat_binding destruct_binding)
-val mk_Rel_nat_destruct_type_binding = type_suffix_binding Rel_nat_destruct_binding
-fun mk_Rel_nat_destruct_ctr_binding ctr = TrpUtil.add_suffix
-  (TrpUtil.add_suffix Rel_nat_binding destruct_binding) (const_binding ctr)
+val selector_binding = @{binding selector}
+val Rel_nat_selector_binding = (TrpUtil.add_suffix Rel_nat_binding selector_binding)
+val mk_Rel_nat_selector_type_binding = type_suffix_binding Rel_nat_selector_binding
+fun mk_Rel_nat_selector_ctr_binding ctr = TrpUtil.add_suffix
+  (TrpUtil.add_suffix Rel_nat_binding selector_binding) (const_binding ctr)
 
-fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
+fun register_nat_selector_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
   let
     val (argTs, headT) = dest_Const_type ctr |> strip_type
     val ctr_nargs = length argTs
@@ -133,22 +132,22 @@ fun register_ctr_destruct_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
     fun reg_ctr_des_Rel_thm_arg (i, arg) =
       let
         fun tac ctxt = solve_compiled_Rel_nat_tac transfer_fun_RelD
-          (ctxt addsimps (ctrs_nat_def :: natify_simps))
-        val (goal, lthy) = mk_Rel_nat (fastype_of arg) $ dest_ctr_arg ctr_nargs prem_freet i $ arg
+          (ctxt addsimps (@{thm nat_selector_eq} :: ctrs_nat_def :: natify_simps))
+        val (goal, lthy) = mk_Rel_nat (fastype_of arg) $ nat_selector ctr_nargs prem_freet i $ arg
           |> HOLogic.mk_Trueprop
           |> curry Logic.mk_implies prem
           |> map_types add_compile_nat_sort
           |> (fn t => yield_singleton (Variable.import_terms false) t lthy)
       in Goal.prove lthy [] [] goal (#context #> tac #> HEADGOAL) end
-    val binding = mk_Rel_nat_destruct_ctr_binding ctr
+    val binding = mk_Rel_nat_selector_ctr_binding ctr
   (*since these theorems make transfer loop in most cases, they are not registered by default as
   Rel_nat relatedness theorems*)
   in register_thms binding (map_index reg_ctr_des_Rel_thm_arg args) lthy |>> snd end
 
-fun register_ctr_destruct_Rel_thms T ctrs natify_simps ctrs_nat_defs =
-  fold_map (register_ctr_destruct_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
-  #> (fn (thms, lthy) => register_attrs_thms @{attributes [Rel_nat_compile_nat_destruct]}
-      (mk_Rel_nat_destruct_type_binding T) (flat thms) lthy
+fun register_nat_selector_Rel_thms T ctrs natify_simps ctrs_nat_defs =
+  fold_map (register_nat_selector_Rel_thm natify_simps) (map2 pair ctrs_nat_defs ctrs)
+  #> (fn (thms, lthy) => register_attrs_thms @{attributes [Rel_nat_compile_nat_selector]}
+      (mk_Rel_nat_selector_type_binding T) (flat thms) lthy
     |> snd |> pair thms)
 
 val mk_Rel_nat_eq_fst_nat_case_binding = type_suffix_binding @{binding "Rel_nat_eq_fst_nat_case"}
@@ -178,7 +177,7 @@ fun register_case T ctrs casex ctxt =
     val case_arg_free = snd case_arg_binder
     val ctrs_conditions = map_index (fst #> mk_ctr_condition case_arg_free) ctrs
     fun mk_case case_free ctr_nargs =
-      map_range (dest_ctr_arg ctr_nargs case_arg_free) ctr_nargs
+      map_range (nat_selector ctr_nargs case_arg_free) ctr_nargs
       |> curry list_comb case_free
     val all_case_binders = case_arg_binder :: rev case_binders
     val case_rhs = (ctrs_conditions, map2 mk_case (map snd case_binders) (map fun_nargs ctrs))
@@ -245,7 +244,7 @@ fun datatype_compile_nat T ctrs casex split thy =
       |> Class.instantiation ([Tname], Tfrees, compile_natS)
       |> Local_Theory.begin_nested |> snd
 
-    (*create trport functions*)
+    (*create transport functions*)
     val lthy = register_natify T ctrs_nat casex lthy
       (*we pass the rhs of case_nat to create denatify due to termination issues: we do not have a
       congruence rule for case_nat. As a result, the function package's termination checker cannot
@@ -282,7 +281,7 @@ fun datatype_compile_nat T ctrs casex split thy =
 
     (*prove instantiation*)
     fun solve_instantiation_tac ctxt =
-      let val simps = ctrs_nat_def @ natify_simps
+      let val simps = @{thm nat_selector_eq} :: ctrs_nat_def @ natify_simps
       in
         EqSubst.eqsubst_tac ctxt [1] denatify_simps
         THEN' asm_full_simp_tac (ctxt addsimps simps)
@@ -293,20 +292,21 @@ fun datatype_compile_nat T ctrs casex split thy =
     val phi = Proof_Context.export_morphism lthy (Proof_Context.init_global thy)
     val natify_simps = map (Morphism.thm phi) natify_simps
     val lthy = Local_Theory.begin_nested lthy |> snd
-    val lthy = lthy addsimps ctrs_nat_def @ natify_simps
+    val lthy = lthy addsimps @{thm nat_selector_eq} :: ctrs_nat_def @ natify_simps
     (*create relator theorem for case*)
     val (case_Rel_thm, lthy) = register_case_Rel_thm T casex case_nat case_nat_def lthy |>> snd
     (*create relator theorems for constructors*)
     val (ctr_Rel_thms, lthy) = register_ctr_Rel_thms ctrs lthy
     val lthy = Local_Theory.end_nested lthy
-    (*create destructor relatedness theorems*)
-    val (dest_Rel_thms, lthy) = register_ctr_destruct_Rel_thms T ctrs natify_simps ctrs_nat_def lthy
+    (*create discriminator/selectors relatedness theorems*)
+    val (nat_selector_Rel_thms, lthy) =
+      register_nat_selector_Rel_thms T ctrs natify_simps ctrs_nat_def lthy
     val (Rel_nat_eq_fst_nat_case_thm, lthy) =
       register_Rel_nat_eq_fst_nat_case_thm ctrs casex (natify_simps @ ctrs_nat_def) split lthy
 
     (*create bundle of relatedness theorems*)
     val (_, lthy) = register_attrs_thms (@{attributes [Rel_nat_compile_nat]}) (mk_Rel_nat_type_binding T)
-      (flat (Rel_nat_eq_fst_nat_case_thm :: case_Rel_thm :: ctr_Rel_thms @ dest_Rel_thms)) lthy
+      (flat (Rel_nat_eq_fst_nat_case_thm :: case_Rel_thm :: ctr_Rel_thms @ nat_selector_Rel_thms)) lthy
   in lthy end
 
 fun datatype_compile_nat_cmd T thy =
