@@ -476,7 +476,7 @@ begin
 lemma fun_pow_eq: "(f^^n) x = (case n of 0 => x | Suc n => (f^^n) (f x))"
   by (simp add: HOL_Nat_To_IMP_Minus.case_nat_eq_if)
 
-lemma nat_selector_eq: "nat_selector arg nargs n =
+lemma nat_selector_eq: "nat_selector nargs arg n =
   (let x = (snd_nat ^^ (arg + 1)) n in if arg + 1 < nargs then fst_nat x else x)"
   unfolding nat_selector_eq by simp
 

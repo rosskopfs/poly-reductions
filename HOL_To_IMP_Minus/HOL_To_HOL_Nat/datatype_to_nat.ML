@@ -43,7 +43,7 @@ fun mk_ctr_rhs ctr_tag [] = mk_ctr_rhs ctr_tag [mk_nat 0] (*arbitrary number for
           | mk_arg (t :: ts) = pair_nat $ t $ mk_arg ts
     in pair_nat $ ctr_tag $ mk_arg args end
 
-fun nat_selector ctr_nargs t i = \<^Const>\<open>nat_selector for \<open>mk_nat i\<close> \<open>mk_nat ctr_nargs\<close> t\<close>
+fun nat_selector ctr_nargs t i = \<^Const>\<open>nat_selector for \<open>mk_nat ctr_nargs\<close> \<open>mk_nat i\<close> t\<close>
 
 fun mk_ctr_condition t i = HU.mk_eq (fst_nat $ t, mk_ctr_tag i)
 

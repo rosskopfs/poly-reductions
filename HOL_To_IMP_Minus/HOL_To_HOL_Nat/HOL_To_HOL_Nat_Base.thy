@@ -165,11 +165,11 @@ lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<R
 
 ML_file \<open>hol_to_hol_nat_util.ML\<close>
 
-definition "nat_selector arg nargs n \<equiv>
+definition "nat_selector nargs arg n \<equiv>
   (if arg + 1 < nargs then fst_nat else id) ((snd_nat^^(arg + 1)) n)"
 
 lemma nat_selector_eq:
-  "nat_selector arg nargs n = (if arg + 1 < nargs then fst_nat else id) ((snd_nat^^(arg + 1)) n)"
+  "nat_selector nargs arg n = (if arg + 1 < nargs then fst_nat else id) ((snd_nat^^(arg + 1)) n)"
   unfolding nat_selector_def by simp
 
 lemma fun_pow_eq_if_ne_zero [simp]: "n \<noteq> 0 \<Longrightarrow> (f^^n) x = (f^^(n - 1)) (f x)"
@@ -184,7 +184,7 @@ lemma funpow_le_if_all_le:
 
 lemma nat_selector_lt_self_if_lt_fst_nat [termination_simp]:
   assumes "0 < fst_nat x"
-  shows "nat_selector arg nargs x < x"
+  shows "nat_selector nargs arg x < x"
   unfolding nat_selector_eq using assms
   by (simp split: if_splits)
   (metis le_neq_implies_less fst_nat_lt_if_lt snd_nat_le_if_le
@@ -201,7 +201,7 @@ be made an instance of @{class compile_nat} and hence no higher-order arguments 
 named_theorems "Rel_nat_compile_nat"
   "Rel_nat relatedness theorems for terms compiled from HOL to HOL-Nat"
 named_theorems "Rel_nat_compile_nat_selector"
-  "Rel_nat relatedness theorems for nat_selector of constructor terms compiled from HOL to HOL-Nat"
+  "Rel_nat relatedness theorems for ntat_selector of constructor terms compiled from HOL to HOL-Nat"
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>
