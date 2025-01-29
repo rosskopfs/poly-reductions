@@ -17,7 +17,7 @@ locale encode_decode_sat =
   assumes decode_encode_inv : "decode_sat (encode_sat F) = F"
 begin
 
-definition IMP_SAT :: "nat set" where "IMP_SAT == encode_sat ` {n. sat n}"
+definition IMP_SAT :: "nat set" where "IMP_SAT == encode_sat ` sat"
 
 paragraph \<open>Main lemma\<close>
 text \<open>This is the most important part while proving Cook-Levin.
@@ -62,7 +62,7 @@ lemma main_lemma_hol:
          poly t_red
        \<and> poly s_red
        \<and> (\<forall>x. \<exists>f.    bit_length (encode_sat f) \<le> s_red ( bit_length x ) \<and> imp_to_sat x = f
-                   \<and> ( sat f  \<longleftrightarrow>
+                   \<and> ( f \<in> sat  \<longleftrightarrow>
                                         (\<exists>z. bit_length z \<le> p_cer (bit_length x) \<and>
                                                       (\<forall>s t s'. s ''input'' = x
                                                       \<and> s ''certificate'' = z

@@ -3,7 +3,9 @@
 section "Binary Operations in IMP--"
 
 theory Binary_Operations
-  imports IMP_Minus_To_IMP_Minus_Minus_State_Translations IMP_Minus.Max_Constant
+  imports
+    IMP_Minus_To_IMP_Minus_Minus_State_Translations
+    IMP_Minus.Max_Constant
     IMP_Minus_Minus_Subprograms
 begin
 
@@ -489,41 +491,6 @@ lemma binary_subtractor_correct:
 text \<open> The two copy_atom_to_operand which don't have any effect on the output are only a hack to
        ensure that all bits of all variables in IMP- occur in IMP-- \<close>
 
-fun binary_parity:: "nat \<Rightarrow> vname \<Rightarrow> AExp.atomExp \<Rightarrow> IMP_Minus_Minus_com" where
-"binary_parity n v (N a) = binary_assign_constant n v (a mod 2)" |
-"binary_parity n v (V a) = (IF [var_bit_to_var (a, 0)]\<noteq>0 THEN
-    binary_assign_constant n v 1
-  ELSE
-    binary_assign_constant n v 0) ;;
-  (copy_atom_to_operand n (CHR ''a'') (AExp.V a) ;;
-  copy_atom_to_operand n (CHR ''a'') (AExp.N 0))"
-
-lemma binary_parity_correct:
-  assumes "n > 0"
-  shows "t_small_step_fun (50 * (n + 1)) (binary_parity n v a,
-    IMP_Minus_State_To_IMP_Minus_Minus s n)
-    = (SKIP, IMP_Minus_State_To_IMP_Minus_Minus (s(v := atomVal a s mod 2)) n)"
-  apply(cases a)
-   apply simp
-   apply(rule result_of_binary_assign_constant_on_translated_state[OF \<open>n > 0\<close>, simplified])
-  apply(simp add: IMP_Minus_State_To_IMP_Minus_Minus_def)
-  apply(subst seq_terminates_when
-      [OF _ _ seq_terminates_when[OF _ copy_atom_to_operand_a_result copy_atom_to_operand_a_result],
-        where ?t1.0="3 * n + 1" and ?t2.0="9 * n"])
-  using result_of_binary_assign_constant_on_translated_state_aux \<open>n > 0\<close>
-  by(auto simp: IMP_Minus_State_To_IMP_Minus_Minus_def nth_bit_def nat_to_bit_eq_One_iff
-      t_small_step_fun_small_step_fun nat_to_bit_eq_Zero_iff split: if_splits)
-
-lemma binary_parity_variables: "n > 0 \<Longrightarrow> set (enumerate_variables (binary_parity n v a))
-  = { var_bit_to_var (v, i) | i. i < n }
-    \<union> (case a of (V v') \<Rightarrow>
-        { var_bit_to_var (v', i) | i. i < n } \<union> { operand_bit_to_var (CHR ''a'', i) | i. i < n } |
-        _ \<Rightarrow> ({}))"
-  apply(cases a)
-  by(auto simp: binary_assign_constant_variables copy_atom_to_operand_variables
-      var_bit_to_var_neq_operand_bit_to_var[symmetric]
-      set_enumerate_variables_seq set_enumerate_variables_if)
-
 fun assign_shifted_bits:: "nat \<Rightarrow> vname \<Rightarrow> IMP_Minus_Minus_com" where
 "assign_shifted_bits 0 v = SKIP" |
 "assign_shifted_bits (Suc i) v = (IF [operand_bit_to_var ((CHR ''a''), Suc i)]\<noteq>0 THEN
@@ -560,53 +527,17 @@ lemma assign_shifted_bits_variables: "set (enumerate_variables (assign_shifted_b
   using operand_bit_to_var_eq_operand_bit_to_var_iff'
   by (metis Suc_eq_plus1 le_SucE)
 
-definition assign_shifted_bits_and_zero_most_significant::
-  "nat \<Rightarrow> vname \<Rightarrow> IMP_Minus_Minus_com" where
-"assign_shifted_bits_and_zero_most_significant n v = assign_shifted_bits (n - 1) v ;;
-  (var_bit_to_var (v, n - 1)) ::= Zero"
-
-lemma assign_shifted_bits_and_zero_most_significant_correct:
-  assumes "n > 0" "a < 2 ^ n"
-  shows "t_small_step_fun (3 * n) (assign_shifted_bits_and_zero_most_significant n v,
-    IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b s n a b)
-    = (SKIP, IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b (s(v := a div 2)) n a b)"
-  apply(simp only: assign_shifted_bits_and_zero_most_significant_def)
-  apply(rule seq_terminates_when[OF _ result_of_assign_shifted_bits, where ?t2.0=1])
-  using assms apply(auto simp: fun_eq_iff var_to_var_bit_eq_Some_iff div2_is_right_shift
-      le_2_to_the_n_then_nth_bit_zero split: option.splits)
-  using IMP_Minus_State_To_IMP_Minus_Minus_with_operands_a_b_of_changed_s_neq_iff
-  by (metis option.simps)
-
-
-definition binary_right_shift:: "nat \<Rightarrow> vname \<Rightarrow> AExp.atomExp \<Rightarrow> IMP_Minus_Minus_com" where
-"binary_right_shift n v a =  copy_atom_to_operand n (CHR ''a'') a ;;
-    assign_shifted_bits_and_zero_most_significant n v ;;
-    copy_atom_to_operand n (CHR ''a'') (N 0)"
-
-lemma binary_right_shift_correct:
-  assumes "n > 0" "atomVal a s < 2 ^ n"
-  shows "t_small_step_fun (50 * (n + 1)) (binary_right_shift n v a,
-  IMP_Minus_State_To_IMP_Minus_Minus s n) =
-  (SKIP, IMP_Minus_State_To_IMP_Minus_Minus (s(v := atomVal a s div 2)) n)"
-  apply(simp only: IMP_Minus_State_To_IMP_Minus_Minus_def binary_right_shift_def)
-  using seq_terminates_when[OF _ seq_terminates_when[OF _ copy_atom_to_operand_a_result
-          assign_shifted_bits_and_zero_most_significant_correct]
-        copy_atom_to_operand_a_result, where ?t1.0="8 * n"]
-  using assms by auto
-
 definition assignment_to_binary:: "nat \<Rightarrow> vname \<Rightarrow> AExp.aexp \<Rightarrow> IMP_Minus_Minus_com" where
 "assignment_to_binary n v aexp = (case aexp of
   AExp.A a \<Rightarrow> binary_adder n v a (AExp.N 0) |
   AExp.Plus a b \<Rightarrow> binary_adder n v a b |
-  AExp.Sub a b \<Rightarrow> binary_subtractor n v a b |
-  AExp.Parity a \<Rightarrow> binary_parity n v a |
-  AExp.RightShift a \<Rightarrow> binary_right_shift n v a)"
+  AExp.Sub a b \<Rightarrow> binary_subtractor n v a b)"
 
 lemma assignment_to_binary_correct:
   assumes "n > 0"  "AExp.aval a s < 2 ^ n" "\<forall>v. s v < 2 ^ n" "aexp_max_constant a < 2 ^ n"
-  shows 
-    "t_small_step_fun (50 * (n + 1)) 
-       (assignment_to_binary n v a, 
+  shows
+    "t_small_step_fun (50 * (n + 1))
+       (assignment_to_binary n v a,
         IMP_Minus_State_To_IMP_Minus_Minus s n)
   = (SKIP, IMP_Minus_State_To_IMP_Minus_Minus (s(v := AExp.aval a s)) n)"
 using assms binary_adder_correct  proof(cases a)
@@ -615,12 +546,7 @@ using assms binary_adder_correct  proof(cases a)
     apply(simp add: assignment_to_binary_def)
     apply(rule binary_subtractor_correct[simplified])
     using assms by(cases x31; cases x32; auto)+
-next
-  case (RightShift x5)
-  then show ?thesis using assms apply(simp add: assignment_to_binary_def)
-    apply(rule binary_right_shift_correct[simplified])
-    by (cases x5; auto)+
-qed (auto simp: assignment_to_binary_def binary_parity_correct[simplified])
+qed (auto simp: assignment_to_binary_def)
 
 lemma assignment_to_binary_variables:
   "n > 0 \<Longrightarrow> set (enumerate_variables (assignment_to_binary n v a)) \<subseteq>
@@ -630,8 +556,7 @@ lemma assignment_to_binary_variables:
   apply(cases a)
   by(auto simp: assignment_to_binary_def binary_adder_def set_enumerate_variables_seq
       copy_atom_to_operand_variables adder_def com_list_to_seq_variables full_adder_variables
-    binary_subtractor_def subtract_handle_underflow_variables binary_parity_variables
-    binary_right_shift_def assign_shifted_bits_and_zero_most_significant_def
-    assign_shifted_bits_variables split: atomExp.splits)
+    binary_subtractor_def subtract_handle_underflow_variables
+    split: atomExp.splits)
 
 end

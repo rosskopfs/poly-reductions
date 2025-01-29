@@ -10,8 +10,7 @@ begin
 section "Arithmetic Expressions"
 
 text \<open>We define non-nested arithmetic expressions on natural numbers.
-The defined operations are addition and modified subtraction. Based on the AExp theory of IMP.
-\<close>
+The defined operations are addition and modified subtraction. Based on the AExp theory of IMP.\<close>
 
 type_synonym vname = string
 type_synonym val = nat
@@ -26,30 +25,18 @@ fun atomVal :: "atomExp \<Rightarrow> state \<Rightarrow> val" where
 
 text "Defining arithmetic operators and general form of expressions: "
 
-datatype aexp =  A atomExp            |
-  Plus atomExp atomExp |
-  Sub atomExp atomExp  |
-  Parity atomExp       |
-  RightShift atomExp
+datatype aexp = A atomExp | Plus atomExp atomExp | Sub atomExp atomExp
 
 open_bundle aexp_syntax
 begin
-notation Plus            ("_ \<oplus> _" [60,60] 60) and
-  Sub             ("_ \<ominus> _" [60,60] 60) and
-  Parity          ("_ \<doteq>1" [60] 60)   and
-  RightShift      ("_\<then>" [60] 60)
+notation Plus ("_ \<oplus> _" [60,60] 60)
+and Sub ("_ \<ominus> _" [60,60] 60)
 end
 
 fun aval :: "aexp \<Rightarrow> state \<Rightarrow> val" where
   "aval (A atomExp) s = atomVal atomExp s"        |
   "aval (a \<oplus> b) s = atomVal a s  + atomVal b s" |
-  "aval (a \<ominus> b) s = atomVal a s - atomVal b s"  |
-  "aval (a \<doteq>1) s = atomVal a s  mod 2"        |
-  "aval (a \<then>) s = atomVal a s div 2"
-
-text "evaluation examples:"
-value "aval (V ''x'' \<oplus> N 5)  (\<lambda>x. if x = ''x'' then 7 else 0)"
-value "aval (V ''x'' \<ominus> N 5)  ((\<lambda>x. 0) (''x'':= 7))"
+  "aval (a \<ominus> b) s = atomVal a s - atomVal b s"
 
 text "Syntactic sugar to write states:"
 definition null_state ("<>") where
@@ -64,13 +51,6 @@ bundle state_syntax
 begin
 notation null_state ("<>")
 end
-
-lemma "<a := 1, b := 2> = (<> (a := 1)) (b := (2::int))"
-  by (rule refl)
-
-value "aval (V ''x'' \<ominus> N 5) <''x'' := 7>"
-value "aval (V ''x'' \<ominus> N 10) <''x'' := 7>"
-
 
 instantiation atomExp :: order_bot
 begin
@@ -108,16 +88,10 @@ fun less_eq_aexp :: "aexp \<Rightarrow> aexp \<Rightarrow> bool" where
   "less_eq_aexp (A a1) (A a2) \<longleftrightarrow> a1 \<le> a2"
 | "less_eq_aexp (Plus a1 a2) (Plus b1 b2) \<longleftrightarrow> (a1, a2) \<le> (b1, b2)"
 | "less_eq_aexp (Sub a1 a2) (Sub b1 b2) \<longleftrightarrow> (a1, a2) \<le> (b1, b2)"
-| "less_eq_aexp (Parity p1) (Parity p2) \<longleftrightarrow> p1 \<le> p2"
-| "less_eq_aexp (RightShift sh1) (RightShift sh2) \<longleftrightarrow> sh1 \<le> sh2"
 | "less_eq_aexp (A _) _ \<longleftrightarrow> True"
 | "less_eq_aexp _ (A _) \<longleftrightarrow> False"
 | "less_eq_aexp (Plus _ _) _ \<longleftrightarrow> True"
 | "less_eq_aexp _ (Plus _ _) \<longleftrightarrow> False"
-| "less_eq_aexp (Sub _ _) _ \<longleftrightarrow> True"
-| "less_eq_aexp _ (Sub _ _) \<longleftrightarrow> False"
-| "less_eq_aexp (Parity _) _ \<longleftrightarrow> True"
-| "less_eq_aexp _ (Parity _) \<longleftrightarrow> False"
 
 definition less_aexp :: "aexp \<Rightarrow> aexp \<Rightarrow> bool" where
   "less_aexp c1 c2 = (c1 \<le> c2 \<and> \<not> c2 \<le> c1)"

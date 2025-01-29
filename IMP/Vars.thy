@@ -45,9 +45,7 @@ begin
 fun vars_aexp :: "aexp \<Rightarrow> vname list" where
 "vars (A e) = vars e" |
 "vars (Plus e\<^sub>1 e\<^sub>2) = vars e\<^sub>1 @ vars e\<^sub>2" |
-"vars (Sub e\<^sub>1 e\<^sub>2) = vars e\<^sub>1 @ vars e\<^sub>2" |
-"vars (Parity e) = vars e" |
-"vars (RightShift e) = vars e"
+"vars (Sub e\<^sub>1 e\<^sub>2) = vars e\<^sub>1 @ vars e\<^sub>2"
 
 instance ..
 
@@ -59,9 +57,7 @@ begin
 fun subst_aexp :: "(vname \<Rightarrow> vname) \<Rightarrow> aexp \<Rightarrow> aexp" where
 "subst m (A e) = A (subst m e)" |
 "subst m (Plus e\<^sub>1 e\<^sub>2) = Plus (subst m e\<^sub>1) (subst m e\<^sub>2)" |
-"subst m (Sub e\<^sub>1 e\<^sub>2) = Sub (subst m e\<^sub>1) (subst m e\<^sub>2)" |
-"subst m (Parity e) = Parity (subst m e)" |
-"subst m (RightShift e) = RightShift (subst m e)"
+"subst m (Sub e\<^sub>1 e\<^sub>2) = Sub (subst m e\<^sub>1) (subst m e\<^sub>2)"
 
 instance
 proof (standard, goal_cases)

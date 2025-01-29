@@ -11,7 +11,7 @@ text \<open> We give a definition for the amount of memory that an IMP- program 
 definition bit_length where "bit_length x \<equiv>  floor_log x + 1"
 
 lemma bit_length_monotonic: "x \<le> y \<Longrightarrow> bit_length x \<le> bit_length y"
-  by(auto simp: bit_length_def log_le_iff)
+  by(auto simp: bit_length_def floor_log_le_iff)
 
 lemma bit_length_of_power_of_two: "y > 0 \<Longrightarrow> bit_length (2 ^ x * y) = x + bit_length y"
   apply(induction x)
@@ -52,7 +52,7 @@ proof(induction l arbitrary: k)
 qed auto
 
 lemma max_bit_length_bit_length: "max (bit_length x) (bit_length y) = bit_length (max x y)"
-  by (simp add: bit_length_def log_mono max_of_mono)
+  by (simp add: bit_length_def floor_log_mono max_of_mono)
 
 lemma fold_max_map_bit_length: "l \<noteq> []
   \<Longrightarrow> fold max (map (\<lambda>x. bit_length (f x)) l) (bit_length a) = bit_length (fold max (map f l) a)"
@@ -141,40 +141,6 @@ proof (induction c1 s1 c2 s2 rule: small_step_induct)
       apply(cases x1; cases x2; auto simp only: intro!: Max_insert_le_when)
       by(auto simp: numeral_2_eq_2 max.coboundedI1
               intro!: le_then_sub_le trans_le_add1)
-  next
-    case (Parity x1)
-    then show ?thesis
-    proof (cases x1)
-      case (N x1)
-      then show ?thesis
-        using \<open>finite (range s)\<close> Parity
-        apply (auto simp only: intro!: Max_insert_le_when)
-        by auto
-    next
-      case (V x2)
-      then show ?thesis
-        using \<open>finite (range s)\<close> Parity
-        by(fastforce simp add: numeral_2_eq_2
-                     intro!: trans_le_add1 Max_insert_le_when
-                     intro: le_trans[where ?j="s x2"])
-    qed
-  next
-    case (RightShift x1)
-    then show ?thesis
-    proof (cases x1)
-      case (N x1)
-      then show ?thesis
-        using \<open>finite (range s)\<close> RightShift
-        apply (auto simp only: intro!: Max_insert_le_when)
-        by auto
-    next
-      case (V x2)
-      then show ?thesis
-        using \<open>finite (range s)\<close> RightShift
-        by(fastforce simp add: numeral_2_eq_2
-                     intro!: trans_le_add1 Max_insert_le_when
-                     intro: le_trans[where ?j="s x2"])
-    qed
   qed
 next
   case (Seq2 c\<^sub>1 s c\<^sub>1' s' c\<^sub>2)

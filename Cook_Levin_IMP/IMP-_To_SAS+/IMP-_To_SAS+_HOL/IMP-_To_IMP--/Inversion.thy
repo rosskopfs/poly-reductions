@@ -6,7 +6,7 @@ text \<open>General definition of procedure for inverting certain functions f ::
 
 (* Clean up *)
 theory Inversion
-  imports Primitives "Karp21.Landau_Auxiliaries"
+  imports Primitives "Landau_Auxiliaries"
     "HOL-Library.Rewrite" "HOL-Library.Sublist" "HOL-Eisbach.Eisbach"
 
     "HOL-Library.Nat_Bijection" IMP_Minus.Call_By_Prefixes

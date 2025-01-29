@@ -16,9 +16,7 @@ fun atomExp_add_prefix where
 fun aexp_add_prefix where
 "aexp_add_prefix p (A a) = A (atomExp_add_prefix p a)" |
 "aexp_add_prefix p (Plus a b) = Plus (atomExp_add_prefix p a) (atomExp_add_prefix p b)" |
-"aexp_add_prefix p (Sub a b) = Sub (atomExp_add_prefix p a) (atomExp_add_prefix p b)"  |
-"aexp_add_prefix p (Parity a) = Parity (atomExp_add_prefix p a)" |
-"aexp_add_prefix p (RightShift a) = RightShift (atomExp_add_prefix p a)"
+"aexp_add_prefix p (Sub a b) = Sub (atomExp_add_prefix p a) (atomExp_add_prefix p b)"
 
 fun com_add_prefix where
 "com_add_prefix p SKIP = SKIP"
