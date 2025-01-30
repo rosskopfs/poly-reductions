@@ -153,14 +153,7 @@ datatype tc_ast = If of int * (tc_ast * tc_ast * tc_ast) |
   Let of (int * (string * (tc_ast * tc_ast))) |
   LetBound of int |
   Call of int * ((string * typ) * tc_ast list) |
-  TailCall of tc_ast list
-
-(* is the given function called? *)
-fun has_call to (Call (_, ((f, _), es))) = (f = to) orelse exists (has_call to) es
-  | has_call to (If (_, (_, e1, e2))) = has_call to e1 orelse has_call to e2
-  | has_call to (Let (_, (_, (e1, e2)))) = has_call to e1 orelse has_call to e2
-  | has_call to (TailCall es) = exists (has_call to) es
-  | has_call _ _ = false
+  TailCall of int * tc_ast list
 
 fun tc_ast_of_term head f_args t =
   let
@@ -177,9 +170,9 @@ fun tc_ast_of_term head f_args t =
       | index_tc_ast index (Let (_, (x, (e1, e2)))) =
         let val (index', [e2', e1']) = fold fold_step [e1, e2] (index, [])
         in (index' + 1, Let (index', (x, (e1', e2')))) end
-      | index_tc_ast index (TailCall args) =
+      | index_tc_ast index (TailCall (_, args)) =
         let val (index', rev_args') = fold fold_step args (index, [])
-        in (index', TailCall (rev rev_args')) end
+        in (index' + 1, TailCall (index', rev rev_args')) end
       | index_tc_ast index t = (index, t)
 
     fun is_comb (_ $ _) = true
@@ -204,7 +197,7 @@ fun tc_ast_of_term head f_args t =
             else Arg (Library.find_index (fn v' => (n, typ) = v') f_args)
         | g as Const (g_name, g_typ) =>
           if g = head
-            then TailCall (map build_tc_ast (Term.args_of t))
+            then TailCall (~1, map build_tc_ast (Term.args_of t))
             else Call (~1, ((g_name, g_typ), map build_tc_ast (Term.args_of t)))
         | h => raise TERM ("Unexpected head of term:", [h])
   in
@@ -216,10 +209,6 @@ exception NONTAIL of string
 
 fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
   let
-    fun mk_copy from_reg to_reg =
-      \<^Const>\<open>tAssign for to_reg \<^Const>\<open>A for \<^Const>\<open>V for from_reg\<close>\<close>\<close>
-    val mk_copies = List.map (uncurry mk_copy)
-
     fun mk_Seq es = fold_rev (fn e1 => fn e2 => \<^Const>\<open>tSeq for e1 e2\<close>) es \<^Const>\<open>tSKIP\<close>
 
     fun mk_N n = \<^Const>\<open>N for \<open>HOLogic.mk_number \<^typ>\<open>nat\<close> n\<close>\<close>
@@ -227,18 +216,10 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
     val mk_reg = List.map Substring.full #> Substring.concatWith register_sep #> HOLogic.mk_string
     val mk_local_reg = cons "" #> mk_reg
 
-    fun f_local_arg_reg i = mk_local_reg ["args", Int.toString i]
-    fun f_arg_reg i = nth f_arg_names i |> HOLogic.mk_string
-
-    val copy_f_args =
-      map_index (fn (i, arg_name) => (HOLogic.mk_string arg_name, f_local_arg_reg i)) f_arg_names
-      |> mk_copies |> mk_Seq
-
     (* compile the expression, then pass an aexp that evaluates to
         the value of the expression to the continuation *)
-
     fun go _ _ cont (Number i) = cont \<^Const>\<open>A for \<open>mk_N i\<close>\<close>
-      | go _ _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>f_local_arg_reg i\<close>\<close>\<close>
+      | go _ _ cont (Arg i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string (nth f_arg_names i)\<close>\<close>\<close>
       | go is_tail bounds cont (If (idx, (cond, e1, e2))) =
         let
           val cond_reg = mk_local_reg ["If", Int.toString idx]
@@ -257,13 +238,13 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
           mk_Seq [e1_IMP, e2_IMP]
         end
       | go _ bounds cont (LetBound i) = cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>nth bounds i\<close>\<close>\<close>
-      | go is_tail bounds _ (TailCall es) =
+      | go is_tail bounds _ (TailCall (idx, es)) =
         let
           val _ = is_tail orelse raise NONTAIL "Recursive call must be in tail position"
-          val es_IMP =
-            map_index (fn (i, e) => go false bounds (fn rhs => \<^Const>\<open>tAssign for \<open>f_arg_reg i\<close> rhs\<close>) e) es
+          
+          fun f_local_arg_reg i = mk_local_reg ["args", Int.toString idx, Int.toString i]
         in
-          mk_Seq (es_IMP @ [\<^Const>\<open>tTAIL\<close>])
+          mk_Seq [prepare_call bounds f_local_arg_reg f_arg_names es, \<^Const>\<open>tTAIL\<close>]
         end
       | go _ bounds cont (Call (idx, ((g_name, g_type), es))) =
         let
@@ -275,35 +256,29 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
           val g_ret = #ret_reg g_compiled
 
           fun g_local_arg_reg i = mk_local_reg ["Call", Int.toString idx, Int.toString i]
-          fun g_arg_cont reg rhs = \<^Const>\<open>tAssign for reg rhs\<close>
-          fun g_go_reg reg = go false bounds (g_arg_cont reg)
-
-          (* if g is called in e_j, then for i < j,
-             the computation of e_i needs to be saved in a temporary variable *)
-          fun g_do_arg (i, (arg_reg, e)) { calls, copies, needs_tmp } =
-            if needs_tmp then
-              { calls = g_go_reg (g_local_arg_reg i) e :: calls,
-                copies = (g_local_arg_reg i, HOLogic.mk_string arg_reg) :: copies,
-                needs_tmp = true }
-            else
-              { calls = g_go_reg (HOLogic.mk_string arg_reg) e :: calls,
-                copies = copies,
-                needs_tmp = has_call g_name e }
-          val g_args =
-            #arg_regs g_compiled ~~ es
-            |> foldr_index g_do_arg { calls = [], copies = [], needs_tmp = false }
         in
-          #calls g_args @
-          mk_copies (#copies g_args) @
-            [ \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
-            , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
-            ]
+          [ prepare_call bounds g_local_arg_reg (#arg_regs g_compiled) es
+          , \<^Const>\<open>tCall for \<open>#compiled g_compiled\<close> \<open>HOLogic.mk_string g_ret\<close>\<close>
+          , cont \<^Const>\<open>A for \<^Const>\<open>V for \<open>HOLogic.mk_string g_ret\<close>\<close>\<close>
+          ]
           |> mk_Seq
         end
+    and prepare_call bounds local_arg_reg arg_names args =
+      let
+        fun mk_copy from_reg to_reg =
+          \<^Const>\<open>tAssign for to_reg \<^Const>\<open>A for \<^Const>\<open>V for from_reg\<close>\<close>\<close>
+        val mk_copies = List.map (uncurry mk_copy)
 
-    val body = go true [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
+        val args_IMP =
+          map_index (fn (i, e) => go false bounds (fn rhs => \<^Const>\<open>tAssign for \<open>local_arg_reg i\<close> rhs\<close>) e) args
+        val copy_args =
+          map_index (fn (i, arg_name) => (local_arg_reg i, HOLogic.mk_string arg_name)) arg_names
+          |> mk_copies
+      in
+        args_IMP @ copy_args |> mk_Seq
+      end  
   in
-    mk_Seq [copy_f_args, body]
+    go true [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
   end
 
 fun define_compiled compiled_binding compiled lthy =
