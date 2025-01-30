@@ -28,8 +28,6 @@ structure HTHNU = HOL_To_HOL_Nat_Util
 
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
 
-fun foldr_index f z = map_index I #> List.foldr (uncurry f) z
-
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Net.net;
   val empty = Net.empty
