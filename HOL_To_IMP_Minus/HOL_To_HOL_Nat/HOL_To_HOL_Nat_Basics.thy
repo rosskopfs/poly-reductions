@@ -54,7 +54,7 @@ lemma False_nat_eq_zero: "False_nat = 0"
 lemma True_nat_ne_False_nat: "True_nat \<noteq> False_nat"
   using True_nat_neq_zero False_nat_eq_zero by simp
 
-definition "case_bool_nat \<equiv> \<lambda>x y n. if n = False_nat then y else x"
+definition [simp]: "case_bool_nat \<equiv> \<lambda>x y n. if n = False_nat then y else x"
 
 instantiation bool :: compile_nat
 begin
