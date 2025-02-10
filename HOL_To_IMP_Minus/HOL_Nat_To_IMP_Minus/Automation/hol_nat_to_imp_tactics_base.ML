@@ -76,12 +76,20 @@ fun simp_state_update_val_tac ctxt =
   THEN' TRY o safe_asm_simp_tac ctxt
 
 fun Rel_nat_step_tac ctxt =
-  assume_tac ctxt
-  ORELSE' Unify_Resolve_Base.unify_resolve_any_tac
+  let fun resolve_tac thms = Unify_Resolve_Base.unify_resolve_any_tac
     HOL_To_IMP_Unification.norms_first_higherp_decomp_comb_higher_unify
-    HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify
-    (HOL_To_HOL_Nat_Util.get_Rel_nat_thms ctxt @ [@{thm refl}, @{thm rel_fun_appI}])
-    ctxt
+    HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify thms ctxt
+  in
+    resolve_tac [@{thm rel_fun_app_closeI}]
+    ORELSE' assume_tac ctxt
+    APPEND' resolve_tac
+      (HOL_To_HOL_Nat_Util.get_Rel_nat_thms ctxt @
+      (*FIXME: cannot simply register app theorems as Rel_nat because transfer loops with that theorem*)
+      [@{thm Rel_nat_fst_nat_app_if_Rel_nat_eqI}] @
+      [@{thm rel_fun_appI}] @
+      (*lowest priority; only apply if term cannot be further decomposed*)
+      [@{thm Rel_nat_nat_self}])
+  end
 
 fun solve_Rel_nat_tac ctxt =
   SOLVED' (Rel_nat_step_tac ctxt
@@ -93,7 +101,7 @@ fun simp_lhs_solve_Rel_nat_tac ctxt =
   THEN' solve_Rel_nat_tac ctxt
 
 fun rewrite_ne_zero_if_Rel_nat_tac ctxt =
-  HTIU.subst_first_tac ctxt [@{thm rewrite_ne_zero_if_Rel_nat}]
+  HTIU.subst_first_tac ctxt [@{thm rewrite_ne_False_nat_if_Rel_nat}]
   THEN' simp_lhs_solve_Rel_nat_tac ctxt
 
 (* tactics for assign, seq, and if that run one step of the program, given the appropriate theorems *)

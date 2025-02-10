@@ -21,3 +21,6 @@ session Refinements in "Refinements" = HOL_Nat_To_IMP_Minus +
   theories
     HOL_To_IMP_Minus_Arithmetics
     HOL_To_IMP_Minus_Lists
+    HOL_To_IMP_Minus_THREE_SAT_To_IS_List
+    HOL_To_IMP_Minus_IS_To_VC_List
+

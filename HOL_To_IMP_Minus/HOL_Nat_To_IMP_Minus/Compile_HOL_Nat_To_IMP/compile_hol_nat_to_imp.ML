@@ -176,13 +176,18 @@ fun tc_ast_of_term head f_args t =
     fun is_comb (_ $ _) = true
       | is_comb _ = false
 
-    fun build_tc_ast t =
+    fun if_case c e1 e2= If (~1, @{apply 3} build_tc_ast (c, e1, e2))
+    and build_tc_ast t =
       if can HOLogic.dest_number t then Number (HOLogic.dest_number t |> snd)
       else
         case Term.head_of t of
           \<^Const_>\<open>HOL.If _\<close> =>
             (case Term.args_of t of
-              [c, e1, e2] => If (~1, @{apply 3} build_tc_ast (c, e1, e2))
+              [c, e1, e2] => if_case c e1 e2
+            | _ => raise TERM ("Only fully applied if allowed, got:", [t]))
+        | \<^Const_>\<open>HOL_To_HOL_Nat.If_nat _\<close> =>
+            (case Term.args_of t of
+              [c, e1, e2] => if_case c e1 e2
             | _ => raise TERM ("Only fully applied if allowed, got:", [t]))
         | \<^Const>\<open>HOL.Let _ _\<close> =>
             (case Term.args_of t of
@@ -239,7 +244,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
       | go is_tail bounds _ (TailCall (idx, es)) =
         let
           val _ = is_tail orelse raise NONTAIL "Recursive call must be in tail position"
-          
+
           fun f_local_arg_reg i = mk_local_reg ["args", Int.toString idx, Int.toString i]
         in
           mk_Seq [prepare_call bounds f_local_arg_reg f_arg_names es, \<^Const>\<open>tTAIL\<close>]
@@ -274,7 +279,7 @@ fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn register_sep e =
           |> mk_copies
       in
         args_IMP @ copy_args |> mk_Seq
-      end  
+      end
   in
     go true [] (fn rhs => \<^Const>\<open>tAssign for \<open>HOLogic.mk_string f_ret_name\<close> rhs\<close>) e
   end

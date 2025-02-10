@@ -44,7 +44,7 @@ HOL_To_IMP_Minus_correct Cons_nat by cook
 compile_nat Nil_nat_def
 HOL_To_IMP_Minus_correct Nil_nat by cook
 
-lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat rev_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat by cook
 
@@ -85,7 +85,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat length_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat by cook
 
@@ -119,7 +119,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat zip_acc_nat_eq
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat by cook
@@ -148,7 +148,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas count_acc_nat_eq = HTHN.count_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas count_acc_nat_eq = HTHN.count_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat count_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat by cook
 
@@ -207,7 +207,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat enumerate_acc_nat_eq
 
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_acc_nat by cook
@@ -246,7 +246,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas map_pair_acc_nat_eq = HTHN.map_pair_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas map_pair_acc_nat_eq = HTHN.map_pair_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_pair_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_pair_acc_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
@@ -254,11 +254,11 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_pair_acc_nat
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
-lemmas product_acc_nat_eq = HTHN.product_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas product_acc_nat_eq = HTHN.product_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat product_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.product_acc_nat by cook
 
-lemmas product_nat_eq = HTHN.product_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas product_nat_eq = HTHN.product_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat product_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.product_nat by cook
 
@@ -287,7 +287,7 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas concat_acc_nat_eq = HTHN.concat_acc_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas concat_acc_nat_eq = HTHN.concat_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat concat_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.concat_acc_nat by (cook mode = induction)
 
@@ -300,15 +300,10 @@ end
 context HOL_To_HOL_Nat
 begin
 
-fun ListMem' :: "'a \<Rightarrow> 'a list \<Rightarrow> bool"  where
-  "ListMem' a [] = False"
-| "ListMem' a (x#xs) = (if a = x then True else ListMem' a xs)"
-declare ListMem'.simps[simp del]
+lemma ListMem_eq: "ListMem y xs = (case xs of [] => False
+  | x # xs => if x = y then True else ListMem y xs)"
+  by (induction xs) (simp_all add: ListMem_iff)
 
-lemma ListMem'_eq_ListMem: "ListMem' x ys = ListMem x ys"
-  by (induction ys) (simp_all add: ListMem'.simps ListMem_iff)
-
-case_of_simps ListMem_eq[unfolded ListMem'_eq_ListMem] : ListMem'.simps
 function_compile_nat ListMem_eq
 
 end
@@ -316,13 +311,13 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas ListMem_nat_eq = HTHN.ListMem_nat_eq_unfolded[simplified case_list_nat_def]
+lemmas ListMem_nat_eq = HTHN.ListMem_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat ListMem_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.ListMem_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction ya arbitrary: s)
-    (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
+  HB.get_HOL_eqs @{context} 1\<close>)+
 
 end
 
@@ -331,7 +326,7 @@ begin
 
 fun remdups_acc :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"  where
   "remdups_acc [] acc = rev acc"
-| "remdups_acc (x#xs) acc = remdups_acc xs (case ListMem x xs of True \<Rightarrow> acc | False \<Rightarrow> (x # acc))"
+| "remdups_acc (x # xs) acc = remdups_acc xs (if ListMem x xs then acc else (x # acc))"
 declare remdups_acc.simps[simp del]
 
 lemma remdups_acc_eq_rev_append_remdups: "remdups_acc xs acc = rev acc @ remdups xs"
@@ -349,30 +344,11 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
-lemmas remdups_acc_nat_eq = HTHN.remdups_acc_nat_eq_unfolded[simplified case_list_nat_def case_bool_nat_def]
+lemmas remdups_acc_nat_eq = HTHN.remdups_acc_nat_eq_unfolded[unfolded case_list_nat_def case_bool_nat_def]
 compile_nat remdups_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.remdups_acc_nat
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (induction y ya arbitrary: s rule: HTHN.remdups_acc.induct)
-  subgoal by  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)
-  subgoal for x xs acc s
-    apply (cases "ListMem x xs")
-    apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 1\<close>)+
-    apply (tactic \<open>HT.run_step_tac HT.get_imp_minus_correct @{context} 2\<close>)+
-    apply (tactic \<open>HT.run_HOL_fun_tac HB.get_HOL_eqs @{context} 1\<close>)
-    apply (tactic \<open>HT.run_HOL_fun_tac HB.get_HOL_eqs @{context} 2\<close>)
-    apply auto
-    apply (tactic \<open>HT.finish_tail_tac @{context} 1\<close>)
-    apply (tactic \<open>HT.finish_tail_tac @{context} 2\<close>)+
-    apply (smt (verit) False_nat_eq_zero HOL_To_HOL_Nat.ListMem_nat_eq_unfolded HOL_To_HOL_Nat.Rel_nat_ListMem_nat_unfolded
-        Rel_nat_selector_list(1,2) rewrite_ne_zero_if_Rel_nat)+
-    done
-done
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.remdups_acc_nat by cook
 
-lemmas remdups_nat_eq = HTHN.remdups_nat_eq_unfolded
-compile_nat remdups_nat_eq
+compile_nat HTHN.remdups_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.remdups_nat by cook
 
 end
@@ -380,14 +356,10 @@ end
 context HOL_To_HOL_Nat
 begin
 
-fun list_all' :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> bool"  where
-  "list_all' p [] = True"
-| "list_all' p (x#xs) = (case p x of True \<Rightarrow> list_all' p xs | False \<Rightarrow> False)"
-
-lemma list_all'_eq_list_all: "list_all' p xs = list_all p xs"
+lemma list_all_eq: "list_all P xs = (case xs of
+    [] => True
+  | (x # xs) => if P x then list_all P xs else False)"
   by (induction xs) (simp_all split: bool.split)
-
-case_of_simps list_all_eq[unfolded list_all'_eq_list_all] : list_all'.simps
 
 end
 

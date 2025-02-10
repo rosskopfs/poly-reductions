@@ -16,7 +16,9 @@ begin
   instance by standard (simp add: natify_nat_def denatify_nat_def)
 end
 
-lemma Rel_nat_nat_self [Rel_nat]: "Rel_nat n n"
+(*do not register with Rel_nat attribute; for otherwise the synthesis will close goals
+on natural numbers using the trivial instance*)
+lemma Rel_nat_nat_self [transfer_rule]: "Rel_nat n n"
   unfolding Rel_nat_iff_eq_natify natify_nat_def by simp
 
 lemma Rel_nat_nat_eq_eq: "Rel_nat = ((=) :: nat \<Rightarrow> nat \<Rightarrow> bool)"
@@ -33,7 +35,16 @@ lemma Rel_nat_case_nat [Rel_nat, Rel_nat_compile_nat]:
   "(R ===> (Rel_nat ===> R) ===> Rel_nat ===> R) case_nat case_nat"
   by (fact case_nat_transfer[folded Rel_nat_nat_eq_eq])
 
+lemma Rel_nat_selector_Suc: "Rel_nat n (Suc x) \<Longrightarrow> Rel_nat (n - 1) x"
+  unfolding Rel_nat_nat_eq_eq by auto
+
+lemmas Rel_nat_selector_nat = Rel_nat_selector_Suc
+
 lemmas Rel_nat_nat = Rel_nat_nat_self Rel_nat_zero_nat Rel_nat_suc_nat Rel_nat_case_nat
+
+lemma case_nat_eq_if:
+  "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) = (if n = 0 then x else f (n - 1))"
+  by (cases n type: nat) auto
 
 text\<open>We instantiate @{typ bool} by hand to make sure that True gets mapped to a positive value and
 False to zero. This is due to the fact that the compiler from HOL-Nat to IMP assumes such an
@@ -54,7 +65,7 @@ lemma False_nat_eq_zero: "False_nat = 0"
 lemma True_nat_ne_False_nat: "True_nat \<noteq> False_nat"
   using True_nat_neq_zero False_nat_eq_zero by simp
 
-definition [simp]: "case_bool_nat \<equiv> \<lambda>x y n. if n = False_nat then y else x"
+definition "case_bool_nat \<equiv> \<lambda>x y n. if n = False_nat then y else x"
 
 instantiation bool :: compile_nat
 begin
@@ -93,13 +104,11 @@ lemma Rel_nat_case_bool_nat [Rel_nat, Rel_nat_compile_nat]:
 lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 
 datatype_compile_nat list
-print_theorems
+
 datatype_compile_nat char
 
 datatype_compile_nat prod
 
 datatype_compile_nat option
-
-datatype_compile_nat num
 
 end

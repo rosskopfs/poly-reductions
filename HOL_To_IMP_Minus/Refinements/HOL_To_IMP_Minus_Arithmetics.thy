@@ -19,25 +19,26 @@ lemma power_acc_nat_eq_power_mul: "power_acc_nat x y z = x^y * z"
   by (induction x y z arbitrary: z rule: power_acc_nat.induct)
   (auto simp: power_acc_nat.simps)
 
+case_of_simps power_acc_nat_eq : power_acc_nat.simps
+function_compile_nat power_acc_nat_eq
+
 lemma power_eq_power_acc_nat_one: "x^y = power_acc_nat x y 1"
   using power_acc_nat_eq_power_mul by simp
 
-lemma Rel_nat_power [Rel_nat]:
-  "(Rel_nat ===> Rel_nat ===> Rel_nat) power (power :: nat \<Rightarrow> _)"
-  by (auto simp: Rel_nat_nat_eq_eq)
+function_compile_nat power_eq_power_acc_nat_one
 
 end
 
 context HOL_Nat_To_IMP_Minus
 begin
 
-case_of_simps power_acc_nat_eq[simplified case_nat_eq_if] : HTHN.power_acc_nat.simps
-compile_nat power_acc_nat_eq basename power_acc
+lemmas power_acc_nat_nat_eq = HTHN.power_acc_nat_nat_eq_unfolded[unfolded case_nat_eq_if]
+compile_nat power_acc_nat_nat_eq basename power_acc
+HOL_To_IMP_Minus_correct HTHN.power_acc_nat_nat
+  supply Rel_nat_selector_Suc[Rel_nat] by cook
 
-HOL_To_IMP_Minus_correct HTHN.power_acc_nat by cook
-
-compile_nat HTHN.power_eq_power_acc_nat_one basename power
-HOL_To_IMP_Minus_correct power by cook
+compile_nat HTHN.power_nat_eq_unfolded basename power
+HOL_To_IMP_Minus_correct HTHN.power_nat by cook
 
 end
 
@@ -72,6 +73,8 @@ lemma lt_square_Suc_sqrt_aux_nat:
   by (induction x L R rule: sqrt_aux_nat.induct)
   (use order_less_le_trans in \<open>force simp: sqrt_aux_nat.simps Let_def\<close>)
 
+function_compile_nat sqrt_aux_nat.simps
+
 definition sqrt_nat :: "nat \<Rightarrow> nat" where
   "sqrt_nat x = sqrt_aux_nat x 0 (Suc x)"
 
@@ -88,18 +91,15 @@ corollary sqrt_nat_eq: "sqrt_nat y = floor_sqrt y"
 corollary floor_sqrt_eq_sqrt_aux_nat: "floor_sqrt x = sqrt_aux_nat x 0 (Suc x)"
   using sqrt_nat_eq sqrt_nat_def by simp
 
-lemma Rel_nat_floor_sqrt [Rel_nat]:
-  "(Rel_nat ===> Rel_nat) floor_sqrt floor_sqrt"
-  by (auto simp: Rel_nat_nat_eq_eq)
+function_compile_nat sqrt_nat_def
 
 end
 
 context HOL_Nat_To_IMP_Minus
 begin
 
-compile_nat HTHN.sqrt_aux_nat.simps basename sqrt_aux
-
-HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by cook
+compile_nat HTHN.sqrt_aux_nat_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat_nat by cook
   (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
   (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
@@ -110,14 +110,8 @@ HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat by cook
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   oops *)
 
-compile_nat HTHN.sqrt_nat_def basename sqrt
-
-declare_compiled_const floor_sqrt
-  return_register "sqrt.ret"
-  argument_registers "sqrt.args.x"
-  compiled "tailcall_to_IMP_Minus sqrt_IMP_tailcall"
-
-HOL_To_IMP_Minus_correct HTHN.sqrt_nat by cook
+compile_nat HTHN.sqrt_nat_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HTHN.sqrt_nat_nat by cook
 
 end
 

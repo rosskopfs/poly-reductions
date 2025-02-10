@@ -4,7 +4,7 @@ theory Compile_HOL_Nat_To_IMP
   imports
     IMP_Terminates_With
     HOL_Nat_To_IMP_Minus_Base
-    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Base
+    HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
   keywords
     "compile_nat" :: thy_decl and "basename" and
     "declare_compiled_const" :: thy_decl and
@@ -126,6 +126,16 @@ lemma tbig_step_pull_tIf_iff:
   shows "C \<turnstile> (pull_tIf_assoc_right c, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
   by (induction c arbitrary: s t s' rule: pull_tIf_assoc_right.induct)
   (fastforce simp: tbig_step_t_assoc_right_tSeq tbig_step_pull_tIf_iff_aux)+
+
+context HOL_To_HOL_Nat
+begin
+
+definition "If_nat b x y \<equiv> HOL.If (b = False_nat) y x"
+
+lemma Rel_nat_If_nat [Rel_nat]: "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat) If_nat HOL.If"
+  unfolding If_nat_def by (fastforce simp: Rel_nat_bool_iff True_nat_ne_False_nat)
+
+end
 
 ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 

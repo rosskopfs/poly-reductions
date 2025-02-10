@@ -32,7 +32,9 @@ begin
 
 sublocale compile_nat_type_def: type_definition natify denatify "range natify"
   by unfold_locales auto
+
 declare compile_nat_type_def.Rep_induct[induct del] compile_nat_type_def.Abs_induct[induct del]
+and compile_nat_type_def.Rep_cases[cases del] compile_nat_type_def.Abs_cases[cases del]
 
 lemma inj_natify: "inj natify"
   by (rule inj_on_inverseI[where ?g=denatify]) simp

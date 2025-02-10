@@ -11,6 +11,15 @@ begin
 paragraph \<open>Summary\<close>
 text \<open>Basic setup and general ML utilities.\<close>
 
+locale HOL_To_HOL_Nat
+begin
+end
+
+locale HOL_Nat_To_IMP_Minus
+begin
+sublocale HTHN : HOL_To_HOL_Nat .
+end
+
 setup_result HOL_Nat_To_IMP_Minus_base_logger =
   \<open>Logger.new_logger Logger.root "HOL_Nat_To_IMP_Minus_Base"\<close>
 

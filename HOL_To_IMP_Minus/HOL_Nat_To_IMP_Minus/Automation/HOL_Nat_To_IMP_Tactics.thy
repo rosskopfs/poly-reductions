@@ -18,16 +18,16 @@ lemma terminates_with_res_IMP_Tailcall_start:
 
 lemma terminates_with_res_tIf_processedI:
   assumes "s vb = v"
-  and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b"
-  and "b \<Longrightarrow> v \<noteq> 0 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c1 s r val"
-  and "\<not>b \<Longrightarrow> v = 0 \<Longrightarrow> terminates_with_res_IMP_Tailcall c c2 s r val"
+  and "PROP SIMPS_TO_UNIF (v \<noteq> False_nat) b"
+  and "b \<Longrightarrow> v \<noteq> False_nat \<Longrightarrow> terminates_with_res_IMP_Tailcall c c1 s r val"
+  and "\<not>b \<Longrightarrow> v = False_nat \<Longrightarrow> terminates_with_res_IMP_Tailcall c c2 s r val"
   shows "terminates_with_res_IMP_Tailcall c (tIf vb c1 c2) s r val"
-  using assms terminates_with_res_tIfI unfolding SIMPS_TO_UNIF_eq atomize_eq by auto
+  using assms terminates_with_res_tIfI unfolding SIMPS_TO_UNIF_eq atomize_eq False_nat_eq_zero by auto
 
 (*rewriting of an if condition*)
-lemma rewrite_ne_zero_if_Rel_nat:
+lemma rewrite_ne_False_nat_if_Rel_nat:
   assumes "Rel_nat n b"
-  shows "(n \<noteq> 0) = b"
+  shows "(n \<noteq> False_nat) = b"
   using assms Rel_nat_bool_iff False_nat_eq_zero True_nat_neq_zero
   unfolding SIMPS_TO_UNIF_eq atomize_eq by fastforce
 
@@ -63,26 +63,30 @@ ML\<open>
 \<close>
 local_setup \<open>HOL_To_IMP_Unification_Combine.setup_attribute NONE\<close>
 
+definition "rel_fun_app_close x y \<equiv> x = y"
+
+lemma rel_fun_app_closeI: "rel_fun_app_close x x"
+  unfolding rel_fun_app_close_def by simp
+
 lemma rel_fun_appI:
   assumes "(R ===> S) f g"
-  assumes "R x y"
-  assumes "gy = g y"
+  and "R x y"
+  and "rel_fun_app_close gy (g y)"
   shows "S (f x) gy"
-  using rel_funD using assms by auto
+  using rel_funD assms unfolding rel_fun_app_close_def by auto
 
-lemma Rel_nat_fst_nat_app_if_Rel_nat_eqI [Rel_nat]:
+lemma Rel_nat_fst_nat_app_if_Rel_nat_eqI:
   assumes "Rel_nat x y"
   and "(Rel_nat ===> (=)) fst_nat f"
-  and "fy = f y"
+  and "rel_fun_app_close fy (f y)"
   shows "Rel_nat (fst_nat x) fy"
-  using assms Rel_nat_nat_eq_eq by (auto dest: rel_funD)
+  using assms Rel_nat_nat_eq_eq unfolding rel_fun_app_close_def by (auto dest: rel_funD)
 
 named_theorems HOL_To_IMP_finish_simps
   "equations used to prove the equality of the results computed by the IMP-program
   and the HOL term as well as to close contradictory branches"
 
-declare natify_neq_zero_iff[HOL_To_IMP_finish_simps]
-  natify_eq_zero_iff_not[HOL_To_IMP_finish_simps]
+declare HOL_To_HOL_Nat.If_nat_def[HOL_To_IMP_finish_simps]
 
 ML_file \<open>hol_nat_to_imp_tactics_base.ML\<close>
 
@@ -100,6 +104,11 @@ lemma SIMPS_TO_if_FalseI:
 
 ML_file \<open>hol_nat_to_imp_tailcalls_tactics.ML\<close>
 ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
+
+context HOL_Nat_To_IMP_Minus
+begin
+declaration \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
+end
 
 ML\<open>
   @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Minus_Tactics
@@ -120,6 +129,5 @@ ML \<open>
   structure HM = HOL_Nat_To_IMP_Minus_Tactics_Base
   structure SUT = State_Update_Tracking
 \<close>
-
 
 end
