@@ -18,9 +18,11 @@ session HOL_Nat_To_IMP_Minus in "HOL_Nat_To_IMP_Minus" = IMP_Minus +
    "HOL_Nat_To_IMP_Tactics"
 
 session Refinements in "Refinements" = HOL_Nat_To_IMP_Minus +
+  sessions
+    Karp21
   theories
     HOL_To_IMP_Minus_Arithmetics
     HOL_To_IMP_Minus_Lists
-    HOL_To_IMP_Minus_THREE_SAT_To_IS_List
-    HOL_To_IMP_Minus_IS_To_VC_List
+    HOL_To_IMP_Minus_THREE_SAT_To_IS
+    HOL_To_IMP_Minus_IS_To_VC
 

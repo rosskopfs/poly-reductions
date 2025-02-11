@@ -85,7 +85,8 @@ val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop =
 fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
   let fun tac c =
     let val solve_side_condition_tac =
-      Simplifier.simp_tac (ctxt addsimps (get_IMP_def ctxt c |> the_list))
+      (HTIT.delete_IH_prems
+      THEN' Simplifier.simp_tac (ctxt addsimps (get_IMP_def ctxt c |> the_list)))
       |> SOLVED'
     in
       resolve_tac ctxt [@{thm terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI}]

@@ -17,7 +17,7 @@ definition "vars F = \<Union>(set (map vars_cls F))"
 lemma var_map_lit [simp]: "var (map_lit f x) = f (var x)" for x
   by (cases x) (auto)
 
-lemma vars_cons: "vars (x#xs) =  (vars_cls x) \<union> (vars xs)"
+lemma vars_cons: "vars (x # xs) =  (vars_cls x) \<union> (vars xs)"
   by (simp add: vars_def)
 
 lemma var_flip [simp]: "var (flip_lit d) = var d"
@@ -53,32 +53,32 @@ lemma models_append:
 
 section "The Reduction"
 
-datatype 'a red = v 'a | u "nat \<times> nat"
+datatype 'a red = RV 'a | RU "nat \<times> nat"
 
 fun to_at_most_3_clause where
-  "to_at_most_3_clause (a#b#c#d#rest) i j =
-    [a,b,Pos (u (i,j))] #  to_at_most_3_clause (Neg (u (i,j))#c#d#rest) i (j+1)
-    @ map (\<lambda>l. [Pos (u(i,j)), flip_lit l]) (c#d#rest)"
+  "to_at_most_3_clause (a # b # c # d # rest) i j =
+    to_at_most_3_clause (Neg (RU (i, j)) # c # d # rest) i (j+1) @
+    [a, b, Pos (RU (i, j))] # map (\<lambda>l. [Pos (RU (i, j)), flip_lit l]) (c # d # rest)"
 | "to_at_most_3_clause xs i j = [xs]"
 
 fun sat_to_at_most_three_sat_aux where
-  "sat_to_at_most_three_sat_aux (x#xs) i =
-    (to_at_most_3_clause x i 0)  @ (sat_to_at_most_three_sat_aux xs (i+1))"
+  "sat_to_at_most_three_sat_aux (x # xs) i =
+    (sat_to_at_most_three_sat_aux xs (i+1)) @ (to_at_most_3_clause x i 0)"
 | "sat_to_at_most_three_sat_aux [] i = []"
 
 abbreviation V  where
-  "V F \<equiv> map (map (map_lit v)) F"
+  "V F \<equiv> map (map (map_lit RV)) F"
 
 definition sat_to_at_most_three_sat where
   "sat_to_at_most_three_sat F  = sat_to_at_most_three_sat_aux (V F) 0"
 
 lemma vars_to_at_most_3_clause:
-  "vars (to_at_most_3_clause cls i j) \<subseteq> (vars_cls cls \<union> {u (i,k) |k. True})"
+  "vars (to_at_most_3_clause cls i j) \<subseteq> (vars_cls cls \<union> {RU (i,k) |k. True})"
   by (induction j rule: to_at_most_3_clause.induct)
      (auto simp add: vars_cls_def vars_def)
 
 lemma vars_sat_to_at_most_three_sat_aux:
-  "vars (sat_to_at_most_three_sat_aux F i) \<subseteq> (vars F \<union> {u (k,j) |k j. k \<ge> i})"
+  "vars (sat_to_at_most_three_sat_aux F i) \<subseteq> (vars F \<union> {RU (k,j) |k j. k \<ge> i})"
   by (induction rule: sat_to_at_most_three_sat_aux.induct)
   (auto intro!: vars_to_at_most_3_clause[THEN subset_trans] simp: vars_cons vars_append)
 
@@ -86,8 +86,8 @@ lemma models_V: "sat_list_pred (V F) \<longleftrightarrow> sat_list_pred F"
 proof (intro iffI)
   assume "sat_list_pred (V F)"
   then obtain \<sigma> where "models_list \<sigma> (V F)" by blast
-  let ?\<sigma> = "\<lambda>x. \<sigma> (v x)"
-  have "(?\<sigma>\<up>) x = (\<sigma>\<up>) (map_lit v x)" for x by (cases x) auto
+  let ?\<sigma> = "\<lambda>x. \<sigma> (RV x)"
+  have "(?\<sigma>\<up>) x = (\<sigma>\<up>) (map_lit RV x)" for x by (cases x) auto
   then have "models_list ?\<sigma> F" using \<open>models_list \<sigma> (V F)\<close>
     unfolding models_list_iff_ball_models_clause by force
   then show "sat_list_pred F" by blast
@@ -95,7 +95,7 @@ next
   assume "sat_list_pred F"
   then obtain \<sigma> where "models_list \<sigma> F" by blast
   let ?\<sigma> = "case_red \<sigma> (\<lambda>x. True)"
-  have "(?\<sigma>\<up>) (map_lit v x) = (\<sigma>\<up>) x" for x by (cases x) auto
+  have "(?\<sigma>\<up>) (map_lit RV x) = (\<sigma>\<up>) x" for x by (cases x) auto
   then have "models_list ?\<sigma> (V F)" using \<open>models_list \<sigma> F\<close>
     unfolding models_list_iff_ball_models_clause  models_clause_list_def by auto
   then show "sat_list_pred (V F)" by blast
@@ -105,61 +105,61 @@ section "Soundness"
 
 lemma to_at_most_3_clause_sound:
   assumes "models_list \<sigma> [cls]"
-  and "vars_cls cls \<inter> {u (i, k)|k. k \<ge> j} = {}"
-  shows "\<exists>\<sigma>'. (\<forall>x \<in> -{u (i,k) |k. k \<ge> j}. \<sigma>' x = \<sigma> x)
+  and "vars_cls cls \<inter> {RU (i, k)|k. k \<ge> j} = {}"
+  shows "\<exists>\<sigma>'. (\<forall>x \<in> -{RU (i, k) |k. k \<ge> j}. \<sigma>' x = \<sigma> x)
     \<and> models_list \<sigma>' (to_at_most_3_clause cls i j)"
 using assms
 proof (induction arbitrary: \<sigma> rule: to_at_most_3_clause.induct )
   case (1 a b c d rest i j)
-  let ?tail = "c#d#rest"
-  define \<sigma>1 where "\<sigma>1 = \<sigma>(u (i,j) := models_list \<sigma> [?tail])"
+  let ?tail = "c # d # rest"
+  define \<sigma>1 where "\<sigma>1 = \<sigma>(RU (i, j) := models_list \<sigma> [?tail])"
   have "models_list \<sigma>1 [?tail]" if "models_list \<sigma> [?tail]"
     using that 1 models_list_iff_ball_models_clause
     by (intro models_cong[of _ \<sigma>1 \<sigma>])
     (auto simp add: \<sigma>1_def vars_def vars_cls_def)
-  then have "models_list \<sigma>1 [Neg (u (i, j)) # ?tail]"
+  then have "models_list \<sigma>1 [Neg (RU (i, j)) # ?tail]"
     by (cases "models_list \<sigma> [?tail]")
     (auto simp add: models_list_iff_ball_models_clause models_clause_list_def \<sigma>1_def)
-  moreover have "vars_cls (Neg (u (i, j)) # ?tail) \<inter> {u (i, k) |k. j + 1 \<le> k} = {}"
+  moreover have "vars_cls (Neg (RU (i, j)) # ?tail) \<inter> {RU (i, k) |k. j + 1 \<le> k} = {}"
     using 1(3) by (auto simp add: vars_cls_def)
-  ultimately obtain \<sigma>' where \<sigma>'_def: "(\<forall>x\<in>- {u (i, k) |k. j + 1 \<le> k}. \<sigma>' x = \<sigma>1 x) \<and>
-      models_list \<sigma>' (to_at_most_3_clause (Neg (u (i, j)) # ?tail) i (j + 1))"
+  ultimately obtain \<sigma>' where \<sigma>'_def: "(\<forall>x\<in>- {RU (i, k) |k. j + 1 \<le> k}. \<sigma>' x = \<sigma>1 x) \<and>
+      models_list \<sigma>' (to_at_most_3_clause (Neg (RU (i, j)) # ?tail) i (j + 1))"
     using 1 by fastforce
-  moreover then have "\<sigma>' x = \<sigma> x" if "x \<in>- {u (i, k) |k. j \<le> k}" for x
-    using that by (cases "x = u (i,j)", auto simp add: \<sigma>1_def) force
-  moreover have "models_list \<sigma>' [[Pos (u(i,j)), flip_lit l]]" if "l \<in> set (?tail)" for l
+  moreover then have "\<sigma>' x = \<sigma> x" if "x \<in>- {RU (i, k) |k. j \<le> k}" for x
+    using that by (cases "x = RU (i, j)", auto simp add: \<sigma>1_def) force
+  moreover have "models_list \<sigma>' [[Pos (RU (i, j)), flip_lit l]]" if "l \<in> set (?tail)" for l
   proof (intro models_cong[of _ \<sigma>' \<sigma>1])
-    show "models_list \<sigma>1 [[Pos (u(i,j)), flip_lit l]]"
+    show "models_list \<sigma>1 [[Pos (RU (i, j)), flip_lit l]]"
     proof (cases "models_list \<sigma> [?tail]")
       case False
       then have "\<not> (\<sigma>\<up>) l"
         using that by (auto simp add: models_list_iff_ball_models_clause)
-      moreover have "var l \<noteq> u (i, j)"
+      moreover have "var l \<noteq> RU (i, j)"
         using 1(3) that
         by (auto simp add: vars_cls_def)
       ultimately show ?thesis
         by (cases l) (auto simp add: models_list_iff_ball_models_clause \<sigma>1_def)
     qed(auto simp add: \<sigma>1_def models_list_iff_ball_models_clause)
-    have "vars [[Pos (u (i, j)), flip_lit l]] \<subseteq> -{u (i, k) |k. j + 1 \<le> k}"
+    have "vars [[Pos (RU (i, j)), flip_lit l]] \<subseteq> -{RU (i, k) |k. j + 1 \<le> k}"
       using that 1(3)
       by(auto simp add: vars_def vars_cls_def)
-    then show "\<forall>x\<in>vars [[Pos (u (i, j)), flip_lit l]]. \<sigma>' x = \<sigma>1 x"
+    then show "\<forall>x\<in>vars [[Pos (RU (i, j)), flip_lit l]]. \<sigma>' x = \<sigma>1 x"
       using \<sigma>'_def  by blast
   qed
-  moreover have "models_list \<sigma>' [[a, b, Pos (u (i, j))]]"
+  moreover have "models_list \<sigma>' [[a, b, Pos (RU (i, j))]]"
   proof (intro models_cong[of _ \<sigma>' \<sigma>1])
     have "models_list \<sigma>1 [[a,b]]" if "\<not>(models_list \<sigma> [?tail])"
       using 1(3) that 1(2)
       by (intro models_cong[of _ \<sigma>1 \<sigma>])
       (auto simp add: models_list_iff_ball_models_clause models_clause_list_def
         \<sigma>1_def vars_def vars_cls_def)
-    then show "models_list \<sigma>1 [[a, b, Pos (u (i, j))]]"
+    then show "models_list \<sigma>1 [[a, b, Pos (RU (i, j))]]"
       by (cases "models_list \<sigma> [?tail]")
       (auto simp add: models_list_iff_ball_models_clause models_clause_list_def \<sigma>1_def)
-    have "vars [[a, b, Pos (u (i, j))]]  \<subseteq> -{u (i, k) |k. j + 1 \<le> k}"
+    have "vars [[a, b, Pos (RU (i, j))]]  \<subseteq> -{RU (i, k) |k. j + 1 \<le> k}"
       using 1(3)
       by(auto simp add: vars_def vars_cls_def)
-    then show "\<forall>x\<in>vars[[a, b, Pos (u (i, j))]]. \<sigma>' x = \<sigma>1 x"
+    then show "\<forall>x\<in>vars[[a, b, Pos (RU (i, j))]]. \<sigma>' x = \<sigma>1 x"
       using \<sigma>'_def  by blast
   qed
   ultimately show ?case
@@ -168,32 +168,32 @@ qed auto
 
 lemma sat_to_at_most_three_sat_aux_sound:
   assumes "models_list \<sigma> F"
-  and "vars F \<inter> u ` UNIV = {}"
+  and "vars F \<inter> RU ` UNIV = {}"
   shows "\<exists>\<sigma>'. models_list \<sigma>' (sat_to_at_most_three_sat_aux F i) \<and>
-    (\<forall>x \<in> -{u (k,j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x)"
+    (\<forall>x \<in> -{RU (k, j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x)"
 using assms
 proof (induct F i  rule: sat_to_at_most_three_sat_aux.induct )
   case (1 x xs i)
   then obtain \<sigma>ih where \<sigma>ih_models: "models_list \<sigma>ih (sat_to_at_most_three_sat_aux xs (i + 1))"
-    and \<sigma>ih_\<sigma>:  "(\<forall>x \<in> -{u (k,j) |k j. k \<ge> (i+1)}. \<sigma>ih x = \<sigma> x)"
+    and \<sigma>ih_\<sigma>:  "(\<forall>x \<in> -{RU (k, j) |k j. k \<ge> (i+1)}. \<sigma>ih x = \<sigma> x)"
     unfolding models_list_iff_ball_models_clause by (auto simp add: vars_cons)
-  moreover have "vars_cls x \<subseteq>  -{u (k,j) |k j. k \<ge> (i+1)}"
+  moreover have "vars_cls x \<subseteq>  -{RU (k, j) |k j. k \<ge> (i+1)}"
     using 1(3) vars_cons unfolding vars_cls_def
     by fastforce
   ultimately have "models_list \<sigma>ih [x]"
     using 1 by(intro models_cong[of _ \<sigma>ih \<sigma>])
     (auto simp: vars_cons vars_def models_list_iff_ball_models_clause vars_cls_def)
-  moreover have "vars_cls x \<inter> {u (i, k) |k. 0 \<le> k} = {}"
+  moreover have "vars_cls x \<inter> {RU (i, k) |k. 0 \<le> k} = {}"
     using 1 by (auto simp add: vars_def)
-  ultimately obtain \<sigma>' where  \<sigma>'_def: "(\<forall>x \<in> -{u (i,k) |k. 0 \<le> k}. \<sigma>' x = \<sigma>ih x) \<and>
+  ultimately obtain \<sigma>' where  \<sigma>'_def: "(\<forall>x \<in> -{RU (i, k) |k. 0 \<le> k}. \<sigma>' x = \<sigma>ih x) \<and>
     models_list \<sigma>' (to_at_most_3_clause x i 0)"
     using to_at_most_3_clause_sound[of \<sigma>ih] by iprover
-  moreover have "vars (sat_to_at_most_three_sat_aux xs (i + 1)) \<subseteq>  -{u (i,k) |k. True}"
+  moreover have "vars (sat_to_at_most_three_sat_aux xs (i + 1)) \<subseteq>  -{RU (i, k) |k. True}"
     using 1 by (intro vars_sat_to_at_most_three_sat_aux[THEN subset_trans])
     (auto simp add: vars_cons)
   ultimately have "models_list \<sigma>' (sat_to_at_most_three_sat_aux xs (i + 1))" using \<sigma>ih_models
     by (intro models_cong[of _ \<sigma>' \<sigma>ih]) auto
-  moreover have "\<forall>x \<in> -{u (k,j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x"
+  moreover have "\<forall>x \<in> -{RU (k, j) |k j. k \<ge> i}. \<sigma>' x = \<sigma> x"
     using \<sigma>ih_\<sigma> \<sigma>'_def by force
   ultimately show ?case
     using \<sigma>'_def unfolding models_list_iff_ball_models_clause
@@ -205,7 +205,7 @@ lemma sat_to_3_sat_sound:
   shows "sat_to_at_most_three_sat F \<in> at_most_three_sat_list"
 proof -
   obtain \<sigma> where "models_list \<sigma> (V F)" using assms models_V by fastforce
-  moreover have "vars (V F) \<inter> u ` UNIV = {}" by (auto simp add: vars_def vars_cls_def)
+  moreover have "vars (V F) \<inter> RU ` UNIV = {}" by (auto simp add: vars_def vars_cls_def)
   ultimately have "sat_list_pred (sat_to_at_most_three_sat F)"
     unfolding sat_to_at_most_three_sat_def using sat_to_at_most_three_sat_aux_sound by blast
   moreover {
@@ -232,7 +232,7 @@ lemma to_at_most_3_clause_complete:
 proof(induction cls i j rule:to_at_most_3_clause.induct)
   case (1 a b c d rest i j)
   then show ?case
-    by (cases "\<sigma> (u (i,j))")
+    by (cases "\<sigma> (u (i, j))")
     (auto simp add: models_list_iff_ball_models_clause models_clause_list_def)
 qed auto
 

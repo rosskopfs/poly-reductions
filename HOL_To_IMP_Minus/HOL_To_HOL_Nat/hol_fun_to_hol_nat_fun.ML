@@ -232,7 +232,8 @@ fun mk_unconditional_eq f_eq =
       lhs |> Term.args_of |> chop_prefix (is_itself o Term.fastype_of) |>> List.length
     val f'_typ = List.map Term.fastype_of rem_args ---> Term.fastype_of lhs
     val f' = f |> Term.map_types (K f'_typ)
-    fun rewrite_rhs t =
+    fun rewrite_rhs (Abs (x, T, t)) = Abs (x, T, rewrite_rhs t)
+      | rewrite_rhs t =
       let
         val (head, args) = Term.strip_comb t
         val is_rec_call = (f = head)

@@ -189,6 +189,14 @@ val terminates_with_res_tSeq_tac = HTITB.seq_tac @{thm terminates_with_res_tSeqI
 val terminates_with_res_tAssign_tac = HTITB.assign_tac @{thm terminates_with_res_tAssignI}
 val terminates_with_tAssign_tac = HTITB.assign_tac @{thm terminates_with_tAssignI}
 
+val is_ih = can (Term_Util.strip_subgoal #> snd #> snd #> dest_terminates_with_res_IMP_Tailcall_prop)
+
+val delete_IH_prems =
+  let fun tac prems i state =
+    let val ih_prems = fold_index (fn (i, prem) => if is_ih prem then cons (i + 1) else I) prems []
+    in TU.thin_tacs ih_prems i state end
+  in TU.SUBGOAL_STRIPPED (snd #> fst) tac end
+
 fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
   let fun tac {c,...} = case c of
       \<^Const_>\<open>tCall for c _\<close> => (case get_imp_minus_correct ctxt c of
@@ -198,17 +206,9 @@ fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
             ] |> Pretty.string_of);
             K no_tac)
         | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI}
-            (HTITB.simp_lhs_solve_Rel_nat_tac ctxt) ctxt cs)
+            (delete_IH_prems THEN' HTITB.simp_lhs_solve_Rel_nat_tac ctxt) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
-
-val is_ih = can (Term_Util.strip_subgoal #> snd #> snd #> dest_terminates_with_res_IMP_Tailcall_prop)
-
-val delete_IH_prems =
-  let fun tac prems i state =
-    let val ih_prems = fold_index (fn (i, prem) => if is_ih prem then cons (i + 1) else I) prems []
-    in TU.thin_tacs ih_prems i state end
-  in TU.SUBGOAL_STRIPPED (snd #> fst) tac end
 
 fun finish_contradictory_branch ctxt =
   (delete_IH_prems

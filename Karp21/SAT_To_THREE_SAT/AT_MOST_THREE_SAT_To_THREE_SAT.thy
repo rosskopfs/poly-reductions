@@ -7,31 +7,34 @@ section "The Reduction"
 
 fun to_at_least_3_clause where
   "to_at_least_3_clause [] i = [
-     [Pos (u (i,0)), Pos (u (i,1)), Pos (u (i,2))],
-     [Pos (u (i,0)), Pos (u (i,1)), Neg (u (i,2))],
-     [Pos (u (i,0)), Neg (u (i,1)), Pos (u (i,2))],
-     [Pos (u (i,0)), Neg (u (i,1)), Neg (u (i,2))],
-     [Neg (u (i,0)), Pos (u (i,1)), Pos (u (i,2))],
-     [Neg (u (i,0)), Pos (u (i,1)), Neg (u (i,2))],
-     [Neg (u (i,0)), Neg (u (i,1)), Pos (u (i,2))],
-     [Neg (u (i,0)), Neg (u (i,1)), Neg (u (i,2))]]"
-| "to_at_least_3_clause [x] i = [ [x, Pos (u (i,0)), Pos (u (i,1))],
-                                  [x, Pos (u (i,0)), Neg (u (i,1))],
-                                  [x, Neg (u (i,0)), Pos (u (i,1))],
-                                  [x, Neg (u (i,0)), Neg (u (i,1)) ]]"
-| "to_at_least_3_clause [x, y] i = [[x,y, Pos (u (i,0))], [x,y, Neg (u (i,0))]]"
+     [Pos (RU (i, 0)), Pos (RU (i, 1)), Pos (RU (i, 2))],
+     [Pos (RU (i, 0)), Pos (RU (i, 1)), Neg (RU (i, 2))],
+     [Pos (RU (i, 0)), Neg (RU (i, 1)), Pos (RU (i, 2))],
+     [Pos (RU (i, 0)), Neg (RU (i, 1)), Neg (RU (i, 2))],
+     [Neg (RU (i, 0)), Pos (RU (i, 1)), Pos (RU (i, 2))],
+     [Neg (RU (i, 0)), Pos (RU (i, 1)), Neg (RU (i, 2))],
+     [Neg (RU (i, 0)), Neg (RU (i, 1)), Pos (RU (i, 2))],
+     [Neg (RU (i, 0)), Neg (RU (i, 1)), Neg (RU (i, 2))]]"
+| "to_at_least_3_clause [x] i = [ [x, Pos (RU (i, 0)), Pos (RU (i, 1))],
+                                  [x, Pos (RU (i, 0)), Neg (RU (i, 1))],
+                                  [x, Neg (RU (i, 0)), Pos (RU (i, 1))],
+                                  [x, Neg (RU (i, 0)), Neg (RU (i, 1)) ]]"
+| "to_at_least_3_clause [x, y] i = [[x,y, Pos (RU (i, 0))], [x,y, Neg (RU (i, 0))]]"
 | "to_at_least_3_clause xs i = [xs]"
 
 
 fun at_most_three_sat_to_three_sat_aux where
-  "at_most_three_sat_to_three_sat_aux (x#xs) i = (to_at_least_3_clause (remdups x) i)
-                                 @ (at_most_three_sat_to_three_sat_aux xs (i+1))"
+  "at_most_three_sat_to_three_sat_aux (x#xs) i =
+    at_most_three_sat_to_three_sat_aux xs (i + 1) @ to_at_least_3_clause (remdups x) i"
 | "at_most_three_sat_to_three_sat_aux [] i = []"
 
 
-definition "at_most_three_sat_to_three_sat F \<equiv> if at_most_n_sat_list 3 F
-  then map set (at_most_three_sat_to_three_sat_aux (V F) 0)
-  else [{}]"
+definition "at_most_three_sat_to_three_sat_list F \<equiv> if at_most_n_sat_list 3 F
+  then (at_most_three_sat_to_three_sat_aux (V F) 0)
+  else [[]]"
+
+definition "at_most_three_sat_to_three_sat F \<equiv>
+  transl_list_list_list_set (at_most_three_sat_to_three_sat_list F)"
 
 section "Soundness"
 
@@ -63,7 +66,7 @@ lemma length_to_at_least_3_clause_exact:
   by (cases "(cls, i)" rule: to_at_least_3_clause.cases) auto
 
 lemma to_at_least_3_distinct:
-  assumes "\<forall>i j. u (i, j) \<notin> vars_cls cls" "distinct cls"
+  assumes "\<forall>i j. RU (i, j) \<notin> vars_cls cls" "distinct cls"
   and "x \<in> set (to_at_least_3_clause cls i)"
   shows "distinct x"
   using assms
@@ -71,7 +74,7 @@ lemma to_at_least_3_distinct:
       (auto simp add: vars_cls_def, auto)
 
 lemma cards_at_most_three_sat_to_three_sat_aux:
-  assumes "at_most_n_sat_list 3 F"  "\<forall>i j. u (i, j) \<notin> vars F"
+  assumes "at_most_n_sat_list 3 F"  "\<forall>i j. RU (i, j) \<notin> vars F"
   shows "\<forall>x \<in> set (map set (at_most_three_sat_to_three_sat_aux F i)). card x = 3"
   using assms unfolding at_most_n_sat_list_def at_most_n_clause_list_def
   by (induction F i rule: at_most_three_sat_to_three_sat_aux.induct)
@@ -88,9 +91,10 @@ proof -
   have *: "at_most_n_sat_list 3 (V F)"
     using assms unfolding at_most_n_sat_list_def at_most_n_clause_list_def
     by auto (metis List.finite_set card_image_le order_trans)
-  moreover have "\<forall>i j. u (i, j) \<notin> vars (V F)" by (auto simp add: vars_def vars_cls_def)
+  moreover have "\<forall>i j. RU (i, j) \<notin> vars (V F)" by (auto simp add: vars_def vars_cls_def)
   ultimately show ?thesis by (intro is_n_satI)
-    (simp add: assms at_most_three_sat_to_three_sat_def cards_at_most_three_sat_to_three_sat_aux)
+    (auto simp: assms at_most_three_sat_to_three_sat_list_def at_most_three_sat_to_three_sat_def
+      cards_at_most_three_sat_to_three_sat_aux transl_list_list_list_set_def)
 qed
 
 subsection "The reduction is sound"
@@ -103,6 +107,7 @@ lemma at_most_three_sat_to_three_sat_sound:
   unfolding at_most_three_sat_to_three_sat_def
     at_most_three_sat_list_def at_most_three_sat_list_pred_def
     sat_list_pred_def three_sat_def
+    at_most_three_sat_to_three_sat_list_def transl_list_list_list_set_def
   by (smt (verit, best) three_sat_predI mem_Collect_eq sat_predI)
 
 section "Completeness"
@@ -127,6 +132,7 @@ lemma at_most_three_sat_to_three_sat_complete:
   using assms  at_most_three_sat_to_three_sat_aux_complete models_V models_list_models
   unfolding models_list_iff_ball_models_clause models_clause_list_def
     at_most_three_sat_to_three_sat_def three_sat_def sat_def
+    at_most_three_sat_to_three_sat_list_def transl_list_list_list_set_def
   apply (cases "at_most_n_sat_list 3 F")
   apply (smt (z3) at_most_three_sat_list_def at_most_three_sat_list_predI
     at_most_three_sat_to_three_sat_aux_complete

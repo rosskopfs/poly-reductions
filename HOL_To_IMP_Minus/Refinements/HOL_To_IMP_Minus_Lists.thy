@@ -160,6 +160,51 @@ end
 context HOL_To_HOL_Nat
 begin
 
+fun take_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "take_acc _ [] acc = rev acc"
+| "take_acc 0 _ acc = rev acc"
+| "take_acc (Suc n) (x # xs) acc = take_acc n xs (x # acc)"
+declare take_acc.simps[simp del]
+
+lemma take_acc_eq_rev_append_take: "take_acc n xs ys = rev ys @ take n xs"
+  by (induction n xs ys rule: take_acc.induct) (auto simp: take_acc.simps)
+
+case_of_simps take_acc_eq : take_acc.simps
+function_compile_nat take_acc_eq
+
+lemma take_eq_take_acc_nil: "take n xs = take_acc n xs []"
+  unfolding take_acc_eq_rev_append_take by simp
+
+function_compile_nat take_eq_take_acc_nil
+
+case_of_simps drop_eq : drop.simps
+function_compile_nat drop_eq
+
+end
+
+context HOL_Nat_To_IMP_Minus
+begin
+
+lemmas take_acc_nat_eq = HTHN.take_acc_nat_eq_unfolded[unfolded case_list_nat_def case_nat_eq_if]
+compile_nat take_acc_nat_eq
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.take_acc_nat by cook
+
+compile_nat HTHN.take_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.take_nat by cook
+
+lemmas drop_nat_eq = HTHN.drop_nat_eq_unfolded[unfolded case_list_nat_def case_nat_eq_if]
+compile_nat drop_nat_eq
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.drop_nat
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  by (induction ya arbitrary: s y)
+  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
+    HB.get_HOL_eqs @{context} 1\<close>)+
+
+end
+
+context HOL_To_HOL_Nat
+begin
+
 fun map_acc :: "('a \<Rightarrow> 'b) \<Rightarrow> 'a list \<Rightarrow> 'b list \<Rightarrow> 'b list"  where
   "map_acc f [] acc = rev acc"
 | "map_acc f (x#xs) acc = map_acc f xs (f x # acc)"

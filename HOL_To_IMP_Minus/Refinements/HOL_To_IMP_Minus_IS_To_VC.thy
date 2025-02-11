@@ -1,4 +1,4 @@
-theory HOL_To_IMP_Minus_IS_To_VC_List
+theory HOL_To_IMP_Minus_IS_To_VC
   imports
     HOL_To_IMP_Minus_Lists
     Karp21.IS_To_VC_List
@@ -24,8 +24,7 @@ end
 context HOL_To_HOL_Nat
 begin
 
-lemmas is_vc_list_eq = is_vc_list_def[unfolded case_prod_beta, THEN meta_fun_cong]
-function_compile_nat is_vc_list_def[unfolded case_prod_beta]
+function_compile_nat is_vc_list_def
 
 end
 

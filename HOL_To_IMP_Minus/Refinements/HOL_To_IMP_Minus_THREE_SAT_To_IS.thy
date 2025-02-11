@@ -1,6 +1,6 @@
-theory HOL_To_IMP_Minus_THREE_SAT_To_IS_List
+theory HOL_To_IMP_Minus_THREE_SAT_To_IS
   imports
-    HOL_To_IMP_Minus_Lists
+    HOL_To_IMP_Minus_SAT
     Karp21.THREE_SAT_To_IS_List
 begin
 
@@ -30,7 +30,7 @@ lemmas map_acc_rpair_nat_eq = HTHN.map_acc_rpair_nat_eq_unfolded[unfolded case_l
 compile_nat map_acc_rpair_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_rpair_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  by (induction "HTHN.rpair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HOL_To_HOL_Nat.map_acc.induct)
+  by (induction "HTHN.rpair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -45,7 +45,7 @@ compile_nat map_acc_case_prod_map_rpair_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_case_prod_map_rpair_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.case_prod_map_rpair :: ('a \<times> 'b list) \<Rightarrow> _" _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.map_acc.induct)
+    rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -68,7 +68,7 @@ compile_nat map_acc_product_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_product_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "\<lambda>x :: 'a list. List.product x x" _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.map_acc.induct)
+    rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -109,7 +109,7 @@ compile_nat filter_prod_fsts_neq_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_neq_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_fsts_neq :: ((('a \<times> 'b) \<times> ('a \<times> 'c)) \<Rightarrow> bool) " _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.filter_acc.induct)
+    rule: HTHN.filter_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -122,7 +122,7 @@ compile_nat map_filter_prod_fsts_neq_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_filter_prod_fsts_neq_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.filter_prod_fsts_neq :: (('a \<times> 'b) \<times> 'a \<times> 'c) list \<Rightarrow> _" _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.map_acc.induct)
+    rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -153,7 +153,7 @@ compile_nat map_acc_pair_list_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_pair_list_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.pair_list :: ('a \<times> 'a) \<Rightarrow> _" _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.map_acc.induct)
+    rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
@@ -184,13 +184,11 @@ compile_nat map_acc_prod_product_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_prod_product_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_product :: 'a list \<times> 'b list \<Rightarrow> _" _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.map_acc.induct)
+    rule: HTHN.map_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
 end
-
-datatype_compile_nat lit
 
 context HOL_To_HOL_Nat
 begin
@@ -228,38 +226,7 @@ compile_nat filter_acc_prod_fsts_conflict_lit_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_conflict_lit_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_fsts_conflict_lit :: ((('a lit \<times> 'b) \<times> ('a lit \<times> 'c)) \<Rightarrow> _) " _ _ arbitrary: s
-    rule: HOL_To_HOL_Nat.filter_acc.induct)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
-
-end
-
-context HOL_To_HOL_Nat
-begin
-
-lemmas is_n_clause_list_eq = is_n_clause_list_def[unfolded is_n_clause_def,
-    folded length_remdups_card_conv, unfolded list_length_eq_length]
-function_compile_nat is_n_clause_list_eq
-
-lemmas is_n_sat_list_eq = list_all_eq[of "is_n_clause_list n" for n,
-  folded is_n_sat_list_def[unfolded Ball_set_list_all]]
-function_compile_nat is_n_sat_list_eq
-
-end
-
-context HOL_Nat_To_IMP_Minus
-begin
-
-lemmas is_n_clause_list_nat_eq = HTHN.is_n_clause_list_nat_eq_unfolded
-compile_nat is_n_clause_list_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.is_n_clause_list_nat by cook
-
-lemmas is_n_sat_list_nat_eq = HTHN.is_n_sat_list_nat_eq_unfolded[unfolded
-  case_list_nat_def case_bool_nat_def]
-compile_nat is_n_sat_list_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.is_n_sat_list_nat
-  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  by (induction ya arbitrary: s)
+    rule: HTHN.filter_acc.induct)
   (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
     HB.get_HOL_eqs @{context} 1\<close>)+
 
