@@ -1,6 +1,8 @@
 session Complexity_Basics in "Complexity_Classes" = Main +
   sessions
     IMP_Minus
+    Karp21
+    Landau_Symbols
   theories
     Cook_Levin
 

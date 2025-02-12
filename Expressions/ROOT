@@ -1,4 +1,4 @@
-session Expressions in "Expressions" = HOL +
+session Expressions = HOL +
   directories
     Basics
     Global_Calls
