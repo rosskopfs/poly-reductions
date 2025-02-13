@@ -61,6 +61,7 @@ proof(goal_cases)
     by simp
 qed
 
+\<^marker>\<open>title "thm:spaceConsume"\<close>
 lemma IMP_Minus_space_growth:
   "\<lbrakk>(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2; finite (range s1);
     max (Max (range s1)) (Max_Constant.max_constant c1) < 2 ^ k\<rbrakk> \<Longrightarrow>
