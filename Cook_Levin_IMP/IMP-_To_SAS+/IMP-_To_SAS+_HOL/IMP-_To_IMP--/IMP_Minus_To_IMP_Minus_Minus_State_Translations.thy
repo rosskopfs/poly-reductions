@@ -14,7 +14,7 @@ text \<open> We define a translation between IMP- states, which map registers to
        IMP- register. Furthermore, the IMP-- states contain special registers ''carry'' and
         operands ''a'' and ''b'' with n bits respectively, which we will use when replacing
         arithmetic expressions by binary operations when translating IMP- to IMP-- programs. \<close>
-
+                          
 type_synonym state = AExp.state
 type_synonym bit_state = IMP_Minus_Minus_Small_StepT.state
 
@@ -285,6 +285,7 @@ definition IMP_Minus_Minus_State_To_IMP_Minus:: "bit_state \<Rightarrow> nat \<R
   bit_list_to_nat (map (\<lambda>i. case s (var_bit_to_var (v, i)) of (Some b) \<Rightarrow>  b |
   None \<Rightarrow> Zero) [0..<n]))"
 
+\<^marker>\<open>title "def:bitblast"\<close>
 lemma nth_bit_of_IMP_Minus_Minus_State_To_IMP_Minus:
   "nth_bit (IMP_Minus_Minus_State_To_IMP_Minus s1 n v) k = (if k < n then
     (case s1 (var_bit_to_var (v, k)) of (Some b) \<Rightarrow> b |

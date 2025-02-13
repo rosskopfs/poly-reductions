@@ -148,6 +148,7 @@ text \<open>First direction of the correctness statement. We show that when an I
       a number of steps that is polynomially bigger than the number of steps the IMP- program run
       for. The constants appearing in the polynomial bound have no significance.  \<close>
 
+\<^marker>\<open>title "lem:bitblastProgram"\<close>
 lemma IMP_Minus_To_IMP_Minus_Minus:
   assumes
     "(c1 :: IMP_Minus_com, s1) \<Rightarrow>\<^bsup>t\<^esup> s2"

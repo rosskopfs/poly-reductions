@@ -1,9 +1,11 @@
+\<^marker>\<open>creator Fabian Huch\<close>
 section "Big step semantics of IMP-- "
 
 theory IMP_Minus_Minus_Big_StepT
   imports IMP_Minus_Minus_Small_StepT
 begin
 
+\<^marker>\<open>title "fig:imp_minus_def"\<close>
 inductive
   big_step :: "com * state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool"  ("_ \<Rightarrow>\<^bsup>_\<^esup> _" 55)
   where
@@ -15,8 +17,8 @@ Seq:    "(c\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2 \<Longri
 IfTrue:  "\<exists>b \<in> set bs. s b \<noteq> Some Zero \<Longrightarrow> (c\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
 IfFalse: "\<forall>b \<in> set bs. s b = Some Zero \<Longrightarrow> (c\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
 WhileTrue:
- "(\<exists>b \<in> set bs. s b \<noteq> Some Zero) \<Longrightarrow>
-  (c,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2 \<Longrightarrow> ((WHILE bs \<noteq>0 DO c),s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3 \<Longrightarrow>
+ "\<lbrakk>(\<exists>b \<in> set bs. s b \<noteq> Some Zero); (c,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2; 
+  ((WHILE bs \<noteq>0 DO c),s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3 \<rbrakk> \<Longrightarrow>
   ((WHILE bs \<noteq>0 DO c), s)\<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup>s\<^sub>3" |
 WhileFalse[intro!]:   "(\<forall>b \<in> set bs. s b = Some Zero) \<Longrightarrow> (WHILE bs \<noteq>0 DO c,s) \<Rightarrow>\<^bsup>1\<^esup> s"
 

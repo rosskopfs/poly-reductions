@@ -533,6 +533,7 @@ definition assignment_to_binary:: "nat \<Rightarrow> vname \<Rightarrow> AExp.ae
   AExp.Plus a b \<Rightarrow> binary_adder n v a b |
   AExp.Sub a b \<Rightarrow> binary_subtractor n v a b)"
 
+\<^marker>\<open>title "lem:bitblastExpr"\<close>
 lemma assignment_to_binary_correct:
   assumes "n > 0"  "AExp.aval a s < 2 ^ n" "\<forall>v. s v < 2 ^ n" "aexp_max_constant a < 2 ^ n"
   shows
