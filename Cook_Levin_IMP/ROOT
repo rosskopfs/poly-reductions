@@ -7,6 +7,7 @@ session Complexity_Basics in "Complexity_Classes" = Main +
     Cook_Levin
 
 session "IMP-_To_SAS+_HOL" in "IMP-_To_SAS+/IMP-_To_SAS+_HOL" = "HOL-Analysis" +
+  options [quick_and_dirty]
   sessions
     Verified_SAT_Based_AI_Planning
     Complexity_Basics
