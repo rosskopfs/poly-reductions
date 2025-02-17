@@ -71,9 +71,7 @@ fun simp_state_update_val_tac ctxt =
   (*simplify expression*)
   TRY o safe_simp_tac ctxt
   (*substitute all (created) state retrievals*)
-  THEN' TRY o SUT.subst_all_STATE_interp_retrieve_key_tac ctxt
-  (*final simplification with assumptions*)
-  THEN' TRY o safe_asm_simp_tac ctxt
+  THEN' TRY o (SUT.simp_STATE_interp_retrieve_key safe_simp_tac ctxt)
 
 fun Rel_nat_step_tac ctxt =
   let fun resolve_tac thms = Unify_Resolve_Base.unify_resolve_any_tac

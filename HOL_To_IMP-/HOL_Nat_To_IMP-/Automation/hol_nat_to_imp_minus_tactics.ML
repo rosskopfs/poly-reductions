@@ -11,7 +11,7 @@ HOL to IMP tactics with arguments from context.
   [IMP_def, imp_minus_correct, HOL_eqs, fun_inducts, mode]}
 
 @{parse_entries (sig) PARSE_HOL_NAT_TO_IMP_PROOF_MODES
-  [induction, simple]}
+  [induction, simple, run_finish]}
 
 signature HOL_NAT_TO_IMP_MINUS_TACTICS_BASE =
 sig
@@ -59,7 +59,7 @@ structure PU = Parse_Util
   [IMP_def, imp_minus_correct, HOL_eqs, fun_inducts, mode]}
 
 @{parse_entries (struct) PM
-  [induction, simple]}
+  [induction, simple, run_finish]}
 type mode = PM.key
 val parse_mode = PM.parse_key
 
@@ -86,7 +86,7 @@ fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
   let fun tac c =
     let val solve_side_condition_tac =
       (HTIT.delete_IH_prems
-      THEN' Simplifier.simp_tac (ctxt addsimps (get_IMP_def ctxt c |> the_list)))
+      THEN' Simplifier.safe_simp_tac (ctxt addsimps (get_IMP_def ctxt c |> the_list)))
       |> SOLVED'
     in
       resolve_tac ctxt [@{thm terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI}]
@@ -116,10 +116,16 @@ fun cook_tac context_args mode ctxt =
     val get_IMP_def = PCA.get_get_IMP_def context_args
     val get_imp_minus_correct = PCA.get_get_imp_minus_correct context_args
     val get_HOL_eqs = PCA.get_get_HOL_eqs context_args
+    val should_setup = case mode of
+        SOME (PM.induction _) => true
+      | SOME (PM.simple _) => true
+      | SOME (PM.run_finish _) => false
+      | NONE => true
     fun start_run_finish_tac {c,...}=
       let val is_induction = case mode of
           SOME (PM.induction _) => true
         | SOME (PM.simple _) => false
+        | SOME (PM.run_finish _) => false
         | NONE => get_IMP_def ctxt c |> Option.map is_IMP_def_rec |> the_default false
       in
         HTIT.start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_minus_correct
@@ -127,7 +133,7 @@ fun cook_tac context_args mode ctxt =
       end
   in
     (fn _ => fn st => (@{log Logger.INFO} ctxt (K "👨‍🍳 Cooking 👩‍🍳"); all_tac st))
-    THEN' correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt
+    THEN' (if should_setup then correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt else K all_tac)
     THEN' HTIT.with_dest_terminates_with_res_IMP_Tailcall_prop ctxt start_run_finish_tac
     THEN' (fn _ => fn st => if Thm.no_prems st
       then (@{log Logger.INFO} ctxt (K "Dinner served! 😍🍲😍"); all_tac st)

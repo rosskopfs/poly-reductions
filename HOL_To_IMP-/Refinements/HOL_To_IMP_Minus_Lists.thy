@@ -196,9 +196,7 @@ lemmas drop_nat_eq = HTHN.drop_nat_eq_unfolded[unfolded case_list_nat_def case_n
 compile_nat drop_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.drop_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  by (induction ya arbitrary: s y)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  by (induction ya arbitrary: s y) (cook mode = run_finish)
 
 end
 
@@ -296,8 +294,7 @@ compile_nat map_pair_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_pair_acc_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "Pair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HOL_To_HOL_Nat.map_acc.induct)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (cook mode = run_finish)
 
 lemmas product_acc_nat_eq = HTHN.product_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat product_acc_nat_eq
@@ -360,9 +357,7 @@ lemmas ListMem_nat_eq = HTHN.ListMem_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat ListMem_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.ListMem_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
-  by (induction ya arbitrary: s)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-  HB.get_HOL_eqs @{context} 1\<close>)+
+  by (induction ya arbitrary: s) (cook mode = run_finish)
 
 end
 

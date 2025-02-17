@@ -44,8 +44,8 @@ compile_nat is_n_sat_list_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.is_n_sat_list_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction ya arbitrary: s)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (tactic \<open>PARALLEL_ALLGOALS (HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
+    HB.get_HOL_eqs @{context})\<close>)
 
 lemmas flip_lit_nat_eq = HTHN.flip_lit_nat_eq_unfolded[unfolded case_lit_nat_def]
 compile_nat flip_lit_nat_eq

@@ -41,28 +41,41 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_pos_RU_flip_lit_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.pos_RU_flip_lit y ya :: 'a red lit \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (cook mode = run_finish)
 
 end
 
 context HOL_To_HOL_Nat
 begin
 
+definition [termination_simp]: "to_at_most_3_clause_acc_body_rec_aux1 i j c d rest \<equiv>
+  Neg (RU (i, j)) # c # d # rest"
+
+lemmas to_at_most_3_clause_acc_body_rec_aux1_eq = to_at_most_3_clause_acc_body_rec_aux1_def
+function_compile_nat to_at_most_3_clause_acc_body_rec_aux1_eq
+
+definition "to_at_most_3_clause_acc_body_rec_aux2 a b c d rest i j acc \<equiv>
+  (([a, b, Pos (RU (i, j))] # map (\<lambda>l. [Pos (RU (i, j)), flip_lit l]) (c # d # rest)) @ acc)"
+
+lemmas to_at_most_3_clause_acc_body_rec_aux2_eq =
+  to_at_most_3_clause_acc_body_rec_aux2_def[unfolded map_eq_map_acc_nil,
+  folded pos_RU_flip_lit_def map_acc_pos_RU_flip_lit_def]
+function_compile_nat to_at_most_3_clause_acc_body_rec_aux2_eq
+
 fun to_at_most_3_clause_acc where
   "to_at_most_3_clause_acc (a # b # c # d # rest) i j acc =
-    to_at_most_3_clause_acc (Neg (RU (i, j)) # c # d # rest) i (j+1)
-    (([a, b, Pos (RU (i, j))] # map (\<lambda>l. [Pos (RU (i, j)), flip_lit l]) (c # d # rest)) @ acc)"
+    to_at_most_3_clause_acc (to_at_most_3_clause_acc_body_rec_aux1 i j c d rest) i (j + 1)
+    (to_at_most_3_clause_acc_body_rec_aux2 a b c d rest i j acc)"
 | "to_at_most_3_clause_acc xs i j acc = [xs] @ acc"
 declare to_at_most_3_clause_acc.simps[simp del]
 
 lemma to_at_most_3_clause_acc_eq_to_at_most_3_clause_append:
   "to_at_most_3_clause_acc xs i j acc = to_at_most_3_clause xs i j @ acc"
   by (induction xs i j acc rule: to_at_most_3_clause_acc.induct)
-  (auto simp: to_at_most_3_clause_acc.simps)
+  (auto simp: to_at_most_3_clause_acc.simps
+    to_at_most_3_clause_acc_body_rec_aux1_def to_at_most_3_clause_acc_body_rec_aux2_def)
 
-case_of_simps to_at_most_3_clause_acc_eq : to_at_most_3_clause_acc.simps[unfolded map_eq_map_acc_nil,
-  folded pos_RU_flip_lit_def map_acc_pos_RU_flip_lit_def]
+case_of_simps to_at_most_3_clause_acc_eq : to_at_most_3_clause_acc.simps
 function_compile_nat to_at_most_3_clause_acc_eq
 
 lemma to_at_most_3_clause_eq_to_at_most_3_clause_acc_nil:
@@ -76,12 +89,17 @@ end
 context HOL_Nat_To_IMP_Minus
 begin
 
+compile_nat HTHN.to_at_most_3_clause_acc_body_rec_aux1_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux1_nat by cook
+
+compile_nat HTHN.to_at_most_3_clause_acc_body_rec_aux2_nat_eq_unfolded
+HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux2_nat by cook
+
 lemmas to_at_most_3_clause_acc_nat_eq = HTHN.to_at_most_3_clause_acc_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat to_at_most_3_clause_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_nat
-  (* by cook *) \<comment>\<open>FIXME: too slow\<close>
-  sorry
+  by cook \<comment>\<open>FIXME: very slow, but terminates!\<close>
 
 compile_nat HTHN.to_at_most_3_clause_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_nat by cook
@@ -167,8 +185,7 @@ compile_nat map_acc_map_lit_RV_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_map_lit_RV_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.map_lit_RV :: 'a lit \<Rightarrow> _" _ _ arbitrary: s rule: HTHN.map_acc.induct)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (cook mode = run_finish)
 
 compile_nat HTHN.map_map_lit_RV_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_map_lit_RV_nat by cook
@@ -180,8 +197,7 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_map_map_lit_RV_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.map_map_lit_RV :: 'a lit list \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
-  (tactic \<open>HT.start_run_finish_case_tac HT.get_IMP_def HT.get_imp_minus_correct
-    HB.get_HOL_eqs @{context} 1\<close>)+
+  (cook mode = run_finish)
 
 compile_nat HTHN.map_map_map_lit_RV_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_map_map_lit_RV_nat by cook

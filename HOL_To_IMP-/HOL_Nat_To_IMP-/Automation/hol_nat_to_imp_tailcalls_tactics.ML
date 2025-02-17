@@ -379,6 +379,7 @@ fun start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt
 fun start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
   ctxt =
   (if is_induction then setup_induction_tac get_fun_inducts ctxt else K all_tac)
-  THEN_ALL_NEW (start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt)
+  THEN' K
+    (PARALLEL_ALLGOALS (start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt))
 
 end
