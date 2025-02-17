@@ -5,7 +5,7 @@ section "Equivalence of big step and small step semantics"
 theory Big_Step_Small_Step_Equivalence imports Big_StepT Small_StepT begin
 
 paragraph "Introduction"
-text "We show that the big and small step semantics with time we defined for IMP- are equivalent."
+text "We show that the big and small step semantics with time we defined for IMP are equivalent."
 
 text "from Big step to small step semantics"
 lemma big_to_small_helper: "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> t = Suc t' \<Longrightarrow> (c, s) \<rightarrow>\<^bsup> t' \<^esup> (SKIP, s')"

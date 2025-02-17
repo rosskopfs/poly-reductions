@@ -1,10 +1,10 @@
 \<^marker>\<open>creator Bilel Ghorbel\<close>
-chapter \<open>Abstractions over IMP-\<close>
+chapter \<open>Abstractions over IMP\<close>
 paragraph \<open>Summary\<close>
 text \<open>We define an abstraction layer over our computation model 
       to be able to define complexity classes easily.\<close>
 theory Abstractions
-  imports  "IMP_Minus.Big_StepT"
+  imports  "IMP.Big_StepT"
 begin
 paragraph \<open>Definitions\<close>
 text \<open>
@@ -55,7 +55,7 @@ lemma state_maker_works:
   apply (auto simp add:state_maker_works_helper1 state_maker_works_helper2)
   done
 paragraph \<open>Computing determinism\<close>
-text \<open>Thanks to the determinism of IMP-, computations are deterministic.
+text \<open>Thanks to the determinism of IMP, computations are deterministic.
 i.e. if a program c computes for every input xs, two results r1 AND r2 who describe the same
 final registers, then r1=r2
 
@@ -129,7 +129,7 @@ subsection \<open>Decision problems\<close>
 paragraph \<open>Convention\<close>
 text \<open>Decision programs are programs that compute a boolean logical result 
 (hence a decision) given an input.
-IMP- does only support natural number values. But we can make our own interpretation of the result
+IMP does only support natural number values. But we can make our own interpretation of the result
 r::nat as a boolean value. 
 
 Theoretically, every predicate in HOL over the result r is an admissible interpretation.

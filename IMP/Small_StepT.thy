@@ -1,12 +1,12 @@
 \<^marker>\<open>creator Bilel Ghorbel, Florian Kessler\<close>
 
-section "Small step semantics of IMP- "
+section "Small step semantics of IMP "
 
 subsection "Small step semantics definition"
 theory Small_StepT  imports Main Com Rel_Pow begin
 
 paragraph "Summary"
-text\<open>We give small step semantics with time for IMP-.
+text\<open>We give small step semantics with time for IMP.
 Based on the small step semantics definition time for IMP\<close>
 
 inductive

@@ -11,7 +11,7 @@ theory Complexity_Classes
   imports
     "Karp21.Polynomial_Growth_Functions"
     "Karp21.SAT_Definition" Bounds Abstractions
-    "IMP-_Reductions"
+    "IMP_Reductions"
 
 begin
 paragraph \<open>Conventions\<close>

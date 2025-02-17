@@ -1,5 +1,5 @@
 \<^marker>\<open>creator Bilel Ghorbel, Florian Kessler\<close>
-section "IMP- A reduced imperative language"
+section "IMP A reduced imperative language"
 theory Com
   imports
     Main
@@ -10,7 +10,7 @@ theory Com
 begin
 
 paragraph "Summary"
-text\<open>Syntax definition for IMP-. Based on the syntax definition of IMP\<close>
+text\<open>Syntax definition for IMP. Based on the syntax definition of IMP\<close>
 
 datatype com = SKIP
   | Assign vname aexp

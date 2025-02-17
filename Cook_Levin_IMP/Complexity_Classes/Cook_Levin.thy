@@ -3,7 +3,7 @@ chapter \<open>The mighty Cook-Levin Theorem\<close>
 paragraph \<open>Summary\<close>
 text \<open>Stating the Cook-Levin theorem based on a homomorphism of SAT formulas.
 
-Since IMP- works on natural numbers. We prove that the set of encoded satisfiable formulae
+Since IMP works on natural numbers. We prove that the set of encoded satisfiable formulae
 is NP-Hard.
 
 The homomorphism in HOL should be polynomially bounded in time. The statement cannot be formalized ?
@@ -147,7 +147,7 @@ proof -
     using assms
     by (auto simp add: NP_def is_poly_verif_def poly_time_bounded_def poly_certif_bounded_def)
 
-  \<comment> \<open>Using the @{thm main_lemma} we obtain a IMP- program \<open>imp_to_sat\<close> that gives us for an input
+  \<comment> \<open>Using the @{thm main_lemma} we obtain a IMP program \<open>imp_to_sat\<close> that gives us for an input
       x a formula \<open>f\<close> that is satisfiably iff \<open>v\<close> would verify that \<open>x\<in>L\<close>\<close>
   have "poly p" "poly p_cer" using pv_def by auto
   moreover have "\<forall>s. \<exists>t. Ex (big_step_t (v, s) t) \<and> t \<le> p (bit_length (s ''input'') + bit_length (s ''certificate''))" using pv_def(3)

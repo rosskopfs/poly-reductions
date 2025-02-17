@@ -1,14 +1,14 @@
 \<^marker>\<open>creator Mohammad Abdulaziz, Bilel Ghorbel, Florian Kessler\<close>
-section "Big step semantics of IMP-"
+section "Big step semantics of IMP"
 theory Big_StepT imports Main Max_Constant Com "HOL-Eisbach.Eisbach_Tools" begin
 
 paragraph "Summary"
-text\<open>We define big step semantics with time for IMP-.
+text\<open>We define big step semantics with time for IMP.
 Based on the big step semantics definition with time of IMP\<close>
 
 subsection "Big step semantics definition:"
 
-text "In IMP- Branching is only based on whether a variable's value equals 0."
+text "In IMP Branching is only based on whether a variable's value equals 0."
 
 inductive
   big_step_t :: "com \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool"  ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)
@@ -82,7 +82,7 @@ lemma assign_t_simp:
   "((x ::= a,s) \<Rightarrow>\<^bsup> Suc(Suc 0) \<^esup>  s') \<longleftrightarrow> (s' = s(x := aval a s))"
   by (auto)
 
-subsection "Determinism of Big semantics of IMP-"
+subsection "Determinism of Big semantics of IMP"
 theorem big_step_t_determ2: "\<lbrakk> (c,s) \<Rightarrow>\<^bsup> p \<^esup> t; (c,s) \<Rightarrow>\<^bsup> q \<^esup> u \<rbrakk> \<Longrightarrow> (u = t \<and> p=q)"
   apply  (induction arbitrary: u q rule: big_step_t_induct)
     apply(elim Skip_tE) apply(simp)

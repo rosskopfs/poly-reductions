@@ -5,14 +5,14 @@ begin
 
 section "IMP"
 
-text \<open>IMP with calls to IMP- programs (explicitly stored).\<close>
+text \<open>IMP with calls to IMP programs (explicitly stored).\<close>
 datatype
   com' = SKIP'
       | Assign' vname aexp
       | Seq'    com'  com'
       | If'     vname com' com'
       | While'  vname com'
-\<comment> \<open>The only change: A call to an IMP- @{typ com}, storing its result in the return @{typ vname}.\<close>
+\<comment> \<open>The only change: A call to an IMP @{typ com}, storing its result in the return @{typ vname}.\<close>
       | Call'   com vname
 
 open_bundle com'_syntax
@@ -40,7 +40,7 @@ WhileTrue': "\<lbrakk> s1 b \<noteq> 0;  (c,s1) \<Rightarrow>'\<^bsup> x \<^esup
     the subprogram. In the caller, only the result variable is affected.\<close>
 Call': "(c,s) \<Rightarrow>\<^bsup> z \<^esup> t \<Longrightarrow> (CALL c RETURN r,s) \<Rightarrow>'\<^bsup> z \<^esup> (s(r:=t r))"
 
-text \<open>For compilation to IMP-, skip to final proof.\<close>
+text \<open>For compilation to IMP, skip to final proof.\<close>
 
 code_pred big_step_t' .
 

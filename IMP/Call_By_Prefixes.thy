@@ -1,7 +1,7 @@
 (*Authors: Mohammad Abdulaziz*)
 
 theory Call_By_Prefixes
-  imports IMP_Minus.Com Big_StepT
+  imports IMP.Com Big_StepT
 begin
 
 abbreviation add_prefix :: "string \<Rightarrow> vname \<Rightarrow> vname" where

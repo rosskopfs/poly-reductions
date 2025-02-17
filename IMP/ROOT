@@ -1,4 +1,4 @@
-session IMP_Minus = "HOL-Eisbach" +
+session IMP = "HOL-Eisbach" +
   theories
     Com
     Big_StepT

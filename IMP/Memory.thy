@@ -4,7 +4,7 @@ theory Memory
   imports Big_Step_Small_Step_Equivalence "HOL-Library.Discrete_Functions" Max_Constant
 begin
 
-text \<open> We give a definition for the amount of memory that an IMP- program uses during its
+text \<open> We give a definition for the amount of memory that an IMP program uses during its
        execution, and show that there is a bound that is linear in the number of steps the
        execution takes. \<close>
 
