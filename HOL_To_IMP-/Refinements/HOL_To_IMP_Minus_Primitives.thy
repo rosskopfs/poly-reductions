@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Minus_Primitives
   imports
-    HOL_Nat_To_IMP_Minus.HOL_Nat_To_IMP_Tactics
+    "HOL_Nat_To_IMP-.HOL_Nat_To_IMP_Tactics"
 begin
 
 context HOL_To_HOL_Nat

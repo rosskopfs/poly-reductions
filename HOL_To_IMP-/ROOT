@@ -5,7 +5,7 @@ session HOL_To_HOL_Nat in "HOL_To_HOL_Nat" = Transport +
     HOL_To_HOL_Nat_Basics
     HOL_To_HOL_Nat_Tests
 
-session HOL_Nat_To_IMP_Minus in "HOL_Nat_To_IMP_Minus" = IMP +
+session "HOL_Nat_To_IMP-" in "HOL_Nat_To_IMP-" = IMP +
   sessions
     HOL_To_HOL_Nat
     ML_Typeclasses
@@ -17,7 +17,7 @@ session HOL_Nat_To_IMP_Minus in "HOL_Nat_To_IMP_Minus" = IMP +
   theories
    "HOL_Nat_To_IMP_Tactics"
 
-session Refinements in "Refinements" = HOL_Nat_To_IMP_Minus +
+session Refinements in "Refinements" = "HOL_Nat_To_IMP-" +
   sessions
     Karp21
   theories
