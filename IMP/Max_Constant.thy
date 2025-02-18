@@ -1,4 +1,5 @@
 \<^marker>\<open>creator Florian Keßler\<close>
+\<^marker>\<open>creator Fabian Huch\<close>
 
 section "IMP Max Constant"
 
@@ -9,24 +10,48 @@ begin
 text \<open>We define functions to derive the constant with the highest value and enumerate all variables
   in IMP programs. \<close>
 
-fun atomExp_to_constant:: "atomExp \<Rightarrow> nat" where
-"atomExp_to_constant (V var) = 0" |
-"atomExp_to_constant (N val) = val"
+class max_const =
+  fixes max_const :: "'a \<Rightarrow> nat"
 
-fun aexp_max_constant:: "AExp.aexp \<Rightarrow> nat" where
-"aexp_max_constant (A a) = atomExp_to_constant a" |
-"aexp_max_constant (Plus a b) = max (atomExp_to_constant a) (atomExp_to_constant b)" |
-"aexp_max_constant (Sub a b) = max (atomExp_to_constant a) (atomExp_to_constant b)"
+instantiation atomExp :: max_const
+begin
 
-fun max_constant :: "com \<Rightarrow> nat" where
-"max_constant (SKIP) = 0" |
-"max_constant (Assign vname aexp) = aexp_max_constant aexp" |
-"max_constant (Seq c1  c2) = max (max_constant c1) (max_constant c2)" |
-"max_constant (If  _ c1 c2) = max (max_constant c1) (max_constant c2)"  |
-"max_constant (While _ c) = max_constant c"
+fun max_const_atomExp :: "atomExp \<Rightarrow> nat" where
+"max_const (V _) = 0" |
+"max_const (N n) = n"
+
+instance ..
+
+end
+
+instantiation aexp :: max_const
+begin
+
+fun max_const_aexp :: "aexp \<Rightarrow> nat" where
+"max_const (A e) = max_const e" |
+"max_const (Plus e\<^sub>1 e\<^sub>2) = max (max_const e\<^sub>1) (max_const e\<^sub>2)" |
+"max_const (Sub e\<^sub>1 e\<^sub>2) = max (max_const e\<^sub>1) (max_const e\<^sub>2)"
+
+instance ..
+
+end
+
+instantiation com :: max_const
+begin
+
+fun max_const_com :: "com \<Rightarrow> nat" where
+"max_const SKIP = 0" |
+"max_const (_ ::= e) = max_const e" |
+"max_const (c1;;c2) = max (max_const c1) (max_const c2)" |
+"max_const (IF _\<noteq>0 THEN c1 ELSE c2) = max (max_const c1) (max_const c2)" |
+"max_const (WHILE _\<noteq>0 DO c) = max_const c"
+
+instance ..
+
+end
 
 lemma max_constant_not_increasing_step:
-  "(c1, s1) \<rightarrow> (c2, s2) \<Longrightarrow> max_constant c2 \<le> max_constant c1"
+  "(c1, s1) \<rightarrow> (c2, s2) \<Longrightarrow> max_const c2 \<le> max_const c1"
   by (induction c1 s1 c2 s2 rule: small_step_induct) auto
 
 lemma Max_range_le_then_element_le: "finite (range s) \<Longrightarrow> 2 * Max (range s) < (x :: nat) \<Longrightarrow> 2 * (s y) < x"
@@ -39,7 +64,7 @@ proof -
 qed
 
 lemma aval_le_when:
-  assumes "finite (range s)" "2 * max (Max (range s)) (aexp_max_constant a) < x"
+  assumes "finite (range s)" "2 * max (Max (range s)) (max_const a) < x"
   shows "AExp.aval a s < x"
 using assms proof(cases a)
   case (A x1)

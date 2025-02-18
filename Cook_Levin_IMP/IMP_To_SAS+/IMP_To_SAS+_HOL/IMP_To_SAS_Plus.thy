@@ -27,7 +27,7 @@ text \<open> We give a definition to compute the upper bound on the number of bi
 
 definition max_input_bits:: "IMP_com \<Rightarrow> (vname \<rightharpoonup> nat) \<Rightarrow> nat \<Rightarrow> nat" where
 "max_input_bits c I r = 
-  bit_length (max (max (Max (ran I)) r) (Max_Constant.max_constant c))" 
+  bit_length (max (max (Max (ran I)) r) (max_const c))" 
 
 lemma bit_at_index_geq_max_input_bits_is_zero:
   assumes "x < r" "max_input_bits c I r \<le> b"
@@ -45,15 +45,15 @@ lemma bit_at_index_geq_max_input_bits_is_zero_in_initial_state:
                       Max_ge ranI max.coboundedI1 bit_length_monotonic
                simp: max_input_bits_def)
 
-lemma max_constant_less_two_to_the_max_input_bits:
-  "max_constant c < 2 ^ (max_input_bits c I r)"
+lemma max_const_less_two_to_the_max_input_bits:
+  "max_const c < 2 ^ (max_input_bits c I r)"
   using floor_log_exp2_gt max_less_iff_conj
   by(fastforce simp: max_input_bits_def bit_length_def)
 
 lemma initial_state_element_less_two_to_the_max_input_bits: 
   "\<lbrakk>finite (ran I); I x = Some y\<rbrakk> \<Longrightarrow> y < (2 :: nat) ^ (max_input_bits c I r)" 
   by(force intro: floor_log_exp2_gt Max_ge ranI order.strict_trans1[of y "Max (ran I)"]
-                  order.strict_trans1[of _ "(max (max (Max (ran I)) r) (max_constant c))"]
+                  order.strict_trans1[of _ "(max (max (Max (ran I)) r) (max_const c))"]
            simp: algebra_simps max_input_bits_def bit_length_def)
 
 text \<open> Translation of a (partial) initial state from IMP to IMP-. Observe that in order to avoid
@@ -149,7 +149,7 @@ proof -
   have "Suc 0 < 2 ^ t'"
     using \<open>(c, s1) \<Rightarrow>\<^bsup> t \<^esup> s2\<close> \<open>t \<le> t'\<close> floor_log_Suc_zero
     by (fastforce intro: Suc_lessI dest: bigstep_progress)
-  moreover have "2 ^ t * max (Max (range s1)) (max_constant c) \<le> 2 ^ t' * 2 ^ max_input_bits c I r"
+  moreover have "2 ^ t * max (Max (range s1)) (max_const c) \<le> 2 ^ t' * 2 ^ max_input_bits c I r"
            (is "?max_bits_t \<le> _")
     using \<open>Max (range s1) < r\<close> \<open>t \<le> t'\<close> le_two_to_the_bit_length_intro mult_le_mono
     by (auto simp: max_input_bits_def)
@@ -386,7 +386,7 @@ proof -
     "Max (range (IMP_Minus_State_To_IMP s1 ?n)) < 2 ^ ?guess_range" 
     using all_bits_geq_k_Zero_then_IMP_Minus_State_To_IMP_range_limited by blast+
   ultimately have "s2' = IMP_State_To_IMP_Minus s2'' ?n" 
-    using IMP_Minus_To_IMP_aux max_constant_less_two_to_the_max_input_bits
+    using IMP_Minus_To_IMP_aux max_const_less_two_to_the_max_input_bits
     by(auto simp: power_add algebra_simps mult_2 trans_less_add2)
 
   have "G v = Some y \<Longrightarrow> s2'' v = y" for v y 
@@ -417,7 +417,7 @@ proof -
         apply(rule 
                 conjunct2[OF IMP_space_growth[OF \<open>(c, ?s1') \<Rightarrow>\<^bsup>t''\<^esup> s2''\<close> 
                                                        \<open>finite (range (IMP_Minus_State_To_IMP s1 ?n))\<close>, where ?k="?guess_range"]])
-        using \<open>Max (range (IMP_Minus_State_To_IMP s1 ?n)) < 2 ^ ?guess_range\<close> max_constant_less_two_to_the_max_input_bits 
+        using \<open>Max (range (IMP_Minus_State_To_IMP s1 ?n)) < 2 ^ ?guess_range\<close> max_const_less_two_to_the_max_input_bits 
         by auto
       also have "... \<le> 2 ^ (t + max_input_bits c I r)" 
         using \<open>t'' \<le> t\<close>

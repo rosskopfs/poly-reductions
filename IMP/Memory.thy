@@ -21,7 +21,7 @@ text \<open> The amount of memory a single state uses. Note that we only conside
        can be accessed by the program, hence the additional parameter 'c' in this definition. \<close>
 
 definition state_memory :: "com \<Rightarrow> state \<Rightarrow> nat" where
-"state_memory c s = fold (+) (map (\<lambda> r. bit_length (s r)) (remdups (all_variables c))) 0"
+"state_memory c s = fold (+) (map (\<lambda> r. bit_length (s r)) (remdups (vars c))) 0"
 
 text \<open> We define something to be a memory bound for a program and an initial state, if it
        bounds every state that is reachable. \<close>
@@ -119,7 +119,7 @@ lemma Max_insert_le_when: "finite (range (s :: vname \<Rightarrow> nat)) \<Longr
 lemma le_then_sub_le: "(a :: nat) \<le> b \<Longrightarrow> a - c \<le> b" by simp
 
 lemma one_step_Max_increase: "(c1, s1) \<rightarrow> (c2, s2) \<Longrightarrow> finite (range s1)
-  \<Longrightarrow> Max (range s2) \<le> 2 * (max (Max (range s1)) (max_constant c1))"
+  \<Longrightarrow> Max (range s2) \<le> 2 * (max (Max (range s1)) (max_const c1))"
 proof (induction c1 s1 c2 s2 rule: small_step_induct)
   case (Assign x a s)
   then show ?case
@@ -148,25 +148,25 @@ next
 qed (linarith)+
 
 lemma Max_increase: "(c1, s1) \<rightarrow>\<^bsup>t\<^esup> (c2, s2) \<Longrightarrow> finite (range s1)
-  \<Longrightarrow> Max (range s2) \<le> (2 ^ t) * (max (Max (range s1)) (max_constant c1))"
+  \<Longrightarrow> Max (range s2) \<le> (2 ^ t) * (max (Max (range s1)) (max_const c1))"
 proof (induction t arbitrary: c1 s1)
   case (Suc t)
   obtain c1' s1' where "(c1, s1) \<rightarrow> (c1', s1')" "(c1', s1') \<rightarrow>\<^bsup>t\<^esup> (c2, s2)"
     using \<open>(c1, s1) \<rightarrow>\<^bsup>Suc t\<^esup> (c2, s2)\<close>
     by auto
-  have "Max (range s2) \<le> (2 ^ t) * (max (Max (range s1')) (max_constant c1'))"
+  have "Max (range s2) \<le> (2 ^ t) * (max (Max (range s1')) (max_const c1'))"
     using Suc.IH \<open>finite (range s1)\<close>
       \<open>(c1', s1') \<rightarrow>\<^bsup>t\<^esup> (c2, s2)\<close> \<open>(c1, s1) \<rightarrow> (c1', s1')\<close>
       finite_range_stays_finite_step
     by presburger
   also have "... \<le> (2 ^ t) *
-    (max (2 * (max (Max (range s1)) (max_constant c1))) (max_constant c1'))"
+    (max (2 * (max (Max (range s1)) (max_const c1))) (max_const c1'))"
     using one_step_Max_increase[OF \<open>(c1, s1) \<rightarrow> (c1', s1')\<close> \<open>finite (range s1)\<close>]
     by simp
   also have "... \<le> (2 ^ Suc t) *
-      (max (max (Max (range s1)) (max_constant c1))) (max_constant c1')"
+      (max (max (Max (range s1)) (max_const c1))) (max_const c1')"
     by simp
-  also have "... \<le> (2 ^ Suc t) * max (Max (range s1)) (max_constant c1)"
+  also have "... \<le> (2 ^ Suc t) * max (Max (range s1)) (max_const c1)"
     using max_constant_not_increasing_step[OF \<open>(c1, s1) \<rightarrow> (c1', s1')\<close>]
     by simp
   finally show ?case by simp
@@ -176,10 +176,10 @@ text \<open> We show that there always is a linear bound for the memory consumpt
 
 lemma linear_bound: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<Longrightarrow> finite (range s1)
   \<Longrightarrow> is_memory_bound c1 s1 ((num_variables c1)
-      * (t + bit_length (max 1 (max (Max (range s1)) (max_constant c1)))))"
+      * (t + bit_length (max 1 (max (Max (range s1)) (max_const c1)))))"
 proof -
   let ?b = "(num_variables c1)
-      * (t + bit_length (max 1 (max (Max (range s1)) (max_constant c1))))"
+      * (t + bit_length (max 1 (max (Max (range s1)) (max_const c1))))"
 
   assume "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2" "finite (range s1)"
 
@@ -191,20 +191,20 @@ proof -
       using \<open>finite (range s1)\<close> finite_range_stays_finite
       by auto
 
-    have "Max (range s') \<le> (2 ^ t') * (max (Max (range s1)) (max_constant c1))"
+    have "Max (range s') \<le> (2 ^ t') * (max (Max (range s1)) (max_const c1))"
       using Max_increase \<open>(c1, s1) \<rightarrow>\<^bsup>t'\<^esup> (c', s')\<close> \<open>finite (range s1)\<close>
       by auto
-    also have "... \<le> (2 ^ t) * (max (Max (range s1)) (max_constant c1))"
+    also have "... \<le> (2 ^ t) * (max (Max (range s1)) (max_const c1))"
       using small_step_cant_run_longer_than_big_step
         \<open>(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2\<close> \<open>(c1, s1) \<rightarrow>\<^bsup>t'\<^esup> (c', s')\<close>
       by simp
 
     finally have "state_memory c' s' \<le> num_variables c'
-          * bit_length ((2 ^ t) * (max (Max (range s1)) (max_constant c1)))"
+          * bit_length ((2 ^ t) * (max (Max (range s1)) (max_const c1)))"
       using Max_register_bounds_state_memory[OF \<open>finite (range s')\<close>]
       by (meson bit_length_monotonic dual_order.trans mult_le_cancel1)
     also have "... \<le>  num_variables c'
-          * bit_length ((2 ^ t) * (max 1 (max (Max (range s1)) (max_constant c1))))"
+          * bit_length ((2 ^ t) * (max 1 (max (Max (range s1)) (max_const c1))))"
       using bit_length_monotonic
       by simp
 

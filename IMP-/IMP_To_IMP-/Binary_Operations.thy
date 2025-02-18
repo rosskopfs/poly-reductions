@@ -535,7 +535,7 @@ definition assignment_to_binary:: "nat \<Rightarrow> vname \<Rightarrow> AExp.ae
 
 \<^marker>\<open>title "lem:bitblastExpr"\<close>
 lemma assignment_to_binary_correct:
-  assumes "n > 0"  "AExp.aval a s < 2 ^ n" "\<forall>v. s v < 2 ^ n" "aexp_max_constant a < 2 ^ n"
+  assumes "n > 0"  "AExp.aval a s < 2 ^ n" "\<forall>v. s v < 2 ^ n" "max_const a < 2 ^ n"
   shows
     "t_small_step_fun (50 * (n + 1))
        (assignment_to_binary n v a,
