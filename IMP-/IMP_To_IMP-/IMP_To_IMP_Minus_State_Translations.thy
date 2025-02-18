@@ -3,7 +3,7 @@
 section "IMP to IMP- State Translations"
 
 theory IMP_To_IMP_Minus_State_Translations
-  imports "IMP.Small_StepT" Binary_Arithmetic
+  imports "IMP.IMP_Base" Binary_Arithmetic 
 begin
 
 text \<open> We define a translation between IMP states, which map registers to natural numbers, and
@@ -15,8 +15,8 @@ text \<open> We define a translation between IMP states, which map registers to 
         operands ''a'' and ''b'' with n bits respectively, which we will use when replacing
         arithmetic expressions by binary operations when translating IMP to IMP- programs. \<close>
                           
-type_synonym state = AExp.state
-type_synonym bit_state = IMP_Minus_Small_StepT.state
+type_synonym state = IMP_Base.state
+type_synonym bit_state = "IMP_Minus_Base.state"
 
 definition var_to_var_bit:: "vname \<Rightarrow> (vname * nat) option" where
 "var_to_var_bit v =

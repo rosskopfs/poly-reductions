@@ -13,8 +13,6 @@ Based on the small step semantics definition time for IMP. In contrast to IMP, w
 maps to represent states. That has the simple reason the we designed this with translation to
 SAS++ in mind, which also uses partial states. \<close>
 
-type_synonym state = "vname \<rightharpoonup> bit"
-
 inductive
   small_step :: "com * state  \<Rightarrow> com * state \<Rightarrow> bool"  ("_ \<rightarrow> _" 55)
   where

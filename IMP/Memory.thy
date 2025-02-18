@@ -89,8 +89,8 @@ lemma fold_max_map_le_Max_range':
   by (metis max_0L)
 
 lemma Max_register_bounds_state_memory: "finite (range s)
-  \<Longrightarrow> state_memory c s \<le> num_variables c * bit_length (Max (range s))"
-  by(auto simp: num_variables_def fold_max_map_bit_length' state_memory_def
+  \<Longrightarrow> state_memory c s \<le> num_vars c * bit_length (Max (range s))"
+  by(auto simp: num_vars_def fold_max_map_bit_length' state_memory_def
           intro!: bit_length_monotonic fold_max_map_le_Max_range' sum_of_list_leq_length_times_max)
 
 lemma finite_range_stays_finite_step: "(c1, s1) \<rightarrow> (c2, s2) \<Longrightarrow> finite (range s1)
@@ -175,10 +175,10 @@ qed auto
 text \<open> We show that there always is a linear bound for the memory consumption. \<close>
 
 lemma linear_bound: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<Longrightarrow> finite (range s1)
-  \<Longrightarrow> is_memory_bound c1 s1 ((num_variables c1)
+  \<Longrightarrow> is_memory_bound c1 s1 ((num_vars c1)
       * (t + bit_length (max 1 (max (Max (range s1)) (max_const c1)))))"
 proof -
-  let ?b = "(num_variables c1)
+  let ?b = "(num_vars c1)
       * (t + bit_length (max 1 (max (Max (range s1)) (max_const c1))))"
 
   assume "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2" "finite (range s1)"
@@ -199,17 +199,17 @@ proof -
         \<open>(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2\<close> \<open>(c1, s1) \<rightarrow>\<^bsup>t'\<^esup> (c', s')\<close>
       by simp
 
-    finally have "state_memory c' s' \<le> num_variables c'
+    finally have "state_memory c' s' \<le> num_vars c'
           * bit_length ((2 ^ t) * (max (Max (range s1)) (max_const c1)))"
       using Max_register_bounds_state_memory[OF \<open>finite (range s')\<close>]
       by (meson bit_length_monotonic dual_order.trans mult_le_cancel1)
-    also have "... \<le>  num_variables c'
+    also have "... \<le>  num_vars c'
           * bit_length ((2 ^ t) * (max 1 (max (Max (range s1)) (max_const c1))))"
       using bit_length_monotonic
       by simp
 
     finally show "state_memory c' s' \<le> ?b"
-      using num_variables_not_increasing[OF \<open>(c1, s1) \<rightarrow>\<^bsup>t'\<^esup> (c', s')\<close>] order_trans
+      using num_vars_not_increasing[OF \<open>(c1, s1) \<rightarrow>\<^bsup>t'\<^esup> (c', s')\<close>] order_trans
       by(fastforce simp: bit_length_of_power_of_two)
   qed
 

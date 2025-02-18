@@ -3,7 +3,9 @@
 section "Small step semantics of IMP "
 
 subsection "Small step semantics definition"
-theory Small_StepT  imports Main Com "IMP-.Rel_Pow" begin
+theory Small_StepT 
+  imports Com "IMP-.Rel_Pow"
+begin
 
 paragraph "Summary"
 text\<open>We give small step semantics with time for IMP.
@@ -36,15 +38,6 @@ notation small_step (infix "\<rightarrow>" 55) and
          small_step_pow ("_ \<rightarrow>\<^bsup>_\<^esup> _" 55)
 end
 
-subsection\<open>Executability\<close>
-
-code_pred small_step .
-
-experiment begin
-values "{(c',map t [''x'',''y'',''z''], n) |c' t n.
-   ((''x'' ::= A (V ''z'');; ''y'' ::=A ( V ''x''),
-    <''x'' := 3, ''y'' := 7, ''z'' := 5>) \<rightarrow>\<^bsup>n\<^esup> (c',t))}"
-end
 subsection\<open>Proof infrastructure\<close>
 
 subsubsection\<open>Induction rules\<close>
@@ -139,5 +132,40 @@ proof(rule ccontr)
     by (cases t3) auto
   thus False using \<open>t3 > 0\<close> by simp
 qed
+
+
+section "Facts"
+
+lemma max_constant_not_increasing_step:
+  "(c1, s1) \<rightarrow> (c2, s2) \<Longrightarrow> max_const c2 \<le> max_const c1"
+  by (induction c1 s1 c2 s2 rule: small_step_induct) auto
+
+
+
+lemma all_variables_subset_step: "(c1, s1) \<rightarrow> (c2, s2)
+  \<Longrightarrow> set (vars c2) \<subseteq> set (vars c1)"
+  apply(induction c1 s1 c2 s2 rule: small_step_induct)
+  by auto
+
+lemma num_vars_not_increasing_step: "(c1, s1) \<rightarrow> (c2, s2)
+  \<Longrightarrow> num_vars c2 \<le> num_vars c1"
+  apply(induction c1 s1 c2 s2 rule: small_step_induct)
+  using subset_then_length_remdups_le[OF all_variables_subset_step]
+        apply(auto simp: num_vars_def length_remdups_card_conv)
+        apply (meson List.finite_set card_mono finite_Un sup.cobounded1 sup.cobounded2 le_SucI)+
+  by (simp add: insert_absorb)
+
+lemma num_vars_not_increasing: "(c1, s1) \<rightarrow>\<^bsup> t \<^esup> (c2, s2)
+  \<Longrightarrow> num_vars c2 \<le> num_vars c1"
+proof (induction t arbitrary: c1 s1)
+  case (Suc t)
+  then obtain c3 s3 where "(c1, s1) \<rightarrow> (c3, s3)" "(c3, s3) \<rightarrow>\<^bsup> t \<^esup> (c2, s2)"
+    by auto
+  then show ?case
+    using num_vars_not_increasing_step[OF \<open>(c1, s1) \<rightarrow> (c3, s3)\<close>]
+      Suc.IH[OF \<open>(c3, s3) \<rightarrow>\<^bsup> t \<^esup> (c2, s2)\<close>]
+    by simp
+qed auto
+
 
 end

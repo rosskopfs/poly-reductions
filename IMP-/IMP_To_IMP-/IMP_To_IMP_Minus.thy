@@ -4,7 +4,7 @@
 section "IMP to IMP-"
 
 theory IMP_To_IMP_Minus
-  imports "IMP.Max_Constant" Binary_Operations 
+  imports "IMP.Big_StepT" Binary_Operations
 begin
 
 text \<open> We give a reduction from IMP to IMP-. The reduction works by bit blasting each register
@@ -67,7 +67,7 @@ qed
 \<^marker>\<open>title "thm:spaceConsume"\<close>
 lemma IMP_space_growth:
   "\<lbrakk>(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2; finite (range s1);
-    max (Max (range s1)) (Max_Constant.max_const c1) < 2 ^ k\<rbrakk> \<Longrightarrow>
+    max (Max (range s1)) (max_const c1) < 2 ^ k\<rbrakk> \<Longrightarrow>
     (finite (range s2) \<and> Max (range s2) < (2 :: nat) ^ (k + t))"
 proof(induction c1 s1 t s2 arbitrary: k rule: big_step_t_induct)
   case (Skip s)
@@ -344,11 +344,11 @@ lemma card_union_le_intro: "card U \<le> a \<Longrightarrow> card W \<le> b \<Lo
 lemma IMP_To_IMP_Minus_variables_length:
   assumes "n > 0"
   shows "length (enumerate_variables (IMP_To_IMP_Minus c n)) \<le>
-    (n + 1) * (Max_Constant.num_variables c) + 2 * n + 1"
+    (n + 1) * (num_vars c) + 2 * n + 1"
 proof -
   have "finite { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
     \<and> card { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
-    \<le> n * (Max_Constant.num_variables c)"
+    \<le> n * (num_vars c)"
   proof(induction n)
     case (Suc n)
     have "{var_bit_to_var (w, i) |w i. i < Suc n \<and> w \<in> set (vars c)}
@@ -356,12 +356,12 @@ proof -
         \<union> { var_bit_to_var (w, n) |w. w \<in> set (vars c) }"
       by auto
     moreover have "card {var_bit_to_var (w, n) |w. w \<in> set (vars c)}
-      \<le> num_variables c"
-      using card_of_set_comprehension_of_set_list num_variables_def by fastforce
+      \<le> num_vars c"
+      using card_of_set_comprehension_of_set_list num_vars_def by fastforce
     ultimately show ?case using Suc by (simp add: card_union_le sup_commute)
   qed auto
   moreover have "card {CHR ''?'' # CHR ''$'' # w |w. w \<in> set (vars c)}
-    \<le> num_variables c" using card_of_set_comprehension_of_set_list num_variables_def by fastforce
+    \<le> num_vars c" using card_of_set_comprehension_of_set_list num_vars_def by fastforce
   moreover have "finite {operand_bit_to_var (op, i) |op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'')}
     \<and> card { operand_bit_to_var (op, i) |op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') } \<le> 2 * n"
   proof (induction n)
@@ -377,10 +377,10 @@ proof -
     \<union> { ''carry'' })" and
     "card ({ var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
     \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
-    \<union> { ''carry'' }) \<le> (n + 1) * (num_variables c) + 2 * n + 1"
+    \<union> { ''carry'' }) \<le> (n + 1) * (num_vars c) + 2 * n + 1"
     by(auto simp: card_union_le intro!: card_insert_le_m1 card_union_le_intro)
   hence "card (set (enumerate_variables (IMP_To_IMP_Minus c n)))
-    \<le> (n + 1) * (num_variables c) + 2 * n + 1"
+    \<le> (n + 1) * (num_vars c) + 2 * n + 1"
     using card_mono[OF f IMP_To_IMP_Minus_variables[OF \<open>n > 0\<close>]] by simp
   thus ?thesis by(simp add:  distinct_card[OF enumerate_variables_distinct])
 qed

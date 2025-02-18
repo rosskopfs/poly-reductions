@@ -5,8 +5,8 @@ section "Binary Operations in IMP-"
 theory Binary_Operations
   imports
     IMP_To_IMP_Minus_State_Translations
-    IMP.Max_Constant
-    "IMP-.IMP_Minus_Subprograms"
+    "IMP.Com"
+    "IMP-.IMP_Minus_Subprograms" 
 begin
 
 text \<open> We give programs in IMP- that work on states translated from IMP to IMP- and simulate
@@ -14,7 +14,7 @@ text \<open> We give programs in IMP- that work on states translated from IMP to
        operand registers, and then performing standard binary addition / subtraction. \<close>
 
 type_synonym IMP_com = Com.com
-type_synonym IMP_Minus_com = com
+type_synonym IMP_Minus_com = "IMP_Minus_Com.com"
 
 unbundle no Com.com_syntax
 

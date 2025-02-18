@@ -1,6 +1,6 @@
 \<^marker>\<open>creator Fabian Huch\<close>
 theory IMP_Calls
-  imports Vars
+  imports Big_StepT
 begin
 
 section "IMP"
@@ -96,7 +96,7 @@ next
     by (metis (mono_tags, lifting) WhileTrue'.hyps(1) WhileTrue'.hyps(4) big_step_t'.WhileTrue' eq_onE)
 next
   case (Call' c s z t r)
-  then show ?case apply auto using Vars.noninterference[of c s z t S s'] by fastforce
+  then show ?case apply auto using noninterference[of c s z t S s'] by fastforce
 qed fastforce+
 
 lemma var'_unchanged: "(c,s) \<Rightarrow>'\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> s v = t v"

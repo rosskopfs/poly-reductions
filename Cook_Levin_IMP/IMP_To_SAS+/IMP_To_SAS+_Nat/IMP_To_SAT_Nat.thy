@@ -491,7 +491,7 @@ encode_problem_with_operator_interference_exclusion_def
         encode_problem_with_operator_interference_exclusion_list 
         (sas_plus_problem_to_strips_problem_list (prob_with_noop_list (IMP_to_SAS_Plus_list c I guess_range G (t'_pair pt p_cer x))))
            (100 * (max_bits + (t'_pair pt p_cer x) + 1) * ((t'_pair pt p_cer x) - 1) +
-             (max_bits + (t'_pair pt p_cer x) + 2) * (num_variables c + 2) + 52))"
+             (max_bits + (t'_pair pt p_cer x) + 2) * (num_vars c + 2) + 52))"
 
 lemma sublist_imp_to_sat:
 "imp_to_sat_list c pt p_cer x 
@@ -542,7 +542,7 @@ lemma main_lemma_hol_list:
           "\<And>x s s' t. \<lbrakk>in_lang x \<noteq> 0; s ''input'' = x; (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'\<rbrakk> \<Longrightarrow>
                          s' ''input'' = in_lang x"
   assumes verifier_has_registers:
-    "''input'' \<in> set (Max_Constant.all_variables c)"
+    "''input'' \<in> set (all_vars c)"
   shows "\<exists>t_red s_red.
          poly t_red 
        \<and> poly s_red
@@ -560,7 +560,7 @@ lemma main_lemma_hol_list:
         encode_problem_with_operator_interference_exclusion_nat 
         (sas_plus_problem_to_strips_problem_nat (prob_with_noop_nat (IMP_to_SAS_Plus_nat c I guess_range G (t'_nat pt p_cer x))))
            (100 * (max_bits + (t'_nat pt p_cer x) + 1) * ((t'_nat pt p_cer x) - 1) +
-             (max_bits + (t'_nat pt p_cer x) + 2) * (num_variables_nat c + 2) + 52))"
+             (max_bits + (t'_nat pt p_cer x) + 2) * (num_vars_nat c + 2) + 52))"
 
 definition imp_to_sat_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
     "imp_to_sat_tail c pt p_cer x =
@@ -572,14 +572,14 @@ definition imp_to_sat_tail :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightar
         encode_problem_with_operator_interference_exclusion_tail 
         (sas_plus_problem_to_strips_problem_tail (prob_with_noop_tail (IMP_to_SAS_Plus_tail c I guess_range G (t'_tail pt p_cer x))))
            (100 * (max_bits + (t'_tail pt p_cer x) + 1) * ((t'_tail pt p_cer x) - 1) +
-             (max_bits + (t'_tail pt p_cer x) + 2) * (num_variables_tail c + 2) + 52))"
+             (max_bits + (t'_tail pt p_cer x) + 2) * (num_vars_tail c + 2) + 52))"
 
 lemma subtail_imp_to_sat :
 "imp_to_sat_tail c pt p_cer x = imp_to_sat_nat c pt p_cer x"
   apply(auto simp only: imp_to_sat_tail_def imp_to_sat_nat_def
 subtail_poly_of subtail_max_input_bits subtail_encode_problem_with_operator_interference_exclusion
 subtail_sas_plus_problem_to_strips_problem subtail_prob_with_noop subtail_IMP_to_SAS_Plus
-subtail_t' subtail_num_variables
+subtail_t' subtail_num_vars
 )
   done
 
@@ -592,7 +592,7 @@ lemma subnat_imp_to_sat:
 sat_formula_encode (imp_to_sat_list c pt p_cer x)  "
   apply (auto simp only: imp_to_sat_nat_def Let_def
     cons0 sub_cons  unfold_map_signleton[of impm_assignment_encode] 
-sub_poly_of subnat_max_input_bits subnat_t' sub_num_variables subnat_IMP_to_SAS_Plus
+sub_poly_of subnat_max_input_bits subnat_t' sub_num_vars subnat_IMP_to_SAS_Plus
 subnat_prob_with_noop subnat_encode_problem_with_operator_interference_exclusion
 simp flip: impm_assignment_encode.simps  impm_assignment_list_encode_def
 )
@@ -626,7 +626,7 @@ proof -
         (x + 1 + 2 * 2 ^ poly_of p_cer (Bit_Length.bit_length x)) +
        t'_pair pt p_cer x +
        2) *
-      (num_variables c + 2) +
+      (num_vars c + 2) +
       52) =
     sat_formula_encode (imp_to_sat_list c pt p_cer x)"
     apply (auto simp only: subnat_sas_plus_problem_to_strips_problem Let_def
@@ -654,7 +654,7 @@ lemma main_lemma_hol_nat:
           "\<And>x s s' t. \<lbrakk>in_lang x \<noteq> 0; s ''input'' = x; (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'\<rbrakk> \<Longrightarrow>
                          s' ''input'' = in_lang x"
   assumes verifier_has_registers:
-    "''input'' \<in> set (Max_Constant.all_variables c)"
+    "''input'' \<in> set (all_vars c)"
   shows "\<exists>t_red s_red.
          poly t_red 
        \<and> poly s_red
@@ -675,7 +675,7 @@ lemma main_lemma_hol_tail:
           "\<And>x s s' t. \<lbrakk>in_lang x \<noteq> 0; s ''input'' = x; (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'\<rbrakk> \<Longrightarrow>
                          s' ''input'' = in_lang x"
   assumes verifier_has_registers:
-    "''input'' \<in> set (Max_Constant.all_variables c)"
+    "''input'' \<in> set (all_vars c)"
   shows "\<exists>t_red s_red.
          poly t_red 
        \<and> poly s_red

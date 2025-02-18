@@ -128,7 +128,7 @@ lemma IMP_to_SAS_Plus_correctness:
     "t \<le> t'"
   shows
     "\<exists>plan. length plan \<le> 100 * (max_input_bits c I r + t' + 1) * (t' - 1) 
-                            + (max_input_bits c I r + t' + 1 + 1) * (num_variables c + 2) + 52
+                            + (max_input_bits c I r + t' + 1 + 1) * (num_vars c + 2) + 52
             \<and> is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t') plan"
 proof -
   let ?guess_range = " max_input_bits c I r"
@@ -216,14 +216,14 @@ proof -
      by rule
 
    let ?plan' = "prefix @ (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator plan)"
-   have "length ((?sas_plus_plus_problem)\<^sub>\<V>\<^sub>+) \<le> (?n + 1) * (num_variables c + 2) + 1"
+   have "length ((?sas_plus_plus_problem)\<^sub>\<V>\<^sub>+) \<le> (?n + 1) * (num_vars c + 2) + 1"
      using IMP_To_IMP_Minus_variables_length
              [where ?c=c and ?n="(Suc (t' + max_input_bits c I r))"]
      by(auto simp: imp_minus_minus_to_sas_plus_def Let_def add.commute)
-   hence "length prefix \<le> (?n + 1) * (num_variables c + 2) + 2"
+   hence "length prefix \<le> (?n + 1) * (num_vars c + 2) + 2"
      using prefix_def
      by simp
-   hence "length ?plan' \<le> 100 * ?n * (t' - 1) + (?n + 1) * (num_variables c + 2) + 52
+   hence "length ?plan' \<le> 100 * ?n * (t' - 1) + (?n + 1) * (num_vars c + 2) + 52
            \<and> is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t') ?plan'"
      using plan_def prefix_def t''_def
      by(auto simp: IMP_to_SAS_Plus_def Let_def add.commute)

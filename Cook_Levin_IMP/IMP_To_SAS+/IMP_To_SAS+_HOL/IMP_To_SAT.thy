@@ -1,6 +1,6 @@
 theory IMP_To_SAT
   imports "IMP_To_SAS_Plus" "Verified_SAT_Based_AI_Planning.SAT_Solve_SAS_Plus"
-    "Complexity_Basics.Cook_Levin" "IMP.Max_Constant"
+    "Complexity_Basics.Cook_Levin"
 begin
 
 section \<open>Translation from IMP to SAT\<close>
@@ -58,7 +58,7 @@ lemma while_program_has_model:
   "\<exists>\<A>. \<A> \<Turnstile> \<Phi>\<^sub>\<forall> (\<phi> prob_with_noop (IMP_to_SAS_Plus c I r G t'))
                 100 * (max_input_bits c I r + t' + 1) * (t' - 1) +
                    (max_input_bits c I r + t' + 2) *
-                      (num_variables c + 2) + 52"
+                      (num_vars c + 2) + 52"
   (is "\<exists>_. _ \<Turnstile> \<Phi>\<^sub>\<forall> _ (?b::nat)")
 proof-
   obtain plan where plan:
@@ -82,7 +82,7 @@ lemma if_there_is_model_then_program_terminates:
     "\<A> \<Turnstile> \<Phi>\<^sub>\<forall> (\<phi> prob_with_noop (IMP_to_SAS_Plus c I r G t))
             100 * (max_input_bits c I r + t + 1) * (t - 1) +
                (max_input_bits c I r + t + 2) *
-                  (num_variables c + 2) + 52"
+                  (num_vars c + 2) + 52"
   shows "\<exists>s1 s2 t'. t' \<le> t \<and> I \<subseteq>\<^sub>m Some \<circ> s1 \<and> G \<subseteq>\<^sub>m Some \<circ> s2 \<and> (c, s1)  \<Rightarrow>\<^bsup>t'\<^esup> s2"
 proof-
   obtain plan
@@ -106,7 +106,7 @@ definition t' ::"(nat \<Rightarrow> nat) \<Rightarrow> (nat\<Rightarrow> nat) \<
       in
         \<Phi>\<^sub>\<forall> (\<phi> prob_with_noop (IMP_to_SAS_Plus c I guess_range G (t' pt p_cer x)))
            100 * (max_bits + (t' pt p_cer x) + 1) * ((t' pt p_cer  x) - 1) +
-             (max_bits + (t' pt p_cer x) + 2) * (num_variables c + 2) + 52)"
+             (max_bits + (t' pt p_cer x) + 2) * (num_vars c + 2) + 52)"
 
 lemma main_lemma_hol:
   fixes c pt p_cer in_lang

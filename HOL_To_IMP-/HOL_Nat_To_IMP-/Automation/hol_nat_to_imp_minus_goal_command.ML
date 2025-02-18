@@ -71,7 +71,7 @@ in
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding_attrs, (const, pos)) => fn b => fn lthy =>
         let
-          val stateT = \<^typ>\<open>AExp.state\<close>
+          val stateT = \<^typ>\<open>IMP_Base.state\<close>
           val const_term = HTHNU.read_const lthy const
           val compiled_const = const_term
             |> Compile_HOL_Nat_To_IMP.get_compiled_const lthy

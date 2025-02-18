@@ -2,8 +2,8 @@
 
 section "Binary Arithmetic"
 
-theory Binary_Arithmetic
-  imports "IMP-.IMP_Minus_Small_StepT" "HOL-Library.Discrete_Functions"
+theory Binary_Arithmetic 
+  imports "IMP-.IMP_Minus_Base" "HOL-Library.Discrete_Functions"
 
 begin
 

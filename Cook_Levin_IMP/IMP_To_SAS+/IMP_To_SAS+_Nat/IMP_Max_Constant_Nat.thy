@@ -1111,16 +1111,16 @@ lemma sub_append_vname: "append_nat (vname_list_encode x) (vname_list_encode xs)
 
 
 
-definition num_variables_nat :: "nat \<Rightarrow> nat" where 
-"num_variables_nat n = length_nat (remdups_nat (all_variables_nat n))"
+definition num_vars_nat :: "nat \<Rightarrow> nat" where 
+"num_vars_nat n = length_nat (remdups_nat (all_variables_nat n))"
 
-definition num_variables_tail :: "nat \<Rightarrow> nat" where 
-"num_variables_tail n = length_tail (remdups_tail (all_variables_tail n))"
+definition num_vars_tail :: "nat \<Rightarrow> nat" where 
+"num_vars_tail n = length_tail (remdups_tail (all_variables_tail n))"
 
-lemma subtail_num_variables:
-"num_variables_tail n = num_variables_nat n"
-  by (simp add: all_variables_tail_def num_variables_nat_def 
-num_variables_tail_def subtail_length subtail_remdups)
+lemma subtail_num_vars:
+"num_vars_tail n = num_vars_nat n"
+  by (simp add: all_variables_tail_def num_vars_nat_def 
+num_vars_tail_def subtail_length subtail_remdups)
 
 lemma vname_encode_eq: "vname_encode x = vname_encode y \<Longrightarrow> x=y"
   apply (auto simp add:vname_encode_def list_encode_eq idchar)
@@ -1129,9 +1129,9 @@ lemma [simp]: "remdups (map (vname_encode) x) = map vname_encode (remdups x)"
   apply (induction x)
   using vname_encode_eq by auto
    
-lemma sub_num_variables:"num_variables_nat (com_encode c) = num_variables c"
-  apply (auto simp only:num_variables_nat_def sub_all_variables sub_remdups vname_list_encode_def
-        sub_length num_variables_def)
+lemma sub_num_vars:"num_vars_nat (com_encode c) = num_vars c"
+  apply (auto simp only:num_vars_nat_def sub_all_variables sub_remdups vname_list_encode_def
+        sub_length num_vars_def)
   apply (induct "all_variables c"  arbitrary:c)
   by (auto simp add:map_def)
       

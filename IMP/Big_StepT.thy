@@ -1,14 +1,14 @@
 \<^marker>\<open>creator Mohammad Abdulaziz, Bilel Ghorbel, Florian Kessler\<close>
+\<^marker>\<open>creator Fabian Huch\<close>
 section "Big step semantics of IMP"
-theory Big_StepT imports Main Com "HOL-Eisbach.Eisbach_Tools" begin
+theory Big_StepT imports 
+  Com "HOL-Eisbach.Eisbach_Tools"
+begin
 
-paragraph "Summary"
-text\<open>We define big step semantics with time for IMP.
-Based on the big step semantics definition with time of IMP\<close>
-
-subsection "Big step semantics definition:"
-
-text "In IMP Branching is only based on whether a variable's value equals 0."
+text\<open>
+  We define big step semantics with time for IMP.
+  Based on the big step semantics definition with time of IMP
+\<close>
 
 inductive
   big_step_t :: "com \<times> state \<Rightarrow> nat \<Rightarrow> state \<Rightarrow> bool"  ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)
@@ -29,31 +29,8 @@ end
 
 code_pred big_step_t .
 
-text "Some examples using the big step semantics"
-experiment
-begin
 
-text "finding out the final state and running time of a command:"
-schematic_goal ex: "(''x'' ::= A (N 5);; ''y'' ::= A (V ''x''), s) \<Rightarrow>\<^bsup> ?t \<^esup> ?s"
-  apply(rule Seq)
-    apply(rule Assign)
-   apply simp
-   apply(rule Assign)
-  apply simp
-  done
-
-
-values "{(t, x). big_step_t (SKIP, \<lambda>_. 0) x t}"
-
-values "{map t [''x''] |t x. (SKIP, <''x'' := 42>) \<Rightarrow>\<^bsup> x \<^esup> t}"
-
-values "{map t [''x''] |t x. (''x'' ::=A (N 2), <''x'' := 42>) \<Rightarrow>\<^bsup> x \<^esup> t}"
-
-values "{(map t [''x''],x) |t x. (WHILE ''x''\<noteq>0 DO ''x''::= Sub (V ''x'') (N 1),<''x'':=5>) \<Rightarrow>\<^bsup> x \<^esup> t }"
-
-end
-
-text "proof automation:"
+section "Automation Setup"
 
 text "Introduction rules:"
 declare big_step_t.intros [intro]
@@ -105,12 +82,12 @@ lemma bigstep_det: "(c1, s) \<Rightarrow>\<^bsup> p1 \<^esup> t1 \<Longrightarro
   using big_step_t_determ2 by simp
 
 lemma seq_assign_t_simp:
-  "((c ;; x ::= a, s) \<Rightarrow>\<^bsup> Suc(Suc t) \<^esup>  s')
+  "((c ;; x ::= a, s) \<Rightarrow>\<^bsup> t + Suc (Suc 0) \<^esup>  s')
   \<longleftrightarrow> (\<exists>s''. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<and> s' = s''(x := aval a s''))"
 proof
-  assume "(c;; x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc t) \<^esup> s'"
+  assume "(c;; x ::= a, s) \<Rightarrow>\<^bsup> t + Suc (Suc 0) \<^esup> s'"
   then obtain s'' where "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''" by auto
-  have "s' = s''(x := aval a s'')" using \<open>(c;; x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc t) \<^esup> s'\<close>
+  have "s' = s''(x := aval a s'')" using \<open>(c;; x ::= a, s) \<Rightarrow>\<^bsup> t + Suc (Suc 0) \<^esup> s'\<close>
     using bigstep_det \<open>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s''\<close>
     by blast
   thus "\<exists>s''. (c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<and> s' = s''(x := aval a s'')"
@@ -119,7 +96,7 @@ proof
 qed auto
 
 lemma seq_assign_t_intro: "(c, s) \<Rightarrow>\<^bsup> t \<^esup> s'' \<Longrightarrow> s' = s''(x := aval a s'')
-  \<Longrightarrow>(c ;; x ::= a, s) \<Rightarrow>\<^bsup> Suc(Suc t) \<^esup>  s'"
+  \<Longrightarrow>(c ;; x ::= a, s) \<Rightarrow>\<^bsup> t + Suc (Suc 0) \<^esup>  s'"
   using seq_assign_t_simp
   by auto
 
@@ -157,7 +134,7 @@ lemma SKIPt: "\<down>\<^sub>s(SKIP,s) = s"
   apply auto done
 
 
-lemma ASSp: "(THE p. Ex (big_step_t (x ::= e, s) p)) = Suc(Suc 0)"
+lemma ASSp: "(THE p. Ex (big_step_t (x ::= e, s) p)) = Suc (Suc 0)"
   apply(rule the_equality)
   apply fast
   apply auto done
@@ -167,7 +144,7 @@ lemma ASSt: "(THE t. \<exists>p. (x ::= e, s) \<Rightarrow>\<^bsup> p \<^esup> t
   apply fast
   apply auto done
 
-lemma ASSnot: "( \<not> (x ::= e, s) \<Rightarrow>\<^bsup> p \<^esup> t ) = (p\<noteq>Suc(Suc 0) \<or> t\<noteq>s(x := aval e s))"
+lemma ASSnot: "( \<not> (x ::= e, s) \<Rightarrow>\<^bsup> p \<^esup> t ) = (p\<noteq>Suc (Suc 0) \<or> t\<noteq>s(x := aval e s))"
   apply auto done
 
 lemma If_THE_True: "Suc (THE n. \<exists>a. (c1, s) \<Rightarrow>\<^bsup> n \<^esup> a) =  (THE n. \<exists>a. (IF b \<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup> n \<^esup> a)"
@@ -231,7 +208,7 @@ lemma terminates_split_if : "(P s \<Longrightarrow> (c, s) \<Rightarrow>\<^bsup>
   by auto
 
 lemma AssignD':
-"(x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<Longrightarrow> s' = s (x:= aval a s)"
+"(x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s' \<Longrightarrow> s' = s (x:= aval a s)"
   by (auto simp add: eval_nat_numeral)
 
 
@@ -280,17 +257,12 @@ lemma AssignI:
         \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s'"
   by (auto simp add: Assign)
 
-lemma AssignI':
-"\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
-        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s'"
-  by (auto simp add: Assign eval_nat_numeral)
-
 lemma AssignI'':
 "\<lbrakk>s' = s (x:= aval a s)\<rbrakk>
-        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<and> s' = s'"
-  by (auto simp add: Assign eval_nat_numeral)
+        \<Longrightarrow> (x ::= a, s) \<Rightarrow>\<^bsup> Suc (Suc 0) \<^esup> s' \<and> s' = s'"
+  by (auto simp add: Assign)
 
-lemma AssignD: "(x ::= a, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> t = 2 \<and> s' = s(x := aval a s)"
+lemma AssignD: "(x ::= a, s) \<Rightarrow>\<^bsup> t \<^esup> s' \<Longrightarrow> t = Suc (Suc 0) \<and> s' = s(x := aval a s)"
   by auto
 
 lemma compose_programs_1:
@@ -341,5 +313,103 @@ method dest_com_gen_time =
     for init_while_cond loop_body after_loop  \<Rightarrow>
       \<open>match premises in b[thin]: "\<lbrakk>loop_cond; state_upd; _\<rbrakk> \<Longrightarrow> P"
        for loop_cond state_upd P \<Rightarrow> \<open>subst b[OF _ _ a, simplified add.assoc]\<close>\<close>))
+
+
+section "Important Facts"
+
+
+lemma var_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> s v = t v"
+  by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
+
+lemma fresh_var_changed: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> set (vars c) \<Longrightarrow> (c,s(v:=y)) \<Rightarrow>\<^bsup>z\<^esup> t(v:=y)"
+proof (induction c s z t arbitrary:  rule: big_step_t_induct)
+  case (Assign x a s)
+  hence " s(v := y, x := aval a (s(v := y))) = s(x := aval a s, v := y)" by force
+  thus ?case using big_step_t.Assign[of x a "s(v:=y)"] by argo
+qed auto
+
+lemma lvars_unchanged: "(c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> v \<notin> lvars c \<Longrightarrow> s v = t v"
+  by (induction c s z t arbitrary:  rule: big_step_t_induct) auto
+
+lemma subst_sound:
+  "\<lbrakk> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
+    \<Longrightarrow> \<exists>t'. (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m on S"
+proof (induction c s z t arbitrary: s' rule: big_step_t_induct)
+  case Assign then show ?case unfolding eq_on_def
+    by (auto simp: subset_inj_on subsetD inj_on_contraD aval_eq_if_eq_on_vars[unfolded eq_on_def])
+next
+  case (WhileTrue s\<^sub>1 b c x s\<^sub>2 y s\<^sub>3 z s\<^sub>1')
+  then obtain s\<^sub>2' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' \<circ> m on S" unfolding eq_on_def by force
+  with WhileTrue obtain s\<^sub>3' where 2: "(subst m (WHILE b\<noteq>0 DO c), s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3 = s\<^sub>3' \<circ> m on S" unfolding eq_on_def by force
+  have "(WHILE m b\<noteq>0 DO (subst m c), s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'"
+    apply (rule big_step_t.WhileTrue)
+    using 1 2 WhileTrue by auto
+  with 2 show ?case unfolding eq_on_def by auto
+qed (auto | fastforce)+
+
+lemma subst_complete:
+  "\<lbrakk> (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t'; s = s' o m on S; set (vars c) \<subseteq> S; inj_on m S \<rbrakk>
+    \<Longrightarrow> \<exists>t. (c,s) \<Rightarrow>\<^bsup>z\<^esup> t \<and> t = t' o m on S"
+proof (induction "subst m c" s' z t' arbitrary: c s rule: big_step_t_induct)
+  case (Skip s c s')
+  then show ?case by (cases c) auto
+next
+  case (Assign x a  s' c s)
+  then obtain x' a' where defs: "c = x' ::= a'" "x = m x'" "a = subst m a'" by (cases c) auto
+  moreover have "(x' ::= a',s) \<Rightarrow>\<^bsup>Suc (Suc 0)\<^esup> s(x' := aval a' s)" by auto
+  moreover have "s(x' := aval a' s) = s'(x := aval a s') \<circ> m on S"
+    by (smt (verit, ccfv_SIG) Assign.hyps Assign Assign_tE calculation(1) calculation(4) subst_sound)
+  ultimately show ?case by blast
+next
+  case (Seq c\<^sub>1 s\<^sub>1 x s\<^sub>2 c\<^sub>2 y s\<^sub>3 z c s\<^sub>1') then show ?case by (cases c) (auto, fastforce)
+next
+  case (IfTrue s b c\<^sub>1 x t z c\<^sub>2 c s') then show ?case by (cases c) (auto, fastforce)
+next
+  case (IfFalse s b c\<^sub>2 x t z c\<^sub>1 c s') then show ?case by (cases c) (auto, fastforce)
+next
+  case (WhileFalse s b c\<^sub>1 c s') then show ?case by (cases c) (auto, fastforce)
+next
+  case (WhileTrue s\<^sub>1 b c\<^sub>1 x s\<^sub>2 y s\<^sub>3 z c s\<^sub>1')
+  then obtain c\<^sub>1' b' where [simp]: "c = WHILE b'\<noteq>0 DO c\<^sub>1'" "m b' = b" "c\<^sub>1 = subst m c\<^sub>1'" by (cases c) auto
+  with WhileTrue have "set (vars c\<^sub>1') \<subseteq> S" by auto
+  with WhileTrue.hyps(3)[OF _ WhileTrue.prems(1) this WhileTrue.prems(3)] obtain s\<^sub>2' where
+    1: "(c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2' = s\<^sub>2 \<circ> m on S" by auto
+  with WhileTrue.hyps(5)[OF _ this(2) WhileTrue.prems(2) WhileTrue.prems(3)] obtain s\<^sub>3' where
+    2: "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>2') \<Rightarrow>\<^bsup> y \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" by auto
+  from 1 2 WhileTrue.hyps(1,6) WhileTrue.prems(1,2) have
+    "(WHILE b'\<noteq>0 DO c\<^sub>1', s\<^sub>1') \<Rightarrow>\<^bsup> z \<^esup> s\<^sub>3'" "s\<^sub>3' = s\<^sub>3 \<circ> m on S" unfolding eq_on_def by auto
+  thus ?case by auto
+qed
+
+corollary neat_subst:
+  assumes "inj m"
+  shows "(subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> (c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t o m"
+proof -
+  assume "(subst m c, s) \<Rightarrow>\<^bsup> z \<^esup> t"
+  with subst_complete[where S = UNIV] assms obtain t' where
+    1: "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t'" "t' = t o m on UNIV"
+    by blast
+  hence "t' = t o m" by auto
+  with 1 show "(c, s \<circ> m) \<Rightarrow>\<^bsup> z \<^esup> t \<circ> m" by simp
+qed
+
+corollary neat_subst_2:
+  assumes "inj m"
+  shows "(c, s o m) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> \<exists>t'. (subst m c, s) \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m"
+  using subst_sound[where S = UNIV] assms by fast
+
+lemma noninterference:
+  "(c,s) \<Rightarrow>\<^bsup> x \<^esup> t \<Longrightarrow> set (vars c) \<subseteq> S \<Longrightarrow> s = s' on S \<Longrightarrow> \<exists>t'. (c,s') \<Rightarrow>\<^bsup> x \<^esup> t' \<and> t = t' on S"
+proof (induction c s x t arbitrary: s' rule: big_step_t_induct)
+  case (Assign x a s)
+  then show ?case
+    using aval_eq_if_eq_on_vars big_step_t.Assign eq_on_def eq_on_subset fun_upd_apply set_subset_Cons vars_com.simps(2) by fastforce
+next
+  case (WhileTrue s1 b c x s2 y s3 z)
+  then show ?case apply auto
+    by (metis (mono_tags, lifting) WhileTrue.hyps(1) WhileTrue.hyps(4) big_step_t.WhileTrue eq_onE)
+qed fastforce+
+
+lemmas com_only_vars = var_unchanged
 
 end
