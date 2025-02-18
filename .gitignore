@@ -82,6 +82,9 @@ tags
 # Persistent undo
 [._]*.un~
 
+### IntelliJ ###
+.idea
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
