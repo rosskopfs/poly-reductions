@@ -6,7 +6,7 @@ theory Binary_Operations
   imports
     IMP_To_IMP_Minus_State_Translations
     IMP.Max_Constant
-    IMP_Minus_Subprograms
+    "IMP-.IMP_Minus_Subprograms"
 begin
 
 text \<open> We give programs in IMP- that work on states translated from IMP to IMP- and simulate

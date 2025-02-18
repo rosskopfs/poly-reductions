@@ -3,7 +3,7 @@
 section "IMP- to SAS++ Reduction"
 
 theory IMP_Minus_To_SAS_Plus_Plus_Reduction                             
-  imports IMP_Minus_To_SAS_Plus_Plus_State_Translations IMP_Minus_Subprograms
+  imports IMP_Minus_To_SAS_Plus_Plus_State_Translations "IMP-.IMP_Minus_Subprograms"
 begin
 
 text \<open> We define a reduction from IMP- to SAS++. The reduction is pretty straightforward, 

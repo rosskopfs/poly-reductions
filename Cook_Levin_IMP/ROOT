@@ -9,6 +9,7 @@ session Complexity_Basics in "Complexity_Classes" = Main +
 session "IMP_To_SAS+_HOL" in "IMP_To_SAS+/IMP_To_SAS+_HOL" = "HOL-Analysis" +
   options [quick_and_dirty]
   sessions
+    "IMP_To_IMP-"
     Verified_SAT_Based_AI_Planning
     Complexity_Basics
   directories

@@ -4,7 +4,7 @@
 section "IMP to SAS+"
 
 theory IMP_To_SAS_Plus
-  imports IMP_To_IMP_Minus
+  imports "IMP_To_IMP-.IMP_To_IMP_Minus"
     IMP_Minus_To_SAS_Plus_Plus_Correctness
     SAS_Plus_Plus_To_SAS_Plus
 begin
