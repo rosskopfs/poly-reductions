@@ -3,7 +3,7 @@
 section "Small step semantics of IMP "
 
 subsection "Small step semantics definition"
-theory Small_StepT  imports Main Com Rel_Pow begin
+theory Small_StepT  imports Main Com "IMP-.Rel_Pow" begin
 
 paragraph "Summary"
 text\<open>We give small step semantics with time for IMP.

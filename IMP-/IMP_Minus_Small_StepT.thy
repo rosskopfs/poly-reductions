@@ -4,7 +4,7 @@ section "Small step semantics of IMP- "
 
 subsection "IMP- Small step semantics definition"
 theory IMP_Minus_Small_StepT
-  imports Main IMP_Minus_Com "IMP.Rel_Pow"
+  imports Main IMP_Minus_Com Rel_Pow
 begin
 
 paragraph "Summary"

@@ -1,9 +1,10 @@
-session "IMP-" = IMP +
+session "IMP-" = "HOL-Library" +
   theories
     IMP_Minus_Small_StepT
     IMP_Minus_Big_StepT
     IMP_Minus_Subprograms
 
 session "IMP_To_IMP-" in "IMP_To_IMP-" = "IMP-" +
+  sessions IMP
   theories "IMP_To_IMP_Minus"
     
