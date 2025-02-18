@@ -1,7 +1,7 @@
 (*Authors: Mohammad Abdulaziz*)
 
 theory Call_By_Prefixes
-  imports IMP.Com Big_StepT
+  imports IMP.Com Big_StepT Vars
 begin
 
 abbreviation add_prefix :: "string \<Rightarrow> vname \<Rightarrow> vname" where
@@ -63,34 +63,34 @@ notation pcom_SKIP ("SKIP" [] 61) and
 end
 *)
 
-lemma atomExp_add_prefix_valid: "(\<And>v. v \<in> set (atomExp_var x1) \<Longrightarrow> s1 v = s1' (add_prefix p v)) \<Longrightarrow>
+lemma atomExp_add_prefix_valid: "(\<And>v. v \<in> set (vars x1) \<Longrightarrow> s1 v = s1' (add_prefix p v)) \<Longrightarrow>
           atomVal x1 s1 = atomVal (atomExp_add_prefix p x1) s1'"
   by (cases x1) auto
 
-lemma aexp_add_prefix_valid: "(\<And>v. v \<in> set (aexp_vars aexp) \<Longrightarrow> s1 v = s1' (add_prefix p v)) \<Longrightarrow>
+lemma aexp_add_prefix_valid: "(\<And>v. v \<in> set (vars aexp) \<Longrightarrow> s1 v = s1' (add_prefix p v)) \<Longrightarrow>
        aval aexp s1 = aval (aexp_add_prefix p aexp) s1'"
   by (cases aexp) (auto simp: atomExp_add_prefix_valid)
 
-lemma atomExp_add_prefix_valid': "v \<in> set (atomExp_var (atomExp_add_prefix p x1)) \<Longrightarrow> \<exists>v'. v = p @ v'"
+lemma atomExp_add_prefix_valid': "v \<in> set (vars (atomExp_add_prefix p x1)) \<Longrightarrow> \<exists>v'. v = p @ v'"
   by (cases x1) (auto simp:)
 
-lemma aexp_add_prefix_valid':"v \<in> set (aexp_vars (aexp_add_prefix p aexp)) \<Longrightarrow> \<exists>v'. v = p @ v'"
+lemma aexp_add_prefix_valid':"v \<in> set (vars (aexp_add_prefix p aexp)) \<Longrightarrow> \<exists>v'. v = p @ v'"
   by (cases aexp) (auto simp: atomExp_add_prefix_valid')
 
-lemma com_add_prefix_valid': "v \<in> set (all_variables (com_add_prefix p c)) \<Longrightarrow> \<exists>v'. v = p @ v'"
+lemma com_add_prefix_valid': "v \<in> set (vars (com_add_prefix p c)) \<Longrightarrow> \<exists>v'. v = p @ v'"
   by (induction p c rule: com_add_prefix.induct) (auto simp: aexp_add_prefix_valid')
 
-lemma atomExp_add_prefix_valid'': "add_prefix p1 v \<in> set (atomExp_var (atomExp_add_prefix (p1 @ p2) x1)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
+lemma atomExp_add_prefix_valid'': "add_prefix p1 v \<in> set (vars (atomExp_add_prefix (p1 @ p2) x1)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
   by (cases x1) (auto simp:)
 
-lemma aexp_add_prefix_valid'':"add_prefix p1 v \<in> set (aexp_vars (aexp_add_prefix (p1 @ p2) aexp)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
+lemma aexp_add_prefix_valid'':"add_prefix p1 v \<in> set (vars (aexp_add_prefix (p1 @ p2) aexp)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
   by (cases aexp) (auto simp: atomExp_add_prefix_valid'')
 
 
-lemma com_add_prefix_valid'': "add_prefix p1 v \<in> set (all_variables (com_add_prefix (p1 @ p2) c)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
+lemma com_add_prefix_valid'': "add_prefix p1 v \<in> set (vars (com_add_prefix (p1 @ p2) c)) \<Longrightarrow> \<exists>v'. v = p2 @ v'"
   by (induction "p1 @ p2" c arbitrary: p1 p2 rule: com_add_prefix.induct) (auto simp: aexp_add_prefix_valid'')
 
-lemma com_add_prefix_valid_subset: "add_prefix p1 v \<in> set (all_variables (com_add_prefix (p1 @ p2) c)) \<Longrightarrow> set p2 \<subseteq> set v"
+lemma com_add_prefix_valid_subset: "add_prefix p1 v \<in> set (vars (com_add_prefix (p1 @ p2) c)) \<Longrightarrow> set p2 \<subseteq> set v"
   using com_add_prefix_valid''
   by (metis set_append sup_ge1)
 

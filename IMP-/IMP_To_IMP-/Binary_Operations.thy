@@ -178,7 +178,7 @@ lemma copy_atom_to_operand_b_result:
 lemma copy_atom_to_operand_variables:
   "set (enumerate_variables (copy_atom_to_operand n op a))
     = { operand_bit_to_var (op, i) | i. i < n }
-    \<union> { var_bit_to_var (v, i) | i v. i < n \<and> v \<in> set (atomExp_var a) }"
+    \<union> { var_bit_to_var (v, i) | i v. i < n \<and> v \<in> set (vars a) }"
   apply (induction n)
   apply(cases a)
     apply (auto simp: copy_atom_to_operand_def enumerate_variables_def)[1]
@@ -551,7 +551,7 @@ qed (auto simp: assignment_to_binary_def)
 
 lemma assignment_to_binary_variables:
   "n > 0 \<Longrightarrow> set (enumerate_variables (assignment_to_binary n v a)) \<subseteq>
-    { var_bit_to_var (w, i) | w i. i < n \<and> (w = v \<or> w \<in> set (aexp_vars a)) }
+    { var_bit_to_var (w, i) | w i. i < n \<and> (w = v \<or> w \<in> set (vars a)) }
     \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
     \<union> { ''carry'' }"
   apply(cases a)

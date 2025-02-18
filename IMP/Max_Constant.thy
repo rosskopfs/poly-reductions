@@ -3,7 +3,7 @@
 section "IMP Max Constant"
 
 theory Max_Constant
-  imports "Small_StepT"
+  imports Small_StepT Vars
 begin
 
 text \<open>We define functions to derive the constant with the highest value and enumerate all variables
@@ -65,27 +65,11 @@ next
         linorder_neqE_nat n_less_m_mult_n numeral_2_eq_2)+
 qed
 
-fun atomExp_var:: "atomExp \<Rightarrow> vname list" where
-"atomExp_var (V var) = [ var ]" |
-"atomExp_var (N val) = []"
-
-fun aexp_vars:: "AExp.aexp \<Rightarrow> vname list" where
-"aexp_vars (A a) = atomExp_var a" |
-"aexp_vars (Plus a b) = (atomExp_var a) @ (atomExp_var b)" |
-"aexp_vars (Sub a b) = (atomExp_var a) @ (atomExp_var b)"
-
-fun all_variables :: "com \<Rightarrow> vname list" where
-"all_variables (SKIP) = []" |
-"all_variables (Assign v aexp) = v # aexp_vars aexp" |
-"all_variables (Seq c1 c2) = all_variables c1 @ all_variables c2" |
-"all_variables (If v c1 c2) = [ v ] @ all_variables c1 @ all_variables c2" |
-"all_variables (While v c) = [ v ] @ all_variables c"
-
 definition num_variables:: "com \<Rightarrow> nat" where
-"num_variables c = length (remdups (all_variables c))"
+"num_variables c = length (remdups (vars c))"
 
 lemma all_variables_subset_step: "(c1, s1) \<rightarrow> (c2, s2)
-  \<Longrightarrow> set (all_variables c2) \<subseteq> set (all_variables c1)"
+  \<Longrightarrow> set (vars c2) \<subseteq> set (vars c1)"
   apply(induction c1 s1 c2 s2 rule: small_step_induct)
   by auto
 

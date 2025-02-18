@@ -1,8 +1,7 @@
 \<^marker>\<open>creator Fabian Huch\<close>
-(* todo merge with existing vars *)
 theory Vars
   imports
-    Big_StepT
+    Small_StepT Big_StepT
     Eq_On
 begin
 
@@ -217,5 +216,6 @@ next
     by (metis (mono_tags, lifting) WhileTrue.hyps(1) WhileTrue.hyps(4) big_step_t.WhileTrue eq_onE)
 qed fastforce+
 
+lemmas com_only_vars = var_unchanged
 
 end

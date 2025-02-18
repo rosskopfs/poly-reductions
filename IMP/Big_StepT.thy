@@ -1,6 +1,6 @@
 \<^marker>\<open>creator Mohammad Abdulaziz, Bilel Ghorbel, Florian Kessler\<close>
 section "Big step semantics of IMP"
-theory Big_StepT imports Main Max_Constant Com "HOL-Eisbach.Eisbach_Tools" begin
+theory Big_StepT imports Main Com "HOL-Eisbach.Eisbach_Tools" begin
 
 paragraph "Summary"
 text\<open>We define big step semantics with time for IMP.
@@ -234,8 +234,6 @@ lemma AssignD':
 "(x ::= a, s) \<Rightarrow>\<^bsup> 2 \<^esup> s' \<Longrightarrow> s' = s (x:= aval a s)"
   by (auto simp add: eval_nat_numeral)
 
-lemma com_only_vars: "\<lbrakk>(c, s) \<Rightarrow>\<^bsup> t \<^esup> s'; x \<notin> set (Max_Constant.all_variables c)\<rbrakk> \<Longrightarrow> s x = s' x"
-  by (induction arbitrary: t rule: big_step_t_induct)  auto
 
 lemma Seq'': "\<lbrakk> (c1,s1) \<Rightarrow>\<^bsup> x \<^esup> s2 \<and> P s2; P s2 \<Longrightarrow> (c2,s2) \<Rightarrow>\<^bsup> y \<^esup> s3 \<and> Q s3; Q s3 \<Longrightarrow> R s3 \<rbrakk>
              \<Longrightarrow> (c1;;c2, s1) \<Rightarrow>\<^bsup> x + y \<^esup> s3 \<and> R s3"

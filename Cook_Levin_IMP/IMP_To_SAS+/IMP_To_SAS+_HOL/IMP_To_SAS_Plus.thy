@@ -242,8 +242,8 @@ text \<open> Second direction of the correctness proof. We show that for an IMP 
 
 lemma SAS_Plus_to_IMP_correctness: 
   assumes 
-    "dom I \<subseteq> set (Max_Constant.all_variables c)"
-    "dom G \<subseteq> set (Max_Constant.all_variables c)" 
+    "dom I \<subseteq> set (vars c)"
+    "dom G \<subseteq> set (vars c)" 
     "Max (ran G) < 2 ^ (t + max_input_bits c I r)" 
     "is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t) plan"
     "\<forall>s1. I \<subseteq>\<^sub>m Some o s1 \<longrightarrow> (\<exists>s2. \<exists>t' \<le> t. (c, s1) \<Rightarrow>\<^bsup>t'\<^esup> s2)" 
@@ -257,8 +257,8 @@ proof -
   let ?G = "(IMP_State_To_IMP_Minus_partial G ?n ?n) |` (set (enumerate_variables ?c'))"
 
   have "finite (ran I)" "finite (ran G)" 
-    using \<open>dom I \<subseteq> set (Max_Constant.all_variables c)\<close> 
-      \<open>dom G \<subseteq> set (Max_Constant.all_variables c)\<close>
+    using \<open>dom I \<subseteq> set (vars c)\<close> 
+      \<open>dom G \<subseteq> set (vars c)\<close>
     finite_set by(auto simp: finite_subset intro!: finite_ran)
 
   have "?n > 0" by simp 
@@ -321,8 +321,8 @@ proof -
 
   have "?s1' v = y" if "I v = Some y" for v y 
   proof -
-    from that have "v \<in> set (Max_Constant.all_variables c)" 
-      using \<open>dom I \<subseteq> set (Max_Constant.all_variables c)\<close>
+    from that have "v \<in> set (vars c)" 
+      using \<open>dom I \<subseteq> set (vars c)\<close>
       by auto
     hence "\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')" 
       by(auto simp: var_bit_in_IMP_Minus_variables)
@@ -392,8 +392,8 @@ proof -
   have "G v = Some y \<Longrightarrow> s2'' v = y" for v y 
   proof -
     assume "G v = Some y" 
-    hence "v \<in> set (Max_Constant.all_variables c)" 
-      using \<open>dom G \<subseteq> set (Max_Constant.all_variables c)\<close> by auto
+    hence "v \<in> set (vars c)" 
+      using \<open>dom G \<subseteq> set (vars c)\<close> by auto
     hence "\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')" 
       by(auto simp: var_bit_in_IMP_Minus_variables)
     moreover hence "i < ?n \<longrightarrow> s2 (var_bit_to_var (v, i)) = ?G (var_bit_to_var (v, i))" for i
