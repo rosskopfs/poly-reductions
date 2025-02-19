@@ -2,7 +2,7 @@
 \<^marker>\<open>creator Fabian Huch\<close>
 theory AExp
   imports
-    IMP_Base Eq_On
+    IMP_Base
     "HOL-Library.Char_ord" "HOL-Library.List_Lexorder" "HOL-Library.Product_Lexorder"
 begin
 
@@ -173,8 +173,53 @@ lemma atomVal_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> atomVal (s
 lemma aval_subst[simp]: "inj_on m (set (vars a)) \<Longrightarrow> aval (subst m a) s = aval a (s o m)"
   by (induction a) (auto simp add: inj_on_Un)
 
+lemma max_exp_plus[simp]: "max_exp (Plus a\<^sub>1 a\<^sub>2) s = max (max_exp a\<^sub>1 s) (max_exp a\<^sub>2 s)"
+  unfolding max_exp_def by simp
 
-lemma Max_range_le_then_element_le: "finite (range s) \<Longrightarrow> 2 * Max (range s) < (x :: nat) \<Longrightarrow> 2 * (s y) < x"
+lemma max_exp_sub[simp]: "max_exp (Sub a\<^sub>1 a\<^sub>2) s = max (max_exp a\<^sub>1 s) (max_exp a\<^sub>2 s)"
+  unfolding max_exp_def by simp
+
+lemma atomVal_le_max_exp[simp]: "max_exp a s = atomVal a s"
+  by (cases a) (auto simp: max_exp_def)
+
+lemma max_exp_A[simp]: "max_exp (A x) = max_exp x"
+  unfolding max_exp_def by simp
+
+lemma max_exp_aval[simp]: "aval a s \<le> max_exp a s + max_exp a s"
+  by (cases a) auto
+
+lemma max_exp_A_subst[simp]: "max_exp (subst m (a::atomExp)) s = max_exp a (s o m)"
+  by (cases a) (auto simp: max_exp_def)
+
+lemma max_exp_subst[simp,intro]: "inj_on m (set (vars a)) \<Longrightarrow>
+  max_exp (subst m (a::aexp)) s = max_exp a (s o m)"
+  apply (cases a)
+  using atomVal_le_max_exp max_exp_A_subst by auto
+
+lemma max_exp_part[simp,intro]: "s = s' on set (vars a) \<Longrightarrow> max_exp a s = max_exp a s'"
+  unfolding max_exp_def by simp
+
+section "Aval time: Logarithmic in max number of bits"
+
+abbreviation "T_aval (a:: aexp) s \<equiv> num_bits (max_exp a s)"
+
+lemma T_aval_subst[simp,intro]:
+  "inj_on m (set (vars a)) \<Longrightarrow> T_aval (subst m a) s = T_aval a (s o m)"
+  by auto
+
+lemma T_aval_part[simp,intro]: "s = s' on set (vars a) \<Longrightarrow> T_aval a s = T_aval a s'"
+  by simp
+
+lemma T_aval_part2[simp,intro]: "set (vars a) \<subseteq> S \<Longrightarrow> s = s' on S\<Longrightarrow> T_aval a s = T_aval a s'"
+  by blast
+
+
+lemma T_aval_part_subst[simp,intro]:
+  "s = s' on S \<Longrightarrow> inj_on m S \<Longrightarrow> set (vars a) \<subseteq> S \<Longrightarrow> T_aval (subst m a) s = T_aval a (s' o m)"
+  oops
+
+lemma Max_range_le_then_element_le:
+  "finite (range s) \<Longrightarrow> 2 * Max (range s) < (x :: nat) \<Longrightarrow> 2 * (s y) < x"
 proof -
   assume "2 * Max (range s) < (x :: nat)"
   moreover have "s y \<in> range s" by simp
