@@ -1,3 +1,4 @@
+\<^marker>\<open>creator "Nico Lintner"\<close>
 theory HOL_To_IMP_Minus_IS_To_VC
   imports
     HOL_To_IMP_Minus_Lists

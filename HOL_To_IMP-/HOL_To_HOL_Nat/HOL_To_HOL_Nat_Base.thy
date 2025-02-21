@@ -43,7 +43,7 @@ lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
   using inj_natify by (blast dest: injD)
 
 definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
-  "Rel_nat n x \<equiv> n = natify x"
+  [code del]: "Rel_nat n x \<equiv> n = natify x"
 
 lemma Rel_nat_iff_eq_natify: "Rel_nat n x \<longleftrightarrow> n = natify x"
   unfolding Rel_nat_def by simp
@@ -88,7 +88,7 @@ declare Galois_eq_inv_Rel_nat[trp_relator_rewrite, trp_uhint]
 lemma eq_eq_Fun_Rel_eq_eq_uhint [trp_uhint]: "P \<equiv> (=) \<Longrightarrow> P \<equiv> (=) \<Rrightarrow> (=)" by simp
 
 definition pair_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat"
-  where "pair_nat a b = prod_encode (a, b)"
+  where [code del]: "pair_nat a b = prod_encode (a, b)"
 
 lemma pair_nat_eq: "pair_nat a b = prod_encode (a, b)"
   unfolding pair_nat_def by simp
@@ -111,7 +111,7 @@ lemma unpair_nat_zero_eq_zero_zero [simp]: "unpair_nat 0 = (0, 0)"
   by (subst pair_nat_zero_zero_eq_zero[symmetric], subst unpair_nat_pair_nat_eq) simp
 
 definition fst_nat :: "nat \<Rightarrow> nat" where
-  "fst_nat p = fst (unpair_nat p)"
+  [code del]: "fst_nat p = fst (unpair_nat p)"
 
 lemma fst_nat_eq: "fst_nat p = fst (unpair_nat p)"
   unfolding fst_nat_def by simp
@@ -123,7 +123,7 @@ lemma fst_nat_zero_eq [simp]: "fst_nat 0 = 0"
   unfolding fst_nat_eq by simp
 
 definition snd_nat :: "nat \<Rightarrow> nat" where
-  "snd_nat p = snd (unpair_nat p)"
+  [code del]: "snd_nat p = snd (unpair_nat p)"
 
 lemma snd_nat_eq: "snd_nat p = snd (unpair_nat p)"
   unfolding snd_nat_def by simp
@@ -167,7 +167,7 @@ lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<R
 
 ML_file \<open>hol_to_hol_nat_util.ML\<close>
 
-definition "nat_selector nargs arg n \<equiv>
+definition [code del]: "nat_selector nargs arg n \<equiv>
   (if arg + 1 < nargs then fst_nat else id) ((snd_nat^^(arg + 1)) n)"
 
 lemma nat_selector_eq:

@@ -121,7 +121,6 @@ begin
 
 lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat zip_acc_nat_eq
-
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat by cook
 
 compile_nat HTHN.zip_nat_eq_unfolded

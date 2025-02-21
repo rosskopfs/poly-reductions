@@ -49,8 +49,7 @@ struct
 val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Tactics_Base.logger "HOL_Nat_To_IMP_Minus_Tactics_Base"
 
 structure HTIT = HOL_Nat_To_IMP_Tailcalls_Tactics
-structure TU = Tactic_Util
-structure SUT = State_Update_Tracking
+structure HTIU = HOL_Nat_To_IMP_Util
 structure PU = Parse_Util
 
 @{parse_entries (struct) PCA
@@ -82,18 +81,25 @@ val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus =
 val dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus_prop =
   HOL_Nat_To_IMP_Util.dest_Trueprop #> dest_terminates_with_res_IMP_Minus_tailcall_to_IMP_Minus
 
+(*solve the invariant: invar f_IMP_tailcall*)
+fun invar_side_condition_tac IMP_def ctxt =
+  HTIU.subst_first_tac ctxt IMP_def
+  THEN' safe_simp_tac (HTIU.set_simps ctxt @{thms invar.simps tails.simps})
+  THEN' Simplifier.safe_simp_tac ctxt
+
+(*solve the assumption: ''f.ret'' in vars f_IMP_tailcall*)
+fun ret_reg_in_vars_side_condition_tac IMP_def ctxt =
+  resolve_tac ctxt [@{thm mem_set_vars_if_vars_tcom_no_calls}]
+  THEN' HTIU.subst_first_tac ctxt IMP_def
+  THEN' safe_simp_tac (HTIU.set_simps ctxt @{thms vars_tcom_no_calls.simps HOL.simp_thms})
+
 fun correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt =
   let fun tac c =
-    let val solve_side_condition_tac =
-      (HTIT.delete_IH_prems
-      THEN' Simplifier.safe_simp_tac (ctxt addsimps (get_IMP_def ctxt c |> the_list)))
-      |> SOLVED'
+    let val IMP_def = get_IMP_def ctxt c |> the_list
     in
       resolve_tac ctxt [@{thm terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI}]
-      (*solve the invariant: invar f_IMP_tailcall*)
-      THEN' solve_side_condition_tac
-      (*solve the assumption: ''f.ret'' in vars f_IMP_tailcall*)
-      THEN' solve_side_condition_tac
+      THEN' SOLVED' (invar_side_condition_tac IMP_def ctxt)
+      THEN' SOLVED' (ret_reg_in_vars_side_condition_tac IMP_def ctxt)
     end
   in
     HOL_Nat_To_IMP_Util.with_dest_concl_tac (fn _ => Pretty.block [

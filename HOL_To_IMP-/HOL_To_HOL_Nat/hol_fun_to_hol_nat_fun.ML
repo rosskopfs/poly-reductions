@@ -65,7 +65,10 @@ fun wrapper_trp_api binding cx yT lthy =
     val thms = Trp.setup_goals_blackbox ctxt (L, R, cx) maxidx
       |> prove_goals (fn ctxt => HEADGOAL (Goal.conjunction_tac THEN' Trp.transport_prover ctxt))
         ctxt
-  in Trp.after_qed_blackbox (binding, NoSyn) [thms] lthy |> snd |> Local_Theory.end_nested end
+  in
+    Trp.after_qed_blackbox @{attributes [code del]} (binding, NoSyn) [thms] lthy
+    |> snd |> Local_Theory.end_nested
+  end
 
 fun register_transport_term f lthy =
   let

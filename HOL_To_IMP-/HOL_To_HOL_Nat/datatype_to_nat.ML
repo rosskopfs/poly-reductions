@@ -54,7 +54,7 @@ fun register_ctr ctrs ctr lthy =
     val rhs = mk_ctr_rhs (find_mk_ctr_tag ctrs lthy ctr) args
     val lhs = Free (mk_ctr_binding ctr |> Binding.name_of, map (snd o fst) binders ---> natT)
     val eq = BU.mk_Trueprop_eq (list_comb (lhs, args), rhs)
-  in register_def [] eq lthy end
+  in register_def @{attributes [code del]} eq lthy end
 
 fun register_ctrs ctrs = fold_map (register_ctr ctrs) ctrs
 

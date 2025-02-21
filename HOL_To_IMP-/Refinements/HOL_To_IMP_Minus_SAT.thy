@@ -1,3 +1,5 @@
+\<^marker>\<open>creator "Kevin Kappelmann"\<close>
+\<^marker>\<open>creator "Nico Lintner"\<close>
 theory HOL_To_IMP_Minus_SAT
   imports
     HOL_To_IMP_Minus_Lists

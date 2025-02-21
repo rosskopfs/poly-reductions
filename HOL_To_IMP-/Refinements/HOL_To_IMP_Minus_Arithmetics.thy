@@ -34,8 +34,7 @@ begin
 
 lemmas power_acc_nat_nat_eq = HTHN.power_acc_nat_nat_eq_unfolded[unfolded case_nat_eq_if]
 compile_nat power_acc_nat_nat_eq basename power_acc
-HOL_To_IMP_Minus_correct HTHN.power_acc_nat_nat
-  supply Rel_nat_selector_Suc[Rel_nat] by cook
+HOL_To_IMP_Minus_correct HTHN.power_acc_nat_nat by cook
 
 compile_nat HTHN.power_nat_eq_unfolded basename power
 HOL_To_IMP_Minus_correct HTHN.power_nat by cook
@@ -100,7 +99,7 @@ begin
 
 compile_nat HTHN.sqrt_aux_nat_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HTHN.sqrt_aux_nat_nat by cook
-  (*Example step-by-step tactic invocation. Do not remove for debugging purposes*)
+  (*Example step-by-step tactic invocation for debugging purposes.*)
   (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)

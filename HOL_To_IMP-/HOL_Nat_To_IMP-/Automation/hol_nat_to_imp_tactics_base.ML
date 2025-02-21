@@ -67,11 +67,13 @@ fun get_HOL_eqs ctxt t = case HOL_Fun_To_HOL_Nat_Fun.get_compiled_eq_unfolded ct
 fun get_HOL_To_IMP_finish_simps ctxt =
   Named_Theorems.get ctxt @{named_theorems HOL_To_IMP_finish_simps}
 
+val simp_STATE_interp_retrieve_key = SUT.simp_STATE_interp_retrieve_key safe_simp_tac
+
 fun simp_state_update_val_tac ctxt =
   (*simplify expression*)
   TRY o safe_simp_tac ctxt
   (*substitute all (created) state retrievals*)
-  THEN' TRY o (SUT.simp_STATE_interp_retrieve_key safe_simp_tac ctxt)
+  THEN' TRY o (simp_STATE_interp_retrieve_key ctxt)
 
 fun Rel_nat_step_tac ctxt =
   let fun resolve_tac thms = Unify_Resolve_Base.unify_resolve_any_tac
@@ -107,13 +109,16 @@ fun rewrite_ne_zero_if_Rel_nat_tac ctxt =
 (*applies a theorem of the form: assumes "?P1 c1" and "?P2 c2" shows "?P (Seq c1 c2)" *)
 fun seq_tac seq_thmI ctxt = resolve_tac ctxt [seq_thmI]
 
+fun eq_STATE_interp_fun_upd_tac ctxt =
+  SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_state_update_val_tac ctxt) ctxt
+
 (*applies a theorem of the following form and solves the premise:
 assumes "s' = (STATE (interp_state st))(k := eval exp s)"
 shows "?P (Assign k exp) (STATE (interp_state st))"*)
 fun assign_tac assign_thmI ctxt =
   resolve_tac ctxt [assign_thmI]
   (*solve state update assumption*)
-  THEN' SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_state_update_val_tac ctxt) ctxt
+  THEN' eq_STATE_interp_fun_upd_tac ctxt
 
 fun call_tac call_thmI solve_side_conditions_tac ctxt correctness =
   resolve_tac ctxt [call_thmI]
@@ -121,25 +126,21 @@ fun call_tac call_thmI solve_side_conditions_tac ctxt correctness =
     (*solve correctness side-conditions*)
     THEN_ALL_NEW (SOLVED' solve_side_conditions_tac))
   (*solve state update assumption*)
-  THEN' SUT.STATE_interp_update_eq_STATE_interp_fun_upd (simp_state_update_val_tac ctxt) ctxt
+  THEN' eq_STATE_interp_fun_upd_tac ctxt
 
 (*
-assumes "s vb = v"
+assumes "PROP SIMPS_TO_UNIF (s vb) v"
 and "PROP SIMPS_TO_UNIF (v \<noteq> 0) b"
 and "b \<Longrightarrow> ?P c c1 s"
 and "\<not>b \<Longrightarrow> ?P c c2 s"
 shows "?P s (If vb c1 c2)"
 *)
 fun if_tac if_thmI finish_contradictory_branch ctxt =
-  let val SIMP_TO_UNIF_condition_tac = HTIU.SIMPS_TO_UNIF_refl_tac
-    (rewrite_ne_zero_if_Rel_nat_tac ctxt) ctxt
-  in
-    resolve_tac ctxt [if_thmI]
-    THEN' SUT.STATE_interp_retrieve_key_eq_tac (HTIU.refl_tac ctxt) ctxt
-    THEN' SIMP_TO_UNIF_condition_tac
-    (*close possibly contradictory branches*)
-    THEN' TRY o (fn i => finish_contradictory_branch i ORELSE finish_contradictory_branch (i + 1))
-  end
+  resolve_tac ctxt [if_thmI]
+  THEN' HTIU.SIMPS_TO_UNIF_refl_tac (simp_STATE_interp_retrieve_key ctxt) ctxt
+  THEN' HTIU.SIMPS_TO_UNIF_refl_tac (rewrite_ne_zero_if_Rel_nat_tac ctxt) ctxt
+  (*close possibly contradictory branches*)
+  THEN' TRY o (fn i => finish_contradictory_branch i ORELSE finish_contradictory_branch (i + 1))
 
 (*run one (seq assign ...), (seq call ...), or if step of a program*)
 fun run_step_tac seq_tac assign_tac call_tac if_tac =

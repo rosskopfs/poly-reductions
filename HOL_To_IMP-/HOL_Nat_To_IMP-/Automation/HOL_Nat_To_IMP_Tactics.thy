@@ -12,12 +12,12 @@ text \<open>Tactics and methods to refine HOL programs on natural numbers to IMP
 via IMP with tailcalls.\<close>
 
 lemma terminates_with_res_IMP_Tailcall_start:
-  assumes "terminates_with_res_IMP_Tailcall tc c (STATE (interp_state (State s))) r val"
+  assumes "terminates_with_res_IMP_Tailcall tc c (STATE (interp_state (state s))) r val"
   shows "terminates_with_res_IMP_Tailcall tc c s r val"
-  using assms unfolding STATE_interp_state_State_eq by simp
+  using assms unfolding STATE_eq interp_state_state_eq by simp
 
 lemma terminates_with_res_tIf_processedI:
-  assumes "s vb = v"
+  assumes "PROP SIMPS_TO_UNIF (s vb) v"
   and "PROP SIMPS_TO_UNIF (v \<noteq> False_nat) b"
   and "b \<Longrightarrow> v \<noteq> False_nat \<Longrightarrow> terminates_with_res_IMP_Tailcall c c1 s r val"
   and "\<not>b \<Longrightarrow> v = False_nat \<Longrightarrow> terminates_with_res_IMP_Tailcall c c2 s r val"
@@ -103,12 +103,23 @@ lemma SIMPS_TO_if_FalseI:
   using assms unfolding SIMPS_TO_eq by simp
 
 ML_file \<open>hol_nat_to_imp_tailcalls_tactics.ML\<close>
+
+context includes tcom_syntax
+begin
+fun vars_tcom_no_calls :: "tcom \<Rightarrow> vname \<Rightarrow> bool" where
+"vars_tcom_no_calls (x ::= _) x' = (x = x')" |
+"vars_tcom_no_calls (_ ;; c2) x = vars_tcom_no_calls c2 x" |
+"vars_tcom_no_calls (IF _\<noteq>0 THEN c1 ELSE c2) x = (vars_tcom_no_calls c1 x \<or> vars_tcom_no_calls c2 x)" |
+"vars_tcom_no_calls _ _ = False"
+end
+
+lemma mem_set_vars_if_vars_tcom_no_calls: "vars_tcom_no_calls c x \<Longrightarrow> x \<in> set (vars c)"
+  by (induction c) auto
+
 ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
 
-context HOL_Nat_To_IMP_Minus
-begin
-declaration \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
-end
+declaration (in HOL_Nat_To_IMP_Minus)
+  \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
 
 ML\<open>
   @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Minus_Tactics

@@ -1,3 +1,5 @@
+\<^marker>\<open>creator "Kevin Kappelmann"\<close>
+\<^marker>\<open>creator "Nico Lintner"\<close>
 theory HOL_To_IMP_Minus_THREE_SAT_To_IS
   imports
     HOL_To_IMP_Minus_SAT
@@ -240,6 +242,7 @@ lemmas sat_is_un_2_list_eq = sat_is_un_2_list_def[unfolded map_eq_map_acc_nil
   map_acc_prod_product_def[unfolded prod_product_def]
   filter_acc_prod_fsts_conflict_lit_def[unfolded prod_fsts_conflict_lit_def]
   map_acc_pair_list_def[unfolded pair_list_def]]
+
 function_compile_nat sat_is_un_2_list_eq
 
 lemmas sat_is_list_eq = sat_is_list_def[unfolded list_length_eq_length]

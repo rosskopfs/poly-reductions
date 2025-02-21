@@ -50,8 +50,8 @@ text\<open>We instantiate @{typ bool} by hand to make sure that True gets mapped
 False to zero. This is due to the fact that the compiler from HOL-Nat to IMP assumes such an
 encoding of booleans as natural numbers.\<close>
 
-definition "True_nat \<equiv> 1 :: nat"
-definition "False_nat \<equiv> 0 :: nat"
+definition [code del]: "True_nat \<equiv> 1 :: nat"
+definition [code del]: "False_nat \<equiv> 0 :: nat"
 
 lemma True_nat_neq_zero: "True_nat \<noteq> 0"
   unfolding True_nat_def by simp
