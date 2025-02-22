@@ -22,6 +22,10 @@ WhileTrue:
   ((WHILE b \<noteq>0 DO c), s)\<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup>s\<^sub>3" |
 WhileFalse[intro!]:   "s b = Some Zero \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<Rightarrow>\<^bsup>1\<^esup> s"
 
+bundle imp_minus_big begin
+  notation big_step ("_ \<Rightarrow>\<^bsup>_\<^esup> _" 55)
+end
+
 lemmas big_step_induct = big_step.induct[split_format(complete)]
 
 declare big_step.intros[intro]
@@ -71,7 +75,7 @@ next
   then show ?case using big_step.WhileFalse by force
 qed
 
-lemma "(c,s) \<Rightarrow>\<^bsup>n\<^esup> s' = (c,s) \<rightarrow>\<^bsup>n\<^esup> (SKIP,s')"
+lemma big_eq_small: "(c,s) \<Rightarrow>\<^bsup>n\<^esup> s' = (c,s) \<rightarrow>\<^bsup>n\<^esup> (SKIP,s')"
 proof
   assume "(c,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
   then show "(c,s) \<rightarrow>\<^bsup>n\<^esup> (SKIP,s')"
@@ -84,5 +88,7 @@ next
   then show "(c,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
     by (induction n c s SKIP s' rule: rel_pow_induct) (auto dest: step)
 qed
+
+unbundle no imp_minus_big
 
 end

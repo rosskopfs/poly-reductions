@@ -542,7 +542,6 @@ theorem inline_complete:
      and "t = t' on set (vars c)" "z' \<le> z" "z \<le> (z' + 1) * (1 + size\<^sub>c c)"
   unfolding inline_def using inline_S_complete[OF inline_sem[unfolded inline_def] s] by auto
 
-
 text \<open>Final correctness theorem (for refinements)\<close>
 corollary inline:
   assumes "(inline c,s)\<Rightarrow>\<^bsup>z\<^esup> t"
