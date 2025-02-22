@@ -14,13 +14,13 @@ Assign[intro!]:  "(x ::= v, s) \<Rightarrow>\<^bsup>1\<^esup> (s(x \<mapsto> v))
 
 Seq:    "(c\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2 \<Longrightarrow> (c\<^sub>2,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3 \<Longrightarrow> (c\<^sub>1;;c\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s\<^sub>3" |
 
-IfTrue:  "\<exists>b \<in> set bs. s b \<noteq> Some Zero \<Longrightarrow> (c\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
-IfFalse: "\<forall>b \<in> set bs. s b = Some Zero \<Longrightarrow> (c\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
+IfTrue:  "s b \<noteq> Some Zero \<Longrightarrow> (c\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
+IfFalse: "s b = Some Zero \<Longrightarrow> (c\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'" |
 WhileTrue:
- "\<lbrakk>(\<exists>b \<in> set bs. s b \<noteq> Some Zero); (c,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2; 
-  ((WHILE bs \<noteq>0 DO c),s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3 \<rbrakk> \<Longrightarrow>
-  ((WHILE bs \<noteq>0 DO c), s)\<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup>s\<^sub>3" |
-WhileFalse[intro!]:   "(\<forall>b \<in> set bs. s b = Some Zero) \<Longrightarrow> (WHILE bs \<noteq>0 DO c,s) \<Rightarrow>\<^bsup>1\<^esup> s"
+ "\<lbrakk>s b \<noteq> Some Zero; (c,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2; 
+  ((WHILE b \<noteq>0 DO c),s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3 \<rbrakk> \<Longrightarrow>
+  ((WHILE b \<noteq>0 DO c), s)\<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup>s\<^sub>3" |
+WhileFalse[intro!]:   "s b = Some Zero \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<Rightarrow>\<^bsup>1\<^esup> s"
 
 lemmas big_step_induct = big_step.induct[split_format(complete)]
 

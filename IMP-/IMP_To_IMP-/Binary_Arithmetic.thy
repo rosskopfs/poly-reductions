@@ -85,6 +85,39 @@ proof-
     by(auto simp: nth_bit_def nat_to_bit_cases nth_bit_nat_is_right_shift)
 qed
 
+fun bits_zero :: "nat \<Rightarrow> nat \<Rightarrow> bool" where
+  "bits_zero x 0 \<longleftrightarrow> True" |
+  "bits_zero x (Suc n) \<longleftrightarrow> nth_bit_nat x n = 0 \<and> bits_zero x n"
+
+lemma bits_zero_iff: "bits_zero x n \<longleftrightarrow> (\<forall>i < n. nth_bit_nat x i = 0)"
+  by (induction n) (auto simp: less_Suc_eq)
+
+definition zero_bit :: "nat \<Rightarrow> nat \<Rightarrow> bit" where
+  "zero_bit x n = (if bits_zero x n then Zero else One)"
+
+lemma zero_bit_0[simp]: "zero_bit x 0 = Zero"
+  unfolding zero_bit_def by simp
+
+lemma zero_bit_zero: "(zero_bit x n = Zero) = (\<forall>i < n. nth_bit x i = Zero)"
+  unfolding zero_bit_def nth_bit_def by (auto iff: nat_to_bit_eq_One_iff bits_zero_iff)
+
+lemma zero_bit_one: "(zero_bit x n = One) = (\<exists> i < n. nth_bit x i = One)"
+  unfolding zero_bit_def nth_bit_def by (auto iff: nat_to_bit_eq_One_iff bits_zero_iff)
+
+lemma zero_bit_one1[elim]:
+  assumes "zero_bit x n = One"
+  obtains i where "i < n" "nth_bit x i = One"
+  using assms by (auto simp add: zero_bit_one)
+
+lemma zero_bit_rec: "n > 0 \<Longrightarrow> zero_bit x n = (if zero_bit x (n-1) = Zero then nth_bit x (n-1) else One)"
+proof (induction n)
+  case (Suc n)
+  then show ?case apply (cases "zero_bit x (n - 1)"; cases "nth_bit x (n - 1)")
+       apply (auto simp: less_Suc_eq zero_bit_one zero_bit_zero split: if_splits)
+       apply (metis (full_types) bit_neq_one_iff less_Suc_eq zero_bit_one)
+    done
+qed auto
+
 fun nth_carry:: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bit" where
 "nth_carry 0 a b = (if (nth_bit a 0 = One \<and> nth_bit b 0 = One) then One else Zero)" |
 "nth_carry (Suc n) a b = (if (nth_bit a (Suc n) = One \<and> nth_bit b (Suc n) = One)
@@ -143,7 +176,7 @@ lemma first_bit_of_add: "nth_bit (a + b) 0
   = (if nth_bit a 0 = One then if nth_bit b 0 = One then Zero else One
      else if nth_bit b 0 = One then One else Zero)"
   apply(auto simp: nth_bit_def nat_to_bit_eq_One_iff nat_to_bit_eq_Zero_iff)
-  by presburger
+  by presburger+
 
 lemma nth_bit_of_add: "nth_bit (a + b) (Suc n) = (let u = nth_bit a (Suc n);
   v = nth_bit b (Suc n); w = nth_carry n a b in

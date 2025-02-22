@@ -5,7 +5,7 @@ section "IMP to IMP-"
 
 theory IMP_To_IMP_Minus
   imports "IMP.Big_StepT" Binary_Operations
-begin
+begin                           
 
 text \<open> We give a reduction from IMP to IMP-. The reduction works by bit blasting each register
        of IMP into several registers in IMP- each holding a single bit. Arithmetic operations
@@ -13,26 +13,14 @@ text \<open> We give a reduction from IMP to IMP-. The reduction works by bit bl
        theory. For WHILE and IF, we replace the condition of a single register's content being
        non-zero by checking whether any of the bits in the translated state is non-zero. \<close>
 
-definition var_bit_list:: "nat \<Rightarrow> vname \<Rightarrow> vname list" where
-"var_bit_list n v = map (\<lambda>i. var_bit_to_var (v, i)) [0..<n]"
-
-lemma exists_non_zero_in_var_bit_list_iff:
-  assumes "finite (range s)" "Max (range s) < 2 ^ n"
-  shows "(\<exists>b\<in>set (var_bit_list n v). IMP_State_To_IMP_Minus s n b \<noteq> Some Zero)
-      \<longleftrightarrow> s v > 0"
-  using assms
-  by(auto simp: var_bit_list_def IMP_State_To_IMP_Minus_def
-      IMP_State_To_IMP_Minus_with_operands_a_b_def has_bit_one_then_greater_zero
-      greater_zero_then_has_bit_one)
-
 fun IMP_To_IMP_Minus:: "IMP_com \<Rightarrow> nat \<Rightarrow> IMP_Minus_com" where
 "IMP_To_IMP_Minus Com.SKIP n = SKIP" |
 "IMP_To_IMP_Minus (Com.Assign v aexp) n = assignment_to_binary n v aexp" |
 "IMP_To_IMP_Minus (Com.Seq c1 c2) n =
   (IMP_To_IMP_Minus c1 n ;; IMP_To_IMP_Minus c2 n )" |
-"IMP_To_IMP_Minus (Com.If v c1 c2) n = (IF (var_bit_list n v)\<noteq>0 THEN
+"IMP_To_IMP_Minus (Com.If v c1 c2) n = (IF (var_bit_to_var (v, n))\<noteq>0 THEN
   IMP_To_IMP_Minus c1 n ELSE IMP_To_IMP_Minus c2 n)" |
-"IMP_To_IMP_Minus (Com.While v c) n = (WHILE (var_bit_list n v)\<noteq>0 DO
+"IMP_To_IMP_Minus (Com.While v c) n = (WHILE (var_bit_to_var (v, n))\<noteq>0 DO
   IMP_To_IMP_Minus c n)"
 
 lemma finite_range_stays_finite: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<Longrightarrow> finite (range s1)
@@ -215,12 +203,15 @@ next
   hence "(2 ^ y) * Max (range s) < 2 ^ n"
     by (meson le_less_trans max.cobounded1 move_exponent_to_rhs power_of_two_minus)
   hence "Max (range s) < 2 ^ n" by(auto intro: le_less_trans[OF _ \<open>2 ^ y * Max (range s) < 2 ^ n\<close>])
-  thus ?case apply(simp only: t_small_step_fun_terminate_iff)
-    using IfTrue apply(simp add: t_small_step_fun_small_step_fun exists_non_zero_in_var_bit_list_iff)
+
+  with IfTrue show ?case apply auto
+    using local.IfTrue.hyps(1) apply auto 
+  apply(simp only: t_small_step_fun_terminate_iff)
+    using IfTrue apply(simp add: t_small_step_fun_small_step_fun)
     apply(rule t_small_step_fun_increase_time[where ?t="100 * n * (x - 1) + 50"])
      apply(cases x)
       using bigstep_progress IfTrue.IH bigstep_progress
-    by(fastforce simp: nat_mult_max_right)+
+      by(fastforce simp: nat_mult_max_right)+
 next
   case (IfFalse s b c2 x t y c1)
   hence "(2 ^ y) * Max (range s) < 2 ^ n"
@@ -229,7 +220,7 @@ next
   then show ?case
     apply(subst t_small_step_fun_terminate_iff)
     using IfFalse
-    using t_small_step_fun_small_step_fun exists_non_zero_in_var_bit_list_iff
+    using t_small_step_fun_small_step_fun
     apply simp
     apply(rule t_small_step_fun_increase_time[where ?t="100 * n * (x - 1) + 50"])
      apply(cases x)
@@ -242,7 +233,7 @@ next
   hence "Max (range s) < 2 ^ n"
     by(auto intro: le_less_trans[OF _ \<open>(2 ^ Suc (Suc 0)) * Max (range s) < 2 ^ n\<close>])
   then show ?case using WhileFalse
-    by(simp add: t_small_step_fun_terminate_iff exists_non_zero_in_var_bit_list_iff)
+    by(simp add: t_small_step_fun_terminate_iff)
 next
   case (WhileTrue s1 b c x s2 y s3 z)
   hence "(2 ^ z) * Max (range s1) < 2 ^ n"
@@ -269,7 +260,7 @@ next
   ultimately show ?case using Seq \<open>2 ^ x * max (Max (range s1)) (max_const c) < 2 ^ n\<close>
     apply(simp only: t_small_step_fun_terminate_iff)
     using \<open>s1 b \<noteq> 0\<close> \<open>finite (range s1)\<close> \<open>Max (range s1) < 2 ^ n\<close>
-    apply(simp add: exists_non_zero_in_var_bit_list_iff)
+    apply(simp add:)
     apply(rule seq_terminates_when[where ?t1.0="100 * n * (x - Suc 0) + 50" and
           ?t2.0="100 * n * (y - Suc 0) + 50"])
       using WhileTrue
@@ -305,9 +296,9 @@ text \<open>We give a few lemmas that specify what variables appear in translate
 
 lemma IMP_To_IMP_Minus_variables:
   "n > 0 \<Longrightarrow> set (enumerate_variables (IMP_To_IMP_Minus c n)) \<subseteq>
-    { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
-    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
-    \<union> { ''carry'' }"
+    { var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
+    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = a_chr \<or> op = b_chr) }
+    \<union> { carry, zero }"
 proof(induction c)
   case SKIP
   then show ?case by(auto simp: enumerate_variables_def)
@@ -319,10 +310,10 @@ next
   then show ?case by(auto simp: set_enumerate_variables_seq)
 next
   case (If x1 c1 c2)
-  then show ?case by(auto simp: set_enumerate_variables_if var_bit_list_def)
+  then show ?case by (auto simp: set_enumerate_variables_if)
 next
   case (While x1 c)
-  then show ?case by(auto simp: set_enumerate_variables_while var_bit_list_def)
+  then show ?case by (auto simp: set_enumerate_variables_while)
 qed
 
 lemma card_of_set_comprehension_of_set_list: "card { f x |x. x \<in> set l} \<le> length (remdups l)"
@@ -344,9 +335,16 @@ lemma card_union_le_intro: "card U \<le> a \<Longrightarrow> card W \<le> b \<Lo
 lemma IMP_To_IMP_Minus_variables_length:
   assumes "n > 0"
   shows "length (enumerate_variables (IMP_To_IMP_Minus c n)) \<le>
-    (n + 1) * (num_vars c) + 2 * n + 1"
+    (n + 2) * (num_vars c) + 2 * n + 2"
 proof -
-  have "finite { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
+  have "card  { var_bit_to_var (w, i) | w i. i = n \<and> w \<in> set (vars c)} \<le> card (set (vars c))"
+    using card_of_set_comprehension_of_set_list length_remdups_card_conv by metis
+  moreover have "num_vars c = card (set (vars c))"
+    by (simp add: length_remdups_card_conv num_vars_def)
+  ultimately have "card  { var_bit_to_var (w, i) | w i. i = n \<and> w \<in> set (vars c)} \<le> num_vars c"
+    by linarith
+
+  moreover have "finite { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
     \<and> card { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
     \<le> n * (num_vars c)"
   proof(induction n)
@@ -360,42 +358,43 @@ proof -
       using card_of_set_comprehension_of_set_list num_vars_def by fastforce
     ultimately show ?case using Suc by (simp add: card_union_le sup_commute)
   qed auto
-  moreover have "card {CHR ''?'' # CHR ''$'' # w |w. w \<in> set (vars c)}
+
+  moreover have *: "{ var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) } = 
+  { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) } \<union> { var_bit_to_var (w, i) | w i. i = n \<and> w \<in> set (vars c)}"
+    by auto
+  ultimately have "finite { var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
+    \<and> card { var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
+    \<le> n * (num_vars c) + num_vars c"
+    by (subst *) (auto simp: card_union_le)
+  
+  moreover have "card {CHR ''?'' # sep2 # w |w. w \<in> set (vars c)}
     \<le> num_vars c" using card_of_set_comprehension_of_set_list num_vars_def by fastforce
-  moreover have "finite {operand_bit_to_var (op, i) |op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'')}
-    \<and> card { operand_bit_to_var (op, i) |op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') } \<le> 2 * n"
+  moreover have "finite {operand_bit_to_var (op, i) |op i. i < n \<and> (op = a_chr \<or> op = b_chr)}
+    \<and> card { operand_bit_to_var (op, i) |op i. i < n \<and> (op = a_chr \<or> op = b_chr) } \<le> 2 * n"
   proof (induction n)
     case (Suc n)
-    have "{operand_bit_to_var (op, i) |op i. i < Suc n \<and> (op = CHR ''a'' \<or> op = CHR ''b'')}
-      = { operand_bit_to_var (op, i) |op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
-        \<union> { operand_bit_to_var (CHR ''a'', n), operand_bit_to_var (CHR ''b'', n)}" by auto
+    have "{operand_bit_to_var (op, i) |op i. i < Suc n \<and> (op = a_chr \<or> op = b_chr)}
+      = { operand_bit_to_var (op, i) |op i. i < n \<and> (op = a_chr \<or> op = b_chr) }
+        \<union> { operand_bit_to_var (a_chr, n), operand_bit_to_var (b_chr, n)}" by auto
     thus ?case using Suc by(auto intro!: card_insert_le_m1)
   qed auto
   ultimately have
-    f: "finite ({ var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
-    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
-    \<union> { ''carry'' })" and
-    "card ({ var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) }
-    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = CHR ''a'' \<or> op = CHR ''b'') }
-    \<union> { ''carry'' }) \<le> (n + 1) * (num_vars c) + 2 * n + 1"
+    f: "finite ({ var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
+    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = a_chr \<or> op = b_chr) }
+    \<union> { carry, zero })" and
+    "card ({ var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
+    \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = a_chr \<or> op = b_chr) }
+    \<union> { carry, zero }) \<le> (n + 1) * (num_vars c) + 2 * n + 2"
     by(auto simp: card_union_le intro!: card_insert_le_m1 card_union_le_intro)
   hence "card (set (enumerate_variables (IMP_To_IMP_Minus c n)))
-    \<le> (n + 1) * (num_vars c) + 2 * n + 1"
+    \<le> (n + 2) * (num_vars c) + 2 * n + 2"
     using card_mono[OF f IMP_To_IMP_Minus_variables[OF \<open>n > 0\<close>]] by simp
   thus ?thesis by(simp add:  distinct_card[OF enumerate_variables_distinct])
 qed
 
 lemma var_bit_in_IMP_Minus_variables_then_bit_less_n: "n > 0 \<Longrightarrow> var_bit_to_var (a, b)
-           \<in> set (enumerate_variables (IMP_To_IMP_Minus c n)) \<Longrightarrow> b < n"
+           \<in> set (enumerate_variables (IMP_To_IMP_Minus c n)) \<Longrightarrow> b \<le> n"
   apply(frule set_mp[OF IMP_To_IMP_Minus_variables])
   by auto
-
-lemma var_bit_in_IMP_Minus_variables: "v \<in> set (vars c)
-  \<Longrightarrow> i < n \<Longrightarrow> var_bit_to_var (v, i) \<in>  set (enumerate_variables (IMP_To_IMP_Minus c n))"
-  apply(induction c)
-  by(auto simp: assignment_to_binary_def binary_adder_def set_enumerate_variables_seq
-      copy_atom_to_operand_variables adder_def com_list_to_seq_variables full_adder_variables
-      binary_subtractor_def subtract_handle_underflow_variables set_enumerate_variables_if
-      var_bit_list_def set_enumerate_variables_while split: aexp.splits atomExp.splits)
 
 end
