@@ -21,12 +21,12 @@ Assign:  "(x ::= v, s) \<rightarrow> (SKIP, s(x \<mapsto> v))" |
 Seq1:    "(SKIP;;c\<^sub>2,s) \<rightarrow> (c\<^sub>2,s)" |
 Seq2:    "(c\<^sub>1,s) \<rightarrow> (c\<^sub>1',s') \<Longrightarrow> (c\<^sub>1;;c\<^sub>2,s) \<rightarrow> (c\<^sub>1';;c\<^sub>2,s')" |
 
-IfTrue:  "\<exists>b \<in> set bs. s b \<noteq> Some Zero \<Longrightarrow> (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>1,s)" |
-IfFalse: "\<forall>b \<in> set bs. s b = Some Zero \<Longrightarrow> (IF bs \<noteq>0  THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>2,s)" |
+IfTrue:  "s b \<noteq> Some Zero \<Longrightarrow> (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>1,s)" |
+IfFalse: "s b = Some Zero \<Longrightarrow> (IF b \<noteq>0  THEN c\<^sub>1 ELSE c\<^sub>2,s) \<rightarrow> (c\<^sub>2,s)" |
 
-WhileTrue:   "(\<exists>b \<in> set bs. s b \<noteq> Some Zero) \<Longrightarrow> (WHILE bs \<noteq>0 DO c,s) \<rightarrow>
-            (c ;; (WHILE bs \<noteq>0 DO c), s)" |
-WhileFalse:   "(\<forall>b \<in> set bs. s b = Some Zero) \<Longrightarrow> (WHILE bs \<noteq>0 DO c,s) \<rightarrow>
+WhileTrue:   "(s b \<noteq> Some Zero) \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<rightarrow>
+            (c ;; (WHILE b \<noteq>0 DO c), s)" |
+WhileFalse:   "(s b = Some Zero) \<Longrightarrow> (WHILE b \<noteq>0 DO c,s) \<rightarrow>
             (SKIP,s)"
 
 subsection "Transitive Closure"
@@ -89,38 +89,22 @@ qed auto
 
 
 lemma if_trueI[intro]:
-  "is1 v = Some One \<Longrightarrow> v \<in> set x1 \<Longrightarrow> (IF x1\<noteq>0 THEN c11 ELSE c12, is1) \<rightarrow> (c11, is1)"
+  "is1 v = Some One \<Longrightarrow>  (IF v\<noteq>0 THEN c11 ELSE c12, is1) \<rightarrow> (c11, is1)"
   by force
 
 lemma if_falseI[intro]:
-  "map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1
-    \<Longrightarrow> (IF x1\<noteq>0 THEN c11 ELSE c12, is1) \<rightarrow> (c12, is1)"
-proof -
-  assume "map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1"
-  have "v \<in> set (remdups x1) \<Longrightarrow> map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) v = Some Zero" for v
-    by(induction x1) (auto split: if_splits)
-  hence "\<forall>v \<in> set x1. is1 v = Some Zero"
-    apply(auto simp: map_le_def dom_map_of_conv_image_fst)
-    by (metis (mono_tags, lifting) \<open>map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1\<close> domI map_le_def)
-  thus ?thesis by simp
-qed
+  "is1 v = Some Zero
+    \<Longrightarrow> (IF v\<noteq>0 THEN c11 ELSE c12, is1) \<rightarrow> (c12, is1)"
+  by simp
 
 lemma while_trueI[intro]:
-  "is1 v = Some One \<Longrightarrow> v \<in> set x1 \<Longrightarrow> (WHILE x1\<noteq>0 DO c1, is1) \<rightarrow> (c1 ;; WHILE x1\<noteq>0 DO c1, is1)"
+  "is1 v = Some One \<Longrightarrow> (WHILE v\<noteq>0 DO c1, is1) \<rightarrow> (c1 ;; WHILE v\<noteq>0 DO c1, is1)"
   by force
 
 lemma while_falseI[intro]:
-  "map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1
-    \<Longrightarrow> (WHILE x1\<noteq>0 DO c1, is1) \<rightarrow> (SKIP, is1)"
-proof -
-  assume "map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1"
-  have "v \<in> set (remdups x1) \<Longrightarrow> map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) v = Some Zero" for v
-    by(induction x1) (auto split: if_splits)
-  hence "\<forall>v \<in> set x1. is1 v = Some Zero"
-    apply(auto simp: map_le_def dom_map_of_conv_image_fst)
-    by (metis (mono_tags, lifting) \<open>map_of (map (\<lambda>v. (v, Zero)) (remdups x1)) \<subseteq>\<^sub>m is1\<close> domI map_le_def)
-  thus ?thesis by simp
-qed
+  "is1 v = Some Zero
+    \<Longrightarrow> (WHILE v\<noteq>0 DO c1, is1) \<rightarrow> (SKIP, is1)"
+  by blast
 
 subsection \<open>Functional definition\<close>
 
@@ -133,9 +117,9 @@ fun small_step_fun:: "com * state \<Rightarrow> com * state" where
 "small_step_fun (x ::= v, s) = (SKIP, s(x \<mapsto> v))" |
 "small_step_fun (c\<^sub>1;;c\<^sub>2,s) = (if c\<^sub>1 = SKIP then (c\<^sub>2,s)
   else  (fst (small_step_fun (c\<^sub>1, s)) ;;c\<^sub>2, snd (small_step_fun (c\<^sub>1, s))))" |
-"small_step_fun (IF bs \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) = (if \<exists>b \<in> set bs. s b \<noteq> Some Zero then (c\<^sub>1,s) else (c\<^sub>2,s))" |
-"small_step_fun (WHILE bs \<noteq>0 DO c,s) = (if  \<exists>b \<in> set bs. s b \<noteq> Some Zero
-  then (c ;; (WHILE bs \<noteq>0 DO c), s) else (SKIP,s))"
+"small_step_fun (IF b \<noteq>0 THEN c\<^sub>1 ELSE c\<^sub>2,s) = (if s b \<noteq> Some Zero then (c\<^sub>1,s) else (c\<^sub>2,s))" |
+"small_step_fun (WHILE b \<noteq>0 DO c,s) = (if  s b \<noteq> Some Zero
+  then (c ;; (WHILE b \<noteq>0 DO c), s) else (SKIP,s))"
 
 fun t_small_step_fun:: "nat \<Rightarrow> com * state \<Rightarrow> com * state" where
 "t_small_step_fun 0 = id" |

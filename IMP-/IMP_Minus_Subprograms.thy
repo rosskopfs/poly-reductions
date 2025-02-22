@@ -29,8 +29,8 @@ fun all_variables :: "com \<Rightarrow> vname list" where
 "all_variables (SKIP) = []" |
 "all_variables (Assign v _) = [ v ]" |
 "all_variables (c1 ;; c2) = []" |
-"all_variables (If vs c1 c2) = vs" |
-"all_variables (While vs c) = vs"
+"all_variables (If v c1 c2) = [v]" |
+"all_variables (While v c) = [v]"
 
 definition enumerate_variables :: "com \<Rightarrow> vname list" where
 "enumerate_variables c = remdups (concat (map all_variables (enumerate_subprograms c)))"
@@ -42,12 +42,12 @@ lemma set_enumerate_variables_seq: "set (enumerate_variables (c1 ;; c2)) =
   set (enumerate_variables c1) \<union> set (enumerate_variables c2)" 
   by(auto simp: enumerate_variables_def enumerate_subprograms_def)
 
-lemma set_enumerate_variables_if: "set (enumerate_variables (IF vs\<noteq>0 THEN c1 ELSE c2))
-  = set vs \<union> set (enumerate_variables c1) \<union> set (enumerate_variables c2)"
+lemma set_enumerate_variables_if: "set (enumerate_variables (IF v\<noteq>0 THEN c1 ELSE c2))
+  = {v} \<union> set (enumerate_variables c1) \<union> set (enumerate_variables c2)"
   by(auto simp: enumerate_variables_def enumerate_subprograms_def)
 
-lemma set_enumerate_variables_while: "set (enumerate_variables (WHILE vs\<noteq>0 DO c))
-  = set vs \<union> set (enumerate_variables c)"
+lemma set_enumerate_variables_while: "set (enumerate_variables (WHILE v\<noteq>0 DO c))
+  = {v} \<union> set (enumerate_variables c)"
   by(auto simp: enumerate_variables_def enumerate_subprograms_def)
 
 lemma enumerate_variables_assign[simp]: "enumerate_variables (x1 ::= x2) = [x1]"

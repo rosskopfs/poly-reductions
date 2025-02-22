@@ -19,8 +19,8 @@ datatype
   com = SKIP
   | Assign vname bit
   | Seq com com
-  | If "(vname list)" com com
-  | While "(vname list)" com
+  | If vname com com
+  | While vname com
 
 open_bundle com_syntax
 begin
