@@ -162,6 +162,7 @@ definition "trans_assigns c \<equiv> fst (trans_assigns_aux c [])"
 
 definition "register_sep \<equiv> ''.''"
 definition "arg_sep \<equiv> ''arg''"
+
 definition "is_prefix xs ys \<equiv> take (length ys) xs = ys"
 
 fun is_arg :: "vname \<Rightarrow> bool" where

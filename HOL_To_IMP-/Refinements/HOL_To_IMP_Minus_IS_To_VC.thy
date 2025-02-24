@@ -37,11 +37,11 @@ compile_nat is_vc_list_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.is_vc_list_nat by (cook mode = induction)
 
 lemma is_vc_list_IMP_Minus_correct:
-  assumes "Rel_nat (s ''is_vc_list_nat.args.x'') x"
+  assumes "Rel_nat (s ''is_vc_list_nat.arg.x'') x"
   shows "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus is_vc_list_nat_IMP_tailcall) s
     ''is_vc_list_nat.ret'' (natify (is_vc_list x))"
 proof -
-  have "HTHN.is_vc_list_nat TYPE('a) (s ''is_vc_list_nat.args.x'') = natify (is_vc_list x)"
+  have "HTHN.is_vc_list_nat TYPE('a) (s ''is_vc_list_nat.arg.x'') = natify (is_vc_list x)"
     using HTHN.is_vc_list_nat_eq_unfolded[OF assms] HTHN.Rel_nat_is_vc_list_nat_unfolded[OF assms]
     by (simp add: Rel_nat_iff_eq_natify)
   then show ?thesis using is_vc_list_nat_IMP_Minus_correct[of s, OF assms] by simp
