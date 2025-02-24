@@ -6,7 +6,7 @@ theory Compile_HOL_Nat_To_IMP
     HOL_Nat_To_IMP_Minus_Base
     HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
   keywords
-    "compile_nat" :: thy_decl and "basename" and
+    "compile_nat" :: thy_decl and "compile_nat_old" :: thy_decl and "basename" and
     "declare_compiled_const" :: thy_decl and
     "return_register" and "argument_registers" and "compiled" and
     "print_compiled_consts" :: diag
@@ -127,6 +127,68 @@ lemma tbig_step_pull_tIf_iff:
   by (induction c arbitrary: s t s' rule: pull_tIf_assoc_right.induct)
   (fastforce simp: tbig_step_t_assoc_right_tSeq tbig_step_pull_tIf_iff_aux)+
 
+fun al_get :: "vname \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> atomExp" where
+  "al_get x ((a,b)#ys) = (if x = a then b else al_get x ys)"
+| "al_get x [] = V x"
+
+fun al_set :: "vname \<Rightarrow> atomExp \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> (vname \<times> atomExp) list" where
+  "al_set a b ((a',b')#xs) = (if a = a' then (a',b)#xs else (a',b') # al_set a b xs)"
+| "al_set a b [] = [(a,b)]"
+
+lemma al_get_al_set: "al_get x (al_set x y al) = y"
+  by (induction al) auto
+
+fun subst_atomExp :: "atomExp \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> atomExp" where
+  "subst_atomExp (V var) al = al_get var al"
+| "subst_atomExp a _ = a"
+
+fun subst_aexp :: "aexp \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> aexp" where
+  "subst_aexp (A a) al = A (subst_atomExp a al)"
+| "subst_aexp (Plus a1 a2) al = Plus (subst_atomExp a1 al) (subst_atomExp a2 al)"
+| "subst_aexp (Sub a1 a2) al = Sub (subst_atomExp a1 al) (subst_atomExp a2 al)"
+
+lemma tbig_step_subst_aexp_iff_if_aval_eq:
+  includes tcom_syntax
+  assumes "aval (subst_aexp a al) s = aval a s"
+  shows "C \<turnstile> (v ::= (subst_aexp a al), s) \<Rightarrow>\<^bsup>t\<^esup> s' \<longleftrightarrow> C \<turnstile> (v ::= a, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
+  by (metis assms tAssign tAssign_tE)
+
+fun ListMem' where
+  "ListMem' [] _ = False"
+| "ListMem' (x#xs) y = (x = y \<or> ListMem' xs y)"
+
+fun trans_assns_aux ::
+    "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> tcom \<times> (vname \<times> atomExp) list" where
+  "trans_assns_aux (tSeq c1 c2) al = (let (c1', al') = trans_assns_aux c1 al;
+    (c2', al'') = trans_assns_aux c2 al' in (tSeq c1' c2', al''))"
+| "trans_assns_aux (tIf v c1 c2) al =
+    (let (c1', al'1) = trans_assns_aux c1 al; (c2', al'2) = trans_assns_aux c2 al in
+    (tIf (case al_get v al of (V v') \<Rightarrow> v' | _ \<Rightarrow> v) c1' c2', filter (ListMem' al'2) al'1))"
+| "trans_assns_aux (tAssign v a) al = (let a' = subst_aexp a al in
+    (tAssign v a', (case a' of A atom \<Rightarrow> al_set v atom al | _ \<Rightarrow> al)))"
+| "trans_assns_aux (tCall c v) al = (tCall c v, filter (\<lambda>(_, v'). v' \<noteq> V v) al)"
+| "trans_assns_aux c al = (c, al)"
+definition "trans_assns c \<equiv> fst (trans_assns_aux c [])"
+
+fun is_arg :: "vname \<Rightarrow> bool" where
+  "is_arg (x#xs) = (take 6 xs = ''.args.'' \<or> is_arg xs)"
+| "is_arg [] = False"
+
+fun bury_aux :: "tcom \<Rightarrow> vname list \<Rightarrow> tcom \<times> vname list" where
+  "bury_aux (tSeq c1 c2) vl = (let (c2', vl') = bury_aux c2 vl;
+    (c1', vl'') = bury_aux c1 vl' in (tSeq c1' c2', vl''))"
+| "bury_aux (tIf v c1 c2) vl = (let (c1', vl'1) = bury_aux c1 vl;
+    (c2', vl'2) = bury_aux c2 vl in (tIf v c1' c2', v # vl'1 @ vl'2))"
+| "bury_aux (tAssign v a) vl = (if a = A (V v) \<or> \<not>(ListMem' vl v \<or> is_arg v)
+    then (tSKIP, vl) else (tAssign v a, vars a @ (filter (\<lambda>x. x \<noteq> v) vl)))"
+| "bury_aux (tCall c v) vl = (if ListMem' vl v then
+    (tCall c v, filter (\<lambda>x. x \<noteq> v) vl) else (tSKIP, vl))"
+| "bury_aux c vl = (c, vl)"
+definition
+  "bury ret_reg c \<equiv> fst (bury_aux c [ret_reg])"
+
+unbundle tcom_syntax
+
 context HOL_To_HOL_Nat
 begin
 
@@ -137,6 +199,7 @@ lemma Rel_nat_If_nat [Rel_nat]: "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat
 
 end
 
-ML_file\<open>compile_hol_nat_to_imp.ML\<close>
+declare tailcall_to_IMP_Minus_def[code del]
 
+ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 end
