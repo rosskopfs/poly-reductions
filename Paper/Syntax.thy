@@ -1,5 +1,6 @@
 theory Syntax
   imports "IMP_To_IMP-.IMP_To_IMP_Minus" "IMP.IMP_Tailcall" "IMP-.IMP_Minus_Big_StepT"
+    "HOL_Nat_To_IMP-.IMP_Terminates_With"
 begin
 
 (* disabled: original syntax *)
@@ -11,6 +12,13 @@ no_notation big_step ("_ \<Rightarrow>\<^bsup>_\<^esup> _" 55)
 no_notation big_step_t ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)
 no_notation tail_steps ("_ \<turnstile>''_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
 
+(* terminates with syntax *)
+bundle terminates_with_syntax
+begin
+  notation terminates_with_res_IMP_Minus ("'(_, _') \<Rightarrow>\<^bsub>_\<^esub> _")
+  notation terminates_with_res_IMP_Tailcall ("_ \<turnstile> '(_, _') \<Rightarrow>\<^bsub>_\<^esub> _")
+  notation terminates_with_IMP_Tailcall ("_ \<turnstile> '(_, _') \<Rightarrow> _")
+end
 
 (* enabled: canonical *)
 

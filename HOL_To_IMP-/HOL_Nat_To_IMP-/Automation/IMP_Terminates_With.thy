@@ -188,8 +188,8 @@ lemma terminates_with_res_tIfI:
 
 lemma terminates_with_res_tCallI:
   assumes "terminates_with_res_IMP_Minus p s r val"
-  and "(s(r := val)) r' = val"
-  shows "terminates_with_res_IMP_Tailcall tp (tCall p r) s r' val"
+  and "(s(r := val)) r' = val'"
+  shows "terminates_with_res_IMP_Tailcall tp (tCall p r) s r' val'"
   using assms by blast
 
 lemma terminates_with_res_tTailI:

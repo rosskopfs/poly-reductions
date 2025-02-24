@@ -80,13 +80,9 @@ qed
 end
 
 text \<open>TODO function relator fun_rel\<close>
-text \<open>TODO proof of relation left-unique\<close>
-text \<open>TODO put in example\<close>
 text \<open>TODO link typeclass @ {class compile_nat}\<close>
 text \<open>TODO link pair\<close>
 text \<open>TODO link selector\<close>
-text \<open>TODO another example\<close>
-text \<open>TODO link to ML structure\<close>
 
 section \<open>\<open>HOL\<^bsup>(TC)\<^esup>\<close> to \<open>HOL\<^bsup>(TC)\<nat>\<^esup>\<close>\<close>
 
@@ -189,7 +185,45 @@ text \<open>See @{ML_structure Compile_HOL_Nat_To_IMP}.\<close>
 
 subsection \<open>Execution Rules used for Symbolic Execution of \<open>IMP\<^bsup>TC\<^esup>\<close> Programs (Fig. 14, Appendix)\<close>
 
-(*TODO, see terminates_with_res_tSeqI and below*)
+context
+  includes terminates_with_syntax
+begin
+
+theorem Assign1:
+  assumes "(s(r := \<lbrakk>a\<rbrakk>\<^sub>s)) r' = v"
+  shows "p \<turnstile> (r ::= a, s) \<Rightarrow>\<^bsub>r'\<^esub> v"
+  using assms terminates_with_res_tAssignI by auto
+
+lemma Seq1:
+  assumes "p \<turnstile> (p1, s) \<Rightarrow> s'"
+  and "p \<turnstile> (p2, s') \<Rightarrow>\<^bsub>r\<^esub> val"
+  shows "p \<turnstile> (p1;; p2, s) \<Rightarrow>\<^bsub>r\<^esub> val"
+  using assms by (rule terminates_with_res_tSeqI)
+
+lemma IfT1:
+  assumes "s r \<noteq> 0"
+  and "p \<turnstile> (p1, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  shows "p \<turnstile> (IF r\<noteq>0 THEN p1 ELSE p2, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  using assms terminates_with_res_tIfI by auto
+
+lemma IfF1:
+  assumes "s r = 0"
+  and "p \<turnstile> (p2, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  shows "p \<turnstile> (IF r\<noteq>0 THEN p1 ELSE p2, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  using assms terminates_with_res_tIfI by auto
+
+lemma Call1:
+  assumes "(pc, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  and "(s(r := v)) r' = v'"
+  shows "p \<turnstile> (CALL pc RETURN r, s) \<Rightarrow>\<^bsub>r'\<^esub> v'"
+  using assms terminates_with_res_tCallI by auto
+
+lemma Rec1:
+  assumes "p \<turnstile> (p, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  shows "p \<turnstile> (RECURSE, s) \<Rightarrow>\<^bsub>r\<^esub> v"
+  using assms terminates_with_res_tTailI by auto
+
+end
 
 subsection \<open>Example 2\<close>
 
