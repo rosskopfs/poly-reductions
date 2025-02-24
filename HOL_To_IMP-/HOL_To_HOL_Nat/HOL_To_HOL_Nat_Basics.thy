@@ -43,7 +43,7 @@ lemmas Rel_nat_selector_nat = Rel_nat_selector_Suc
 lemmas Rel_nat_nat = Rel_nat_nat_self Rel_nat_zero_nat Rel_nat_suc_nat Rel_nat_case_nat
 
 lemma case_nat_eq_if:
-  "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) = (if n = 0 then x else f (n - 1))"
+  "(case n of 0 \<Rightarrow> x | Suc x \<Rightarrow> f x) = (if n = 0 then x else let pn = n - 1 in f pn)"
   by (cases n type: nat) auto
 
 text\<open>We instantiate @{typ bool} by hand to make sure that True gets mapped to a positive value and
@@ -100,7 +100,7 @@ lemma Rel_nat_case_bool_nat [Rel_nat, Rel_nat_compile_nat]:
   "(R ===> R ===> Rel_nat ===> R) case_bool_nat case_bool"
   by (intro rel_funI)
   (auto simp: Rel_nat_bool_iff case_bool_nat_def True_nat_neq_zero False_nat_eq_zero)
-
+declare[[ML_print_depth=1000,eta_contract]]
 lemmas Rel_nat_bool = Rel_nat_True_nat Rel_nat_False_nat Rel_nat_case_bool_nat
 
 datatype_compile_nat list

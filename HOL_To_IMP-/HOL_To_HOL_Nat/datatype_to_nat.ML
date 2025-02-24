@@ -176,9 +176,10 @@ fun register_case T ctrs casex ctxt =
     val (case_arg_binder, ctxt) = Binders.fix_binder ("n", natT) ctxt
     val case_arg_free = snd case_arg_binder
     val ctrs_conditions = map_index (fst #> mk_ctr_condition case_arg_free) ctrs
+    fun mk_let t body = \<^Const>\<open>HOL.Let dummyT dummyT for t \<open>absdummy dummyT body\<close>\<close>
     fun mk_case case_free ctr_nargs =
       map_range (nat_selector ctr_nargs case_arg_free) ctr_nargs
-      |> curry list_comb case_free
+      |> (fn args => fold mk_let args (list_comb (case_free, map_range Bound ctr_nargs)))
     val all_case_binders = case_arg_binder :: rev case_binders
     val case_rhs = (ctrs_conditions, map2 mk_case (map snd case_binders) (map fun_nargs ctrs))
       |-> BU.mk_IfN dummyT

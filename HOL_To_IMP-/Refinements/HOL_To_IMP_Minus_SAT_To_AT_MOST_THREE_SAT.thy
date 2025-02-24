@@ -100,7 +100,7 @@ lemmas to_at_most_3_clause_acc_nat_eq = HTHN.to_at_most_3_clause_acc_nat_eq_unfo
   case_list_nat_def]
 compile_nat to_at_most_3_clause_acc_nat_eq
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_nat
-  by cook \<comment>\<open>FIXME: very slow, but terminates!\<close>
+  by cook \<comment>\<open>FIXME: quite slow, but terminates!\<close>
 
 compile_nat HTHN.to_at_most_3_clause_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_nat by cook

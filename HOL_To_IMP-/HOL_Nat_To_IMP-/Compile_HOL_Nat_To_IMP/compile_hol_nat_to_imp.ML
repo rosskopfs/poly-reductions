@@ -18,8 +18,8 @@ sig
   val compiled_const_suffix_cfg : string Config.T
   val declare_compiled_const : term -> compiled_const -> local_theory -> local_theory
 
-  (* val register_sep_cfg : string Config.T *)
-  (* val argument_sep_cfg : string Config.T *)
+  val register_sep_cfg : string Config.T
+  val argument_sep_cfg : string Config.T
 end
 
 structure Compile_HOL_Nat_To_IMP : COMPILE_HOL_NAT_TO_IMP =
@@ -192,8 +192,12 @@ fun tc_ast_of_term head f_args t =
             | _ => raise TERM ("Only fully applied if allowed, got:", [t]))
         | \<^Const>\<open>HOL.Let _ _\<close> =>
             (case Term.args_of t of
-              [e1, Abs (x, _, e2)] => Let (~1, (x, @{apply 2} build_tc_ast (e1, e2)))
-            | _ => raise TERM ("Only Let with a lambda is allowed, got:", [t]))
+              [e1, e2] =>
+                let val (x, e2) = case e2 of
+                    Abs (x, _, e2) => (x, e2)
+                  | _ => (Name.uu_, incr_boundvars 1 e2 $ Bound 0)
+                in Let (~1, (x, @{apply 2} build_tc_ast (e1, e2))) end
+            | _ => raise TERM ("Only fully applied Let allowed, got:", [t]))
         | Bound i => LetBound i
         | Var ((n, _), typ) =>
             if is_comb t then
@@ -316,7 +320,7 @@ val compiled_const_suffix_cfg =
 val register_sep_cfg =
   Attrib.setup_config_string \<^binding>\<open>register_seperator\<close> (K ".")
 
-val arg_sep_cfg =
+val argument_sep_cfg =
   Attrib.setup_config_string \<^binding>\<open>argument_seperator\<close> (K "arg")
 
 fun compile_cmd f_def optimized basenamepos_opt lthy =
@@ -334,12 +338,15 @@ fun compile_cmd f_def optimized basenamepos_opt lthy =
 
     val (args, def_body) =
       lhs |> strip_comb |> snd |> map Term.dest_Free
-      |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
+      |> List.foldr (I #-> Term.absfree) rhs
+      |> Raw_Simplifier.rewrite_term (Proof_Context.theory_of lthy)
+          (map reflect_eq @{thms Let_compile_simps}) []
+      |> Term.strip_abs
 
     val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
 
     val register_sep = Config.get lthy register_sep_cfg
-    val arg_sep = Config.get lthy arg_sep_cfg
+    val arg_sep = Config.get lthy argument_sep_cfg
     val f_ret_name = fst f_IMP_namepos ^ register_sep ^ "ret"
     fun mk_arg_name arg_name =
       fst f_IMP_namepos ^ register_sep ^ arg_sep ^ register_sep ^ arg_name

@@ -160,6 +160,8 @@ fun trans_assigns_aux :: "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rig
 
 definition "trans_assigns c \<equiv> fst (trans_assigns_aux c [])"
 
+(*FIXME: proper analysis of arguments used in calls instead of comparison against changeable naming
+convention*)
 definition "register_sep \<equiv> ''.''"
 definition "arg_sep \<equiv> ''arg''"
 
@@ -201,6 +203,9 @@ lemma Rel_nat_If_nat [Rel_nat]: "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat
   unfolding If_nat_def by (fastforce simp: Rel_nat_bool_iff True_nat_ne_False_nat)
 
 end
+
+lemma Let_lambda_eq_Let: "(let x = t in (\<lambda>y. f y x)) y = (let x = t in f y x)" by simp
+lemmas Let_compile_simps = Let_const Let_lambda_eq_Let
 
 declare tailcall_to_IMP_Minus_def[code del]
 
