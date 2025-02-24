@@ -11,8 +11,8 @@ sig
   type IMP_def_retrieval = Proof.context -> term -> thm option
   val get_IMP_def: IMP_def_retrieval
 
-  type imp_minus_correct_retrieval = Proof.context -> term -> thm list option
-  val get_imp_minus_correct: Proof.context -> Termtab.key -> thm list option
+  type imp_correct_retrieval = Proof.context -> term -> thm list option
+  val get_imp_correct: Proof.context -> Termtab.key -> thm list option
 
   type fun_inducts_retrieval = Proof.context -> term -> thm list option
   val get_fun_inducts: fun_inducts_retrieval
@@ -47,8 +47,8 @@ sig
   val add_SIMPS_TO_if_assumption_loop : Context.generic -> Context.generic
   val terminates_with_res_tIf_tac : Proof.context -> int -> tactic
 
-  val run_step_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
-  val run_tac : imp_minus_correct_retrieval -> Proof.context -> int -> tactic
+  val run_step_tac : imp_correct_retrieval -> Proof.context -> int -> tactic
+  val run_tac : imp_correct_retrieval -> Proof.context -> int -> tactic
 
   val subst_HOL_fun_eq_tac : thm list -> Proof.context -> int -> tactic
 
@@ -57,14 +57,14 @@ sig
   val solve_IH_prem_tac : Proof.context -> int -> tactic
   val finish_tail_tac : Proof.context -> int -> tactic
 
-  val run_HOL_fun_tac : HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
-  val finish_tac : HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val run_HOL_fun_tac : HOL_Nat_To_IMP_Tactics_Gen.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val finish_tac : HOL_Nat_To_IMP_Tactics_Gen.HOL_eqs_retrieval -> Proof.context -> int -> tactic
 
-  val start_run_finish_case_tac : IMP_def_retrieval -> imp_minus_correct_retrieval ->
-    HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context -> int -> tactic
+  val start_run_finish_case_tac : IMP_def_retrieval -> imp_correct_retrieval ->
+    HOL_Nat_To_IMP_Tactics_Gen.HOL_eqs_retrieval -> Proof.context -> int -> tactic
 
   val start_run_finish_tac : bool -> fun_inducts_retrieval -> IMP_def_retrieval ->
-    imp_minus_correct_retrieval -> HOL_Nat_To_IMP_Tactics_Base.HOL_eqs_retrieval -> Proof.context ->
+    imp_correct_retrieval -> HOL_Nat_To_IMP_Tactics_Gen.HOL_eqs_retrieval -> Proof.context ->
     int -> tactic
 end
 
@@ -72,9 +72,9 @@ structure HOL_Nat_To_IMP_Tailcalls_Tactics : HOL_NAT_TO_IMP_TAILCALLS_TACTICS =
 struct
 
 val logger =
-  Logger.setup_new_logger HOL_Nat_To_IMP_Tactics_Base.logger "HOL_Nat_To_IMP_Tailcalls_Tactics"
+  Logger.setup_new_logger HOL_Nat_To_IMP_Tactics_Gen.logger "HOL_Nat_To_IMP_Tailcalls_Tactics"
 
-structure HTITB = HOL_Nat_To_IMP_Tactics_Base
+structure HTITG = HOL_Nat_To_IMP_Tactics_Gen
 structure GU = General_Util
 structure TU = Tactic_Util
 structure HTIU = HOL_Nat_To_IMP_Util
@@ -86,9 +86,9 @@ structure List = HTIU.List
 type IMP_def_retrieval = Proof.context -> term -> thm option
 val get_IMP_def = Compile_HOL_Nat_To_IMP.get_compiled_const_def
 
-type imp_minus_correct_retrieval = Proof.context -> term -> thm list option
-val get_imp_minus_correct =
-  Option.map single oo HOL_Nat_To_IMP_Minus_Goal_Command.get_imp_minus_correct
+type imp_correct_retrieval = Proof.context -> term -> thm list option
+val get_imp_correct =
+  Option.map single oo HOL_Nat_To_IMP_Goal_Command.get_imp_correct
 
 (*retrieve induction rule for HOL function*)
 type fun_inducts_retrieval = Proof.context -> term -> (thm list) option
@@ -184,10 +184,10 @@ fun start_case_tac get_IMP_def ctxt =
 
 (* tactics for tAssign, tSeq, and tIf that run one step of the tailcall program *)
 
-val terminates_with_res_tSeq_tac = HTITB.seq_tac @{thm terminates_with_res_tSeqI}
+val terminates_with_res_tSeq_tac = HTITG.seq_tac @{thm terminates_with_res_tSeqI}
 
-val terminates_with_res_tAssign_tac = HTITB.assign_tac @{thm terminates_with_res_tAssignI}
-val terminates_with_tAssign_tac = HTITB.assign_tac @{thm terminates_with_tAssignI}
+val terminates_with_res_tAssign_tac = HTITG.assign_tac @{thm terminates_with_res_tAssignI}
+val terminates_with_tAssign_tac = HTITG.assign_tac @{thm terminates_with_tAssignI}
 
 val is_ih = can (Term_Util.strip_subgoal #> snd #> snd #> dest_terminates_with_res_IMP_Tailcall_prop)
 
@@ -197,22 +197,22 @@ val delete_IH_prems =
     in TU.thin_tacs ih_prems i state end
   in TU.SUBGOAL_STRIPPED (snd #> fst) tac end
 
-fun terminates_with_tCall_tac get_imp_minus_correct ctxt =
+fun terminates_with_tCall_tac get_imp_correct ctxt =
   let fun tac {c,...} = case c of
-      \<^Const_>\<open>tCall for c _\<close> => (case get_imp_minus_correct ctxt c of
+      \<^Const_>\<open>tCall for c _\<close> => (case get_imp_correct ctxt c of
           NONE => (@{log Logger.WARN} ctxt (fn _ => Pretty.block [
               Pretty.str "Could not find correctness theorem for ",
               Syntax.pretty_term ctxt c
             ] |> Pretty.string_of);
             K no_tac)
-        | SOME cs => HTITB.call_tac @{thm terminates_with_tCallI}
-            (delete_IH_prems THEN' HTITB.simp_lhs_solve_Rel_nat_tac ctxt) ctxt cs)
+        | SOME cs => HTITG.call_tac @{thm terminates_with_tCallI}
+            (delete_IH_prems THEN' HTITG.simp_lhs_solve_Rel_nat_tac ctxt) ctxt cs)
     | _ => K no_tac
   in with_dest_terminates_with_IMP_Tailcall_prop ctxt tac end
 
 fun finish_contradictory_branch ctxt =
   (delete_IH_prems
-  THEN' safe_asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt))
+  THEN' safe_asm_full_simp_tac (ctxt addsimps HTITG.get_HOL_To_IMP_finish_simps ctxt))
   |> SOLVED'
 
 (*SIMPS_TO looper needed for if conditions containing meta variables*)
@@ -224,17 +224,17 @@ val add_SIMPS_TO_if_assumption_loop = Simplifier.map_ss
   (fn ctxt => ctxt addloop SIMPS_TO_if_assumption_loop)
 
 fun terminates_with_res_tIf_tac ctxt =
-  HTITB.if_tac @{thm terminates_with_res_tIf_processedI} (finish_contradictory_branch ctxt) ctxt
+  HTITG.if_tac @{thm terminates_with_res_tIf_processedI} (finish_contradictory_branch ctxt) ctxt
 
-fun run_step_tac get_imp_minus_correct ctxt = HTITB.run_step_tac
+fun run_step_tac get_imp_correct ctxt = HTITG.run_step_tac
   (terminates_with_res_tSeq_tac ctxt)
   (terminates_with_tAssign_tac ctxt)
-  (terminates_with_tCall_tac get_imp_minus_correct ctxt)
+  (terminates_with_tCall_tac get_imp_correct ctxt)
   (terminates_with_res_tIf_tac ctxt)
 
 (*run a tailcall program to completion, ends with
 terminates_with_res _ c _ _ _, where c is either an assignment or tTAIL *)
-fun run_tac get_imp_minus_correct = HTITB.run_tac o run_step_tac get_imp_minus_correct
+fun run_tac get_imp_correct = HTITG.run_tac o run_step_tac get_imp_correct
 
 (* finishing tactics *)
 
@@ -326,7 +326,7 @@ fun apply_IH_tac ctxt =
 fun solve_IH_prem_tac ctxt =
   delete_IH_prems
   THEN' TRY o safe_asm_full_simp_tac ctxt
-  THEN_ALL_NEW TRY o HTITB.solve_Rel_nat_tac ctxt
+  THEN_ALL_NEW TRY o HTITG.solve_Rel_nat_tac ctxt
 
 fun finish_tail_tac ctxt =
   apply_IH_tac ctxt
@@ -336,7 +336,7 @@ fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
   THEN' delete_IH_prems
   THEN' SUT.STATE_interp_retrieve_key_eq_tac
-    (asm_full_simp_tac (ctxt addsimps HTITB.get_HOL_To_IMP_finish_simps ctxt)) ctxt
+    (asm_full_simp_tac (ctxt addsimps HTITG.get_HOL_To_IMP_finish_simps ctxt)) ctxt
 
 (*shared tail/non-tail finish tactics*)
 fun simp_res_value_tac simp_tac ctxt =
@@ -348,7 +348,7 @@ fun THEN_ALL_NEW_OFFSET offset tac1 tac2 i st =
     st' |> Seq.INTERVAL tac2 i (i + Thm.nprems_of st' - Thm.nprems_of st - offset)));
 
 fun subst_HOL_fun_eq_tac thms ctxt = THEN_ALL_NEW_OFFSET 1 (HTIU.subst_first_tac ctxt thms)
-  (HTITB.solve_Rel_nat_tac ctxt)
+  (HTITG.solve_Rel_nat_tac ctxt)
 
 (*run the HOL function to its return value or to a recursive call*)
 fun run_HOL_fun_tac get_HOL_eqs ctxt =
@@ -363,7 +363,7 @@ fun run_HOL_fun_tac get_HOL_eqs ctxt =
           subst_HOL_fun_eq_tac thms ctxt
           THEN' delete_IH_prems
           THEN' TRY o safe_asm_full_simp_tac (ctxt delsimps thms addsimps
-            @{thm Let_def} :: HTITB.get_HOL_To_IMP_finish_simps ctxt)
+            @{thm Let_def} :: HTITG.get_HOL_To_IMP_finish_simps ctxt)
         ) ctxt
   in with_dest_terminates_with_res_IMP_Tailcall_prop ctxt tac end
 
@@ -371,15 +371,15 @@ fun finish_tac get_HOL_eqs ctxt =
   run_HOL_fun_tac get_HOL_eqs ctxt
   THEN' (finish_non_tail_tac ctxt ORELSE' finish_tail_tac ctxt)
 
-fun start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt =
+fun start_run_finish_case_tac get_IMP_def get_imp_correct get_HOL_eqs ctxt =
   start_case_tac get_IMP_def ctxt
-  THEN' run_tac get_imp_minus_correct ctxt
+  THEN' run_tac get_imp_correct ctxt
   THEN_ALL_NEW SOLVED' (finish_tac get_HOL_eqs ctxt)
 
-fun start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_minus_correct get_HOL_eqs
+fun start_run_finish_tac is_induction get_fun_inducts get_IMP_def get_imp_correct get_HOL_eqs
   ctxt =
   (if is_induction then setup_induction_tac get_fun_inducts ctxt else K all_tac)
   THEN' K
-    (PARALLEL_ALLGOALS (start_run_finish_case_tac get_IMP_def get_imp_minus_correct get_HOL_eqs ctxt))
+    (PARALLEL_ALLGOALS (start_run_finish_case_tac get_IMP_def get_imp_correct get_HOL_eqs ctxt))
 
 end

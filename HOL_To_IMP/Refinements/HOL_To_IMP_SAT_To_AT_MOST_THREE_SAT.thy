@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory HOL_To_IMP_Minus_SAT_To_AT_MOST_THREE_SAT
+theory HOL_To_IMP_SAT_To_AT_MOST_THREE_SAT
   imports
-    HOL_To_IMP_Minus_SAT
+    HOL_To_IMP_SAT
     Karp21.SAT_To_AT_MOST_THREE_SAT
 begin
 
@@ -20,25 +20,25 @@ function_compile_nat map_acc_pos_RU_flip_lit_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 declare Rel_nat_selector_red[Rel_nat]
 
 compile_nat RV_nat_def
-HOL_To_IMP_Minus_correct RV_nat by cook
+HOL_To_IMP_correct RV_nat by cook
 
 compile_nat RU_nat_def
-HOL_To_IMP_Minus_correct RU_nat by cook
+HOL_To_IMP_correct RU_nat by cook
 
 compile_nat HTHN.pos_RU_flip_lit_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.pos_RU_flip_lit_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.pos_RU_flip_lit_nat by cook
 
 lemmas map_acc_pos_RU_flip_lit_nat_eq =
   HTHN.map_acc_pos_RU_flip_lit_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_acc_pos_RU_flip_lit_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_pos_RU_flip_lit_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_pos_RU_flip_lit_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.pos_RU_flip_lit y ya :: 'a red lit \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
@@ -87,23 +87,23 @@ function_compile_nat to_at_most_3_clause_eq_to_at_most_3_clause_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.to_at_most_3_clause_acc_body_rec_aux1_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux1_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux1_nat by cook
 
 compile_nat HTHN.to_at_most_3_clause_acc_body_rec_aux2_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux2_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_body_rec_aux2_nat by cook
 
 lemmas to_at_most_3_clause_acc_nat_eq = HTHN.to_at_most_3_clause_acc_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat to_at_most_3_clause_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_most_3_clause_acc_nat
   by cook \<comment>\<open>FIXME: quite slow, but terminates!\<close>
 
 compile_nat HTHN.to_at_most_3_clause_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_most_3_clause_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_most_3_clause_nat by cook
 
 end
 
@@ -133,16 +133,16 @@ function_compile_nat sat_to_at_most_three_sat_aux_eq_sat_to_at_most_three_sat_au
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas sat_to_at_most_three_sat_aux_acc_nat_eq = HTHN.sat_to_at_most_three_sat_aux_acc_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat sat_to_at_most_three_sat_aux_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_aux_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_aux_acc_nat by cook
 
 compile_nat HTHN.sat_to_at_most_three_sat_aux_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_aux_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_aux_nat by cook
 
 end
 
@@ -173,35 +173,35 @@ function_compile_nat map_map_map_lit_RV_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas map_lit_RV_nat_eq = HTHN.map_lit_RV_nat_eq_unfolded[unfolded case_lit_nat_def]
 compile_nat map_lit_RV_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_lit_RV_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_lit_RV_nat by cook
 
 lemmas map_acc_map_lit_RV_nat_eq = HTHN.map_acc_map_lit_RV_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat map_acc_map_lit_RV_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_map_lit_RV_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_map_lit_RV_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.map_lit_RV :: 'a lit \<Rightarrow> _" _ _ arbitrary: s rule: HTHN.map_acc.induct)
   (cook mode = run_finish)
 
 compile_nat HTHN.map_map_lit_RV_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_map_lit_RV_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_map_lit_RV_nat by cook
 
 lemmas map_acc_map_map_lit_RV_nat_eq = HTHN.map_acc_map_map_lit_RV_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat map_acc_map_map_lit_RV_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_map_map_lit_RV_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_map_map_lit_RV_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.map_map_lit_RV :: 'a lit list \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
   (cook mode = run_finish)
 
 compile_nat HTHN.map_map_map_lit_RV_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_map_map_lit_RV_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_map_map_lit_RV_nat by cook
 
 end
 
@@ -214,11 +214,11 @@ function_compile_nat sat_to_at_most_three_sat_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.sat_to_at_most_three_sat_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_to_at_most_three_sat_nat by cook
 
 end
 

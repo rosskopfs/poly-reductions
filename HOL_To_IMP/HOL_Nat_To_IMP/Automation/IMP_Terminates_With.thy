@@ -3,67 +3,67 @@ theory IMP_Terminates_With
   imports IMP.IMP_Tailcall
 begin
 
-definition "tailcall_to_IMP_Minus \<equiv> inline o compile"
+definition "tailcall_to_IMP \<equiv> inline o compile"
 
-lemma tailcall_to_IMP_Minus_eq: "tailcall_to_IMP_Minus p = inline (compile p)"
-  unfolding tailcall_to_IMP_Minus_def by simp
+lemma tailcall_to_IMP_eq: "tailcall_to_IMP p = inline (compile p)"
+  unfolding tailcall_to_IMP_def by simp
 
-definition "terminates_with_pred_time_IMP_Minus p s s' P \<equiv> \<exists>t. (p, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<and> P t"
+definition "terminates_with_pred_time_IMP p s s' P \<equiv> \<exists>t. (p, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<and> P t"
 
-lemma terminates_with_pred_time_IMP_MinusI:
+lemma terminates_with_pred_time_IMPI:
   assumes "(p, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
   and "P t"
-  shows "terminates_with_pred_time_IMP_Minus p s s' P"
-  using assms unfolding terminates_with_pred_time_IMP_Minus_def by blast
+  shows "terminates_with_pred_time_IMP p s s' P"
+  using assms unfolding terminates_with_pred_time_IMP_def by blast
 
-lemma terminates_with_pred_time_IMP_MinusE:
-  assumes "terminates_with_pred_time_IMP_Minus p s s' P"
+lemma terminates_with_pred_time_IMPE:
+  assumes "terminates_with_pred_time_IMP p s s' P"
   obtains t where "(p, s) \<Rightarrow>\<^bsup>t\<^esup> s'" "P t"
-  using assms unfolding terminates_with_pred_time_IMP_Minus_def by blast
+  using assms unfolding terminates_with_pred_time_IMP_def by blast
 
-definition "terminates_with_IMP_Minus p s s' \<equiv> terminates_with_pred_time_IMP_Minus p s s' (\<lambda>_. True)"
+definition "terminates_with_IMP p s s' \<equiv> terminates_with_pred_time_IMP p s s' (\<lambda>_. True)"
 
-lemma terminates_with_IMP_MinusI:
+lemma terminates_with_IMPI:
   assumes "(p, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  shows "terminates_with_IMP_Minus p s s'"
-  using assms terminates_with_pred_time_IMP_MinusI unfolding terminates_with_IMP_Minus_def by auto
+  shows "terminates_with_IMP p s s'"
+  using assms terminates_with_pred_time_IMPI unfolding terminates_with_IMP_def by auto
 
-lemma terminates_with_IMP_MinusE:
-  assumes "terminates_with_IMP_Minus p s s'"
+lemma terminates_with_IMPE:
+  assumes "terminates_with_IMP p s s'"
   obtains t where "(p, s) \<Rightarrow>\<^bsup>t\<^esup> s'"
-  using assms terminates_with_pred_time_IMP_MinusE unfolding terminates_with_IMP_Minus_def by blast
+  using assms terminates_with_pred_time_IMPE unfolding terminates_with_IMP_def by blast
 
-definition "terminates_with_res_pred_time_IMP_Minus p s r val P \<equiv>
-  \<exists>s'. terminates_with_pred_time_IMP_Minus p s s' P \<and> s' r = val"
+definition "terminates_with_res_pred_time_IMP p s r val P \<equiv>
+  \<exists>s'. terminates_with_pred_time_IMP p s s' P \<and> s' r = val"
 
-lemma terminates_with_res_pred_time_IMP_MinusI:
-  assumes "terminates_with_pred_time_IMP_Minus p s s' P"
+lemma terminates_with_res_pred_time_IMPI:
+  assumes "terminates_with_pred_time_IMP p s s' P"
   and "s' r = val"
-  shows "terminates_with_res_pred_time_IMP_Minus p s r val P"
-  using assms unfolding terminates_with_res_pred_time_IMP_Minus_def by blast
+  shows "terminates_with_res_pred_time_IMP p s r val P"
+  using assms unfolding terminates_with_res_pred_time_IMP_def by blast
 
-lemma terminates_with_res_pred_time_IMP_MinusE:
-  assumes "terminates_with_res_pred_time_IMP_Minus p s r val P"
-  obtains s' where "terminates_with_pred_time_IMP_Minus p s s' P" "s' r = val"
-  using assms unfolding terminates_with_res_pred_time_IMP_Minus_def by blast
+lemma terminates_with_res_pred_time_IMPE:
+  assumes "terminates_with_res_pred_time_IMP p s r val P"
+  obtains s' where "terminates_with_pred_time_IMP p s s' P" "s' r = val"
+  using assms unfolding terminates_with_res_pred_time_IMP_def by blast
 
-definition "terminates_with_res_IMP_Minus p s r val \<equiv>
-  terminates_with_res_pred_time_IMP_Minus p s r val (\<lambda>_. True)"
+definition "terminates_with_res_IMP p s r val \<equiv>
+  terminates_with_res_pred_time_IMP p s r val (\<lambda>_. True)"
 
-lemma terminates_with_res_IMP_MinusI:
-  assumes "terminates_with_IMP_Minus p s s'"
+lemma terminates_with_res_IMPI:
+  assumes "terminates_with_IMP p s s'"
   and "s' r = val"
-  shows "terminates_with_res_IMP_Minus p s r val"
-  using assms unfolding terminates_with_res_IMP_Minus_def
-  by (intro terminates_with_res_pred_time_IMP_MinusI)
-  (simp only: flip: terminates_with_IMP_Minus_def)
+  shows "terminates_with_res_IMP p s r val"
+  using assms unfolding terminates_with_res_IMP_def
+  by (intro terminates_with_res_pred_time_IMPI)
+  (simp only: flip: terminates_with_IMP_def)
 
-lemma terminates_with_res_IMP_MinusE:
-  assumes "terminates_with_res_IMP_Minus p s r val"
-  obtains s' where "terminates_with_IMP_Minus p s s'" "s' r = val"
-  using assms unfolding terminates_with_res_IMP_Minus_def
-  by (elim terminates_with_res_pred_time_IMP_MinusE)
-  (simp only: flip: terminates_with_IMP_Minus_def)
+lemma terminates_with_res_IMPE:
+  assumes "terminates_with_res_IMP p s r val"
+  obtains s' where "terminates_with_IMP p s s'" "s' r = val"
+  using assms unfolding terminates_with_res_IMP_def
+  by (elim terminates_with_res_pred_time_IMPE)
+  (simp only: flip: terminates_with_IMP_def)
 
 definition "terminates_with_pred_time_IMP_Tailcall tp p s s' P \<equiv> \<exists>t. tp \<turnstile> (p, s) \<Rightarrow>\<^bsup>t\<^esup> s' \<and> P t"
 
@@ -125,20 +125,20 @@ lemma terminates_with_res_IMP_TailcallE:
 
 context
   notes
-    terminates_with_IMP_MinusE[elim] terminates_with_res_IMP_MinusE[elim]
+    terminates_with_IMPE[elim] terminates_with_res_IMPE[elim]
     terminates_with_IMP_TailcallE[elim] terminates_with_res_IMP_TailcallE[elim]
-    terminates_with_res_IMP_MinusI[intro] terminates_with_IMP_MinusI[intro]
+    terminates_with_res_IMPI[intro] terminates_with_IMPI[intro]
     terminates_with_res_IMP_TailcallI[intro] terminates_with_IMP_TailcallI[intro]
 begin
 
-lemma terminates_with_res_IMP_Minus_if_terminates_with_res_IMP_TailcallI:
+lemma terminates_with_res_IMP_if_terminates_with_res_IMP_TailcallI:
   assumes "invar p"
   and "r \<in> set (vars p)"
   and "terminates_with_res_IMP_Tailcall p p s r val"
-  shows "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus p) s r val"
+  shows "terminates_with_res_IMP (tailcall_to_IMP p) s r val"
   using assms by (elim terminates_with_res_IMP_TailcallE terminates_with_IMP_TailcallE
     compile_sound inline_sound[where ?s=s and ?s'=s for s])
-  (force simp: set_vars_compile tailcall_to_IMP_Minus_eq)+
+  (force simp: set_vars_compile tailcall_to_IMP_eq)+
 
 lemma terminates_with_tSeqI:
   assumes "terminates_with_IMP_Tailcall p p1 s s'"
@@ -158,7 +158,7 @@ lemma terminates_with_tIfI:
   using assms by (cases "s vb = 0") blast+
 
 lemma terminates_with_tCallI:
-  assumes "terminates_with_res_IMP_Minus p s r val"
+  assumes "terminates_with_res_IMP p s r val"
   and "s' = s(r := val)"
   shows "terminates_with_IMP_Tailcall tp (tCall p r) s s'"
   using assms by blast
@@ -187,7 +187,7 @@ lemma terminates_with_res_tIfI:
   using assms by (cases "s vb = 0") blast+
 
 lemma terminates_with_res_tCallI:
-  assumes "terminates_with_res_IMP_Minus p s r val"
+  assumes "terminates_with_res_IMP p s r val"
   and "(s(r := val)) r' = val'"
   shows "terminates_with_res_IMP_Tailcall tp (tCall p r) s r' val'"
   using assms by blast

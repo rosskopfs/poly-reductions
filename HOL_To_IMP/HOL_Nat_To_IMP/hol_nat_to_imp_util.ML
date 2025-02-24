@@ -1,4 +1,4 @@
-(*  Title:  HOL_To_IMP-/hol_nat_to_imp_util.ML
+(*  Title:  HOL_To_IMP/hol_nat_to_imp_util.ML
     Author: Kevin Kappelmann
 
 General utilities when refining HOL to IMP programs.
@@ -52,7 +52,7 @@ end
 structure HOL_Nat_To_IMP_Util : HOL_NAT_TO_IMP_UTIL =
 struct
 
-val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "HOL_Nat_To_IMP_Util"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_base_logger "HOL_Nat_To_IMP_Util"
 
 val successors = map (curry (op +) 1)
 

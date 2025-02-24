@@ -1,4 +1,4 @@
-(*  Title:      HOL_To_IMP-/compile_hol_nat_to_imp.ML
+(*  Title:      HOL_To_IMPcompile_hol_nat_to_imp.ML
     Author:     Lukas Stevens, TU Muenchen
 
 Compiler from HOL-tailrecursive functions on natural numbers to IMP with tailcalls.
@@ -27,7 +27,7 @@ struct
 
 structure HTHNU = HOL_To_HOL_Nat_Util
 
-val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger "Compile_HOL_Nat_To_IMP"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_base_logger "Compile_HOL_Nat_To_IMP"
 
 structure Compiled_Const_Defs = Generic_Data(
   type T = thm Net.net;
@@ -60,7 +60,7 @@ fun delete_compiled_const_def thm =
 
 val delete_compiled_const_def_attr = Thm.declaration_attribute delete_compiled_const_def
 
-val compiled_const_def_binding = \<^binding>\<open>compiled_IMP_Minus_const_def\<close>
+val compiled_const_def_binding = \<^binding>\<open>compiled_IMP_const_def\<close>
 
 val setup_compiled_const_def_attr = Attrib.add_del
   update_compiled_const_def_attr delete_compiled_const_def_attr
@@ -215,7 +215,7 @@ fun tc_ast_of_term head f_args t =
 exception PARTIAL of string * string
 exception NONTAIL of string
 
-fun IMP_Minus_of_tc_ast (f_ret_name, f_arg_names) lookup_fn arg_sep register_sep e =
+fun IMP_of_tc_ast (f_ret_name, f_arg_names) lookup_fn arg_sep register_sep e =
   let
     fun mk_Seq es = fold_rev (fn e1 => fn e2 => \<^Const>\<open>tSeq for e1 e2\<close>) es \<^Const>\<open>tSKIP\<close>
 
@@ -365,7 +365,7 @@ fun compile_cmd f_def optimized basenamepos_opt lthy =
       def_body
       |> curry Term.subst_bounds (rev f_args_vars)
       |> tc_ast_of_term f_head f_args
-      |> IMP_Minus_of_tc_ast
+      |> IMP_of_tc_ast
           (f_ret_name, map fst f_args)
           (get_compiled_const lthy)
           arg_sep
@@ -378,7 +378,7 @@ fun compile_cmd f_def optimized basenamepos_opt lthy =
     val lthy' = define_compiled f_IMP_binding f_IMP lthy
     val f_IMP_const = Binding.name_of f_IMP_binding
       |> HTHNU.read_const lthy'
-      |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
+      |> (fn t => \<^Const>\<open>tailcall_to_IMP for t\<close>)
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
                        compiled = f_IMP_const }
   in

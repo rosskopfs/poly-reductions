@@ -1,6 +1,6 @@
 (*<*)
 theory Paper
-  imports "HOL_To_IMP_Refinements.HOL_To_IMP_Minus_Lists" Syntax
+  imports "HOL_To_IMP_Refinements.HOL_To_IMP_Lists" Syntax
 begin
 (*>*)
 
@@ -227,7 +227,7 @@ end
 
 subsection \<open>Example 2\<close>
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 text \<open>First, unfold the case combinator to if-then-elses:\<close>
@@ -244,7 +244,7 @@ Here, we provide the corresponding
 step-by-step proof from the paper. Here is the input function:
 \<close>
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc'_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   text \<open>We prove correctness of the compiled \<open>IMP\<^bsup>W\<^esup>\<close> program. First, we reduce this proof to the
   correctness proof of the generated \<open>IMP\<^bsup>TC\<^esup>\<close> program.\<close>
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
@@ -252,8 +252,8 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc'_nat
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>) defer
   text \<open>Cons-case (Listing 1.6)\<close>
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.run_HOL_fun_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.run_tac HT.get_imp_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.run_HOL_fun_tac HG.get_HOL_eqs @{context} 1\<close>)
   text \<open>Goals after symbolic execution (Listing 1.7)\<close>
   apply (tactic \<open>HT.apply_IH_tac @{context} 1\<close>)
   text \<open>Relatedness goals after application of inductive hypothesis (Listing 1.8)\<close>
@@ -261,21 +261,21 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc'_nat
   apply (tactic \<open>HT.solve_IH_prem_tac @{context} 1\<close>)
   apply (tactic \<open>HT.solve_IH_prem_tac @{context} 1\<close>)
   text \<open>Second subcase in Cons-case\<close>
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HG.get_HOL_eqs @{context} 1\<close>)
   text \<open>Nil-case\<close>
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
-  apply (tactic \<open>HT.run_tac HT.get_imp_minus_correct @{context} 1\<close>)
-  apply (tactic \<open>HT.finish_tac HB.get_HOL_eqs @{context} 1\<close>)
+  apply (tactic \<open>HT.run_tac HT.get_imp_correct @{context} 1\<close>)
+  apply (tactic \<open>HT.finish_tac HG.get_HOL_eqs @{context} 1\<close>)
   text \<open>Done! We do not close the proof because in the next command, we prove it again, automatically:\<close>
   oops
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc'_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat by cook
 
 end
 
 subsection \<open>Case Studies\<close>
 
-text \<open>Can be found in @{dir "../HOL_To_IMP-/Refinements"}.\<close>
+text \<open>Can be found in @{dir "../HOL_To_IMP/Refinements"}.\<close>
 
 
 section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>-\<close>\<close>

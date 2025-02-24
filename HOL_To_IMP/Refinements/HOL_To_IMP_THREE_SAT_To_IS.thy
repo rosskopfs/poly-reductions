@@ -1,8 +1,8 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 \<^marker>\<open>creator "Nico Lintner"\<close>
-theory HOL_To_IMP_Minus_THREE_SAT_To_IS
+theory HOL_To_IMP_THREE_SAT_To_IS
   imports
-    HOL_To_IMP_Minus_SAT
+    HOL_To_IMP_SAT
     Karp21.THREE_SAT_To_IS_List
 begin
 
@@ -25,12 +25,12 @@ function_compile_nat map_acc_case_prod_map_rpair_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas map_acc_rpair_nat_eq = HTHN.map_acc_rpair_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_acc_rpair_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_rpair_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_rpair_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.rpair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HTHN.map_acc.induct)
   (cook mode = run_finish)
@@ -38,12 +38,12 @@ HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_rpair_nat
 lemmas case_prod_map_rpair_nat_eq = HTHN.case_prod_map_rpair_nat_eq_unfolded[unfolded
   case_prod_nat_def]
 compile_nat case_prod_map_rpair_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.case_prod_map_rpair_nat by (cook mode = induction)
+HOL_To_IMP_correct HOL_To_HOL_Nat.case_prod_map_rpair_nat by (cook mode = induction)
 
 lemmas map_acc_case_prod_map_rpair_nat_eq =
   HTHN.map_acc_case_prod_map_rpair_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_acc_case_prod_map_rpair_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_case_prod_map_rpair_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_case_prod_map_rpair_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.case_prod_map_rpair :: ('a \<times> 'b list) \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
@@ -60,12 +60,12 @@ function_compile_nat map_acc_product_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas map_acc_product_nat_eq = HTHN.map_acc_product_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_acc_product_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_product_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_product_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "\<lambda>x :: 'a list. List.product x x" _ _ arbitrary: s rule: HTHN.map_acc.induct)
   (cook mode = run_finish)
@@ -94,29 +94,29 @@ function_compile_nat map_filter_prod_fsts_neq_acc_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas prod_fsts_neq_nat_eq = HTHN.prod_fsts_neq_nat_eq_unfolded[unfolded case_prod_nat_def]
 compile_nat prod_fsts_neq_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.prod_fsts_neq_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.prod_fsts_neq_nat by cook
 
 lemmas filter_prod_fsts_neq_acc_nat_eq = HTHN.filter_acc_prod_fsts_neq_nat_eq_unfolded[unfolded
   case_bool_nat_def case_list_nat_def]
 compile_nat filter_prod_fsts_neq_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_neq_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_neq_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_fsts_neq :: ((('a \<times> 'b) \<times> ('a \<times> 'c)) \<Rightarrow> bool) " _ _ arbitrary: s
     rule: HTHN.filter_acc.induct)
   (cook mode = run_finish)
 
 compile_nat HTHN.filter_prod_fsts_neq_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.filter_prod_fsts_neq_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.filter_prod_fsts_neq_nat by cook
 
 lemmas map_filter_prod_fsts_neq_acc_nat_eq = HTHN.map_acc_filter_prod_fsts_neq_nat_eq_unfolded
   [unfolded case_list_nat_def]
 compile_nat map_filter_prod_fsts_neq_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_filter_prod_fsts_neq_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_filter_prod_fsts_neq_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.filter_prod_fsts_neq :: (('a \<times> 'b) \<times> 'a \<times> 'c) list \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
@@ -136,17 +136,17 @@ function_compile_nat map_acc_pair_list_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas pair_list_nat_eq = HTHN.pair_list_nat_eq_unfolded[unfolded case_prod_nat_def]
 compile_nat pair_list_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.pair_list_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.pair_list_nat by cook
 
 lemmas map_acc_pair_list_nat_eq = HTHN.map_acc_pair_list_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat map_acc_pair_list_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_pair_list_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_pair_list_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.pair_list :: ('a \<times> 'a) \<Rightarrow> _" _ _ arbitrary: s rule: HTHN.map_acc.induct)
   (cook mode = run_finish)
@@ -165,17 +165,17 @@ function_compile_nat map_acc_prod_product_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas prod_product_nat_eq = HTHN.prod_product_nat_eq_unfolded[unfolded case_prod_nat_def]
 compile_nat prod_product_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.prod_product_nat by (cook mode = induction)
+HOL_To_IMP_correct HOL_To_HOL_Nat.prod_product_nat by (cook mode = induction)
 
 lemmas map_acc_prod_product_nat_eq = HTHN.map_acc_prod_product_nat_eq_unfolded[unfolded
   case_list_nat_def]
 compile_nat map_acc_prod_product_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_acc_prod_product_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_acc_prod_product_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_product :: 'a list \<times> 'b list \<Rightarrow> _" _ _ arbitrary: s
     rule: HTHN.map_acc.induct)
@@ -202,21 +202,21 @@ function_compile_nat filter_acc_prod_fsts_conflict_lit_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas conflict_lit_nat_eq = HTHN.conflict_lit_nat_eq_unfolded[unfolded case_lit_nat_def]
 compile_nat conflict_lit_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.conflict_lit_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.conflict_lit_nat by cook
 
 lemmas prod_fsts_conflict_lit_nat_eq = HTHN.prod_fsts_conflict_lit_nat_eq_unfolded[unfolded case_prod_nat_def]
 compile_nat prod_fsts_conflict_lit_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.prod_fsts_conflict_lit_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.prod_fsts_conflict_lit_nat by cook
 
 lemmas filter_acc_prod_fsts_conflict_lit_nat_eq =
   HTHN.filter_acc_prod_fsts_conflict_lit_nat_eq_unfolded[unfolded case_list_nat_def case_bool_nat_def]
 compile_nat filter_acc_prod_fsts_conflict_lit_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_conflict_lit_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.filter_acc_prod_fsts_conflict_lit_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "HTHN.prod_fsts_conflict_lit :: ((('a lit \<times> 'b) \<times> ('a lit \<times> 'c)) \<Rightarrow> _) " _ _ arbitrary: s
     rule: HTHN.filter_acc.induct)
@@ -250,28 +250,28 @@ function_compile_nat sat_is_list_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.sat_is_un_1_list_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_is_un_1_list_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_is_un_1_list_nat by cook
 
 compile_nat HTHN.sat_is_un_2_list_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_is_un_2_list_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_is_un_2_list_nat by cook
 
 compile_nat HTHN.sat_is_list_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_is_list_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.sat_is_list_nat by cook
 
-corollary sat_is_list_IMP_Minus_correct:
+corollary sat_is_list_IMP_correct:
   assumes "Rel_nat (s ''sat_is_list_nat.arg.x'') x"
-  shows "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus sat_is_list_nat_IMP_tailcall) s
+  shows "terminates_with_res_IMP (tailcall_to_IMP sat_is_list_nat_IMP_tailcall) s
     ''sat_is_list_nat.ret'' (natify (sat_is_list x))"
 proof -
   have "HTHN.sat_is_list_nat TYPE('a) (s ''sat_is_list_nat.arg.x'') = natify (sat_is_list x)"
     using HTHN.sat_is_list_nat_eq_unfolded[OF assms]
       HTHN.Rel_nat_sat_is_list_nat_unfolded[OF assms]
     by (simp add: Rel_nat_iff_eq_natify)
-  then show ?thesis using sat_is_list_nat_IMP_Minus_correct[of s, OF assms] by simp
+  then show ?thesis using sat_is_list_nat_IMP_correct[of s, OF assms] by simp
 qed
 
 end

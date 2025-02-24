@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory HOL_To_IMP_Minus_Primitives
+theory HOL_To_IMP_Primitives
   imports
-    "HOL_Nat_To_IMP-.HOL_Nat_To_IMP_Tactics"
+    "HOL_Nat_To_IMP.HOL_Nat_To_IMP_Tactics"
 begin
 
 context HOL_To_HOL_Nat
@@ -34,7 +34,7 @@ qed
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 (*remove simplification rules interfering with refinement proofs*)
@@ -46,7 +46,7 @@ unbundle tcom_syntax
 context includes com_syntax and no com'_syntax and no tcom_syntax
 begin
 
-definition [compiled_IMP_Minus_const_def]:
+definition [compiled_IMP_const_def]:
   "eq_IMP \<equiv>
     ''eq.x_Sub_y'' ::= (V ''eq.arg.x'' \<ominus> V ''eq.arg.y'');;
     ''eq.y_Sub_x'' ::= (V ''eq.arg.y'' \<ominus> V ''eq.arg.x'');;
@@ -67,9 +67,9 @@ declare_compiled_const HOL.eq
   argument_registers "eq.arg.x" "eq.arg.y"
   compiled eq_IMP
 
-HOL_To_IMP_Minus_correct HTHN.eq_nat
+HOL_To_IMP_correct HTHN.eq_nat
   unfolding eq_IMP_def HTHN.eq_nat_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+  by (fastforce intro: terminates_with_res_IMPI terminates_with_IMPI)
 
 end
 
@@ -88,15 +88,15 @@ lemma Rel_nat_sub [Rel_nat]:
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 context includes com_syntax and no com'_syntax and no tcom_syntax
 begin
 
-definition [compiled_IMP_Minus_const_def]:
+definition [compiled_IMP_const_def]:
   "add_IMP \<equiv> ''add.ret'' ::= (V ''add.arg.x'' \<oplus> V ''add.arg.y'')"
-definition [compiled_IMP_Minus_const_def]:
+definition [compiled_IMP_const_def]:
   "sub_IMP \<equiv> ''sub.ret'' ::= (V ''sub.arg.x'' \<ominus> V ''sub.arg.y'')"
 
 end
@@ -111,12 +111,12 @@ declare_compiled_const "Groups.minus"
   argument_registers "sub.arg.x" "sub.arg.y"
   compiled "sub_IMP"
 
-HOL_To_IMP_Minus_correct Groups.plus
+HOL_To_IMP_correct Groups.plus
   unfolding add_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
-HOL_To_IMP_Minus_correct Groups.minus
+  by (fastforce intro: terminates_with_res_IMPI terminates_with_IMPI)
+HOL_To_IMP_correct Groups.minus
   unfolding sub_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+  by (fastforce intro: terminates_with_res_IMPI terminates_with_IMPI)
 
 end
 
@@ -144,7 +144,7 @@ function_compile_nat mul_eq_mul_acc_nat_zero
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 declare case_nat_eq_if[simp]
@@ -153,23 +153,23 @@ and Rel_nat_selector_Suc[Rel_nat]
 
 lemmas mul_acc_nat_nat_eq = HTHN.mul_acc_nat_nat_eq_unfolded[unfolded case_nat_eq_if]
 compile_nat mul_acc_nat_nat_eq
-HOL_To_IMP_Minus_correct HTHN.mul_acc_nat_nat by cook
+HOL_To_IMP_correct HTHN.mul_acc_nat_nat by cook
 
 compile_nat HTHN.times_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.times_nat by cook
+HOL_To_IMP_correct HTHN.times_nat by cook
 
 end
 
 paragraph \<open>Boolean Operators\<close>
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat True_nat_def
-HOL_To_IMP_Minus_correct True_nat by cook
+HOL_To_IMP_correct True_nat by cook
 
 compile_nat False_nat_def
-HOL_To_IMP_Minus_correct False_nat by cook
+HOL_To_IMP_correct False_nat by cook
 
 end
 
@@ -182,11 +182,11 @@ function_compile_nat not_iff_eq_False
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.Not_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.Not_nat by cook
+HOL_To_IMP_correct HTHN.Not_nat by cook
 
 end
 
@@ -207,14 +207,14 @@ function_compile_nat min_nat_eq_if
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.max_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.max_nat by cook
+HOL_To_IMP_correct HTHN.max_nat by cook
 
 compile_nat HTHN.min_nat_eq_unfolded basename min
-HOL_To_IMP_Minus_correct HTHN.min_nat by cook
+HOL_To_IMP_correct HTHN.min_nat by cook
 
 end
 
@@ -235,14 +235,14 @@ function_compile_nat disj_eq_if_then_else
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.conj_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.conj_nat by cook
+HOL_To_IMP_correct HTHN.conj_nat by cook
 
 compile_nat HTHN.disj_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.disj_nat by cook
+HOL_To_IMP_correct HTHN.disj_nat by cook
 
 end
 
@@ -261,14 +261,14 @@ function_compile_nat lt_nat_iff_le_and_ne
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.less_eq_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.less_eq_nat by cook
+HOL_To_IMP_correct HTHN.less_eq_nat by cook
 
 compile_nat HTHN.less_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.less_nat by cook
+HOL_To_IMP_correct HTHN.less_nat by cook
 
 end
 
@@ -293,23 +293,23 @@ function_compile_nat div_eq_div_acc_nat_zero
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.div_acc_nat_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.div_acc_nat_nat by cook
+HOL_To_IMP_correct HTHN.div_acc_nat_nat by cook
 
 compile_nat HTHN.divide_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.divide_nat by cook
+HOL_To_IMP_correct HTHN.divide_nat by cook
 
 end
 
 paragraph \<open>Datatype Encoding Functions\<close>
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
-definition [compiled_IMP_Minus_const_def]:
+definition [compiled_IMP_const_def]:
   "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.arg.x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
@@ -317,8 +317,8 @@ declare_compiled_const Suc
   argument_registers "suc.arg.x"
   compiled suc_IMP
 
-HOL_To_IMP_Minus_correct Suc unfolding suc_IMP_def
-  by (fastforce intro: terminates_with_res_IMP_MinusI terminates_with_IMP_MinusI)
+HOL_To_IMP_correct Suc unfolding suc_IMP_def
+  by (fastforce intro: terminates_with_res_IMPI terminates_with_IMPI)
 
 end
 
@@ -349,14 +349,14 @@ lemma Rel_nat_pair_nat [Rel_nat]: "(Rel_nat ===> Rel_nat ===> Rel_nat) pair_nat 
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.triangle_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.triangle_nat by cook
+HOL_To_IMP_correct HTHN.triangle_nat by cook
 
 compile_nat HTHN.pair_nat_eq_triangle_nat
-HOL_To_IMP_Minus_correct pair_nat by cook
+HOL_To_IMP_correct pair_nat by cook
 
 end
 
@@ -413,20 +413,20 @@ function_compile_nat snd_nat_eq_snd_acc_nat
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.fst_acc_nat_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.fst_acc_nat_nat by cook
+HOL_To_IMP_correct HTHN.fst_acc_nat_nat by cook
 
 compile_nat HTHN.snd_acc_nat_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.snd_acc_nat_nat by cook
+HOL_To_IMP_correct HTHN.snd_acc_nat_nat by cook
 
 compile_nat HTHN.fst_nat_eq_fst_acc_nat_nat
-HOL_To_IMP_Minus_correct fst_nat by cook
+HOL_To_IMP_correct fst_nat by cook
 
 compile_nat HTHN.snd_nat_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HTHN.snd_nat_nat by cook
+HOL_To_IMP_correct HTHN.snd_nat_nat by cook
 
 end
 
@@ -463,19 +463,19 @@ lemma Rel_nat_nat_selector [Rel_nat]:
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas fun_pow_snd_nat_eq = HTHN.fun_pow_snd_nat_nat_eq_unfolded[unfolded case_nat_eq_if]
 compile_nat fun_pow_snd_nat_eq
 
-HOL_To_IMP_Minus_correct HTHN.fun_pow_snd_nat_nat
+HOL_To_IMP_correct HTHN.fun_pow_snd_nat_nat
   supply Rel_nat_selector_Suc[Rel_nat]
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction y arbitrary: ya s rule: nat.induct) (cook mode = run_finish)
 
 compile_nat HTHN.nat_selector_eq_nat
-HOL_To_IMP_Minus_correct nat_selector by cook
+HOL_To_IMP_correct nat_selector by cook
 
 end
 

@@ -26,19 +26,19 @@ lemma linear_inD [dest]:
   shows "y \<le> scale_linear c n x"
   using assms unfolding linear_in_eq_le_scale_linear by auto
 
-definition "terminates_with_res_linear_in_IMP_Minus P p r f ft \<equiv> \<exists>c n. \<forall>s. P s \<longrightarrow>
-  terminates_with_res_pred_time_IMP_Minus p s r (f s) (linear_in c n (ft s))"
+definition "terminates_with_res_linear_in_IMP P p r f ft \<equiv> \<exists>c n. \<forall>s. P s \<longrightarrow>
+  terminates_with_res_pred_time_IMP p s r (f s) (linear_in c n (ft s))"
 
-lemma terminates_with_res_linear_in_IMP_MinusI:
-  assumes "\<And>s. P s \<Longrightarrow> terminates_with_res_pred_time_IMP_Minus p s r (f s) (linear_in c n (ft s))"
-  shows "terminates_with_res_linear_in_IMP_Minus P p r f ft"
-  using assms unfolding terminates_with_res_linear_in_IMP_Minus_def by blast
+lemma terminates_with_res_linear_in_IMPI:
+  assumes "\<And>s. P s \<Longrightarrow> terminates_with_res_pred_time_IMP p s r (f s) (linear_in c n (ft s))"
+  shows "terminates_with_res_linear_in_IMP P p r f ft"
+  using assms unfolding terminates_with_res_linear_in_IMP_def by blast
 
-lemma terminates_with_res_linear_in_IMP_MinusE:
-  assumes "terminates_with_res_linear_in_IMP_Minus P p r f ft"
+lemma terminates_with_res_linear_in_IMPE:
+  assumes "terminates_with_res_linear_in_IMP P p r f ft"
   obtains c n where
-    "\<And>s. P s \<Longrightarrow> terminates_with_res_pred_time_IMP_Minus p s r (f s) (linear_in c n (ft s))"
-  using assms unfolding terminates_with_res_linear_in_IMP_Minus_def by blast
+    "\<And>s. P s \<Longrightarrow> terminates_with_res_pred_time_IMP p s r (f s) (linear_in c n (ft s))"
+  using assms unfolding terminates_with_res_linear_in_IMP_def by blast
 
 definition "terminates_with_res_linear_in_IMP_Tailcall P tp p r f ft \<equiv> \<exists>c n. \<forall>s. P s \<longrightarrow>
   terminates_with_res_pred_time_IMP_Tailcall tp p s r (f s) (linear_in c n (ft s))"
@@ -60,11 +60,11 @@ context
     terminates_with_res_linear_in_IMP_TailcallI[intro]
 begin
 
-lemma terminates_with_res_linear_in_IMP_Minus_if_terminates_with_res_linear_in_IMP_TailcallI:
+lemma terminates_with_res_linear_in_IMP_if_terminates_with_res_linear_in_IMP_TailcallI:
   assumes "invar p"
   and "r \<in> set (vars p)"
   and "terminates_with_res_linear_in_IMP_Tailcall P p p r f ft"
-  shows "terminates_with_res_linear_in_IMP_Minus P (tailcall_to_IMP_Minus p) r f ft"
+  shows "terminates_with_res_linear_in_IMP P (tailcall_to_IMP p) r f ft"
 proof -
   from assms obtain c n where termtc:
     "terminates_with_res_pred_time_IMP_Tailcall p p s r (f s) (linear_in c n (ft s))" if "P s" for s
@@ -72,16 +72,16 @@ proof -
   let ?c' = 8 and ?n' = "1 + size\<^sub>c (compile p)"
   let ?c = "(c + ?c') * ?n'" and ?n = "n * ?n'"
   show ?thesis
-  proof (rule terminates_with_res_linear_in_IMP_MinusI)
+  proof (rule terminates_with_res_linear_in_IMPI)
     fix s assume "P s"
     with termtc have "terminates_with_res_pred_time_IMP_Tailcall p p s r (f s) (linear_in c n (ft s))"
       by blast
     with assms(1,2) obtain t t' s' where
-      correct: "s' r = f s" "(tailcall_to_IMP_Minus p, s) \<Rightarrow>\<^bsup> t'\<^esup> s'"
+      correct: "s' r = f s" "(tailcall_to_IMP p, s) \<Rightarrow>\<^bsup> t'\<^esup> s'"
       and linears: "linear_in c n (ft s) t" "t' \<le> (?c' + t) * ?n'"
       by (elim terminates_with_res_pred_time_IMP_TailcallE terminates_with_pred_time_IMP_TailcallE
         compile_sound inline_sound[where ?s=s and ?s'=s for s])
-      (auto simp: tailcall_to_IMP_Minus_eq eq_on_def set_vars_compile algebra_simps)
+      (auto simp: tailcall_to_IMP_eq eq_on_def set_vars_compile algebra_simps)
     have "linear_in ?c ?n (ft s) t'"
     proof -
       from linears have "t' \<le> (?c' + t) * ?n'" by simp
@@ -92,9 +92,9 @@ proof -
       also have "... = ?c + ?n * (ft s)" by (auto simp: algebra_simps)
       finally show ?thesis by auto
     qed
-    with correct show "terminates_with_res_pred_time_IMP_Minus (tailcall_to_IMP_Minus p) s r (f s)
+    with correct show "terminates_with_res_pred_time_IMP (tailcall_to_IMP p) s r (f s)
       (linear_in ?c ?n (ft s))"
-      by (intro terminates_with_res_pred_time_IMP_MinusI terminates_with_pred_time_IMP_MinusI)
+      by (intro terminates_with_res_pred_time_IMPI terminates_with_pred_time_IMPI)
   qed
 qed
 

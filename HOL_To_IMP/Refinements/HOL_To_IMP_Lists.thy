@@ -1,8 +1,8 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 \<^marker>\<open>creator "Jonas Stahl"\<close>
-theory HOL_To_IMP_Minus_Lists
+theory HOL_To_IMP_Lists
   imports
-    HOL_To_IMP_Minus_Pairs
+    HOL_To_IMP_Pairs
 begin
 
 paragraph \<open>Lists\<close>
@@ -33,26 +33,26 @@ function_compile_nat append_eq_rev_acc_rev
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 declare Rel_nat_selector_list[Rel_nat]
 
 compile_nat Cons_nat_def
-HOL_To_IMP_Minus_correct Cons_nat by cook
+HOL_To_IMP_correct Cons_nat by cook
 
 compile_nat Nil_nat_def
-HOL_To_IMP_Minus_correct Nil_nat by cook
+HOL_To_IMP_correct Nil_nat by cook
 
 lemmas rev_acc_nat_eq = HTHN.rev_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat rev_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.rev_acc_nat by cook
 
 compile_nat HTHN.rev_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.rev_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.rev_nat by cook
 
 compile_nat HTHN.append_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.append_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.append_nat by cook
 
 end
 
@@ -82,15 +82,15 @@ function_compile_nat length_eq_length_acc_zero
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas length_acc_nat_eq = HTHN.length_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat length_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.length_acc_nat by cook
 
 compile_nat HTHN.length_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.length_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.length_nat by cook
 
 end
 
@@ -116,15 +116,15 @@ function_compile_nat zip_req_rev_zip_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas zip_acc_nat_eq = HTHN.zip_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat zip_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.zip_acc_nat by cook
 
 compile_nat HTHN.zip_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.zip_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.zip_nat by cook
 
 end
 
@@ -144,15 +144,15 @@ function_compile_nat count_def
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas count_acc_nat_eq = HTHN.count_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat count_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc_nat by cook
 
 compile_nat HTHN.count_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.count_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_nat by cook
 
 end
 
@@ -181,19 +181,19 @@ function_compile_nat drop_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas take_acc_nat_eq = HTHN.take_acc_nat_eq_unfolded[unfolded case_list_nat_def case_nat_eq_if]
 compile_nat take_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.take_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.take_acc_nat by cook
 
 compile_nat HTHN.take_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.take_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.take_nat by cook
 
 lemmas drop_nat_eq = HTHN.drop_nat_eq_unfolded[unfolded case_list_nat_def case_nat_eq_if]
 compile_nat drop_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.drop_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.drop_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction ya arbitrary: s y) (cook mode = run_finish)
 
@@ -246,16 +246,16 @@ function_compile_nat enumerate_eq_enumerate_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat enumerate_acc_nat_eq
 
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.enumerate_acc_nat by cook
 
 compile_nat HTHN.enumerate_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.enumerate_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.enumerate_nat by cook
 
 end
 
@@ -285,23 +285,23 @@ function_compile_nat product_eq_product_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas map_pair_acc_nat_eq = HTHN.map_pair_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat map_pair_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.map_pair_acc_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.map_pair_acc_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction "Pair y :: 'b \<Rightarrow> _" _ _ arbitrary: s rule: HOL_To_HOL_Nat.map_acc.induct)
   (cook mode = run_finish)
 
 lemmas product_acc_nat_eq = HTHN.product_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat product_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.product_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.product_acc_nat by cook
 
 lemmas product_nat_eq = HTHN.product_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat product_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.product_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.product_nat by cook
 
 end
 
@@ -325,16 +325,16 @@ function_compile_nat concat_eq_concat_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas concat_acc_nat_eq = HTHN.concat_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat concat_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.concat_acc_nat by (cook mode = induction)
+HOL_To_IMP_correct HOL_To_HOL_Nat.concat_acc_nat by (cook mode = induction)
 
 lemmas concat_nat_eq = HTHN.concat_nat_eq_unfolded
 compile_nat concat_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.concat_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.concat_nat by cook
 
 end
 
@@ -349,12 +349,12 @@ function_compile_nat ListMem_eq
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas ListMem_nat_eq = HTHN.ListMem_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat ListMem_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.ListMem_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.ListMem_nat
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
   by (induction ya arbitrary: s) (cook mode = run_finish)
 
@@ -380,15 +380,15 @@ function_compile_nat remdups_eq_remdups_acc_nil
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 lemmas remdups_acc_nat_eq = HTHN.remdups_acc_nat_eq_unfolded[unfolded case_list_nat_def case_bool_nat_def]
 compile_nat remdups_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.remdups_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.remdups_acc_nat by cook
 
 compile_nat HTHN.remdups_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.remdups_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.remdups_nat by cook
 
 end
 

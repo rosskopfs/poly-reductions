@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
-theory HOL_To_IMP_Minus_AT_MOST_THREE_SAT_To_THREE_SAT
+theory HOL_To_IMP_AT_MOST_THREE_SAT_To_THREE_SAT
   imports
-    HOL_To_IMP_Minus_SAT_To_AT_MOST_THREE_SAT
+    HOL_To_IMP_SAT_To_AT_MOST_THREE_SAT
     Karp21.AT_MOST_THREE_SAT_To_THREE_SAT
 begin
 
@@ -99,33 +99,33 @@ function_compile_nat at_most_three_sat_to_three_sat_aux_eq_at_most_three_sat_to_
 
 end
 
-context HOL_Nat_To_IMP_Minus
+context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.to_at_least_3_clause_empty1_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_least_3_clause_empty1_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_least_3_clause_empty1_nat by cook
 
 compile_nat HTHN.to_at_least_3_clause_empty2_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_least_3_clause_empty2_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_least_3_clause_empty2_nat by cook
 
 compile_nat HTHN.to_at_least_3_clause_single_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_least_3_clause_single_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_least_3_clause_single_nat by cook
 
 compile_nat HTHN.to_at_least_3_clause_double_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_least_3_clause_double_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_least_3_clause_double_nat by cook
 
 lemmas to_at_least_3_clause_nat_eq = HTHN.to_at_least_3_clause_nat_eq_unfolded[
   unfolded case_list_nat_def]
 compile_nat to_at_least_3_clause_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.to_at_least_3_clause_nat by (cook mode = induction)
+HOL_To_IMP_correct HOL_To_HOL_Nat.to_at_least_3_clause_nat by (cook mode = induction)
 
 lemmas at_most_three_sat_to_three_sat_aux_acc_nat_eq =
   HTHN.at_most_three_sat_to_three_sat_aux_acc_nat_eq_unfolded[unfolded case_list_nat_def]
 compile_nat at_most_three_sat_to_three_sat_aux_acc_nat_eq
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.at_most_three_sat_to_three_sat_aux_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.at_most_three_sat_to_three_sat_aux_acc_nat by cook
 
 compile_nat HTHN.at_most_three_sat_to_three_sat_aux_nat_eq_unfolded
-HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.at_most_three_sat_to_three_sat_aux_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.at_most_three_sat_to_three_sat_aux_nat by cook
 
 end
 

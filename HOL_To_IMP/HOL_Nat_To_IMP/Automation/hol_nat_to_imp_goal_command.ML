@@ -1,63 +1,63 @@
-(*  Title:  Automation/hol_nat_to_imp_minus_goal_command.ML
+(*  Title:  Automation/hol_nat_to_imp_goal_command.ML
     Author: Kevin Kappelmann
 
 Setup goal for HOL to IMP- refinement.
 *)
-signature HOL_NAT_TO_IMP_MINUS_GOAL_COMMAND =
+signature HOL_NAT_TO_IMP_GOAL_COMMAND =
 sig
-val get_imp_minus_correct : Proof.context -> Termtab.key -> thm option
+  val get_imp_correct : Proof.context -> Termtab.key -> thm option
 
-val update_imp_minus_correct : thm -> Context.generic -> Context.generic
-val update_imp_minus_correct_attr : attribute
+  val update_imp_correct : thm -> Context.generic -> Context.generic
+  val update_imp_correct_attr : attribute
 
-val delete_imp_minus_correct : thm -> Context.generic -> Context.generic
-val delete_imp_minus_correct_attr : attribute
+  val delete_imp_correct : thm -> Context.generic -> Context.generic
+  val delete_imp_correct_attr : attribute
 
-val setup_imp_minus_correct_attr : attribute context_parser
+  val setup_imp_correct_attr : attribute context_parser
 end
 
-structure HOL_Nat_To_IMP_Minus_Goal_Command : HOL_NAT_TO_IMP_MINUS_GOAL_COMMAND =
+structure HOL_Nat_To_IMP_Goal_Command : HOL_NAT_TO_IMP_GOAL_COMMAND =
 struct
 
 structure HTIU = HOL_Nat_To_IMP_Util
 structure HTHNU = HOL_To_HOL_Nat_Util
 
-fun mk_terminates_with_res_IMP_Minus c s r v = \<^Const>\<open>terminates_with_res_IMP_Minus for c s r v\<close>
-val dest_terminates_with_res_IMP_Minus =
-  \<^Const_fn>\<open>terminates_with_res_IMP_Minus for c s r v => \<open>(c, s, r, v)\<close>\<close>
+fun mk_terminates_with_res_IMP c s r v = \<^Const>\<open>terminates_with_res_IMP for c s r v\<close>
+val dest_terminates_with_res_IMP =
+  \<^Const_fn>\<open>terminates_with_res_IMP for c s r v => \<open>(c, s, r, v)\<close>\<close>
 
-val compiled_const_from_thm = Thm.concl_of #> HTIU.dest_Trueprop #> dest_terminates_with_res_IMP_Minus
+val compiled_const_from_thm = Thm.concl_of #> HTIU.dest_Trueprop #> dest_terminates_with_res_IMP
   #> (fn (c, _, _, _) => c)
 
-structure HOL_To_IMP_Minus_IMP_Minus_Correct_Thms = Generic_Data
+structure HOL_To_IMP_IMP_Correct_Thms = Generic_Data
 (
   type T = thm Termtab.table
   val empty = Termtab.empty
   val merge = Termtab.join (K fst)
 )
 
-val get_imp_minus_correct =
-  Termtab.lookup o HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.get o Context.Proof
+val get_imp_correct =
+  Termtab.lookup o HOL_To_IMP_IMP_Correct_Thms.get o Context.Proof
 
-fun update_imp_minus_correct thm =
+fun update_imp_correct thm =
   compiled_const_from_thm thm
   |> rpair thm
   |> Termtab.update_new
-  |> HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.map
-val update_imp_minus_correct_attr = Thm.declaration_attribute update_imp_minus_correct
+  |> HOL_To_IMP_IMP_Correct_Thms.map
+val update_imp_correct_attr = Thm.declaration_attribute update_imp_correct
 
-fun delete_imp_minus_correct thm = compiled_const_from_thm thm
+fun delete_imp_correct thm = compiled_const_from_thm thm
   |> Termtab.delete
-  |> HOL_To_IMP_Minus_IMP_Minus_Correct_Thms.map
-val delete_imp_minus_correct_attr = Thm.declaration_attribute delete_imp_minus_correct
+  |> HOL_To_IMP_IMP_Correct_Thms.map
+val delete_imp_correct_attr = Thm.declaration_attribute delete_imp_correct
 
-val imp_minus_correct_binding = \<^binding>\<open>IMP_Minus_correct\<close>
+val imp_correct_binding = \<^binding>\<open>IMP_correct\<close>
 
-val setup_imp_minus_correct_attr = Attrib.add_del
-  update_imp_minus_correct_attr delete_imp_minus_correct_attr
+val setup_imp_correct_attr = Attrib.add_del
+  update_imp_correct_attr delete_imp_correct_attr
 
 val _ = Theory.setup (
-  Attrib.setup imp_minus_correct_binding setup_imp_minus_correct_attr
+  Attrib.setup imp_correct_binding setup_imp_correct_attr
     "add/del IMP- functional correctness theorem")
 
 local
@@ -67,7 +67,7 @@ local
 in
   val _ =
     Outer_Syntax.local_theory_to_proof'
-      \<^command_keyword>\<open>HOL_To_IMP_Minus_correct\<close>
+      \<^command_keyword>\<open>HOL_To_IMP_correct\<close>
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
       (parser >> (fn (binding_attrs, (const, pos)) => fn b => fn lthy =>
         let
@@ -98,18 +98,18 @@ in
           val IMP_program = #compiled compiled_const
           val ret_reg = HTIU.mk_register (#ret_reg compiled_const)
           (*TODO: move terminates_with_res stuff to utility module*)
-          val concl = mk_terminates_with_res_IMP_Minus IMP_program s ret_reg HOLt
+          val concl = mk_terminates_with_res_IMP IMP_program s ret_reg HOLt
             |> HTIU.mk_Trueprop
           val goal = Logic.list_implies (prems, concl)
           val goal_stmt = Element.Shows [(Binding.empty_atts, [(goal, [])])]
 
-          val imp_minus_correct_attr = Attrib.internal pos (K update_imp_minus_correct_attr)
+          val imp_correct_attr = Attrib.internal pos (K update_imp_correct_attr)
           val binding_attrs = binding_attrs
             |>> (fn binding => if Binding.is_empty binding
               then Transport_Util.add_suffix (HTHNU.const_binding const_term)
-                imp_minus_correct_binding |> Binding.set_pos pos
+                imp_correct_binding |> Binding.set_pos pos
               else binding)
-            ||> cons imp_minus_correct_attr
+            ||> cons imp_correct_attr
         in
           Specification.theorem false Thm.theoremK NONE (K I) binding_attrs [] [] goal_stmt b lthy
         end

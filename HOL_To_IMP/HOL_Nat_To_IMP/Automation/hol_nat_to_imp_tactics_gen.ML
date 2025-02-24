@@ -1,11 +1,11 @@
-(*  Title:  Automation/hol_nat_to_imp_tactics_base.ML
+(*  Title:  Automation/hol_nat_to_imp_tactics_gen.ML
     Author: Kevin Kappelmann
     Author: Max Lang
 
 Basics to run IMP programs, track their states changes, and prove their
 correspondence with HOL programs.
 *)
-signature HOL_NAT_TO_IMP_TACTICS_BASE =
+signature HOL_NAT_TO_IMP_TACTICS_GEN =
 sig
   include HAS_LOGGER
 
@@ -32,11 +32,10 @@ sig
   val run_tac : (int -> tactic) -> int -> tactic
 end
 
-structure HOL_Nat_To_IMP_Tactics_Base : HOL_NAT_TO_IMP_TACTICS_BASE =
+structure HOL_Nat_To_IMP_Tactics_Gen : HOL_NAT_TO_IMP_TACTICS_GEN =
 struct
 
-val logger = Logger.setup_new_logger HOL_Nat_To_IMP_Minus_base_logger
-  "HOL_Nat_To_IMP_Tactics_Base"
+val logger = Logger.setup_new_logger HOL_Nat_To_IMP_base_logger "HOL_Nat_To_IMP_Tactics_Gen"
 
 structure SUT = State_Update_Tracking
 structure HTIU = HOL_Nat_To_IMP_Util

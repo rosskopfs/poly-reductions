@@ -1,14 +1,14 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_Nat_To_IMP_Tactics
   imports
-    HOL_Nat_To_IMP_Minus_Goal_Commands
+    HOL_Nat_To_IMP_Goal_Commands
     HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
     ML_Unification.ML_Unifiers
     ML_Unification.Unify_Resolve_Tactics
 begin
 
 paragraph \<open>Summary\<close>
-text \<open>Tactics and methods to refine HOL programs on natural numbers to IMP-Minus
+text \<open>Tactics and methods to refine HOL programs on natural numbers to IMP (with while loops)
 via IMP with tailcalls.\<close>
 
 lemma terminates_with_res_IMP_Tailcall_start:
@@ -88,7 +88,7 @@ named_theorems HOL_To_IMP_finish_simps
 
 declare HOL_To_HOL_Nat.If_nat_def[HOL_To_IMP_finish_simps]
 
-ML_file \<open>hol_nat_to_imp_tactics_base.ML\<close>
+ML_file \<open>hol_nat_to_imp_tactics_gen.ML\<close>
 
 lemma SIMPS_TO_if_TrueI:
   assumes "b"
@@ -116,28 +116,28 @@ end
 lemma mem_set_vars_if_vars_tcom_no_calls: "vars_tcom_no_calls c x \<Longrightarrow> x \<in> set (vars c)"
   by (induction c) auto
 
-ML_file \<open>hol_nat_to_imp_minus_tactics.ML\<close>
+ML_file \<open>hol_nat_to_imp_tactics.ML\<close>
 
-declaration (in HOL_Nat_To_IMP_Minus)
+declaration (in HOL_Nat_To_IMP)
   \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
 
 ML\<open>
-  @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Minus_Tactics
-    and functor_name = HOL_Nat_To_IMP_Minus_Tactics
+  @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Tactics
+    and functor_name = HOL_Nat_To_IMP_Tactics
     and id = \<open>""\<close>
     and more_args = \<open>val init_args = {
       get_IMP_def = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_IMP_def,
-      get_imp_minus_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_minus_correct,
-      get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Base.get_HOL_eqs,
+      get_imp_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_correct,
+      get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Gen.get_HOL_eqs,
       get_fun_inducts = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_fun_inducts
     }\<close>}
 \<close>
-local_setup \<open>Standard_HOL_Nat_To_IMP_Minus_Tactics.setup_attribute NONE\<close>
-local_setup \<open>Standard_HOL_Nat_To_IMP_Minus_Tactics.setup_method NONE\<close>
+local_setup \<open>Standard_HOL_Nat_To_IMP_Tactics.setup_attribute NONE\<close>
+local_setup \<open>Standard_HOL_Nat_To_IMP_Tactics.setup_method NONE\<close>
 ML \<open>
-  structure HB = HOL_Nat_To_IMP_Tactics_Base
+  structure HG = HOL_Nat_To_IMP_Tactics_Gen
   structure HT = HOL_Nat_To_IMP_Tailcalls_Tactics
-  structure HM = HOL_Nat_To_IMP_Minus_Tactics_Base
+  structure HM = HOL_Nat_To_IMP_Tactics_Base
   structure SUT = State_Update_Tracking
 \<close>
 

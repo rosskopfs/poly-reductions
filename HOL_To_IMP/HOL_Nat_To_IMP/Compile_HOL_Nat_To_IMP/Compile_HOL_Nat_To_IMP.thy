@@ -3,7 +3,7 @@
 theory Compile_HOL_Nat_To_IMP
   imports
     IMP_Terminates_With
-    HOL_Nat_To_IMP_Minus_Base
+    HOL_Nat_To_IMP_Base
     HOL_To_HOL_Nat.HOL_To_HOL_Nat_Basics
     "HOL-Library.AList"
   keywords
@@ -205,7 +205,7 @@ end
 lemma Let_lambda_eq_Let: "(let x = t in (\<lambda>y. f y x)) y = (let x = t in f y x)" by simp
 lemmas Let_compile_simps = Let_const Let_lambda_eq_Let
 
-declare tailcall_to_IMP_Minus_def[code del]
+declare tailcall_to_IMP_def[code del]
 
 ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 
