@@ -39,19 +39,18 @@ fun com_to_operators :: "com \<Rightarrow> operator list" where
         list_update (precondition_of op) 0 (PC, PCV (c1 ;; c2)),
         effect_of = 
         list_update (effect_of op) 0 (PC, PCV (c1' ;; c2))\<rparr>)) ops))" |
-"com_to_operators (IF vs\<noteq>0 THEN c1 ELSE c2) = (let i = PCV (IF vs\<noteq>0 THEN c1 ELSE c2)
-   in  \<lparr> precondition_of = (PC, i) # map (\<lambda>v. (VN v, EV Zero)) (remdups vs), 
-        effect_of = [(PC, PCV c2)]\<rparr> 
-      # map (\<lambda> v. 
-      \<lparr> precondition_of = [(PC, i), (VN v, EV One)], 
-         effect_of = [(PC, PCV c1)]\<rparr>) vs)" |
-"com_to_operators (WHILE vs\<noteq>0 DO c) = (let i = PCV (WHILE vs\<noteq>0 DO c) ;
-  j = PCV (c ;; (WHILE vs\<noteq>0 DO c)); k = PCV SKIP in 
-    \<lparr> precondition_of = (PC, i) # map (\<lambda>v. (VN v, EV Zero)) (remdups vs), 
-        effect_of = [(PC, k)]\<rparr> 
-      # map (\<lambda> v. 
-      \<lparr> precondition_of = [(PC, i), (VN v, EV One)], 
-         effect_of = [(PC, j)]\<rparr>) vs)"
+"com_to_operators (IF v\<noteq>0 THEN c1 ELSE c2) = (
+  let i = PCV (IF v\<noteq>0 THEN c1 ELSE c2) in
+  [\<lparr> precondition_of = [(PC, i), (VN v, EV Zero)], effect_of = [(PC, PCV c2)]\<rparr>,
+   \<lparr> precondition_of = [(PC, i), (VN v, EV One)],  effect_of = [(PC, PCV c1)]\<rparr>])" |
+"com_to_operators (WHILE v\<noteq>0 DO c) = (
+  let 
+    i = PCV (WHILE v\<noteq>0 DO c) ;
+    j = PCV (c ;; (WHILE v\<noteq>0 DO c));
+    k = PCV SKIP
+  in 
+    [\<lparr> precondition_of = [(PC, i), (VN v, EV Zero)], effect_of = [(PC, k)]\<rparr>,
+     \<lparr> precondition_of = [(PC, i), (VN v, EV One)],  effect_of = [(PC, j)]\<rparr>])"
 
 lemma precondition_nonempty[simp]: "op \<in> set (com_to_operators c) 
   \<Longrightarrow> length (precondition_of op) > 0"

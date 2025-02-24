@@ -18,9 +18,9 @@ fun IMP_To_IMP_Minus:: "IMP_com \<Rightarrow> nat \<Rightarrow> IMP_Minus_com" w
 "IMP_To_IMP_Minus (Com.Assign v aexp) n = assignment_to_binary n v aexp" |
 "IMP_To_IMP_Minus (Com.Seq c1 c2) n =
   (IMP_To_IMP_Minus c1 n ;; IMP_To_IMP_Minus c2 n )" |
-"IMP_To_IMP_Minus (Com.If v c1 c2) n = (IF (var_bit_to_var (v, n))\<noteq>0 THEN
+"IMP_To_IMP_Minus (Com.If v c1 c2) n = (IF (var_bit_to_var (v, 0))\<noteq>0 THEN
   IMP_To_IMP_Minus c1 n ELSE IMP_To_IMP_Minus c2 n)" |
-"IMP_To_IMP_Minus (Com.While v c) n = (WHILE (var_bit_to_var (v, n))\<noteq>0 DO
+"IMP_To_IMP_Minus (Com.While v c) n = (WHILE (var_bit_to_var (v, 0))\<noteq>0 DO
   IMP_To_IMP_Minus c n)"
 
 lemma finite_range_stays_finite: "(c1, s1) \<Rightarrow>\<^bsup>t\<^esup> s2 \<Longrightarrow> finite (range s1)
@@ -392,9 +392,19 @@ proof -
   thus ?thesis by(simp add:  distinct_card[OF enumerate_variables_distinct])
 qed
 
-lemma var_bit_in_IMP_Minus_variables_then_bit_less_n: "n > 0 \<Longrightarrow> var_bit_to_var (a, b)
+lemma var_bit_in_IMP_Minus_variables_then_bit_less_n: "n > 0 \<Longrightarrow> var_bit_to_var (a, Suc b)
            \<in> set (enumerate_variables (IMP_To_IMP_Minus c n)) \<Longrightarrow> b \<le> n"
   apply(frule set_mp[OF IMP_To_IMP_Minus_variables])
   by auto
+
+lemma var_bit_in_IMP_Minus_variables: "
+v \<in> set (vars c) \<Longrightarrow> 
+  (\<forall>i < n. var_bit_to_var (v, Suc i) \<in> set (enumerate_variables (IMP_To_IMP_Minus c n))) \<or> 
+  var_bit_to_var (v,0) \<in> set (enumerate_variables (IMP_To_IMP_Minus c n))"
+  apply(induction c)
+  by(auto simp: assignment_to_binary_def binary_adder_def set_enumerate_variables_seq
+      copy_atom_to_operand_variables adder_def com_list_to_seq_variables full_adder_variables
+      binary_subtractor_def subtract_handle_underflow_variables set_enumerate_variables_if
+      set_enumerate_variables_while split: aexp.splits atomExp.splits)
 
 end

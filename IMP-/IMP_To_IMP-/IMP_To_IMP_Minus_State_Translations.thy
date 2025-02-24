@@ -1,17 +1,19 @@
 \<^marker>\<open>creator Florian Keßler\<close>
+\<^marker>\<open>contributor Fabian Huch\<close>
 
 section "IMP to IMP- State Translations"
 
 theory IMP_To_IMP_Minus_State_Translations
-  imports "IMP.IMP_Base" Binary_Arithmetic 
+  imports "IMP.IMP_Base" Binary_Arithmetic
 begin
 
 text \<open> We define a translation between IMP states, which map registers to natural numbers, and
        IMP- state where a register can only hold a single bit. Fixing a number of bits n that
        are assumed to be sufficient to represent each natural number in the IMP states, a register
-       ''x'' in IMP is represented by n registers in IMP-: ''#$x'', ''##$x'', ... ''#...#$x'',
-        where the IMP- register starting with k hashes represents the k- 1th bit of the
-       IMP register. Furthermore, the IMP- states contain special registers carry and
+       ''x'' in IMP is represented by n+1 registers in IMP-: A zeroness register in ''#$x'',
+        followed by the actual bits ''##$x'', ... ''#...#$x'',
+        where the IMP- register starting with k hashes represents the k-th bit of the
+        IMP register. Furthermore, the IMP- states contain special registers carry and
         operands ''a'' and ''b'' with n bits respectively, which we will use when replacing
         arithmetic expressions by binary operations when translating IMP to IMP- programs. \<close>
                           
@@ -215,10 +217,9 @@ definition IMP_State_To_IMP_Minus_with_operands_a_b::
   "state \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bit_state" where
 "IMP_State_To_IMP_Minus_with_operands_a_b s n a b = (\<lambda>v.
   (case var_to_var_bit v of
-     Some (v', k) \<Rightarrow> 
-       if k < n then Some (nth_bit (s v') k)
-       else if k = n then Some (zero_bit (s v') k)
-       else None |
+     Some (v', k) \<Rightarrow> case k of
+        0 \<Rightarrow> Some (zero_bit (s v') n)
+      | Suc k \<Rightarrow> if k < n then Some (nth_bit (s v') k) else None |
      None \<Rightarrow>
        (case var_to_operand_bit v of
           Some (c, k) \<Rightarrow> if k < n \<and> c = a_chr then Some (nth_bit a k) else
@@ -230,38 +231,7 @@ definition IMP_State_To_IMP_Minus:: "state \<Rightarrow> nat \<Rightarrow> bit_s
 "IMP_State_To_IMP_Minus s n
   = IMP_State_To_IMP_Minus_with_operands_a_b s n 0 0 "
 
-definition IMP_State_To_IMP_Minus_partial::
-  "(vname \<rightharpoonup> nat) \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bit_state" where
-"IMP_State_To_IMP_Minus_partial s n r =
- (\<lambda>v. (case var_to_var_bit v of
-         Some (v', k) \<Rightarrow>
-           if k \<ge> n then
-             None
-           else
-             (if k < r then
-                ((\<lambda>x. Some (nth_bit x k)) \<circ>\<^sub>m s) v'
-              else if k = r then
-                ((\<lambda>x. Some (zero_bit x k)) \<circ>\<^sub>m s) v'
-              else
-                Some Zero)
-        | None \<Rightarrow> (case var_to_operand_bit v of
-            Some (c, k) \<Rightarrow>
-              if c = a_chr \<and> k < n then
-                Some Zero
-              else if c = b_chr \<and> k < n then 
-                Some Zero
-              else
-                 None
-          |  _ \<Rightarrow>
-              if v = carry \<or> v = zero then
-                Some Zero
-              else
-                None)))"
 
-lemma IMP_State_To_IMP_Minus_partial_of_operand_bit_to_var:
-  "IMP_State_To_IMP_Minus_partial s n r (operand_bit_to_var (op, k)) =
-    (if (op = a_chr \<or> op = b_chr) \<and> k < n then Some Zero else None)"
-  unfolding IMP_State_To_IMP_Minus_partial_def by auto
 
 lemma IMP_State_To_IMP_Minus_with_operands_a_b_of_carry[simp]:
   "IMP_State_To_IMP_Minus_with_operands_a_b s k a b carry = Some Zero"
@@ -294,31 +264,30 @@ lemma IMP_State_To_IMP_Minus_with_operands_a_b_of_operand_b[simp]:
 
 lemma IMP_State_To_IMP_Minus_with_operands_a_b_of_var_bit_to_var[simp]:
   "IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, i))
-    = (if i < n then Some (nth_bit (s v) i) else if i = n then Some (zero_bit (s v) n) else None)"
+    = (case i of 0 \<Rightarrow> Some (zero_bit (s v) n) | Suc i \<Rightarrow> if i < n then Some (nth_bit (s v) i) else None)"
   by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def)
 
 lemma IMP_State_To_IMP_Minus_with_operands_a_b_of_z[simp]:
-  "n = i \<Longrightarrow> IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, i))
+  "i = 0 \<Longrightarrow> IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, i))
     = Some (zero_bit (s v) n)"
   by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def)
 
 lemma zero_IMP_State_To_IMP_Minus_with_operands_a_b[simp]:
-  "IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, n)) = Some Zero 
+  "IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, 0)) = Some Zero 
   \<longleftrightarrow> zero_bit (s v) n = Zero"
   by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits)
 
 lemma zero_IMP_State_To_IMP_Minus_with_operands_a_b2[simp]:
-  "IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, n)) = Some One 
+  "IMP_State_To_IMP_Minus_with_operands_a_b s n a b (var_bit_to_var (v, 0)) = Some One 
   \<longleftrightarrow> zero_bit (s v) n = One"
   by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits)
-
 
 lemma IMP_State_To_IMP_Minus_with_operands_a_b_of_changed_s_neq_iff:
   "IMP_State_To_IMP_Minus_with_operands_a_b s n a b x \<noteq>
        IMP_State_To_IMP_Minus_with_operands_a_b (s(v := y)) n a b x
-  \<longleftrightarrow> (var_to_var_bit x = Some (v, n) \<and> zero_bit (s v) n \<noteq> zero_bit y n) \<or> 
-      (\<exists>i < n. var_to_var_bit x = Some (v, i) \<and> nth_bit(s v) i \<noteq> nth_bit y i)" (is "?lhs \<longleftrightarrow> ?rhs")
-  by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits)
+  \<longleftrightarrow> (var_to_var_bit x = Some (v, 0) \<and> zero_bit (s v) n \<noteq> zero_bit y n) \<or> 
+      (\<exists>i < n. var_to_var_bit x = Some (v, Suc i) \<and> nth_bit(s v) i \<noteq> nth_bit y i)" (is "?lhs \<longleftrightarrow> ?rhs")
+  by(auto simp: IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits if_splits nat.splits)
 
 lemma dom_of_IMP_State_To_IMP_Minus: "dom (IMP_State_To_IMP_Minus s n) =
   { carry, zero }
@@ -326,7 +295,7 @@ lemma dom_of_IMP_State_To_IMP_Minus: "dom (IMP_State_To_IMP_Minus s n) =
   \<union> { operand_bit_to_var (op, i) | op i. i < n \<and> (op = a_chr \<or> op = b_chr) }" for s n
   by (auto simp: IMP_State_To_IMP_Minus_def var_to_operand_bit_eq_Some_iff
                  var_to_var_bit_eq_Some_iff IMP_State_To_IMP_Minus_with_operands_a_b_def
-           split: char.splits option.splits bool.splits if_splits)
+           split: char.splits option.splits bool.splits if_splits nat.splits)
 
 
 definition IMP_Minus_State_To_IMP:: "bit_state \<Rightarrow> nat \<Rightarrow> state" where
@@ -346,11 +315,11 @@ lemma zero_bit_le[simp]: "a + b < 2 ^ n \<Longrightarrow> zero_bit (a+b) (Suc n)
   by (auto simp: zero_bit_def bits_zero_iff less_Suc_eq nth_bit_nat_is_right_shift)
 
 lemma zero_IMP_Minus_State_To_IMP[simp]:
-  "s b < 2 ^n \<Longrightarrow> (IMP_State_To_IMP_Minus s n) (var_bit_to_var (b, n)) = Some Zero \<longleftrightarrow> s b = 0"
+  "s b < 2 ^n \<Longrightarrow> (IMP_State_To_IMP_Minus s n) (var_bit_to_var (b, 0)) = Some Zero \<longleftrightarrow> s b = 0"
   by (auto simp: IMP_State_To_IMP_Minus_def all_bits_equal_then_equal zero_bit_zero split: option.splits)
 
 lemma zero_IMP_Minus_State_To_IMP2[simp]:
-  "s b < 2 ^n \<Longrightarrow> (IMP_State_To_IMP_Minus s n) (var_bit_to_var (b, n)) = Some One \<longleftrightarrow> s b \<noteq> 0"
+  "s b < 2 ^n \<Longrightarrow> (IMP_State_To_IMP_Minus s n) (var_bit_to_var (b, 0)) = Some One \<longleftrightarrow> s b \<noteq> 0"
   using all_bits_equal_then_equal
   by (fastforce simp: IMP_State_To_IMP_Minus_def  zero_bit_one)
   

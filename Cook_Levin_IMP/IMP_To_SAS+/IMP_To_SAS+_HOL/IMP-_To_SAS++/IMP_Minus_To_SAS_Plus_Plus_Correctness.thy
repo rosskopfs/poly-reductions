@@ -339,26 +339,26 @@ next
     by auto
   then show ?case using Seq2 by blast
 next
-  case (IfTrue bs s c\<^sub>1 c\<^sub>2)
-  have "set bs \<subseteq> set (enumerate_variables c)" 
+  case (IfTrue s b c\<^sub>1 c\<^sub>2)
+  have "b \<in> set (enumerate_variables c)" 
     using IfTrue enumerate_subprograms_enumerate_variables by fastforce
-  hence "\<forall>b \<in> set bs. \<exists>y. s b = Some y" using \<open>dom s = set (enumerate_variables c)\<close> by auto
+  hence "\<exists>y. s b = Some y" using \<open>dom s = set (enumerate_variables c)\<close> by auto
   then show ?case using IfTrue by (auto simp: Let_def) 
 next
-  case (IfFalse bs s c\<^sub>1 c\<^sub>2)
-  hence "set bs \<subseteq> set (enumerate_variables c)" 
+  case (IfFalse s b c\<^sub>1 c\<^sub>2)
+  hence "b \<in> set (enumerate_variables c)" 
     using enumerate_subprograms_enumerate_variables by fastforce
   thus ?case using IfFalse 
     by(auto simp: Let_def map_leq_imp_minus_state_to_sas_plus_iff all_zero_than_zero_map_le) 
 next
-  case (WhileTrue bs s c1)
-  hence "set bs \<subseteq> set (enumerate_variables c)" 
+  case (WhileTrue s b c1)
+  hence "b \<in> set (enumerate_variables c)" 
     using  enumerate_subprograms_enumerate_variables by fastforce
   then show ?case using WhileTrue
     by(force simp: Let_def map_leq_imp_minus_state_to_sas_plus_iff all_zero_than_zero_map_le)
 next
-  case (WhileFalse bs s c1)
-   hence "set bs \<subseteq> set (enumerate_variables c)" 
+  case (WhileFalse s b c1)
+   hence "b \<in> set (enumerate_variables c)" 
     using  enumerate_subprograms_enumerate_variables by fastforce
   then show ?case using WhileFalse
     by(force simp: Let_def map_leq_imp_minus_state_to_sas_plus_iff all_zero_than_zero_map_le)

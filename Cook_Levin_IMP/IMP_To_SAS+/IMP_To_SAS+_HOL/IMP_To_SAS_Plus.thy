@@ -60,6 +60,38 @@ text \<open> Translation of a (partial) initial state from IMP to IMP-. Observe 
        overflows when executing IMP-, we require all bits beyond a certain guess_range in the bit
        blasted IMP- registers that are unspecified in the IMP initial state to be zero. \<close>
 
+definition IMP_State_To_IMP_Minus_partial::
+  "(vname \<rightharpoonup> nat) \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bit_state" where
+"IMP_State_To_IMP_Minus_partial s n r =
+ (\<lambda>v. (case var_to_var_bit v of
+         Some (v', k) \<Rightarrow>
+          case k of 0 \<Rightarrow> ((\<lambda>x. Some (zero_bit x n)) \<circ>\<^sub>m s) v'
+              | Suc k \<Rightarrow> 
+           if k \<ge> n then
+             None
+           else
+             if k < r then
+               ((\<lambda>x. Some (nth_bit x k)) \<circ>\<^sub>m s) v'                
+             else Some Zero
+        | None \<Rightarrow> (case var_to_operand_bit v of
+            Some (c, k) \<Rightarrow>
+              if c = a_chr \<and> k < n then
+                Some Zero
+              else if c = b_chr \<and> k < n then 
+                Some Zero
+              else
+                 None
+          |  _ \<Rightarrow>
+              if v = carry \<or> v = zero then
+                Some Zero
+              else
+                None)))"
+
+lemma IMP_State_To_IMP_Minus_partial_of_operand_bit_to_var:
+  "IMP_State_To_IMP_Minus_partial s n r (operand_bit_to_var (op, k)) =
+    (if (op = a_chr \<or> op = b_chr) \<and> k < n then Some Zero else None)"
+  unfolding IMP_State_To_IMP_Minus_partial_def by auto
+
 text \<open> We give our reduction, by composing the steps IMP \<Rightarrow> IMP- \<Rightarrow> SAS++ \<Rightarrow> SAS+. For the IMP
        \<Rightarrow> IMP- step, we compute a number of bits n that is guaranteed to suffice for all
       executions of the program for at most t steps, starting in initial states where the maximal 
@@ -100,7 +132,7 @@ lemma map_le_IMP_State_To_IMP_Minus:
                    IMP_State_To_IMP_Minus_def
                    IMP_State_To_IMP_Minus_with_operands_a_b_def
                    map_le_def
-             split!: option.splits if_splits char.splits bool.splits)
+             split!: option.splits if_splits bool.splits nat.splits)
     by (smt domI map_comp_Some_iff option.inject)+
 
 lemma map_le_IMP_State_To_IMP_Minus_2:
@@ -109,13 +141,13 @@ lemma map_le_IMP_State_To_IMP_Minus_2:
     apply (auto simp: IMP_State_To_IMP_Minus_partial_def
                    IMP_State_To_IMP_Minus_def
                    IMP_State_To_IMP_Minus_with_operands_a_b_def
-                   map_le_def image_def
-             split!: option.splits if_splits char.splits bool.splits)
-   apply (smt domI map_comp_Some_iff option.inject)
-  apply(intro bit_geq_bit_length_is_Zero[symmetric])
-  by (metis bit_length_monotonic leI le_less less_le_trans)
-
-
+                   map_le_def
+             split!: option.splits if_splits bool.splits nat.splits)
+  apply (metis (mono_tags, lifting) Option.option.inject domI map_comp_Some_iff) 
+  apply (metis (mono_tags, lifting) Option.option.inject domI map_comp_Some_iff) 
+  apply (metis IMP_Minus_Base.bit.simps(2) bit_geq_bit_length_is_Zero bit_length_monotonic leI 
+        less_or_eq_imp_le order_less_le_trans)
+  done
 
 
 lemma IMP_to_SAS_Plus_correctness:
@@ -128,7 +160,7 @@ lemma IMP_to_SAS_Plus_correctness:
     "t \<le> t'"
   shows
     "\<exists>plan. length plan \<le> 100 * (max_input_bits c I r + t' + 1) * (t' - 1) 
-                            + (max_input_bits c I r + t' + 1 + 1) * (num_vars c + 2) + 52
+                            + (max_input_bits c I r + t' + 1 + 1 + 1) * (num_vars c + 2) + 52
             \<and> is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t') plan"
 proof -
   let ?guess_range = " max_input_bits c I r"
@@ -137,7 +169,7 @@ proof -
   let ?s1' = "IMP_State_To_IMP_Minus s1 ?n |` (set (enumerate_variables ?c'))"
   let ?s2' = "IMP_State_To_IMP_Minus s2 ?n |` (set (enumerate_variables ?c'))"
   let ?I = "(IMP_State_To_IMP_Minus_partial I ?n ?guess_range) 
-    |` (set (enumerate_variables ?c'))"
+   |` (set (enumerate_variables ?c'))"
   let ?G = "(IMP_State_To_IMP_Minus_partial G ?n ?n) 
     |` (set (enumerate_variables ?c'))"
   let ?t = "100 * ?n * (t' - 1) + 51"
@@ -216,17 +248,17 @@ proof -
      by rule
 
    let ?plan' = "prefix @ (map SAS_Plus_Plus_Operator_To_SAS_Plus_Operator plan)"
-   have "length ((?sas_plus_plus_problem)\<^sub>\<V>\<^sub>+) \<le> (?n + 1) * (num_vars c + 2) + 1"
+   have "length ((?sas_plus_plus_problem)\<^sub>\<V>\<^sub>+) \<le> (?n + 1 + 1) * (num_vars c + 2) + 1"
      using IMP_To_IMP_Minus_variables_length
              [where ?c=c and ?n="(Suc (t' + max_input_bits c I r))"]
      by(auto simp: imp_minus_minus_to_sas_plus_def Let_def add.commute)
-   hence "length prefix \<le> (?n + 1) * (num_vars c + 2) + 2"
+   hence "length prefix \<le> (?n + 1 + 1) * (num_vars c + 2) + 2"
      using prefix_def
      by simp
-   hence "length ?plan' \<le> 100 * ?n * (t' - 1) + (?n + 1) * (num_vars c + 2) + 52
+   hence "length ?plan' \<le> 100 * ?n * (t' - 1) + (?n + 1 + 1) * (num_vars c + 2) + 52
            \<and> is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t') ?plan'"
      using plan_def prefix_def t''_def
-     by(auto simp: IMP_to_SAS_Plus_def Let_def add.commute)
+     by (auto simp: IMP_to_SAS_Plus_def Let_def add.commute)
    thus ?thesis
      by rule
 qed
@@ -247,13 +279,12 @@ lemma SAS_Plus_to_IMP_correctness:
     "Max (ran G) < 2 ^ (t + max_input_bits c I r)" 
     "is_serial_solution_for_problem (IMP_to_SAS_Plus c I r G t) plan"
     "\<forall>s1. I \<subseteq>\<^sub>m Some o s1 \<longrightarrow> (\<exists>s2. \<exists>t' \<le> t. (c, s1) \<Rightarrow>\<^bsup>t'\<^esup> s2)" 
-  shows "\<exists>s1 s2 t'. t' \<le> t \<and> I \<subseteq>\<^sub>m Some \<circ> s1 \<and> G \<subseteq>\<^sub>m Some \<circ> s2 \<and> (c, s1)  \<Rightarrow>\<^bsup>t'\<^esup> s2" 
+  shows "\<exists>s1 s2 t'. t' \<le> t \<and> I \<subseteq>\<^sub>m Some \<circ> s1 \<and> G \<subseteq>\<^sub>m Some \<circ> s2 \<and> (c, s1)  \<Rightarrow>\<^bsup>t'\<^esup> s2"  
 proof -
   let ?guess_range = "max_input_bits c I r"
   let ?n = "t + ?guess_range + 1"
   let ?c' = "IMP_To_IMP_Minus c ?n"
-  let ?I = "(IMP_State_To_IMP_Minus_partial I ?n ?guess_range) 
-    |` (set (enumerate_variables ?c'))"
+  let ?I = "(IMP_State_To_IMP_Minus_partial I ?n ?guess_range) |` (set (enumerate_variables ?c'))"
   let ?G = "(IMP_State_To_IMP_Minus_partial G ?n ?n) |` (set (enumerate_variables ?c'))"
 
   have "finite (ran I)" "finite (ran G)" 
@@ -289,7 +320,7 @@ proof -
         by(auto simp: map_le_def)
       thus ?thesis using \<open>v \<in> set (enumerate_variables ?c')\<close> 
           using \<open>v \<in> dom ?I\<close> 
-          by(auto simp: map_comp_def IMP_State_To_IMP_Minus_partial_def  
+          apply(auto simp: map_comp_def IMP_State_To_IMP_Minus_partial_def  
               IMP_State_To_IMP_Minus_with_operands_a_b_def
               var_to_var_bit_eq_Some_iff
               var_bit_to_var_neq_operand_bit_to_var[symmetric]
@@ -297,21 +328,24 @@ proof -
               IMP_State_To_IMP_Minus_partial_of_operand_bit_to_var
               IMP_State_To_IMP_Minus_def
               nth_bit_of_IMP_Minus_State_To_IMP 
-              split: option.splits
+              split: option.splits nat.splits
               dest!: set_mp[OF IMP_To_IMP_Minus_variables[OF \<open>?n > 0\<close>, simplified]] 
               split: option.splits char.splits bool.splits)
+           sorry
     next
       case False
       then obtain v' i where "v = var_bit_to_var (v', i) \<and> i < ?guess_range" using \<open>\<not>(v \<in> dom ?I)\<close>
          \<open>v \<in> set (enumerate_variables ?c')\<close>
         set_mp[OF IMP_To_IMP_Minus_variables \<open>v \<in> set (enumerate_variables ?c')\<close>]
-        by(auto simp: map_comp_def
-            IMP_State_To_IMP_Minus_partial_def split: option.splits)
+        apply(auto simp: map_comp_def
+            IMP_State_To_IMP_Minus_partial_def split: option.splits nat.splits)
+        apply (simp add: bit_length_def max_input_bits_def) sorry
       thus ?thesis using \<open>v \<in> set (enumerate_variables ?c')\<close> 
           \<open>dom s1 = set (enumerate_variables ?c')\<close>
-        by(auto simp: IMP_State_To_IMP_Minus_def 
+        apply(auto simp: IMP_State_To_IMP_Minus_def 
             nth_bit_of_IMP_Minus_State_To_IMP
-            IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits)
+            IMP_State_To_IMP_Minus_with_operands_a_b_def split: option.splits nat.splits)
+        sorry
     qed
   next
     case False
@@ -325,25 +359,27 @@ proof -
       using \<open>dom I \<subseteq> set (vars c)\<close>
       by auto
     hence "\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')" 
-      by(auto simp: var_bit_in_IMP_Minus_variables)
+      apply (auto simp: var_bit_in_IMP_Minus_variables)
+      sorry
     moreover hence "i < ?n \<Longrightarrow> s1 (var_bit_to_var (v, i)) = ?I (var_bit_to_var (v, i))" for i
       using \<open>(?I|` set (enumerate_variables ?c')) \<subseteq>\<^sub>m s1\<close> \<open>I v = Some y\<close>
       by(auto simp: map_le_def
                     IMP_State_To_IMP_Minus_def dom_def
                     IMP_State_To_IMP_Minus_partial_def map_comp_def
-                    split: option.splits) 
+                    split: option.splits nat.splits)
     ultimately show "?s1' v = y"
       using
         \<open>(?I|` set (enumerate_variables ?c')) \<subseteq>\<^sub>m s1\<close>
         less_le_trans[OF initial_state_element_less_two_to_the_max_input_bits[where ?c=c and ?r=r]]
         \<open>I v = Some y\<close> \<open>finite (ran I)\<close>
-      by(auto simp add: map_comp_def 
+      apply(auto simp add: map_comp_def 
           power_add 
           algebra_simps nth_append bit_list_to_nat_eq_nat_iff
           IMP_Minus_State_To_IMP_def 
           IMP_State_To_IMP_Minus_partial_def
           intro!: bit_at_index_geq_max_input_bits_is_zero_in_initial_state
           [symmetric, where ?c=c and ?I = I and ?r=r])
+      sorry
   qed
   hence "I \<subseteq>\<^sub>m Some \<circ> ?s1'" by(auto simp: map_le_def)
   
@@ -372,9 +408,11 @@ proof -
     hence "?I (var_bit_to_var (v, i)) = Some Zero" 
       using set_mp[OF IMP_To_IMP_Minus_variables 
           \<open>(var_bit_to_var (v, i)) \<in> set (enumerate_variables ?c')\<close>] 
-      by (auto simp: IMP_State_To_IMP_Minus_partial_def 
+      apply (auto simp: IMP_State_To_IMP_Minus_partial_def 
               intro!: var_bit_in_IMP_Minus_variables 
-              split: option.splits)
+              split: option.splits nat.splits)
+  apply (simp add: bit_length_def max_input_bits_def)+
+      sorry
     thus ?thesis using \<open>(?I|` set (enumerate_variables ?c')) \<subseteq>\<^sub>m s1\<close> 
       by(auto simp: map_le_def dom_def)
   next
@@ -395,24 +433,25 @@ proof -
     hence "v \<in> set (vars c)" 
       using \<open>dom G \<subseteq> set (vars c)\<close> by auto
     hence "\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')" 
-      by(auto simp: var_bit_in_IMP_Minus_variables)
+      apply(auto simp: var_bit_in_IMP_Minus_variables)
+      sorry
     moreover hence "i < ?n \<longrightarrow> s2 (var_bit_to_var (v, i)) = ?G (var_bit_to_var (v, i))" for i
       using \<open>(?G|` set (enumerate_variables ?c')) \<subseteq>\<^sub>m s2\<close> \<open>G v = Some y\<close>
       by(auto simp:  map_le_def
           IMP_State_To_IMP_Minus_def dom_def
-          IMP_State_To_IMP_Minus_partial_def map_comp_def split: option.splits) 
+          IMP_State_To_IMP_Minus_partial_def map_comp_def split: option.splits nat.splits) 
     moreover hence "i < ?n \<longrightarrow> s2' (var_bit_to_var (v, i)) = ?G (var_bit_to_var (v, i))" for i 
       using \<open>s2' |` set (enumerate_variables ?c') = s2\<close> 
         \<open>\<forall>i < ?n. var_bit_to_var (v, i) \<in> set (enumerate_variables ?c')\<close> by auto
     ultimately have "i < ?n \<Longrightarrow> map_option (\<lambda>x. nth_bit x i) (G v) = Some (nth_bit (s2'' v) i)" for i 
       using  \<open>s2' = IMP_State_To_IMP_Minus s2'' ?n\<close> \<open>G v = Some y\<close>
-      by(auto simp: IMP_State_To_IMP_Minus_def 
+      apply(auto simp: IMP_State_To_IMP_Minus_def 
           IMP_State_To_IMP_Minus_partial_def
           IMP_State_To_IMP_Minus_with_operands_a_b_def)
+      sorry
     show "s2'' v = y"
     proof(rule all_bits_equal_then_equal[where ?n = "?n"], goal_cases)
       case 1
-      find_theorems "_ \<and> _ \<Longrightarrow> _"
       have "Max (range s2'') < 2 ^ (max_input_bits c I r + t'')"
         apply(rule 
                 conjunct2[OF IMP_space_growth[OF \<open>(c, ?s1') \<Rightarrow>\<^bsup>t''\<^esup> s2''\<close> 
