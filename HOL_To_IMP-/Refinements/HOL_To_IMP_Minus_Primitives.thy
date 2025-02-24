@@ -48,8 +48,8 @@ begin
 
 definition [compiled_IMP_Minus_const_def]:
   "eq_IMP \<equiv>
-    ''eq.x_Sub_y'' ::= (V ''eq.args.x'' \<ominus> V ''eq.args.y'');;
-    ''eq.y_Sub_x'' ::= (V ''eq.args.y'' \<ominus> V ''eq.args.x'');;
+    ''eq.x_Sub_y'' ::= (V ''eq.arg.x'' \<ominus> V ''eq.arg.y'');;
+    ''eq.y_Sub_x'' ::= (V ''eq.arg.y'' \<ominus> V ''eq.arg.x'');;
     ''eq.neq'' ::= (V ''eq.x_Sub_y'' \<oplus> V ''eq.y_Sub_x'');;
     IF ''eq.neq'' \<noteq>0
     THEN ''eq.ret'' ::= A (N False_nat)
@@ -59,12 +59,12 @@ end
 
 declare_compiled_const HTHN.eq_nat
   return_register "eq.ret"
-  argument_registers "eq.args.x" "eq.args.y"
+  argument_registers "eq.arg.x" "eq.arg.y"
   compiled eq_IMP
 
 declare_compiled_const HOL.eq
   return_register "eq.ret"
-  argument_registers "eq.args.x" "eq.args.y"
+  argument_registers "eq.arg.x" "eq.arg.y"
   compiled eq_IMP
 
 HOL_To_IMP_Minus_correct HTHN.eq_nat
@@ -95,20 +95,20 @@ context includes com_syntax and no com'_syntax and no tcom_syntax
 begin
 
 definition [compiled_IMP_Minus_const_def]:
-  "add_IMP \<equiv> ''add.ret'' ::= (V ''add.args.x'' \<oplus> V ''add.args.y'')"
+  "add_IMP \<equiv> ''add.ret'' ::= (V ''add.arg.x'' \<oplus> V ''add.arg.y'')"
 definition [compiled_IMP_Minus_const_def]:
-  "sub_IMP \<equiv> ''sub.ret'' ::= (V ''sub.args.x'' \<ominus> V ''sub.args.y'')"
+  "sub_IMP \<equiv> ''sub.ret'' ::= (V ''sub.arg.x'' \<ominus> V ''sub.arg.y'')"
 
 end
 
 declare_compiled_const "Groups.plus"
   return_register "add.ret"
-  argument_registers "add.args.x" "add.args.y"
+  argument_registers "add.arg.x" "add.arg.y"
   compiled "add_IMP"
 
 declare_compiled_const "Groups.minus"
   return_register "sub.ret"
-  argument_registers "sub.args.x" "sub.args.y"
+  argument_registers "sub.arg.x" "sub.arg.y"
   compiled "sub_IMP"
 
 HOL_To_IMP_Minus_correct Groups.plus
@@ -310,11 +310,11 @@ context HOL_Nat_To_IMP_Minus
 begin
 
 definition [compiled_IMP_Minus_const_def]:
-  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.args.x'' \<oplus> N 1)"
+  "suc_IMP \<equiv> Com.Assign ''suc.ret'' (V ''suc.arg.x'' \<oplus> N 1)"
 
 declare_compiled_const Suc
   return_register "suc.ret"
-  argument_registers "suc.args.x"
+  argument_registers "suc.arg.x"
   compiled suc_IMP
 
 HOL_To_IMP_Minus_correct Suc unfolding suc_IMP_def

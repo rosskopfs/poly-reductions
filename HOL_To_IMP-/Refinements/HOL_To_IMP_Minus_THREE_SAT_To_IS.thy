@@ -263,11 +263,11 @@ compile_nat HTHN.sat_is_list_nat_eq_unfolded
 HOL_To_IMP_Minus_correct HOL_To_HOL_Nat.sat_is_list_nat by cook
 
 corollary sat_is_list_IMP_Minus_correct:
-  assumes "Rel_nat (s ''sat_is_list_nat.args.x'') x"
+  assumes "Rel_nat (s ''sat_is_list_nat.arg.x'') x"
   shows "terminates_with_res_IMP_Minus (tailcall_to_IMP_Minus sat_is_list_nat_IMP_tailcall) s
     ''sat_is_list_nat.ret'' (natify (sat_is_list x))"
 proof -
-  have "HTHN.sat_is_list_nat TYPE('a) (s ''sat_is_list_nat.args.x'') = natify (sat_is_list x)"
+  have "HTHN.sat_is_list_nat TYPE('a) (s ''sat_is_list_nat.arg.x'') = natify (sat_is_list x)"
     using HTHN.sat_is_list_nat_eq_unfolded[OF assms]
       HTHN.Rel_nat_sat_is_list_nat_unfolded[OF assms]
     by (simp add: Rel_nat_iff_eq_natify)
