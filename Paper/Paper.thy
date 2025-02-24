@@ -20,6 +20,7 @@ section \<open>Preliminaries\<close>
 text \<open>Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.\<close>
 
 text \<open>Atom evaluation function @{const atomVal} with the following equations:\<close>
+(*<*)unbundle aops unbundle atom(*>*)
 
 lemma "\<lbrakk>C n\<rbrakk>\<^sub>s \<equiv> n" by simp
 lemma "\<lbrakk>R r\<rbrakk>\<^sub>s \<equiv> s r" by simp
@@ -34,7 +35,7 @@ text \<open>
   Commands also contain a no-op command ("SKIP") for technical reasons, which we skip in the paper
   as it is irrelevant. Shared rules (here from @{const big_step_t}):
 \<close>
-(*<*)unbundle no atom (*>*)
+(*<*)unbundle no atom unbundle no aops unbundle orig(*>*)
 
 lemma Assign: 
   assumes "s' = s(r := \<lbrakk>a\<rbrakk>\<^sub>s)"
@@ -54,7 +55,7 @@ lemma IfF:
 lemma Seq:
   assumes "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s'" "(p\<^sub>2,s') \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s''"
     shows "(p\<^sub>1;;p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+0\<^esup> s''" 
-  (*<*)using assms by (auto intro: add_le_mono)(*>*)
+(*<*)using assms by auto(*>*)
 
 subsection "Theorem 1"
 
@@ -78,22 +79,30 @@ qed
 
 end
 
+text \<open>TODO function relator fun_rel\<close>
+text \<open>TODO proof of relation left-unique\<close>
+text \<open>TODO put in example\<close>
+text \<open>TODO link typeclass @ {class compile_nat}\<close>
+text \<open>TODO link pair\<close>
+text \<open>TODO link selector\<close>
+text \<open>TODO another example\<close>
+text \<open>TODO link to ML structure\<close>
 
 section \<open>\<open>HOL\<^bsup>TC\<nat>\<close> to \<open>IMP\<^bsup>TC\<^esup>\<close>\<close>
 
 subsection \<open>Fig. 5\<close>
 text \<open>Commands as @{typ tcom}, semantics via @{const tbig_step_t}. Special rules:\<close>
-(*<*)unbundle tcom_syntax(*>*)
+(*<*)unbundle tcom_syntax unbundle partial(*>*)
 
 lemma Call: 
   assumes "(pc,s) \<Rightarrow>\<^sub>r\<^bsup>n\<^esup> v" "s' = s(r := v)"
-    shows "p \<turnstile> (CALL pc RETURN r,s) \<Rightarrow>\<^bsup>n+0\<^esup> s'"
-  (*<*)using assms by (auto intro: le_trans)(*>*)
+  shows "p \<turnstile> (CALL pc RETURN r,s) \<Rightarrow>\<^bsup>n+0\<^esup> s'"
+  (*<*)using assms by auto(*>*)
 
 lemma Rec:
   assumes "p \<turnstile> (p,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
-    shows "p \<turnstile> (RECURSE,s) \<Rightarrow>\<^bsup>n+5\<^esup> s'"
-  (*<*)using assms by (metis add.commute tTail add_le_mono1)(*>*)
+  shows "p \<turnstile> (RECURSE,s) \<Rightarrow>\<^bsup>n+5\<^esup> s'"
+  (*<*)using assms by (metis add.commute tTail)(*>*)
 
 
 section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>-\<close>\<close>
@@ -102,32 +111,29 @@ subsection \<open>Fig. 9\<close>
 text \<open>Commands as @{typ com'}, semantics via @{const big_step_t'}. Special rules:\<close>
 (*<*)unbundle no tcom_syntax unbundle com'_syntax(*>*)
 
-lemma WhileF:
+lemma WhF:
   assumes "s r = 0"
   shows "(WHILE r\<noteq>0 DO p,s) \<Rightarrow>\<^bsup>2\<^esup> s"
   (*<*)using assms by (auto simp: numeral_eq_Suc)(*>*)
 
-lemma WhileT:
+lemma WhT:
   assumes "s\<^sub>1 r \<noteq> 0" "(p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2" "(WHILE r\<noteq>0 DO p,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3"
   shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s\<^sub>3"
-  (*<*)
-  using assms by auto 
-    (metis (mono_tags, lifting) WhileI add_Suc add_le_mono assms(1) not_less_eq_eq plus_1_eq_Suc)
-  (*>*)
+  (*<*)using assms by auto(*>*)
 
 subsection \<open>Fig. 10:\<close>
 text \<open>Full execution relation in @{const tail_step}. Shown rules:\<close>
-(*<*)unbundle no com'_syntax unbundle tcom_syntax unbundle tail (*>*)
+(*<*)unbundle no com'_syntax unbundle no orig unbundle tcom_syntax unbundle tail unbundle holb(*>*)
 
 lemma
   assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
   shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> (s',b)"
-  (*<*)using assms by (auto intro: Suc_eq_plus1)(*>*)
+  (*<*)using assms by auto(*>*)
 
 lemma
   assumes "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> (s',\<zero>)" "(p\<^sub>2,s') \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> (s',b)"
     shows "(p\<^sub>1;;p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+0\<^esup> (s',b)"
-  (*<*)using assms by (auto intro: le_trans add_mono)(*>*)
+  (*<*)using assms by auto(*>*)
 
 lemma
   assumes "s' = s(r:= \<lbrakk>a\<rbrakk>\<^sub>s)"
@@ -154,6 +160,7 @@ text \<open>
   Proven in @{thm small_sound} and @{thm small_complete}, with the additional assumptions that
   the programs are actually tail-recursive (the type does not enforce this)
 \<close>
+(*<*)unbundle no partial unbundle orig(*>*)
 context fixes tp p assumes "invar tp" "invar p" begin
 
 lemma
@@ -165,8 +172,8 @@ lemma
   assumes "(p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> (s\<^sub>2,\<one>)" "tp \<turnstile> (tp,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3"
     shows "tp \<turnstile> (p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2\<^esup> s\<^sub>3"
   (*<*)
-  using assms small_complete[OF _ \<open>invar p\<close> \<open>invar tp\<close>]  \<open>invar tp\<close> small_sound[OF _ \<open>invar tp\<close>] 
-    add_mono tTrue by (auto intro: add_mono)
+  using assms small_complete[OF _ \<open>invar p\<close> \<open>invar tp\<close>]  \<open>invar tp\<close> small_sound[OF _ \<open>invar tp\<close>]
+    tTrue by auto
   (*>*)
 
 end
@@ -176,7 +183,7 @@ text \<open>
   Definition in @{const compile}, correctness theorems @{thm compile_sound}
   and @{thm compile_complete_add}.
 \<close>
-(*<*)unbundle no total unbundle partial(*>*)
+(*<*)unbundle partial(*>*)
 
 context fixes p assumes "invar p" begin
 
@@ -212,7 +219,7 @@ text \<open>
   Definition in @{const inline}, correctness theorems @{thm inline_sound} 
   and @{thm inline_complete}
 \<close>
-(*<*)unbundle partial2(*>*)
+(*<*)(*>*)
 
 theorem "(p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>(n+1)*(\<bar>p\<bar>+1)\<^esup> s'"
 (*<*)
@@ -231,57 +238,49 @@ proof -
 qed
 (*>*)
 
-text \<open>
-  TODO: LTR directions does not get cheaper. 
-  Change Semantics so call costs 2*(length (vars c))+5? Or change the text?
-\<close>
 theorem "(\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s'"
 (*<*)using inline_complete by (smt (verit, del_insts) eq_on_def le_trans)(*>*)
 
 
 subsection "Fig. 11"
 text \<open>Rules in @{const big_step}.\<close>
-(*<*)unbundle no imp unbundle no tail unbundle minus unbundle no holb unbundle bitsb(*>*)
+(*<*)unbundle no partial unbundle no orig unbundle no imp unbundle no tail unbundle minus unbundle no holb unbundle bitsb(*>*)
 
 lemma
   assumes "b \<in> {\<zero>,\<one>}" "s' = s(r := Some b)"
   shows "(r ::= b, s) \<Rightarrow>\<^bsup>1\<^esup> s'"
- (*<*)using assms by blast(*>*)
+  (*<*)using assms by blast(*>*)
 
 lemma
   assumes "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s'" "(p\<^sub>2,s') \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s''"
   shows "(p\<^sub>1;;p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s''"
-(*<*)
-  using assms by (metis big_step.Seq Suc_eq_plus1 Suc_le_mono add_mono_thms_linordered_semiring(1))
-(*>*)
+  (*<*)using assms by blast(*>*)
 
 lemma
   assumes "s r \<noteq> Some \<zero>" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
   shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'"
- (*<*)using assms by (metis IfTrue Suc_eq_plus1 add_le_mono nle_le)(*>*)
+ (*<*)using assms by blast(*>*)
 
 lemma
   assumes "s r = Some \<zero>" "(p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
   shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'"
- (*<*)using assms by (metis IfFalse Suc_eq_plus1 add_le_mono nle_le)(*>*)
+ (*<*)using assms by blast(*>*)
 
 lemma
   assumes "s r = Some \<zero>"
   shows "(WHILE r\<noteq>0 DO p,s) \<Rightarrow>\<^bsup>1\<^esup> s"
-  using assms by blast
+  (*<*)using assms by blast(*>*)
 
 lemma
   assumes "s\<^sub>1 r \<noteq> Some \<zero>" "(p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2" "(WHILE r\<noteq>0 DO p,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3"
   shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup> s\<^sub>3"
-(*<*)
-  using assms using WhileTrue[of s\<^sub>1 r p _ s\<^sub>2 _ s\<^sub>3]
-  by (metis Suc_le_mono add_2_eq_Suc' add_le_mono)
-(*>*)
+  (*<*)using assms by blast(*>*)
 
+text \<open>TODO link to adder\<close>
 
 subsection "Lemma 3"
-text \<open>Lemma in @{thm assignment_to_binary_correct}\<close>
-(*<*)unbundle no aops unbundle no imp unbundle no total unbundle no tail unbundle no partial unbundle no partial2 unbundle minus(*>*)
+text \<open>Adder in @{const binary_adder}, lemma in @{thm assignment_to_binary_correct}\<close>
+(*<*)unbundle no minus unbundle minus2(*>*)
 
 context 
   fixes w::nat assumes "0 < w"
