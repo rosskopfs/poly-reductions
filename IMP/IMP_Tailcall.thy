@@ -34,6 +34,11 @@ tCall: "(C,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile>
 \<comment> \<open>New rule\<close>
 tTail: "c \<turnstile> (c,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile> (tTAIL,s) \<Rightarrow>\<^bsup>5 + z \<^esup> t"
 
+bundle tbig_step_syntax
+begin
+notation tbig_step_t ("_ \<turnstile> _ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
+end
+
 code_pred tbig_step_t .
 
 declare tbig_step_t.intros[intro]

@@ -1,2 +1,3 @@
-session Paper = "IMP_To_IMP-" +
+session Paper = "HOL_To_IMP_Refinements" +
+  sessions "IMP_To_IMP-"
   theories Paper

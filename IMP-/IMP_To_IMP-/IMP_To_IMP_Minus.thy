@@ -5,7 +5,7 @@ section "IMP to IMP-"
 
 theory IMP_To_IMP_Minus
   imports "IMP.Big_StepT" Binary_Operations
-begin                           
+begin
 
 text \<open> We give a reduction from IMP to IMP-. The reduction works by bit blasting each register
        of IMP into several registers in IMP- each holding a single bit. Arithmetic operations
@@ -205,7 +205,7 @@ next
   hence "Max (range s) < 2 ^ n" by(auto intro: le_less_trans[OF _ \<open>2 ^ y * Max (range s) < 2 ^ n\<close>])
 
   with IfTrue show ?case apply auto
-    using local.IfTrue.hyps(1) apply auto 
+    using local.IfTrue.hyps(1) apply auto
   apply(simp only: t_small_step_fun_terminate_iff)
     using IfTrue apply(simp add: t_small_step_fun_small_step_fun)
     apply(rule t_small_step_fun_increase_time[where ?t="100 * n * (x - 1) + 50"])
@@ -359,14 +359,14 @@ proof -
     ultimately show ?case using Suc by (simp add: card_union_le sup_commute)
   qed auto
 
-  moreover have *: "{ var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) } = 
+  moreover have *: "{ var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) } =
   { var_bit_to_var (w, i) | w i. i < n \<and> w \<in> set (vars c) } \<union> { var_bit_to_var (w, i) | w i. i = n \<and> w \<in> set (vars c)}"
     by auto
   ultimately have "finite { var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
     \<and> card { var_bit_to_var (w, i) | w i. i \<le> n \<and> w \<in> set (vars c) }
     \<le> n * (num_vars c) + num_vars c"
     by (subst *) (auto simp: card_union_le)
-  
+
   moreover have "card {CHR ''?'' # sep2 # w |w. w \<in> set (vars c)}
     \<le> num_vars c" using card_of_set_comprehension_of_set_list num_vars_def by fastforce
   moreover have "finite {operand_bit_to_var (op, i) |op i. i < n \<and> (op = a_chr \<or> op = b_chr)}

@@ -192,8 +192,6 @@ fun bury_aux :: "tcom \<Rightarrow> vname list \<Rightarrow> tcom \<times> vname
 definition
   "bury ret_reg c \<equiv> fst (bury_aux c [ret_reg])"
 
-unbundle tcom_syntax
-
 context HOL_To_HOL_Nat
 begin
 

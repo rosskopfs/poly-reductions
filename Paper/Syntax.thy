@@ -4,7 +4,8 @@ begin
 
 (* disabled: original syntax *)
 
-no_notation tbig_step_t ("_ \<turnstile> _ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
+unbundle no big_step_syntax
+unbundle no tbig_step_syntax
 no_notation tail_step ("\<turnstile>_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
 no_notation big_step ("_ \<Rightarrow>\<^bsup>_\<^esup> _" 55)
 no_notation big_step_t ("_ \<Rightarrow>\<^bsup> _ \<^esup> _" 55)

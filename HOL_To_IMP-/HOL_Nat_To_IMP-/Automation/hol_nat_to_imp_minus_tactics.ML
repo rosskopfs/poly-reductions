@@ -138,8 +138,8 @@ fun cook_tac context_args mode ctxt =
           get_HOL_eqs ctxt
       end
   in
-    (fn _ => fn st => (@{log Logger.INFO} ctxt (K "👨‍🍳 Cooking 👩‍🍳"); all_tac st))
-    THEN' (if should_setup then correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt else K all_tac)
+    (if should_setup then correct_if_IMP_tailcall_correct_tac get_IMP_def ctxt else K all_tac)
+    THEN' (fn _ => fn st => (@{log Logger.INFO} ctxt (K "👨‍🍳 Cooking 👩‍🍳"); all_tac st))
     THEN' HTIT.with_dest_terminates_with_res_IMP_Tailcall_prop ctxt start_run_finish_tac
     THEN' (fn _ => fn st => if Thm.no_prems st
       then (@{log Logger.INFO} ctxt (K "Dinner served! 😍🍲😍"); all_tac st)
