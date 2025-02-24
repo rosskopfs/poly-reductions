@@ -341,6 +341,60 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_args = map (@{apply 2 (1)} mk_arg_name) args
     val f_args_vars = map (Var o @{apply 2 (1)} (fn n => (n, 0))) f_args
 
+    val eval = Nbe.dynamic_value lthy
+    val f_ret_name_str = HOLogic.mk_string f_ret_name
+    val f_IMP =
+      def_body
+      |> curry Term.subst_bounds (rev f_args_vars)
+      |> tc_ast_of_term f_head f_args
+      |> IMP_Minus_of_tc_ast
+          (f_ret_name, map fst f_args)
+          (get_compiled_const lthy)
+          register_sep
+      |> (fn t => \<^Const>\<open>rm_tSKIP for \<^Const>\<open>bury for f_ret_name_str \<^Const>\<open>trans_assns for
+          \<^Const>\<open>pull_tIf_assoc_right for \<^Const>\<open>assoc_right_tSeq for \<^Const>\<open>rm_tSKIP for t\<close>\<close>\<close>\<close>\<close>\<close>)
+      |> eval
+
+    val f_IMP_binding = Config.get lthy compiled_const_suffix_cfg
+      |> Binding.name
+      |> Transport_Util.add_suffix (f_IMP_namepos |> fst |> Binding.name)
+    val lthy' = define_compiled f_IMP_binding f_IMP lthy
+    val f_IMP_const = Binding.name_of f_IMP_binding
+      |> HTHNU.read_const lthy'
+      |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
+    val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
+                       compiled = f_IMP_const }
+  in
+    lthy'
+    |> declare_compiled_const f_head f_compiled
+  end
+
+fun compile_cmd_old f_def basenamepos_opt lthy =
+  let
+    val pos = Position.thread_data ()
+
+    val f_def = reflect_eq f_def
+
+    val (lhs, rhs) = f_def |> Thm.prop_of
+      |> (fn t => yield_singleton (Variable.import_terms true) t lthy) |> fst
+      |> HOL_Fun_To_HOL_Nat_Fun.mk_unconditional_eq
+
+    val f_head = lhs |> head_of
+    val f_name = f_head |> dest_Const_name
+
+    val (args, def_body) =
+      lhs |> strip_comb |> snd |> map Term.dest_Free
+      |> List.foldr (I #-> Term.absfree) rhs |> Term.strip_abs
+
+    val f_IMP_namepos = the_default (Long_Name.base_name f_name, pos) basenamepos_opt
+
+    val register_sep = Config.get lthy register_sep_cfg
+    val f_ret_name = fst f_IMP_namepos ^ register_sep ^ "ret"
+    fun mk_arg_name arg_name =
+      fst f_IMP_namepos ^ register_sep ^ "args" ^ register_sep ^ arg_name
+    val f_args = map (@{apply 2 (1)} mk_arg_name) args
+    val f_args_vars = map (Var o @{apply 2 (1)} (fn n => (n, 0))) f_args
+
     val simp_thy = empty_simpset lthy |> Proof_Context.theory_of
     val simp_thms = map reflect_eq
       @{thms assoc_right_tSeq.simps rm_tSkip_tseq.simps rm_tSKIP.simps pull_tIf_assoc_right.simps}
@@ -364,7 +418,6 @@ fun compile_cmd f_def basenamepos_opt lthy =
     val f_IMP_const = Binding.name_of f_IMP_binding
       |> HTHNU.read_const lthy'
       |> (fn t => \<^Const>\<open>tailcall_to_IMP_Minus for t\<close>)
-
     val f_compiled = { ret_reg = f_ret_name, arg_regs = map fst f_args,
                        compiled = f_IMP_const }
   in
@@ -381,6 +434,12 @@ in
     (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
       let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
       in compile_cmd thm namepos_opt lthy end))
+  val _ = Outer_Syntax.local_theory
+    \<^command_keyword>\<open>compile_nat_old\<close>
+    "compile and declare a constant"
+    (parser >> (fn ((thm_ref, _), namepos_opt) => fn lthy =>
+      let val thm = Proof_Context.get_fact lthy thm_ref |> the_single
+      in compile_cmd_old thm namepos_opt lthy end))
 end
 
 
