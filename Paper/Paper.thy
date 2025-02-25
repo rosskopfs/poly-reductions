@@ -15,7 +15,6 @@ text \<open>
   and implicit assumptions are stated via local context where necessary.
 \<close>
 
-
 section \<open>Preliminaries\<close>
 
 text \<open>Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.\<close>
@@ -87,18 +86,28 @@ qed
 
 end
 
-text \<open>TODO function relator fun_rel\<close>
-text \<open>TODO link typeclass @ {class compile_nat}\<close>
-text \<open>TODO link pair\<close>
-text \<open>TODO link selector\<close>
 
 section \<open>\<open>HOL\<^bsup>(TC)\<^esup>\<close> to \<open>HOL\<^bsup>(TC)\<nat>\<^esup>\<close>\<close>
 
+text \<open>
+  Definitions: @{const rel_fun} (function relator), @{class compile_nat} (typeclass),
+  Pairing function @{const pair_nat} with inverses @{const fst_nat} and @{const snd_nat}
+  and natural number datatype selector @{const nat_selector}.
+\<close>
+
 subsection "Theorem 3"
 
-lemma "galois.galois_equivalence (=\<^bsub>range (natify :: 'a :: compile_nat  \<Rightarrow> _)\<^esub>) ((=) :: 'a \<Rightarrow> _)
-  denatify natify"
-(*<*) by (fact compile_nat_type_def.galois_equivalence) (*>*)
+lemma
+  defines "L_rel \<equiv> (=\<^bsub>in_dom (Rel_nat :: nat \<Rightarrow> ('a::compile_nat) \<Rightarrow> bool)\<^esub>)"
+      and "R_rel \<equiv> (=\<^bsub>in_codom (Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool)\<^esub>)"
+    shows "galois.galois_equivalence L_rel R_rel denatify natify"
+(*<*)
+proof -
+  have eqs: "L_rel = (=\<^bsub>range (natify :: 'a :: compile_nat  \<Rightarrow> _)\<^esub>)" "R_rel = ((=) :: 'a \<Rightarrow> _)"
+    unfolding L_rel_def R_rel_def using Rel_nat_def imageE by blast+
+  show ?thesis unfolding eqs by (fact compile_nat_type_def.galois_equivalence)
+qed
+(*>*)
 
 subsection \<open>Example 3 (Appendix)\<close>
 
@@ -107,7 +116,7 @@ For illustration purposes, we compile a copy of the type:\<close>
 
 datatype 'a listcopy = Nil_copy | Cons_copy 'a "'a listcopy"
 datatype_compile_nat listcopy
-print_theorems (*move your cursor on the command to the left to see all generated theorems and constants*)
+print_theorems \<comment> \<open>move your cursor on the command to the left to see all generated theorems and constants\<close>
 
 subsection \<open>Fig. 4\<close>
 
@@ -117,26 +126,26 @@ begin
 text \<open>The synthesis is fully automatic. We list the corresponding theorems from the figure below.
 Here is the input function:\<close>
 
-fun count_acc' :: "'a \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> nat" where
-  "count_acc' a [] n = n"
-| "count_acc' a (x#xs) n = count_acc' a xs (if x = a then Suc n else n)"
-(*<*) declare count_acc'.simps[simp del] (*>*)
+fun count_acc2 :: "'a \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> nat" where
+  "count_acc2 a [] n = n"
+| "count_acc2 a (x#xs) n = count_acc2 a xs (if x = a then Suc n else n)"
+(*<*) declare count_acc2.simps[simp del] (*>*)
 
 text \<open>First, get a single equation (Listing 1.1):\<close>
 
-case_of_simps count_acc'_eq : count_acc'.simps
+case_of_simps count_acc2_eq : count_acc2.simps
 
 text \<open>Now we use black-box and white-box transport to obtain the related constant and its
 defining, tail-recursive equation:\<close>
 
-function_compile_nat count_acc'_eq
-print_theorems (*move your cursor on the command to the left to see all generated theorems and constants*)
+function_compile_nat count_acc2_eq
+print_theorems \<comment> \<open>move your cursor on the command to the left to see all generated theorems and constants\<close>
 
 text \<open>Related constant from black-box transport (Listing 1.2):\<close>
 
-lemma "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat) (count_acc'_nat TYPE('a :: compile_nat))
-  (count_acc' :: 'a \<Rightarrow> _)"
-(*<*) by (fact count_acc'_related_transfer) (*>*)
+lemma "(Rel_nat ===> Rel_nat ===> Rel_nat ===> Rel_nat) (count_acc2_nat TYPE('a :: compile_nat))
+  (count_acc2 :: 'a \<Rightarrow> _)"
+(*<*) by (fact count_acc2_related_transfer) (*>*)
 
 text \<open>Theorem from white-box transport (Listing 1.3):\<close>
 
@@ -146,10 +155,10 @@ lemma
   and "Rel_nat n (n' :: nat)"
   shows "Rel_nat
     (case_list_nat n
-      (\<lambda>x xs. count_acc'_nat TYPE('a) a xs (if x = a then Suc n else n))
+      (\<lambda>x xs. count_acc2_nat TYPE('a) a xs (if x = a then Suc n else n))
       xs)
-    (count_acc' a' xs' n')"
-(*<*) using assms Rel_nat_count_acc'_nat_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
+    (count_acc2 a' xs' n')"
+(*<*) using assms Rel_nat_count_acc2_nat_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
   by fastforce (*>*)
 
 text \<open>Final tail-recursive equation (Listing 1.4), using that @{const Rel_nat} is left-unique,
@@ -159,9 +168,9 @@ lemma
   assumes "Rel_nat a (a' :: 'a :: compile_nat)"
   and "Rel_nat xs (xs' :: 'a list)"
   and "Rel_nat n (n' :: nat)"
-  shows "count_acc'_nat TYPE('a) a xs n =
-    case_list_nat n (\<lambda>x xs. count_acc'_nat TYPE('a) a xs (if x = a then Suc n else n)) xs"
-(*<*) using assms count_acc'_nat_eq_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
+  shows "count_acc2_nat TYPE('a) a xs n =
+    case_list_nat n (\<lambda>x xs. count_acc2_nat TYPE('a) a xs (if x = a then Suc n else n)) xs"
+(*<*) using assms count_acc2_nat_eq_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
   by fastforce (*>*)
 
 end
@@ -240,11 +249,11 @@ begin
 
 text \<open>First, unfold the case combinator to if-then-elses:\<close>
 
-lemmas count_acc'_nat_eq = HTHN.count_acc'_nat_eq_unfolded[unfolded case_list_nat_def]
+lemmas count_acc2_nat_eq = HTHN.count_acc2_nat_eq_unfolded[unfolded case_list_nat_def]
 
 text \<open>Then, generate the \<open>IMP\<^bsup>TC\<^esup>\<close> program:\<close>
 
-compile_nat (non-optimized) count_acc'_nat_eq (*remove the non-optimized flag for a shorter program*)
+compile_nat (non-optimized) count_acc2_nat_eq \<comment> \<open>remove the non-optimized flag for a shorter program\<close>
 
 text \<open>Then, prove the correctness. This is fully automatic, using the method @{method cook}.
 Here, we pr
@@ -252,7 +261,7 @@ Here, we provide the corresponding
 step-by-step proof from the paper. Here is the input function:
 \<close>
 
-HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc2_nat
   text \<open>We prove correctness of the compiled \<open>IMP\<^bsup>W\<^esup>\<close> program. First, we reduce this proof to the
   correctness proof of the generated \<open>IMP\<^bsup>TC\<^esup>\<close> program.\<close>
   apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
@@ -277,7 +286,7 @@ HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   text \<open>Done! We do not close the proof because in the next command, we prove it again, automatically:\<close>
   oops
 
-HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc2_nat by cook
 
 end
 
