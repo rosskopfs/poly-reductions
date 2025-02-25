@@ -7,34 +7,9 @@ session Karp21 = HOL +
     NREST
     Tree_Enumeration
   directories
-    "CHRN_To_CC"
-    "CLIQUE_To_SP"
-    "HC_To_UHC"
     "IS_To_VC"
     "Lib"
-    "PART_To_MAXCUT"
-    "SAT_To_CLIQUE"
     "SAT_To_THREE_SAT"
-    "SAT_To_XC"
-    "SS_To_JS"
-    "SS_To_KS"
-    "SS_To_PART"
-    "SS_To_ZERO_ONE"
-    "THREE_COL_To_CHRN"
-    "THREE_DM_To_X3C"
     "THREE_SAT_To_IS"
-    "THREE_SAT_To_SC"
-    "THREE_SAT_To_THREE_COL"
-    "VC_Set_To_VC_List"
-    "VC_To_FAS"
-    "VC_To_FNS"
-    "VC_To_HC"
-    "VC_To_SC"
-    "X3C_To_ST"
-    "XC_To_THREE_DM"
-    "XC_To_EHS"
-    "XC_To_SS"
-    "XC_To_ST"
   theories
-    All_Reductions
-    All_Reductions_Poly
+    Reductions
