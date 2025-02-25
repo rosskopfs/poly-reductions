@@ -251,7 +251,7 @@ Here, we pr
 Here, we provide the corresponding
 step-by-step proof from the paper. Here is the input function:
 \<close>
-(*
+
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   text \<open>We prove correctness of the compiled \<open>IMP\<^bsup>W\<^esup>\<close> program. First, we reduce this proof to the
   correctness proof of the generated \<open>IMP\<^bsup>TC\<^esup>\<close> program.\<close>
@@ -278,7 +278,7 @@ HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   oops
 
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat by cook
-*)
+
 end
 
 subsection \<open>Case Studies\<close>
