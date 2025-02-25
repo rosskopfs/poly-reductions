@@ -10,7 +10,7 @@ text \<open>
   "Proof-Producing Translation of Functional Programs into a Time & Space Reasonable Model"
 
   Open this file in Isabelle/jEdit, as described in the supplied README.
-  Formal elements referenced in the texts are all clickable, leading to the original definition.
+  Formal elements referenced in the texts are all clickable, leading to the orig_syntaxinal definition.
   To get the statements as close to the informal text as possible, local notation is introduced,
   and implicit assumptions are stated via local context where necessary.
 \<close>
@@ -21,7 +21,7 @@ section \<open>Preliminaries\<close>
 text \<open>Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.\<close>
 
 text \<open>Atom evaluation function @{const atomVal} with the following equations:\<close>
-(*<*)context includes aops and atom begin(*>*)
+(*<*)context includes aops_syntax and atom_syntax begin(*>*)
 
 lemma "\<lbrakk>C n\<rbrakk>\<^sub>s \<equiv> n" (*<*)by simp(*>*)
 lemma "\<lbrakk>R r\<rbrakk>\<^sub>s \<equiv> s r" (*<*)by simp(*>*)
@@ -38,7 +38,7 @@ text \<open>
   Commands also contain a no-op command (@{const SKIP}) for technical reasons, which we skip in the
   paper as it is irrelevant. Here are the shared rules (from @{const big_step_t}):
 \<close>
-(*<*)context includes orig and Com.com_syntax begin(*>*)
+(*<*)context includes orig_syntax and Com.com_syntax begin(*>*)
 
 lemma Assign:
   assumes "s' = s(r := \<lbrakk>a\<rbrakk>\<^sub>s)"
@@ -69,7 +69,7 @@ text \<open>
   implicit assumption that the state has a finite codomain.
 \<close>
 
-context (*<*)includes orig(*>*) 
+context (*<*)includes orig_syntax(*>*) 
   fixes s :: state assumes "finite (range s)"
 begin
 
@@ -171,7 +171,7 @@ section \<open>\<open>HOL\<^bsup>TC\<nat>\<^esup>\<close> to \<open>IMP\<^bsup>T
 
 subsection \<open>Fig. 5\<close>
 text \<open>Commands as @{typ tcom}, semantics via @{const tbig_step_t}. Special rules:\<close>
-(*<*)context includes tcom_syntax and orig and partial begin(*>*)
+(*<*)context includes tcom_syntax and orig_syntax and partial_syntax begin(*>*)
 
 lemma Call:
   assumes "(pc,s) \<Rightarrow>\<^sub>r\<^bsup>n\<^esup> v" "s' = s(r := v)"
@@ -251,7 +251,7 @@ Here, we pr
 Here, we provide the corresponding
 step-by-step proof from the paper. Here is the input function:
 \<close>
-
+(*
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   text \<open>We prove correctness of the compiled \<open>IMP\<^bsup>W\<^esup>\<close> program. First, we reduce this proof to the
   correctness proof of the generated \<open>IMP\<^bsup>TC\<^esup>\<close> program.\<close>
@@ -278,7 +278,7 @@ HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat
   oops
 
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc'_nat by cook
-
+*)
 end
 
 subsection \<open>Case Studies\<close>
@@ -290,7 +290,7 @@ section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>-\<close
 
 subsection \<open>Fig. 9\<close>
 text \<open>Commands as @{typ com'}, semantics via @{const big_step_t'}. Special rules:\<close>
-(*<*)context includes orig and Com.com_syntax begin(*>*)
+(*<*)context includes orig_syntax and Com.com_syntax begin(*>*)
 
 lemma WhF:
   assumes "s r = 0"
@@ -306,7 +306,7 @@ lemma WhT:
 
 subsection \<open>Fig. 10:\<close>
 text \<open>Full execution relation in @{const tail_step}. Shown rules:\<close>
-(*<*)context includes holb and tail and partial and tcom_syntax begin(*>*)
+(*<*)context includes hol_bin_syntax and tail_syntax and partial_syntax and tcom_syntax begin(*>*)
 
 lemma
   assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
@@ -345,7 +345,7 @@ text \<open>
   Proven in @{thm small_sound} and @{thm small_complete}, with the additional assumptions that
   the programs are actually tail-recursive (the type does not enforce this)
 \<close>
-context (*<*)includes orig and tail and holb(*>*)
+context (*<*)includes orig_syntax and tail_syntax and hol_bin_syntax(*>*)
   fixes tp p assumes "invar tp" "invar p"
 begin
 
@@ -369,7 +369,7 @@ text \<open>
   Definition in @{const compile}, correctness theorems @{thm compile_sound}
   and @{thm compile_complete_add}.
 \<close>
-context (*<*)includes partial(*>*)
+context (*<*)includes partial_syntax(*>*)
   fixes p assumes "invar p"
 begin
 
@@ -394,7 +394,7 @@ end
 subsection "Lemma 2"
 text \<open>Lemma in @{thm neat_subst}.\<close>
 
-(*<*)context includes orig begin(*>*)
+(*<*)context includes orig_syntax begin(*>*)
 
 lemma
   assumes "inj m"
@@ -408,7 +408,7 @@ text \<open>
   Definition in @{const inline}, correctness theorems @{thm inline_sound}
   and @{thm inline_complete}
 \<close>
-(*<*)context includes orig and partial begin(*>*)
+(*<*)context includes orig_syntax and partial_syntax begin(*>*)
 
 theorem "(p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>(n+1)*(\<bar>p\<bar>+1)\<^esup> s'"
 (*<*)
@@ -434,7 +434,7 @@ theorem "(\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>
 
 subsection "Fig. 11"
 text \<open>Rules in @{const big_step}.\<close>
-(*<*)context includes minus and bitsb and com_syntax begin(*>*)
+(*<*)context includes minus_syntax and com_syntax begin(*>*)
 
 lemma
   assumes "b \<in> {\<zero>,\<one>}" "s' = s(r := Some b)"
@@ -471,7 +471,7 @@ lemma
 subsection "Lemma 3"
 text \<open>Adder in @{const binary_adder}, lemma in @{thm assignment_to_binary_correct}\<close>
 
-context (*<*)includes minus2(*>*)
+context (*<*)includes minus2_syntax(*>*)
   fixes w::nat assumes "0 < w"
   fixes s::state assumes "finite (range s)"
 begin
@@ -490,7 +490,7 @@ end
 
 subsection "Theorem 8"
 text \<open>Theorem in @{thm IMP_To_IMP_Minus}\<close>
-context (*<*)includes imp and minus2(*>*)
+context (*<*)includes imp_syntax and minus2_syntax(*>*)
   fixes s::state assumes "finite (range s)"
 begin
 
