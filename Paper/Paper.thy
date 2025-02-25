@@ -1,6 +1,6 @@
 (*<*)
 theory Paper
-  imports "HOL_To_IMP_Refinements.HOL_To_IMP_Lists" Syntax
+  imports Syntax
 begin
 (*>*)
 
@@ -15,27 +15,30 @@ text \<open>
   and implicit assumptions are stated via local context where necessary.
 \<close>
 
+
 section \<open>Preliminaries\<close>
 
 text \<open>Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.\<close>
 
 text \<open>Atom evaluation function @{const atomVal} with the following equations:\<close>
-(*<*)unbundle aops unbundle atom(*>*)
+(*<*)context includes aops and atom begin(*>*)
 
-lemma "\<lbrakk>C n\<rbrakk>\<^sub>s \<equiv> n" by simp
-lemma "\<lbrakk>R r\<rbrakk>\<^sub>s \<equiv> s r" by simp
+lemma "\<lbrakk>C n\<rbrakk>\<^sub>s \<equiv> n" (*<*)by simp(*>*)
+lemma "\<lbrakk>R r\<rbrakk>\<^sub>s \<equiv> s r" (*<*)by simp(*>*)
 
 text \<open>Expression evaluation function @{const aval} with the following equations:\<close>
 
-lemma "\<lbrakk>A\<^sub>1 + A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s + \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" by simp
-lemma "\<lbrakk>A\<^sub>1 - A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s - \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" by simp
+lemma "\<lbrakk>A\<^sub>1 + A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s + \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" (*<*)by simp(*>*)
+lemma "\<lbrakk>A\<^sub>1 - A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s - \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" (*<*)by simp(*>*)
+
+(*<*)end(*>*)
 
 subsection \<open>Execution Relation (Big-Step Semantics)\<close>
 text \<open>
   Commands also contain a no-op command (@{const SKIP}) for technical reasons, which we skip in the
   paper as it is irrelevant. Here are the shared rules (from @{const big_step_t}):
 \<close>
-(*<*)unbundle no atom unbundle no aops unbundle orig and no big_step_syntax and no tbig_step_syntax (*>*)
+(*<*)context includes orig and Com.com_syntax begin(*>*)
 
 lemma Assign:
   assumes "s' = s(r := \<lbrakk>a\<rbrakk>\<^sub>s)"
@@ -45,25 +48,30 @@ lemma Assign:
 lemma IfT:
   assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
   shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'"
-(*<*)using assms by fastforce(*>*)
+(*<*)using assms by blast(*>*)
 
 lemma IfF:
   assumes "s r = 0" "(p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
   shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> s'"
-(*<*)using assms by fastforce(*>*)
+(*<*)using assms by blast(*>*)
 
 lemma Seq:
   assumes "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s'" "(p\<^sub>2,s') \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s''"
     shows "(p\<^sub>1;;p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+0\<^esup> s''"
 (*<*)using assms by auto(*>*)
 
+(*<*)end(*>*)
+
 subsection "Theorem 1"
 
 text \<open>
-\<open>a\<^bsub>max\<^esub>\<close> via @{class max_const} typeclass. The theorem @{thm IMP_space_growth} also needs the
-implicit assumption that the state has a finite codomain.\<close>
+  \<open>a\<^bsub>max\<^esub>\<close> via @{class max_const} typeclass. The theorem @{thm IMP_space_growth} also needs the
+  implicit assumption that the state has a finite codomain.
+\<close>
 
-context fixes s :: state assumes "finite (range s)" begin
+context (*<*)includes orig(*>*) 
+  fixes s :: state assumes "finite (range s)"
+begin
 
 theorem
   assumes "max {p\<^bsub>max\<^esub>, s\<^bsub>max \<^esub>} < 2^w"
@@ -163,7 +171,7 @@ section \<open>\<open>HOL\<^bsup>TC\<nat>\<^esup>\<close> to \<open>IMP\<^bsup>T
 
 subsection \<open>Fig. 5\<close>
 text \<open>Commands as @{typ tcom}, semantics via @{const tbig_step_t}. Special rules:\<close>
-(*<*)unbundle tcom_syntax unbundle partial(*>*)
+(*<*)context includes tcom_syntax and orig and partial begin(*>*)
 
 lemma Call:
   assumes "(pc,s) \<Rightarrow>\<^sub>r\<^bsup>n\<^esup> v" "s' = s(r := v)"
@@ -175,6 +183,8 @@ lemma Rec:
   shows "p \<turnstile> (RECURSE,s) \<Rightarrow>\<^bsup>n+5\<^esup> s'"
   (*<*)using assms by (metis add.commute tTail)(*>*)
 
+(*<*)end(*>*)
+
 subsection \<open>Example 1\<close>
 
 text \<open>See @{thm HOL_To_HOL_Nat.fun_pow_snd_nat_eq}.\<close>
@@ -185,9 +195,7 @@ text \<open>See @{ML_structure Compile_HOL_Nat_To_IMP}.\<close>
 
 subsection \<open>Execution Rules used for Symbolic Execution of \<open>IMP\<^bsup>TC\<^esup>\<close> Programs (Fig. 14, Appendix)\<close>
 
-context
-  includes terminates_with_syntax
-begin
+(*<*)context includes tcom_syntax and terminates_with_syntax begin(*>*)
 
 theorem Assign1:
   assumes "(s(r := \<lbrakk>a\<rbrakk>\<^sub>s)) r' = v"
@@ -223,7 +231,7 @@ lemma Rec1:
   shows "p \<turnstile> (RECURSE, s) \<Rightarrow>\<^bsub>r\<^esub> v"
   using assms terminates_with_res_tTailI by auto
 
-end
+(*<*)end(*>*)
 
 subsection \<open>Example 2\<close>
 
@@ -282,7 +290,7 @@ section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>-\<close
 
 subsection \<open>Fig. 9\<close>
 text \<open>Commands as @{typ com'}, semantics via @{const big_step_t'}. Special rules:\<close>
-(*<*)unbundle no tcom_syntax unbundle com'_syntax(*>*)
+(*<*)context includes orig and Com.com_syntax begin(*>*)
 
 lemma WhF:
   assumes "s r = 0"
@@ -294,9 +302,11 @@ lemma WhT:
   shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s\<^sub>3"
   (*<*)using assms by auto(*>*)
 
+(*<*)end(*>*)
+
 subsection \<open>Fig. 10:\<close>
 text \<open>Full execution relation in @{const tail_step}. Shown rules:\<close>
-(*<*)unbundle no com'_syntax unbundle no orig unbundle tcom_syntax unbundle tail unbundle holb(*>*)
+(*<*)context includes holb and tail and partial and tcom_syntax begin(*>*)
 
 lemma
   assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
@@ -328,13 +338,16 @@ lemma
     shows "(CALL pc RETURN r,s) \<Rightarrow>\<^bsup>n+0\<^esup> (s',\<zero>)"
   (*<*)using assms by (auto intro: le_trans)(*>*)
 
+(*<*)end(*>*)
+
 subsection "Lemma 1"
 text \<open>
   Proven in @{thm small_sound} and @{thm small_complete}, with the additional assumptions that
   the programs are actually tail-recursive (the type does not enforce this)
 \<close>
-(*<*)unbundle no partial unbundle orig(*>*)
-context fixes tp p assumes "invar tp" "invar p" begin
+context (*<*)includes orig and tail and holb(*>*)
+  fixes tp p assumes "invar tp" "invar p"
+begin
 
 lemma
   assumes "(p,s) \<Rightarrow>\<^bsup>n\<^esup> (s,\<zero>)"
@@ -356,9 +369,9 @@ text \<open>
   Definition in @{const compile}, correctness theorems @{thm compile_sound}
   and @{thm compile_complete_add}.
 \<close>
-(*<*)unbundle partial(*>*)
-
-context fixes p assumes "invar p" begin
+context (*<*)includes partial(*>*)
+  fixes p assumes "invar p"
+begin
 
 theorem "p \<turnstile> (p,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<longleftrightarrow> (\<lparr>p\<rparr>\<^sub>\<circle>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n+7\<^esup> s'"
 (*<*)
@@ -381,18 +394,21 @@ end
 subsection "Lemma 2"
 text \<open>Lemma in @{thm neat_subst}.\<close>
 
+(*<*)context includes orig begin(*>*)
+
 lemma
   assumes "inj m"
     shows "(p[(m x)/x],s)\<Rightarrow>\<^bsup>n\<^esup> s' \<Longrightarrow> (p,s o m)\<Rightarrow>\<^bsup>n\<^esup> s' o m"
   (*<*)using assms neat_subst by auto(*>*)
 
+(*<*)end(*>*)
 
 subsection "Theorem 7"
 text \<open>
   Definition in @{const inline}, correctness theorems @{thm inline_sound}
   and @{thm inline_complete}
 \<close>
-(*<*)(*>*)
+(*<*)context includes orig and partial begin(*>*)
 
 theorem "(p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>(n+1)*(\<bar>p\<bar>+1)\<^esup> s'"
 (*<*)
@@ -414,10 +430,11 @@ qed
 theorem "(\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s'"
 (*<*)using inline_complete by (smt (verit, del_insts) eq_on_def le_trans)(*>*)
 
+(*<*)end(*>*)
 
 subsection "Fig. 11"
 text \<open>Rules in @{const big_step}.\<close>
-(*<*)unbundle no partial unbundle no orig unbundle no imp unbundle no tail unbundle minus unbundle no holb unbundle bitsb(*>*)
+(*<*)context includes minus and bitsb and com_syntax begin(*>*)
 
 lemma
   assumes "b \<in> {\<zero>,\<one>}" "s' = s(r := Some b)"
@@ -449,13 +466,12 @@ lemma
   shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+2\<^esup> s\<^sub>3"
   (*<*)using assms by blast(*>*)
 
-text \<open>TODO link to adder\<close>
+(*<*)end(*>*)
 
 subsection "Lemma 3"
 text \<open>Adder in @{const binary_adder}, lemma in @{thm assignment_to_binary_correct}\<close>
-(*<*)unbundle no minus unbundle minus2(*>*)
 
-context
+context (*<*)includes minus2(*>*)
   fixes w::nat assumes "0 < w"
   fixes s::state assumes "finite (range s)"
 begin
@@ -474,9 +490,9 @@ end
 
 subsection "Theorem 8"
 text \<open>Theorem in @{thm IMP_To_IMP_Minus}\<close>
-(*<*)unbundle imp(*>*)
-
-context fixes s::state assumes "finite (range s)" begin
+context (*<*)includes imp and minus2(*>*)
+  fixes s::state assumes "finite (range s)"
+begin
 
 theorem
   assumes "(p,s) \<Rightarrow>\<^bsup>n\<^esup> s'" "n < w" "max {s\<^bsub>max \<^esub>, p\<^bsub>max\<^esub>} * 2^n < 2^w"

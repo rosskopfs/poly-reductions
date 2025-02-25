@@ -1,10 +1,18 @@
 theory Syntax
-  imports "IMP_To_IMP-.IMP_To_IMP_Minus" "IMP.IMP_Tailcall" "IMP-.IMP_Minus_Big_StepT"
+  imports 
+    "HOL_To_IMP_Refinements.HOL_To_IMP_Lists"
+    "IMP_To_IMP-.IMP_To_IMP_Minus"
+    "IMP.IMP_Tailcall"
+    "IMP-.IMP_Minus_Big_StepT"
     "HOL_Nat_To_IMP.IMP_Terminates_With"
 begin
 
 (* disabled: original syntax *)
 
+unbundle no "Com.com_syntax"
+unbundle no com'_syntax
+unbundle no com_syntax
+unbundle no tcom_syntax
 unbundle no big_step_syntax
 unbundle no tbig_step_syntax
 no_notation tail_step ("\<turnstile>_ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
