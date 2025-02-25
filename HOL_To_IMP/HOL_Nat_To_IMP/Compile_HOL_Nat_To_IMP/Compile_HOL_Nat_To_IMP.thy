@@ -165,7 +165,7 @@ fun trans_assigns_aux :: "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rig
 
 definition "trans_assigns c \<equiv> fst (trans_assigns_aux c [])"
 
-(*FIXME: proper analysis of arguments used in calls instead of comparison against changeable naming
+(*FIXME: proper analysis of arguments used in calls instead of comparison against unstable naming
 convention*)
 definition "register_sep \<equiv> ''.''"
 definition "arg_sep \<equiv> ''arg''"
