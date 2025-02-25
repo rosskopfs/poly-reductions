@@ -9,7 +9,6 @@ Tested revisions:
 
 - Isabelle/2ea9efde917c
 - AFP/7454e207574a
-- ML-Typeclasses/75d3399
 
 ## Setup:
 Needs [Mercurial](https://www.mercurial-scm.org/) and [Git](https://git-scm.com/) installed.
@@ -19,16 +18,10 @@ In the following, replace `<revision>` with the corresponding SHA value listed a
   - This repo: `git clone https://github.com/rosskopfs/poly-reductions`
   - Isabelle: `hg clone https://isabelle-dev.sketis.net/source/isabelle -r <revision>`
   - AFP: `hg clone https://foss.heptapod.net/isa-afp/afp-devel -r <revision>`
-  - ML-Typeclasses: 
-    - `git clone https://github.com/kappelmann/ml-typeclasses-isabelle.git`
-    - `cd ml-typeclasses-isabelle`
-    - `git checkout <revision>`
-    - `cd ..`
 
 2. Setup up Isabelle from the terminal (on Windows, run `isabelle/Admin/Cygwin/Cygwin-Terminal.bat` to start a terminal):
   - initialize Installation: `isabelle/Admin/init`
   - add AFP: `isabelle/bin/isabelle components -u afp-devel/thys`
-  - make ML-Typeclasses globally available with `isabelle components -u ml-typeclasses-isabelle`
   - download additional components: `isabelle/bin/isabelle components -a`
 
 When you run Isabelle, include this repository with `-d <workdir>/poly-reductions`.
