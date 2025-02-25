@@ -1,5 +1,6 @@
 \<^marker>\<open>creator "Lukas Stevens"\<close>
 \<^marker>\<open>contributor "Kevin Kappelmann"\<close>
+\<^marker>\<open>contributor "Nico Lintner"\<close>
 theory Compile_HOL_Nat_To_IMP
   imports
     IMP_Terminates_With
@@ -142,6 +143,9 @@ fun subst_aexp :: "aexp \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow
 | "subst_aexp (Plus a1 a2) al = Plus (subst_atomExp a1 al) (subst_atomExp a2 al)"
 | "subst_aexp (Sub a1 a2) al = Sub (subst_atomExp a1 al) (subst_atomExp a2 al)"
 
+definition
+  "rm_assn_var v \<equiv> filter (\<lambda>(_, v'). v' \<noteq> V v)"
+
 fun trans_assigns_aux :: "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rightarrow> tcom \<times> (vname \<times> atomExp) list" where
   "trans_assigns_aux (tSeq c1 c2) al = (
     let
@@ -154,8 +158,9 @@ fun trans_assigns_aux :: "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rig
       (c2', al'2) = trans_assigns_aux c2 al
     in (tIf (case get_reg al v of (V v') \<Rightarrow> v' | _ \<Rightarrow> v) c1' c2', filter (List.member al'2) al'1))"
 | "trans_assigns_aux (tAssign v a) al = (let a' = subst_aexp a al
-    in (tAssign v a', case a' of A atom \<Rightarrow> AList.update v atom al | _ \<Rightarrow> al))"
-| "trans_assigns_aux (tCall c v) al = (tCall c v, filter (\<lambda>(_, v'). v' \<noteq> V v) al)"
+    in (tAssign v a',
+      rm_assn_var v (case a' of A atom \<Rightarrow> AList.update v atom al| _ \<Rightarrow> AList.delete_aux v al)))"
+| "trans_assigns_aux (tCall c v) al = (tCall c v, rm_assn_var v al)"
 | "trans_assigns_aux c al = (c, al)"
 
 definition "trans_assigns c \<equiv> fst (trans_assigns_aux c [])"
