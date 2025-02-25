@@ -7,13 +7,17 @@ begin
 text \<open>
   This is the alignment theory for the paper:
 
-  "Proof-Producing Translation of Functional Programs into a Time & Space Reasonable Model"
+  \<open>Proof-Producing Translation of Functional Programs into a Time & Space Reasonable Model\<close>
 
-  Open this file in Isabelle/jEdit, as described in the supplied README.
-  Formal elements referenced in the texts are all clickable, leading to the orig_syntaxinal definition.
+  Open this file in Isabelle/jEdit, as described in the supplied @{file "../README.md"}.
+  Formal elements referenced in the texts are all clickable, leading to the original definition.
   To get the statements as close to the informal text as possible, local notation is introduced,
   and implicit assumptions are stated via local context where necessary.
+
+  Text between (*<*)\<dots>(*>*) is needed by the system (e.g., small proofs relating the new statement 
+  to the original theorem(s)), but can otherwise be ignored.
 \<close>
+
 
 section \<open>Preliminaries\<close>
 
@@ -75,7 +79,7 @@ begin
 theorem
   assumes "max {p\<^bsub>max\<^esub>, s\<^bsub>max \<^esub>} < 2^w"
       and "(p,s) \<Rightarrow>\<^bsup>n\<^esup> s'"
-    shows "Max (range s') < 2^(w+n)"
+    shows "s'\<^bsub>max \<^esub> < 2^(w+n)"
 (*<*)
 proof -
   from assms(2) obtain n' where "big_step_t (p,s) n' s'" "n' \<le> n" by blast
@@ -90,13 +94,15 @@ end
 section \<open>\<open>HOL\<^bsup>(TC)\<^esup>\<close> to \<open>HOL\<^bsup>(TC)\<nat>\<^esup>\<close>\<close>
 
 text \<open>
-  Definitions: @{const rel_fun} (function relator), @{class compile_nat} (typeclass),
-  Pairing function @{const pair_nat} with inverses @{const fst_nat} and @{const snd_nat}
-  and natural number datatype selector @{const nat_selector}.
+  Definition 1: @{const rel_fun} (function relator)
+  Definition 2: @{class compile_nat} typeclass,
+  Definition 3: Pairing function @{const pair_nat} with inverses @{const fst_nat} 
+  and @{const snd_nat} and natural number datatype selector @{const nat_selector}.
 \<close>
 
 subsection "Theorem 3"
 
+text \<open>Proof of partial Galois equivalence:\<close>
 lemma
   defines "L_rel \<equiv> (=\<^bsub>in_dom (Rel_nat :: nat \<Rightarrow> ('a::compile_nat) \<Rightarrow> bool)\<^esub>)"
       and "R_rel \<equiv> (=\<^bsub>in_codom (Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool)\<^esub>)"
@@ -414,7 +420,7 @@ lemma
 
 subsection "Theorem 7"
 text \<open>
-  Definition in @{const inline}, correctness theorems @{thm inline_sound}
+  Definition 5 in @{const inline}, correctness theorems @{thm inline_sound}
   and @{thm inline_complete}
 \<close>
 (*<*)context includes orig_syntax and partial_syntax begin(*>*)
@@ -498,7 +504,9 @@ theorem
 end
 
 subsection "Theorem 8"
+
 text \<open>Theorem in @{thm IMP_To_IMP_Minus}\<close>
+
 context (*<*)includes imp_syntax and minus2_syntax(*>*)
   fixes s::state assumes "finite (range s)"
 begin
@@ -524,4 +532,4 @@ qed
 
 end
 
-end
+(*<*)end(*>*)
