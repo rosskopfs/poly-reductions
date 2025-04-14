@@ -83,6 +83,11 @@ fun invar :: "tcom \<Rightarrow> bool" where
 lemma no_tails_invar[simp]: "\<not>tails c \<Longrightarrow> invar c"
   by (induction c) auto
 
+lemma tbigstep_det:
+  assumes "C \<turnstile> (c,s) \<Rightarrow>\<^bsup>p\<^esup> t" "C \<turnstile> (c,s) \<Rightarrow>\<^bsup>q\<^esup> u"
+  shows "q = p" "u = t"
+  using assms by (induction C c s p t arbitrary: q u rule: tbig_step_t_induct)
+    (safe, (linarith | simp)+, (blast dest: bigstep_det)+)
 
 section \<open>Semantics for small-step-ish reasoning (loops)\<close>
 text \<open>Big-step semantics that just returns true for Tail\<close>
