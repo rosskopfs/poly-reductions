@@ -166,7 +166,7 @@ fun trans_assigns_aux :: "tcom \<Rightarrow> (vname \<times> atomExp) list \<Rig
       rm_assn_var v (case a' of A atom \<Rightarrow> AList.update v atom al | _ \<Rightarrow> AList.delete_aux v al)))"
 | "trans_assigns_aux (tCall c v) al = (tCall c v, rm_assn_var v (AList.delete_aux v al))"
 | "trans_assigns_aux tTAIL al = (tTAIL, [])"
-| "trans_assigns_aux c al = (c, al)"
+| "trans_assigns_aux tSKIP al = (tSKIP, al)"
 
 definition "trans_assigns c \<equiv> fst (trans_assigns_aux c [])"
 
@@ -434,10 +434,11 @@ fun bury_aux :: "tcom \<Rightarrow> vname list \<Rightarrow> tcom \<times> vname
 | "bury_aux (tAssign v a) vl = (if a = A (V v) \<or> (v \<notin> set vl \<and> \<not>is_arg v)
     then (tSKIP, vl)
     else (tAssign v a, vars a @ filter ((\<noteq>) v) vl))"
-| "bury_aux (tCall c v) vl = (if v \<in> set vl
+| "bury_aux (tCall c v) vl = (if v \<in> set vl \<or> is_arg v
     then (tCall c v, filter ((\<noteq>) v) vl)
     else (tSKIP, vl))"
-| "bury_aux c vl = (c, vl)"
+| "bury_aux tTAIL vl = (tTAIL, [])"
+| "bury_aux tSKIP vl = (tSKIP, vl)"
 
 definition
   "bury ret_reg c \<equiv> fst (bury_aux c [ret_reg])"
