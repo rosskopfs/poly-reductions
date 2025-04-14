@@ -443,6 +443,149 @@ fun bury_aux :: "tcom \<Rightarrow> vname list \<Rightarrow> tcom \<times> vname
 definition
   "bury ret_reg c \<equiv> fst (bury_aux c [ret_reg])"
 
+lemma bury_aux_vl_set_same:
+    "set vl1 = set vl2 \<Longrightarrow> set (snd (bury_aux c vl1)) = set (snd (bury_aux c vl2))"
+  by (induction c vl1 arbitrary: vl2 rule: bury_aux.induct) (auto split: prod.splits)
+
+(* every Call in c has the same return value if the args are the same *)
+fun tCall_ret_eq_if_args_eq :: "tcom \<Rightarrow> bool" where
+  "tCall_ret_eq_if_args_eq (tSeq c1 c2) = (tCall_ret_eq_if_args_eq c1 \<and> tCall_ret_eq_if_args_eq c2)"
+| "tCall_ret_eq_if_args_eq (tIf v c1 c2) = (tCall_ret_eq_if_args_eq c1 \<and> tCall_ret_eq_if_args_eq c2)"
+| "tCall_ret_eq_if_args_eq (tCall c r) = (\<forall>s1 s2 t1 s1'. s1 = s2 on {v. is_arg v} \<longrightarrow>
+    (c,s1) \<Rightarrow>\<^bsup>t1 \<^esup> s1' \<longrightarrow> (\<exists>s2' t2. (c,s2) \<Rightarrow>\<^bsup>t2 \<^esup> s2' \<and> s1' r = s2' r))"
+| "tCall_ret_eq_if_args_eq _ = True"
+
+(* C returns the same ret if args are the same  *)
+definition tTail_ret_eq_if_args_eq :: "tcom \<Rightarrow> vname \<Rightarrow> bool" where
+  "tTail_ret_eq_if_args_eq C ret \<equiv> \<forall>s1 s2 t1 s1'. s1 = s2 on {v. is_arg v} \<longrightarrow>
+    C \<turnstile> (C,s1) \<Rightarrow>\<^bsup>t1 \<^esup> s1' \<longrightarrow> (\<exists>t2 s2'. C \<turnstile> (C,s2) \<Rightarrow>\<^bsup>t2 \<^esup> s2' \<and>  s1' ret = s2' ret)"
+
+lemma tbig_step_bury_aux_ret_same_if_no_tails:
+  includes tcom_syntax
+  assumes "C \<turnstile> (c, s1) \<Rightarrow>\<^bsup>t1\<^esup> s1'"
+    and "s1 = s2 on set vl' \<union> {v. is_arg v}"
+    and "tCall_ret_eq_if_args_eq c" "\<not>tails c"
+    and "(c', vl') = bury_aux c vl"
+  shows "\<exists>t2 s2'. C \<turnstile> (c', s2) \<Rightarrow>\<^bsup>t2\<^esup> s2' \<and> s1' = s2' on set vl \<union> {v. is_arg v}"
+  using assms
+proof (induction c vl arbitrary: c' vl' s1 t1 s1' s2 rule: bury_aux.induct)
+  case (1 c1 c2 vl)
+  then show ?case
+    by (auto split: prod.splits) (meson tSeq)+
+next
+  case (2 v c1 c2 vl)
+  from 2(4,7) obtain c1' c2' vl1' vl2' where obt:
+      "(c1', vl1') = bury_aux c1 vl" "(c2', vl2') = bury_aux c2 vl"
+      "s1 = s2 on set vl1' \<union> {a. is_arg a}" "s1 = s2 on set vl2' \<union> {a. is_arg a}"
+    by (auto split: prod.splits)
+  with 2(7) have c': "c' = tIf v c1' c2'" by (simp split: prod.splits)
+  show ?case
+  proof (cases "s1 v = 0")
+    case True
+    with 2(3) obtain t1' where "C \<turnstile> (c2, s1) \<Rightarrow>\<^bsup>t1'\<^esup> s1'" by auto
+    from 2(2)[OF obt(1) refl this obt(4)  _ _ obt(2)] True c' 2(4-7) show ?thesis
+      by (auto 0 5 split: prod.splits)
+  next
+    case False
+    with 2(3) obtain t1' where "C \<turnstile> (c1, s1) \<Rightarrow>\<^bsup>t1'\<^esup> s1'" by auto
+    from 2(1)[OF this obt(3)  _ _ obt(1)] False c' 2(4-7) show ?thesis
+      by (auto 0 5 split: prod.splits)
+  qed
+next
+  case (3 v a vl)
+  have "s1' = s2' on set vl \<union> {a. is_arg a}"
+    if asm: "C \<turnstile> (c', s2) \<Rightarrow>\<^bsup>t2\<^esup>  s2'"  for t2 s2'
+  proof (cases "a = A (V v) \<or> (v \<notin> set vl \<and> \<not>is_arg v)")
+    case True
+    with 3(5) have "c' = tSKIP" "vl' = vl" by simp_all
+    with asm True 3(1,2) show ?thesis by fastforce
+  next
+    case False
+    with 3(5) have "c' = (v ::= a)" "vl' = vars a @ filter ((\<noteq>) v) vl" by simp_all
+    with asm False 3(1,2) show ?thesis by (auto simp: eq_on_def)
+  qed
+  with 3(5) show ?case by (fastforce split: if_splits)
+next
+  case (4 c r vl)
+  from 4(1-3) obtain t2' s2' where "(c, s2) \<Rightarrow>\<^bsup> t2' \<^esup> s2'" by (auto 9 0)
+  with 4(5) tCall[OF this] obtain t2 s2' where obt: "C \<turnstile> (c', s2) \<Rightarrow>\<^bsup>t2\<^esup>  s2'"
+    by (auto 6 0 split: if_splits)
+  moreover have "s1' = s2' on set vl \<union> {a. is_arg a}"
+  proof (cases "r \<in> set vl \<or> is_arg r")
+    case True
+    with 4(1,2,3,5) obt bigstep_det have "s1' r = s2' r" by auto blast+
+    with True 4(1,2,5) obt show ?thesis by (auto simp: eq_on_def)
+  qed (use 4(1,2,5) obt in auto)
+  ultimately show ?case by blast
+qed auto
+
+lemma tbig_step_bury_aux_ret_same_if_invars:
+  includes tcom_syntax
+  assumes "C \<turnstile> (c, s1) \<Rightarrow>\<^bsup>t1\<^esup> s1'"
+    and "s1 = s2 on set vl' \<union> {v. is_arg v}"
+    and "tCall_ret_eq_if_args_eq c" "invar c" "set vl \<noteq> {}" "\<And>v. v \<in> set vl \<Longrightarrow> tTail_ret_eq_if_args_eq C v"
+    and "(c', vl') = bury_aux c vl"
+  shows "\<exists>t2 s2'. C \<turnstile> (c', s2) \<Rightarrow>\<^bsup>t2\<^esup> s2' \<and> s1' = s2' on set vl \<union> (if \<not>tails c then {a. is_arg a} else {})"
+  using assms
+proof (induction c vl arbitrary: c' vl' s1 t1 s1' s2 rule: bury_aux.induct)
+  case (1 c1 c2 vl)
+  from 1(3) obtain x y s' where obt_t: "C \<turnstile> (c1, s1) \<Rightarrow>\<^bsup>x\<^esup>  s'" "C \<turnstile> (c2, s') \<Rightarrow>\<^bsup>y\<^esup>  s1'" "x + y = t1"
+    by blast
+  from 1(9) obtain c1' c2' vl2 where obt: "(c2', vl2) = bury_aux c2 vl" "(c1', vl') = bury_aux c1 vl2"
+    by (simp split: prod.splits)
+  from 1(5,6) have "tCall_ret_eq_if_args_eq c1" "\<not>tails c1" by simp_all
+  from tbig_step_bury_aux_ret_same_if_no_tails[OF obt_t(1) 1(4) this obt(2)] obtain x' s''
+    where *: "C \<turnstile> (c1', s2) \<Rightarrow>\<^bsup>x'\<^esup>  s''" "s' = s'' on set vl2 \<union> {a. is_arg a}" by blast
+  from 1(5,6) have "tCall_ret_eq_if_args_eq c2" "invar c2" by simp_all
+  from 1(1)[OF obt_t(2) *(2) this 1(7,8) obt(1)] obtain y' s2' where **: "C \<turnstile> (c2', s'') \<Rightarrow>\<^bsup>y'\<^esup>  s2'"
+      "s1' = s2' on set vl \<union> (if \<not>tails c2 then {a. is_arg a} else {})" by blast
+  from * ** 1(3,4,5,9) tbig_step_bury_aux_ret_same_if_no_tails \<open>\<not> tails c1\<close> obt show ?case
+    by (auto split: prod.splits)
+next
+  case (2 v c1 c2 vl)
+  from 2(4,9) have s1_s2_eq: "s1 v = s2 v"
+    by (auto split: prod.splits)
+  from 2(4,9) obtain c1' c2' vl1' vl2' where obt:
+      "(c1', vl1') = bury_aux c1 vl" "(c2', vl2') = bury_aux c2 vl"
+      "s1 = s2 on set vl1' \<union> {a. is_arg a}" "s1 = s2 on set vl2' \<union> {a. is_arg a}"
+    by (auto split: prod.splits)
+  with 2(9) have c': "c' = tIf v c1' c2'" by (simp split: prod.splits)
+  show ?case
+  proof (cases "s1 v = 0")
+    case True
+    with 2(3) obtain t1' where "C \<turnstile> (c2, s1) \<Rightarrow>\<^bsup>t1'\<^esup> s1'" by auto
+    from 2(2)[OF obt(1) refl this obt(4) _ _ 2(7,8) obt(2)] True c' s1_s2_eq 2(4,5,6) show ?thesis
+      using tbig_step_bury_aux_ret_same_if_no_tails[OF 2(3,4,5) _ 2(9)] by auto
+  next
+    case False
+    with 2(3) obtain t1' where "C \<turnstile> (c1, s1) \<Rightarrow>\<^bsup>t1'\<^esup> s1'" by auto
+    from 2(1)[OF this obt(3) _ _ 2(7,8) obt(1)] False c' s1_s2_eq 2(4,5,6) show ?thesis
+      using tbig_step_bury_aux_ret_same_if_no_tails[OF 2(3,4,5) _ 2(9)] by auto
+  qed
+next
+  case (5 vl)
+  from 5(1,2,6) have "v \<in> set vl \<Longrightarrow> (\<exists>t2 s2'. C \<turnstile> (C, s2) \<Rightarrow>\<^bsup>t2\<^esup>  s2' \<and> s1' v = s2' v)" for v
+    unfolding tTail_ret_eq_if_args_eq_def by blast
+  with 5(5) have "\<exists>t2 s2'. C \<turnstile> (C, s2) \<Rightarrow>\<^bsup>t2\<^esup>  s2' \<and> s1'= s2' on set vl"
+    unfolding eq_on_def using tbigstep_det(2)[of C C s2] by (blast intro!: equals0I)
+  with 5(7) show ?case by auto
+qed (use tbig_step_bury_aux_ret_same_if_no_tails in auto)
+
+lemma tbig_step_bury_ret_same_ex_if_invars:
+  assumes "C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t1\<^esup> s1"
+    and "tCall_ret_eq_if_args_eq c" "invar c" "tTail_ret_eq_if_args_eq C r"
+  shows "\<exists>t2 s2. C \<turnstile> (bury r c, s) \<Rightarrow>\<^bsup>t2\<^esup> s2 \<and> s1 r = s2 r"
+  using assms tbig_step_bury_aux_ret_same_if_invars[OF assms(1) _ assms(2,3) _, of s _ "[r]"]
+  by (auto simp add: split_pairs bury_def)
+
+lemma tbig_step_bury_ret_same_all_if_invars:
+  assumes "C \<turnstile> (c, s) \<Rightarrow>\<^bsup>t1\<^esup> s1"
+    and "tCall_ret_eq_if_args_eq c" "invar c" "tTail_ret_eq_if_args_eq C r"
+    and "C \<turnstile> (bury r c, s) \<Rightarrow>\<^bsup>t2\<^esup> s2"
+  shows "s1 r = s2 r"
+  using tbig_step_bury_ret_same_ex_if_invars[OF assms(1-4)] tbigstep_det(2)[OF assms(5)] by blast
+
+
 context HOL_To_HOL_Nat
 begin
 
