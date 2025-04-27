@@ -12,13 +12,13 @@ definition
   "is_clique E C \<equiv> \<forall>u \<in> C. \<forall>v \<in> C. v=u \<or> {u, v} \<in> E"
 
 definition
-  "clique \<equiv> {(E, V , k). \<exists>C. ugraph_nodes E V \<and> C \<subseteq> V \<and> card C \<ge> k \<and> is_clique E C}"
+  "clique \<equiv> {(E, V, k). \<exists>C. ugraph_nodes E V \<and> C \<subseteq> V \<and> card C \<ge> k \<and> is_clique E C}"
 
 definition
   "sat_to_clique F \<equiv> (if finite (\<Union> (set F)) then (
     {{(l1, i), (l2, j)} | l1 l2 i j. i < length F \<and> j < length F \<and> i\<noteq> j \<and> \<not> conflict_lit l1 l2 \<and>
          l1 \<in> F ! i \<and> l2 \<in> F ! j},
-    {(l1, i) | l1 i. i < length F \<and>   l1 \<in> F ! i},
+    {(l1, i) | l1 i. i < length F \<and> l1 \<in> F ! i},
     length F) else ({}, {}, 1))"
 
 subsection \<open>F \<in> fin_sat \<Longrightarrow> sat_to_clique F \<in> clique\<close>

@@ -17,10 +17,9 @@ lemma set_packing_cert:
   using assms unfolding set_packing_def
   by blast
 
-
 definition clique_to_set_packing:
   "clique_to_set_packing \<equiv> \<lambda>(E, V, k). if ugraph_nodes E V  then
-  ((\<lambda>i. {{i,j}|j. j \<in> V  \<and> {i, j} \<notin> E }) ` V, k) else ({},1)"
+  ((\<lambda>i. {{i,j}|j. j \<in> V \<and> {i, j} \<notin> E }) ` V, k) else ({},1)"
 
 lemma node_to_set_inj:
   assumes "ugraph_nodes E V"

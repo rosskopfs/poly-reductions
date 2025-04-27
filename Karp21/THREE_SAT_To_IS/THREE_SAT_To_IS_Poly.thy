@@ -45,11 +45,10 @@ lemma sat_to_is_refines:
       mop_list_length_def mop_set_empty_set_def add_first_part_def
       add_second_part_def
   apply(rule T_specifies_I)
-  apply(vcg' \<open>-\<close> rules: T_SPEC )
+  apply(vcg' \<open>-\<close> rules: T_SPEC)
   by (auto simp: sat_to_is_time_def size_SAT_def one_enat_def sat_is_un_1_def sat_is_un_2_def)
 
 definition "sat_to_is_space n = 9 * n + 9 * n * n"
-
 
 lemma paf2: "{f l1 l2 i j |l1 l2 i j. i < k \<and> g l1 l2 i j}
     = (\<Union>i \<in> {..<k::nat}. {f l1 l2 i j |l1 l2 j. g l1 l2 i j}) "
