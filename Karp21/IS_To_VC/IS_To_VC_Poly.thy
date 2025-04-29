@@ -17,6 +17,19 @@ definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E + 1]"
 
 definition "mop_get_vertices_card E = REST [(card (\<Union> E)) \<mapsto> 2 * card E + 2]"
 
+lemma "sum id (UNIV::nat set) = 0"
+try0
+sorry
+
+term "{ f x | x.  x ∈ P }"
+lemma "{ f x | x.  x ∈ P } = f ` P"
+sorry
+
+declare [[ML_print_depth=100]]
+ML ‹
+  val a = @{term "{ f x | x.  x ∈ P }"}
+›
+
 text \<open>Then we can easily give an abstract algorithm for the reduction:\<close>
 
 definition "is_to_vc = (\<lambda>(E,k).
@@ -112,7 +125,8 @@ definition "mop_get_vertices' es = SPECT [\<Union> ((\<lambda>(a,b). {a,b}) ` (s
 
 definition get_vertices where
   "get_vertices es =
-    do { S \<leftarrow> mop_set_empty_set;
+    do {
+      S \<leftarrow> mop_set_empty_set;
       S' \<leftarrow> nfoldli es (\<lambda>_. True)
             (\<lambda>(a,b) S. do {
                   S \<leftarrow> mop_set_insert S a;
@@ -122,7 +136,6 @@ definition get_vertices where
         S;
       RETURNT S'
   }"
-
 
 lemma get_vertices_refine:
   "get_vertices xs \<le> mop_get_vertices' xs"
@@ -230,6 +243,5 @@ theorem "ispolyredd is_to_vc2
   unfolding independent_set_def vertex_cover_def
   apply(rule ispolyredd_refine[OF is_to_vc_ispolyred[THEN ispolyredd_generalizes_ispolyredD], simplified])
   apply(rule is_to_vc2_refines' ) .
-
 
 end

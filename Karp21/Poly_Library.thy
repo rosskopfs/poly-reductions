@@ -4,9 +4,28 @@ theory Poly_Library
     "HOL-Library.Discrete_Functions"
 begin
 
+definition "mop_set_card S  = REST [card S \<mapsto> 1]"
 definition "mop_set_empty_set = REST [ {} \<mapsto> 1]"
 
+definition "mop_set_insert S s = REST [insert s S \<mapsto> 1]"
+definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E + 1]"
+
 (* TODO: helper lemmas? *)
-definition "encode_size k = floor_log k + 1"
+definition "nat_encoded_size k = floor_log k + 1"
+
+definition "nrest_image f ft A = REST [ f ` A \<mapsto> sum ft A ]"
+
+(* TODO: lemmas *)
+definition "nrest_filter_image f ft P Pt A = REST [ f ` {a ∈ A. P a} \<mapsto> sum (λa. Pt a + (if P a then ft a else 0)) A ]"
+
+lemma nrest_image_bound:
+assumes "⋀a. a ∈ A ⟹ ft a ≤ c"
+shows "sum ft A ≤ card A * c"
+by (metis assms of_nat_id sum_bounded_above)
+
+(* lemma nrest_image_bound: *)
+(* assumes "⋀a. a ∈ A ⟹ ft a ≤ c" and "⋀a. a ∈ A ⟹ Pt a ≤ c'" *)
+(* shows "sum () A ≤ card A * (c + c')" *)
+(* by (metis assms of_nat_id sum_bounded_above) *)
 
 end
