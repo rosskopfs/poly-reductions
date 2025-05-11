@@ -23,9 +23,9 @@ assumes "⋀a. a ∈ A ⟹ ft a ≤ c"
 shows "sum ft A ≤ card A * c"
 by (metis assms of_nat_id sum_bounded_above)
 
-(* lemma nrest_image_bound: *)
-(* assumes "⋀a. a ∈ A ⟹ ft a ≤ c" and "⋀a. a ∈ A ⟹ Pt a ≤ c'" *)
-(* shows "sum () A ≤ card A * (c + c')" *)
-(* by (metis assms of_nat_id sum_bounded_above) *)
+lemma nrest_filter_image_bound:
+assumes "⋀a. a ∈ A ⟹ ft a ≤ c" and "⋀a. a ∈ A ⟹ Pt a ≤ c'"
+shows "sum (λa. ft a + Pt a) A ≤ card A * (c + c')"
+by (metis assms of_nat_id nrest_image_bound)
 
 end
