@@ -28,4 +28,7 @@ assumes "⋀a. a ∈ A ⟹ ft a ≤ c" and "⋀a. a ∈ A ⟹ Pt a ≤ c'"
 shows "sum (λa. ft a + Pt a) A ≤ card A * (c + c')"
 by (metis assms of_nat_id nrest_image_bound)
 
+lemma choose_2_upperbound: "n choose 2 ≤ n * n"
+by (metis binomial_le_pow linorder_le_less_linear order_trans power2_eq_square zero_le zero_less_binomial_iff)
+
 end

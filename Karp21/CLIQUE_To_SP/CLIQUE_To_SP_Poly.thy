@@ -6,8 +6,6 @@ theory CLIQUE_To_SP_Poly
 begin
 
 definition "mop_ugraph_nodes E V = SPECT [ ugraph_nodes E V ↦ card E * card V ]"
-
-(* definition "mop_set_image_sp E V = SPECT [ vertex_pairs_not_in_edge_set E V ` V ↦ card V * card V * card E ]" *)
 definition "mop_set_image_sp E V =
               nrest_image (vertex_pairs_not_in_edge_set E V) (λ_. card V * card E) V"
 
@@ -28,27 +26,26 @@ definition "size_SP = (\<lambda>(S, k). sum card S + nat_encoded_size k)"
 definition "clique_to_set_packing_space n ≡ n * (n * n + n)"
 definition "clique_to_set_packing_time n ≡ n * n + n * n * n"
 
-lemma image_inner_subset:
+lemma sp_inner_image_subset:
 assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
 shows "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}"
 using assms mem_Collect_eq singleton_insert_inj_eq' subsetI
   by fastforce
 
-lemma sp_image_elem_size:
+lemma card_inner_image_upper:
 assumes "finite V"
 shows "card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}) ≤ (card V choose 2) + card V"
 proof -
-  have *: "{{v} | v. v ∈ V} = (λv. {v}) ` V" using Setcompr_eq_image .
   have "card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}) ≤
-          card ({e. e ⊆ V ∧ card e = 2}) + card ({{v}| v. v ∈ V})"
-    using card_Un_le by blast
+          card ({e. e ⊆ V ∧ card e = 2}) + card ({{v}| v. v ∈ V})" using card_Un_le by blast
   moreover have "... ≤ (card V choose 2) + card ({{v} | v. v ∈ V})" using assms
     by (simp add: le_refl n_subsets)
-  moreover have "... ≤ (card V choose 2) + card V" using card_image_le[OF assms] * by auto
+  moreover have "... ≤ (card V choose 2) + card V"
+    using card_image_le[OF assms] Setcompr_eq_image[of "(λv. {v})" "V"] by auto
   ultimately show ?thesis by linarith
 qed
 
-lemma card_image_inner:
+lemma card_sp_inner_image:
 assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
 shows "card x ≤ (card V choose 2) + card V"
 proof -
@@ -59,19 +56,20 @@ proof -
   then have finite_term: "finite (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
     using finite_left by force
 
-  have "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}" using assms image_inner_subset by fastforce
+  have "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}" using assms sp_inner_image_subset
+    by fastforce
   then have "card x ≤ card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
     using card_mono[OF finite_term] by blast
   then show ?thesis
-    using sp_image_elem_size by fastforce
+    using card_inner_image_upper by fastforce
 qed
 
-lemma card_verteces:
+lemma card_clique_to_sp:
 assumes "ugraph_nodes E V"
 shows "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ card V * (card V * card V + card V)"
 proof -
   have image_size: "∀i∈V. card (vertex_pairs_not_in_edge_set E V i) ≤ (card V choose 2) + card V"
-    using sp_image_elem_size image_inner_subset card_image_inner assms by fastforce
+    using card_inner_image_upper sp_inner_image_subset card_sp_inner_image by fastforce
   have "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤
             (∑i∈V. card (vertex_pairs_not_in_edge_set E V i))"
     using assms card_UN_le ugraph_nodes_def by blast
@@ -83,21 +81,20 @@ proof -
     by (meson add_le_cancel_right diff_le_self div_le_dividend le_trans mult_le_mono2)
 qed
 
-lemma card_bound:
+lemma card_clique_to_sp_loose:
 assumes "ugraph_nodes E V" and "x = card E + card V"
 shows "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ x * (x * x + x)"
-using card_verteces assms
+using card_clique_to_sp assms
 by (meson add_mono_thms_linordered_semiring(1) dual_order.trans le_add2 mult_le_mono)
 
 lemma clique_to_sp_size:
   "size_SP (clique_to_set_packing C) ≤ clique_to_set_packing_space (size_CLIQUE C)"
-apply (auto simp: size_SP_def clique_to_set_packing clique_to_set_packing_space_def size_CLIQUE_def)
-apply (cases C; simp)
-unfolding size_SP_def nat_encoded_size_def apply auto
+unfolding size_SP_def clique_to_set_packing clique_to_set_packing_space_def size_CLIQUE_def
+apply (cases C; auto simp: nat_encoded_size_def)
 subgoal for E V k
   apply (rule le_trans[where j =
     "(card E + card V) * ((card E + card V) * (card E + card V) + (card E + card V))"])
-  using card_bound[of E V] apply fast
+  using card_clique_to_sp_loose[of E V] apply fast
   by (simp add: add_mono add.commute le_SucI mult_le_mono trans_le_add2)
 done
 

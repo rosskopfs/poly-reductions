@@ -17,19 +17,6 @@ definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E + 1]"
 
 definition "mop_get_vertices_card E = REST [(card (\<Union> E)) \<mapsto> 2 * card E + 2]"
 
-lemma "sum id (UNIV::nat set) = 0"
-try0
-sorry
-
-term "{ f x | x.  x ∈ P }"
-lemma "{ f x | x.  x ∈ P } = f ` P"
-sorry
-
-declare [[ML_print_depth=100]]
-ML ‹
-  val a = @{term "{ f x | x.  x ∈ P }"}
-›
-
 text \<open>Then we can easily give an abstract algorithm for the reduction:\<close>
 
 definition "is_to_vc = (\<lambda>(E,k).
@@ -219,6 +206,7 @@ lemma is_to_vc2_refines:
   subgoal by (auto simp: RETURNT_refine prod_rel_def_internal)
   subgoal by(auto intro!: RETURNT_refine simp: prod_rel_def_internal)
   done
+
 lemma is_to_vc2_refines':
   "(i',i) \<in> R_edge_set_tuple_list \<times>\<^sub>r Id
      \<Longrightarrow> is_to_vc2 i' \<le> \<Down> (R_edge_set_tuple_list \<times>\<^sub>r Id) (is_to_vc i)"

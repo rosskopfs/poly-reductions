@@ -108,7 +108,7 @@ lemma MALFROMED_not_in_THREE_DM: "MALFORMED \<notin> three_dm"
   by blast
 
 definition xc_to_three_dm where
-  "xc_to_three_dm = (\<lambda>(X, S). if \<Union>S = X then
+  "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X then
     let
       T = \<Uplus>S;
       \<alpha> = (SOME f. inj_on f X \<and> f ` X \<subseteq> T );
