@@ -178,7 +178,7 @@ qed
 
 
 definition "MALFORMED_GRAPH \<equiv> ({},{{undefined}})"
-definition chrn_to_cc  where
+definition chrn_to_cc where
   "chrn_to_cc \<equiv> \<lambda>(E,k). if (\<forall>e\<in>E. card e = 2) \<and> k \<ge> 3 \<and> (k \<le> card (\<Union>E) + 1)
                         then ((\<Union>E, sgraph.complement_edges (\<Union>E) E), k)
                         else (MALFORMED_GRAPH,k)"

@@ -6,8 +6,12 @@ theory CLIQUE_To_SP_Poly
 begin
 
 definition "mop_ugraph_nodes E V = SPECT [ ugraph_nodes E V ↦ card E * card V ]"
+(* try with do *)
+definition "mop_v E V i ≡ nrest_filter_image (λj. {i, j}) (λ_. 1) (λj. {i, j} ∉ E) V"
+
 definition "mop_set_image_sp E V =
               nrest_image (vertex_pairs_not_in_edge_set E V) (λ_. card V * card E) V"
+
 
 definition clique_to_set_packing_poly:
   "clique_to_set_packing_poly ≡ λ(E, V, k).
@@ -89,12 +93,13 @@ by (meson add_mono_thms_linordered_semiring(1) dual_order.trans le_add2 mult_le_
 
 lemma clique_to_sp_size:
   "size_SP (clique_to_set_packing C) ≤ clique_to_set_packing_space (size_CLIQUE C)"
-unfolding size_SP_def clique_to_set_packing clique_to_set_packing_space_def size_CLIQUE_def
-apply (cases C; auto simp: nat_encoded_size_def)
+apply (cases C)
+apply (simp add: size_SP_def size_CLIQUE_def clique_to_set_packing clique_to_set_packing_space_def nat_encoded_size_def)
+apply (intro impI conjI)
 subgoal for E V k
   apply (rule le_trans[where j =
     "(card E + card V) * ((card E + card V) * (card E + card V) + (card E + card V))"])
-  using card_clique_to_sp_loose[of E V] apply fast
+  using card_clique_to_sp_loose[of E V "card E + card V"] apply blast
   by (simp add: add_mono add.commute le_SucI mult_le_mono trans_le_add2)
 done
 
@@ -105,7 +110,7 @@ unfolding SPEC_def clique_to_set_packing_poly
   clique_to_set_packing mop_ugraph_nodes_def mop_set_image_sp_def size_CLIQUE_def nrest_image_def
 apply(rule T_specifies_I)
 apply(vcg' \<open>-\<close> rules: T_SPEC)
-apply auto
+apply simp
 subgoal for a b c
 proof -
   let ?x = "card a * card b + card b * card b * card a"
