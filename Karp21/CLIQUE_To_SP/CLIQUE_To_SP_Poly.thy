@@ -12,7 +12,6 @@ definition "mop_v E V i ≡ nrest_filter_image (λj. {i, j}) (λ_. 1) (λj. {i, 
 definition "mop_set_image_sp E V =
               nrest_image (vertex_pairs_not_in_edge_set E V) (λ_. card V * card E) V"
 
-
 definition clique_to_set_packing_poly:
   "clique_to_set_packing_poly ≡ λ(E, V, k).
     do {

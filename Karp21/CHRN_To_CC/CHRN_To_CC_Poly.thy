@@ -8,9 +8,6 @@ begin
 
 definition "mop_edge_set E ≡ SPECT [ ∀e ∈ E. card e = 2 ↦ card E ]"
 
-(* can't use times since edges is a 'a set set rather than ('a × 'a) set *)
-definition "mop_all_edges V ≡ REST [ all_edges V ↦ card V * card V]"
-
 definition "chrn_to_cc_poly ≡ λ(E, k). do {
   b ← mop_edge_set E;
   if b then do {
@@ -36,11 +33,6 @@ lemma card_complement_edges: "card (sgraph.complement_edges V E) = (card V choos
   by (metis card_Diff_subset card_all_edges finite_all_edges finite_subset
         sgraph.complement_edges_def sgraph.wellformed_all_edges)
 
-lemma card_all_edges_upper:
-assumes "finite V"
-shows "card (all_edges V) ≤ card V * card V"
-by (simp add: assms card_all_edges choose_2_upperbound)
-
 definition "size_CC ≡ (λ((V, E), k). card E + card V + nat_encoded_size k)"
 definition "size_chrN ≡ (λ (E, k). card E + nat_encoded_size k)"
 
@@ -56,15 +48,12 @@ proof -
   let ?A = "⋃ a"
   let ?card = "card ?A"
   let ?lb = "nat_encoded_size b"
-
   assume assm: "(∀e∈a. card e = 2) ∧ 3 ≤ b ∧ b ≤ Suc (card (⋃ a))"
 
   then have card_A: "?card ≤ 2 * card a"
     by (simp add: card_edges_union mult.commute)
-
   from assm have size_upper: "?lb ≤ Suc ?card" using nat_encoded_size_leq_self
     by (metis Suc_leD numeral_1_eq_Suc_0 numeral_3_eq_3 numerals(1) one_add_one order_trans plus_1_eq_Suc)
-
   from assm have size_lower: "1 ≤ ?lb" using nat_encoded_size_def
     by force
 

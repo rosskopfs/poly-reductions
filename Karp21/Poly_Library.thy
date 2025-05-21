@@ -2,16 +2,18 @@ theory Poly_Library
   imports
     NREST.Refine_Foreach
     "HOL-Library.Discrete_Functions"
+    Undirected_Graph_Theory.Undirected_Graphs_Root
 begin
 
 definition "mop_set_card S  = REST [card S \<mapsto> 1]"
 definition "mop_set_empty_set = REST [ {} \<mapsto> 1]"
-
 definition "mop_set_insert S s = REST [insert s S \<mapsto> 1]"
 definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E ]"
-
+definition "mop_list_up_to xs ≡ REST [ {..<length xs} ↦ length xs ]"
 definition "mop_set_times A B ≡ REST [ A × B ↦ card A * card B ]"
 
+(* can't use times since edges is a 'a set set rather than ('a × 'a) set *)
+definition "mop_all_edges V ≡ REST [ all_edges V ↦ card V * card V]"
 
 definition "mop_set_diff A B ≡ REST [ A - B ↦ card A ]"
 definition "mop_set_Union A ≡ REST [ ⋃ A ↦ sum card A ]"
@@ -49,5 +51,10 @@ by (metis assms of_nat_id nrest_image_bound)
 
 lemma choose_2_upperbound: "n choose 2 ≤ n * n"
 by (metis binomial_le_pow linorder_le_less_linear order_trans power2_eq_square zero_le zero_less_binomial_iff)
+
+lemma card_all_edges_upper:
+assumes "finite V"
+shows "card (all_edges V) ≤ card V * card V"
+by (simp add: assms card_all_edges choose_2_upperbound)
 
 end
