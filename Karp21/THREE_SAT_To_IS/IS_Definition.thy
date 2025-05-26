@@ -19,6 +19,12 @@ lemma ugraphE [elim]:
   obtains "finite E" "\<And>e. e \<in> E \<Longrightarrow> card e = 2"
   using assms unfolding ugraph_def by simp
 
+lemma ugraph_edge_finiteE [elim]:
+  assumes "ugraph E"
+  obtains "\<And>e. e \<in> E \<Longrightarrow> finite e"
+  using assms ugraphE
+  using card_ge_0_finite by fastforce
+
 lemma ugraph_vertex_set_finite:
   assumes "ugraph E"
   shows "finite (\<Union>E)"
