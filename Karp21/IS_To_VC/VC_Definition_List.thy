@@ -26,7 +26,7 @@ definition "vertex_cover_list \<equiv> {(E, k). vertex_cover_pred_list E k}"
 lemma vertex_cover_pred_le_Domainp_Set_List_rel_Set_List_rel_eq:
   "(\<lambda>E. vertex_cover_pred E k) \<le> Domainp (Set_List_rel Set_List_rel_eq)"
   apply (intro predicate1I DomainPI, rule Set_List_rel_Set_List_rel_eq_transl_set_set_list_list_selfI)
-  by auto (metis card_eq_0_iff vertex_cover_predE nat.simps numeral_2_eq_2 ugraphE)
+  by auto
 
 lemma vertex_cover_pred_list_le_Rangep_Set_List_rel_Set_List_rel_eq:
   "(\<lambda>E. vertex_cover_pred_list E k) \<le> Rangep (Set_List_rel Set_List_rel_eq)"
