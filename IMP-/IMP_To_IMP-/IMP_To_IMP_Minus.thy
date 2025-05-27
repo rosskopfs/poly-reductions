@@ -73,16 +73,10 @@ next
     using finite_range_stays_finite
     by blast
 next
-  case (Seq c1 s1 x s2 c2 y s3 z)
+  case (Seq c1 s1 x s2 c2 y s3 z) 
   hence "finite (range s2)"
     using finite_range_stays_finite
     by blast
-  hence "s2 a < 2 ^ (k + x)" for a
-    using Seq \<open>finite (range s1)\<close> \<open>finite (range s2)\<close>
-    by auto
-  have "max_const c2  < 2 ^ k"
-    using Seq
-    by simp
   hence "max_const c2 < (2 :: nat) ^ (k + x)"
     using bigstep_progress Seq
     by (auto simp: eval_nat_numeral intro: le_less_trans less_imp_le_nat  n_less_n_mult_m)
