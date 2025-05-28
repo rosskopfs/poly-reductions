@@ -9,35 +9,27 @@ definition "mop_set_card S  = REST [card S \<mapsto> 1]"
 definition "mop_set_empty_set = REST [ {} \<mapsto> 1]"
 definition "mop_set_insert S s = REST [insert s S \<mapsto> 1]"
 definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E ]"
+
 definition "mop_list_up_to xs ≡ REST [ {..<length xs} ↦ length xs ]"
+definition "mop_list_up_to_n n ≡ REST [ {..<n} ↦ n ]"
+
 definition "mop_set_times A B ≡ REST [ A × B ↦ card A * card B ]"
+definition "mop_set_union A B ≡ REST [ A \<union> B ↦ card A + card B ]"
 
 (* can't use times since edges is a 'a set set rather than ('a × 'a) set *)
 definition "mop_all_edges V ≡ REST [ all_edges V ↦ card V * card V]"
+definition "mop_for_all_set S p pt ≡ REST [ ∀s ∈ S. p s ↦ sum pt S ]"
 
 definition "mop_set_diff A B ≡ REST [ A - B ↦ card A ]"
 definition "mop_set_Union A ≡ REST [ ⋃ A ↦ sum card A ]"
+definition "mop_set_eq A B ≡ REST [ A = B ↦ min (card A) (card B) ]"
 
-definition "mop_leq (l :: nat) r ≡ REST [ (l ≤ r) ↦ min l r ]"
-definition "mop_plus l r ≡ REST [ l + r ↦ l + r ]"
-
-(* TODO: helper lemmas? *)
-definition "nat_encoded_size k = floor_log k + 1"
-
-lemma nat_encoded_size_leq_self:
-  assumes "2 ≤ k"
-  shows "nat_encoded_size k ≤ k"
-using assms
-unfolding nat_encoded_size_def
-apply (induction k)
-apply simp
-by (smt (verit, del_insts) One_nat_def Suc_1 add_Suc_right floor_log_Suc_zero floor_log_le_iff floor_log_twice le_Suc_eq nat_arith.rule0 not_less_eq_eq)
-
+definition "mop_leq (l :: nat) r ≡ REST [ (l ≤ r) ↦ 1 ]"
+definition "mop_plus (l :: nat) r ≡ REST [ l + r ↦ 1 ]"
 
 definition "nrest_image f ft A = REST [ f ` A \<mapsto> sum ft A ]"
-
-(* TODO: lemmas *)
-definition "nrest_filter_image f ft P Pt A = REST [ f ` {a ∈ A. P a} \<mapsto> sum (λa. Pt a + (if P a then ft a else 0)) A ]"
+definition "nrest_filter_image f ft P Pt A =
+    REST [ f ` {a ∈ A. P a} \<mapsto> sum (λa. Pt a + (if P a then ft a else 0)) A ]"
 
 lemma nrest_image_bound:
 assumes "⋀a. a ∈ A ⟹ ft a ≤ c"
@@ -56,5 +48,18 @@ lemma card_all_edges_upper:
 assumes "finite V"
 shows "card (all_edges V) ≤ card V * card V"
 by (simp add: assms card_all_edges choose_2_upperbound)
+
+definition "nat_encoded_size k = floor_log k + 1"
+
+lemma nat_encoded_size_leq_self:
+  assumes "2 ≤ k"
+  shows "nat_encoded_size k ≤ k"
+using assms
+unfolding nat_encoded_size_def
+apply (induction k)
+apply simp
+by (smt (verit, del_insts) One_nat_def Suc_1 add_Suc_right floor_log_Suc_zero floor_log_le_iff
+  floor_log_twice le_Suc_eq nat_arith.rule0 not_less_eq_eq)
+
 
 end

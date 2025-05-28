@@ -5,7 +5,7 @@ theory PART_To_MAXCUT
     Reductions
 begin
 
-definition max_cut  where
+definition max_cut where
   "max_cut \<equiv> {((V,E), w, W).
                        fin_sgraph V E \<and>
                        (\<exists>S. S \<subseteq> V  \<and> sum w {{u, v}|u v. u \<in> S \<and> v \<in> (V - S)} \<ge> W)}"
@@ -28,9 +28,10 @@ definition "part_alter \<equiv> {as::nat list. \<exists>xs. (\<forall>i < length
    but (1 * 2 + 2 * 2) \<ge> (ceil (1/4 * (2^2 + 2^2 + 1)) *)
 
 abbreviation "w as \<equiv> (\<lambda>s. (THE x. x \<in> {(as!u) * (as!v)|u v. {u, v} = s}))"
-definition part_to_max_cut  where
-  "part_to_max_cut as = (({..<length as},all_edges {..<length as}),
-                          w as, (sum_list as^2 + 3) div 4)"
+definition part_to_max_cut where
+  "part_to_max_cut as = (
+    ({..<length as}, all_edges {..<length as}),
+    w as, (sum_list as^2 + 3) div 4)"
 
 lemma reduction_weight_is_product:
   assumes "finite S"
