@@ -114,7 +114,7 @@ lemma rel_set_independent_set_independent_set_list [transfer_rule]:
   unfolding independent_set_def independent_set_list_def
   unfolding independent_set_pred_def independent_set_pred_list_def
   apply transfer_prover_start
-              apply transfer_step+
+  apply transfer_step+
   by (auto simp: pred_prod_beta)
 
 end
