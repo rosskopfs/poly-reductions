@@ -7,7 +7,7 @@ begin
 text \<open>
   This is the alignment theory for the paper:
 
-  \<open>Proof-Producing Translation of Functional Programs into a Time & Space Reasonable Model\<close>
+  \<open>Proof-Producing Translation of Functional Programs Towards a Time & Space Reasonable Model\<close>
 
   Open this file in Isabelle/jEdit, as described in the supplied @{file "../README.md"}.
   Formal elements referenced in the texts are all clickable, leading to the original definition.

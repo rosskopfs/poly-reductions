@@ -16,7 +16,9 @@ In short:
 
 2. Install AFP for Isabelle from the terminal
    (on Windows, run `isabelle/Admin/Cygwin/Cygwin-Terminal.bat` to start a terminal):
-   `Isabelle2025/bin/isabelle components -u afp-2025-05-23/thys`
+   ```
+   Isabelle2025/bin/isabelle components -u afp-2025-05-23/thys
+   ```
 
 ## Using this project
 Download this project, then include the directory in Isabelle with `-d <workdir>/poly-reductions`.
