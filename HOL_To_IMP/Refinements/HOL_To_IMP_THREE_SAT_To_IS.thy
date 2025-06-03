@@ -106,7 +106,7 @@ context HOL_To_HOL_Nat
 begin
 
 case_of_simps conflict_lit_eq : conflict_lit.simps
-function_compile_nat conflict_lit_eq
+function_compile_nat conflict_lit_eq print_theorems
 
 thm sat_is_un_2_list_def
 
@@ -124,16 +124,16 @@ lemma sat_is_un_2_list_fo_def:
   "sat_is_un_2_list F = concat (map (sat_is_un_2_list_fo3 F) (enumerate 0 F))"
   unfolding sat_is_un_2_list_def sat_is_un_2_list_fo_defs by simp
 
-function_compile_nat sat_is_un_2_list_fo0_def
+function_compile_nat sat_is_un_2_list_fo0_def print_theorems
 
 definition "map_acc_sat_is_un_2_list_fo0 l1 i j \<equiv> map_acc (sat_is_un_2_list_fo0 l1 i j)"
 lemmas map_acc_sat_is_un_2_list_fo0_eq = map_acc_eq[of "sat_is_un_2_list_fo0 l1 i j" for l1 i j,
   folded map_acc_sat_is_un_2_list_fo0_def]
-function_compile_nat map_acc_sat_is_un_2_list_fo0_eq
+function_compile_nat map_acc_sat_is_un_2_list_fo0_eq print_theorems
 
 lemmas sat_is_un_2_list_fo1_eq = sat_is_un_2_list_fo1_def[unfolded map_eq_map_acc_nil,
   folded map_acc_sat_is_un_2_list_fo0_def]
-function_compile_nat sat_is_un_2_list_fo1_eq
+function_compile_nat sat_is_un_2_list_fo1_eq print_theorems
 
 definition "map_acc_sat_is_un_2_list_fo1 i j Cj \<equiv> map_acc (sat_is_un_2_list_fo1 i j Cj)"
 lemmas map_acc_sat_is_un_2_list_fo1_eq =

@@ -1,5 +1,4 @@
 # Automatic Refinements and Polynomial-Time Reductions in Isabelle/HOL
-This repository sets out to formalize some classic results about NP-completeness in Isabelle/HOL.
 
 ## Preliminaries
 
