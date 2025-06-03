@@ -15,7 +15,7 @@ In short:
    ```
 
 2. Install AFP for Isabelle from the terminal
-   (on Windows, run `isabelle/Admin/Cygwin/Cygwin-Terminal.bat` to start a terminal):
+   (on Windows, run `Isabelle2025/Admin/Cygwin/Cygwin-Terminal.bat` to start a terminal):
    ```
    Isabelle2025/bin/isabelle components -u afp-2025-05-23/thys
    ```
