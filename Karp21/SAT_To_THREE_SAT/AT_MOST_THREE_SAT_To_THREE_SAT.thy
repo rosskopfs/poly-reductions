@@ -28,7 +28,6 @@ fun at_most_three_sat_to_three_sat_aux where
     at_most_three_sat_to_three_sat_aux xs (i + 1) @ to_at_least_3_clause (remdups x) i"
 | "at_most_three_sat_to_three_sat_aux [] i = []"
 
-
 definition "at_most_three_sat_to_three_sat_list F \<equiv> if at_most_n_sat_list 3 F
   then (at_most_three_sat_to_three_sat_aux (V F) 0)
   else [[]]"

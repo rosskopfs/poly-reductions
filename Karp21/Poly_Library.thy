@@ -11,7 +11,9 @@ definition "mop_set_insert S s = REST [insert s S \<mapsto> 1]"
 definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E ]"
 
 definition "mop_list_up_to xs ≡ REST [ {..<length xs} ↦ length xs ]"
-definition "mop_list_up_to_n n ≡ REST [ {..<n} ↦ n ]"
+definition "mop_list_up_to_n (n :: nat) ≡ REST [ {..<n} ↦ n ]"
+definition "mop_list_length xs ≡ REST [ length xs ↦ 1 ]"
+definition "mop_list_map xs f ft ≡ REST [ map f xs ↦ foldl (+) 0 (map ft xs)]"
 
 definition "mop_set_times A B ≡ REST [ A × B ↦ card A * card B ]"
 definition "mop_set_union A B ≡ REST [ A \<union> B ↦ card A + card B ]"
