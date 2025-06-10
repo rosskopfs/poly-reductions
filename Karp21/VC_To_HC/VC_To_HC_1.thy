@@ -404,8 +404,7 @@ lemma edge_of_vertex_contains:
   shows "e = {v,a}"
 proof -
   have 1: "a\<in> e"
-    using node_of_edge_construction_contains_a assms
-    by fast
+    using node_of_edge_construction_contains_a[OF assms(1)] .
   have 2: "v \<in> e"
     using vertex_in_edge_of_node assms
     by fast
@@ -442,7 +441,7 @@ proof -
     case True
     then have "x\<notin> set (construct_cycle_add_edge_nodes E u C')"
       using assms node_of_node_of_edge_construction \<open>x = Edge w e i\<close>
-      by fast
+      by meson
     then show ?thesis
       using assms
       by simp
@@ -2637,8 +2636,8 @@ proof -
     by (metis in_set_conv_nth only_previous_edges_in_new_edges)
   then obtain i where i_def: "i<length E' \<and> e = E' ! i" by auto
   have va: "v = a"
-    using assms  helper7_for_helper_arcs_explicit_Cover_Edge0_Edge0
-    by fastforce
+    using assms helper7_for_helper_arcs_explicit_Cover_Edge0_Edge0
+    by force
   have " (\<forall>j. v \<in> E' ! j \<longrightarrow> j < length E' \<longrightarrow> \<not> j < i)"
   proof (rule ccontr)
     assume "\<not>(\<forall>j. v \<in> E' ! j \<longrightarrow> j < length E' \<longrightarrow> \<not> j < i)"
@@ -2808,7 +2807,7 @@ proof -
     by auto
   have va: "v = a"
     using assms helper7_for_helper_arcs_explicit_Cover_Edge0_Edge0b
-    by fastforce
+    by force
   have "(\<forall>j. v \<in> E' ! j \<longrightarrow> j < length E' \<longrightarrow> \<not> i < j)"
   proof (rule ccontr)
     assume "\<not>(\<forall>j. v \<in> E' ! j \<longrightarrow> j < length E' \<longrightarrow> \<not> i < j)"

@@ -468,6 +468,6 @@ lemma ugraph_implies_smaller_set_ugraph:
 lemma edge_contains_minus_one_not_empty:
   assumes "e \<in> set E'" "ugraph (set E')" "u \<in> e"
   shows "e-{u} \<noteq> {}"
-  using subset_singletonD assms ugraph_def by fastforce
+  using assms unfolding ugraph_def by (auto dest!: subset_singletonD)
 
 end

@@ -103,7 +103,7 @@ definition "independent_set_list \<equiv> {(E, k). independent_set_pred_list E k
 lemma independent_set_pred_le_Domainp_Set_List_rel_Set_List_rel_eq:
   "(\<lambda>E. independent_set_pred E k) \<le> Domainp (Set_List_rel Set_List_rel_eq)"
   apply (intro predicate1I DomainPI, rule Set_List_rel_Set_List_rel_eq_transl_set_set_list_list_selfI)
-  by auto (metis card_eq_0_iff independent_set_predE nat.simps numeral_2_eq_2 ugraphE)
+  by auto
 
 lemma independent_set_pred_list_le_Rangep_Set_List_rel_Set_List_rel_eq:
   "(\<lambda>E. independent_set_pred_list E k) \<le> Rangep (Set_List_rel Set_List_rel_eq)"
@@ -112,9 +112,9 @@ lemma independent_set_pred_list_le_Rangep_Set_List_rel_Set_List_rel_eq:
 lemma rel_set_independent_set_independent_set_list [transfer_rule]:
   "rel_set (rel_prod (Set_List_rel Set_List_rel_eq) (=)) independent_set independent_set_list"
   unfolding independent_set_def independent_set_list_def
-  apply (intro rel_set_Collect_Collect_if_rel_fun_if_le_Rangep_if_le_Domainp
-    case_prod_le_DomainpI independent_set_pred_le_Domainp_Set_List_rel_Set_List_rel_eq
-    case_prod_le_RangepI independent_set_pred_list_le_Rangep_Set_List_rel_Set_List_rel_eq)
-  by auto transfer_prover
+  unfolding independent_set_pred_def independent_set_pred_list_def
+  apply transfer_prover_start
+  apply transfer_step+
+  by (auto simp: pred_prod_beta)
 
 end

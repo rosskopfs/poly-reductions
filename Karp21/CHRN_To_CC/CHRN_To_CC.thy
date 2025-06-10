@@ -115,8 +115,7 @@ proof -
    using fin \<open>card c_Sets = k\<close> card_Suc_Diff1[OF fin \<open>c \<in> c_Sets\<close>]
    by (intro card_Un_disjoint[THEN trans]) auto
   moreover have "{x} \<notin> E"
-    using \<open>ugraph E\<close> ugraph_def
-    by fastforce
+    using \<open>ugraph E\<close> unfolding ugraph_def by auto
   ultimately  show ?thesis
     using c_Sets_def cx_def ugraph_def card_2_iff
     by (intro exI[of _ ?cs] is_k_colorableI) (auto|force)

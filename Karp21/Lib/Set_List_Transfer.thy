@@ -23,7 +23,55 @@ lemma Set_List_relD:
 lemma Set_List_rel_iff [iff]: "Set_List_rel R s xs \<longleftrightarrow> rel_set R s (set xs)"
   using Set_List_relI Set_List_relD by blast
 
+lemma right_total_Set_List_rel[transfer_rule]:
+  "right_total R \<Longrightarrow> right_total (Set_List_rel R)"
+  unfolding Set_List_rel_def
+  by (metis right_total_def right_total_rel_set)
+
+lemma left_unique_Set_List_rel[transfer_rule]:
+  "left_unique R \<Longrightarrow> left_unique (Set_List_rel R)"
+  by (metis Set_List_rel_def left_unique_def left_unique_rel_set)
+
+lemma Set_List_rel_setI:
+  assumes "list_all2 R xs ys"
+  shows "Set_List_rel R (set xs) ys"
+  using assms unfolding Set_List_rel_def
+  by (meson list.set_transfer rel_funE)
+
 abbreviation "Set_List_rel_eq \<equiv> Set_List_rel (=)"
+
+lemma Domainp_Set_List_rel_eq[relator_domain]:
+  assumes "left_unique R"
+  shows "Domainp (Set_List_rel R) = (\<lambda>A. finite A \<and> Ball A (Domainp R))"
+proof -
+  have [simp]: "finite X" if "rel_set R X (set xs)" for X xs
+  proof -
+    from assms that have "X = {(THE x'. R x' x) | x. x \<in> set xs}"
+      unfolding left_unique_def rel_set_def
+      by auto (metis the_equality)+
+    then show ?thesis
+      by simp
+  qed
+  have "Ex (Set_List_rel R X)" if "finite X" "\<forall>x \<in> X. \<exists>x'. R x x'" for X
+  proof -
+    from that obtain xs where "set xs = X"
+      using finite_list by blast
+    moreover from this that have "\<exists>ys. list_all2 R xs ys"
+      by (induction xs arbitrary: X) fastforce+
+    ultimately show ?thesis
+      using Set_List_rel_setI by blast
+  qed
+  with assms show ?thesis
+    unfolding Domainp_iff
+    by (intro ext) (fastforce simp: rel_set_def)
+qed
+
+lemma Domain_Set_List_rel_eq_eq_finite[transfer_domain_rule]:
+  "Domainp Set_List_rel_eq = finite"
+  unfolding Set_List_rel_def rel_set_def Domainp_iff
+  apply(intro ext)
+  by (metis List.finite_set finite_distinct_list set_eqI)
+
 
 lemma eq_set_if_Set_List_rel_eq:
   assumes "Set_List_rel_eq s xs"
@@ -106,6 +154,17 @@ next
     by auto (metis Pow_iff image_iff in_mono subseqs_powset)
   then show ?case by blast
 qed
+
+lemma set_enumerate_eq:
+  "set (enumerate n xs) = {(n + i, xs ! i) |i. i < length xs}"
+  by (force simp: in_set_enumerate_eq less_diff_conv2)
+
+lemma enumerate_Set_List_transfer [transfer_rule]:
+  "((=) ===> list_all2 R ===> Set_List_rel (rel_prod (=) R))
+    (\<lambda>n xs. {(n + i, xs ! i) |i. i < length xs}) enumerate"
+  apply(intro rel_funI Set_List_relI rel_setI)
+   apply(auto simp: set_enumerate_eq list_all2_lengthD list_all2_nthD2)
+  done
 
 definition "transl_list_list_list_set \<equiv> map set"
 

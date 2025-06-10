@@ -19,7 +19,7 @@ theorem is_reduction_vc_sc:
   subgoal for E k V
     apply (rule bexI[where x = "{{e \<in> E. v \<in> e} |v. v \<in> V}", rotated])
     subgoal
-      by fastforce
+      by blast
     apply (intro conjI)
     subgoal
       apply safe

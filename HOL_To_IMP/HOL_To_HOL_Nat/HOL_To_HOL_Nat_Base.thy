@@ -203,7 +203,7 @@ be made an instance of @{class compile_nat} and hence no higher-order arguments 
 named_theorems "Rel_nat_compile_nat"
   "Rel_nat relatedness theorems for terms compiled from HOL to HOL-Nat"
 named_theorems "Rel_nat_compile_nat_selector"
-  "Rel_nat relatedness theorems for ntat_selector of constructor terms compiled from HOL to HOL-Nat"
+  "Rel_nat relatedness theorems for nat_selector of constructor terms compiled from HOL to HOL-Nat"
 
 ML_file \<open>datatype_to_nat.ML\<close>
 ML_file \<open>hol_fun_to_hol_nat_fun.ML\<close>

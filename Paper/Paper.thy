@@ -7,40 +7,40 @@ begin
 text \<open>
   This is the alignment theory for the paper:
 
-  \<open>Proof-Producing Translation of Functional Programs into a Time & Space Reasonable Model\<close>
+  \<open>Proof-Producing Translation of Functional Programs Towards a Time & Space Reasonable Model\<close>
 
   Open this file in Isabelle/jEdit, as described in the supplied @{file "../README.md"}.
   Formal elements referenced in the texts are all clickable, leading to the original definition.
   To get the statements as close to the informal text as possible, local notation is introduced,
   and implicit assumptions are stated via local context where necessary.
 
-  Text between (*<*)\<dots>(*>*) is needed by the system (e.g., small proofs relating the new statement 
-  to the original theorem(s)), but can otherwise be ignored.
-\<close>
+  Proofs have to be explored interactively; in this theory, we only put together our final theorems.
+  Text between (*<*)\<dots>(*>*) is needed by the system, but can otherwise be ignored.\<close>
+
 
 
 section \<open>Preliminaries\<close>
 
-text \<open>Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.\<close>
+paragraph \<open>Fig. 3: Semantics shared by our IMP-languages, excluding \<open>IMP\<^sup>-\<close>\<close>
+text \<open>
+  Registers are of @{typ vname}, values of @{typ val}, state of @{typ state}.
 
-text \<open>Atom evaluation function @{const atomVal} with the following equations:\<close>
+  (a) Atom evaluation function @{const atomVal} with the following equations:\<close>
 (*<*)context includes aops_syntax and atom_syntax begin(*>*)
 
 lemma "\<lbrakk>C n\<rbrakk>\<^sub>s \<equiv> n" (*<*)by simp(*>*)
 lemma "\<lbrakk>R r\<rbrakk>\<^sub>s \<equiv> s r" (*<*)by simp(*>*)
 
-text \<open>Expression evaluation function @{const aval} with the following equations:\<close>
+text \<open>(b) Expression evaluation function @{const aval} with the following equations:\<close>
 
 lemma "\<lbrakk>A\<^sub>1 + A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s + \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" (*<*)by simp(*>*)
 lemma "\<lbrakk>A\<^sub>1 - A\<^sub>2\<rbrakk>\<^sub>s = \<lbrakk>A\<^sub>1\<rbrakk>\<^sub>s - \<lbrakk>A\<^sub>2\<rbrakk>\<^sub>s" (*<*)by simp(*>*)
 
 (*<*)end(*>*)
 
-subsection \<open>Execution Relation (Big-Step Semantics)\<close>
 text \<open>
-  Commands also contain a no-op command (@{const SKIP}) for technical reasons, which we skip in the
-  paper as it is irrelevant. Here are the shared rules (from @{const big_step_t}):
-\<close>
+  (c) Commands also contain a no-op command (@{const SKIP}) for technical reasons, which we skip in
+      the paper as it is irrelevant. Shared rules (from @{const big_step_t}):\<close>
 (*<*)context includes orig_syntax and Com.com_syntax begin(*>*)
 
 lemma Assign:
@@ -65,12 +65,29 @@ lemma Seq:
 
 (*<*)end(*>*)
 
-subsection "Theorem 1"
+paragraph \<open>Fig. 4: Execution relation for \<open>WHILE\<close>\<close>
+text \<open>Commands as @{typ com'}, semantics via @{const big_step_t'}. Special rules:\<close>
+(*<*)context includes orig_syntax and Com.com_syntax begin(*>*)
 
+lemma WhF:
+  assumes "s r = 0"
+  shows "(WHILE r\<noteq>0 DO p,s) \<Rightarrow>\<^bsup>2\<^esup> s"
+  (*<*)using assms by (auto simp: numeral_eq_Suc)(*>*)
+
+lemma WhT:
+  assumes "s\<^sub>1 r \<noteq> 0" "(p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2" "(WHILE r\<noteq>0 DO p,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3"
+  shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s\<^sub>3"
+  (*<*)using assms by auto(*>*)
+
+(*<*)end(*>*)
+
+paragraph \<open>Definition 1\<close>
+text \<open>See @{const smax}; \<open>a\<^bsub>max\<^esub>\<close> via @{class max_const} typeclass.\<close>
+
+paragraph \<open>Theorem 1\<close>
 text \<open>
-  \<open>a\<^bsub>max\<^esub>\<close> via @{class max_const} typeclass. The theorem @{thm IMP_space_growth} also needs the
-  implicit assumption that the state has a finite codomain.
-\<close>
+  In theorem @{thm IMP_space_growth}, which also needs the implicit assumption that the state has a
+  finite codomain. In nicer syntax:\<close>
 
 context (*<*)includes orig_syntax(*>*) 
   fixes s :: state assumes "finite (range s)"
@@ -91,46 +108,112 @@ qed
 end
 
 
+
 section \<open>\<open>HOL\<^bsup>(TC)\<^esup>\<close> to \<open>HOL\<^bsup>(TC)\<nat>\<^esup>\<close>\<close>
 
+paragraph \<open>Definition 2 and 3\<close>
 text \<open>
-  Definition 1: @{const rel_fun} (function relator)
-  Definition 2: @{class compile_nat} typeclass,
-  Definition 3: Pairing function @{const pair_nat} with inverses @{const fst_nat} 
-  and @{const snd_nat} and natural number datatype selector @{const nat_selector}.
-\<close>
+  Definition 2: @{const rel_fun} (function relator)
+  Definition 3: @{class compile_nat} typeclass\<close>
 
-subsection "Theorem 3"
 
-text \<open>Proof of partial Galois equivalence:\<close>
-lemma
-  defines "L_rel \<equiv> (=\<^bsub>in_dom (Rel_nat :: nat \<Rightarrow> ('a::compile_nat) \<Rightarrow> bool)\<^esub>)"
-      and "R_rel \<equiv> (=\<^bsub>in_codom (Rel_nat :: nat \<Rightarrow> 'a \<Rightarrow> bool)\<^esub>)"
-    shows "galois.galois_equivalence L_rel R_rel denatify natify"
-(*<*)
-proof -
-  have eqs: "L_rel = (=\<^bsub>range (natify :: 'a :: compile_nat  \<Rightarrow> _)\<^esub>)" "R_rel = ((=) :: 'a \<Rightarrow> _)"
-    unfolding L_rel_def R_rel_def using Rel_nat_def imageE by blast+
-  show ?thesis unfolding eqs by (fact compile_nat_type_def.galois_equivalence)
-qed
-(*>*)
+subsection \<open>Encoding of Datatypes\<close>
 
-subsection \<open>Example 3 (Appendix)\<close>
+paragraph \<open>Definition 4\<close>
+text \<open>
+  Pairing function @{const pair_nat} with inverses @{const fst_nat} and @{const snd_nat} and natural
+  number datatype selector @{const nat_selector}.\<close>
 
-text \<open>The type of lists is already compiled (see @{const Cons_nat}).
-For illustration purposes, we compile a copy of the type:\<close>
+paragraph \<open>Example 2\<close>
+text \<open>
+  The type of lists is already compiled (see @{const Cons_nat}).
+  For illustration purposes, we compile a copy of the type:\<close>
 
 datatype 'a listcopy = Nil_copy | Cons_copy 'a "'a listcopy"
 datatype_compile_nat listcopy
 print_theorems \<comment> \<open>move your cursor on the command to the left to see all generated theorems and constants\<close>
 
-subsection \<open>Fig. 4\<close>
 
-context HOL_To_HOL_Nat
-begin
+subsection \<open>Synthesis of \<open>HOL\<^sup>\<nat>\<close> Functions\<close>
 
-text \<open>The synthesis is fully automatic. We list the corresponding theorems from the figure below.
-Here is the input function:\<close>
+paragraph \<open>Definition 5 (Monotone Functions)\<close>
+text \<open>@{const mono_wrt_rel}\<close>
+
+paragraph \<open>Definition 6 (Partial Galois Property, Connection, and Equivalence)\<close>
+text \<open>
+  Partial Galois Property: @{const galois_prop.galois_prop}
+  Partial Galois Connection: @{const galois.galois_connection}
+  Partial Galois Equivalence: @{const galois.galois_equivalence}
+  Partial Galois Equivalence on PERs: @{const transport.partial_equivalence_rel_equivalence}\<close>
+
+paragraph \<open>Lemma 1\<close>
+lemma "((=\<^bsub>\<W> TYPE('a::compile_nat)\<^esub>) \<equiv>\<^bsub>PER\<^esub> ((=) :: 'a \<Rightarrow> _)) denatify natify"
+ (*<*) by (rule compile_nat_type_def.transport.tper_bij.tpre_bij.trefl_bij.tbij.partial_equivalence_rel_equivalenceI) (*>*)
+
+paragraph \<open>Definition 7 (Galois Relator)\<close>
+text \<open>@{const galois_rel.Galois}\<close>
+
+paragraph \<open>Lemma 2\<close>
+(*<*)context galois begin(*>*)
+lemma
+  assumes "((\<le>\<^bsub>R\<^esub>) \<Rightarrow> (\<le>\<^bsub>L\<^esub>)) r"
+      and "in_codom (\<le>\<^bsub>R\<^esub>) y"
+  obtains x where "Galois (\<le>\<^bsub>L\<^esub>) (\<le>\<^bsub>R\<^esub>) r x y"
+(*<*)
+proof -
+  from assms(2) obtain y' where "y' \<le>\<^bsub>R\<^esub> y" by blast
+  hence "Galois (\<le>\<^bsub>L\<^esub>) (\<le>\<^bsub>R\<^esub>) r (r y') y"
+    by (rule Galois_Relator.galois.right_left_Galois_if_right_relI[OF assms(1)])
+  thus ?thesis ..
+qed
+(*>*)
+(*<*)end(*>*)
+
+paragraph \<open>Lemma 3\<close>
+lemma "R\<nat> = Galois ((=\<^bsub>\<W> TYPE('a::compile_nat)\<^esub>)) ((=) :: 'a \<Rightarrow> _) natify"
+(*<*)
+  using compile_nat_type_def.left_Galois_eq_AR unfolding compile_nat_type_def.AR_def
+  unfolding Rel_nat_iff_eq_natify ..
+(*>*)
+
+paragraph \<open>Theorem 3\<close>
+text \<open>Repeated here for completeness.\<close>
+theorem
+  fixes L\<^sub>1 and L\<^sub>2 and R\<^sub>1 and R\<^sub>2
+  assumes
+    "(L\<^sub>1 \<equiv>\<^bsub>PER\<^esub> R\<^sub>1) l\<^sub>1 r\<^sub>1"
+    "(L\<^sub>2 \<equiv>\<^bsub>PER\<^esub> R\<^sub>2) l\<^sub>2 r\<^sub>2"
+  obtains l r where "((L\<^sub>1 \<Rrightarrow> L\<^sub>2) \<equiv>\<^bsub>PER\<^esub> (R\<^sub>1 \<Rrightarrow> R\<^sub>2)) l r"
+(*<*)
+  by (metis Fun_Rel_rel_def
+      Transport_Functions.transport_Fun_Rel.partial_equivalence_rel_equivalenceI
+      Transport_Functions_Base.transport_Dep_Fun_Rel.transport_defs(3) assms)
+(*>*)
+
+paragraph \<open>Theorem 4\<close>
+theorem
+  fixes "L\<^sub>1" "L\<^sub>2"
+  assumes
+    "(L\<^sub>1 \<equiv>\<^bsub>PER\<^esub> R\<^sub>1) l\<^sub>1 r\<^sub>1"
+    "(L\<^sub>2 \<equiv>\<^bsub>PER\<^esub> R\<^sub>2) l\<^sub>2 r\<^sub>2"
+  defines "L \<equiv> (L\<^sub>1 \<Rrightarrow> L\<^sub>2)"
+   and "R \<equiv> (R\<^sub>1 \<Rrightarrow> R\<^sub>2)"
+   and "G\<^sub>1 \<equiv> Galois L\<^sub>1 R\<^sub>1 r\<^sub>1"
+   and "G\<^sub>2 \<equiv> Galois L\<^sub>2 R\<^sub>2 r\<^sub>2"
+ shows "\<exists>r. Galois L R r = (G\<^sub>1 \<Rrightarrow> G\<^sub>2)"
+(*<*)
+  unfolding L_def R_def G\<^sub>1_def G\<^sub>2_def
+  apply (rule exI)
+  apply (rule transport_Fun_Rel.left_Galois_eq_Fun_Rel_left_Galois[unfolded transport_Fun_Rel.transport_defs])
+  apply (rule assms)+
+  done
+(*>*)
+
+paragraph \<open>Fig. 5 (natural number translation of \<open>count\<close>)\<close>
+text \<open>
+  The synthesis is fully automatic. We list the corresponding theorems from the figure below.
+  Here is the input function:\<close>
+(*<*)context HOL_To_HOL_Nat begin(*>*)
 
 fun count_acc2 :: "'a \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> nat" where
   "count_acc2 a [] n = n"
@@ -141,8 +224,9 @@ text \<open>First, get a single equation (Listing 1.1):\<close>
 
 case_of_simps count_acc2_eq : count_acc2.simps
 
-text \<open>Now we use black-box and white-box transport to obtain the related constant and its
-defining, tail-recursive equation:\<close>
+text \<open>
+  Now we use black-box and white-box transport to obtain the related constant and its defining,
+  tail-recursive equation:\<close>
 
 function_compile_nat count_acc2_eq
 print_theorems \<comment> \<open>move your cursor on the command to the left to see all generated theorems and constants\<close>
@@ -167,8 +251,9 @@ lemma
 (*<*) using assms Rel_nat_count_acc2_nat_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
   by fastforce (*>*)
 
-text \<open>Final tail-recursive equation (Listing 1.4), using that @{const Rel_nat} is left-unique,
-as shown in @{thm left_unique_Rel_nat}:\<close>
+text \<open>
+  Final tail-recursive equation (Listing 1.4), using that @{const Rel_nat} is left-unique,
+  as shown in @{thm left_unique_Rel_nat}:\<close>
 
 lemma
   assumes "Rel_nat a (a' :: 'a :: compile_nat)"
@@ -179,13 +264,15 @@ lemma
 (*<*) using assms count_acc2_nat_eq_unfolded[unfolded If_nat_def eq_nat_eq_False_nat_iff]
   by fastforce (*>*)
 
-end
+(*<*)end(*>*)
+
 
 
 section \<open>\<open>HOL\<^bsup>TC\<nat>\<^esup>\<close> to \<open>IMP\<^bsup>TC\<^esup>\<close>\<close>
 
-subsection \<open>Fig. 5\<close>
+paragraph \<open>Fig. 6: Execution relation of \<open>IMP\<^bsup>TC\<^esup>\<close>-specific commands\<close>
 text \<open>Commands as @{typ tcom}, semantics via @{const tbig_step_t}. Special rules:\<close>
+
 (*<*)context includes tcom_syntax and orig_syntax and partial_syntax begin(*>*)
 
 lemma Call:
@@ -200,16 +287,19 @@ lemma Rec:
 
 (*<*)end(*>*)
 
-subsection \<open>Example 1\<close>
-
+paragraph \<open>Example 3 (Iteration function)\<close>                           
 text \<open>See @{thm HOL_To_HOL_Nat.fun_pow_snd_nat_eq}.\<close>
+
 
 subsection \<open>Compilation to \<open>IMP\<^bsup>TC\<^esup>\<close>\<close>
 
+paragraph \<open>Fig. 7 (compiler)\<close>
 text \<open>See @{ML_structure Compile_HOL_Nat_To_IMP}.\<close>
 
-subsection \<open>Execution Rules used for Symbolic Execution of \<open>IMP\<^bsup>TC\<^esup>\<close> Programs (Fig. 14, Appendix)\<close>
 
+subsection \<open>Correctness Proofs\<close>
+
+paragraph \<open>Fig. 9: Execution relation of  \<open>IMP\<^bsup>TC\<^esup>\<close> for single return registers\<close>
 (*<*)context includes tcom_syntax and terminates_with_syntax begin(*>*)
 
 theorem Assign1:
@@ -248,12 +338,9 @@ lemma Rec1:
 
 (*<*)end(*>*)
 
-subsection \<open>Example 2\<close>
-
-context HOL_Nat_To_IMP
-begin
-
+paragraph \<open>Fig. 10: Step-by-step correctness proof for \<open>count\<^sup>\<nat>\<close>\<close>
 text \<open>First, unfold the case combinator to if-then-elses:\<close>
+(*<*)context HOL_Nat_To_IMP begin(*>*)
 
 lemmas count_acc2_nat_eq = HTHN.count_acc2_nat_eq_unfolded[unfolded case_list_nat_def]
 
@@ -261,11 +348,10 @@ text \<open>Then, generate the \<open>IMP\<^bsup>TC\<^esup>\<close> program:\<cl
 
 compile_nat (non-optimized) count_acc2_nat_eq \<comment> \<open>remove the non-optimized flag for a shorter program\<close>
 
-text \<open>Then, prove the correctness. This is fully automatic, using the method @{method cook}.
-Here, we pr
-Here, we provide the corresponding
-step-by-step proof from the paper. Here is the input function:
-\<close>
+text \<open>
+  Then, prove the correctness. This is fully automatic, using the method @{method cook}.
+  Here, we provide the corresponding
+  step-by-step proof from the paper. Here is the input function:\<close>
 
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc2_nat
   text \<open>We prove correctness of the compiled \<open>IMP\<^bsup>W\<^esup>\<close> program. First, we reduce this proof to the
@@ -294,39 +380,21 @@ HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc2_nat
 
 HOL_To_IMP_correct HOL_To_HOL_Nat.count_acc2_nat by cook
 
-end
-
-subsection \<open>Case Studies\<close>
-
-text \<open>Can be found in @{dir "../HOL_To_IMP/Refinements"}.\<close>
-
-
-section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>-\<close>\<close>
-
-subsection \<open>Fig. 9\<close>
-text \<open>Commands as @{typ com'}, semantics via @{const big_step_t'}. Special rules:\<close>
-(*<*)context includes orig_syntax and Com.com_syntax begin(*>*)
-
-lemma WhF:
-  assumes "s r = 0"
-  shows "(WHILE r\<noteq>0 DO p,s) \<Rightarrow>\<^bsup>2\<^esup> s"
-  (*<*)using assms by (auto simp: numeral_eq_Suc)(*>*)
-
-lemma WhT:
-  assumes "s\<^sub>1 r \<noteq> 0" "(p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> s\<^sub>2" "(WHILE r\<noteq>0 DO p,s\<^sub>2) \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> s\<^sub>3"
-  shows "(WHILE r\<noteq>0 DO p,s\<^sub>1) \<Rightarrow>\<^bsup>n\<^sub>1+n\<^sub>2+1\<^esup> s\<^sub>3"
-  (*<*)using assms by auto(*>*)
-
 (*<*)end(*>*)
 
-subsection \<open>Fig. 10:\<close>
-text \<open>Full execution relation in @{const tail_step}. Shown rules:\<close>
+
+
+section \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^sup>W\<close>\<close>
+
+paragraph \<open>Fig. 11: Execution relation from Lemma 4\<close>
+text \<open>Full execution relation in @{const tail_step}:\<close>
+
 (*<*)context includes hol_bin_syntax and tail_syntax and partial_syntax and tcom_syntax begin(*>*)
 
 lemma
-  assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
-  shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> (s',b)"
-  (*<*)using assms by auto(*>*)
+  assumes "s' = s(r:= \<lbrakk>a\<rbrakk>\<^sub>s)"
+  shows "(r ::= a,s) \<Rightarrow>\<^bsup>2\<^esup> (s',\<zero>)"
+  (*<*)using assms by (auto simp: numeral_eq_Suc)(*>*)
 
 lemma
   assumes "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^sub>1\<^esup> (s',\<zero>)" "(p\<^sub>2,s') \<Rightarrow>\<^bsup>n\<^sub>2\<^esup> (s',b)"
@@ -334,14 +402,9 @@ lemma
   (*<*)using assms by auto(*>*)
 
 lemma
-  assumes "s' = s(r:= \<lbrakk>a\<rbrakk>\<^sub>s)"
-  shows "(r ::= a,s) \<Rightarrow>\<^bsup>2\<^esup> (s',\<zero>)"
-  (*<*)using assms by (auto simp: numeral_eq_Suc)(*>*)
-
-lemma "(RECURSE,s) \<Rightarrow>\<^bsup>5\<^esup> (s,\<one>)"
-  (*<*)by auto(*>*)
-
-text \<open>Rules not shown:\<close>
+  assumes "s r \<noteq> 0" "(p\<^sub>1,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
+  shows "(IF r\<noteq>0 THEN p\<^sub>1 ELSE p\<^sub>2,s) \<Rightarrow>\<^bsup>n+1\<^esup> (s',b)"
+  (*<*)using assms by auto(*>*)
 
 lemma
   assumes "s r = 0" "(p\<^sub>2,s) \<Rightarrow>\<^bsup>n\<^esup> (s',b)"
@@ -353,13 +416,19 @@ lemma
     shows "(CALL pc RETURN r,s) \<Rightarrow>\<^bsup>n+0\<^esup> (s',\<zero>)"
   (*<*)using assms by (auto intro: le_trans)(*>*)
 
+lemma "(RECURSE,s) \<Rightarrow>\<^bsup>5\<^esup> (s,\<one>)"
+  (*<*)by auto(*>*)
+
 (*<*)end(*>*)
 
-subsection "Lemma 1"
+
+subsection \<open>\<open>IMP\<^bsup>TC\<^esup>\<close> to \<open>IMP\<^bsup>WC\<^esup>\<close>\<close>
+
+paragraph \<open>Lemma 4\<close>
 text \<open>
   Proven in @{thm small_sound} and @{thm small_complete}, with the additional assumptions that
-  the programs are actually tail-recursive (the type does not enforce this)
-\<close>
+  the programs are actually tail-recursive (the type does not enforce this)\<close>
+
 context (*<*)includes orig_syntax and tail_syntax and hol_bin_syntax(*>*)
   fixes tp p assumes "invar tp" "invar p"
 begin
@@ -379,11 +448,11 @@ lemma
 
 end
 
-subsection "Theorem 6"
+paragraph \<open>Theorem 8\<close>
 text \<open>
   Definition in @{const compile}, correctness theorems @{thm compile_sound}
-  and @{thm compile_complete_add}.
-\<close>
+  and @{thm compile_complete_add}.\<close>
+
 context (*<*)includes partial_syntax(*>*)
   fixes p assumes "invar p"
 begin
@@ -406,9 +475,12 @@ theorem "p \<turnstile> (p,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esu
 end
 
 
-subsection "Lemma 2"
-text \<open>Lemma in @{thm neat_subst}.\<close>
+subsection \<open>\<open>IMP\<^bsup>WC\<^esup>\<close> to \<open>IMP\<^sup>W\<close>\<close>
 
+paragraph \<open>Definition 9\<close>
+text \<open>Definition in @{const inline}.\<close>
+
+paragraph \<open>Lemma 5\<close>
 (*<*)context includes orig_syntax begin(*>*)
 
 lemma
@@ -418,11 +490,7 @@ lemma
 
 (*<*)end(*>*)
 
-subsection "Theorem 7"
-text \<open>
-  Definition 5 in @{const inline}, correctness theorems @{thm inline_sound}
-  and @{thm inline_complete}
-\<close>
+paragraph \<open>Theorem 9\<close>
 (*<*)context includes orig_syntax and partial_syntax begin(*>*)
 
 theorem "(p,s)\<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>n\<^esup> s' \<Longrightarrow> (\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>\<^bsup>(n+1)*(\<bar>p\<bar>+1)\<^esup> s'"
@@ -447,7 +515,10 @@ theorem "(\<lparr>p\<rparr>\<^sub>\<star>,s) \<Rightarrow>\<^bsub>regs p\<^esub>
 
 (*<*)end(*>*)
 
-subsection "Fig. 11"
+
+subsection \<open>\<open>IMP\<^sup>W\<close> to \<open>IMP\<^sup>-\<close>\<close>
+
+paragraph \<open>Fig. 12: Execution relation for \<open>IMP\<^sup>-\<close>\<close>
 text \<open>Rules in @{const big_step}.\<close>
 (*<*)context includes minus_syntax and com_syntax begin(*>*)
 
@@ -483,14 +554,15 @@ lemma
 
 (*<*)end(*>*)
 
-subsection "Lemma 3"
-text \<open>Adder in @{const binary_adder}, lemma in @{thm assignment_to_binary_correct}\<close>
+paragraph \<open>Definition 10\<close>
+text \<open>Definition in @{const assignment_to_binary}, with adder in @{const binary_adder}.\<close>
 
+paragraph \<open>Lemma 6\<close>
+text \<open>This needs the implicit assumption that states have finite range. We also fix a word length:\<close>
 context (*<*)includes minus2_syntax(*>*)
   fixes w::nat assumes "0 < w"
   fixes s::state assumes "finite (range s)"
 begin
-
 
 theorem
   assumes "max {a\<^bsub>max\<^esub>, \<lbrakk>a\<rbrakk>\<^sub>s, s\<^bsub>max \<^esub>} < 2^w"
@@ -503,10 +575,8 @@ theorem
 
 end
 
-subsection "Theorem 8"
-
-text \<open>Theorem in @{thm IMP_To_IMP_Minus}\<close>
-
+paragraph \<open>Theorem 10\<close>
+text \<open>Again, states must have finite range.\<close>
 context (*<*)includes imp_syntax and minus2_syntax(*>*)
   fixes s::state assumes "finite (range s)"
 begin
@@ -529,6 +599,83 @@ proof -
     by (simp add: mult.commute mult.left_commute)
 qed
 (*>*)
+
+end
+
+
+
+section \<open>Case Study - Reducing 3SAT to Independent Sets\<close>
+text \<open>
+The examples of our case study can be found in @{dir "../HOL_To_IMP/Refinements"}.
+
+For 3SAT, we define the problem with:
+
+@{datatype lit} @{type sat}
+\<close>
+thm models_def sat_pred_def is_n_clause_def is_n_sat_def three_sat_pred_def three_sat_def
+
+text \<open>And independent set on @{type ugraph}s:\<close>
+thm ugraph_def is_independent_set_def independent_set_pred_def independent_set_def
+
+text \<open>Abstract reduction with:
+
+@{const conflict_lit} @{const sat_is_un_1} @{const sat_is_un_2} @{const sat_is}
+\<close>
+
+text \<open>Reduction correctness:\<close>
+thm is_reduction_sat_is[unfolded is_reduction_def]
+
+text \<open>
+@{const sat_is_un_2} is part of the abstract reduction and hence not an executable function.
+In the paper, we omit this detail for simplicity. The executable definition (used in the compilation)
+is actually called @{const sat_is_un_2_list}.
+\<close>
+
+text \<open>From the ADT compilation, we get the encoding into numbers:\<close>
+thm natify_lit.simps[unfolded Pos_nat_def Neg_nat_def] denatify_lit.simps
+
+text \<open>And IMP programs with correctness proofs for the constructors:\<close>
+context HOL_Nat_To_IMP begin (*<*)unbundle terminates_with_syntax(*>*)
+
+thm Pos_nat_IMP_tailcall_def Neg_nat_IMP_tailcall_def Pos_nat_IMP_correct Neg_nat_IMP_correct
+
+end
+
+text \<open>
+We next compile the functions used in @{const sat_is_un_2_list} to use the number encodings.
+For @{const conflict_lit} this is straightforward:
+\<close>
+context HOL_To_HOL_Nat begin
+
+thm conflict_lit_eq HOL_To_HOL_Nat.conflict_lit_nat_eq_unfolded
+                                    
+text \<open>All map applications need to be written as first-order functions, i.e. we have:\<close>
+thm sat_is_un_2_list_fo_def
+
+\<comment> \<open>@{const sat_is_un_2_list_fo0}\<close>
+thm HOL_To_HOL_Nat.sat_is_un_2_list_fo0_nat_eq_unfolded
+
+\<comment> \<open>@{const sat_is_un_2_list_fo1}: using first-order @{const map_acc_sat_is_un_2_list_fo0} based on 
+    tail-recursive @{const map_acc}\<close>
+thm map_acc_eq
+  HOL_To_HOL_Nat.map_acc_sat_is_un_2_list_fo0_nat_eq_unfolded
+  HOL_To_HOL_Nat.sat_is_un_2_list_fo1_nat_eq_unfolded
+
+end
+
+text \<open>Now we can compile the functions to \<open>IMP\<close>.\<close>
+
+context HOL_Nat_To_IMP begin
+
+\<comment> \<open>@{const conflict_lit}\<close>
+thm conflict_lit_nat_IMP_correct HOL_Nat_To_IMP.conflict_lit_nat_IMP_tailcall_def
+
+
+\<comment> \<open>@{const HTHN.map_acc_sat_is_un_2_list_fo0}\<close>
+thm map_acc_sat_is_un_2_list_fo0_nat_IMP_correct HOL_Nat_To_IMP.map_acc_sat_is_un_2_list_fo0_nat_IMP_tailcall_def
+                                                                         
+\<comment> \<open>Finally, @{const HTHN.sat_is_list_nat}\<close>
+thm sat_is_list_IMP_correct HOL_Nat_To_IMP.sat_is_list_nat_IMP_tailcall_def
 
 end
 

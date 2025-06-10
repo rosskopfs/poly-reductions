@@ -1,6 +1,7 @@
 theory Syntax
   imports 
     "HOL_To_IMP_Refinements.HOL_To_IMP_Lists"
+    "HOL_To_IMP_Refinements.HOL_To_IMP_THREE_SAT_To_IS"
     "IMP_To_IMP-.IMP_To_IMP_Minus"
     "IMP.IMP_Tailcall"
     "IMP-.IMP_Minus_Big_StepT"
@@ -31,8 +32,6 @@ end
 (* enabled: canonical *)
 
 abbreviation "omax \<equiv> max"
-abbreviation "R\<equiv>V"
-abbreviation "C\<equiv>N"
 notation aval ("\<lbrakk>(_)\<rbrakk> \<^sub>_")
 notation max_const ("_\<^bsub>max\<^esub>")
 abbreviation smax ("_\<^bsub>max \<^esub>") where "smax s \<equiv> Max (range s)"
@@ -44,7 +43,10 @@ notation size\<^sub>c ("\<bar>_\<bar>")
 unbundle no abs_syntax
 notation compile ("\<lparr>_\<rparr>\<^sub>\<circle>")
 notation inline ("\<lparr>_\<rparr>\<^sub>\<star>")
-
+notation transport.partial_equivalence_rel_equivalence (infix \<open>\<equiv>\<^bsub>PER\<^esub>\<close> 50)
+notation galois_rel.Galois ("Galois")
+notation Rel_nat ("R\<nat>")
+abbreviation "\<W>\<equiv>range (natify :: 'a :: compile_nat  \<Rightarrow> _)"
 
 (* abbrevs for context-dependent bundles *)
 
@@ -64,6 +66,8 @@ abbreviation ptobin ("\<lparr>_\<rparr>\<^sup>_") where "ptobin p w \<equiv> IMP
 (* bundles *)
 
 bundle atom_syntax begin
+  notation V ("R")
+  notation N ("C")
   notation atomVal ("\<lbrakk>(_)\<rbrakk> \<^sub>_")
 end
 
