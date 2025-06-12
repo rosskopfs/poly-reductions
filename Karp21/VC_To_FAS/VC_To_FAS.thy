@@ -95,7 +95,7 @@ lemma isMALFORMED_GRAPH:
   by (simp add: MALFORMED_GRAPH_def wf_digraph_def)
 
 definition vc_to_fas where
-  "vc_to_fas \<equiv> \<lambda>(E,K). (if K \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)
+  "vc_to_fas \<equiv> \<lambda>(E,K). (if finite E ∧ K \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)
                         then H E else MALFORMED_GRAPH, K)"
 
 
@@ -205,15 +205,15 @@ proof -
     qed
   qed
   then show ?thesis
-    unfolding  vc_to_fas_def
-    by (simp add: \<open>k \<le> card (\<Union> E)\<close> card2)
+    unfolding vc_to_fas_def
+    by (simp add: \<open>k \<le> card (\<Union> E)\<close> card2 finE)
 qed
 
 
 lemma vc_to_fas_completeness:
   assumes "(vc_to_fas (E, k)) \<in> feedback_arc_set"
   shows "(E, k) \<in> vertex_cover"
-proof (cases "k \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)")
+proof (cases "finite E ∧ k \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)")
   case True
   obtain S where S_def: "S \<subseteq> arcs (H E)" "card S \<le> k" "fin_digraph (H E)"
     "\<forall> p. pre_digraph.cycle (H E) p \<longrightarrow> (\<exists> e \<in> S. e \<in> set p)"

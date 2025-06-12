@@ -25,13 +25,13 @@ by auto
 definition "mop_list_to_set xs ≡ REST [ set xs ↦ length xs ]"
 
 (* remdups in O(n), to_at_least_3_clause is constant *)
-definition "mop_aux_fold_fn x acc ≡ REST [ (to_at_least_3_clause (remdups x) (snd acc) @ (fst acc), snd acc + 1) ↦ length x ]"
+definition "mop_aux_fold_fn x acc ≡ REST [ (to_at_least_3_clause (remdups x) (snd acc) @ (fst acc), snd acc + 1) ↦ length x ]" (* inner fun calls as REST stuff *)
 definition "mop_transl_list_list_list_set l ≡ REST [ transl_list_list_list_set l ↦ length l ]"
 definition "mop_at_most_three_sat_to_three_sat_list F ≡ nfoldli (V F) (λ_. True) mop_aux_fold_fn ([], 0)"
 
 definition "at_most_three_sat_to_three_sat_list_poly ≡ λ F. do {
   F' ← mop_list_to_set F;
-  b ← mop_for_all_set F' (λ cls. at_most_n_clause_list 3 cls) (λ_. 1);
+  b ← mop_set_for_all F' (λ cls. at_most_n_clause_list 3 cls) (λ_. 1);
   if b then do {
     (l, _) ← mop_at_most_three_sat_to_three_sat_list F;
     s ← mop_transl_list_list_list_set l;

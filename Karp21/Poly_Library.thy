@@ -5,7 +5,9 @@ theory Poly_Library
     Undirected_Graph_Theory.Undirected_Graphs_Root
 begin
 
-definition "mop_set_card S  = REST [card S \<mapsto> 1]"
+definition "mop_set_finite S ≡ REST [ finite S ↦ 1 ]" (* not computable? *)
+
+definition "mop_set_card S = REST [card S \<mapsto> 1]"
 definition "mop_set_empty_set = REST [ {} \<mapsto> 1]"
 definition "mop_set_insert S s = REST [insert s S \<mapsto> 1]"
 definition "mop_get_vertices E = REST [ (\<Union> E)  \<mapsto> 2 * card E ]"
@@ -20,7 +22,7 @@ definition "mop_set_union A B ≡ REST [ A \<union> B ↦ card A + card B ]"
 
 (* can't use times since edges is a 'a set set rather than ('a × 'a) set *)
 definition "mop_all_edges V ≡ REST [ all_edges V ↦ card V * card V]"
-definition "mop_for_all_set S p pt ≡ REST [ ∀s ∈ S. p s ↦ sum pt S ]"
+definition "mop_set_for_all S p pt ≡ REST [ ∀s ∈ S. p s ↦ sum pt S ]"
 
 definition "mop_set_diff A B ≡ REST [ A - B ↦ card A ]"
 definition "mop_set_Union A ≡ REST [ ⋃ A ↦ sum card A ]"
