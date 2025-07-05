@@ -46,16 +46,6 @@ definition "size_VC ≡ λ(E, K). card E + nat_encoded_size K"
 definition "size_FAS ≡ λ(H, K). card (verts H) + card (arcs H) + nat_encoded_size K"
 
 definition "vc_to_fas_space n ≡ 6 * n + 4 * n * n"
-definition "vc_to_fas_time' n ≡
-  1 + n +
-  2 * n + 1 +
-  4 * n +
-
-  4 * n * n +
-  2 * n +
-  4 * n * n * n +
-  4 * n * n * n + 2 * n"
-
 definition "vc_to_fas_time n ≡ 2 + 11 * n + 12 * n * n + 4 * n * n * n"
 
 lemma pair_image_list_inj_on: "inj_on (λ(u,v). ((u, True), (v, False))) { (u, v) . (u,v) ∈ S}"
@@ -139,7 +129,6 @@ unfolding SPEC_def vc_to_fas_poly_def vc_to_fas_def vc_to_fas_time_def size_VC_d
   H_def H'_def
 apply (rule T_specifies_I)
 apply(vcg' ‹-› rules: T_SPEC)
-(* apply (simp add: algebra_simps)+ *)
 apply (simp_all add: of_nat_eq_enat)
 subgoal for E K
 apply (intro impI conjI)
@@ -151,91 +140,120 @@ subgoal proof -
   let ?cross = "(⋃ E) × (⋃ E)"
   let ?enc_k = "nat_encoded_size K"
 
-  find_theorems "enat _"
-  find_theorems "of_nat _"
   assume e: "finite E ∧ (∀s∈E. card s = 2)" and k: "K ≤ ?card_u"
 
-  from e have card_bounds: "?card_u ≤ 2 * ?card"
-    by (simp add: card_union_if_all_subsets_card_i)
-
-  from e have inner_finite: "∀s ∈ E. finite s"
-    using card_ge_0_finite by force
-
-  from card_bounds have card_cross: "card ?cross ≤ 4 * ?card * ?card"
-  using card_cartesian_product[of ?u ?u] mult_le_mono[of ?card_u "2 * ?card" ?card_u "2 * ?card"]
-    by linarith
-
-
-  let ?a = "1 + enat ?card + enat (?card * 2) + 1 + enat (?card_u + ?card_u) + enat (?card_u * ?card_u) + enat ?card_u"
-  have "?a  = 1 + ?card + (?card * 2) + 1 + (?card_u + ?card_u) + (?card_u * ?card_u) + ?card_u"
-    by (simp add: one_enat_def)
-  also have "... ≤
-        1 + ?card + ?card * 2 + 1 + 2 * ?card + 2 * ?card + 2 * ?card * 2 * ?card + 2 * ?card"
-        using card_bounds mult_le_mono by fastforce
-  finally have a: "?a ≤ 2 + 9 * ?card + 4 * ?card * ?card" by simp
-
-find_theorems "enat _ + enat _ = enat _"
-  let ?b = "(∑a∈ ?cross . enat ?card + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0))"
-  have "?b ≤ (∑a ∈ ?cross . enat ?card + 1)"
-    using one_enat_def zero_enat_def
-    by (smt (verit, ccfv_SIG) add_left_mono le_zero_eq nle_le sum_mono)
-  (* also have "... = (∑a ∈ ?cross. enat (?card + 1))" *)
-  (*   by (metis one_enat_def plus_enat_simps(1)) *)
-  also have "... = (∑a ∈ ?cross. ?card + 1)"
-    by (metis one_enat_def plus_enat_simps(1))
-  also have "... ≤ card ?cross * (?card + 1)" by fastforce
-  also have "... ≤ 4 * ?card * ?card * (?card + 1)" using card_cross mult_le_mono
-    by blast
-  also have "... = 4 * ?card * ?card * ?card + 4 * ?card * ?card" by force
-  finally have b: "?b ≤ 4 * ?card * ?card * ?card + 4 * ?card * ?card" .
-
-  let ?c = "card ((λu. ((u, False), u, True)) ` ?u)"
-
-  from e have finite_a_inner: "∀e∈E. finite e"
-    using card_ge_0_finite by force
-  hence "finite ?u" using finite_union_if_all_subset_fin[of E] e
+  from e have card_u_bound: "?card_u ≤ 2 * ?card"
+    using card_union_if_all_subsets_card_i
     by fastforce
-  hence "?c ≤ ?card_u" using card_image_le e by blast
-  hence c: "?c ≤ 2 * ?card" using card_bounds by linarith
-
-  let ?d = "card ((λ(u, v). ((u, True), v, False)) ` { (u,v) ∈ ?cross. {u, v} ∈ E})"
-  have "?d ≤ card ?cross" using e card_image_cross_to_arcs inner_finite by blast
-  hence d: "?d ≤ 4 * ?card * ?card" using card_cross by linarith
 
   have card_bound: "?card ≤ ?card + ?enc_k"
     unfolding nat_encoded_size_def by force
 
-  have
-  "?a + ?b + ?c + ?d ≤
-    2 + 9 * ?card + 4 * ?card * ?card +
-    4 * ?card * ?card * ?card + 4 * ?card * ?card + 2 * ?card + 4 * ?card * ?card"
-    using a b c d
-    sorry
-    (* by linarith *)
-  also have "... ≤ 2 + 11 * ?card + 12 * ?card * ?card + 4 * ?card * ?card * ?card"
+  from e have inner_finite: "∀s ∈ E. finite s"
+    using card_ge_0_finite by force
+
+  from e have finite_a_inner: "∀e∈E. finite e"
+    using card_ge_0_finite by force
+  hence finite_u: "finite ?u" using finite_union_if_all_subset_fin[of E] e
+    by fastforce
+
+  from card_u_bound have card_cross: "card ?cross ≤ 4 * ?card * ?card"
+  using card_cartesian_product[of ?u ?u] mult_le_mono[of ?card_u "2 * ?card" ?card_u "2 * ?card"]
     by linarith
-  also have "... ≤ 2 + 11 * (?card + ?enc_k) + 12 * (?card + ?enc_k) * ?card +
-                    4 * (?card + ?enc_k) * ?card * ?card"
-    using card_bound mult_le_mono add_le_mono eq_imp_le by presburger
+
+  let ?a = "1 + enat ?card + enat (?card * 2) + 1 + enat (?card_u + ?card_u) + enat (?card_u * ?card_u) + enat ?card_u"
+  let ?a_nat = "1 + ?card + ?card * 2 + 1 + ?card_u + ?card_u + ?card_u * ?card_u + ?card_u"
+  have a_eq_nat: "?a = ?a_nat"
+    by (simp add: add.assoc one_enat_def)
+
+  have "?a_nat ≤
+        1 + ?card + ?card * 2 + 1 + 2 * ?card + 2 * ?card + 2 * ?card * 2 * ?card + 2 * ?card"
+      using card_u_bound mult_le_mono by fastforce
+  then have a: "?a_nat ≤ 2 + 9 * ?card + 4 * ?card * ?card"
+    by simp
+
+  let ?b = "(∑a∈ ?cross . enat ?card + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0))"
+  let ?b_nat = "(∑a∈ ?cross . ?card + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0))"
+
+  have sum_enat_nat: "⋀ A f. (∑ a ∈ A. enat (f a)) = enat (∑ a ∈ A. f a)"
+    by (metis (no_types, lifting) of_nat_eq_enat of_nat_sum sum.cong)
+  have "∀a. enat (card E) + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0) =
+          enat (card E + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0))"
+    by (simp add: one_enat_def)
+  then have "?b = (∑a∈ ?cross . enat (?card + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0)))"
+     by presburger
+  also have  "... = enat ?b_nat"
+    using sum_enat_nat[of "λa. ?card + (if case a of (u, v) ⇒ {u, v} ∈ E then 1 else 0)" ?cross]
+    by force
+  finally have b_eq_nat: "?b = ?b_nat" .
+
+  have "?b_nat ≤ (∑a∈ ?cross . ?card + 1)"
+    using sum_mono[of ?cross _ "λ_. ?card + 1"]
+    by simp
+  also have "... ≤ card ?cross * (?card + 1)" by fastforce
+  also have "... ≤ 4 * ?card * ?card * (?card + 1)" using card_cross mult_le_mono
+    by blast
+  also have "... = 4 * ?card * ?card * ?card + 4 * ?card * ?card" by simp
+  finally have b: "?b_nat ≤ 4 * ?card * ?card * ?card + 4 * ?card * ?card" .
+
+  let ?c = "card ((λu. ((u, False), u, True)) ` ?u)"
+  from finite_u have "?c ≤ ?card_u" using card_image_le e
+    by blast
+  then have c: "?c ≤ 2 * ?card" using card_u_bound
+    by linarith
+
+  let ?d = "card ((λ(u, v). ((u, True), v, False)) ` { (u,v) ∈ ?cross. {u, v} ∈ E})"
+  have "?d ≤ card ?cross" using e card_image_cross_to_arcs inner_finite
+    by blast
+  hence d: "?d ≤ 4 * ?card * ?card" using card_cross by linarith
+
+  have *: "?a + ?b + ?c + ?d = enat (?a_nat + ?b_nat + ?c + ?d)"
+    using a_eq_nat b_eq_nat plus_enat_simps(1) by presburger
+  have "?a_nat + ?b_nat + ?c + ?d ≤
+    2 + 9 * ?card + 4 * ?card * ?card + 4 * ?card * ?card * ?card +
+    4 * ?card * ?card + 2 * ?card + 4 * ?card * ?card"
+    using a b c d by simp
+
+  also have "... = 2 + 11 * ?card + 12 * ?card * ?card + 4 * ?card * ?card * ?card"
+    by algebra
   also have "... ≤ 2 + (11 * ?card + 11 * ?enc_k) + (12 * ?card + 12 * ?enc_k) * (?card + ?enc_k) +
                     (4 * ?card + 4 * ?enc_k) * (?card + ?enc_k) * (?card + ?enc_k)"
-  (* using card_bound mult_le_mono add_le_mono *)
-  (* by (metis add_mult_distrib2 le_add1 nat_add_left_cancel_le) *)
-                    sorry
-  finally have "?a + ?b + ?c + ?d ≤
-                2 + (11 * ?card + 11 * ?enc_k) + (12 * ?card + 12 * ?enc_k) * (?card + ?enc_k) +
-                    (4 * ?card + 4 * ?enc_k) * (?card + ?enc_k) * (?card + ?enc_k)"
-  sorry
+    by (simp add: algebra_simps card_bound)
+  finally have **: "?a + ?b + ?c + ?d ≤
+      2 + (11 * ?card + 11 * ?enc_k) + (12 * ?card + 12 * ?enc_k) * (?card + ?enc_k) +
+          (4 * ?card + 4 * ?enc_k) * (?card + ?enc_k) * (?card + ?enc_k)"
+      using * by fastforce
 
-  show ?thesis
-  sorry
+  have "{a ∈ ?cross. case a of (u, v) ⇒ {u, v} ∈ E}
+        = {(u, v). Bex E ((∈) u) ∧ Bex E ((∈) v) ∧ {u, v} ∈ E}"
+    by auto
+  then have "?a + ?b +
+    enat (card ((λu. ((u, False), u, True)) ` ?u)
+      + card ((λ(u, v). ((u, True), v, False)) ` {a ∈ ?cross. case a of (u, v) ⇒ {u, v} ∈ E}))
+      = ?a + ?b + ?c + ?d"
+      by simp
+
+  then show ?thesis using * ** add_2_eq_Suc[symmetric]
+    by (smt (verit, del_insts) add.assoc)
 qed
 done
-subgoal for E K
-apply (simp add: MALFORMED_GRAPH_def nat_encoded_size_def)
-sorry
-apply (simp add: MALFORMED_GRAPH_def nat_encoded_size_def)
-sorry
+apply (simp add: one_enat_def)
+apply (intro impI conjI)
+by (simp_all add: MALFORMED_GRAPH_def one_enat_def)
+
+theorem vc_to_fas_ispolyred:
+  "ispolyred vc_to_fas_poly vertex_cover feedback_arc_set size_VC size_FAS"
+unfolding ispolyred_def
+apply(rule exI[where x=vc_to_fas])
+apply(rule exI[where x=vc_to_fas_time])
+apply(rule exI[where x=vc_to_fas_space])
+apply safe
+  subgoal using vc_to_fas_refines by blast
+  subgoal using vc_to_fas_size by blast
+  subgoal unfolding poly_def vc_to_fas_time_def apply(rule exI[where x=2]) by auto
+  subgoal unfolding poly_def vc_to_fas_space_def apply(rule exI[where x=3]) by auto
+  subgoal using is_reduction_vc_to_fas .
+done
 
 end
 
