@@ -26,7 +26,8 @@ by auto
 definition "mop_list_to_set xs ≡ REST [ set xs ↦ length xs ]"
 
 (* remdups xs in O(length xs), to_at_least_3_clause is constant *)
-definition "mop_at_most_three_sat_to_three_sat_list' F ≡ REST [ at_most_three_sat_to_three_sat_aux (V F) 0 ↦ sum_list (map (λl. length l + 1) F) ]"
+definition "mop_at_most_three_sat_to_three_sat_list' F ≡
+    REST [ at_most_three_sat_to_three_sat_aux (V F) 0 ↦ sum_list (map (λl. length l + 1) F) * sum_list (map (λl. length l + 1) F) ]"
 definition "mop_transl_list_list_list_set l ≡ REST [ transl_list_list_list_set l ↦ sum_list (map length l) ]"
 
 (* definition "mop_aux_fold_fn x acc ≡ REST [ (to_at_least_3_clause (remdups x) (snd acc) @ (fst acc), snd acc + 1) ↦ length x ]"  *)
@@ -55,7 +56,7 @@ definition "size_AT_MOST_THREE_SAT xs ≡ sum_list (map length xs) + length xs"
 definition "size_THREE_SAT xs ≡ 3 * length xs"
 
 definition "at_most_three_sat_to_three_sat_space n ≡ 24 * n + 3"
-definition "at_most_three_sat_to_three_sat_time n ≡ 27 * n"
+definition "at_most_three_sat_to_three_sat_time n ≡ 27 * n + n * n"
 
 lemma len_to_at_least_3_clause: "length (to_at_least_3_clause x i) ≤ 8"
 by (induction x i rule: to_at_least_3_clause.induct) auto
@@ -125,7 +126,7 @@ lemma at_most_three_sat_to_three_sat_refines:
       using card_length by blast
 
     have "∀ x ∈ set (V F). card (set x) ≤ 3"
-    using assms by simp (meson List.finite_set card_image_le le_trans)
+      using assms by simp (meson List.finite_set card_image_le le_trans)
 
     then have "∀ x ∈ set ?aux_list. length x = 3"
       using length_aux_inner assms by blast
@@ -136,13 +137,15 @@ lemma at_most_three_sat_to_three_sat_refines:
     finally have b: "?sum_list ≤ 24 * ?len" using len_at_most_three_sat_to_three_sat
       by (metis length_map mult.assoc mult_le_mono2)
 
-    have c: "?sum = ?len + sum_list (map length F)"
-      by (simp add: sum_list_Suc)
+    have c: "?sum * ?sum = (?len + sum_list (map length F)) * (?len + sum_list (map length F))"
+      by (simp add: sum_list_Suc algebra_simps)
 
-    from a b c have "card (set F) + ?sum + ?sum_list ≤ 26 * ?len + sum_list (map length F)"
-      by linarith
+    from a b c have "card (set F) + ?sum * ?sum + ?sum_list ≤
+      26 * ?len + (?len + sum_list (map length F)) * (?len + sum_list (map length F))"
+      by simp
 
-    then show ?thesis by simp
+    then show ?thesis
+      by (simp add: algebra_simps)
   qed
   apply (rule impI conjI, fast)
   using card_length[of F] by force
@@ -157,7 +160,7 @@ apply(rule exI[where x=at_most_three_sat_to_three_sat_space])
 apply safe
   subgoal using at_most_three_sat_to_three_sat_refines by blast
   subgoal using at_most_three_sat_to_three_sat_size by blast
-  subgoal unfolding poly_def at_most_three_sat_to_three_sat_time_def apply(rule exI[where x=1]) by auto
+  subgoal unfolding poly_def at_most_three_sat_to_three_sat_time_def apply(rule exI[where x=2]) by auto
   subgoal unfolding poly_def at_most_three_sat_to_three_sat_space_def apply(rule exI[where x=1]) by auto
   subgoal using is_reduction_at_most_three_sat_to_three_sat .
 done
