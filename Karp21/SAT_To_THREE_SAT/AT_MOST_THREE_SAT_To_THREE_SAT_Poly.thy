@@ -25,10 +25,7 @@ by auto
 
 definition "mop_list_to_set xs ≡ REST [ set xs ↦ length xs ]"
 
-(*
-remdups in O(n); could be in O(3) since there are only 3 unique values in each inner list
-to_at_least_3_clause is constant
-*)
+(* remdups xs in O(length xs), to_at_least_3_clause is constant *)
 definition "mop_at_most_three_sat_to_three_sat_list' F ≡ REST [ at_most_three_sat_to_three_sat_aux (V F) 0 ↦ sum_list (map (λl. length l + 1) F) ]"
 definition "mop_transl_list_list_list_set l ≡ REST [ transl_list_list_list_set l ↦ sum_list (map length l) ]"
 
@@ -54,9 +51,6 @@ definition "at_most_three_sat_to_three_sat_poly ≡ λ F. do {
   } else RETURNT [{}]
 }"
 
-(* definition "size_AT_MOST_THREE_SAT xs ≡ 3 * length xs" *)
-(* definition "size_AT_MOST_THREE_SAT ≡ sum_list o (map length)" *)
-(* definition "size_AT_MOST_THREE_SAT ≡ sum_list o (map (λ l. if length l = 0 then 1 else length l))" *)
 definition "size_AT_MOST_THREE_SAT xs ≡ sum_list (map length xs) + length xs"
 definition "size_THREE_SAT xs ≡ 3 * length xs"
 
