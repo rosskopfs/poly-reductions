@@ -31,9 +31,9 @@ definition "mop_set_eq A B ≡ REST [ A = B ↦ min (card A) (card B) ]"
 definition "mop_leq (l :: nat) r ≡ REST [ (l ≤ r) ↦ 1 ]"
 definition "mop_plus (l :: nat) r ≡ REST [ l + r ↦ 1 ]"
 
-definition "nrest_image f ft A = REST [ f ` A \<mapsto> sum ft A ]"
-definition "nrest_filter_image f ft P Pt A =
-    REST [ f ` {a ∈ A. P a} \<mapsto> sum (λa. Pt a + (if P a then ft a else 0)) A ]"
+definition "nrest_image f (ft :: 'b ⇒ nat) A = REST [ f ` A \<mapsto> sum ft A ]"
+definition "nrest_filter_image f (ft :: 'b ⇒ nat) P (Pt :: 'b ⇒ nat) A =
+    REST [ f ` {a ∈ A. P a} \<mapsto> enat (sum (λa. Pt a + (if P a then ft a else 0)) A) ]"
 
 lemma nrest_image_bound:
 assumes "⋀a. a ∈ A ⟹ ft a ≤ c"

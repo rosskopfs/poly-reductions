@@ -28,9 +28,33 @@ fun at_most_three_sat_to_three_sat_aux where
     at_most_three_sat_to_three_sat_aux xs (i + 1) @ to_at_least_3_clause (remdups x) i"
 | "at_most_three_sat_to_three_sat_aux [] i = []"
 
+value "[] @ [(1::nat), 2, 3]"
+
 definition "at_most_three_sat_to_three_sat_list F \<equiv> if at_most_n_sat_list 3 F
   then (at_most_three_sat_to_three_sat_aux (V F) 0)
   else [[]]"
+
+value "[ [Pos (RV ())] ]"
+
+definition "a = at_most_three_sat_to_three_sat_aux [ ([] :: unit red lit list) ] 0"
+
+value "a"
+value "length a"
+
+definition "b = at_most_three_sat_to_three_sat_aux [ [Pos (RV ())] ] 0"
+value "b"
+value "length b"
+
+definition "c = at_most_three_sat_to_three_sat_aux [ [Pos (RV ()), Neg (RV ())] ] 0"
+value "c"
+value "length c"
+
+definition "d = at_most_three_sat_to_three_sat_aux [ [Pos (RV ()), Neg (RV ()), Pos (RU (0, 0))] ] 0"
+value "d"
+value "length d"
+value "map length [ [Pos (RV ()), Neg (RV ()), Pos (RV ())] ]"
+
+value "at_most_three_sat_to_three_sat_list [ ([] :: unit red lit list) ]"
 
 definition "at_most_three_sat_to_three_sat F \<equiv>
   transl_list_list_list_set (at_most_three_sat_to_three_sat_list F)"
