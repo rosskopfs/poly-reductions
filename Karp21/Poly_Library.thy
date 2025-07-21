@@ -31,7 +31,7 @@ definition "mop_set_eq A B ≡ REST [ A = B ↦ min (card A) (card B) ]"
 definition "mop_leq (l :: nat) r ≡ REST [ (l ≤ r) ↦ 1 ]"
 definition "mop_plus (l :: nat) r ≡ REST [ l + r ↦ 1 ]"
 
-definition "nrest_image f (ft :: 'b ⇒ nat) A = REST [ f ` A \<mapsto> sum ft A ]"
+definition "nrest_image f (ft :: 'b ⇒ nat) A = REST [ f ` A \<mapsto> enat (sum ft A) ]"
 definition "nrest_filter_image f (ft :: 'b ⇒ nat) P (Pt :: 'b ⇒ nat) A =
     REST [ f ` {a ∈ A. P a} \<mapsto> enat (sum (λa. Pt a + (if P a then ft a else 0)) A) ]"
 
@@ -55,8 +55,10 @@ by (simp add: assms card_all_edges choose_2_upperbound)
 
 definition "nat_encoded_size k = floor_log k + 1"
 
+value "nat_encoded_size 1"
+
 lemma nat_encoded_size_leq_self:
-  assumes "2 ≤ k"
+  assumes "1 ≤ k"
   shows "nat_encoded_size k ≤ k"
 using assms
 unfolding nat_encoded_size_def

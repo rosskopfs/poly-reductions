@@ -27,7 +27,8 @@ definition "mop_list_to_set xs ≡ REST [ set xs ↦ length xs ]"
 
 (* remdups xs in O(length xs), to_at_least_3_clause is constant *)
 definition "mop_at_most_three_sat_to_three_sat_list' F ≡
-    REST [ at_most_three_sat_to_three_sat_aux (V F) 0 ↦ sum_list (map (λl. length l + 1) F) * sum_list (map (λl. length l + 1) F) ]"
+    REST [ at_most_three_sat_to_three_sat_aux (V F) 0 ↦
+      sum_list (map (λl. length l + 1) F) * sum_list (map (λl. length l + 1) F) ]"
 definition "mop_transl_list_list_list_set l ≡ REST [ transl_list_list_list_set l ↦ sum_list (map length l) ]"
 
 (* definition "mop_aux_fold_fn x acc ≡ REST [ (to_at_least_3_clause (remdups x) (snd acc) @ (fst acc), snd acc + 1) ↦ length x ]"  *)
