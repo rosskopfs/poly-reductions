@@ -32,35 +32,6 @@ definition "X3C_to_steiner_tree_poly ≡ λ((X :: 'a set), S). do {
   } else RETURNT NOT_STEINER_TREE_EXAMPLE
 }"
 
-\<comment> \<open>
-definition "X3C_to_steiner_tree_poly ≡ λ((X :: 'a set), S). do {
-  b ← mop_set_for_all S (λs. card s = 3) (λ_. 1); n
-  if b then do {
-    as ← nrest_image a (λ_. 1) X; n
-    cs ← nrest_image c (λ_. 1) S; n
-
-    v ← mop_set_union as {ROOT}; n + 1
-    all_v ← mop_set_union v cs;  n + 1 + n
-
-    pairs ← nrest_image (λs. {ROOT, c s}) (λ_. 1) S; n
-    tmp ← nrest_image (λu. {{c u, a v} | v. v ∈ u}) (λu. card u) S; n * n
-    pairs' ← mop_set_Union tmp; n * n * n?
-
-    all_pairs ← mop_set_union pairs pairs'; n + n * n * n?
-
-    union ← mop_set_union {ROOT} as; n
-
-    RETURNT (
-      all_v,
-      all_pairs,
-      (λe. 1),
-      union,
-      4 * card X div 3
-    )
-  } else RETURNT NOT_STEINER_TREE_EXAMPLE
-}"
-\<close>
-
 definition "size_X3C ≡ λ(X, S). card X + card S + sum card S"
 definition "size_ST ≡ λ(V, E, _, S, K). card V + sum card E + card S + nat_encoded_size K"
 
@@ -105,6 +76,7 @@ proof -
 qed
 
 
+(* TODO: *)
 lemma X3C_to_steiner_tree_size:
   "size_ST (X3C_to_steiner_tree C) ≤ X3C_to_steiner_tree_space (size_X3C C)"
 apply (cases C)
@@ -156,55 +128,16 @@ proof -
     using card_Union_le_sum_card by blast
   also have "... ≤ 3 * card S" using assms sum_card_c_a by blast
   moreover have "∀ s ∈ (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)). card s = 2" by auto
-  ultimately have "sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)) ≤ 2 * 3 * card S"
-    (* sledgehammer[provers = "z3 zipperposition cvc5 vampire cvc5_proof e spass", isar_proofs = true, timeout = 100] *)
-
-  (* finite ?I ⟹ ∀i∈?I. finite (?A i) ⟹ disjoint_family_on ?A ?I ⟹ sum ?g (⋃ (?A ` ?I)) = (∑x∈?I. sum ?g (?A x)) *)
-  proof (cases "finite S")
-    case True
-    have *: "∀s ∈ S. (λs. { {c s, a v} | v. v ∈ s}) s = (λv. {c s, a v}) ` s" by blast
-    have finite_inner: "∀s∈S. finite s" using assms
-      by (metis card_ge_0_finite zero_less_numeral)
-
-    have "∀ s ∈ S. inj_on (λv. {c s, a v}) s" unfolding inj_on_def by blast
-    then have "∀ s ∈ S. card ((λv. {c s, a v}) ` s) = 3" using card_image assms by fastforce
-    then have "∀ s ∈ S. finite ((λv. {c s, a v}) ` s)" using card_ge_0_finite by force
-    then have **: "∀ s ∈ S. finite ((λs. { {c s, a v} | v. v ∈ s}) s)" using * by simp
-    then have "sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)) = (∑s∈S. sum card ({ {c s, a v} | v. v ∈ s}))"
-      using sum.UNION_disjoint_family[OF True ** disj] by blast
-
-    have "∀ s ∈ S. ∀ s' ∈ ({ {c s, a v} | v. v ∈ s}). card s' = 2" by auto
-    have "∀ s ∈ S. sum card ({ {c s, a v} | v. v ∈ s}) = 2 * card s"
-    sorry
-    then have "∀ s ∈ S. sum card ({ {c s, a v} | v. v ∈ s}) = sum (λ_. 2) ({ {c s, a v} | v. v ∈ s})"
-    sorry
-    then show ?thesis using disj
-    (* sledgehammer[provers = "z3 zipperposition cvc5 vampire cvc5_proof e spass", isar_proofs = true, timeout = 100] *)
-    sorry
-  next
-    case False
-    then show ?thesis
-    sorry
-  qed
+  ultimately have "sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)) ≤ 2 * 3 * card S" sorry
 
   have "{{c u, a v} |u v. u ∈ S ∧ v ∈ u} = ⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)" by blast
 
   then have "sum card {{c u, a v} |u v. u ∈ S ∧ v ∈ u} =
-  sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S))" by argo
-
-  then have "... ≤ sum card ((λs. { {c s, a v} | v. v ∈ s}) ` S)"
-  (* sledgehammer *)
-  sorry
-  (* have "sum card {{c u, a v} |u v. u ∈ S ∧ v ∈ u} ≤ " *)
-  (* sorry *)
-
+    sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S))" by argo
   have "sum card ({{ROOT, c s} |s. s ∈ S} ∪ {{c u, a v} |u v. u ∈ S ∧ v ∈ u}) ≤
         sum card {{ROOT, c s} | s. s ∈ S} + sum card {{c u, a v} |u v. u ∈ S ∧ v ∈ u}"
     by (metis (no_types, lifting) diff_le_self finite_Un le_add1
                                   le_add_same_cancel1 sum.infinite sum_Un_nat)
-
-
-
   show ?thesis sorry
 qed
 apply (simp add: NOT_STEINER_TREE_EXAMPLE_def nat_encoded_size_def)
@@ -233,13 +166,14 @@ proof -
     by blast
 
   have "card (⋃u∈S. {{c u, a v} | v. v ∈ u}) = card (⋃ ?mapped)" by blast
-  then have "... ≤ sum card ?mapped"
+  then have *: "... ≤ sum card ?mapped"
     using card_Union_le_sum_card by blast
+  have **: "card ((λu. {{c u, a v} |v. v ∈ u}) ` S) = card S" using card_image[OF inj_on_f] by blast
 
   then show ?thesis
   apply (intro conjI, fast)
   apply (simp add: card_image inj_on_a inj_on_c inj_on_root)
-  using sum_bound card_insert by linarith
+  using sum_bound card_insert * ** by linarith
 qed
 apply fast
 done
@@ -253,8 +187,7 @@ apply(rule exI[where x=X3C_to_steiner_tree_space])
 apply safe
   subgoal using X3C_to_steiner_tree_refines by blast
   subgoal using X3C_to_steiner_tree_size by blast
-  subgoal unfolding X3C_to_steiner_tree_time_def
-    by (auto simp: poly_add poly_mult poly_linear)
+  subgoal unfolding X3C_to_steiner_tree_time_def by (auto simp: poly_add poly_mult poly_linear)
   subgoal unfolding X3C_to_steiner_tree_space_def sorry
   subgoal using is_reduction_X3C_to_steiner_tree .
 done

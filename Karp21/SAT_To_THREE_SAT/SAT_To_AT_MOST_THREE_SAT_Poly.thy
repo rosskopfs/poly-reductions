@@ -7,7 +7,7 @@ theory SAT_To_AT_MOST_THREE_SAT_Poly
 begin
 
 definition "mop_sat_to_at_most_three_sat_aux xs i ≡
-  REST [ sat_to_at_most_three_sat_aux xs i ↦ sum_list (map (λxs. length xs^3) xs) ]"
+  REST [ sat_to_at_most_three_sat_aux xs i ↦ (sum_list (map (λxs. length xs^3) xs) + length xs)^2 ]"
 
 definition "sat_to_at_most_three_sat_poly ≡ λ F. do {
   res ← mop_sat_to_at_most_three_sat_aux (V F) 0;
@@ -17,8 +17,9 @@ definition "sat_to_at_most_three_sat_poly ≡ λ F. do {
 definition "size_SAT xs ≡ sum_list (map length xs) + length xs"
 definition "size_AT_MOST_THREE_SAT xs ≡ sum_list (map length xs) + length xs"
 
-definition "sat_to_at_most_three_sat_size n ≡ n^3"
-definition "sat_to_at_most_three_sat_time n ≡ n^3"
+(* TODO: space *)
+definition "sat_to_at_most_three_sat_space n ≡ n^3"
+definition "sat_to_at_most_three_sat_time n ≡ n^6"
 
 lemma length_bound_to_at_most_3_clause: "length (to_at_most_3_clause xs i j) ≤ (1 + length xs^2)"
 proof (induction xs i j rule: to_at_most_3_clause.induct)
@@ -34,9 +35,9 @@ proof (induction xs i j rule: to_at_most_3_clause.induct)
     by (metis ab_semigroup_add_class.add_ac(1) length_Cons nat_1_add_1 numeral_Bit0 plus_1_eq_Suc)
 qed simp_all
 
+(* TODO: *)
 lemma sat_to_at_most_three_sat_size:
   "size_AT_MOST_THREE_SAT (sat_to_at_most_three_sat xs) ≤ sat_to_at_most_three_sat_size (size_SAT xs)"
-unfolding sat_to_at_most_three_sat_size_def size_SAT_def size_AT_MOST_THREE_SAT_def sat_to_at_most_three_sat_def
 sorry
 
 lemma sum_pow3_leq: "(x :: nat)^3 + y^3 ≤ (x + y)^3"
@@ -64,12 +65,28 @@ lemma sat_to_at_most_three_sat_refines:
   apply(vcg' \<open>-\<close> rules: T_SPEC)
   apply simp
   subgoal proof -
-    have "sum_list (map (((λxs. length xs ^ 3) ∘∘ map) (map_lit RV)) F) = sum_list (map (λxs. length xs ^ 3) F)"
+    have "(sum_list (map (((λxs. length xs ^ 3) ∘∘ map) (map_lit RV)) F))^2 =
+        sum_list (map (λxs. length xs ^ 3) F)^2"
       by (simp add: comp_def)
-    then show ?thesis using sum_list_pow_3[of length F]
-      by (metis (mono_tags, lifting) le_add1 le_trans sum_pow3_leq)
+    also have "sum_list (map (λxs. length xs ^ 3) F)^2 ≤ ((sum_list (map length F))^3)^2"
+      using sum_list_pow_3[of length F] power2_nat_le_eq_le[symmetric] by blast
+    also have "... = (sum_list (map length F))^6" by force
+    finally show ?thesis using le_add1 le_trans power_mono by blast
   qed
   done
 
+theorem sat_to_at_most_three_sat_ispolyred:
+  "ispolyred sat_to_at_most_three_sat_poly sat_list at_most_three_sat_list size_SAT size_AT_MOST_THREE_SAT"
+unfolding ispolyred_def
+apply(rule exI[where x=sat_to_at_most_three_sat])
+apply(rule exI[where x=sat_to_at_most_three_sat_time])
+apply(rule exI[where x=sat_to_at_most_three_sat_space])
+apply safe
+  subgoal using sat_to_at_most_three_sat_refines by blast
+  subgoal using sat_to_at_most_three_sat_size by blast
+  subgoal unfolding sat_to_at_most_three_sat_time_def poly_def by force
+  subgoal unfolding sat_to_at_most_three_sat_space_def sorry
+  subgoal using is_reduction_sat_to_at_most_three_sat .
+done
 
 end

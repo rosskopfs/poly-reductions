@@ -6,8 +6,6 @@ theory PART_To_MAXCUT_Poly
 begin
 
 definition "mop_sum_list xs ≡ REST [ sum_list xs ↦ length xs ]"
-
-(* is `w as` constant? *)
 definition "part_to_max_cut_poly ≡ λas. do {
   n ← mop_list_length as;
   V ← mop_list_up_to_n n;

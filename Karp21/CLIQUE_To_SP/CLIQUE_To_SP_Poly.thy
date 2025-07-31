@@ -6,9 +6,7 @@ theory CLIQUE_To_SP_Poly
 begin
 
 definition "mop_ugraph_nodes E V = SPECT [ ugraph_nodes E V ↦ card E * card V ]"
-(* try with do *)
 definition "mop_v E V i ≡ nrest_filter_image (λj. {i, j}) (λ_. 1) (λj. {i, j} ∉ E) V"
-
 definition "mop_set_image_sp E V =
               nrest_image (vertex_pairs_not_in_edge_set E V) (λ_. card V * card E) V"
 
@@ -63,8 +61,7 @@ proof -
     by fastforce
   then have "card x ≤ card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
     using card_mono[OF finite_term] by blast
-  then show ?thesis
-    using card_inner_image_upper by fastforce
+  then show ?thesis using card_inner_image_upper finite_v by fastforce
 qed
 
 lemma card_clique_to_sp:
@@ -114,14 +111,10 @@ subgoal for a b c
 proof -
   let ?x = "card a * card b + card b * card b * card a"
   let ?y = "clique_to_set_packing_time (card a + card b + nat_encoded_size c)"
-  have enat_x: "enat (card a * card b) + of_nat (card b) * enat (card b * card a) = enat ?x"
-    using of_nat_eq_enat by simp
   have "?x ≤ ?y"
     unfolding clique_to_set_packing_time_def nat_encoded_size_def
     by (simp add: add_mono mult_le_mono trans_le_add2 le_SucI)
-  then have "enat ?x ≤ enat ?y" by auto
-  then show ?thesis using enat_x
-    by presburger
+  then show ?thesis by simp
 qed
 unfolding clique_to_set_packing_time_def nat_encoded_size_def
 by (simp add: add_mono mult_le_mono trans_le_add2 le_SucI)

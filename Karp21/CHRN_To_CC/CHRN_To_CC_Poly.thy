@@ -37,7 +37,7 @@ definition "size_CC ≡ (λ((V, E), k). card E + card V + nat_encoded_size k)"
 definition "size_chrN ≡ (λ (E, k). card E + nat_encoded_size k)"
 
 definition "chrn_to_cc_space n ≡ 2 * n + 4 * n * n"
-definition "chrn_to_cc_time n ≡ 3 * n + 8 * n * n"
+definition "chrn_to_cc_time n ≡ 4 * n + 8 * n * n"
 
 lemma chrn_to_cc_size: "size_CC (chrn_to_cc C) ≤ chrn_to_cc_space (size_chrN C)"
 apply (cases C)
@@ -83,7 +83,7 @@ unfolding SPEC_def chrn_to_cc_poly_def chrn_to_cc_def size_chrN_def chrn_to_cc_t
   mop_edge_set_def mop_set_Union_def mop_all_edges_def mop_leq_def mop_set_diff_def
 apply(rule T_specifies_I)
 apply(vcg' \<open>-\<close> rules: T_SPEC)
-apply simp_all
+apply (simp_all add: one_enat_def)
 subgoal for a b
 proof -
   let ?A = "⋃ a"
@@ -109,13 +109,13 @@ proof -
     then have card_aa: "?card * ?card ≤ 4 * card a * card a"
       using mult_le_mono by fastforce
 
-    have "3 * card a + 1 + (?card * ?card + card (all_edges ?A))
-        ≤ 3 * card a + 1 + (4 * card a * card a + card (all_edges ?A))"
+    have "4 * card a + 1 + (?card * ?card + card (all_edges ?A))
+        ≤ 4 * card a + 1 + (4 * card a * card a + card (all_edges ?A))"
       using card_aa by linarith
-    also have "... ≤ 3 * card a + 1 + (8 * card a * card a)" using card_aa card_all_edges by linarith
-    also have "... ≤ 3 * card a + 3 * ?lb + (8 * card a * card a)" using size_lower
+    also have "... ≤ 4 * card a + 1 + (8 * card a * card a)" using card_aa card_all_edges by linarith
+    also have "... ≤ 4 * card a + 4 * ?lb + (8 * card a * card a)" using size_lower
       by linarith
-    also have "... ≤ 3 * card a + 3 * ?lb + (8 * (card a + ?lb) * (card a + ?lb))"
+    also have "... ≤ 4 * card a + 4 * ?lb + (8 * (card a + ?lb) * (card a + ?lb))"
       by (simp add: mult_le_mono)
     finally show ?thesis
       by (simp add: one_enat_def)
@@ -124,12 +124,9 @@ proof -
 qed
 subgoal for a b
 unfolding MALFORMED_GRAPH_def
-by (smt (verit, ccfv_threshold) One_nat_def Suc_1 add_2_eq_Suc' add_Suc_right add_le_mono
-  card_edges_union dual_order.trans min_def mult.commute nat_encoded_size_def not_less_eq_eq
-  not_numeral_le_zero one_le_mult_iff trans_le_add2)
+  by (metis One_nat_def nat_encoded_size_def numeral_One one_le_mult_iff one_le_numeral trans_le_add2)
 subgoal for a b
 unfolding MALFORMED_GRAPH_def by blast
-
 done
 
 theorem chrn_to_cc_ispolyred:

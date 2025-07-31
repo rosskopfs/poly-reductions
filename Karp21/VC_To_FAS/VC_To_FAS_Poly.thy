@@ -43,7 +43,7 @@ definition "size_VC ≡ λ(E, K). card E + nat_encoded_size K"
 definition "size_FAS ≡ λ(H, K). card (verts H) + card (arcs H) + nat_encoded_size K"
 
 definition "vc_to_fas_space n ≡ 6 * n + 4 * n * n"
-definition "vc_to_fas_time n ≡ 2 + 11 * n + 12 * n * n + 4 * n * n * n"
+definition "vc_to_fas_time n ≡ 2 + 12 * n + 12 * n * n + 4 * n * n * n"
 
 lemma pair_image_list_inj_on: "inj_on (λ(u,v). ((u, True), (v, False))) { (u, v) . (u,v) ∈ S}"
 using inj_on_def by fast
@@ -167,7 +167,6 @@ subgoal proof -
   have "?card_u * ?card_u ≤ 4 * ?card * ?card"
     using mult_le_mono[OF card_u_bound card_u_bound] by simp
 
-  find_theorems "?a * (?b + ?c) = ?a * ?b + ?a * ?c"
   then have "3 * ?card_u + ?card_u * ?card_u + ?sum + ?image1 + ?image2 ≤
               6 * ?card + ?card_u * ?card_u + ?sum + ?image1 + ?image2"
       using card_u_bound by linarith

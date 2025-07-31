@@ -5,7 +5,7 @@ theory Poly_Library
     Undirected_Graph_Theory.Undirected_Graphs_Root
 begin
 
-definition "mop_set_finite S ≡ REST [ finite S ↦ 1 ]" (* not computable? *)
+definition "mop_set_finite S ≡ REST [ finite S ↦ 1 ]"
 
 definition "mop_set_card S = REST [card S \<mapsto> 1]"
 definition "mop_set_empty_set = REST [ {} \<mapsto> 1]"
@@ -20,12 +20,11 @@ definition "mop_list_map xs f ft ≡ REST [ map f xs ↦ foldl (+) 0 (map ft xs)
 definition "mop_set_times A B ≡ REST [ A × B ↦ card A * card B ]"
 definition "mop_set_union A B ≡ REST [ A \<union> B ↦ card A + card B ]"
 
-(* can't use times since edges is a 'a set set rather than ('a × 'a) set *)
 definition "mop_all_edges V ≡ REST [ all_edges V ↦ card V * card V]"
 definition "mop_set_for_all S p pt ≡ REST [ ∀s ∈ S. p s ↦ sum pt S ]"
 
 definition "mop_set_diff A B ≡ REST [ A - B ↦ card A ]"
-definition "mop_set_Union A ≡ REST [ ⋃ A ↦ sum card A ]"
+definition "mop_set_Union A ≡ REST [ ⋃ A ↦ sum card A + card A ]"
 definition "mop_set_eq A B ≡ REST [ A = B ↦ min (card A) (card B) ]"
 
 definition "mop_leq (l :: nat) r ≡ REST [ (l ≤ r) ↦ 1 ]"
@@ -54,8 +53,6 @@ shows "card (all_edges V) ≤ card V * card V"
 by (simp add: assms card_all_edges choose_2_upperbound)
 
 definition "nat_encoded_size k = floor_log k + 1"
-
-value "nat_encoded_size 1"
 
 lemma nat_encoded_size_leq_self:
   assumes "1 ≤ k"
