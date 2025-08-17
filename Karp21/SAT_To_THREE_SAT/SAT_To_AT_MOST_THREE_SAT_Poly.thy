@@ -6,7 +6,7 @@ theory SAT_To_AT_MOST_THREE_SAT_Poly
     Polynomial_Reductions
 begin
 
-definition "mop_sat_to_at_most_three_sat_aux xs i ≡
+definition "mop_sat_to_at_most_three_sat_aux xs i =
   REST [ sat_to_at_most_three_sat_aux xs i ↦ (sum_list (map (λxs. length xs^3) xs) + length xs)^2 ]"
 
 definition "sat_to_at_most_three_sat_poly ≡ λ F. do {
@@ -68,10 +68,12 @@ lemma sat_to_at_most_three_sat_refines:
     have "(sum_list (map (((λxs. length xs ^ 3) ∘∘ map) (map_lit RV)) F))^2 =
         sum_list (map (λxs. length xs ^ 3) F)^2"
       by (simp add: comp_def)
-    also have "sum_list (map (λxs. length xs ^ 3) F)^2 ≤ ((sum_list (map length F))^3)^2"
+    also have "... ≤ ((sum_list (map length F))^3)^2"
       using sum_list_pow_3[of length F] power2_nat_le_eq_le[symmetric] by blast
     also have "... = (sum_list (map length F))^6" by force
-    finally show ?thesis using le_add1 le_trans power_mono by blast
+    finally have "(sum_list (map (((λxs. length xs ^ 3) ∘∘ map) (map_lit RV)) F))^2 \<le> 
+      (sum_list (map length F))^6" by simp
+    then show ?thesis using le_add1 le_trans power_mono sorry
   qed
   done
 

@@ -135,8 +135,8 @@ lemma at_most_three_sat_to_three_sat_refines:
     then have "?sum_list = sum_list (map (λ_. 3) ?aux_list)" by argo
     also have "... = 3 * length ?aux_list"
       by (simp add: sum_list_triv)
-    finally have b: "?sum_list ≤ 24 * ?len" using len_at_most_three_sat_to_three_sat
-      by (metis length_map mult.assoc mult_le_mono2)
+    finally have b: "?sum_list ≤ 24 * ?len" using len_at_most_three_sat_to_three_sat[of "V F"]
+      by auto
 
     have c: "?sum * ?sum = (?len + sum_list (map length F)) * (?len + sum_list (map length F))"
       by (simp add: sum_list_Suc algebra_simps)

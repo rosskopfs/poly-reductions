@@ -58,17 +58,14 @@ proof -
 qed
 
 lemma sum_card_c_a:
-  assumes "∀s∈S. card s = n"
+  assumes "\<And>s. s∈S \<Longrightarrow> card s = n"
+  and "0 < n"
   shows "sum card ((λu. {{c u, a v} | v. v ∈ u}) ` S) ≤ n * card S"
 proof -
   let ?f = "(λu. {{c u, a v} | v. v ∈ u})"
-  have card_f_inner: "∀s∈S. card (?f s) ≤ n"
-  proof -
-    have "∀s. s ∉ S ∨ card {{c s, a v} | v. v ∈ s} ≤ n"
-      by (metis (no_types) Setcompr_eq_image assms card_image_le)
-    then show ?thesis
-      by blast
-  qed
+  have card_f_inner: "card (?f s) ≤ n" if prems: "s∈S" for s
+    using assms prems unfolding Setcompr_eq_image
+    by (auto intro!: card_image_le card_ge_0_finite)
   then have "card (?f ` S) = card S" using card_image inj_on_f by blast
   then have sum_bound: "sum card (?f ` S) ≤ n * card S" using card_f_inner
     by (smt (verit) imageE mult.commute nrest_image_bound)
@@ -126,7 +123,7 @@ proof -
 
   have "card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)) ≤ sum card ((λs. { {c s, a v} | v. v ∈ s}) ` S)"
     using card_Union_le_sum_card by blast
-  also have "... ≤ 3 * card S" using assms sum_card_c_a by blast
+  also have "... ≤ 3 * card S" using assms sum_card_c_a by fastforce
   moreover have "∀ s ∈ (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)). card s = 2" by auto
   ultimately have "sum card (⋃ ((λs. { {c s, a v} | v. v ∈ s}) ` S)) ≤ 2 * 3 * card S" sorry
 
@@ -163,7 +160,7 @@ proof -
   have finite_inner: "∀s∈S. finite s" using assms
     by (metis card_ge_0_finite zero_less_numeral)
   then have sum_bound: "sum card ?mapped ≤ 3 * card S" using assms sum_card_c_a
-    by blast
+    by fastforce
 
   have "card (⋃u∈S. {{c u, a v} | v. v ∈ u}) = card (⋃ ?mapped)" by blast
   then have *: "... ≤ sum card ?mapped"

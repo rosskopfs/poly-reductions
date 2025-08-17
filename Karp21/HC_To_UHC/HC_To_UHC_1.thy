@@ -503,7 +503,7 @@ lemma hd_hd_tl_Cycle_in_arcs:
 proof -
   have 1: "(hd Cycle, hd (tl Cycle)) \<in> set (vwalk_arcs Cycle)"
     using assms
-    by (metis Nil_tl in_set_member list.collapse member_rec(1) vwalk_arcs_Cons)
+    by (metis Cycle_not_empty list.collapse list.set_intros(1) vwalk_arcs_Cons)
   have "set (vwalk_arcs Cycle) \<subseteq> arcs G"
     using Cycle_def assms
     unfolding pre_digraph.cycle_def is_hc_def pre_digraph.awalk_def

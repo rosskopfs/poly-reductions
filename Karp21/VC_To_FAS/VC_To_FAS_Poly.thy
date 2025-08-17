@@ -3,7 +3,7 @@ theory VC_To_FAS_Poly
     Polynomial_Reductions
     Poly_Library
     VC_To_FAS
-begin
+begin  
 
 definition H' where
   "H' v a ≡ ⦇
@@ -57,7 +57,9 @@ proof -
     using inj_on_subset[OF pair_image_list_inj_on]
     by (simp add: inj_on_def)
   then show ?thesis
-    using card_image le_eq_less_or_eq by blast
+    using card_image le_eq_less_or_eq assms 
+    by (metis (no_types, lifting) card_mono case_prodE finite_SigmaI finite_Union
+      mem_Collect_eq subsetI)
 qed
 
 lemma vc_to_fas_size: "size_FAS (vc_to_fas E) ≤ vc_to_fas_space (size_VC E)"
@@ -86,11 +88,16 @@ proof -
   have card_bound: "?card ≤ ?card + ?enc_k" unfolding nat_encoded_size_def by force
 
   have a: "card (?u × {False, True}) ≤ 4 * ?card"
-    by (metis card_cartesian_product card_doubleton_eq_2_iff card_u_bound)
+    proof -
+      have "card (⋃ E) * card {b::bool, ba} ≤ card E * 4" for b ba
+        by (smt (z3) card_u_bound mult.commute mult.left_commute mult_le_mono 
+          numeral_Bit0_eq_double two_elem_card_le)
+      then show ?thesis by (metis card_cartesian_product mult.commute)
+    qed
 
   have "inj_on (λu. ((u, False), (u, True))) ?u"
     by (auto simp: inj_on_def)
-  moreover have "card ((λu. ((u, False), (u, True))) ` ?u) = card ?u"
+  moreover then have "card ((λu. ((u, False), (u, True))) ` ?u) = card ?u"
     using card_image by blast
   moreover have "((λu. ((u, False), (u, True))) ` ?u) = ?arc1" by blast
   ultimately have "card ?arc1 = ?card_u" by argo
@@ -161,7 +168,7 @@ subgoal proof -
 
   let ?image2 = "card ((λ(u, v). ((u, True), v, False)) ` { a ∈ ?cross. case a of (u, v) ⇒ {u, v} ∈ E})"
   have "?image2 ≤ card ?cross" using e card_image_cross_to_arcs inner_finite
-    by blast
+    by (smt (verit, best) Collect_cong Sigma_cong case_prodE case_prod_conv)
   hence i2: "?image2 ≤ 4 * ?card * ?card" using card_cross by linarith
 
   have "?card_u * ?card_u ≤ 4 * ?card * ?card"

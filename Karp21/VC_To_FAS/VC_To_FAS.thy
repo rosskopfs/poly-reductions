@@ -94,8 +94,7 @@ lemma isMALFORMED_GRAPH:
      "\<not> wf_digraph MALFORMED_GRAPH"
   by (simp add: MALFORMED_GRAPH_def wf_digraph_def)
 
-definition vc_to_fas where
-  "vc_to_fas \<equiv> \<lambda>(E,K). (if finite E ∧ K \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)
+definition "vc_to_fas \<equiv> \<lambda>(E,K). (if finite E ∧ K \<le> card (\<Union>E) \<and> (\<forall>e \<in> E. card e = 2)
                         then H E else MALFORMED_GRAPH, K)"
 
 

@@ -107,8 +107,7 @@ lemma MALFROMED_not_in_THREE_DM: "MALFORMED \<notin> three_dm"
   unfolding MALFORMED_def three_dm_def
   by blast
 
-definition xc_to_three_dm where
-  "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X ∧ finite X then
+definition "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X ∧ finite X then
     let
       T = \<Uplus>S;
       \<alpha> = (SOME f. inj_on f X \<and> f ` X \<subseteq> T );

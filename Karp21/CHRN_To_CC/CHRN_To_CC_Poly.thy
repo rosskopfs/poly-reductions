@@ -29,9 +29,15 @@ lemma card_edges_union:
 by (metis (mono_tags, lifting)
       assms card_Union_le_sum_card dual_order.trans nrest_image_bound order_mono_setup.refl)
 
-lemma card_complement_edges: "card (sgraph.complement_edges V E) = (card V choose 2) - card E"
-  by (metis card_Diff_subset card_all_edges finite_all_edges finite_subset
-        sgraph.complement_edges_def sgraph.wellformed_all_edges)
+lemma card_complement_edges: 
+  assumes "∀e ∈ E. card e = 2"
+  and "finite E"
+  shows "card (sgraph.complement_edges (⋃ E) E) = (card (⋃ E) choose 2) - card E"
+proof -
+  interpret sgraph "⋃ E" E using assms by unfold_locales auto
+  show ?thesis using card_Diff_subset card_all_edges complement_edges_def wellformed_all_edges assms
+    by (metis bot_nat_0.not_eq_extremum card.infinite finite_Union zero_less_numeral)
+qed
 
 definition "size_CC ≡ (λ((V, E), k). card E + card V + nat_encoded_size k)"
 definition "size_chrN ≡ (λ (E, k). card E + nat_encoded_size k)"
@@ -60,7 +66,7 @@ proof -
   then have "card (sgraph.complement_edges ?A a) + ?card ≤ card (sgraph.complement_edges ?A a) + ?card + ?lb"
     by linarith
   also have "... ≤ ((?card choose 2) - card a) + ?card + ?lb" using card_complement_edges
-    by (metis order_mono_setup.refl)
+    by (metis Suc_leD assm card.infinite card_A le_zero_eq mult_0_right not_less_eq_eq numeral_3_eq_3)
   also have "... ≤ (?card choose 2) + ?card + ?lb" by force
   also have "... ≤ ?card * ?card + ?card + ?lb" using choose_2_upperbound by fastforce
   also have "... ≤ ?card * ?card + ?card + ?card + 1" using size_upper by linarith
@@ -125,7 +131,7 @@ qed
 subgoal for a b
 unfolding MALFORMED_GRAPH_def
   by (metis One_nat_def nat_encoded_size_def numeral_One one_le_mult_iff one_le_numeral trans_le_add2)
-subgoal for a b
+subgoal for a bcard_complement_edges
 unfolding MALFORMED_GRAPH_def by blast
 done
 

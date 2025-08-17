@@ -31,7 +31,8 @@ lemma sp_inner_image_subset:
 assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
 shows "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}"
 using assms mem_Collect_eq singleton_insert_inj_eq' subsetI
-  by fastforce
+  by (smt (verit, del_insts) UnCI card_doubleton_eq_2_iff imageE insert_absorb insert_iff
+    vertex_pairs_not_in_edge_set_def)
 
 lemma card_inner_image_upper:
 assumes "finite V"
@@ -51,14 +52,14 @@ assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
 shows "card x ≤ (card V choose 2) + card V"
 proof -
   have finite_v: "finite V" using assms ugraph_nodes_def by blast
-  from finite_v have finite_left: "finite ({e. e ⊆ V ∧ card e = 2})" by auto
-  have finite_r': "finite ((λv. {v}) ` V)" using finite_imageI[OF finite_v] by simp
+  then have finite_left: "finite ({e. e ⊆ V ∧ card e = 2})" by auto
+  have "finite ((λv. {v}) ` V)" using finite_imageI[OF finite_v] by simp
   then have "finite ({{v}| v. v ∈ V})" using Setcompr_eq_image by metis
   then have finite_term: "finite (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
     using finite_left by force
 
-  have "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}" using assms sp_inner_image_subset
-    by fastforce
+  from assms have "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}" 
+    by (rule sp_inner_image_subset)
   then have "card x ≤ card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
     using card_mono[OF finite_term] by blast
   then show ?thesis using card_inner_image_upper finite_v by fastforce
@@ -69,13 +70,11 @@ assumes "ugraph_nodes E V"
 shows "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ card V * (card V * card V + card V)"
 proof -
   have image_size: "∀i∈V. card (vertex_pairs_not_in_edge_set E V i) ≤ (card V choose 2) + card V"
-    using card_inner_image_upper sp_inner_image_subset card_sp_inner_image by fastforce
-  have "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤
-            (∑i∈V. card (vertex_pairs_not_in_edge_set E V i))"
-    using assms card_UN_le ugraph_nodes_def by blast
-  moreover have "... ≤ (∑i∈V. (card V choose 2) + card V)" using image_size
-    by (meson sum_mono)
-  moreover have "... ≤ card V * ((card V choose 2) + card V)" by auto
+    using card_inner_image_upper sp_inner_image_subset card_sp_inner_image
+    using assms by fastforce
+  have "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ card V * ((card V choose 2) + card V)" 
+    using image_size assms[unfolded ugraph_nodes_def] 
+    by (meson assms card_image_le card_sp_inner_image mult_le_mono1 nrest_image_bound order.trans)
   moreover have "... ≤ card V * ((card V * (card V - 1) div 2) + card V)" by (simp add: choose_two)
   ultimately show ?thesis
     by (meson add_le_cancel_right diff_le_self div_le_dividend le_trans mult_le_mono2)

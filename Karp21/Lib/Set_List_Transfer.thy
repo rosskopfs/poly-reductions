@@ -133,7 +133,7 @@ lemma rel_fun_Ball_set_list_all [transfer_rule]:
 lemma rel_fun_mem_list_member [transfer_rule]:
   assumes "bi_unique R"
   shows "(Set_List_rel R ===> R ===> (\<longleftrightarrow>)) (\<lambda>S x. x \<in> S) List.member"
-  using assms unfolding in_set_member[symmetric]
+  using assms unfolding list.set_intros
   by (intro rel_funI) (auto simp: rel_set_def dest: bi_uniqueDr bi_uniqueDl)
 
 lemma filter_mem_subseqs: "filter P xs \<in> set (subseqs xs)"

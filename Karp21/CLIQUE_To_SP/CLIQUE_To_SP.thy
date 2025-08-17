@@ -7,7 +7,7 @@ begin
 definition "set_packing \<equiv> {(S, l). finite S \<and> (\<forall>C \<in> S. finite C) \<and>
   (\<exists>S' \<subseteq> S. card S' = l \<and>  disjoint S')}"
 
-definition "vertex_pairs_not_in_edge_set E V ≡ \<lambda>i. {{i,j} | j. j \<in> V \<and> {i, j} \<notin> E}"
+definition "vertex_pairs_not_in_edge_set E V \<equiv> \<lambda>i. {{i,j} | j. j \<in> V \<and> {i, j} \<notin> E}"
 
 lemma set_packing_cert:
   assumes "S' \<subseteq> S"
@@ -47,7 +47,7 @@ proof -
   let ?f = "(\<lambda>i. {{i,j}|j. j \<in> V \<and> {i, j} \<notin>E })"
   let ?S' = "?f ` C'"
   have "card (?f ` C') = k"
-    using C'_def \<open>ugraph_nodes E V\<close> node_to_set_inj subset_inj_on
+    using C'_def \<open>ugraph_nodes E V\<close> node_to_set_inj inj_on_subset
     by (intro card_image[THEN trans]) blast+
   moreover have "disjoint (?f ` C')"
     using \<open>is_clique E C'\<close> \<open>ugraph_nodes E V\<close>

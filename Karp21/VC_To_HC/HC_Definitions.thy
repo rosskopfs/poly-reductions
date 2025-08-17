@@ -328,8 +328,7 @@ lemma get_second_minus_noteq_minus:
   assumes "v \<in> e" "card e = 2"
   shows "get_second (e - {v}) \<noteq> v"
   using assms get_secon_in_set
-  by (metis emptyE get_second_in_edge is_singletonI' is_singleton_altdef member_remove odd_one
-      one_dvd remove_def)
+  by (metis get_secon_in_set assms(1) assms(2) insert_iff get_second_explicit e_in_E_e_explicit)
 
 lemma get_second_in_set:
   "get_second S \<in> S" if "S \<noteq> {}"

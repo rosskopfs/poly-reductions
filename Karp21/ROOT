@@ -5,6 +5,7 @@ session Karp21 = HOL +
     "HOL-Library"
     Landau_Symbols
     NREST
+    Undirected_Graph_Theory
     Tree_Enumeration
   directories
     "CHRN_To_CC"
