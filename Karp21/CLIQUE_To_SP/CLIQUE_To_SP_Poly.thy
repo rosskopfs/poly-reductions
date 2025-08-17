@@ -5,15 +5,15 @@ theory CLIQUE_To_SP_Poly
     Poly_Library
 begin
 
-definition "mop_ugraph_nodes E V = SPECT [ ugraph_nodes E V ↦ card E * card V ]"
-definition "mop_v E V i ≡ nrest_filter_image (λj. {i, j}) (λ_. 1) (λj. {i, j} ∉ E) V"
+definition "mop_ugraph_nodes E V = SPECT [ ugraph_nodes E V \<mapsto> card E * card V ]"
+definition "mop_v E V i \<equiv> nrest_filter_image (\<lambda>j. {i, j}) (\<lambda>_. 1) (\<lambda>j. {i, j} \<notin> E) V"
 definition "mop_set_image_sp E V =
-              nrest_image (vertex_pairs_not_in_edge_set E V) (λ_. card V * card E) V"
+              nrest_image (vertex_pairs_not_in_edge_set E V) (\<lambda>_. card V * card E) V"
 
 definition clique_to_set_packing_poly:
-  "clique_to_set_packing_poly ≡ λ(E, V, k).
+  "clique_to_set_packing_poly \<equiv> \<lambda>(E, V, k).
     do {
-      b ← mop_ugraph_nodes E V;
+      b \<leftarrow> mop_ugraph_nodes E V;
       if b then do {
         S <- mop_set_image_sp E V;
         RETURNT (S, k)
@@ -24,70 +24,70 @@ definition clique_to_set_packing_poly:
 definition "size_CLIQUE = (\<lambda>(E, V, k). card E + card V + nat_encoded_size k)"
 definition "size_SP = (\<lambda>(S, k). sum card S + nat_encoded_size k)"
 
-definition "clique_to_set_packing_space n ≡ n * (n * n + n)"
-definition "clique_to_set_packing_time n ≡ n * n + n * n * n"
+definition "clique_to_set_packing_space n \<equiv> n * (n * n + n)"
+definition "clique_to_set_packing_time n \<equiv> n * n + n * n * n"
 
 lemma sp_inner_image_subset:
-assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
-shows "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}"
+assumes "ugraph_nodes E V" and "x \<in> (vertex_pairs_not_in_edge_set E V ` V)"
+shows "x \<subseteq> ({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V}"
 using assms mem_Collect_eq singleton_insert_inj_eq' subsetI
   by (smt (verit, del_insts) UnCI card_doubleton_eq_2_iff imageE insert_absorb insert_iff
     vertex_pairs_not_in_edge_set_def)
 
 lemma card_inner_image_upper:
 assumes "finite V"
-shows "card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}) ≤ (card V choose 2) + card V"
+shows "card (({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V}) \<le> (card V choose 2) + card V"
 proof -
-  have "card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}) ≤
-          card ({e. e ⊆ V ∧ card e = 2}) + card ({{v}| v. v ∈ V})" using card_Un_le by blast
-  moreover have "... ≤ (card V choose 2) + card ({{v} | v. v ∈ V})" using assms
+  have "card (({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V}) \<le>
+          card ({e. e \<subseteq> V \<and> card e = 2}) + card ({{v}| v. v \<in> V})" using card_Un_le by blast
+  moreover have "... \<le> (card V choose 2) + card ({{v} | v. v \<in> V})" using assms
     by (simp add: le_refl n_subsets)
-  moreover have "... ≤ (card V choose 2) + card V"
-    using card_image_le[OF assms] Setcompr_eq_image[of "(λv. {v})" "V"] by auto
+  moreover have "... \<le> (card V choose 2) + card V"
+    using card_image_le[OF assms] Setcompr_eq_image[of "(\<lambda>v. {v})" "V"] by auto
   ultimately show ?thesis by linarith
 qed
 
 lemma card_sp_inner_image:
-assumes "ugraph_nodes E V" and "x ∈ (vertex_pairs_not_in_edge_set E V ` V)"
-shows "card x ≤ (card V choose 2) + card V"
+assumes "ugraph_nodes E V" and "x \<in> (vertex_pairs_not_in_edge_set E V ` V)"
+shows "card x \<le> (card V choose 2) + card V"
 proof -
   have finite_v: "finite V" using assms ugraph_nodes_def by blast
-  then have finite_left: "finite ({e. e ⊆ V ∧ card e = 2})" by auto
-  have "finite ((λv. {v}) ` V)" using finite_imageI[OF finite_v] by simp
-  then have "finite ({{v}| v. v ∈ V})" using Setcompr_eq_image by metis
-  then have finite_term: "finite (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
+  then have finite_left: "finite ({e. e \<subseteq> V \<and> card e = 2})" by auto
+  have "finite ((\<lambda>v. {v}) ` V)" using finite_imageI[OF finite_v] by simp
+  then have "finite ({{v}| v. v \<in> V})" using Setcompr_eq_image by metis
+  then have finite_term: "finite (({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V})"
     using finite_left by force
 
-  from assms have "x ⊆ ({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V}" 
+  from assms have "x \<subseteq> ({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V}" 
     by (rule sp_inner_image_subset)
-  then have "card x ≤ card (({e. e ⊆ V ∧ card e = 2}) ∪ {{v}| v. v ∈ V})"
+  then have "card x \<le> card (({e. e \<subseteq> V \<and> card e = 2}) \<union> {{v}| v. v \<in> V})"
     using card_mono[OF finite_term] by blast
   then show ?thesis using card_inner_image_upper finite_v by fastforce
 qed
 
 lemma card_clique_to_sp:
 assumes "ugraph_nodes E V"
-shows "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ card V * (card V * card V + card V)"
+shows "sum card (vertex_pairs_not_in_edge_set E V ` V) \<le> card V * (card V * card V + card V)"
 proof -
-  have image_size: "∀i∈V. card (vertex_pairs_not_in_edge_set E V i) ≤ (card V choose 2) + card V"
+  have image_size: "\<forall>i\<in>V. card (vertex_pairs_not_in_edge_set E V i) \<le> (card V choose 2) + card V"
     using card_inner_image_upper sp_inner_image_subset card_sp_inner_image
     using assms by fastforce
-  have "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ card V * ((card V choose 2) + card V)" 
+  have "sum card (vertex_pairs_not_in_edge_set E V ` V) \<le> card V * ((card V choose 2) + card V)" 
     using image_size assms[unfolded ugraph_nodes_def] 
     by (meson assms card_image_le card_sp_inner_image mult_le_mono1 nrest_image_bound order.trans)
-  moreover have "... ≤ card V * ((card V * (card V - 1) div 2) + card V)" by (simp add: choose_two)
+  moreover have "... \<le> card V * ((card V * (card V - 1) div 2) + card V)" by (simp add: choose_two)
   ultimately show ?thesis
     by (meson add_le_cancel_right diff_le_self div_le_dividend le_trans mult_le_mono2)
 qed
 
 lemma card_clique_to_sp_loose:
 assumes "ugraph_nodes E V" and "x = card E + card V"
-shows "sum card (vertex_pairs_not_in_edge_set E V ` V) ≤ x * (x * x + x)"
+shows "sum card (vertex_pairs_not_in_edge_set E V ` V) \<le> x * (x * x + x)"
 using card_clique_to_sp assms
 by (meson add_mono_thms_linordered_semiring(1) dual_order.trans le_add2 mult_le_mono)
 
 lemma clique_to_sp_size:
-  "size_SP (clique_to_set_packing C) ≤ clique_to_set_packing_space (size_CLIQUE C)"
+  "size_SP (clique_to_set_packing C) \<le> clique_to_set_packing_space (size_CLIQUE C)"
 apply (cases C)
 apply (simp add: size_SP_def size_CLIQUE_def clique_to_set_packing clique_to_set_packing_space_def nat_encoded_size_def)
 apply (intro impI conjI)
@@ -99,8 +99,8 @@ subgoal for E V k
 done
 
 lemma clique_to_set_packing_refines:
-  "clique_to_set_packing_poly C ≤
-    SPEC (λy. y = clique_to_set_packing C) (λ_. clique_to_set_packing_time (size_CLIQUE C))"
+  "clique_to_set_packing_poly C \<le>
+    SPEC (\<lambda>y. y = clique_to_set_packing C) (\<lambda>_. clique_to_set_packing_time (size_CLIQUE C))"
 unfolding SPEC_def clique_to_set_packing_poly
   clique_to_set_packing mop_ugraph_nodes_def mop_set_image_sp_def size_CLIQUE_def nrest_image_def
 apply(rule T_specifies_I)
@@ -110,7 +110,7 @@ subgoal for a b c
 proof -
   let ?x = "card a * card b + card b * card b * card a"
   let ?y = "clique_to_set_packing_time (card a + card b + nat_encoded_size c)"
-  have "?x ≤ ?y"
+  have "?x \<le> ?y"
     unfolding clique_to_set_packing_time_def nat_encoded_size_def
     by (simp add: add_mono mult_le_mono trans_le_add2 le_SucI)
   then show ?thesis by simp

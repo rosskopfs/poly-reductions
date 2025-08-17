@@ -107,7 +107,7 @@ lemma MALFROMED_not_in_THREE_DM: "MALFORMED \<notin> three_dm"
   unfolding MALFORMED_def three_dm_def
   by blast
 
-definition "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X ∧ finite X then
+definition "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X \<and> finite X then
     let
       T = \<Uplus>S;
       \<alpha> = (SOME f. inj_on f X \<and> f ` X \<subseteq> T );
@@ -290,7 +290,7 @@ proof -
   qed
   moreover have "\<Union>S = X"
     using \<open>S' \<subseteq> S\<close> \<open>\<Union> S \<subseteq> X\<close> \<open>\<Union> S' = X\<close> by blast
-  moreover have "finite X" using ‹finite X› by blast
+  moreover have "finite X" using \<open>finite X\<close> by blast
   ultimately show ?thesis unfolding xc_to_three_dm_def Let_def using \<alpha>_def
     by simp
 qed
@@ -300,7 +300,7 @@ subsection \<open>Completeness\<close>
 lemma xc_to_three_dm_complete:
   assumes "xc_to_three_dm (X, S) \<in> three_dm"
   shows "(X, S) \<in> exact_cover"
-proof (cases "\<Union>S = X ∧ finite X")
+proof (cases "\<Union>S = X \<and> finite X")
   case True
   then have "\<Union>S = X" by simp
   let ?T = "{(x, s) | s x. s \<in> S \<and> x \<in> s}"
