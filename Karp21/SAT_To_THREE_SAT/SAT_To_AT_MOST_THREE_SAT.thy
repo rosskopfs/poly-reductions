@@ -55,6 +55,7 @@ section "The Reduction"
 
 datatype 'a red = RV 'a | RU "nat \<times> nat"
 
+(* n^3 *)
 fun to_at_most_3_clause where
   "to_at_most_3_clause (a # b # c # d # rest) i j =
     to_at_most_3_clause (Neg (RU (i, j)) # c # d # rest) i (j+1) @

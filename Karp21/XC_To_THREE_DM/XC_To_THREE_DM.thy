@@ -108,7 +108,7 @@ lemma MALFROMED_not_in_THREE_DM: "MALFORMED \<notin> three_dm"
   by blast
 
 definition xc_to_three_dm where
-  "xc_to_three_dm = (\<lambda>(X, S). if \<Union>S = X then
+  "xc_to_three_dm = (\<lambda>(X, S). if \<Union> S = X ∧ finite X then
     let
       T = \<Uplus>S;
       \<alpha> = (SOME f. inj_on f X \<and> f ` X \<subseteq> T );
@@ -118,7 +118,6 @@ definition xc_to_three_dm where
     in
       (U1 \<union> U2, T) else MALFORMED
   )"
-
 
 subsection \<open>Soundness\<close>
 
@@ -292,8 +291,9 @@ proof -
   qed
   moreover have "\<Union>S = X"
     using \<open>S' \<subseteq> S\<close> \<open>\<Union> S \<subseteq> X\<close> \<open>\<Union> S' = X\<close> by blast
-  ultimately show ?thesis  unfolding xc_to_three_dm_def Let_def
-    using \<alpha>_def by simp
+  moreover have "finite X" using ‹finite X› by blast
+  ultimately show ?thesis unfolding xc_to_three_dm_def Let_def using \<alpha>_def
+    by simp
 qed
 
 subsection \<open>Completeness\<close>
@@ -301,8 +301,9 @@ subsection \<open>Completeness\<close>
 lemma xc_to_three_dm_complete:
   assumes "xc_to_three_dm (X, S) \<in> three_dm"
   shows "(X, S) \<in> exact_cover"
-proof (cases "\<Union>S = X")
+proof (cases "\<Union>S = X ∧ finite X")
   case True
+  then have "\<Union>S = X" by simp
   let ?T = "{(x, s) | s x. s \<in> S \<and> x \<in> s}"
   define \<alpha> where "\<alpha> = (SOME f.  inj_on f X \<and> f ` X \<subseteq> ?T)"
   let ?U1 = "{ (\<alpha> x, (x, s), (x, s)) | s x. s \<in> S \<and> x \<in> s }"
@@ -433,9 +434,8 @@ proof (cases "\<Union>S = X")
   qed
   next
   case False
-  then show ?thesis
-    using assms MALFROMED_not_in_THREE_DM unfolding xc_to_three_dm_def
-    by auto
+  then have "xc_to_three_dm (X, S) = MALFORMED" unfolding xc_to_three_dm_def by auto
+  then show ?thesis using assms MALFROMED_not_in_THREE_DM by auto
 qed
 
 subsection "Theorem"

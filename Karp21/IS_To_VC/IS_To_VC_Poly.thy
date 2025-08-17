@@ -112,7 +112,8 @@ definition "mop_get_vertices' es = SPECT [\<Union> ((\<lambda>(a,b). {a,b}) ` (s
 
 definition get_vertices where
   "get_vertices es =
-    do { S \<leftarrow> mop_set_empty_set;
+    do {
+      S \<leftarrow> mop_set_empty_set;
       S' \<leftarrow> nfoldli es (\<lambda>_. True)
             (\<lambda>(a,b) S. do {
                   S \<leftarrow> mop_set_insert S a;
@@ -122,7 +123,6 @@ definition get_vertices where
         S;
       RETURNT S'
   }"
-
 
 lemma get_vertices_refine:
   "get_vertices xs \<le> mop_get_vertices' xs"
@@ -206,6 +206,7 @@ lemma is_to_vc2_refines:
   subgoal by (auto simp: RETURNT_refine prod_rel_def_internal)
   subgoal by(auto intro!: RETURNT_refine simp: prod_rel_def_internal)
   done
+
 lemma is_to_vc2_refines':
   "(i',i) \<in> R_edge_set_tuple_list \<times>\<^sub>r Id
      \<Longrightarrow> is_to_vc2 i' \<le> \<Down> (R_edge_set_tuple_list \<times>\<^sub>r Id) (is_to_vc i)"
@@ -230,6 +231,5 @@ theorem "ispolyredd is_to_vc2
   unfolding independent_set_def vertex_cover_def
   apply(rule ispolyredd_refine[OF is_to_vc_ispolyred[THEN ispolyredd_generalizes_ispolyredD], simplified])
   apply(rule is_to_vc2_refines' ) .
-
 
 end

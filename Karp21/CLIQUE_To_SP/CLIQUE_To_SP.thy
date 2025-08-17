@@ -7,6 +7,8 @@ begin
 definition "set_packing \<equiv> {(S, l). finite S \<and> (\<forall>C \<in> S. finite C) \<and>
   (\<exists>S' \<subseteq> S. card S' = l \<and>  disjoint S')}"
 
+definition "vertex_pairs_not_in_edge_set E V ≡ \<lambda>i. {{i,j} | j. j \<in> V \<and> {i, j} \<notin> E}"
+
 lemma set_packing_cert:
   assumes "S' \<subseteq> S"
   and "card S' = l"
@@ -17,10 +19,9 @@ lemma set_packing_cert:
   using assms unfolding set_packing_def
   by blast
 
-
 definition clique_to_set_packing:
   "clique_to_set_packing \<equiv> \<lambda>(E, V, k). if ugraph_nodes E V  then
-  ((\<lambda>i. {{i,j}|j. j \<in> V  \<and> {i, j} \<notin> E }) ` V, k) else ({},1)"
+  (vertex_pairs_not_in_edge_set E V ` V, k) else ({},1)"
 
 lemma node_to_set_inj:
   assumes "ugraph_nodes E V"
@@ -58,7 +59,7 @@ proof -
     by (intro set_packing_cert[of ?S']) auto
   then show ?thesis
       using \<open>ugraph_nodes E V\<close>
-      unfolding clique_to_set_packing
+      unfolding clique_to_set_packing vertex_pairs_not_in_edge_set_def
       by fastforce
 qed
 
@@ -71,7 +72,7 @@ proof (cases "ugraph_nodes E V")
   let ?S = "?f ` V"
   from assms True obtain S' where S'_def:
     "S' \<subseteq> ?S" "card S' = k" "disjoint S'" "finite ?S" "\<forall>C \<in> ?S. finite C"
-    unfolding set_packing_def clique_to_set_packing
+    unfolding set_packing_def clique_to_set_packing vertex_pairs_not_in_edge_set_def
     by auto
 
   have "bij_betw ?f V ?S"

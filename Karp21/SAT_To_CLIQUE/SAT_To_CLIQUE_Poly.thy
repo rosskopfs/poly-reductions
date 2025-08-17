@@ -30,7 +30,7 @@ definition sat_to_clique_alg ::
           S \<leftarrow> add_edges_cstc F S;
           V \<leftarrow> mop_set_empty_set;
           V \<leftarrow> add_nodes_cstc F V;
-          RETURNT ( S, V, l)
+          RETURNT (S, V, l)
         }
       else RETURNT ( {}, {}, 1 )
     })"

@@ -40,13 +40,13 @@ text \<open>
     \<^item> AM3-SAT @{thm is_reduction_sat_to_at_most_three_sat}
       \<^item> 3-SAT @{thm is_reduction_at_most_three_sat_to_three_sat}
         \<^item> 3-Colorability @{thm is_reduction_sat_three_col}
-         \<^item> Chromatic Number @{thm is_reduction_three_col_chrn}
-          \<^item> Clique Cover  @{thm is_reduction_chrn_to_cc}
+          \<^item> Chromatic Number @{thm is_reduction_three_col_chrn}
+            \<^item> Clique Cover  @{thm is_reduction_chrn_to_cc}
     \<^item> Exact Cover @{thm is_reduction_sat_xc}
       \<^item> Subset Sum @{thm is_reduction_xc_to_ss}
-        \<^item> Job Sequencing @{thm is_reduction_ss_list_to_job_seq}{
+        \<^item> Job Sequencing @{thm is_reduction_ss_list_to_job_seq}
         \<^item> Partition @{thm is_reduction_ss_list_to_part}
-           \<^item> Max Cut @{thm is_reduction_part_to_maxcut}
+          \<^item> Max Cut @{thm is_reduction_part_to_maxcut}
         \<^item> Zero-One Integer Programming @{thm is_reduction_ss_int_list_to_zero_one_int_prog}
         \<^item> Knapsack @{thm is_reduction_ss_to_ks}
       \<^item> Three-Dimensional Matching @{thm is_reduction_xc_to_three_dm}
