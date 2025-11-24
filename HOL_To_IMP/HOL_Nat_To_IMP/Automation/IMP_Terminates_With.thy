@@ -190,12 +190,12 @@ lemma terminates_with_res_tCallI:
   assumes "terminates_with_res_IMP p s r val"
   and "(s(r := val)) r' = val'"
   shows "terminates_with_res_IMP_Tailcall tp (tCall p r) s r' val'"
-  using assms by blast
+  using assms by fast (* TODO: why does blast not work anymore? *)
 
 lemma terminates_with_res_tTailI:
   assumes "terminates_with_res_IMP_Tailcall p p s r val"
   shows "terminates_with_res_IMP_Tailcall p tTAIL s r val"
-  using assms by blast+
+  using assms by fast
 
 end
 

@@ -34,17 +34,32 @@ tCall: "(C,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile>
 \<comment> \<open>New rule\<close>
 tTail: "c \<turnstile> (c,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile> (tTAIL,s) \<Rightarrow>\<^bsup>5 + z \<^esup> t"
 
+print_theorems
+
 bundle tbig_step_syntax
 begin
 notation tbig_step_t ("_ \<turnstile> _ \<Rightarrow>\<^bsup>_\<^esup>  _" 55)
 end
 
-code_pred tbig_step_t .
+code_pred [show_modes] tbig_step_t .
 
 declare tbig_step_t.intros[intro]
 
 lemmas tbig_step_t_induct = tbig_step_t.induct[split_format(complete)]
 
+(* modified introduction rules that always apply when the term is of the correct shape *)
+lemma tbig_step_t_tSkip'[intro]:
+  assumes "t = s" and "z = 1"
+  shows "c \<turnstile> (tSKIP,s) \<Rightarrow>\<^bsup>z\<^esup> t" using assms[unfolded One_nat_def] tSkip by blast
+lemma tbig_step_t_tAssign'[intro]:
+  assumes "t = s(x := aval a s)" and "z = 2"
+  shows "c \<turnstile> (x ::= a,s) \<Rightarrow>\<^bsup>z\<^esup> t" using assms[unfolded numeral_2_eq_2] tAssign by blast
+lemma tbig_step_t_tCall'[intro]:
+  assumes "t' = s(r := t r)"
+  shows "(C,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile> (CALL C RETURN r,s) \<Rightarrow>\<^bsup>z \<^esup> t'" using assms tCall by blast
+lemma tbig_step_t_tTail'[intro]:
+  assumes "z' = 5 + z"
+  shows "c \<turnstile> (c,s) \<Rightarrow>\<^bsup>z \<^esup> t \<Longrightarrow> c \<turnstile> (tTAIL,s) \<Rightarrow>\<^bsup>z'\<^esup> t" using assms tTail by blast
 
 inductive_cases tSkip_tE[elim!]: "c \<turnstile> (tSKIP,s) \<Rightarrow>\<^bsup>x \<^esup> t"
 inductive_cases tAssign_tE[elim!]: "c \<turnstile> (x ::= a,s) \<Rightarrow>\<^bsup>p \<^esup> t"
@@ -54,6 +69,69 @@ inductive_cases tCall_tE[elim!]: "c \<turnstile> (CALL C RETURN v,s) \<Rightarro
 
 inductive_cases tTail_tE[elim]: "c \<turnstile> (tTAIL,s) \<Rightarrow>\<^bsup>x \<^esup> t"
 
+lemma tIfTrue_tE:
+  assumes "c \<turnstile> (IF b\<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup>y\<^esup> t"
+  assumes "s b \<noteq> 0"
+  obtains x where "y = Suc x" "c \<turnstile> (c1, s) \<Rightarrow>\<^bsup>x\<^esup>  t"
+  using assms by fastforce
+lemma tIfFalse_tE:
+  assumes "c \<turnstile> (IF b\<noteq>0 THEN c1 ELSE c2, s) \<Rightarrow>\<^bsup>y\<^esup> t"
+  assumes "s b = 0"
+  obtains x where "y = Suc x" "c \<turnstile> (c2, s) \<Rightarrow>\<^bsup>x\<^esup>  t"
+  using assms by fastforce
+
+lemma determ_value:
+  assumes "f \<turnstile> (c,s) \<Rightarrow>\<^bsup>z1\<^esup> t1"
+  assumes "f \<turnstile> (c,s) \<Rightarrow>\<^bsup>z2\<^esup> t2"
+  shows "t1 = t2"
+using assms proof (induction arbitrary: z2 t2 rule: tbig_step_t_induct)
+  case tIfTrue then show ?case by (meson tIfTrue_tE)
+next
+  case tIfFalse then show ?case by (meson tIfFalse_tE)
+next
+  case tCall then show ?case using bigstep_det by blast
+qed blast+
+
+lemma determ_time:
+  assumes "f \<turnstile> (c,s) \<Rightarrow>\<^bsup>z1\<^esup> t1"
+  assumes "f \<turnstile> (c,s) \<Rightarrow>\<^bsup>z2\<^esup> t2"
+  shows "z1 = z2"
+using assms proof (induction arbitrary: z2 t2 rule: tbig_step_t_induct)
+  case (tSeq c c1 s1 x s2 c2 y s3 z)
+  then show ?case using determ_value by blast
+next
+  case (tIfTrue s b c c1 x t y c2)
+  then show ?case using determ_value by fastforce
+next
+  case (tIfFalse s b c c2 x t y c1)
+  then show ?case using determ_value by fastforce
+next
+  case (tCall C s z t c r)
+  then show ?case using bigstep_det determ by blast
+qed blast+
+
+lemmas determ = determ_value determ_time
+
+fun num_commands :: "tcom \<Rightarrow> nat" where
+  "num_commands tSKIP = 1" |
+  "num_commands (x ::= v) = 1" |
+  "num_commands (c1;; c2) = num_commands c1 + num_commands c2 + 1" |
+  "num_commands (IF x\<noteq>0 THEN c1 ELSE c2) = num_commands c1 + num_commands c2 + 1" |
+  "num_commands (CALL c RETURN r) = 1" |
+  "num_commands tTAIL = 1"
+
+lemma num_commands_size: "num_commands c = 2 * size c + 1"
+  by (induction c) auto
+
+abbreviation "c_struct c \<equiv> 5 * num_commands c"
+
+lemma bigstep_progress: "f \<turnstile> (c, s) \<Rightarrow>\<^bsup>z\<^esup> t \<Longrightarrow> z > 0"
+  by (induct rule: tbig_step_t_induct) (auto simp add: Big_StepT.bigstep_progress) 
+
+lemma bigstep_progressE:
+  assumes "f \<turnstile> (c, s) \<Rightarrow>\<^bsup>z\<^esup> t"
+  obtains z' where "f \<turnstile> (c, s) \<Rightarrow>\<^bsup>Suc z'\<^esup> t" "z = Suc z'"
+  using assms bigstep_progress gr0_implies_Suc by blast
 
 instantiation tcom :: vars
 begin
@@ -82,6 +160,17 @@ fun invar :: "tcom \<Rightarrow> bool" where
 
 lemma no_tails_invar[simp]: "\<not>tails c \<Longrightarrow> invar c"
   by (induction c) auto
+
+lemma no_tails_swap_ctxt:
+  fixes f g c :: tcom
+  assumes "\<not> tails c"
+  assumes "f \<turnstile> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t"
+  shows "g \<turnstile> (c,s) \<Rightarrow>\<^bsup>z\<^esup> t"
+  using assms(2,1) apply (induction f "(c,s)" z t arbitrary: c s rule: tbig_step_t.induct) apply simp_all
+       apply blast
+      apply blast
+     apply blast (* TODO *)
+  by auto
 
 
 section \<open>Semantics for small-step-ish reasoning (loops)\<close>
@@ -312,7 +401,7 @@ next
     using translate_def by auto
 
   from s' * have "s2 CONT = 0"
-    using tSeq by auto (metis "11" determ)
+    using tSeq by auto (metis "11" IMP_Calls.determ)
   with tSeq have 2: "(translate1 CONT c2;; translate CONT c, s2) \<Rightarrow>'\<^bsup> Suc (Suc 0) + y\<^esup>  s3"
     by auto
 
@@ -411,7 +500,7 @@ next
 qed
 
 lemma loop_min: "(WHILE b\<noteq>0 DO c, s) \<Rightarrow>'\<^bsup> z\<^esup>  t \<Longrightarrow> (c,s) \<Rightarrow>'\<^bsup>x\<^esup> s2 \<Longrightarrow> s b \<noteq> 0 \<Longrightarrow> z \<ge> 3+x"
-  apply (induction "WHILE b\<noteq>0 DO c" s z t rule: big_step_t'_induct) apply simp using determ by fastforce
+  apply (induction "WHILE b\<noteq>0 DO c" s z t rule: big_step_t'_induct) apply simp using IMP_Calls.determ by fastforce
 
 lemma translate_complete:
   "\<lbrakk> (translate CONT c,s)\<Rightarrow>'\<^bsup>5+z\<^esup>t; s CONT \<noteq> 0; invar c; CONT \<notin> set (vars c) \<rbrakk>

@@ -7,6 +7,7 @@
 *.code-workspace
 .DS_Store
 Test.thy
+*.marks
 
 # Created by https://www.toptal.com/developers/gitignore/api/emacs,vim,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=emacs,vim,visualstudiocode

@@ -98,16 +98,18 @@ context HOL_Nat_To_IMP
 begin
 
 compile_nat HTHN.sqrt_aux_nat_nat_eq_unfolded
-HOL_To_IMP_correct HTHN.sqrt_aux_nat_nat by cook
+HOL_To_IMP_correct HTHN.sqrt_aux_nat_nat 
+  (* by cook *)
   (*Example step-by-step tactic invocation for debugging purposes.*)
-  (* apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  apply (tactic \<open>HM.correct_if_IMP_tailcall_correct_tac HT.get_IMP_def @{context} 1\<close>)
+  apply (induction rule: sqrt_aux_nat.induct)
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.run_tac HT.get_imp_correct @{context} 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
   apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
-  oops *)
+  oops
 
 compile_nat HTHN.sqrt_nat_nat_eq_unfolded
 HOL_To_IMP_correct HTHN.sqrt_nat_nat by cook
