@@ -56,7 +56,7 @@ val string_eq_congroc =
 fun simp_STATE_interp_retrieve_key simp_tac ctxt =
   let
     val ctxt = Simplifier.add_proc string_eq_congroc ctxt
-    val ctxt = ctxt addsimps
+    val ctxt = ctxt |> Simplifier.add_simps
       @{thms STATE_interp_update_retrieve_key_eq_if STATE_interp_state_state_eq}
   in simp_tac ctxt end
 

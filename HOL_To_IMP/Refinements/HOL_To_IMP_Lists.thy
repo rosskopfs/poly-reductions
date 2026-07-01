@@ -228,34 +228,34 @@ case_of_simps filter_acc_eq : filter_acc.simps
 lemma filter_eq_filter_acc_nil: "filter p xs = filter_acc p xs []"
   by (simp add: filter_acc_eq_rev_append_map)
 
-fun enumerate_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> (nat \<times> 'a) list \<Rightarrow> (nat \<times> 'a) list"  where
-  "enumerate_acc i [] acc = rev acc"
-| "enumerate_acc i (x#xs) acc = enumerate_acc (Suc i) xs ((i, x) # acc)"
-declare enumerate_acc.simps[simp del]
+fun indexed_from_acc :: "nat \<Rightarrow> 'a list \<Rightarrow> (nat \<times> 'a) list \<Rightarrow> (nat \<times> 'a) list"  where
+  "indexed_from_acc i [] acc = rev acc"
+| "indexed_from_acc i (x#xs) acc = indexed_from_acc (Suc i) xs ((i, x) # acc)"
+declare indexed_from_acc.simps[simp del]
 
-lemma enumerate_acc_eq_rev_append_enumerate: "enumerate_acc i xs acc = rev acc @ enumerate i xs"
-  by (induction xs arbitrary: acc i) (auto simp add: enumerate_acc.simps)
+lemma indexed_from_acc_eq_rev_append_indexed_from: "indexed_from_acc i xs acc = rev acc @ indexed_from i xs"
+  by (induction xs arbitrary: acc i) (auto simp add: indexed_from_acc.simps)
 
-case_of_simps enumerate_acc_eq : enumerate_acc.simps
-function_compile_nat enumerate_acc_eq
+case_of_simps indexed_from_acc_eq : indexed_from_acc.simps
+function_compile_nat indexed_from_acc_eq
 
-lemma enumerate_eq_enumerate_acc_nil: "enumerate f xs = enumerate_acc f xs []"
-  by (simp add: enumerate_acc_eq_rev_append_enumerate)
+lemma indexed_from_eq_indexed_from_acc_nil: "indexed_from f xs = indexed_from_acc f xs []"
+  by (simp add: indexed_from_acc_eq_rev_append_indexed_from)
 
-function_compile_nat enumerate_eq_enumerate_acc_nil
+function_compile_nat indexed_from_eq_indexed_from_acc_nil
 
 end
 
 context HOL_Nat_To_IMP
 begin
 
-lemmas enumerate_acc_nat_eq = HTHN.enumerate_acc_nat_eq_unfolded[unfolded case_list_nat_def]
-compile_nat enumerate_acc_nat_eq
+lemmas indexed_from_acc_nat_eq = HTHN.indexed_from_acc_nat_eq_unfolded[unfolded case_list_nat_def]
+compile_nat indexed_from_acc_nat_eq
 
-HOL_To_IMP_correct HOL_To_HOL_Nat.enumerate_acc_nat by cook
+HOL_To_IMP_correct HOL_To_HOL_Nat.indexed_from_acc_nat by cook
 
-compile_nat HTHN.enumerate_nat_eq_unfolded
-HOL_To_IMP_correct HOL_To_HOL_Nat.enumerate_nat by cook
+compile_nat HTHN.indexed_from_nat_eq_unfolded
+HOL_To_IMP_correct HOL_To_HOL_Nat.indexed_from_nat by cook
 
 end
 

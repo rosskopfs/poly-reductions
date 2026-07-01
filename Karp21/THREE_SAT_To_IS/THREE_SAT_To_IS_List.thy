@@ -11,7 +11,7 @@ begin
 subsubsection \<open>List Definition of @{term sat_is_un_1}\<close>
 
 definition "sat_is_un_1_list F \<equiv>
-  [[(l1, i), (l2, i)]. (i, C) \<leftarrow> enumerate 0 F, l1 \<leftarrow> C, l2 \<leftarrow> C, l1 \<noteq> l2]"
+  [[(l1, i), (l2, i)]. (i, C) \<leftarrow> indexed_from 0 F, l1 \<leftarrow> C, l2 \<leftarrow> C, l1 \<noteq> l2]"
 
 text \<open>@{term sat_is_un_1} is related to @{term sat_is_un_1_list}.\<close>
 
@@ -25,7 +25,7 @@ lemma rel_fun_sat_is_un_1_sat_is_un_1_list [transfer_rule]:
 subsubsection \<open>List Definition of @{term sat_is_un_2}\<close>
 
 definition "sat_is_un_2_list F \<equiv>
-  [[(l1, i), (l2, j)]. (i, Ci) \<leftarrow> enumerate 0 F, (j, Cj) \<leftarrow> enumerate 0 F,
+  [[(l1, i), (l2, j)]. (i, Ci) \<leftarrow> indexed_from 0 F, (j, Cj) \<leftarrow> indexed_from 0 F,
     l1 \<leftarrow> Ci, l2 \<leftarrow> Cj, conflict_lit l1 l2]"
 
 text \<open>@{term sat_is_un_2} is related to @{term sat_is_un_2_list}.\<close>

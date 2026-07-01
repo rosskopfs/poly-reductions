@@ -315,7 +315,7 @@ proof -
   next
     case False
     hence "?m r \<notin> set (vars (transfer ?m c))"
-      by (smt (verit, best) S Un_iff fresh fresh_inj inj_on_image_mem_iff list.set_intros(1) set_subset_Cons set_transfer subsetD subset_inj_on)
+      by (smt (verit, best) S Un_iff fresh fresh_inj inj_on_image_mem_iff list.set_intros(1) set_subset_Cons set_transfer subsetD inj_on_subset)
 
     with 2 have "?s\<^sub>1' (?m r) = s\<^sub>2' (?m r)"
       using var_unchanged by blast
@@ -367,7 +367,7 @@ proof -
   next
     case False
     hence "?m r \<notin> set (vars (transfer ?m c))"
-      by (smt (verit, best) S Un_iff fresh fresh_inj inj_on_image_mem_iff list.set_intros(1) set_subset_Cons set_transfer subsetD subset_inj_on)
+      by (smt (verit, best) S Un_iff fresh fresh_inj inj_on_image_mem_iff list.set_intros(1) set_subset_Cons set_transfer subsetD inj_on_subset)
 
     with 2 have "?s\<^sub>1' (?m r) = t' (?m r)"
       using var_unchanged by blast

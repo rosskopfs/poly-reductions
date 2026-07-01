@@ -24,6 +24,7 @@ sig
   val rewrite_ne_zero_if_Rel_nat_tac : Proof.context -> int -> tactic
 
   val seq_tac : thm -> Proof.context -> int -> tactic
+  val eq_STATE_interp_fun_upd_tac : Proof.context -> int -> tactic
   val assign_tac : thm -> Proof.context -> int -> tactic
   val call_tac : thm -> (int -> tactic) -> Proof.context -> thm list -> int -> tactic
   val if_tac : thm -> (int -> tactic) -> Proof.context -> int -> tactic
@@ -76,8 +77,8 @@ fun simp_state_update_val_tac ctxt =
 
 fun Rel_nat_step_tac ctxt =
   let fun resolve_tac thms = Unify_Resolve_Base.unify_resolve_any_tac
-    HOL_To_IMP_Unification.norms_first_higherp_decomp_comb_higher_unify
-    HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify thms ctxt
+    Mixed_Unification.norms_fo_hop_hop_var_unify
+    Mixed_Unification.fo_hop_hop_var_unify thms ctxt
   in
     resolve_tac [@{thm rel_fun_app_closeI}]
     ORELSE' assume_tac ctxt

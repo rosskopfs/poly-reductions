@@ -212,7 +212,7 @@ fun terminates_with_tCall_tac get_imp_correct ctxt =
 
 fun finish_contradictory_branch ctxt =
   (delete_IH_prems
-  THEN' safe_asm_full_simp_tac (ctxt addsimps HTITG.get_HOL_To_IMP_finish_simps ctxt))
+  THEN' safe_asm_full_simp_tac (Simplifier.add_simps (HTITG.get_HOL_To_IMP_finish_simps ctxt) ctxt))
   |> SOLVED'
 
 (*SIMPS_TO looper needed for if conditions containing meta variables*)
@@ -220,8 +220,8 @@ fun SIMPS_TO_if_assumption_tac ctxt =
   resolve_tac ctxt @{thms SIMPS_TO_if_TrueI SIMPS_TO_if_FalseI}
   THEN' assume_tac ctxt
 val SIMPS_TO_if_assumption_loop = ("SIMPS_TO_if_assumption", SIMPS_TO_if_assumption_tac)
-val add_SIMPS_TO_if_assumption_loop = Simplifier.map_ss
-  (fn ctxt => ctxt addloop SIMPS_TO_if_assumption_loop)
+val add_SIMPS_TO_if_assumption_loop = Simplifier.map_simpset
+  (Simplifier.add_loop SIMPS_TO_if_assumption_loop)
 
 fun terminates_with_res_tIf_tac ctxt =
   HTITG.if_tac @{thm terminates_with_res_tIf_processedI} (finish_contradictory_branch ctxt) ctxt
@@ -271,7 +271,8 @@ fun apply_IH_tac ctxt =
     (*tactic for proving the equalities*)
     fun arg_reg_eq_tac ctxt prems =
       resolve_tac ctxt [@{thm sym}]
-      THEN' SUT.STATE_interp_retrieve_key_eq_tac (safe_simp_tac (ctxt addsimps prems)) ctxt
+      THEN' SUT.STATE_interp_retrieve_key_eq_tac
+        (safe_simp_tac (Simplifier.add_simps prems ctxt)) ctxt
     (* rewrite each argument t_i to s ''reg_i'' *)
     fun rewrite_conclusion_arguments_tac ctxt arg_reg_eq_thms =
       let
@@ -281,8 +282,8 @@ fun apply_IH_tac ctxt =
           | rewrite_args_tac (thm :: thms) =
               (*splitting the arguments needs a special unifier*)
               Unify_Resolve_Base.unify_resolve_tac
-                (HOL_To_IMP_Unification.norms_first_higherp_decomp_comb_higher_unify)
-                (HOL_To_IMP_Unification.first_higherp_decomp_comb_higher_unify)
+                Mixed_Unification.norms_fo_hop_hop_var_unify
+                Mixed_Unification.fo_hop_hop_var_unify
                 @{thm SIMPS_TO_UNIF_SIMPS_TO_UNIF_cong} ctxt
               THEN' rewrite_args_tac thms
               THEN' Simps_To_Unif.SIMPS_TO_UNIF_tac (K all_tac)
@@ -307,8 +308,8 @@ fun apply_IH_tac ctxt =
           >>= (fn inst_var => Thm.instantiate (TVars.empty, Vars.make1 (inst_var, s_ct)) ih |> pure
           >>= (fn ih_inst => resolve_tac ctxt [ih_inst] |> pure)))
           |> flat2
-        val prepare_ih_prem_goal_tac =
-          safe_simp_tac (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (clear_simpset ctxt))
+        val prepare_ih_prem_goal_tac = safe_simp_tac
+          (fold (Raw_Simplifier.flip_simp) arg_reg_eq_thms (Simplifier.clear_simpset ctxt))
       in instantiate_apply_ih_tac THEN_ALL_NEW prepare_ih_prem_goal_tac end
     fun prems_tac {context = ctxt, prems,...} {s, v,...} =
       get_reg_eq_thms ctxt (arg_reg_eq_tac ctxt prems) s v
@@ -336,7 +337,7 @@ fun finish_non_tail_tac ctxt =
   terminates_with_res_tAssign_tac ctxt
   THEN' delete_IH_prems
   THEN' SUT.STATE_interp_retrieve_key_eq_tac
-    (asm_full_simp_tac (ctxt addsimps HTITG.get_HOL_To_IMP_finish_simps ctxt)) ctxt
+    (asm_full_simp_tac (Simplifier.add_simps (HTITG.get_HOL_To_IMP_finish_simps ctxt) ctxt)) ctxt
 
 (*shared tail/non-tail finish tactics*)
 fun simp_res_value_tac simp_tac ctxt =
@@ -362,8 +363,8 @@ fun run_HOL_fun_tac get_HOL_eqs ctxt =
     | SOME thms => simp_res_value_tac (
           subst_HOL_fun_eq_tac thms ctxt
           THEN' delete_IH_prems
-          THEN' TRY o safe_asm_full_simp_tac (ctxt delsimps thms addsimps
-            @{thm Let_def} :: HTITG.get_HOL_To_IMP_finish_simps ctxt)
+          THEN' TRY o safe_asm_full_simp_tac (Simplifier.del_simps thms ctxt
+            |> Simplifier.add_simps (@{thm Let_def} :: HTITG.get_HOL_To_IMP_finish_simps ctxt))
         ) ctxt
   in with_dest_terminates_with_res_IMP_Tailcall_prop ctxt tac end
 

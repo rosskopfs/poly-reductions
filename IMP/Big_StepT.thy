@@ -336,7 +336,7 @@ lemma subst_sound:
     \<Longrightarrow> \<exists>t'. (subst m c,s') \<Rightarrow>\<^bsup>z\<^esup> t' \<and> t = t' o m on S"
 proof (induction c s z t arbitrary: s' rule: big_step_t_induct)
   case Assign then show ?case unfolding eq_on_def
-    by (auto simp: subset_inj_on subsetD inj_on_contraD aval_eq_if_eq_on_vars[unfolded eq_on_def])
+    by (auto simp: inj_on_subset subsetD inj_on_contraD aval_eq_if_eq_on_vars[unfolded eq_on_def])
 next
   case (WhileTrue s\<^sub>1 b c x s\<^sub>2 y s\<^sub>3 z s\<^sub>1')
   then obtain s\<^sub>2' where 1: "(subst m c, s\<^sub>1') \<Rightarrow>\<^bsup> x \<^esup> s\<^sub>2'" "s\<^sub>2 = s\<^sub>2' \<circ> m on S" unfolding eq_on_def by force

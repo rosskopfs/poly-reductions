@@ -69,15 +69,15 @@ val dest_eq = HOLogic.dest_eq
 val cdest_eq = Thm.dest_binop
 
 (* simplifier *)
-fun set_simps ctxt thms = (clear_simpset ctxt) addsimps thms
+fun set_simps ctxt thms = Simplifier.clear_simpset ctxt |> Simplifier.add_simps thms
 
 (* tactics *)
 fun refl_tac ctxt = resolve_tac ctxt [@{thm refl}]
 
 fun subst_first_tac ctxt = EqSubst.eqsubst_tac ctxt [1]
 fun simp_only_tac ctxt thms = safe_simp_tac (set_simps ctxt thms)
-fun SIMPS_TO_UNIF_refl_tac simp_tac ctxt i state =
-  Simps_To_Unif.SIMPS_TO_UNIF_refl_tac simp_tac (Thm.maxidx_of state + 1) ctxt i state
+fun SIMPS_TO_UNIF_refl_tac simp_tac ctxt i state = Simps_To_Unif.SIMPS_TO_UNIF_tac
+  simp_tac (resolve_tac ctxt [@{thm reflexive}]) (Thm.maxidx_of state + 1) ctxt i state
 
 (* pretty printing *)
 fun pretty_prems ctxt = SpecCheck_Show.list (Syntax.pretty_term ctxt)

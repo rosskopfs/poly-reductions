@@ -92,10 +92,10 @@ lemma Set_List_rel_Cons [transfer_rule]: "(R ===> Set_List_rel R ===> Set_List_r
 lemma rel_fun_Set_List_rel_id_set [transfer_rule]: "(Set_List_rel R ===> rel_set R) (\<lambda>x. x) set"
   by blast
 
-lemma rel_fun_enumerate [transfer_rule]:
+lemma rel_fun_indexed_from [transfer_rule]:
   "((=) ===> list_all2 (Set_List_rel R) ===> list_all2 (rel_prod (=) (Set_List_rel R)))
-  enumerate enumerate"
-  by (fastforce simp: list_all2_conv_all_nth nth_enumerate_eq)
+  indexed_from indexed_from"
+  by (fastforce simp: list_all2_conv_all_nth nth_indexed_from_eq)
 
 lemma rel_fun_image_map [transfer_rule]:
   "((R ===> S) ===> Set_List_rel R ===> Set_List_rel S) image map"
@@ -155,15 +155,15 @@ next
   then show ?case by blast
 qed
 
-lemma set_enumerate_eq:
-  "set (enumerate n xs) = {(n + i, xs ! i) |i. i < length xs}"
-  by (force simp: in_set_enumerate_eq less_diff_conv2)
+lemma set_indexed_from_eq:
+  "set (indexed_from n xs) = {(n + i, xs ! i) |i. i < length xs}"
+  by (force simp: in_set_indexed_from_eq less_diff_conv2)
 
-lemma enumerate_Set_List_transfer [transfer_rule]:
+lemma indexed_from_Set_List_transfer [transfer_rule]:
   "((=) ===> list_all2 R ===> Set_List_rel (rel_prod (=) R))
-    (\<lambda>n xs. {(n + i, xs ! i) |i. i < length xs}) enumerate"
+    (\<lambda>n xs. {(n + i, xs ! i) |i. i < length xs}) indexed_from"
   apply(intro rel_funI Set_List_relI rel_setI)
-   apply(auto simp: set_enumerate_eq list_all2_lengthD list_all2_nthD2)
+   apply(auto simp: set_indexed_from_eq list_all2_lengthD list_all2_nthD2)
   done
 
 definition "transl_list_list_list_set \<equiv> map set"

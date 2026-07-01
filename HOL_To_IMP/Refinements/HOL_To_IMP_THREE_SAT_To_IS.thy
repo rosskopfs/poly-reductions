@@ -24,7 +24,7 @@ lemmas sat_is_un_1_list_fo_defs =
   sat_is_un_1_list_fo2_def sat_is_un_1_list_fo1_def sat_is_un_1_list_fo0_def
 
 lemma sat_is_un_1_list_fo_def:
-  "sat_is_un_1_list F = concat (map sat_is_un_1_list_fo2 (enumerate 0 F))"
+  "sat_is_un_1_list F = concat (map sat_is_un_1_list_fo2 (indexed_from 0 F))"
   unfolding sat_is_un_1_list_fo_defs sat_is_un_1_list_def by simp
 
 function_compile_nat sat_is_un_1_list_fo0_def
@@ -115,13 +115,13 @@ definition "sat_is_un_2_list_fo0 \<equiv>
 definition "sat_is_un_2_list_fo1 \<equiv> \<lambda>i j Cj l1. concat (map (sat_is_un_2_list_fo0 l1 i j) Cj)"
 definition "sat_is_un_2_list_fo2 \<equiv> \<lambda>i Ci (j, Cj). concat (map (sat_is_un_2_list_fo1 i j Cj) Ci)"
 definition "sat_is_un_2_list_fo3 \<equiv>
-  \<lambda>F (i, Ci). concat (map (sat_is_un_2_list_fo2 i Ci) (enumerate 0 F))"
+  \<lambda>F (i, Ci). concat (map (sat_is_un_2_list_fo2 i Ci) (indexed_from 0 F))"
 
 lemmas sat_is_un_2_list_fo_defs =
   sat_is_un_2_list_fo0_def sat_is_un_2_list_fo1_def sat_is_un_2_list_fo2_def sat_is_un_2_list_fo3_def
 
 lemma sat_is_un_2_list_fo_def:
-  "sat_is_un_2_list F = concat (map (sat_is_un_2_list_fo3 F) (enumerate 0 F))"
+  "sat_is_un_2_list F = concat (map (sat_is_un_2_list_fo3 F) (indexed_from 0 F))"
   unfolding sat_is_un_2_list_def sat_is_un_2_list_fo_defs by simp
 
 function_compile_nat sat_is_un_2_list_fo0_def print_theorems

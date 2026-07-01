@@ -49,12 +49,12 @@ fun mk_ctr_condition t i = HU.mk_eq (fst_nat $ t, mk_ctr_tag i)
 
 fun register_ctr ctrs ctr lthy =
   let
-    val (binders, _) = Binders.fix_binders (map (K ("x", natT)) (term_binder_types ctr)) lthy
-    val args = map snd binders
+    val (args, _) = Variable.variant_fixes (map (K "x") (term_binder_types ctr)) lthy
+      |>> map (rpair natT #> Free)
     val rhs = mk_ctr_rhs (find_mk_ctr_tag ctrs lthy ctr) args
-    val lhs = Free (mk_ctr_binding ctr |> Binding.name_of, map (snd o fst) binders ---> natT)
+    val lhs = Free (mk_ctr_binding ctr |> Binding.name_of, map (K natT) args ---> natT)
     val eq = BU.mk_Trueprop_eq (list_comb (lhs, args), rhs)
-  in register_def @{attributes [code del]} eq lthy end
+  in register_def @{attributes [code drop]} eq lthy end
 
 fun register_ctrs ctrs = fold_map (register_ctr ctrs) ctrs
 
@@ -67,7 +67,7 @@ fun mk_trport_fun transf lhs ctrs casex lthy =
         val (binders, _) = Binders.fix_binders (map_range (K ("x", dummyT)) ctr_nargs) lthy
         val trp_args = map (app transf o Bound) (ctr_nargs - 1 downto 0)
       in list_comb (Trp.map_dummyT ctr, trp_args) |> curry Logic.rlist_abs (map fst (rev binders)) end
-    val (free, _) = Binders.fix_binder ("x", dummyT) lthy |>> snd
+    val (free, _) = yield_singleton Variable.variant_fixes "x" lthy |>> (rpair dummyT #> Free)
     val lhs = lhs $ free
     val rhs = list_comb (Trp.map_dummyT casex, map mk_case ctrs @ [free])
   in (lhs, rhs) end
@@ -132,7 +132,7 @@ fun register_nat_selector_Rel_thm natify_simps (ctrs_nat_def, ctr) lthy =
     fun reg_ctr_des_Rel_thm_arg (i, arg) =
       let
         fun tac ctxt = solve_compiled_Rel_nat_tac transfer_fun_RelD
-          (ctxt addsimps (@{thm nat_selector_eq} :: ctrs_nat_def :: natify_simps))
+          (Simplifier.add_simps (@{thm nat_selector_eq} :: ctrs_nat_def :: natify_simps) ctxt)
         val (goal, lthy) = mk_Rel_nat (fastype_of arg) $ nat_selector ctr_nargs prem_freet i $ arg
           |> HOLogic.mk_Trueprop
           |> curry Logic.mk_implies prem
@@ -162,8 +162,8 @@ fun register_Rel_nat_eq_fst_nat_case_thm ctrs casex simps split lthy =
     val (goal, lthy) = rel $ fst_nat $ caset |> HOLogic.mk_Trueprop
       |> (fn goal => yield_singleton (Variable.import_terms false) goal lthy)
       |>> Syntax.check_prop lthy
-    fun tac ctxt =
-      solve_compiled_Rel_nat_tac transfer_fun_RelD (ctxt addsimps simps |> Splitter.add_split split)
+    fun tac ctxt = solve_compiled_Rel_nat_tac transfer_fun_RelD
+      (Simplifier.add_simps simps ctxt |> Splitter.add_split split)
     val thm = Goal.prove lthy [] [] goal (#context #> tac #> HEADGOAL)
     val binding = ctrs |> hd |> fastype_of |> strip_type |> snd |> mk_Rel_nat_eq_fst_nat_case_binding
   in register_Rel_nat_thms binding [thm] lthy |>> snd end
@@ -192,15 +192,16 @@ fun register_case T ctrs casex ctxt =
 
 fun mk_case_Rel casex case_nat ctxt =
   let
-    val (R, ctxt) = Binders.fix_binder ("R", dummyT) ctxt
+    val R_name = "R"
+    val (R, ctxt) = yield_singleton Variable.variant_fixes R_name ctxt |>> (rpair dummyT #> Free)
     val caseT = fastype_of casex
     val case_toT = caseT |> strip_type |> snd
   in
     mk_Rel_fun_from_type (app o app mk_transfer_rel_fun_dummyT)
-      (fn T => if T = case_toT then snd R else mk_Rel_nat dummyT) caseT
+      (fn T => if T = case_toT then R else mk_Rel_nat dummyT) caseT
       $ Trp.map_dummyT case_nat $ Trp.map_dummyT casex
     |> Syntax.check_term ctxt
-    |> rpair R
+    |> rpair R_name
   end
 
 fun mk_case_Rel_thm casex case_nat case_nat_def ctxt =
@@ -215,7 +216,7 @@ fun mk_case_Rel_thm casex case_nat case_nat_def ctxt =
       THEN_ALL_NEW solve_compiled_Rel_nat_tac transfer_fun_RelD ctxt
   in
     mk_case_Rel casex case_nat ctxt
-    |> (fn (t, binder) => prove_goal_schematics [fst (fst binder)] (HEADGOAL o tac) ctxt t)
+    |> (fn (t, R_name) => prove_goal_schematics [R_name] (HEADGOAL o tac) ctxt t)
   end
 
 fun register_case_Rel_thm T casex case_nat case_nat_def lthy =
@@ -262,7 +263,7 @@ fun datatype_compile_nat T ctrs casex split thy =
     (*prove the desired definition of denatify in terms of case_nat*)
     fun denatify_eq_case_tac ctxt = resolve_tac lthy @{thms ext}
       THEN' EqSubst.eqsubst_tac ctxt [1] denatify_simps
-      THEN' simp_tac (clear_simpset ctxt addsimps [case_nat_def])
+      THEN' simp_tac (Simplifier.clear_simpset ctxt |> Simplifier.add_simps [case_nat_def])
     val (denatify_def, lthy) = mk_trport_fun (mk_denatify T) (mk_denatify dummyT) ctrs case_nat lthy
       |> snd |> dest_comb |> fst
       |> HU.mk_eq o pair denatify
@@ -285,7 +286,7 @@ fun datatype_compile_nat T ctrs casex split thy =
       let val simps = @{thm nat_selector_eq} :: ctrs_nat_def @ natify_simps
       in
         EqSubst.eqsubst_tac ctxt [1] denatify_simps
-        THEN' asm_full_simp_tac (ctxt addsimps simps)
+        THEN' asm_full_simp_tac (Simplifier.add_simps simps ctxt)
       end
     val lthy = prove_instantiation solve_instantiation_tac lthy
 
@@ -293,7 +294,7 @@ fun datatype_compile_nat T ctrs casex split thy =
     val phi = Proof_Context.export_morphism lthy (Proof_Context.init_global thy)
     val natify_simps = map (Morphism.thm phi) natify_simps
     val lthy = Local_Theory.begin_nested lthy |> snd
-    val lthy = lthy addsimps @{thm nat_selector_eq} :: ctrs_nat_def @ natify_simps
+    val lthy = Simplifier.add_simps (@{thm nat_selector_eq} :: ctrs_nat_def @ natify_simps) lthy
     (*create relator theorem for case*)
     val (case_Rel_thm, lthy) = register_case_Rel_thm T casex case_nat case_nat_def lthy |>> snd
     (*create relator theorems for constructors*)

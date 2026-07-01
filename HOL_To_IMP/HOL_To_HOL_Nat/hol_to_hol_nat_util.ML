@@ -132,13 +132,13 @@ fun prove_goals tac ctxt ts = Goal.prove_common ctxt NONE [] [] ts (#context #> 
 
 (*registrations*)
 fun register_def attrs eq =
-  Specification.definition NONE [] [] ((Binding.empty, attrs), eq)
+  Specification.definition {verbose = true} NONE [] [] ((Binding.empty, attrs), eq)
 
 fun register_fun binding_name lhs rhs lthy =
   let
     val fixes = [(binding_name, NONE, NoSyn)]
     val specs = [((Binding.empty_atts, BU.mk_Trueprop_eq (lhs, rhs)), [], [])]
-  in Function_Fun.add_fun fixes specs Function_Fun.fun_config lthy end
+  in Function_Fun.add_fun {verbose = true} fixes specs Function_Fun.fun_config lthy end
 
 fun register_attrs_thms attrs binding thms = Local_Theory.note ((binding, attrs), thms)
 val register_thms = register_attrs_thms @{attributes []}
@@ -189,8 +189,10 @@ val transport_fun_RelI = @{thm Fun_Rel_relI}
 val transport_fun_RelD = @{thm Fun_Rel_relD}
 
 fun fun_rel_intro_tac fun_RelI ctxt = REPEAT_ALL_NEW (resolve_tac ctxt [fun_RelI])
-fun solve_fun_rel_tac fun_RelD ctxt = force_tac (ctxt addDs [fun_RelD] addsimps [@{thm rel_fun_eq}])
-fun solve_compiled_Rel_nat_tac fun_RelD ctxt = solve_fun_rel_tac fun_RelD (ctxt addsimps [Rel_nat_iff_thm])
+fun solve_fun_rel_tac fun_RelD ctxt = force_tac
+  (ctxt addDs [fun_RelD] |> Simplifier.add_simps [@{thm rel_fun_eq}])
+fun solve_compiled_Rel_nat_tac fun_RelD ctxt = solve_fun_rel_tac fun_RelD
+  (Simplifier.add_simps [Rel_nat_iff_thm] ctxt)
 
 fun add_transfer_rules thms ctxt = ctxt
   |> Context.proof_map (fold (Thm.attribute_declaration Transfer.transfer_add) thms)

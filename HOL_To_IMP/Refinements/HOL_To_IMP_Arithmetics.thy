@@ -104,9 +104,9 @@ HOL_To_IMP_correct HTHN.sqrt_aux_nat_nat by cook
   apply (tactic \<open>HT.setup_induction_tac HT.get_fun_inducts @{context} 1\<close>)
   apply (tactic \<open>HT.start_case_tac HT.get_IMP_def @{context} 1\<close>)
   apply (tactic \<open>HT.run_tac HT.get_imp_correct @{context} 1\<close>)
-  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
-  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
-  apply (tactic \<open>SOLVED' (HT.finish_tac HB.get_HOL_eqs @{context}) 1\<close>)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HG.get_HOL_eqs @{context}) 1\<close>)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HG.get_HOL_eqs @{context}) 1\<close>)
+  apply (tactic \<open>SOLVED' (HT.finish_tac HG.get_HOL_eqs @{context}) 1\<close>)
   oops *)
 
 compile_nat HTHN.sqrt_nat_nat_eq_unfolded

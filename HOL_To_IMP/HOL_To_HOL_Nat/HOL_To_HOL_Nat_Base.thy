@@ -42,8 +42,8 @@ lemma inj_natify: "inj natify"
 lemma eq_if_natify_eq: "natify x = natify y \<Longrightarrow> x = y"
   using inj_natify by (blast dest: injD)
 
-definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool" where
-  [code del]: "Rel_nat n x \<equiv> n = natify x"
+definition Rel_nat :: "nat \<Rightarrow> 'a \<Rightarrow> bool"
+  where [code drop]: "Rel_nat n x \<equiv> n = natify x"
 
 lemma Rel_nat_iff_eq_natify: "Rel_nat n x \<longleftrightarrow> n = natify x"
   unfolding Rel_nat_def by simp
@@ -53,10 +53,10 @@ lemmas
     OF eq_reflection, OF ext, OF ext, OF Rel_nat_iff_eq_natify] =
   typedef_bi_unique typedef_right_unique typedef_left_unique typedef_right_total
 
-lemma right_unique_Rel_nat: "Transfer.right_unique Rel_nat"
+lemma right_unique_Rel_nat: "Relation.right_unique Rel_nat"
   by (fact typedef_Rel_nat_transfer)
 
-lemma left_unique_Rel_nat: "left_unique Rel_nat"
+lemma left_unique_Rel_nat: "Relation.left_unique Rel_nat"
   by (fact typedef_Rel_nat_transfer)
 
 (*not registered by default since terms should not be transferred to their
@@ -88,7 +88,7 @@ declare Galois_eq_inv_Rel_nat[trp_relator_rewrite, trp_uhint]
 lemma eq_eq_Fun_Rel_eq_eq_uhint [trp_uhint]: "P \<equiv> (=) \<Longrightarrow> P \<equiv> (=) \<Rrightarrow> (=)" by simp
 
 definition pair_nat :: "nat \<Rightarrow> nat \<Rightarrow> nat"
-  where [code del]: "pair_nat a b = prod_encode (a, b)"
+  where [code drop]: "pair_nat a b = prod_encode (a, b)"
 
 lemma pair_nat_eq: "pair_nat a b = prod_encode (a, b)"
   unfolding pair_nat_def by simp
@@ -110,8 +110,8 @@ lemma pair_nat_unpair_nat_eq [simp]: "(\<lambda>(a, b). pair_nat a b) (unpair_na
 lemma unpair_nat_zero_eq_zero_zero [simp]: "unpair_nat 0 = (0, 0)"
   by (subst pair_nat_zero_zero_eq_zero[symmetric], subst unpair_nat_pair_nat_eq) simp
 
-definition fst_nat :: "nat \<Rightarrow> nat" where
-  [code del]: "fst_nat p = fst (unpair_nat p)"
+definition fst_nat :: "nat \<Rightarrow> nat"
+  where [code drop]: "fst_nat p = fst (unpair_nat p)"
 
 lemma fst_nat_eq: "fst_nat p = fst (unpair_nat p)"
   unfolding fst_nat_def by simp
@@ -122,8 +122,8 @@ lemma fst_nat_pair_eq [simp]: "fst_nat (pair_nat a b) = a"
 lemma fst_nat_zero_eq [simp]: "fst_nat 0 = 0"
   unfolding fst_nat_eq by simp
 
-definition snd_nat :: "nat \<Rightarrow> nat" where
-  [code del]: "snd_nat p = snd (unpair_nat p)"
+definition snd_nat :: "nat \<Rightarrow> nat"
+  where [code drop]: "snd_nat p = snd (unpair_nat p)"
 
 lemma snd_nat_eq: "snd_nat p = snd (unpair_nat p)"
   unfolding snd_nat_def by simp
@@ -163,11 +163,11 @@ corollary [termination_simp]:
   by (cases "unpair_nat p"; auto simp: fst_lt_pair_nat_if_zero_lt snd_lt_pair_nat_if_zero_lt)+
 
 lemma rel_inv_Fun_Rel_rel_eq: "(R \<Rrightarrow> S)\<inverse> = (R\<inverse> \<Rrightarrow> S\<inverse>)"
-  by (urule rel_inv_Dep_Fun_Rel_rel_eq)
+  by (urule Dep_Fun_Rel_rel_inv_rel_inv_eq[symmetric])
 
 ML_file \<open>hol_to_hol_nat_util.ML\<close>
 
-definition [code del]: "nat_selector nargs arg n \<equiv>
+definition [code drop]: "nat_selector nargs arg n \<equiv>
   (if arg + 1 < nargs then fst_nat else id) ((snd_nat^^(arg + 1)) n)"
 
 lemma nat_selector_eq:

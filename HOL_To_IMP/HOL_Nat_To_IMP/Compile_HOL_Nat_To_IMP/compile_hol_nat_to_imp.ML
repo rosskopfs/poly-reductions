@@ -301,7 +301,7 @@ fun define_compiled compiled_binding compiled lthy =
                           ((Thm.def_binding compiled_binding, [def_attr]), compiled))
                           lthy
     val _ =
-      Proof_Display.print_consts true pos lthy' (K false) [Term.dest_Free fv]
+      Proof_Display.print_consts {verbose = true, pos = pos} lthy' (K false) [Term.dest_Free fv]
     val _ =
       Proof_Display.print_theorem pos lthy' (def_name, [def_thm])
   in

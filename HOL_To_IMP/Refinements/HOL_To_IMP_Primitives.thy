@@ -1,7 +1,7 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory HOL_To_IMP_Primitives
   imports
-    "HOL_Nat_To_IMP.HOL_Nat_To_IMP_Tactics"
+    HOL_Nat_To_IMP.HOL_Nat_To_IMP_Tactics
 begin
 
 context HOL_To_HOL_Nat
@@ -156,6 +156,7 @@ compile_nat mul_acc_nat_nat_eq
 HOL_To_IMP_correct HTHN.mul_acc_nat_nat by cook
 
 compile_nat HTHN.times_nat_eq_unfolded
+
 HOL_To_IMP_correct HTHN.times_nat by cook
 
 end

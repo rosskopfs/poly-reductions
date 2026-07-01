@@ -50,19 +50,6 @@ lemma SIMPS_TO_UNIF_SIMPS_TO_UNIF_cong:
   shows "PROP SIMPS_TO_UNIF (f x) (g y)"
   using assms unfolding SIMPS_TO_UNIF_eq by simp
 
-ML\<open>
-  local val id = "hol_to_imp" in
-  @{functor_instance struct_name = HOL_To_IMP_Unification_Combine
-    and functor_name = Unification_Combine
-    and id = \<open>id\<close>}
-  @{functor_instance struct_name = HOL_To_IMP_Unification
-    and functor_name = Mixed_Unification
-    and id = \<open>id\<close>
-    and more_args = \<open>structure UC = HOL_To_IMP_Unification_Combine\<close>}
-  end
-\<close>
-local_setup \<open>HOL_To_IMP_Unification_Combine.setup_attribute NONE\<close>
-
 definition "rel_fun_app_close x y \<equiv> x = y"
 
 lemma rel_fun_app_closeI: "rel_fun_app_close x x"
@@ -122,15 +109,15 @@ declaration (in HOL_Nat_To_IMP)
   \<open>K HOL_Nat_To_IMP_Tailcalls_Tactics.add_SIMPS_TO_if_assumption_loop\<close>
 
 ML\<open>
-  @{functor_instance struct_name = Standard_HOL_Nat_To_IMP_Tactics
-    and functor_name = HOL_Nat_To_IMP_Tactics
-    and id = \<open>""\<close>
-    and more_args = \<open>val init_args = {
-      get_IMP_def = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_IMP_def,
-      get_imp_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_correct,
-      get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Gen.get_HOL_eqs,
-      get_fun_inducts = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_fun_inducts
-    }\<close>}
+\<^functor_instance>\<open>struct_name: Standard_HOL_Nat_To_IMP_Tactics
+  functor_name: HOL_Nat_To_IMP_Tactics
+  id: \<open>""\<close>
+  more_args: \<open>val init_args = {
+    get_IMP_def = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_IMP_def,
+    get_imp_correct = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_imp_correct,
+    get_HOL_eqs = SOME HOL_Nat_To_IMP_Tactics_Gen.get_HOL_eqs,
+    get_fun_inducts = SOME HOL_Nat_To_IMP_Tailcalls_Tactics.get_fun_inducts
+  }\<close>\<close>
 \<close>
 local_setup \<open>Standard_HOL_Nat_To_IMP_Tactics.setup_attribute NONE\<close>
 local_setup \<open>Standard_HOL_Nat_To_IMP_Tactics.setup_method NONE\<close>

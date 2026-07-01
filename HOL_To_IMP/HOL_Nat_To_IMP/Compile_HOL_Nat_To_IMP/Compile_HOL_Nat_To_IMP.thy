@@ -191,7 +191,7 @@ lemma aval_subst_aexp_eq_aval:
   assumes "\<And>x y. (x, y) \<in> set al \<Longrightarrow> s x = atomVal y s"
   shows "aval (subst_aexp a al) s = aval a s"
   using atomVal_subst_atomExp_eq_atomVal[OF assms] atomVal_get_reg_eq_atomVal[OF assms]
-  by (cases a) 
+  by (cases a)
     (auto simp: nat.case_eq_if split: atomExp.split;
       metis add_cancel_left_left add_cancel_left_right atomVal.simps less_eq_nat.simps(1) diff_zero)+
 
@@ -224,9 +224,9 @@ proof -
       using 1(2)[OF prod(1) refl prod(2) obt(2) left(2)
           trans_assigns_aux_al_distinct[OF prod(1) 1(6)]] by blast+
     from left right obt(3) 1(3) prod show ?case by (auto split: prod.splits)
-  next                               
+  next
     case (2 v c1 c2 al)
-    have v': "s (case get_reg al v of V v' \<Rightarrow> v' | _ \<Rightarrow> v) = s v" 
+    have v': "s (case get_reg al v of V v' \<Rightarrow> v' | _ \<Rightarrow> v) = s v"
       using atomVal_get_reg_eq_atomVal[OF 2(5), of al v] by (auto split: atomExp.split)
     show ?case
     proof (cases "s v = 0")
@@ -239,12 +239,11 @@ proof -
       have case_dest: "case get_reg al v of N n \<Rightarrow> n = 0 | V v' \<Rightarrow> s v' = 0"
         using True obt2 2(3) atomVal_get_reg_eq_atomVal[OF 2(5), of al v]
         by (simp split: prod.splits atomExp.splits nat.splits)
-      with 2(3) obt2 have "set al' \<subseteq> set al2"
-        by (auto split: prod.splits atomExp.splits simp: member_def)
+      with 2(3) obt2 have "set al' \<subseteq> set al2" by (auto split: prod.splits atomExp.splits)
       with 1(2) have "\<And>x y. (x, y) \<in> set al' \<Longrightarrow> s' x = atomVal y s'" by blast
-      moreover from True case_dest 2(3) obt2 have "C \<turnstile> (c', s) \<Rightarrow>\<^bsup>t\<^esup>  s'" 
+      moreover from True case_dest 2(3) obt2 have "C \<turnstile> (c', s) \<Rightarrow>\<^bsup>t\<^esup>  s'"
         using tIfFalse[OF True[folded v'] 1(1) t'(2)] tSeq[OF tSkip t'(1) t'(3)]
-        by (fastforce split: prod.splits atomExp.splits nat.splits) 
+        by (fastforce split: prod.splits atomExp.splits nat.splits)
       ultimately show ?thesis by blast
     next
       case False
@@ -257,9 +256,9 @@ proof -
         using False obt1 2(3) atomVal_get_reg_eq_atomVal[OF 2(5), of al v]
         by (simp split: prod.splits atomExp.splits nat.splits)
       with obt1 2(3) have "set al' \<subseteq> set al1"
-        by (auto simp: member_def split: prod.splits atomExp.splits nat.splits)
+        by (auto simp: split: prod.splits atomExp.splits nat.splits)
       with 1(2) have "\<And>x y. (x, y) \<in> set al' \<Longrightarrow> s' x = atomVal y s'" by blast
-      moreover from False case_dest 2(3) obt1 have "C \<turnstile> (c', s) \<Rightarrow>\<^bsup>t\<^esup>  s'" 
+      moreover from False case_dest 2(3) obt1 have "C \<turnstile> (c', s) \<Rightarrow>\<^bsup>t\<^esup>  s'"
         using tIfTrue[OF False[folded v'] 1(1) t'(2)] tSeq[OF tSkip t'(1) t'(3)]
         by (fastforce split: prod.splits atomExp.splits nat.splits)
       ultimately show ?thesis by blast
@@ -351,14 +350,14 @@ proof -
       show ?thesis
       proof (cases "n = 0")
         case True
-        with v_same 2(3,4) N have c': "c' = tSKIP;;fst (trans_assigns_aux c2 al)" 
+        with v_same 2(3,4) N have c': "c' = tSKIP;;fst (trans_assigns_aux c2 al)"
           by (auto split: prod.splits atomExp.splits nat.splits)
         then obtain t' where "C \<turnstile> (fst (trans_assigns_aux c2 al), s) \<Rightarrow>\<^bsup>t'\<^esup>  s'" "t = t' + 1"
           using 2(4)[unfolded c'] by auto
         with True tIfFalse[of s v] v_same 2(2) 2(5,6) N show ?thesis by (simp add: split_pairs)
       next
         case False
-        with v_same 2(3,4) N have c': "c' = tSKIP;;fst (trans_assigns_aux c1 al)" 
+        with v_same 2(3,4) N have c': "c' = tSKIP;;fst (trans_assigns_aux c1 al)"
           by (auto split: prod.splits atomExp.splits nat.splits)
         then obtain t' where "C \<turnstile> (fst (trans_assigns_aux c1 al), s) \<Rightarrow>\<^bsup>t'\<^esup>  s'" "t = t' + 1"
           using 2(4)[unfolded c'] by auto
@@ -455,7 +454,7 @@ end
 lemma Let_lambda_eq_Let: "(let x = t in (\<lambda>y. f y x)) y = (let x = t in f y x)" by simp
 lemmas Let_compile_simps = Let_const Let_lambda_eq_Let
 
-declare tailcall_to_IMP_def[code del]
+declare tailcall_to_IMP_def[code drop]
 
 ML_file\<open>compile_hol_nat_to_imp.ML\<close>
 

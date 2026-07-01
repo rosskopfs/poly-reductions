@@ -206,7 +206,7 @@ sig
 end
 
 functor HOL_Nat_To_IMP_Tactics(A : sig
-    structure FIA : FUNCTOR_INSTANCE_ARGS
+    structure FI : FUNCTOR_INSTANCE_BASE
     val init_args : HOL_Nat_To_IMP_Tactics_Base.context_args
   end) : HOL_NAT_TO_IMP_TACTICS =
 struct
@@ -215,7 +215,7 @@ structure HITA = HOL_Nat_To_IMP_Tactics_Base
 structure PA = HITA.PA
 structure PCA = HITA.PCA
 structure PM = HITA.PM
-structure FIU = Functor_Instance_Util(A.FIA)
+structure FI = Functor_Instance(A.FI)
 structure MCU = ML_Code_Util
 structure PU = Parse_Util
 
@@ -242,7 +242,7 @@ val map_get_fun_inducts = map_args o PCA.map_get_fun_inducts
 
 fun cook_tac mode ctxt = HITA.cook_tac (get_args (Context.Proof ctxt)) mode ctxt
 
-val binding = FIU.mk_binding_id_prefix "cook"
+val binding = Binding.make (FI.prefix_id "cook", FI.pos)
 
 val parse_attribute_arg_entries =
   let
@@ -250,8 +250,8 @@ val parse_attribute_arg_entries =
     val parse_value = PCA.parse_entry (PCA.get_get_IMP_def parsers)
       (PCA.get_get_imp_correct parsers) (PCA.get_get_HOL_eqs parsers)
       (PCA.get_get_fun_inducts parsers)
-    val parse_entry = Parse_Key_Value.parse_entry PCA.parse_key PU.eq parse_value
-  in PCA.parse_entries_required Parse.and_list1 [] parse_entry (PCA.empty_entries ()) end
+    val parse_entry = Parse_Key_Value.parse_entry PCA.parse_key (K PU.eq) parse_value
+  in PCA.parse_entries_required Parse.and_list1 true [] parse_entry (PCA.empty_entries ()) end
 
 fun attribute (entries, pos) =
   let
@@ -265,7 +265,7 @@ fun attribute (entries, pos) =
       |> map (fn (k, v) => code_from_key k @ MCU.atomic (code_from_entry v))
       |> MCU.list
     val code =
-      FIU.code_struct_op "map_args" @ MCU.atomic (code_PCA_op "merge_entries" @
+      FI.code_struct_op "map_args" @ MCU.atomic (code_PCA_op "merge_entries" @
       MCU.atomic (code_PCA_op "entries_from_entry_list" @ code_entries))
   in ML_Attribute.run_map_context (code, pos) end
 
@@ -273,16 +273,16 @@ val parse_attribute = (parse_attribute_arg_entries |> PU.position) >> attribute
 
 val setup_attribute = Attrib.local_setup binding
   (Parse.!!! parse_attribute |> Scan.lift) o
-  the_default ("set HOL to IMP tactics arguments (" ^ FIU.FIA.full_name ^ ")")
+  the_default ("set HOL to IMP tactics arguments (" ^ FI.long_name ^ ")")
 
 val parse_method_arg_entries =
   let
     val parsers = HITA.arg_parsers
     val parse_value = PA.parse_entry (PA.get_IMP_def parsers) (PA.get_imp_correct parsers)
       (PA.get_HOL_eqs parsers) (PA.get_fun_inducts parsers) (PA.get_mode parsers |> Scan.lift)
-    val parse_entry = Parse_Key_Value.parse_entry' (Scan.lift PA.parse_key) (Scan.lift PU.eq)
+    val parse_entry = Parse_Key_Value.parse_entry' (Scan.lift PA.parse_key) (K (Scan.lift PU.eq))
       parse_value
-  in PA.parse_entries_required' Parse.and_list1' [] parse_entry (PA.empty_entries ()) end
+  in PA.parse_entries_required' Parse.and_list1' true [] parse_entry (PA.empty_entries ()) end
 
 val parse_method =
   let
@@ -301,6 +301,6 @@ val parse_method =
   end
 
 val setup_method = Method.local_setup binding parse_method o
-  the_default ("HOL to IMP tactics (" ^ FIU.FIA.full_name ^ ")")
+  the_default ("HOL to IMP tactics (" ^ FI.long_name ^ ")")
 
 end

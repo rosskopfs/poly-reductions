@@ -66,10 +66,10 @@ local
     Parse.position Parse.const
 in
   val _ =
-    Outer_Syntax.local_theory_to_proof'
+    Outer_Syntax.local_theory_to_proof
       \<^command_keyword>\<open>HOL_To_IMP_correct\<close>
       "setup goal to refine HOL tail-recursive functions over nats to IMP-"
-      (parser >> (fn (binding_attrs, (const, pos)) => fn b => fn lthy =>
+      (parser >> (fn (binding_attrs, (const, pos)) => fn lthy =>
         let
           val stateT = \<^typ>\<open>IMP_Base.state\<close>
           val const_term = HTHNU.read_const lthy const
@@ -107,11 +107,12 @@ in
           val binding_attrs = binding_attrs
             |>> (fn binding => if Binding.is_empty binding
               then Transport_Util.add_suffix (HTHNU.const_binding const_term)
-                imp_correct_binding |> Binding.set_pos pos
+                imp_correct_binding |> Binding.new_pos pos
               else binding)
             ||> cons imp_correct_attr
         in
-          Specification.theorem false Thm.theoremK NONE (K I) binding_attrs [] [] goal_stmt b lthy
+          Specification.theorem {verbose = true, long = false, kind = Thm.theoremK}
+            NONE (K I) binding_attrs [] [] goal_stmt lthy
         end
       ))
  end
