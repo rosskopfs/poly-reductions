@@ -1,8 +1,10 @@
 # Automatic Refinements and Polynomial-Time Reductions in Isabelle/HOL
 
+**TODO: update README. Current version is updated to Isabelle/c13a4bd3c018**.
+
 ## Preliminaries
 
-This work is based on [Isabelle/c13a4bd3c018](https://isabelle.in.tum.de) with [AFP-2025](https://www.isa-afp.org/download/).
+This work is based on [Isabelle2025](https://isabelle.in.tum.de) with [AFP-2025](https://www.isa-afp.org/download/).
 
 ## Isabelle/AFP Setup:
 Installation instructions can be found on the [Isabelle](https://isabelle.in.tum.de/installation.html) and [AFP webpage](https://www.isa-afp.org/help/).
